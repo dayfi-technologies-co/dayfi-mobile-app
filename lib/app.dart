@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:onebank/common/app_constants.dart';
+import 'package:dayfi/common/app_constants.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:onebank/core/navigation/navigator_key.dart';
-import 'package:onebank/routes/route.dart';
+import 'package:dayfi/core/navigation/navigator_key.dart';
+import 'package:dayfi/routes/route.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

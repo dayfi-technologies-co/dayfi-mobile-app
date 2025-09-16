@@ -1,3 +1,3 @@
 class AppConstants {
-  static const String appName = 'OneBank';
+  static const String appName = 'dayfi';
 }

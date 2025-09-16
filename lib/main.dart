@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'package:onebank/app.dart';
-import 'package:onebank/app_locator.dart';
+import 'package:dayfi/app.dart';
+import 'package:dayfi/app_locator.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

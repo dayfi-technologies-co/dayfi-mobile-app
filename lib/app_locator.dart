@@ -1,5 +1,5 @@
 import 'package:get_it/get_it.dart';
-import 'package:onebank/core/navigation/navigation.dart';
+import 'package:dayfi/core/navigation/navigation.dart';
 
 
 GetIt locator = GetIt.instance;

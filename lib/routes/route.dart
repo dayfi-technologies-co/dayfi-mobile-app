@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:onebank/features/auth/login/views/login_view.dart';
-import 'package:onebank/features/auth/splash/views/splash_view.dart';
+import 'package:dayfi/features/auth/login/views/login_view.dart';
+import 'package:dayfi/features/auth/splash/views/splash_view.dart';
 
 class AppRoute {
   static RouteSettings globalrouteSettings = const RouteSettings();

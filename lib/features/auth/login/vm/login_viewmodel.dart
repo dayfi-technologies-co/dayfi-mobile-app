@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:onebank/base/base_change_notifier.dart';
+import 'package:dayfi/base/base_change_notifier.dart';
 
 final loginViewModelProvider = ChangeNotifierProvider<LoginViewModel>((ref) {
   return LoginViewModel();

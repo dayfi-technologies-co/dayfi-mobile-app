@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:onebank/features/auth/login/vm/login_viewmodel.dart';
+import 'package:dayfi/features/auth/login/vm/login_viewmodel.dart';
 
 class LoginView extends StatefulHookConsumerWidget {
   const LoginView({super.key});

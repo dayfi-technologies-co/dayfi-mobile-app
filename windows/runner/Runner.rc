@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "onebank" "\0"
+            VALUE "FileDescription", "dayfi" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "onebank" "\0"
+            VALUE "InternalName", "dayfi" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2025 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "onebank.exe" "\0"
-            VALUE "ProductName", "onebank" "\0"
+            VALUE "OriginalFilename", "dayfi.exe" "\0"
+            VALUE "ProductName", "dayfi" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

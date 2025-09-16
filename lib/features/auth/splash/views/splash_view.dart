@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:onebank/app_locator.dart';
-import 'package:onebank/routes/route.dart';
+import 'package:dayfi/app_locator.dart';
+import 'package:dayfi/routes/route.dart';
 
 class SplashView extends StatelessWidget {
   const SplashView({super.key});

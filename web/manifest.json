@@ -1,6 +1,6 @@
 {
-    "name": "onebank",
-    "short_name": "onebank",
+    "name": "dayfi",
+    "short_name": "dayfi",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
