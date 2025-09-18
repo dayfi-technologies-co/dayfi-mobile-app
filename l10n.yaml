@@ -1,0 +1,11 @@
+arb-dir: lib/l10n
+template-arb-file: app_en.arb
+output-dir: lib/l10n
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+nullable-getters: false
+use-deferred-loading: false
+format: true
+untranslated-messages-file: lib/l10n/untranslated_messages.json
+preferred-supported-locales:
+  - en

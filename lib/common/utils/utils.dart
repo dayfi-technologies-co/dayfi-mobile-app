@@ -5,5 +5,6 @@
 export 'string_utils.dart';
 export 'date_utils.dart';
 export 'validation_utils.dart';
+export 'app_logger.dart';
 
 // Add more exports as you create more utility files

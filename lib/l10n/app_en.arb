@@ -1,0 +1,22 @@
+{
+  "@@locale": "en",
+  "language": "English",
+  "@language": {
+    "description": "Selected language"
+  },
+  "canceledApiRequest": "Request to API server was cancelled!!!",
+  "apiConnectionTimeout": "Connection timeout. Please check your internet connection and try again!!!",
+  "apiBadCertificate": "Server certificate error. We have failed to establish a connection due to certificate error!!!",
+  "apiConnectionError": "Connection error. Please check your internet connection and try again!!!",
+  "apiUnknownConnection": "An unknown error has occurred, we are unable to establish a connection with the server!!!",
+  "apiResponseTimeout": "Ouch! Seems like you’re offline. Please check your internet connection and try again!!!",
+  "apiBadRequest": "Failed to process user request, server responded with bad request",
+  "apiUnauthorized": "Access unauthorized, please login to proceed",
+  "apiPermissionDenied": "Permission denied, you are not authorized to access this content",
+  "apiContentNotFound": "The requested content was not found",
+  "apiServerDowntime": "We experienced a server downtime while processing your request, please try again later",
+  "apiInternalServerError": "Internal server error. We are fixing it right away",
+  "apiGenericError": "Ouch! Seems like you’re offline. Please check your internet connection and try again",
+  "apiCaughtError": "Oops an error occurred while processing your request, we are fixing it",
+  "apiUnprocessableEntity": "The data could not be processed, please enter valid inputs"
+}
