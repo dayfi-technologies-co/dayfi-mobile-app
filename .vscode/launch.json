@@ -1,0 +1,45 @@
+{
+  // Select a configuration in Run and Debug to start the app with a flavor
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Flutter Dev",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "args": [
+        "--flavor",
+        "dev",
+        "--dart-define",
+        "FLAVOR=dev"
+      ]
+    },
+    {
+      "name": "Flutter Pilot",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "args": [
+        "--flavor",
+        "pilot",
+        "--dart-define",
+        "FLAVOR=pilot"
+      ]
+    },
+    {
+      "name": "Flutter Prod",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "args": [
+        "--flavor",
+        "prod",
+        "--dart-define",
+        "FLAVOR=prod"
+      ]
+    }
+  ]
+}
+
+
+

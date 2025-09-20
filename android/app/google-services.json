@@ -1,0 +1,68 @@
+{
+    "project_info": {
+      "project_number": "826631103417",
+      "project_id": "dayfi-39eb7",
+      "storage_bucket": "dayfi-39eb7.firebasestorage.app"
+    },
+    "client": [
+      {
+        "client_info": {
+          "mobilesdk_app_id": "1:826631103417:android:e8ab2e6f19dcff165d4c68",
+          "android_client_info": {
+            "package_name": "com.dayfi.pilot"
+          }
+        },
+        "oauth_client": [],
+        "api_key": [
+          {
+            "current_key": "AIzaSyBFfyWdlRHICvpFn5KxpOtyQlg-RdUmwAg"
+          }
+        ],
+        "services": {
+          "appinvite_service": {
+            "other_platform_oauth_client": []
+          }
+        }
+      },
+      {
+        "client_info": {
+          "mobilesdk_app_id": "1:826631103417:android:090b77d220d831b15d4c68",
+          "android_client_info": {
+            "package_name": "com.dayfi.prod"
+          }
+        },
+        "oauth_client": [],
+        "api_key": [
+          {
+            "current_key": "AIzaSyBFfyWdlRHICvpFn5KxpOtyQlg-RdUmwAg"
+          }
+        ],
+        "services": {
+          "appinvite_service": {
+            "other_platform_oauth_client": []
+          }
+        }
+      },
+      {
+        "client_info": {
+          "mobilesdk_app_id": "1:826631103417:android:cdc9c67a16a8e7105d4c68",
+          "android_client_info": {
+            "package_name": "com.dayfi.test"
+          }
+        },
+        "oauth_client": [],
+        "api_key": [
+          {
+            "current_key": "AIzaSyBFfyWdlRHICvpFn5KxpOtyQlg-RdUmwAg"
+          }
+        ],
+        "services": {
+          "appinvite_service": {
+            "other_platform_oauth_client": []
+          }
+        }
+      }
+    ],
+    "configuration_version": "1"
+  }
+  

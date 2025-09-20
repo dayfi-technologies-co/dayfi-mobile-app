@@ -1,13 +1,19 @@
 # Uncomment this line to define a global platform for your project
-# platform :ios, '13.0'
+platform :ios, '15.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
 
 project 'Runner', {
-  'Debug' => :debug,
-  'Profile' => :release,
-  'Release' => :release,
+  'Debug-dev' => :debug,
+  'Profile-dev' => :release,
+  'Release-dev' => :release,
+  'Debug-pilot' => :debug,
+  'Profile-pilot' => :release,
+  'Release-pilot' => :release,
+  'Debug-prod' => :debug,
+  'Profile-prod' => :release,
+  'Release-prod' => :release,
 }
 
 def flutter_root
@@ -39,5 +45,44 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+    target.build_configurations.each do |config|
+      search_paths = config.build_settings['LIBRARY_SEARCH_PATHS']
+      if search_paths.is_a?(Array)
+        fixed = search_paths.map { |p| p.gsub('${DT_TOOLCHAIN_DIR}', '$(TOOLCHAIN_DIR)') }
+        fixed = fixed.map { |p| p.gsub('$(DT_TOOLCHAIN_DIR)', '$(TOOLCHAIN_DIR)') }
+        config.build_settings['LIBRARY_SEARCH_PATHS'] = fixed
+      elsif search_paths.is_a?(String)
+        fixed = search_paths.gsub('${DT_TOOLCHAIN_DIR}', '$(TOOLCHAIN_DIR)')
+        fixed = fixed.gsub('$(DT_TOOLCHAIN_DIR)', '$(TOOLCHAIN_DIR)')
+        config.build_settings['LIBRARY_SEARCH_PATHS'] = fixed
+      end
+    end
+  end
+
+  installer.aggregate_targets.each do |aggregate_target|
+    aggregate_target.user_project.native_targets.each do |native_target|
+      native_target.build_configurations.each do |config|
+        search_paths = config.build_settings['LIBRARY_SEARCH_PATHS']
+        if search_paths.is_a?(Array)
+          fixed = search_paths.map { |p| p.gsub('${DT_TOOLCHAIN_DIR}', '$(TOOLCHAIN_DIR)') }
+          fixed = fixed.map { |p| p.gsub('$(DT_TOOLCHAIN_DIR)', '$(TOOLCHAIN_DIR)') }
+          config.build_settings['LIBRARY_SEARCH_PATHS'] = fixed
+        elsif search_paths.is_a?(String)
+          fixed = search_paths.gsub('${DT_TOOLCHAIN_DIR}', '$(TOOLCHAIN_DIR)')
+          fixed = fixed.gsub('$(DT_TOOLCHAIN_DIR)', '$(TOOLCHAIN_DIR)')
+          config.build_settings['LIBRARY_SEARCH_PATHS'] = fixed
+        end
+      end
+    end
+  end
+
+  # Rewrite generated Pods xcconfig files and frameworks script to avoid DT_TOOLCHAIN_DIR usage
+  Dir.glob('Pods/Target Support Files/**/*.{xcconfig,sh}').each do |file|
+    text = File.read(file)
+    new_text = text.gsub('${DT_TOOLCHAIN_DIR}', '$(TOOLCHAIN_DIR)')
+    new_text = new_text.gsub('$(DT_TOOLCHAIN_DIR)', '$(TOOLCHAIN_DIR)')
+    if new_text != text
+      File.open(file, 'w') { |f| f.write(new_text) }
+    end
   end
 end
