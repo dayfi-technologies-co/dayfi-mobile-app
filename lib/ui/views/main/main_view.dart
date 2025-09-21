@@ -1,3 +1,4 @@
+import 'package:dayfi/ui/views/coins/coins_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:stacked/stacked.dart';
@@ -18,8 +19,10 @@ class MainView extends StackedView<MainViewModel> {
         case 0:
           return HomeView(mainModel: viewModel);
         case 1:
-          return WalletsView(mainModel: viewModel);
+          return CoinsView();
         case 2:
+          return WalletsView(mainModel: viewModel);
+        case 3:
           return SettingsView(mainModel: viewModel);
         default:
           return HomeView(mainModel: viewModel);
@@ -82,10 +85,26 @@ class MainView extends StackedView<MainViewModel> {
                 icon: Padding(
                   padding: const EdgeInsets.only(bottom: 2.0),
                   child: SvgPicture.asset(
-                    "assets/svgs/account_balance_wallet_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.svg",
+                    "assets/svgs/assets/svgs/coins_tab.svg",
                     height: 30,
                     color:
                         viewModel.currentIndex == 1
+                            ? const Color(0xff5645F5)
+                            : Theme.of(
+                              context,
+                            ).textTheme.bodyLarge!.color!.withOpacity(.4),
+                  ),
+                ),
+                label: 'Coins',
+              ),
+              BottomNavigationBarItem(
+                icon: Padding(
+                  padding: const EdgeInsets.only(bottom: 2.0),
+                  child: SvgPicture.asset(
+                    "assets/svgs/account_balance_wallet_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.svg",
+                    height: 30,
+                    color:
+                        viewModel.currentIndex == 2
                             ? const Color(0xff5645F5)
                             : Theme.of(
                               context,
@@ -101,7 +120,7 @@ class MainView extends StackedView<MainViewModel> {
                     "assets/svgs/settings_tab.svg",
                     height: 30,
                     color:
-                        viewModel.currentIndex == 2
+                        viewModel.currentIndex == 3
                             ? const Color(0xff5645F5)
                             : Theme.of(
                               context,

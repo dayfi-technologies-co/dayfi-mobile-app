@@ -20,14 +20,11 @@ class KycSuccessView extends StackedView<KycSuccessViewModel> {
       backgroundColor: const Color(0xff5645F5),
       body: Stack(
         children: [
-          Opacity(
-            opacity: 1,
-            child: Image.asset(
-              'assets/images/background.png',
-              fit: BoxFit.cover,
-              color: const Color(0xffCAC5FC),
-              width: MediaQuery.of(context).size.width,
-            ),
+          Image.asset(
+            'assets/images/backgroud.png',
+            fit: BoxFit.cover,
+            color: const Color(0xffCAC5FC),
+            width: MediaQuery.of(context).size.width,
           ),
           // Align(
           //   alignment: Alignment.topCenter,

@@ -307,14 +307,11 @@ class SwapSuccessView extends StatelessWidget {
       backgroundColor: const Color(0xff5645F5),
       body: Stack(
         children: [
-          Opacity(
-            opacity: 1,
-            child: Image.asset(
-              'assets/images/background.png',
-              fit: BoxFit.cover,
-              color: const Color(0xff2A0079),
-              width: MediaQuery.of(context).size.width,
-            ),
+          Image.asset(
+            'assets/images/backgroud.png',
+            fit: BoxFit.cover,
+            color: const Color(0xff2A0079),
+            width: MediaQuery.of(context).size.width,
           ),
           Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

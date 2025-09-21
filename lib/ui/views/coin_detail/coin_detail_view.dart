@@ -690,7 +690,7 @@ class CoinDetailView extends StackedView<CoinDetailViewModel> {
           // ClipRRect(
           //   borderRadius: BorderRadius.circular(4.r),
           //   child: Image.asset(
-          //     'assets/images/background.png',
+          //     'assets/images/backgroud.png',
           //     fit: BoxFit.cover,
           //     color: Colors.orangeAccent,
           //     width: MediaQuery.of(context).size.width,

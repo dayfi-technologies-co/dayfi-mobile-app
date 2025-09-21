@@ -390,19 +390,13 @@ class WalletView extends StackedView<WalletViewModel> {
         ),
         child: Stack(
           children: [
-            Opacity(
-              opacity: 1,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: Opacity(
-                  opacity: .05,
-                  child: Image.asset(
-                    'assets/images/background.png',
-                    fit: BoxFit.cover,
-                    // color: Colors.orangeAccent.shade200,
-                    width: MediaQuery.of(context).size.width,
-                  ),
-                ),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: Image.asset(
+                'assets/images/backgroud.png',
+                fit: BoxFit.cover,
+                // color: Colors.orangeAccent.shade200,
+                width: MediaQuery.of(context).size.width,
               ),
             ),
             Padding(

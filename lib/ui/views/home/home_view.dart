@@ -642,14 +642,11 @@ class HomeView extends StackedView<HomeViewModel> {
               borderRadius: BorderRadius.circular(
                 _HomeViewConstants.cardBorderRadius,
               ),
-              child: Opacity(
-                opacity: .1,
-                child: Image.asset(
-                  'assets/images/background.png',
-                  fit: BoxFit.cover,
-                  // color: Colors.orangeAccent.shade200,
-                  width: MediaQuery.of(context).size.width,
-                ),
+              child: Image.asset(
+                'assets/images/backgroud.png',
+                fit: BoxFit.cover,
+                // color: Colors.orangeAccent.shade200,
+                width: MediaQuery.of(context).size.width,
               ),
             ),
             Padding(

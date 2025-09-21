@@ -30,14 +30,11 @@ class ForgotPasswordView extends StackedView<ForgotPasswordViewModel> {
             resizeToAvoidBottomInset: false,
             body: ClipRRect(
               borderRadius: BorderRadius.circular(24),
-              child: Opacity(
-                opacity: .05,
-                child: Image.asset(
-                  'assets/images/background.png',
-                  fit: BoxFit.cover,
-                  width: MediaQuery.of(context).size.width,
-                  height: MediaQuery.of(context).size.height,
-                ),
+              child: Image.asset(
+                'assets/images/backgroud.png',
+                fit: BoxFit.cover,
+                width: MediaQuery.of(context).size.width,
+                height: MediaQuery.of(context).size.height,
               ),
             ),
           )

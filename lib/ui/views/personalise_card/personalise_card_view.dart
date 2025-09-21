@@ -419,7 +419,7 @@ class VirtualCard extends StatelessWidget {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(4),
               child: Image.asset(
-                'assets/images/background.png',
+                'assets/images/backgroud.png',
                 fit: BoxFit.cover,
                 color: Colors.orangeAccent.shade200,
                 width: MediaQuery.of(context).size.width,
@@ -685,14 +685,11 @@ class CardSuccessScreen extends StatelessWidget {
       body: Stack(
         children: [
           // ✅ Background image overlay
-          Opacity(
-            opacity: 1,
-            child: Image.asset(
-              'assets/images/background.png',
-              fit: BoxFit.cover,
-              color: const Color(0xffCAC5FC),
-              width: MediaQuery.of(context).size.width,
-            ),
+          Image.asset(
+            'assets/images/backgroud.png',
+            fit: BoxFit.cover,
+            color: const Color(0xffCAC5FC),
+            width: MediaQuery.of(context).size.width,
           ),
 
           // ✅ Main content (Body + Button)
