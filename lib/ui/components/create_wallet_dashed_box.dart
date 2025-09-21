@@ -24,7 +24,7 @@ class CreateWalletDashedBox extends StatelessWidget {
                 'assets/images/background.png',
               ),
               fit: BoxFit.cover,
-              opacity: .1,
+              opacity: .05,
               // // color: Colors.OrangeAccent.shade200,
             ),
           ),

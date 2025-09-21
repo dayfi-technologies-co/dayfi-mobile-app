@@ -194,7 +194,7 @@ class MainPaymentSuccessView extends StatelessWidget {
         children: [
           // Background with entrance animation
           Opacity(
-            opacity: .1,
+            opacity: .05,
             child: Image.asset(
               'assets/images/background.png',
               fit: BoxFit.cover,

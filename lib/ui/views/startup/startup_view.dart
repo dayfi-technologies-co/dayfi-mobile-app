@@ -261,7 +261,7 @@ class StartupView extends StackedView<StartupViewModel> {
           ClipRRect(
                 borderRadius: BorderRadius.circular(24),
                 child: Opacity(
-                  opacity: .1,
+                  opacity: .05,
                   child: Image.asset(
                     'assets/images/background.png',
                     fit: BoxFit.cover,

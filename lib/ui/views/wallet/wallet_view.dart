@@ -395,7 +395,7 @@ class WalletView extends StackedView<WalletViewModel> {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(4),
                 child: Opacity(
-                  opacity: .1,
+                  opacity: .05,
                   child: Image.asset(
                     'assets/images/background.png',
                     fit: BoxFit.cover,
