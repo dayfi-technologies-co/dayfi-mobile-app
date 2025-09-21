@@ -69,11 +69,11 @@ class FilledBtn extends StatelessWidget {
               : Text(
                   text.toUpperCase(),
                   style: theme.textTheme.labelLarge!.copyWith(
-                    fontSize: 16.sp,
+                   
                     fontWeight: FontWeight.w600,
                     letterSpacing: 0.00,
                     height: 1.450,
-                    fontFamily: "Karla",
+                    fontFamily: "Karla", fontSize: 16.sp,
                     color:
                         isDisabled ? Colors.white : textColor ?? Colors.white,
                   ),

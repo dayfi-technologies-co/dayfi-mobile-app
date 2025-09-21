@@ -26,11 +26,14 @@ class LoginView extends StatelessWidget {
             resizeToAvoidBottomInset: false,
             body: ClipRRect(
               borderRadius: BorderRadius.circular(24),
-              child: Image.asset(
-                'assets/images/backgroud.png',
-                fit: BoxFit.cover,
-                width: MediaQuery.of(context).size.width,
-                height: MediaQuery.of(context).size.height,
+              child: Opacity(
+                opacity: .1,
+                child: Image.asset(
+                  'assets/images/background.png',
+                  fit: BoxFit.cover,
+                  width: MediaQuery.of(context).size.width,
+                  height: MediaQuery.of(context).size.height,
+                ),
               ),
             ),
           )
@@ -48,19 +51,19 @@ class LoginView extends StatelessWidget {
                   verticalSpace(12.h),
                   
                   // Back button with subtle animation
-                  Padding(
-                    padding: const EdgeInsets.only(left: 8.0),
-                    child: IconButton(
-                      onPressed: () => model.navigationService.clearStackAndShow(Routes.startupView),
-                      icon: const Icon(
-                        Icons.arrow_back,
-                        color: Color(0xff5645F5),
-                      ),
-                    ),
-                  )
-                      .animate()
-                      .fadeIn(delay: 200.ms, duration: 400.ms, curve: Curves.easeOutCubic)
-                      .slideX(begin: -0.2, end: 0, delay: 200.ms, duration: 400.ms, curve: Curves.easeOutCubic),
+                  // Padding(
+                  //   padding: const EdgeInsets.only(left: 8.0),
+                  //   child: IconButton(
+                  //     onPressed: () => model.navigationService.clearStackAndShow(Routes.startupView),
+                  //     icon: const Icon(
+                  //       Icons.arrow_back_ios,
+                  //       color: Color(0xff5645F5),
+                  //     ),
+                  //   ),
+                  // )
+                  //     .animate()
+                  //     .fadeIn(delay: 200.ms, duration: 400.ms, curve: Curves.easeOutCubic)
+                  //     .slideX(begin: -0.2, end: 0, delay: 200.ms, duration: 400.ms, curve: Curves.easeOutCubic),
                   
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 24),

@@ -134,7 +134,7 @@ class CustomTextField extends StatelessWidget {
                 : Colors.white,
             contentPadding: EdgeInsets.symmetric(
               vertical: 14.h,
-              horizontal: 14.w,
+              horizontal: 10.w,
             ),
             errorStyle: TextStyle(
               fontFamily: 'Karla',

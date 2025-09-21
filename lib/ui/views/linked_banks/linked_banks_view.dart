@@ -7,6 +7,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:dayfi/ui/components/buttons/filled_btn.dart';
 import 'package:stacked/stacked.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'linked_banks_viewmodel.dart';
 
 class LinkedBanksView extends StackedView<LinkedBanksViewModel> {
@@ -28,7 +29,7 @@ class LinkedBanksView extends StackedView<LinkedBanksViewModel> {
         leading: IconButton(
           onPressed: () => viewModel.navigationService.back(),
           icon: const Icon(
-            Icons.arrow_back,
+            Icons.arrow_back_ios,
             color: Color(0xff5645F5), // innit
           ),
         ),
@@ -57,6 +58,19 @@ class LinkedBanksView extends StackedView<LinkedBanksViewModel> {
                         color: Color(0xff2A0079),
                       ),
                       textAlign: TextAlign.start,
+                    ).animate().fadeIn(
+                      duration: 500.ms,
+                      curve: Curves.easeOutCubic,
+                    ).slideY(
+                      begin: -0.1,
+                      end: 0,
+                      duration: 500.ms,
+                      curve: Curves.easeOutCubic,
+                    ).scale(
+                      begin: const Offset(0.95, 0.95),
+                      end: const Offset(1.0, 1.0),
+                      duration: 500.ms,
+                      curve: Curves.easeOutCubic,
                     ),
                     verticalSpace(10),
                     const Text(
@@ -70,6 +84,16 @@ class LinkedBanksView extends StackedView<LinkedBanksViewModel> {
                         color: Color(0xFF302D53),
                       ),
                       textAlign: TextAlign.start,
+                    ).animate().fadeIn(
+                      duration: 500.ms,
+                      curve: Curves.easeOutCubic,
+                      delay: 100.ms,
+                    ).slideY(
+                      begin: 0.1,
+                      end: 0,
+                      duration: 500.ms,
+                      curve: Curves.easeOutCubic,
+                      delay: 100.ms,
                     ),
                   ],
                 ),
@@ -79,6 +103,16 @@ class LinkedBanksView extends StackedView<LinkedBanksViewModel> {
                         child: CupertinoActivityIndicator(
                           color: Color(0xff5645F5), // innit
                         ),
+                      ).animate().fadeIn(
+                        duration: 500.ms,
+                        curve: Curves.easeOutCubic,
+                        delay: 200.ms,
+                      ).scale(
+                        begin: const Offset(0.8, 0.8),
+                        end: const Offset(1.0, 1.0),
+                        duration: 500.ms,
+                        curve: Curves.easeOutCubic,
+                        delay: 200.ms,
                       )
                     : viewModel.savedAccounts.isEmpty
                         ? Center(
@@ -109,9 +143,21 @@ class LinkedBanksView extends StackedView<LinkedBanksViewModel> {
                                 ],
                               ),
                             ),
+                          ).animate().fadeIn(
+                            duration: 500.ms,
+                            curve: Curves.easeOutCubic,
+                            delay: 200.ms,
+                          ).slideY(
+                            begin: 0.1,
+                            end: 0,
+                            duration: 500.ms,
+                            curve: Curves.easeOutCubic,
+                            delay: 200.ms,
                           )
                         : Column(
-                            children: viewModel.savedAccounts.map((account) {
+                            children: viewModel.savedAccounts.asMap().entries.map((entry) {
+                              final index = entry.key;
+                              final account = entry.value;
                               return Container(
                                 padding: const EdgeInsets.all(16),
                                 margin: const EdgeInsets.symmetric(vertical: 8),
@@ -198,6 +244,22 @@ class LinkedBanksView extends StackedView<LinkedBanksViewModel> {
                                     ),
                                   ],
                                 ),
+                              ).animate().fadeIn(
+                                duration: 500.ms,
+                                curve: Curves.easeOutCubic,
+                                delay: Duration(milliseconds: 200 + (index * 100)),
+                              ).slideY(
+                                begin: 0.1,
+                                end: 0,
+                                duration: 500.ms,
+                                curve: Curves.easeOutCubic,
+                                delay: Duration(milliseconds: 200 + (index * 100)),
+                              ).scale(
+                                begin: const Offset(0.98, 0.98),
+                                end: const Offset(1.0, 1.0),
+                                duration: 500.ms,
+                                curve: Curves.easeOutCubic,
+                                delay: Duration(milliseconds: 200 + (index * 100)),
                               );
                             }).toList(),
                           ),
@@ -216,6 +278,20 @@ class LinkedBanksView extends StackedView<LinkedBanksViewModel> {
                               },
                               backgroundColor: const Color(0xff5645F5),
                               text: "Add a new bank",
+                            ).animate().fadeIn(
+                              duration: 500.ms,
+                              curve: Curves.easeOutCubic,
+                              delay: 300.ms,
+                            ).slideY(
+                              begin: 0.1,
+                              end: 0,
+                              duration: 500.ms,
+                              curve: Curves.easeOutCubic,
+                              delay: 300.ms,
+                            ).shimmer(
+                              duration: 2000.ms,
+                              color: Colors.white.withOpacity(0.3),
+                              delay: 500.ms,
                             ),
                             SizedBox(height: 24.h),
                           ],

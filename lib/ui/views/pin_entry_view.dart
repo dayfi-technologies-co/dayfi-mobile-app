@@ -481,7 +481,7 @@ class _PinEntryViewState extends State<PinEntryView> {
             surfaceTintColor: Colors.transparent,
             backgroundColor: const Color(0xffF7F7F7),
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Color(0xff5645F5)),
+              icon: const Icon(Icons.arrow_back_ios, color: Color(0xff5645F5)),
               onPressed: () => Navigator.of(context).pop(),
             ),
           ),

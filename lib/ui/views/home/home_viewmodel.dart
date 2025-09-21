@@ -273,12 +273,6 @@ class HomeViewModel extends BaseViewModel {
       check: false,
     ),
     LetsGetYouStartedCheckModel(
-      title: 'Invest in stable coins',
-      description: 'Buy and keep stablecoins like USDT, USDC or PYUSD',
-      icon: 'assets/svgs/coins_tab.svg',
-      check: false,
-    ),
-    LetsGetYouStartedCheckModel(
       title: 'Get a unique username',
       description: 'Create your Dayfi tag for receiving payments',
       icon: 'assets/svgs/edit_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.svg',

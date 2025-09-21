@@ -23,7 +23,7 @@ class KycSuccessView extends StackedView<KycSuccessViewModel> {
           Opacity(
             opacity: 1,
             child: Image.asset(
-              'assets/images/backgroud.png',
+              'assets/images/background.png',
               fit: BoxFit.cover,
               color: const Color(0xffCAC5FC),
               width: MediaQuery.of(context).size.width,

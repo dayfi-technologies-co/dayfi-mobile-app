@@ -7,7 +7,6 @@ import 'package:dayfi/ui/components/input_fields/pin_text_field.dart';
 import 'package:dayfi/ui/components/top_snack_bar.dart';
 import 'package:dayfi/ui/views/virtual_card_details/virtual_card_details_view.dart';
 import 'package:dayfi/ui/views/virtual_card_details/virtual_card_model.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -35,7 +34,7 @@ class PersonaliseCardView extends StackedView<PersonaliseCardViewModel> {
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
           icon: const Icon(
-            Icons.arrow_back,
+            Icons.arrow_back_ios,
             color: Color(0xff5645F5),
           ),
         ),
@@ -420,7 +419,7 @@ class VirtualCard extends StatelessWidget {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(4),
               child: Image.asset(
-                'assets/images/backgroud.png',
+                'assets/images/background.png',
                 fit: BoxFit.cover,
                 color: Colors.orangeAccent.shade200,
                 width: MediaQuery.of(context).size.width,
@@ -634,7 +633,7 @@ class _PinBottomSheetState extends State<_PinBottomSheet> {
                   color: Color(0xFF302D53),
                   fontWeight: FontWeight.w600,
                 ),
-              ),
+                                ),
 
               verticalSpace(24),
 
@@ -689,7 +688,7 @@ class CardSuccessScreen extends StatelessWidget {
           Opacity(
             opacity: 1,
             child: Image.asset(
-              'assets/images/backgroud.png',
+              'assets/images/background.png',
               fit: BoxFit.cover,
               color: const Color(0xffCAC5FC),
               width: MediaQuery.of(context).size.width,

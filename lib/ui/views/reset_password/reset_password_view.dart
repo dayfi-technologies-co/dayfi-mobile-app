@@ -30,7 +30,7 @@ class ResetPasswordView extends StatelessWidget {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(24),
                 child: Image.asset(
-                  'assets/images/backgroud.png',
+                  'assets/images/background.png',
                   fit: BoxFit.cover,
                   // color: Colors.OrangeAccent.shade200,
                   width: MediaQuery.of(context).size.width,
@@ -55,7 +55,7 @@ class ResetPasswordView extends StatelessWidget {
                           model.navigationService.back();
                         },
                         icon: const Icon(
-                          Icons.arrow_back,
+                          Icons.arrow_back_ios,
                           color: Color(0xff5645F5), // innit
                         )),
                   ),

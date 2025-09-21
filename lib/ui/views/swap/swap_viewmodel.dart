@@ -310,7 +310,7 @@ class SwapSuccessView extends StatelessWidget {
           Opacity(
             opacity: 1,
             child: Image.asset(
-              'assets/images/backgroud.png',
+              'assets/images/background.png',
               fit: BoxFit.cover,
               color: const Color(0xff2A0079),
               width: MediaQuery.of(context).size.width,

@@ -11,18 +11,20 @@ class CreateWalletDashedBox extends StatelessWidget {
         right: 24.0,
       ),
       child: DottedBorder(
-        // color: const Color(0xff5645F5), // border color
-        // strokeWidth: 1,
-        // borderType: BorderType.RRect,
-        // dashPattern: [6, 3], // 6px dash, 3px space
-        // radius: Radius.circular(4),
+        options: RoundedRectDottedBorderOptions(
+          radius: Radius.circular(4),
+          color: const Color(0xff5645F5), // border color
+          strokeWidth: 1,
+          dashPattern: [6, 3], // 6px dash, 3px space
+        ),
         child: Container(
           decoration: BoxDecoration(
             image: DecorationImage(
               image: AssetImage(
-                'assets/images/backgroud.png',
+                'assets/images/background.png',
               ),
               fit: BoxFit.cover,
+              opacity: .1,
               // // color: Colors.OrangeAccent.shade200,
             ),
           ),
@@ -30,7 +32,7 @@ class CreateWalletDashedBox extends StatelessWidget {
           padding: EdgeInsets.symmetric(vertical: 40),
           alignment: Alignment.center,
           child: Text(
-            "You don’t have any wallets yet",
+            "You don't have any wallets yet",
             style: TextStyle(
               fontFamily: 'Karla',
               fontSize: 16,

@@ -39,11 +39,14 @@ class VerifyEmailView extends StackedView<VerifyEmailViewModel> {
             resizeToAvoidBottomInset: false,
             body: ClipRRect(
               borderRadius: BorderRadius.circular(24),
-              child: Image.asset(
-                'assets/images/backgroud.png',
-                fit: BoxFit.cover,
-                width: MediaQuery.of(context).size.width,
-                height: MediaQuery.of(context).size.height,
+              child: Opacity(
+                opacity: .1,
+                child: Image.asset(
+                  'assets/images/background.png',
+                  fit: BoxFit.cover,
+                  width: MediaQuery.of(context).size.width,
+                  height: MediaQuery.of(context).size.height,
+                ),
               ),
             ),
           )
@@ -65,7 +68,7 @@ class VerifyEmailView extends StackedView<VerifyEmailViewModel> {
                     child: IconButton(
                       onPressed: () => model.navigationService.back(),
                       icon: const Icon(
-                        Icons.arrow_back,
+                        Icons.arrow_back_ios,
                         color: Color(0xff5645F5),
                       ),
                     ),

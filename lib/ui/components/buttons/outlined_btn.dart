@@ -84,8 +84,9 @@ class OutlineBtn extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
-                        letterSpacing: -.04,
+                        letterSpacing: 0.00,
                         height: 1.450,
+                        fontFamily: "Karla",
                         color: textColor ?? theme.textTheme.bodyLarge!.color,
                       ),
                     ),

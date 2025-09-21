@@ -8,16 +8,13 @@ import 'package:dayfi/ui/views/main/main_view.dart';
 import 'package:dayfi/ui/views/passcode/passcode_viewmodel.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:stacked/stacked.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class PasscodeView extends StackedView<PasscodeViewModel> {
   const PasscodeView({super.key});
 
   @override
-  Widget builder(
-    BuildContext context,
-    PasscodeViewModel model,
-    Widget? child,
-  ) {
+  Widget builder(BuildContext context, PasscodeViewModel model, Widget? child) {
     return AppScaffold(
       backgroundColor: const Color(0xffF6F5FE),
       body: SafeArea(
@@ -28,185 +25,293 @@ class PasscodeView extends StackedView<PasscodeViewModel> {
             children: [
               const Spacer(flex: 2),
               CircleAvatar(
-                radius: 24,
-                backgroundColor: Colors.white,
-                backgroundImage: const NetworkImage(
-                    'https://avatar.iran.liara.run/public/52'),
-              ),
+                    radius: 24,
+                    backgroundColor: Colors.white,
+                    backgroundImage: const NetworkImage(
+                      'https://avatar.iran.liara.run/public/52',
+                    ),
+                  )
+                  .animate()
+                  .fadeIn(duration: 500.ms, curve: Curves.easeOutCubic)
+                  .scale(
+                    begin: const Offset(0.8, 0.8),
+                    end: const Offset(1.0, 1.0),
+                    duration: 500.ms,
+                    curve: Curves.easeOutCubic,
+                  ),
               const SizedBox(height: 16),
               Text(
-                'Welcome back,',
-                style: TextStyle(
-                  fontFamily: 'Boldonse',
-                  fontSize: 22.00,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xff2A0079),
-                ),
-              ),
+                    'Welcome back,',
+                    style: TextStyle(
+                      fontFamily: 'Boldonse',
+                      fontSize: 22.00,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xff2A0079),
+                    ),
+                  )
+                  .animate()
+                  .fadeIn(
+                    duration: 500.ms,
+                    curve: Curves.easeOutCubic,
+                    delay: 100.ms,
+                  )
+                  .slideY(
+                    begin: -0.1,
+                    end: 0,
+                    duration: 500.ms,
+                    curve: Curves.easeOutCubic,
+                    delay: 100.ms,
+                  ),
               verticalSpace(8.h),
               model.user != null && model.user!.firstName != ""
                   ? Text(
-                      model.user!.firstName,
+                        model.user!.firstName,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.3,
+                          height: 1.450,
+                          color: Color(0xff2A0079),
+                        ),
+                      )
+                      .animate()
+                      .fadeIn(
+                        duration: 500.ms,
+                        curve: Curves.easeOutCubic,
+                        delay: 200.ms,
+                      )
+                      .slideY(
+                        begin: 0.1,
+                        end: 0,
+                        duration: 500.ms,
+                        curve: Curves.easeOutCubic,
+                        delay: 200.ms,
+                      )
+                  : SizedBox.shrink(),
+              const SizedBox(height: 32),
+              model.isVerifying
+                  ? CupertinoActivityIndicator(
+                        color: Color(0xff5645F5), // innit
+                      )
+                      .animate()
+                      .fadeIn(
+                        duration: 500.ms,
+                        curve: Curves.easeOutCubic,
+                        delay: 300.ms,
+                      )
+                      .scale(
+                        begin: const Offset(0.8, 0.8),
+                        end: const Offset(1.0, 1.0),
+                        duration: 500.ms,
+                        curve: Curves.easeOutCubic,
+                        delay: 300.ms,
+                      )
+                  : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(6, (index) {
+                      return Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6.0,
+                            ),
+                            child: Container(
+                              width: 22,
+                              height: 22,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color:
+                                    index < model.passcode.length
+                                        ? const Color(0xff5645F5)
+                                        : Colors.transparent,
+                                border: Border.all(
+                                  color: const Color(0xff5645F5), // innit
+                                  width: 2,
+                                ),
+                              ),
+                            ),
+                          )
+                          .animate()
+                          .fadeIn(
+                            duration: 500.ms,
+                            curve: Curves.easeOutCubic,
+                            delay: Duration(milliseconds: 300 + (index * 50)),
+                          )
+                          .scale(
+                            begin: const Offset(0.8, 0.8),
+                            end: const Offset(1.0, 1.0),
+                            duration: 500.ms,
+                            curve: Curves.easeOutCubic,
+                            delay: Duration(milliseconds: 300 + (index * 50)),
+                          );
+                    }),
+                  ),
+              SizedBox(height: MediaQuery.of(context).size.width * .3),
+              Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: Text(
+                      'Enter your passcode',
                       style: TextStyle(
+                        fontFamily: 'Karla',
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0.3,
                         height: 1.450,
                         color: Color(0xff2A0079),
                       ),
-                    )
-                  : SizedBox.shrink(),
-              const SizedBox(height: 32),
-              model.isVerifying
-                  ? CupertinoActivityIndicator(
-                      color: Color(0xff5645F5), // innit
-                    )
-                  : Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(6, (index) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 6.0),
-                          child: Container(
-                            width: 22,
-                            height: 22,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: index < model.passcode.length
-                                  ? const Color(0xff5645F5)
-                                  : Colors.transparent,
-                              border: Border.all(
-                                  color: const Color(0xff5645F5), // innit
-                                  width: 2),
-                            ),
-                          ),
-                        );
-                      }),
+                      textAlign: TextAlign.start,
                     ),
-              SizedBox(height: MediaQuery.of(context).size.width * .3),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Text(
-                  'Enter your passcode',
-                  style: TextStyle(
-                    fontFamily: 'Karla',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.3,
-                    height: 1.450,
-                    color: Color(0xff2A0079),
+                  )
+                  .animate()
+                  .fadeIn(
+                    duration: 500.ms,
+                    curve: Curves.easeOutCubic,
+                    delay: 400.ms,
+                  )
+                  .slideY(
+                    begin: 0.1,
+                    end: 0,
+                    duration: 500.ms,
+                    curve: Curves.easeOutCubic,
+                    delay: 400.ms,
                   ),
-                  textAlign: TextAlign.start,
-                ),
-              ),
               const SizedBox(height: 8),
               GridView.count(
-                crossAxisCount: 3,
-                shrinkWrap: true,
-                childAspectRatio: 1.5,
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 16,
-                physics: const NeverScrollableScrollPhysics(),
-                children: [
-                  ...List.generate(9, (index) {
-                    final number = (index + 1).toString();
-                    return _buildNumberButton(number, model);
-                  }),
-                  _buildIconButton(
-                    iconSvg: "assets/svgs/fingerprint.svg",
-                    icon: Icons.fingerprint,
-                    onTap: model.isBiometricAvailable
-                        ? () async {
-                            final authenticated =
-                                await model.authenticateWithBiometrics();
-                            if (authenticated) {
-                              model.navigationService
-                                  .clearStackAndShowView(MainView());
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Biometric authentication failed',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      letterSpacing: 0.3,
-                                      height: 1.450,
-                                      color: Colors.white,
-                                      fontFamily: 'Karla',
+                    crossAxisCount: 3,
+                    shrinkWrap: true,
+                    childAspectRatio: 1.5,
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 16,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      ...List.generate(9, (index) {
+                        final number = (index + 1).toString();
+                        return _buildNumberButton(number, model, index);
+                      }),
+                      _buildIconButton(
+                        iconSvg:
+                            model.hasFaceId
+                                ? "assets/svgs/face_id.svg"
+                                : "assets/svgs/fingerprint.svg",
+                        icon: model.hasFaceId ? Icons.face : Icons.fingerprint,
+                        onTap:
+                            model.isBiometricAvailable
+                                ? () async {
+                                  final authenticated =
+                                      await model.authenticateWithBiometrics();
+                                  if (authenticated) {
+                                    model.navigationService
+                                        .clearStackAndShowView(MainView());
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Biometric authentication failed',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                            letterSpacing: 0.3,
+                                            height: 1.450,
+                                            color: Colors.white,
+                                            fontFamily: 'Karla',
+                                          ),
+                                        ),
+                                        duration: Duration(seconds: 2),
+                                      ),
+                                    );
+                                  }
+                                }
+                                : () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Biometric authentication not available',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          letterSpacing: 0.3,
+                                          height: 1.450,
+                                          color: Colors.white,
+                                          fontFamily: "Karla",
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                  duration: Duration(seconds: 2),
-                                ),
-                              );
-                            }
-                          }
-                        : () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Biometric authentication not available',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: 0.3,
-                                    height: 1.450,
-                                    color: Colors.white,
-                                    fontFamily: "Karla",
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
+                                  );
+                                },
+                        index: 9,
+                      ),
+                      _buildNumberButton('0', model, 10),
+                      _buildIconButton(
+                        iconSvg: "",
+                        icon: Icons.arrow_back_ios,
+                        onTap: model.removeDigit,
+                        index: 11,
+                      ),
+                    ],
+                  )
+                  .animate()
+                  .fadeIn(
+                    duration: 500.ms,
+                    curve: Curves.easeOutCubic,
+                    delay: 500.ms,
+                  )
+                  .slideY(
+                    begin: 0.1,
+                    end: 0,
+                    duration: 500.ms,
+                    curve: Curves.easeOutCubic,
+                    delay: 500.ms,
                   ),
-                  _buildNumberButton('0', model),
-                  _buildIconButton(
-                    iconSvg: "",
-                    icon: Icons.arrow_back,
-                    onTap: model.removeDigit,
-                  ),
-                ],
-              ),
               const SizedBox(height: 32),
               //  SizedBox(height: 24.h),
               Center(
-                child: Text.rich(
-                  textAlign: TextAlign.end,
-                  TextSpan(
-                    text: "Not your account?",
-                    style: TextStyle(
-                      fontFamily: 'Karla',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: -.04,
-                      height: 1.450,
-                      color: Theme.of(context)
-                          .textTheme
-                          .bodyLarge!
-                          .color!
-                          // ignore: deprecated_member_use
-                          .withOpacity(.85),
-                    ),
-                    children: [
+                    child: Text.rich(
+                      textAlign: TextAlign.end,
                       TextSpan(
-                        text: " Log out",
-                        style: const TextStyle(
+                        text: "Not your account?",
+                        style: TextStyle(
                           fontFamily: 'Karla',
-                          fontSize: 16,
+                          fontSize: 14,
                           fontWeight: FontWeight.w600,
                           letterSpacing: -.04,
                           height: 1.450,
-                          color: Color(0xff5645F5), // innit
+                          color: Theme.of(context).textTheme.bodyLarge!.color!
+                          // ignore: deprecated_member_use
+                          .withOpacity(.85),
                         ),
-                        recognizer: TapGestureRecognizer()
-                          ..onTap = () {
-                            model.logout();
-                          },
-                      )
-                    ],
+                        children: [
+                          TextSpan(
+                            text: " Log out",
+                            style: const TextStyle(
+                              fontFamily: 'Karla',
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: -.04,
+                              height: 1.450,
+                              color: Color(0xff5645F5), // innit
+                            ),
+                            recognizer:
+                                TapGestureRecognizer()
+                                  ..onTap = () {
+                                    model.logout();
+                                  },
+                          ),
+                        ],
+                      ),
+                      semanticsLabel: '',
+                    ),
+                  )
+                  .animate()
+                  .fadeIn(
+                    duration: 500.ms,
+                    curve: Curves.easeOutCubic,
+                    delay: 600.ms,
+                  )
+                  .slideY(
+                    begin: 0.1,
+                    end: 0,
+                    duration: 500.ms,
+                    curve: Curves.easeOutCubic,
+                    delay: 600.ms,
                   ),
-                  semanticsLabel: '',
-                ),
-              ),
 
               const Spacer(flex: 1),
             ],
@@ -216,55 +321,87 @@ class PasscodeView extends StackedView<PasscodeViewModel> {
     );
   }
 
-  Widget _buildNumberButton(String number, PasscodeViewModel model) {
+  Widget _buildNumberButton(String number, PasscodeViewModel model, int index) {
     return GestureDetector(
-      onTap: () => model.addDigit(number),
-      child: Container(
-        decoration: const BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.transparent,
-        ),
-        child: Center(
-          child: Text(
-            number,
-            style: const TextStyle(
-              fontSize: 28.00,
-              fontWeight: FontWeight.w600,
-              color: Colors.black87,
+          onTap: () => model.addDigit(number),
+          child: Container(
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.transparent,
+            ),
+            child: Center(
+              child: Text(
+                number,
+                style: const TextStyle(
+                  fontSize: 24.00,
+                  fontFamily: 'Boldonse',
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
             ),
           ),
-        ),
-      ),
-    );
+        )
+        .animate()
+        .fadeIn(
+          duration: 500.ms,
+          curve: Curves.easeOutCubic,
+          delay: Duration(milliseconds: 500 + (index * 50)),
+        )
+        .scale(
+          begin: const Offset(0.8, 0.8),
+          end: const Offset(1.0, 1.0),
+          duration: 500.ms,
+          curve: Curves.easeOutCubic,
+          delay: Duration(milliseconds: 500 + (index * 50)),
+        );
   }
 
   Widget _buildIconButton({
     required IconData icon,
     required String iconSvg,
     required VoidCallback onTap,
+    required int index,
   }) {
     return InkWell(
-      onTap: onTap,
-      child: Container(
-        decoration: const BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.transparent,
-        ),
-        child: Center(
-          child: icon == Icons.fingerprint
-              ? SvgPicture.asset(
-                  iconSvg,
-                  height: 36,
-                  color: Color(0xff5645F5), // innit
-                )
-              : Icon(
-                  icon,
-                  size: icon == Icons.fingerprint ? 36 : 24,
-                  color: Color(0xff5645F5), // innit
-                ),
-        ),
-      ),
-    );
+          onTap: onTap,
+          child: Container(
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.transparent,
+            ),
+            child: Center(
+              child:
+                  (icon == Icons.fingerprint || icon == Icons.face)
+                      ? SvgPicture.asset(
+                        iconSvg,
+                        height: 36,
+                        color: Color(0xff5645F5), // innit
+                      )
+                      : Icon(
+                        icon,
+                        size:
+                            (icon == Icons.fingerprint || icon == Icons.face)
+                                ? 36
+                                : 24,
+                        color: Color(0xff5645F5), // innit
+                      ),
+            ),
+          ),
+        )
+        .animate()
+        .fadeIn(
+          duration: 500.ms,
+          curve: Curves.easeOutCubic,
+          delay: Duration(milliseconds: 500 + (index * 50)),
+        )
+        .scale(
+          begin: const Offset(0.8, 0.8),
+          end: const Offset(1.0, 1.0),
+          duration: 500.ms,
+          curve: Curves.easeOutCubic,
+          delay: Duration(milliseconds: 500 + (index * 50)),
+        );
   }
 
   @override

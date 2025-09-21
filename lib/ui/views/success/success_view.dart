@@ -23,11 +23,14 @@ class SuccessView extends StackedView<SuccessViewModel> {
       body: Stack(
         children: [
           // Background with entrance animation
-          Image.asset(
-            'assets/images/backgroud.png',
-            fit: BoxFit.cover,
-            color: const Color(0xffCAC5FC),
-            width: MediaQuery.of(context).size.width,
+          Opacity(
+            opacity: .1,
+            child: Image.asset(
+              'assets/images/background.png',
+              fit: BoxFit.cover,
+              color: const Color(0xffCAC5FC),
+              width: MediaQuery.of(context).size.width,
+            ),
           )
               .animate()
               .fadeIn(duration: 600.ms, curve: Curves.easeOutCubic)

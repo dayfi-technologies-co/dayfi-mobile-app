@@ -11,6 +11,7 @@ import 'package:dayfi/ui/components/input_fields/custom_text_field.dart';
 import 'package:dayfi/ui/views/recipient_details/recipient_details_view.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:stacked/stacked.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'link_a_bank_viewmodel.dart';
 
 class LinkABankView extends StackedView<LinkABankViewModel> {
@@ -28,7 +29,7 @@ class LinkABankView extends StackedView<LinkABankViewModel> {
         backgroundColor: const Color(0xffF6F5FE),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xff2A0079)),
+          icon: const Icon(Icons.arrow_back_ios, color: Color(0xff2A0079)),
           onPressed: () => model.navigationService.back(),
         ),
         actions: [
@@ -70,6 +71,19 @@ class LinkABankView extends StackedView<LinkABankViewModel> {
                         color: Color(0xff2A0079),
                       ),
                       textAlign: TextAlign.start,
+                    ).animate().fadeIn(
+                      duration: 500.ms,
+                      curve: Curves.easeOutCubic,
+                    ).slideY(
+                      begin: -0.1,
+                      end: 0,
+                      duration: 500.ms,
+                      curve: Curves.easeOutCubic,
+                    ).scale(
+                      begin: const Offset(0.95, 0.95),
+                      end: const Offset(1.0, 1.0),
+                      duration: 500.ms,
+                      curve: Curves.easeOutCubic,
                     ),
                     verticalSpace(8.h),
                     const Text(
@@ -82,6 +96,16 @@ class LinkABankView extends StackedView<LinkABankViewModel> {
                         color: Color(0xFF302D53),
                       ),
                       textAlign: TextAlign.start,
+                    ).animate().fadeIn(
+                      duration: 500.ms,
+                      curve: Curves.easeOutCubic,
+                      delay: 100.ms,
+                    ).slideY(
+                      begin: 0.1,
+                      end: 0,
+                      duration: 500.ms,
+                      curve: Curves.easeOutCubic,
+                      delay: 100.ms,
                     ),
                     verticalSpace(36.h),
                   ],
@@ -148,6 +172,22 @@ class LinkABankView extends StackedView<LinkABankViewModel> {
                           );
                         },
                   controller: TextEditingController(text: model.selectedBank),
+                ).animate().fadeIn(
+                  duration: 500.ms,
+                  curve: Curves.easeOutCubic,
+                  delay: 200.ms,
+                ).slideY(
+                  begin: 0.1,
+                  end: 0,
+                  duration: 500.ms,
+                  curve: Curves.easeOutCubic,
+                  delay: 200.ms,
+                ).scale(
+                  begin: const Offset(0.98, 0.98),
+                  end: const Offset(1.0, 1.0),
+                  duration: 500.ms,
+                  curve: Curves.easeOutCubic,
+                  delay: 200.ms,
                 ),
                 verticalSpace(16.h),
                 CustomTextField(
@@ -206,6 +246,22 @@ class LinkABankView extends StackedView<LinkABankViewModel> {
                               : "Invalid bank details"
                       : null,
                   controller: model.accountNumberController,
+                ).animate().fadeIn(
+                  duration: 500.ms,
+                  curve: Curves.easeOutCubic,
+                  delay: 300.ms,
+                ).slideY(
+                  begin: 0.1,
+                  end: 0,
+                  duration: 500.ms,
+                  curve: Curves.easeOutCubic,
+                  delay: 300.ms,
+                ).scale(
+                  begin: const Offset(0.98, 0.98),
+                  end: const Offset(1.0, 1.0),
+                  duration: 500.ms,
+                  curve: Curves.easeOutCubic,
+                  delay: 300.ms,
                 ),
                 if (model.accountName.isNotEmpty && model.isValidAccount)
                   Padding(
@@ -222,6 +278,16 @@ class LinkABankView extends StackedView<LinkABankViewModel> {
                         color: Colors.green.shade600,
                       ),
                     ),
+                  ).animate().fadeIn(
+                    duration: 500.ms,
+                    curve: Curves.easeOutCubic,
+                    delay: 400.ms,
+                  ).slideX(
+                    begin: -0.1,
+                    end: 0,
+                    duration: 500.ms,
+                    curve: Curves.easeOutCubic,
+                    delay: 400.ms,
                   ),
                 verticalSpace(48.h),
                 FilledBtn(
@@ -232,6 +298,20 @@ class LinkABankView extends StackedView<LinkABankViewModel> {
                   backgroundColor: model.isValidAccount
                       ? const Color(0xff5645F5)
                       : const Color(0xffCAC5FC),
+                ).animate().fadeIn(
+                  duration: 500.ms,
+                  curve: Curves.easeOutCubic,
+                  delay: 500.ms,
+                ).slideY(
+                  begin: 0.1,
+                  end: 0,
+                  duration: 500.ms,
+                  curve: Curves.easeOutCubic,
+                  delay: 500.ms,
+                ).shimmer(
+                  duration: 2000.ms,
+                  color: Colors.white.withOpacity(0.3),
+                  delay: 700.ms,
                 ),
                 verticalSpace(40.h),
               ],

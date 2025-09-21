@@ -25,7 +25,7 @@ class TransactionPinSetView extends StackedView<TransactionPinSetViewModel> {
         leading: IconButton(
           onPressed: () => viewModel.navigationService.back(),
           icon: const Icon(
-            Icons.arrow_back,
+            Icons.arrow_back_ios,
             color: Color(0xff5645F5), // innit
           ),
         ),

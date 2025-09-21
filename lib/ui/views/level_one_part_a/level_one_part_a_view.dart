@@ -8,11 +8,35 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:dayfi/ui/views/home/bottom_sheets/success_bottomsheet.dart';
 import 'package:stacked/stacked.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import 'level_one_part_a_viewmodel.dart';
 
 class LevelOnePartAView extends StackedView<LevelOnePartAViewModel> {
   const LevelOnePartAView({super.key});
+
+  Widget _buildAnimatedFormField({
+    required Widget child,
+    required int delay,
+  }) {
+    return child.animate().fadeIn(
+      duration: 500.ms,
+      curve: Curves.easeOutCubic,
+      delay: Duration(milliseconds: delay),
+    ).slideY(
+      begin: 0.1,
+      end: 0,
+      duration: 500.ms,
+      curve: Curves.easeOutCubic,
+      delay: Duration(milliseconds: delay),
+    ).scale(
+      begin: const Offset(0.98, 0.98),
+      end: const Offset(1.0, 1.0),
+      duration: 500.ms,
+      curve: Curves.easeOutCubic,
+      delay: Duration(milliseconds: delay),
+    );
+  }
 
   @override
   Widget builder(
@@ -28,7 +52,7 @@ class LevelOnePartAView extends StackedView<LevelOnePartAViewModel> {
         leading: IconButton(
           onPressed: () => model.navigationService.back(),
           icon: const Icon(
-            Icons.arrow_back,
+            Icons.arrow_back_ios,
             color: Color(0xff5645F5), // innit
           ),
         ),
@@ -71,6 +95,19 @@ class LevelOnePartAView extends StackedView<LevelOnePartAViewModel> {
                       color: Color(0xff2A0079),
                     ),
                     textAlign: TextAlign.start,
+                  ).animate().fadeIn(
+                    duration: 500.ms,
+                    curve: Curves.easeOutCubic,
+                  ).slideY(
+                    begin: -0.1,
+                    end: 0,
+                    duration: 500.ms,
+                    curve: Curves.easeOutCubic,
+                  ).scale(
+                    begin: const Offset(0.95, 0.95),
+                    end: const Offset(1.0, 1.0),
+                    duration: 500.ms,
+                    curve: Curves.easeOutCubic,
                   ),
                   verticalSpace(8.h),
                   Padding(
@@ -88,122 +125,150 @@ class LevelOnePartAView extends StackedView<LevelOnePartAViewModel> {
                       ),
                       textAlign: TextAlign.start,
                     ),
+                  ).animate().fadeIn(
+                    duration: 500.ms,
+                    curve: Curves.easeOutCubic,
+                    delay: 100.ms,
+                  ).slideY(
+                    begin: 0.1,
+                    end: 0,
+                    duration: 500.ms,
+                    curve: Curves.easeOutCubic,
+                    delay: 100.ms,
                   ),
                   verticalSpace(24.h),
-                  CustomTextField(
-                    label: "Country of origin",
-                    hintText: "Select a country",
-                    keyboardType: TextInputType.text,
-                    textInputAction: TextInputAction.next,
-                    textCapitalization: TextCapitalization.words,
-                    // onChanged: model.setCountryOfOrigin,
-                    shouldReadOnly: true,
-                    onTap: () {
-                      showModalBottomSheet(
-                        barrierColor: const Color(0xff2A0079).withOpacity(0.5),
-                        context: context,
-                        isDismissible: false,
-                        // isScrollControlled: true,
-                        enableDrag: false,
-                        elevation: 0,
-                        shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.vertical(
-                                top: Radius.circular(28.00))),
-                        builder: (context) => SelectValueSheet(
-                          title: "Select country",
-                          list: model.countries,
-                          onSelected: model.setSelectedCountry,
+                  _buildAnimatedFormField(
+                    delay: 200,
+                    child: CustomTextField(
+                      label: "Country of origin",
+                      hintText: "Select a country",
+                      keyboardType: TextInputType.text,
+                      textInputAction: TextInputAction.next,
+                      textCapitalization: TextCapitalization.words,
+                      // onChanged: model.setCountryOfOrigin,
+                      shouldReadOnly: true,
+                      onTap: () {
+                        showModalBottomSheet(
+                          barrierColor: const Color(0xff2A0079).withOpacity(0.5),
+                          context: context,
+                          isDismissible: false,
+                          // isScrollControlled: true,
+                          enableDrag: false,
+                          elevation: 0,
+                          shape: const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.vertical(
+                                  top: Radius.circular(28.00))),
+                          builder: (context) => SelectValueSheet(
+                            title: "Select country",
+                            list: model.countries,
+                            onSelected: model.setSelectedCountry,
+                          ),
+                        );
+                      },
+                      controller:
+                          TextEditingController(text: model.countryOfOrigin),
+                      errorText: model.countryOfOriginError,
+                      suffixIcon: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8.0, vertical: 12.0),
+                        child: SvgPicture.asset(
+                          'assets/svgs/stat_minus_1_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.svg',
+                          height: 22,
+                          color: const Color(0xff5645F5), // innit
                         ),
-                      );
-                    },
-                    controller:
-                        TextEditingController(text: model.countryOfOrigin),
-                    errorText: model.countryOfOriginError,
-                    suffixIcon: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8.0, vertical: 12.0),
-                      child: SvgPicture.asset(
-                        'assets/svgs/stat_minus_1_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.svg',
-                        height: 22,
-                        color: const Color(0xff5645F5), // innit
                       ),
                     ),
                   ),
                   verticalSpace(17.5.h),
-                  CustomTextField(
-                    label: "Residence address",
-                    hintText: "Enter full address",
-                    keyboardType: TextInputType.streetAddress,
-                    textInputAction: TextInputAction.next,
-                    textCapitalization: TextCapitalization.words,
-                    onChanged: model.setResidenceAddress,
-                    errorText: model.residenceAddressError,
+                  _buildAnimatedFormField(
+                    delay: 300,
+                    child: CustomTextField(
+                      label: "Residence address",
+                      hintText: "Enter full address",
+                      keyboardType: TextInputType.streetAddress,
+                      textInputAction: TextInputAction.next,
+                      textCapitalization: TextCapitalization.words,
+                      onChanged: model.setResidenceAddress,
+                      errorText: model.residenceAddressError,
+                    ),
                   ),
                   verticalSpace(17.5.h),
-                  CustomTextField(
-                    label: "City/Town",
-                    hintText: "Enter city/town",
-                    keyboardType: TextInputType.text,
-                    textInputAction: TextInputAction.next,
-                    textCapitalization: TextCapitalization.words,
-                    onChanged: model.setCityTown,
-                    errorText: model.cityTownError,
+                  _buildAnimatedFormField(
+                    delay: 400,
+                    child: CustomTextField(
+                      label: "City/Town",
+                      hintText: "Enter city/town",
+                      keyboardType: TextInputType.text,
+                      textInputAction: TextInputAction.next,
+                      textCapitalization: TextCapitalization.words,
+                      onChanged: model.setCityTown,
+                      errorText: model.cityTownError,
+                    ),
                   ),
                   verticalSpace(17.5.h),
-                  CustomTextField(
-                    label: "Street",
-                    hintText: "Enter street",
-                    keyboardType: TextInputType.streetAddress,
-                    textInputAction: TextInputAction.next,
-                    textCapitalization: TextCapitalization.words,
-                    onChanged: model.setStreet,
-                    errorText: model.streetError,
+                  _buildAnimatedFormField(
+                    delay: 500,
+                    child: CustomTextField(
+                      label: "Street",
+                      hintText: "Enter street",
+                      keyboardType: TextInputType.streetAddress,
+                      textInputAction: TextInputAction.next,
+                      textCapitalization: TextCapitalization.words,
+                      onChanged: model.setStreet,
+                      errorText: model.streetError,
+                    ),
                   ),
                   verticalSpace(17.5.h),
-                  CustomTextField(
-                    label: "Zip code",
-                    hintText: "Enter zip code",
-                    keyboardType: TextInputType.number,
-                    textInputAction: TextInputAction.next,
-                    onChanged: model.setZipCode,
-                    errorText: model.zipCodeError,
+                  _buildAnimatedFormField(
+                    delay: 600,
+                    child: CustomTextField(
+                      label: "Zip code",
+                      hintText: "Enter zip code",
+                      keyboardType: TextInputType.number,
+                      textInputAction: TextInputAction.next,
+                      onChanged: model.setZipCode,
+                      errorText: model.zipCodeError,
+                    ),
                   ),
                   verticalSpace(17.5.h),
-                  CustomTextField(
-                    label: "State",
-                    hintText: "Select a state",
-                    keyboardType: TextInputType.text,
-                    textInputAction: TextInputAction.done,
-                    textCapitalization: TextCapitalization.words,
-                    // onChanged: model.setCountryOfOrigin,
-                    shouldReadOnly: true,
-                    onTap: () {
-                      showModalBottomSheet(
-                        barrierColor: const Color(0xff2A0079).withOpacity(0.5),
-                        context: context,
-                        isDismissible: false,
-                        // isScrollControlled: true,
-                        enableDrag: false,
-                        elevation: 0,
-                        shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.vertical(
-                                top: Radius.circular(28.00))),
-                        builder: (context) => SelectValueSheet(
-                          title: "Select state",
-                          list: model.states,
-                          onSelected: model.setSelectedState,
-                        ),
-                      );
-                    },
-                    controller: TextEditingController(text: model.state),
-                    errorText: model.stateError,
-                    suffixIcon: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8.0, vertical: 12.0),
-                      child: SvgPicture.asset(
-                          height: 22,
-                          'assets/svgs/stat_minus_1_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.svg',
-                          color: const Color(0xff2A0079)),
+                  _buildAnimatedFormField(
+                    delay: 700,
+                    child: CustomTextField(
+                      label: "State",
+                      hintText: "Select a state",
+                      keyboardType: TextInputType.text,
+                      textInputAction: TextInputAction.done,
+                      textCapitalization: TextCapitalization.words,
+                      // onChanged: model.setCountryOfOrigin,
+                      shouldReadOnly: true,
+                      onTap: () {
+                        showModalBottomSheet(
+                          barrierColor: const Color(0xff2A0079).withOpacity(0.5),
+                          context: context,
+                          isDismissible: false,
+                          // isScrollControlled: true,
+                          enableDrag: false,
+                          elevation: 0,
+                          shape: const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.vertical(
+                                  top: Radius.circular(28.00))),
+                          builder: (context) => SelectValueSheet(
+                            title: "Select state",
+                            list: model.states,
+                            onSelected: model.setSelectedState,
+                          ),
+                        );
+                      },
+                      controller: TextEditingController(text: model.state),
+                      errorText: model.stateError,
+                      suffixIcon: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8.0, vertical: 12.0),
+                        child: SvgPicture.asset(
+                            height: 22,
+                            'assets/svgs/stat_minus_1_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.svg',
+                            color: const Color(0xff2A0079)),
+                      ),
                     ),
                   ),
                   verticalSpace(32.h),
@@ -218,6 +283,20 @@ class LevelOnePartAView extends StackedView<LevelOnePartAViewModel> {
                           ? const Color(0xff5645F5)
                           : const Color(0xffCAC5FC),
                     ),
+                  ).animate().fadeIn(
+                    duration: 500.ms,
+                    curve: Curves.easeOutCubic,
+                    delay: 800.ms,
+                  ).slideY(
+                    begin: 0.1,
+                    end: 0,
+                    duration: 500.ms,
+                    curve: Curves.easeOutCubic,
+                    delay: 800.ms,
+                  ).shimmer(
+                    duration: 2000.ms,
+                    color: Colors.white.withOpacity(0.3),
+                    delay: 1000.ms,
                   ),
                   verticalSpace(40.h),
                 ],

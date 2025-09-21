@@ -36,7 +36,7 @@ class RecipientDetailsView extends StackedView<RecipientDetailsViewModel> {
             backgroundColor: const Color(0xffF6F5FE),
             elevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Color(0xff2A0079)),
+              icon: const Icon(Icons.arrow_back_ios, color: Color(0xff2A0079)),
               onPressed: () => model.navigationService.back(),
             ),
           ),
@@ -154,50 +154,52 @@ class RecipientDetailsView extends StackedView<RecipientDetailsViewModel> {
             Row(
               children: [
                 ...model.savedAccounts.map(
-                  (account) => GestureDetector(
-                    onTap: () => model.selectSavedAccount(account),
-                    child: SizedBox(
-                      width: 92,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          CircleAvatar(
-                            radius: 19,
-                            backgroundColor: const Color(0xff5645F5), // innit
-                            child: Text(
-                              "${account.accountName.split(" ")[0][0]}${account.accountName.split(" ")[1][0]}",
-                              style: TextStyle(
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.w600,
-                                height: 1.450,
-                                fontFamily: 'Boldonse',
-                                letterSpacing: 0,
-                                color: Colors.white,
+                  (account) {
+                    return GestureDetector(
+                      onTap: () => model.selectSavedAccount(account),
+                      child: SizedBox(
+                        width: 92,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            CircleAvatar(
+                              radius: 19,
+                              backgroundColor: const Color(0xff5645F5), // innit
+                              child: Text(
+                                "${account.accountName.split(" ")[0][0]}${account.accountName.split(" ")[1][0]}",
+                                style: TextStyle(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.450,
+                                  fontFamily: 'Boldonse',
+                                  letterSpacing: 0,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 2.0),
-                            child: Text(
-                              account.accountName,
-                              style: TextStyle(
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.w600,
-                                height: 1.450,
-                                fontFamily: 'Karla',
-                                letterSpacing: .3,
-                                overflow: TextOverflow.ellipsis,
-                                color: Color(0xFF302D53),
+                            const SizedBox(height: 4),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 2.0),
+                              child: Text(
+                                account.accountName,
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.450,
+                                  fontFamily: 'Karla',
+                                  letterSpacing: .3,
+                                  overflow: TextOverflow.ellipsis,
+                                  color: Color(0xFF302D53),
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ),
-                )
+                    );
+                  },
+                ).toList(),
               ],
             ),
             verticalSpace(24.h),

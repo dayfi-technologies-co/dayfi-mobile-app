@@ -7,7 +7,9 @@ import 'package:dayfi/app/app.dialogs.dart';
 import 'package:dayfi/app/app.locator.dart';
 import 'package:dayfi/app/app.router.dart';
 import 'package:dayfi/data/storage/secure_storage_service.dart';
+import 'package:dayfi/services/app_update_service.dart';
 import 'package:dayfi/ui/common/app_scaffold.dart';
+import 'package:dayfi/ui/views/force_update/force_update_view.dart';
 import 'package:stacked_services/stacked_services.dart';
 
 Future<void> main() async {
@@ -28,11 +30,31 @@ class MainApp extends StatefulWidget {
 
 class _MainAppState extends State<MainApp> {
   late Future<Map<String, dynamic>> _initFuture;
+  AppUpdateStatus? _updateStatus;
 
   @override
   void initState() {
     super.initState();
-    _initFuture = _fetchKnownTokens();
+    _initFuture = _initializeApp();
+  }
+
+  Future<Map<String, dynamic>> _initializeApp() async {
+    // Check for app updates first
+    final appUpdateService = locator<AppUpdateService>();
+    _updateStatus = await appUpdateService.checkForUpdates();
+    
+    // If force update is required, we'll handle it in the build method
+    if (_updateStatus is ForceUpdateRequired) {
+      return {
+        '_isFirstTimeUser': false,
+        '_userToken': null,
+        '_userPasscode': null,
+        '_forceUpdateRequired': true,
+      };
+    }
+    
+    // Continue with normal initialization
+    return _fetchKnownTokens();
   }
 
   Future<Map<String, dynamic>> _fetchKnownTokens() async {
@@ -45,6 +67,7 @@ class _MainAppState extends State<MainApp> {
       '_isFirstTimeUser': firstTime == null || firstTime == 'true',
       '_userToken': token,
       '_userPasscode': passcode,
+      '_forceUpdateRequired': false,
     };
   }
 
@@ -55,6 +78,17 @@ class _MainAppState extends State<MainApp> {
       child: FutureBuilder<Map<String, dynamic>>(
         future: _initFuture,
         builder: (context, snapshot) {
+          // Check if force update is required
+          if (snapshot.connectionState == ConnectionState.done &&
+              snapshot.hasData) {
+            final data = snapshot.data!;
+            final bool forceUpdateRequired = data['_forceUpdateRequired'] as bool? ?? false;
+            
+            if (forceUpdateRequired && _updateStatus != null) {
+              return ForceUpdateView(updateStatus: _updateStatus!);
+            }
+          }
+          
           // Determine initial route based on snapshot data
           String initialRoute = '/startup-view'; // Default to StartupView
           if (snapshot.connectionState == ConnectionState.done &&
@@ -124,9 +158,23 @@ class _MainAppState extends State<MainApp> {
                 ),
               );
             },
+            builder: (context, child) {
+              // Show optional update dialog after app loads
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _showOptionalUpdateIfNeeded(context);
+              });
+              return child!;
+            },
           );
         },
       ),
     );
+  }
+  
+  void _showOptionalUpdateIfNeeded(BuildContext context) {
+    if (_updateStatus is OptionalUpdateAvailable) {
+      final appUpdateService = locator<AppUpdateService>();
+      appUpdateService.showUpdateDialog(context, _updateStatus!);
+    }
   }
 }

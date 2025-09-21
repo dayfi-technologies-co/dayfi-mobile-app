@@ -34,7 +34,7 @@ class TransactionDetailsView extends StackedView<TransactionDetailsViewModel> {
         backgroundColor: const Color(0xffF6F5FE),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xff2A0079)),
+          icon: const Icon(Icons.arrow_back_ios, color: Color(0xff2A0079)),
           onPressed: () => Navigator.pop(context),
         ),
         // actions: [

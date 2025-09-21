@@ -346,7 +346,7 @@ class _MainContentWrapperState extends State<_MainContentWrapper> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           _buildIconButton(
-            icon: Icons.arrow_back,
+            icon: Icons.arrow_back_ios,
             onTap: _isUserInfoVisible
                 ? widget.viewModel.navigationService.back
                 : () {

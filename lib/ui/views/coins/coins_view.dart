@@ -2,7 +2,6 @@ import 'package:dayfi/app/app.router.dart';
 import 'package:dayfi/ui/common/amount_formatter.dart';
 import 'package:dayfi/ui/common/app_scaffold.dart';
 import 'package:dayfi/ui/common/ui_helpers.dart';
-import 'package:dayfi/ui/components/buttons/filled_btn_small.dart';
 import 'package:dayfi/ui/views/coins/coins_viewmodel.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -28,7 +27,7 @@ class CoinsView extends StackedView<CoinsViewModel> {
       //   leading: IconButton(
       //     onPressed: () => viewModel.navigationService.back(),
       //     icon: const Icon(
-      //       Icons.arrow_back,
+      //       Icons.arrow_back_ios,
       //       color: Color( 0xff5645F5), // innit
       //     ),
       //   ),
@@ -317,11 +316,11 @@ class CoinsView extends StackedView<CoinsViewModel> {
                       // coin['name']?.toString() ?? 'Unknown',
                       coin['abbv']?.toString() ?? "",
                       style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w600,
-                        height: 1.450,
-                        fontFamily: 'Boldonse',
-                        letterSpacing: .255,
+                      fontSize: 16.00.sp,
+                                      fontWeight: FontWeight.w700,
+                                      height: 1.450,
+                                      fontFamily: 'Karla',
+                                      letterSpacing: -.06,
                         color: Color(0xff2A0079),
                       ),
                     ),
@@ -353,12 +352,11 @@ class CoinsView extends StackedView<CoinsViewModel> {
               child: Text(
                 '${_formatPriceChange(_parseNum(coin['price_change']) ?? 0.0)} (24h)',
                 style: TextStyle(
-                  fontFamily: 'Boldonse',
-                  fontSize: 12,
-                  // color: const Color( 0xff5645F5), // innit
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: -0.2,
-                  height: 1.450,
+                  fontSize: 12.00.sp,
+                                      fontWeight: FontWeight.w700,
+                                      height: 1.450,
+                                      fontFamily: 'Karla',
+                                      letterSpacing: -.06,
                   color: _getPriceChangeColor(
                       _parseNum(coin['price_change']) ?? 0.0),
                 ),

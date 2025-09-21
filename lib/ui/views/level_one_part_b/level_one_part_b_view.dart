@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:dayfi/ui/views/level_one_part_a/level_one_part_a_view.dart';
 import 'package:stacked/stacked.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import 'level_one_part_b_viewmodel.dart';
 
@@ -28,6 +29,29 @@ class LevelOnePartBView extends StackedView<LevelOnePartBViewModel> {
     required this.address,
   });
 
+  Widget _buildAnimatedFormField({
+    required Widget child,
+    required int delay,
+  }) {
+    return child.animate().fadeIn(
+      duration: 500.ms,
+      curve: Curves.easeOutCubic,
+      delay: Duration(milliseconds: delay),
+    ).slideY(
+      begin: 0.1,
+      end: 0,
+      duration: 500.ms,
+      curve: Curves.easeOutCubic,
+      delay: Duration(milliseconds: delay),
+    ).scale(
+      begin: const Offset(0.98, 0.98),
+      end: const Offset(1.0, 1.0),
+      duration: 500.ms,
+      curve: Curves.easeOutCubic,
+      delay: Duration(milliseconds: delay),
+    );
+  }
+
   @override
   Widget builder(
     BuildContext context,
@@ -42,7 +66,7 @@ class LevelOnePartBView extends StackedView<LevelOnePartBViewModel> {
         leading: IconButton(
           onPressed: () => model.navigationService.back(),
           icon: const Icon(
-            Icons.arrow_back,
+            Icons.arrow_back_ios,
             color: Color(0xff5645F5), // innit
           ),
         ),
@@ -85,6 +109,19 @@ class LevelOnePartBView extends StackedView<LevelOnePartBViewModel> {
                       color: Color(0xff2A0079),
                     ),
                     textAlign: TextAlign.start,
+                  ).animate().fadeIn(
+                    duration: 500.ms,
+                    curve: Curves.easeOutCubic,
+                  ).slideY(
+                    begin: -0.1,
+                    end: 0,
+                    duration: 500.ms,
+                    curve: Curves.easeOutCubic,
+                  ).scale(
+                    begin: const Offset(0.95, 0.95),
+                    end: const Offset(1.0, 1.0),
+                    duration: 500.ms,
+                    curve: Curves.easeOutCubic,
                   ),
                   verticalSpace(8.h),
                   Padding(
@@ -102,189 +139,208 @@ class LevelOnePartBView extends StackedView<LevelOnePartBViewModel> {
                       ),
                       textAlign: TextAlign.start,
                     ),
+                  ).animate().fadeIn(
+                    duration: 500.ms,
+                    curve: Curves.easeOutCubic,
+                    delay: 100.ms,
+                  ).slideY(
+                    begin: 0.1,
+                    end: 0,
+                    duration: 500.ms,
+                    curve: Curves.easeOutCubic,
+                    delay: 100.ms,
                   ),
                   verticalSpace(24.h),
-                  CustomTextField(
-                    label: "Phone Number",
-                    hintText: "E.g. 9027382921",
-                    // maxLength: 1,
-                    minLines: 1,
-                    keyboardType: TextInputType.phone,
-                    textInputAction: TextInputAction.next,
-                    textCapitalization: TextCapitalization.none,
-                    onChanged: model.setPhoneNumber,
-                    errorText: model.phoneNumberError,
+                  _buildAnimatedFormField(
+                    delay: 200,
+                    child: CustomTextField(
+                      label: "Phone Number",
+                      hintText: "E.g. 9027382921",
+                      // maxLength: 1,
+                      minLines: 1,
+                      keyboardType: TextInputType.phone,
+                      textInputAction: TextInputAction.next,
+                      textCapitalization: TextCapitalization.none,
+                      onChanged: model.setPhoneNumber,
+                      errorText: model.phoneNumberError,
+                    ),
                   ),
                   verticalSpace(17.5.h),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: CustomTextField(
-                          label: "Date of Birth",
-                          hintText: "DD",
-                          keyboardType: TextInputType.number,
-                          textInputAction: TextInputAction.next,
-                          onChanged: model.setDobDay,
-                          // maxLength: 1,
-                          minLines: 1,
-                          // onChanged: model.setCountryOfOrigin,
-                          shouldReadOnly: true,
-                          onTap: () {
-                            showModalBottomSheet(
-                              barrierColor:
-                                  const Color(0xff2A0079).withOpacity(0.5),
-                              context: context,
-                              isDismissible: false,
-                              // isScrollControlled: true,
-                              enableDrag: false,
-                              elevation: 0,
-                              shape: const RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.vertical(
-                                      top: Radius.circular(28.00))),
-                              builder: (context) => SelectValueSheet(
-                                title: "Select day",
-                                list: model.days,
-                                onSelected: model.setDobDay,
-                              ),
-                            );
-                          },
-                          controller: TextEditingController(text: model.dobDay),
-                          errorText: model.dobDayError,
-                          suffixIcon: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8.0, vertical: 12.0),
-                            child: SvgPicture.asset(
-                                height: 22,
-                                'assets/svgs/stat_minus_1_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.svg',
-                                color: const Color(0xff2A0079)),
+                  _buildAnimatedFormField(
+                    delay: 300,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: CustomTextField(
+                            label: "Date of Birth",
+                            hintText: "DD",
+                            keyboardType: TextInputType.number,
+                            textInputAction: TextInputAction.next,
+                            onChanged: model.setDobDay,
+                            // maxLength: 1,
+                            minLines: 1,
+                            // onChanged: model.setCountryOfOrigin,
+                            shouldReadOnly: true,
+                            onTap: () {
+                              showModalBottomSheet(
+                                barrierColor:
+                                    const Color(0xff2A0079).withOpacity(0.5),
+                                context: context,
+                                isDismissible: false,
+                                // isScrollControlled: true,
+                                enableDrag: false,
+                                elevation: 0,
+                                shape: const RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.vertical(
+                                        top: Radius.circular(28.00))),
+                                builder: (context) => SelectValueSheet(
+                                  title: "Select day",
+                                  list: model.days,
+                                  onSelected: model.setDobDay,
+                                ),
+                              );
+                            },
+                            controller: TextEditingController(text: model.dobDay),
+                            errorText: model.dobDayError,
+                            suffixIcon: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8.0, vertical: 12.0),
+                              child: SvgPicture.asset(
+                                  height: 22,
+                                  'assets/svgs/stat_minus_1_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.svg',
+                                  color: const Color(0xff2A0079)),
+                            ),
                           ),
                         ),
-                      ),
-                      horizontalSpaceSmall,
-                      Expanded(
-                        child: CustomTextField(
-                          label: "hidden",
-                          hintText: "MM",
-                          keyboardType: TextInputType.number,
-                          textInputAction: TextInputAction.next,
-                          onChanged: model.setDobMonth,
-                          shouldReadOnly: true,
-                          // maxLength: 1,
-                          minLines: 1,
-                          onTap: () {
-                            showModalBottomSheet(
-                              barrierColor:
-                                  const Color(0xff2A0079).withOpacity(0.5),
-                              context: context,
-                              isDismissible: false,
-                              // isScrollControlled: true,
-                              enableDrag: false,
-                              elevation: 0,
-                              shape: const RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.vertical(
-                                      top: Radius.circular(28.00))),
-                              builder: (context) => SelectValueSheet(
-                                title: "Select month",
-                                list: model.months,
-                                onSelected: model.setDobMonth,
-                              ),
-                            );
-                          },
-                          controller:
-                              TextEditingController(text: model.dobMonth),
-                          errorText: model.dobMonthError,
-                          suffixIcon: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8.0, vertical: 12.0),
-                            child: SvgPicture.asset(
-                                height: 22,
-                                'assets/svgs/stat_minus_1_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.svg',
-                                color: const Color(0xff2A0079)),
+                        horizontalSpaceSmall,
+                        Expanded(
+                          child: CustomTextField(
+                            label: "hidden",
+                            hintText: "MM",
+                            keyboardType: TextInputType.number,
+                            textInputAction: TextInputAction.next,
+                            onChanged: model.setDobMonth,
+                            shouldReadOnly: true,
+                            // maxLength: 1,
+                            minLines: 1,
+                            onTap: () {
+                              showModalBottomSheet(
+                                barrierColor:
+                                    const Color(0xff2A0079).withOpacity(0.5),
+                                context: context,
+                                isDismissible: false,
+                                // isScrollControlled: true,
+                                enableDrag: false,
+                                elevation: 0,
+                                shape: const RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.vertical(
+                                        top: Radius.circular(28.00))),
+                                builder: (context) => SelectValueSheet(
+                                  title: "Select month",
+                                  list: model.months,
+                                  onSelected: model.setDobMonth,
+                                ),
+                              );
+                            },
+                            controller:
+                                TextEditingController(text: model.dobMonth),
+                            errorText: model.dobMonthError,
+                            suffixIcon: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8.0, vertical: 12.0),
+                              child: SvgPicture.asset(
+                                  height: 22,
+                                  'assets/svgs/stat_minus_1_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.svg',
+                                  color: const Color(0xff2A0079)),
+                            ),
                           ),
                         ),
-                      ),
-                      horizontalSpaceSmall,
-                      Expanded(
-                        child: CustomTextField(
-                          label: "hidden",
-                          hintText: "YYYY",
-                          keyboardType: TextInputType.number,
-                          textInputAction: TextInputAction.next,
-                          onChanged: model.setDobYear,
-                          errorText: model.dobYearError,
-                          shouldReadOnly: true,
-                          // maxLength: 1,
-                          minLines: 1,
-                          onTap: () {
-                            showModalBottomSheet(
-                              barrierColor:
-                                  const Color(0xff2A0079).withOpacity(0.5),
-                              context: context,
-                              isDismissible: false,
-                              // isScrollControlled: true,
-                              enableDrag: false,
-                              elevation: 0,
-                              shape: const RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.vertical(
-                                      top: Radius.circular(28.00))),
-                              builder: (context) => SelectValueSheet(
-                                title: "Select year",
-                                list: model.years,
-                                onSelected: model.setDobYear,
-                              ),
-                            );
-                          },
-                          controller:
-                              TextEditingController(text: model.dobYear),
-                          suffixIcon: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8.0, vertical: 12.0),
-                            child: SvgPicture.asset(
-                                height: 22,
-                                'assets/svgs/stat_minus_1_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.svg',
-                                color: const Color(0xff2A0079)),
+                        horizontalSpaceSmall,
+                        Expanded(
+                          child: CustomTextField(
+                            label: "hidden",
+                            hintText: "YYYY",
+                            keyboardType: TextInputType.number,
+                            textInputAction: TextInputAction.next,
+                            onChanged: model.setDobYear,
+                            errorText: model.dobYearError,
+                            shouldReadOnly: true,
+                            // maxLength: 1,
+                            minLines: 1,
+                            onTap: () {
+                              showModalBottomSheet(
+                                barrierColor:
+                                    const Color(0xff2A0079).withOpacity(0.5),
+                                context: context,
+                                isDismissible: false,
+                                // isScrollControlled: true,
+                                enableDrag: false,
+                                elevation: 0,
+                                shape: const RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.vertical(
+                                        top: Radius.circular(28.00))),
+                                builder: (context) => SelectValueSheet(
+                                  title: "Select year",
+                                  list: model.years,
+                                  onSelected: model.setDobYear,
+                                ),
+                              );
+                            },
+                            controller:
+                                TextEditingController(text: model.dobYear),
+                            suffixIcon: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8.0, vertical: 12.0),
+                              child: SvgPicture.asset(
+                                  height: 22,
+                                  'assets/svgs/stat_minus_1_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.svg',
+                                  color: const Color(0xff2A0079)),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                   verticalSpace(17.5.h),
-                  CustomTextField(
-                    label: "Gender",
-                    maxLength: 1,
-                    minLines: 1,
-                    hintText: "Select gender",
-                    keyboardType: TextInputType.text,
-                    textInputAction: TextInputAction.done,
-                    onChanged: model.setGender,
-                    errorText: model.genderError,
-                    shouldReadOnly: true,
-                    onTap: () {
-                      showModalBottomSheet(
-                        barrierColor: const Color(0xff2A0079).withOpacity(0.5),
-                        context: context,
-                        isDismissible: false,
-                        // isScrollControlled: true,
-                        enableDrag: false,
-                        elevation: 0,
-                        shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.vertical(
-                                top: Radius.circular(28.00))),
-                        builder: (context) => SelectValueSheet(
-                          title: "Select gender",
-                          list: model.genders,
-                          onSelected: model.setGender,
-                        ),
-                      );
-                    },
-                    controller: TextEditingController(text: model.gender),
-                    suffixIcon: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8.0, vertical: 12.0),
-                      child: SvgPicture.asset(
-                          height: 22,
-                          'assets/svgs/stat_minus_1_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.svg',
-                          color: const Color(0xff2A0079)),
+                  _buildAnimatedFormField(
+                    delay: 400,
+                    child: CustomTextField(
+                      label: "Gender",
+                      maxLength: 1,
+                      minLines: 1,
+                      hintText: "Select gender",
+                      keyboardType: TextInputType.text,
+                      textInputAction: TextInputAction.done,
+                      onChanged: model.setGender,
+                      errorText: model.genderError,
+                      shouldReadOnly: true,
+                      onTap: () {
+                        showModalBottomSheet(
+                          barrierColor: const Color(0xff2A0079).withOpacity(0.5),
+                          context: context,
+                          isDismissible: false,
+                          // isScrollControlled: true,
+                          enableDrag: false,
+                          elevation: 0,
+                          shape: const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.vertical(
+                                  top: Radius.circular(28.00))),
+                          builder: (context) => SelectValueSheet(
+                            title: "Select gender",
+                            list: model.genders,
+                            onSelected: model.setGender,
+                          ),
+                        );
+                      },
+                      controller: TextEditingController(text: model.gender),
+                      suffixIcon: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8.0, vertical: 12.0),
+                        child: SvgPicture.asset(
+                            height: 22,
+                            'assets/svgs/stat_minus_1_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.svg',
+                            color: const Color(0xff2A0079)),
+                      ),
                     ),
                   ),
                   verticalSpace(32.h),
@@ -307,6 +363,20 @@ class LevelOnePartBView extends StackedView<LevelOnePartBViewModel> {
                           ? const Color(0xff5645F5)
                           : const Color(0xffCAC5FC),
                     ),
+                  ).animate().fadeIn(
+                    duration: 500.ms,
+                    curve: Curves.easeOutCubic,
+                    delay: 500.ms,
+                  ).slideY(
+                    begin: 0.1,
+                    end: 0,
+                    duration: 500.ms,
+                    curve: Curves.easeOutCubic,
+                    delay: 500.ms,
+                  ).shimmer(
+                    duration: 2000.ms,
+                    color: Colors.white.withOpacity(0.3),
+                    delay: 700.ms,
                   ),
                   verticalSpace(40.h),
                 ],

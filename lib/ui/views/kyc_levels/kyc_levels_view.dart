@@ -4,6 +4,7 @@ import 'package:dayfi/ui/components/buttons/filled_btn.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:stacked/stacked.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import 'kyc_levels_viewmodel.dart';
 
@@ -24,7 +25,7 @@ class KycLevelsView extends StackedView<KycLevelsViewModel> {
         leading: IconButton(
           onPressed: () => model.navigationService.back(),
           icon: const Icon(
-            Icons.arrow_back,
+            Icons.arrow_back_ios,
             color: Colors.blue, // Updated to match the blue arrow in the image
           ),
         ),
@@ -97,6 +98,14 @@ class KycLevelsView extends StackedView<KycLevelsViewModel> {
                               ),
                             ),
                           ],
+                        ).animate().fadeIn(
+                          duration: 500.ms,
+                          curve: Curves.easeOutCubic,
+                        ).slideX(
+                          begin: -0.1,
+                          end: 0,
+                          duration: 500.ms,
+                          curve: Curves.easeOutCubic,
                         ),
                         content: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -121,16 +130,40 @@ class KycLevelsView extends StackedView<KycLevelsViewModel> {
                                   Text("Full address (residence)"),
                                 ],
                               ),
+                            ).animate().fadeIn(
+                              duration: 500.ms,
+                              curve: Curves.easeOutCubic,
+                            ).slideY(
+                              begin: 0.1,
+                              end: 0,
+                              duration: 500.ms,
+                              curve: Curves.easeOutCubic,
                             ),
                             verticalSpace(16.h),
                             const Text(
                               "Sending Limit: \$1,000",
                               style: TextStyle(fontSize: 14),
+                            ).animate().fadeIn(
+                              duration: 500.ms,
+                              curve: Curves.easeOutCubic,
+                            ).slideX(
+                              begin: -0.1,
+                              end: 0,
+                              duration: 500.ms,
+                              curve: Curves.easeOutCubic,
                             ),
                             verticalSpace(8.h),
                             const Text(
                               "Receiving Limit: Limitless",
                               style: TextStyle(fontSize: 14),
+                            ).animate().fadeIn(
+                              duration: 500.ms,
+                              curve: Curves.easeOutCubic,
+                            ).slideX(
+                              begin: -0.1,
+                              end: 0,
+                              duration: 500.ms,
+                              curve: Curves.easeOutCubic,
                             ),
                             verticalSpace(16.h),
                             SizedBox(
@@ -146,6 +179,17 @@ class KycLevelsView extends StackedView<KycLevelsViewModel> {
                                 //   fontWeight: FontWeight.w600,
                                 // ),
                               ),
+                            ).animate().fadeIn(
+                              duration: 500.ms,
+                              curve: Curves.easeOutCubic,
+                            ).slideY(
+                              begin: 0.1,
+                              end: 0,
+                              duration: 500.ms,
+                              curve: Curves.easeOutCubic,
+                            ).shimmer(
+                              duration: 2000.ms,
+                              color: Colors.white.withOpacity(0.3),
                             ),
                           ],
                         ),
@@ -196,6 +240,16 @@ class KycLevelsView extends StackedView<KycLevelsViewModel> {
                               ),
                             ),
                           ],
+                        ).animate().fadeIn(
+                          duration: 500.ms,
+                          curve: Curves.easeOutCubic,
+                          delay: 100.ms,
+                        ).slideX(
+                          begin: -0.1,
+                          end: 0,
+                          duration: 500.ms,
+                          curve: Curves.easeOutCubic,
+                          delay: 100.ms,
                         ),
                         content: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -214,16 +268,46 @@ class KycLevelsView extends StackedView<KycLevelsViewModel> {
                                   Text("Take a selfie"),
                                 ],
                               ),
+                            ).animate().fadeIn(
+                              duration: 500.ms,
+                              curve: Curves.easeOutCubic,
+                              delay: 200.ms,
+                            ).slideY(
+                              begin: 0.1,
+                              end: 0,
+                              duration: 500.ms,
+                              curve: Curves.easeOutCubic,
+                              delay: 200.ms,
                             ),
                             verticalSpace(16.h),
                             const Text(
                               "Sending Limit: \$2,500",
                               style: TextStyle(fontSize: 14),
+                            ).animate().fadeIn(
+                              duration: 500.ms,
+                              curve: Curves.easeOutCubic,
+                              delay: 300.ms,
+                            ).slideX(
+                              begin: -0.1,
+                              end: 0,
+                              duration: 500.ms,
+                              curve: Curves.easeOutCubic,
+                              delay: 300.ms,
                             ),
                             verticalSpace(8.h),
                             const Text(
                               "Receiving Limit: Limitless",
                               style: TextStyle(fontSize: 14),
+                            ).animate().fadeIn(
+                              duration: 500.ms,
+                              curve: Curves.easeOutCubic,
+                              delay: 400.ms,
+                            ).slideX(
+                              begin: -0.1,
+                              end: 0,
+                              duration: 500.ms,
+                              curve: Curves.easeOutCubic,
+                              delay: 400.ms,
                             ),
                           ],
                         ),
@@ -244,6 +328,11 @@ class KycLevelsView extends StackedView<KycLevelsViewModel> {
             ),
           ],
         ),
+      ).animate().fadeIn(duration: 500.ms, curve: Curves.easeOutCubic).slideY(
+        begin: 0.1,
+        end: 0,
+        duration: 500.ms,
+        curve: Curves.easeOutCubic,
       ),
     );
   }

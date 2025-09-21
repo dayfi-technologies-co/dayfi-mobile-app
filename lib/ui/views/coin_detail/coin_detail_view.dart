@@ -1,9 +1,6 @@
 // coin_details_view.dart
-import 'package:dayfi/app/app.router.dart';
 import 'package:dayfi/ui/common/ui_helpers.dart';
-import 'package:dayfi/ui/components/buttons/filled_btn.dart';
 import 'package:dayfi/ui/components/buttons/filled_btn_small.dart';
-import 'package:dayfi/ui/components/buttons/outlined_btn.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:dayfi/ui/common/amount_formatter.dart';
 import 'package:flutter/material.dart';
@@ -47,7 +44,7 @@ class CoinDetailView extends StackedView<CoinDetailViewModel> {
         leading: IconButton(
           onPressed: () => viewModel.navigationService.back(),
           icon: const Icon(
-            Icons.arrow_back,
+            Icons.arrow_back_ios,
             color: Color(0xff5645F5), // innit
           ),
         ),
@@ -63,30 +60,30 @@ class CoinDetailView extends StackedView<CoinDetailViewModel> {
           ),
         ],
       ),
-      body: viewModel.isBusy
-          ? Center(
-              child: CupertinoActivityIndicator(
-                color: Color(0xff5645F5), // innit
-              ),
-            )
-          : viewModel.hasError
+      body:
+          viewModel.isBusy
+              ? Center(
+                child: CupertinoActivityIndicator(
+                  color: Color(0xff5645F5), // innit
+                ),
+              )
+              : viewModel.hasError
               ? _buildErrorView(context, viewModel)
               : SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildHeader(context, viewModel),
-                      Center(
-                          child: _buildTimeframeSelector(context, viewModel)),
-                      _buildPriceChart(context, viewModel),
-                      _buildFYI(context, viewModel),
-                      _buildAboutSection(context, viewModel),
-                      _buildMarketStats(context, viewModel),
-                      // _buildResources(context),
-                      const SizedBox(height: 40),
-                    ],
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeader(context, viewModel),
+                    Center(child: _buildTimeframeSelector(context, viewModel)),
+                    _buildPriceChart(context, viewModel),
+                    _buildFYI(context, viewModel),
+                    _buildAboutSection(context, viewModel),
+                    _buildMarketStats(context, viewModel),
+                    // _buildResources(context),
+                    const SizedBox(height: 40),
+                  ],
                 ),
+              ),
     );
   }
 
@@ -113,10 +110,7 @@ class CoinDetailView extends StackedView<CoinDetailViewModel> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              viewModel.modelError.toString(),
-              textAlign: TextAlign.center,
-            ),
+            Text(viewModel.modelError.toString(), textAlign: TextAlign.center),
             const SizedBox(height: 16),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -194,12 +188,9 @@ class CoinDetailView extends StackedView<CoinDetailViewModel> {
                             width: 24,
                             height: 22,
                             fit: BoxFit.cover,
-                            imageErrorBuilder: (context, error, stackTrace) =>
-                                Image.asset(
-                              '',
-                              width: 24,
-                              height: 22,
-                            ),
+                            imageErrorBuilder:
+                                (context, error, stackTrace) =>
+                                    Image.asset('', width: 24, height: 22),
                           ),
                         ],
                       ),
@@ -241,11 +232,9 @@ class CoinDetailView extends StackedView<CoinDetailViewModel> {
                     fontWeight: FontWeight.w600,
                     letterSpacing: 0.3,
                     height: 1.450,
-                    color: Theme.of(context)
-                        .textTheme
-                        .bodyLarge!
-                        .color!
-                        .withOpacity(.85),
+                    color: Theme.of(
+                      context,
+                    ).textTheme.bodyLarge!.color!.withOpacity(.85),
                   ),
                 ),
               ],
@@ -284,54 +273,62 @@ class CoinDetailView extends StackedView<CoinDetailViewModel> {
   }
 
   Widget _buildTimeframeSelector(
-      BuildContext context, CoinDetailViewModel viewModel) {
+    BuildContext context,
+    CoinDetailViewModel viewModel,
+  ) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
-        children: viewModel.timeframes.map((timeframe) {
-          final isSelected = viewModel.selectedTimeframe == timeframe;
-          return InkWell(
-            splashColor: Colors.transparent,
-            highlightColor: Colors.transparent,
-            onTap: () => viewModel.setTimeframe(timeframe),
-            child: Container(
-              margin: EdgeInsets.symmetric(vertical: 2, horizontal: 3),
-              decoration: BoxDecoration(
-                color: isSelected ? Colors.white : Colors.transparent,
-                border: Border.all(
-                    color: isSelected
-                        ? const Color(0xff5645F5).withOpacity(.1)
-                        : Colors.transparent),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: SizedBox(
-                height: 36,
-                width: 36,
-                child: Center(
-                  child: Text(
-                    timeframe,
-                    style: TextStyle(
-                      color: isSelected ? Color(0xff5645F5) : Color(0xff2A0079),
-                      fontWeight: FontWeight.w600,
-                      height: .1,
-                      fontSize: 16,
-                      letterSpacing: -.1,
-                      fontFamily: "Karla",
+        children:
+            viewModel.timeframes.map((timeframe) {
+              final isSelected = viewModel.selectedTimeframe == timeframe;
+              return InkWell(
+                splashColor: Colors.transparent,
+                highlightColor: Colors.transparent,
+                onTap: () => viewModel.setTimeframe(timeframe),
+                child: Container(
+                  margin: EdgeInsets.symmetric(vertical: 2, horizontal: 3),
+                  decoration: BoxDecoration(
+                    color: isSelected ? Colors.white : Colors.transparent,
+                    border: Border.all(
+                      color:
+                          isSelected
+                              ? const Color(0xff5645F5).withOpacity(.1)
+                              : Colors.transparent,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: SizedBox(
+                    height: 36,
+                    width: 36,
+                    child: Center(
+                      child: Text(
+                        timeframe,
+                        style: TextStyle(
+                          color:
+                              isSelected
+                                  ? Color(0xff5645F5)
+                                  : Color(0xff2A0079),
+                          fontWeight: FontWeight.w600,
+                          height: .1,
+                          fontSize: 16,
+                          letterSpacing: -.1,
+                          fontFamily: "Karla",
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
-          );
-        }).toList(),
+              );
+            }).toList(),
       ),
     );
   }
 
   Widget _buildFYI(BuildContext context, CoinDetailViewModel viewModel) {
     return // Buy
-        Padding(
+    Padding(
       padding: const EdgeInsets.symmetric(vertical: 18.0, horizontal: 24.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -346,9 +343,7 @@ class CoinDetailView extends StackedView<CoinDetailViewModel> {
               viewModel,
               'Buy',
               'assets/svgs/add-sign.svg',
-              () => {
-                // TODO: Replace with proper action
-              },
+              () => {},
             ),
           ),
 
@@ -392,25 +387,23 @@ class CoinDetailView extends StackedView<CoinDetailViewModel> {
         // width: MediaQuery.of(context).size.width * .4165,
         decoration: BoxDecoration(
           color: const Color(0xffF6F5FE),
-          border: Border.all(
-            width: 0.25,
-            color: const Color(0xff5645F5),
-          ),
+          border: Border.all(width: 0.25, color: const Color(0xff5645F5)),
           boxShadow: [
             BoxShadow(
               blurRadius: 0,
               spreadRadius: 0,
               color: Colors.orangeAccent.shade100,
-              offset: label == "Send"
-                  ? const Offset(-1.5, 2.5)
-                  : label == "Fund"
+              offset:
+                  label == "Send"
+                      ? const Offset(-1.5, 2.5)
+                      : label == "Fund"
                       ? const Offset(0, 2.5)
                       : label == "Swap"
-                          ? const Offset(1.5, 2.5)
-                          : label == "Buy"
-                              ? const Offset(0.75, 2.5)
-                              : const Offset(1.5, 2.5),
-            )
+                      ? const Offset(1.5, 2.5)
+                      : label == "Buy"
+                      ? const Offset(0.75, 2.5)
+                      : const Offset(1.5, 2.5),
+            ),
           ],
           borderRadius: BorderRadius.circular(4),
         ),
@@ -428,9 +421,9 @@ class CoinDetailView extends StackedView<CoinDetailViewModel> {
                 style: TextStyle(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w600,
-                  height: 1.45,
-                  fontFamily: 'Boldonse',
-                  letterSpacing: 0.5,
+                  letterSpacing: 0.00,
+                  height: 1.450,
+                  fontFamily: "Karla",
                   color: const Color(0xff2A0079),
                 ),
               ),
@@ -476,7 +469,9 @@ class CoinDetailView extends StackedView<CoinDetailViewModel> {
   }
 
   Widget _buildAboutSection(
-      BuildContext context, CoinDetailViewModel viewModel) {
+    BuildContext context,
+    CoinDetailViewModel viewModel,
+  ) {
     final coin = viewModel.coinDetail;
     final description = coin?.description ?? 'No description available.';
 
@@ -695,7 +690,7 @@ class CoinDetailView extends StackedView<CoinDetailViewModel> {
           // ClipRRect(
           //   borderRadius: BorderRadius.circular(4.r),
           //   child: Image.asset(
-          //     'assets/images/backgroud.png',
+          //     'assets/images/background.png',
           //     fit: BoxFit.cover,
           //     color: Colors.orangeAccent,
           //     width: MediaQuery.of(context).size.width,
@@ -706,10 +701,11 @@ class CoinDetailView extends StackedView<CoinDetailViewModel> {
               gridData: FlGridData(
                 show: true,
                 drawVerticalLine: false,
-                getDrawingHorizontalLine: (value) => FlLine(
-                  color: Colors.grey.withOpacity(0.2),
-                  strokeWidth: 1,
-                ),
+                getDrawingHorizontalLine:
+                    (value) => FlLine(
+                      color: Colors.grey.withOpacity(0.2),
+                      strokeWidth: 1,
+                    ),
               ),
               // gridData: FlGridData(show: false),
               titlesData: FlTitlesData(show: false),
@@ -727,13 +723,13 @@ class CoinDetailView extends StackedView<CoinDetailViewModel> {
                   isStrokeCapRound: true,
                   dotData: FlDotData(
                     show: true,
-                    getDotPainter: (spot, percent, barData, index) =>
-                        FlDotCirclePainter(
-                      radius: 4,
-                      color: const Color(0xFF2ECC71),
-                      strokeWidth: 1,
-                      strokeColor: Colors.white,
-                    ),
+                    getDotPainter:
+                        (spot, percent, barData, index) => FlDotCirclePainter(
+                          radius: 4,
+                          color: const Color(0xFF2ECC71),
+                          strokeWidth: 1,
+                          strokeColor: Colors.white,
+                        ),
                   ),
                   belowBarData: BarAreaData(
                     show: true,

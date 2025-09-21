@@ -20,8 +20,12 @@ import 'package:stacked/stacked.dart';
 import 'wallet_viewmodel.dart';
 
 class WalletView extends StackedView<WalletViewModel> {
-  const WalletView(this.wallet, this.walletTransactions, this.wallets,
-      {super.key});
+  const WalletView(
+    this.wallet,
+    this.walletTransactions,
+    this.wallets, {
+    super.key,
+  });
 
   final Wallet wallet;
   final List<WalletTransaction> walletTransactions;
@@ -41,10 +45,7 @@ class WalletView extends StackedView<WalletViewModel> {
         backgroundColor: const Color(0xffF6F5FE),
         leading: IconButton(
           onPressed: () => viewModel.navigationService.back(),
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Color(0xff5645F5),
-          ),
+          icon: const Icon(Icons.arrow_back_ios, color: Color(0xff5645F5)),
         ),
         actions: [
           Padding(
@@ -63,12 +64,14 @@ class WalletView extends StackedView<WalletViewModel> {
   }
 
   Map<String, List<WalletTransaction>> groupTransactionsByDate(
-      List<WalletTransaction> txs) {
+    List<WalletTransaction> txs,
+  ) {
     final Map<String, List<WalletTransaction>> grouped = {};
     for (var tx in txs) {
       try {
-        final dateKey =
-            DateFormat.yMMMEd().format(DateTime.parse(tx.createdAt));
+        final dateKey = DateFormat.yMMMEd().format(
+          DateTime.parse(tx.createdAt),
+        );
         grouped.putIfAbsent(dateKey, () => []).add(tx);
       } catch (e) {
         // Skip invalid dates
@@ -80,12 +83,16 @@ class WalletView extends StackedView<WalletViewModel> {
 
   Widget _buildBody(BuildContext context, WalletViewModel viewModel) {
     return FutureBuilder<List<Map<String, dynamic>>>(
-      future: wallet.currency == "USD"
-          ? viewModel.user != null
-              ? DatabaseService()
-                  .getCachedUSDTransactions(viewModel.user!.userId)
-              : Future.value([])
-          : Future.value(walletTransactions.map((tx) => tx.toJson()).toList()),
+      future:
+          wallet.currency == "USD"
+              ? viewModel.user != null
+                  ? DatabaseService().getCachedUSDTransactions(
+                    viewModel.user!.userId,
+                  )
+                  : Future.value([])
+              : Future.value(
+                walletTransactions.map((tx) => tx.toJson()).toList(),
+              ),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -102,20 +109,23 @@ class WalletView extends StackedView<WalletViewModel> {
 
         List<WalletTransaction> transactions = [];
         if (snapshot.hasData && snapshot.data != null) {
-          transactions = snapshot.data!.map((json) {
-            // Create a mutable copy of the json map
-            final mutableJson = Map<String, dynamic>.from(json);
-            if (wallet.currency == "USD" && mutableJson['metadata'] is String) {
-              try {
-                mutableJson['metadata'] =
-                    jsonDecode(mutableJson['metadata'] ?? '{}');
-              } catch (e) {
-                debugPrint('Error decoding metadata for transaction: $e');
-                mutableJson['metadata'] = {};
-              }
-            }
-            return WalletTransaction.fromJson(mutableJson);
-          }).toList();
+          transactions =
+              snapshot.data!.map((json) {
+                // Create a mutable copy of the json map
+                final mutableJson = Map<String, dynamic>.from(json);
+                if (wallet.currency == "USD" &&
+                    mutableJson['metadata'] is String) {
+                  try {
+                    mutableJson['metadata'] = jsonDecode(
+                      mutableJson['metadata'] ?? '{}',
+                    );
+                  } catch (e) {
+                    debugPrint('Error decoding metadata for transaction: $e');
+                    mutableJson['metadata'] = {};
+                  }
+                }
+                return WalletTransaction.fromJson(mutableJson);
+              }).toList();
         }
 
         final grouped = groupTransactionsByDate(transactions);
@@ -130,6 +140,7 @@ class WalletView extends StackedView<WalletViewModel> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              verticalSpace(12),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 22.0),
                 child: Text(
@@ -152,9 +163,10 @@ class WalletView extends StackedView<WalletViewModel> {
                   currencyCode: wallet.currency,
                   currencyName: wallet.currency,
                   balance: wallet.balance,
-                  flagAsset: wallet.currency != "NGN"
-                      ? "assets/images/united-states.png"
-                      : "assets/images/nigeria.png",
+                  flagAsset:
+                      wallet.currency != "NGN"
+                          ? "assets/images/united-states.png"
+                          : "assets/images/nigeria.png",
                   isLocal: wallet.currency == "NGN",
                   wallet: wallet,
                 ),
@@ -165,23 +177,23 @@ class WalletView extends StackedView<WalletViewModel> {
               const SizedBox(height: 40),
               if (transactions.isNotEmpty)
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 22.0),
-                      child: Text(
-                        "${wallet.currency} transaction(s)",
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontFamily: "SpaceGrotesk",
-                          color: Color(0xff2A0079),
-                          letterSpacing: -0.02,
-                          fontWeight: FontWeight.bold,
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 22.0),
+                          child: Text(
+                            "${wallet.currency} transaction(s)",
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontFamily: "SpaceGrotesk",
+                              color: Color(0xff2A0079),
+                              letterSpacing: -0.02,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                  ],
-                )
+                      ],
+                    )
                     .animate()
                     .fadeIn(duration: 320.ms, curve: Curves.easeInOutCirc)
                     .slideY(begin: 0.45, end: 0, duration: 600.ms),
@@ -218,29 +230,34 @@ class WalletView extends StackedView<WalletViewModel> {
                     return Column(
                       children: [
                         ListTile(
-                          onTap: () => viewModel.navigationService
-                              .navigateToTransactionDetailsView(
-                            wallet: wallet,
-                            transaction: item,
+                          onTap:
+                              () => viewModel.navigationService
+                                  .navigateToTransactionDetailsView(
+                                    wallet: wallet,
+                                    transaction: item,
+                                  ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 24,
                           ),
-                          contentPadding:
-                              const EdgeInsets.symmetric(horizontal: 24),
                           leading: CircleAvatar(
                             radius: 20,
-                            backgroundColor: tx.type == 'card_to_wallet' ||
-                                    wallet.currency == "USD"
-                                ? const Color(0xff00AFF5).withOpacity(0.1)
-                                : const Color(0xffFFB97D).withOpacity(0.25),
+                            backgroundColor:
+                                tx.type == 'card_to_wallet' ||
+                                        wallet.currency == "USD"
+                                    ? const Color(0xff00AFF5).withOpacity(0.1)
+                                    : const Color(0xffFFB97D).withOpacity(0.25),
                             child: Transform.rotate(
-                              angle: !tx.type.contains("card_to_wallet")
-                                  ? 0
-                                  : 3.12,
+                              angle:
+                                  !tx.type.contains("card_to_wallet")
+                                      ? 0
+                                      : 3.12,
                               child: SvgPicture.asset(
                                 'assets/svgs/arrow-narrow-down.svg',
-                                color: tx.type == 'card_to_wallet' ||
-                                        wallet.currency == "USD"
-                                    ? const Color(0xff00AFF5)
-                                    : const Color(0xffFF897D),
+                                color:
+                                    tx.type == 'card_to_wallet' ||
+                                            wallet.currency == "USD"
+                                        ? const Color(0xff00AFF5)
+                                        : const Color(0xffFF897D),
                                 height: 14,
                               ),
                             ),
@@ -267,10 +284,11 @@ class WalletView extends StackedView<WalletViewModel> {
                               height: 1.45,
                               fontFamily: 'Karla',
                               letterSpacing: -0.2,
-                              color: tx.status == 'success' ||
-                                      wallet.currency == "USD"
-                                  ? Colors.green.shade800
-                                  : tx.status == 'pending'
+                              color:
+                                  tx.status == 'success' ||
+                                          wallet.currency == "USD"
+                                      ? Colors.green.shade800
+                                      : tx.status == 'pending'
                                       ? Colors.yellow.shade800
                                       : Colors.red.shade800,
                             ),
@@ -282,11 +300,12 @@ class WalletView extends StackedView<WalletViewModel> {
                               Text(
                                 "${tx.type == 'card_to_wallet' || wallet.currency == "USD" ? '+' : '-'}$currencySymbol${NumberFormat("#,##0.00", 'en_US').format(amount)}",
                                 style: GoogleFonts.spaceGrotesk(
-                                  color: tx.status == 'success' &&
-                                              tx.type == 'card_to_wallet' ||
-                                          wallet.currency == "USD"
-                                      ? Colors.green.shade800
-                                      : tx.status == 'pending'
+                                  color:
+                                      tx.status == 'success' &&
+                                                  tx.type == 'card_to_wallet' ||
+                                              wallet.currency == "USD"
+                                          ? Colors.green.shade800
+                                          : tx.status == 'pending'
                                           ? Colors.yellow.shade800
                                           : Colors.red.shade800,
                                   fontSize: 16.sp,
@@ -358,167 +377,171 @@ class WalletView extends StackedView<WalletViewModel> {
     double? width,
   }) {
     return AspectRatio(
-        aspectRatio: 14.5 / 6,
-        child: Container(
-          width: width ?? MediaQuery.of(context).size.width,
-          decoration: BoxDecoration(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(6.r),
-            border: Border.all(
-              color: const Color(0xff5645F5).withOpacity(1),
-              width: 1.0,
-            ),
+      aspectRatio: 14.5 / 6,
+      child: Container(
+        width: width ?? MediaQuery.of(context).size.width,
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(6.r),
+          border: Border.all(
+            color: const Color(0xff5645F5).withOpacity(1),
+            width: 1.0,
           ),
-          child: Stack(
-            children: [
-              Opacity(
-                opacity: 1,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
+        ),
+        child: Stack(
+          children: [
+            Opacity(
+              opacity: 1,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: Opacity(
+                  opacity: .1,
                   child: Image.asset(
-                    'assets/images/backgroud.png',
+                    'assets/images/background.png',
                     fit: BoxFit.cover,
-                    color: Colors.orangeAccent.shade200,
+                    // color: Colors.orangeAccent.shade200,
                     width: MediaQuery.of(context).size.width,
                   ),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 18, 16, 14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Currency + flag
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 3, horizontal: 6),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(1),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Text(
-                                      " $currencyCode",
-                                      style: const TextStyle(
-                                        fontFamily: 'Karla',
-                                        fontSize: 12,
-                                        color: Color(0xff2A0079),
-                                        fontWeight: FontWeight.w600,
-                                        letterSpacing: -.04,
-                                        height: 1.450,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 2),
-                                    Image.asset(
-                                      flagAsset,
-                                      height: 14,
-                                    ),
-                                  ],
-                                ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 18, 16, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Currency + flag
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 3,
+                                horizontal: 6,
                               ),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  isLocal ? " Local wallet" : " ",
-                                  style: const TextStyle(
-                                    fontFamily: 'Karla',
-                                    fontSize: 12,
-                                    color: Color(0xff5645F5),
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: -.04,
-                                    overflow: TextOverflow.ellipsis,
-                                    height: 1.450,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(1),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    " $currencyCode",
+                                    style: const TextStyle(
+                                      fontFamily: 'Karla',
+                                      fontSize: 12,
+                                      color: Color(0xff2A0079),
+                                      fontWeight: FontWeight.w600,
+                                      letterSpacing: -.04,
+                                      height: 1.450,
+                                    ),
                                   ),
+                                  const SizedBox(width: 2),
+                                  Image.asset(flagAsset, height: 14),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                isLocal ? " Local wallet" : " ",
+                                style: const TextStyle(
+                                  fontFamily: 'Karla',
+                                  fontSize: 12,
+                                  color: Color(0xff5645F5),
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: -.04,
+                                  overflow: TextOverflow.ellipsis,
+                                  height: 1.450,
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        FutureBuilder<bool>(
-                          future: hasVirtualCard(wallet.userId),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2),
-                              );
-                            }
-                            final hasVC = snapshot.data ?? false;
-                            return FilledBtnSmall2(
-                              onPressed: () {
-                                if (currencyCode == "NGN") {
-                                  viewModel.navigationService
-                                      .navigateToWalletDetailsView(
-                                          wallet: wallet);
-                                } else if (hasVC) {
-                                  viewModel.navigationService
-                                      .navigateToVirtualCardDetailsView();
-                                } else {
-                                  viewModel.navigationService
-                                      .navigateToPrepaidInfoView(isVCard: true);
-                                }
-                              },
-                              text: currencyCode == "NGN"
-                                  ? 'See wallet details'
-                                  : hasVC
-                                      ? "View card details"
-                                      : "Get a USD virtual card",
-                              backgroundColor: const Color(0xff5645F5),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                    const Spacer(),
-                    Text(
-                      "Your balance  ",
-                      style: TextStyle(
-                        fontFamily: 'Karla',
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: -.04,
-                        height: 1.450,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            AmountFormatter.formatDecimal(
-                                num.tryParse(balance) ?? 0.0),
-                            style: TextStyle(
-                              fontFamily: 'Boldonse',
-                              fontSize: 28.sp,
-                              height: 1.2,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xff2A0079),
-                              letterSpacing: 0,
                             ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      FutureBuilder<bool>(
+                        future: hasVirtualCard(wallet.userId),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            );
+                          }
+                          final hasVC = snapshot.data ?? false;
+                          return FilledBtnSmall2(
+                            onPressed: () {
+                              if (currencyCode == "NGN") {
+                                viewModel.navigationService
+                                    .navigateToWalletDetailsView(
+                                      wallet: wallet,
+                                    );
+                              } else if (hasVC) {
+                                viewModel.navigationService
+                                    .navigateToVirtualCardDetailsView();
+                              } else {
+                                viewModel.navigationService
+                                    .navigateToPrepaidInfoView(isVCard: true);
+                              }
+                            },
+                            text:
+                                currencyCode == "NGN"
+                                    ? 'See wallet details'
+                                    : hasVC
+                                    ? "View card details"
+                                    : "Get a USD virtual card",
+                            backgroundColor: const Color(0xff5645F5),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  Text(
+                    "Your balance  ",
+                    style: TextStyle(
+                      fontFamily: 'Karla',
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -.04,
+                      height: 1.450,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          AmountFormatter.formatDecimal(
+                            num.tryParse(balance) ?? 0.0,
+                          ),
+                          style: TextStyle(
+                            fontFamily: 'Boldonse',
+                            fontSize: 24.sp,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xff2A0079),
+                            letterSpacing: 0,
                           ),
                         ),
-                        Image.asset('assets/images/logoo.png', height: 28),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                      Image.asset('assets/images/logoo.png', height: 28),
+                    ],
+                  ),
+                ],
               ),
-            ],
-          ),
-        ));
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildCircularActionButtons(
@@ -529,54 +552,55 @@ class WalletView extends StackedView<WalletViewModel> {
     return wallets.isEmpty
         ? const SizedBox()
         : Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 48.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                // Send
-                Expanded(
-                  child: _buildCircularActionButton(
-                    context,
-                    viewModel,
-                    'Send',
-                    'assets/svgs/arrow-narrow-down.svg',
-                    () {
-                      // _showSelectTransferMethodBottomSheet(
-                      //     context, viewModel, wallets[0]);
-                    },
-                  ),
+          padding: const EdgeInsets.symmetric(horizontal: 48.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              // Send
+              Expanded(
+                child: _buildCircularActionButton(
+                  context,
+                  viewModel,
+                  'Send',
+                  'assets/svgs/arrow-narrow-down.svg',
+                  () {
+                    // _showSelectTransferMethodBottomSheet(
+                    //     context, viewModel, wallets[0]);
+                  },
                 ),
+              ),
 
-                // Send
-                Expanded(
-                  child: _buildCircularActionButton(
-                    context,
-                    viewModel,
-                    'Fund',
-                    'assets/svgs/arrow-narrow-down.svg',
-                    () {
-                      // _showSelectTransferMethodBottomSheet(
-                      //     context, viewModel, wallets[0]);
-                    },
-                  ),
+              // Send
+              Expanded(
+                child: _buildCircularActionButton(
+                  context,
+                  viewModel,
+                  'Fund',
+                  'assets/svgs/arrow-narrow-down.svg',
+                  () {
+                    // _showSelectTransferMethodBottomSheet(
+                    //     context, viewModel, wallets[0]);
+                  },
                 ),
+              ),
 
-                // Swap
-                Expanded(
-                  child: _buildCircularActionButton(
-                    context,
-                    viewModel,
-                    'Swap',
-                    'assets/svgs/swap.svg',
-                    () {
-                      viewModel.navigationService
-                          .navigateToSwapView(wallets: wallets);
-                    },
-                  ),
+              // Swap
+              Expanded(
+                child: _buildCircularActionButton(
+                  context,
+                  viewModel,
+                  'Swap',
+                  'assets/svgs/swap.svg',
+                  () {
+                    viewModel.navigationService.navigateToSwapView(
+                      wallets: wallets,
+                    );
+                  },
                 ),
-              ],
-            ),
-          );
+              ),
+            ],
+          ),
+        );
   }
 
   Widget _buildCircularActionButton(
@@ -594,25 +618,23 @@ class WalletView extends StackedView<WalletViewModel> {
         // width: MediaQuery.of(context).size.width * .4165,
         decoration: BoxDecoration(
           color: const Color(0xffF6F5FE),
-          border: Border.all(
-            width: 0.25,
-            color: const Color(0xff5645F5),
-          ),
+          border: Border.all(width: 0.25, color: const Color(0xff5645F5)),
           boxShadow: [
             BoxShadow(
               blurRadius: 0,
               spreadRadius: 0,
               color: Colors.orangeAccent.shade100,
-              offset: label == "Send"
-                  ? const Offset(-1.5, 2.5)
-                  : label == "Fund"
+              offset:
+                  label == "Send"
+                      ? const Offset(-1.5, 2.5)
+                      : label == "Fund"
                       ? const Offset(0, 2.5)
                       : label == "Swap"
-                          ? const Offset(1.5, 2.5)
-                          : label == "Buy"
-                              ? const Offset(0.75, 2.5)
-                              : const Offset(1.5, 2.5),
-            )
+                      ? const Offset(1.5, 2.5)
+                      : label == "Buy"
+                      ? const Offset(0.75, 2.5)
+                      : const Offset(1.5, 2.5),
+            ),
           ],
           // borderRadius: BorderRadius.circular(0),
         ),
@@ -678,10 +700,7 @@ class WalletView extends StackedView<WalletViewModel> {
   }
 
   @override
-  WalletViewModel viewModelBuilder(
-    BuildContext context,
-  ) =>
-      WalletViewModel();
+  WalletViewModel viewModelBuilder(BuildContext context) => WalletViewModel();
 
   @override
   void onViewModelReady(WalletViewModel viewModel) {

@@ -35,21 +35,13 @@ class StartupView extends StackedView<StartupViewModel> {
                       viewModel.setPageIndex(index);
                     },
                     children: [
-                      _buildPage(
-                        context,
-                        image: 'assets/images/swap.png',
-                      ),
-                      _buildPage(
-                        context,
-                        image: 'assets/images/payments.png',
-                      ),
-                      _buildPage(
-                        context,
-                        image: 'assets/images/crypto.png',
-                      ),
+                      _buildPage(context, image: 'assets/images/swap.png'),
+                      _buildPage(context, image: 'assets/images/payments.png'),
+                      _buildPage(context, image: 'assets/images/crypto.png'),
                     ],
                   ),
                 ),
+
                 // Positioned(
                 //   top: 54,
                 //   left: 0,
@@ -119,58 +111,69 @@ class StartupView extends StackedView<StartupViewModel> {
                 //     ),
                 //   ),
                 // ),
-            
               ],
             ),
           ),
           Expanded(
             flex: 3,
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 24,
-                vertical: 18,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
               constraints: const BoxConstraints.expand(),
               child: Column(
                 children: [
                   const Spacer(),
                   const Spacer(),
                   Text(
-                    viewModel.titles[viewModel.currentPage],
-                    style: TextStyle(
-                      fontFamily: 'Boldonse',
-                      fontSize: 28.00,
-                      height: 1.5,
-                      letterSpacing: 0,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xff2A0079),
-                    ),
-                    textAlign: TextAlign.center,
-                  )
+                        viewModel.titles[viewModel.currentPage],
+                        style: TextStyle(
+                          fontFamily: 'Boldonse',
+                          fontSize: 28.00,
+                          height: 1.5,
+                          letterSpacing: 0,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xff2A0079),
+                        ),
+                        textAlign: TextAlign.center,
+                      )
                       .animate(key: ValueKey(viewModel.currentPage))
                       .fadeIn(duration: 500.ms, curve: Curves.easeOutCubic)
-                      .slideY(begin: 0.3, end: 0, duration: 500.ms, curve: Curves.easeOutCubic)
-                      .scale(begin: const Offset(0.95, 0.95), end: const Offset(1.0, 1.0), duration: 500.ms, curve: Curves.easeOutCubic),
+                      .slideY(
+                        begin: 0.3,
+                        end: 0,
+                        duration: 500.ms,
+                        curve: Curves.easeOutCubic,
+                      )
+                      .scale(
+                        begin: const Offset(0.95, 0.95),
+                        end: const Offset(1.0, 1.0),
+                        duration: 500.ms,
+                        curve: Curves.easeOutCubic,
+                      ),
                   verticalSpace(14),
                   Padding(
                     padding: EdgeInsets.symmetric(
                       horizontal: MediaQuery.of(context).size.width * .1,
                     ),
                     child: Text(
-                      viewModel.descriptions[viewModel.currentPage],
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0,
-                        fontFamily: 'Karla',
-                        height: 1.450,
-                        color: const Color(0xFF302D53),
-                      ),
-                      textAlign: TextAlign.center,
-                    )
+                          viewModel.descriptions[viewModel.currentPage],
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0,
+                            fontFamily: 'Karla',
+                            height: 1.450,
+                            color: const Color(0xFF302D53),
+                          ),
+                          textAlign: TextAlign.center,
+                        )
                         .animate(key: ValueKey(viewModel.currentPage))
                         .fadeIn(duration: 500.ms, curve: Curves.easeOutCubic)
-                        .slideY(begin: 0.2, end: 0, duration: 500.ms, curve: Curves.easeOutCubic),
+                        .slideY(
+                          begin: 0.2,
+                          end: 0,
+                          duration: 500.ms,
+                          curve: Curves.easeOutCubic,
+                        ),
                   ),
                   const Spacer(),
                   const Spacer(),
@@ -179,34 +182,66 @@ class StartupView extends StackedView<StartupViewModel> {
                   const Spacer(),
                   SizedBox(
                     child: FilledBtn(
-                      onPressed: () {
-                        viewModel.saveFirstTimeUser();
-                        viewModel.navigationService.navigateToSignupView();
-                      },
-                      text: "Sign Up",
-                      backgroundColor: const Color(0xff5645F5),
-                    )
+                          onPressed: () {
+                            viewModel.saveFirstTimeUser();
+                            viewModel.navigationService.replaceWithSignupView();
+                          },
+                          text: "Sign Up",
+                          backgroundColor: const Color(0xff5645F5),
+                        )
                         .animate()
-                        .fadeIn(delay: 200.ms, duration: 500.ms, curve: Curves.easeOutCubic)
-                        .slideY(begin: 0.3, end: 0, delay: 200.ms, duration: 500.ms, curve: Curves.easeOutCubic)
-                        .scale(begin: const Offset(0.98, 0.98), end: const Offset(1.0, 1.0), delay: 200.ms, duration: 500.ms, curve: Curves.easeOutCubic),
+                        .fadeIn(
+                          delay: 200.ms,
+                          duration: 500.ms,
+                          curve: Curves.easeOutCubic,
+                        )
+                        .slideY(
+                          begin: 0.3,
+                          end: 0,
+                          delay: 200.ms,
+                          duration: 500.ms,
+                          curve: Curves.easeOutCubic,
+                        )
+                        .scale(
+                          begin: const Offset(0.98, 0.98),
+                          end: const Offset(1.0, 1.0),
+                          delay: 200.ms,
+                          duration: 500.ms,
+                          curve: Curves.easeOutCubic,
+                        ),
                   ),
                   verticalSpace(12),
                   SizedBox(
                     child: OutlineBtn(
-                      onPressed: () {
-                        viewModel.saveFirstTimeUser();
-                        viewModel.navigationService.navigateToLoginView();
-                      },
-                      text: "Login",
-                      textColor: const Color(0xff5645F5),
-                      backgroundColor: const Color(0xffffffff),
-                      borderColor: const Color(0xff5645F5),
-                    )
+                          onPressed: () {
+                            viewModel.saveFirstTimeUser();
+                            viewModel.navigationService.replaceWithLoginView();
+                          },
+                          text: "Login",
+                          textColor: const Color(0xff5645F5),
+                          backgroundColor: const Color(0xffffffff),
+                          borderColor: const Color(0xff5645F5),
+                        )
                         .animate()
-                        .fadeIn(delay: 400.ms, duration: 500.ms, curve: Curves.easeOutCubic)
-                        .slideY(begin: 0.3, end: 0, delay: 400.ms, duration: 500.ms, curve: Curves.easeOutCubic)
-                        .scale(begin: const Offset(0.98, 0.98), end: const Offset(1.0, 1.0), delay: 400.ms, duration: 500.ms, curve: Curves.easeOutCubic),
+                        .fadeIn(
+                          delay: 400.ms,
+                          duration: 500.ms,
+                          curve: Curves.easeOutCubic,
+                        )
+                        .slideY(
+                          begin: 0.3,
+                          end: 0,
+                          delay: 400.ms,
+                          duration: 500.ms,
+                          curve: Curves.easeOutCubic,
+                        )
+                        .scale(
+                          begin: const Offset(0.98, 0.98),
+                          end: const Offset(1.0, 1.0),
+                          delay: 400.ms,
+                          duration: 500.ms,
+                          curve: Curves.easeOutCubic,
+                        ),
                   ),
                   const Spacer(),
                 ],
@@ -224,16 +259,24 @@ class StartupView extends StackedView<StartupViewModel> {
       child: Stack(
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(24),
-            child: Image.asset(
-              'assets/images/backgroud.png',
-              fit: BoxFit.cover,
-              width: MediaQuery.of(context).size.width,
-            ),
-          )
+                borderRadius: BorderRadius.circular(24),
+                child: Opacity(
+                  opacity: .1,
+                  child: Image.asset(
+                    'assets/images/background.png',
+                    fit: BoxFit.cover,
+                    width: MediaQuery.of(context).size.width,
+                  ),
+                ),
+              )
               .animate()
               .fadeIn(duration: 600.ms, curve: Curves.easeOutCubic)
-              .scale(begin: const Offset(1.05, 1.05), end: const Offset(1.0, 1.0), duration: 600.ms, curve: Curves.easeOutCubic),
+              .scale(
+                begin: const Offset(1.05, 1.05),
+                end: const Offset(1.0, 1.0),
+                duration: 600.ms,
+                curve: Curves.easeOutCubic,
+              ),
         ],
       ),
     );

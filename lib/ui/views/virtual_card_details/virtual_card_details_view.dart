@@ -28,7 +28,7 @@ class VirtualCardDetailsView extends StackedView<VirtualCardDetailsViewModel> {
         scrolledUnderElevation: 0,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xff2A0079)),
+          icon: const Icon(Icons.arrow_back_ios, color: Color(0xff2A0079)),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [

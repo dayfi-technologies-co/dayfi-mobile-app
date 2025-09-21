@@ -48,7 +48,7 @@ class PaymentSetupView extends StackedView<PaymentSetupViewModel> {
           leading: IconButton(
             onPressed: () => viewModel.navigationService.back(),
             icon: const Icon(
-              Icons.arrow_back,
+              Icons.arrow_back_ios,
               color: Color(0xff5645F5), // innit
             ),
           ),
@@ -86,6 +86,19 @@ class PaymentSetupView extends StackedView<PaymentSetupViewModel> {
                             ),
                             textAlign: TextAlign.start,
                           ),
+                        ).animate().fadeIn(
+                          duration: 500.ms,
+                          curve: Curves.easeOutCubic,
+                        ).slideY(
+                          begin: -0.1,
+                          end: 0,
+                          duration: 500.ms,
+                          curve: Curves.easeOutCubic,
+                        ).scale(
+                          begin: const Offset(0.95, 0.95),
+                          end: const Offset(1.0, 1.0),
+                          duration: 500.ms,
+                          curve: Curves.easeOutCubic,
                         ),
                         verticalSpace(12),
                         Text(
@@ -105,6 +118,16 @@ class PaymentSetupView extends StackedView<PaymentSetupViewModel> {
                                 .withOpacity(.85),
                           ),
                           textAlign: TextAlign.start,
+                        ).animate().fadeIn(
+                          duration: 500.ms,
+                          curve: Curves.easeOutCubic,
+                          delay: 100.ms,
+                        ).slideY(
+                          begin: 0.1,
+                          end: 0,
+                          duration: 500.ms,
+                          curve: Curves.easeOutCubic,
+                          delay: 100.ms,
                         ),
                       ],
                     ),
@@ -174,6 +197,22 @@ class PaymentSetupView extends StackedView<PaymentSetupViewModel> {
                           ),
                         ),
                       ),
+                    ).animate().fadeIn(
+                      duration: 500.ms,
+                      curve: Curves.easeOutCubic,
+                      delay: 200.ms,
+                    ).slideY(
+                      begin: 0.1,
+                      end: 0,
+                      duration: 500.ms,
+                      curve: Curves.easeOutCubic,
+                      delay: 200.ms,
+                    ).scale(
+                      begin: const Offset(0.98, 0.98),
+                      end: const Offset(1.0, 1.0),
+                      duration: 500.ms,
+                      curve: Curves.easeOutCubic,
+                      delay: 200.ms,
                     ),
                     const SizedBox(height: 8),
                     viewModel.showCurrencyOptions
@@ -272,16 +311,23 @@ class PaymentSetupView extends StackedView<PaymentSetupViewModel> {
                                         ),
                                       ),
                                     )
-                                        .animate(
-                                            // key: ValueKey(5 + viewModel.currencies.length),
-                                            )
+                                        .animate()
                                         .fadeIn(
-                                            duration: 200.ms,
-                                            curve: Curves.easeInOutCirc)
+                                            duration: 500.ms,
+                                            curve: Curves.easeOutCubic,
+                                            delay: Duration(milliseconds: 300 + (viewModel.currencies.indexOf(currency) * 100)))
                                         .slideY(
-                                            begin: -0.3,
+                                            begin: -0.1,
                                             end: 0,
-                                            duration: (200 + (50 * (1))).ms);
+                                            duration: 500.ms,
+                                            curve: Curves.easeOutCubic,
+                                            delay: Duration(milliseconds: 300 + (viewModel.currencies.indexOf(currency) * 100)))
+                                        .scale(
+                                            begin: const Offset(0.98, 0.98),
+                                            end: const Offset(1.0, 1.0),
+                                            duration: 500.ms,
+                                            curve: Curves.easeOutCubic,
+                                            delay: Duration(milliseconds: 300 + (viewModel.currencies.indexOf(currency) * 100)));
                                   },
                                 ).toList(),
                               ),
@@ -317,6 +363,20 @@ class PaymentSetupView extends StackedView<PaymentSetupViewModel> {
                                 ? const Color(0xff5645F5)
                                 : Color(0xffCAC5FC),
                             text: "Next - Tap to Retrieve Card",
+                          ).animate().fadeIn(
+                            duration: 500.ms,
+                            curve: Curves.easeOutCubic,
+                            delay: 400.ms,
+                          ).slideY(
+                            begin: 0.1,
+                            end: 0,
+                            duration: 500.ms,
+                            curve: Curves.easeOutCubic,
+                            delay: 400.ms,
+                          ).shimmer(
+                            duration: 2000.ms,
+                            color: Colors.white.withOpacity(0.3),
+                            delay: 600.ms,
                           ),
                           SizedBox(height: 24.h),
                         ],

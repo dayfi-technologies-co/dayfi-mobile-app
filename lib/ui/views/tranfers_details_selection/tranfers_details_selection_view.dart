@@ -53,7 +53,7 @@ class TransfersDetailsSelectionView
           leading: IconButton(
             onPressed: () => viewModel.navigationService.back(),
             icon: const Icon(
-              Icons.arrow_back,
+              Icons.arrow_back_ios,
               color: Color(0xff5645F5), // innit
             ),
           ),
@@ -353,7 +353,7 @@ class _SendSummaryBottomSheetState extends State<SendSummaryBottomSheet> {
                     Text(
                       'Send Summary',
                       style: TextStyle(
-                        fontSize: 20.sp,
+                        fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
                         height: 1.2,
                         fontFamily: 'Boldonse',

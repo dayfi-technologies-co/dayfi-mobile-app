@@ -10,6 +10,27 @@ import 'profile_viewmodel.dart';
 class ProfileView extends StackedView<ProfileViewModel> {
   const ProfileView({super.key});
 
+  Widget _buildAnimatedFormField({
+    required String label,
+    required String hintText,
+    required TextEditingController controller,
+    TextInputType? keyboardType,
+    TextInputAction? textInputAction,
+    TextCapitalization? textCapitalization,
+    Widget? prefixIcon,
+    int delay = 0,
+  }) {
+    return ReadOnlyCustomTextField(
+      label: label,
+      hintText: hintText,
+      controller: controller,
+      keyboardType: keyboardType,
+      textInputAction: textInputAction,
+      textCapitalization: textCapitalization,
+      prefixIcon: prefixIcon,
+    );
+  }
+
   @override
   Widget builder(
     BuildContext context,
@@ -26,7 +47,7 @@ class ProfileView extends StackedView<ProfileViewModel> {
           leading: IconButton(
             onPressed: () => model.navigationService.back(),
             icon: const Icon(
-              Icons.arrow_back,
+              Icons.arrow_back_ios,
               color: Color(0xff5645F5), // innit
             ),
           ),
@@ -78,7 +99,7 @@ class ProfileView extends StackedView<ProfileViewModel> {
                       ),
                     ),
                     verticalSpace(24.h),
-                    ReadOnlyCustomTextField(
+                    _buildAnimatedFormField(
                       label: "Email Address",
                       hintText: "",
                       controller: TextEditingController(
@@ -86,29 +107,32 @@ class ProfileView extends StackedView<ProfileViewModel> {
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
                       textCapitalization: TextCapitalization.none,
+                      delay: 300,
                     ),
                     verticalSpace(17.5.h),
                     Row(
                       children: [
                         Expanded(
-                          child: ReadOnlyCustomTextField(
+                          child: _buildAnimatedFormField(
                             label: "First Name",
                             hintText: "",
                             keyboardType: TextInputType.name,
                             textInputAction: TextInputAction.next,
                             controller: TextEditingController(
                                 text: viewModel.user?.firstName ?? ""),
+                            delay: 400,
                           ),
                         ),
                         horizontalSpaceSmall,
                         Expanded(
-                          child: ReadOnlyCustomTextField(
+                          child: _buildAnimatedFormField(
                             label: "Last Name (Surname)",
                             hintText: "",
                             keyboardType: TextInputType.name,
                             textInputAction: TextInputAction.next,
                             controller: TextEditingController(
                                 text: viewModel.user?.lastName ?? ""),
+                            delay: 500,
                           ),
                         ),
                       ],
@@ -117,30 +141,32 @@ class ProfileView extends StackedView<ProfileViewModel> {
                         viewModel.user?.middleName == null ? 0 : 17.5.h),
                     viewModel.user?.middleName == null
                         ? verticalSpace(0.h)
-                        : ReadOnlyCustomTextField(
+                        : _buildAnimatedFormField(
                             label: "Middle Name",
                             hintText: "",
                             keyboardType: TextInputType.name,
                             textInputAction: TextInputAction.next,
                             controller: TextEditingController(
                                 text: viewModel.user?.middleName ?? ""),
+                            delay: 600,
                           ),
                     verticalSpace(
                         viewModel.user?.phoneNumber == null ? 0 : 17.5.h),
                     viewModel.user?.phoneNumber == null
                         ? verticalSpace(0.h)
-                        : ReadOnlyCustomTextField(
+                        : _buildAnimatedFormField(
                             label: "Phone Number",
                             hintText: "+234",
                             keyboardType: TextInputType.name,
                             textInputAction: TextInputAction.next,
                             controller: TextEditingController(
                                 text: viewModel.user?.phoneNumber ?? ""),
+                            delay: 700,
                           ),
                     verticalSpace(viewModel.user?.gender == null ? 0 : 17.5.h),
                     viewModel.user?.gender == null
                         ? verticalSpace(0.h)
-                        : ReadOnlyCustomTextField(
+                        : _buildAnimatedFormField(
                             label: "Gender",
                             hintText: "",
                             keyboardType: TextInputType.name,
@@ -148,6 +174,7 @@ class ProfileView extends StackedView<ProfileViewModel> {
                             controller: TextEditingController(
                                 text: capitalizeFirst(
                                     viewModel.user!.gender.toString())),
+                            delay: 800,
                           ),
                     verticalSpace(
                         viewModel.user?.dateOfBirth == null ? 0 : 17.5.h),
@@ -156,18 +183,19 @@ class ProfileView extends StackedView<ProfileViewModel> {
                         : Row(
                             children: [
                               Expanded(
-                                child: ReadOnlyCustomTextField(
+                                child: _buildAnimatedFormField(
                                   label: "Date of Birth",
                                   hintText: "",
                                   keyboardType: TextInputType.name,
                                   textInputAction: TextInputAction.next,
                                   controller: TextEditingController(
                                       text: viewModel.day.toString()),
+                                  delay: 900,
                                 ),
                               ),
                               horizontalSpaceSmall,
                               Expanded(
-                                child: ReadOnlyCustomTextField(
+                                child: _buildAnimatedFormField(
                                   label: "",
                                   hintText: "",
                                   keyboardType: TextInputType.name,
@@ -177,17 +205,19 @@ class ProfileView extends StackedView<ProfileViewModel> {
                                           viewModel.month.toString().length == 1
                                               ? "0${viewModel.month.toString()}"
                                               : viewModel.month.toString()),
+                                  delay: 1000,
                                 ),
                               ),
                               horizontalSpaceSmall,
                               Expanded(
-                                child: ReadOnlyCustomTextField(
+                                child: _buildAnimatedFormField(
                                   label: "",
                                   hintText: "",
                                   keyboardType: TextInputType.name,
                                   textInputAction: TextInputAction.next,
                                   controller: TextEditingController(
                                       text: viewModel.year.toString()),
+                                  delay: 1100,
                                 ),
                               ),
                             ],
@@ -195,7 +225,7 @@ class ProfileView extends StackedView<ProfileViewModel> {
                     verticalSpace(viewModel.user?.country == null ? 0 : 17.5.h),
                     viewModel.user?.country == null
                         ? verticalSpace(0.h)
-                        : ReadOnlyCustomTextField(
+                        : _buildAnimatedFormField(
                             label: "Country",
                             hintText: "",
                             prefixIcon: Padding(
@@ -210,6 +240,7 @@ class ProfileView extends StackedView<ProfileViewModel> {
                             controller: TextEditingController(
                                 text: capitalizeFirst(
                                     viewModel.user!.country.toString())),
+                            delay: 1200,
                           ),
                     const SizedBox(height: 20),
                     FilledBtn(

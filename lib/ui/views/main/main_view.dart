@@ -59,15 +59,15 @@ class MainView extends StackedView<MainViewModel> {
             unselectedItemColor: Theme.of(
               context,
             ).textTheme.bodyLarge!.color!.withOpacity(.4),
-            selectedFontSize: 15,
-            unselectedFontSize: 15,
+            selectedFontSize: 16,
+            unselectedFontSize: 16,
             items: [
               BottomNavigationBarItem(
                 icon: Padding(
                   padding: const EdgeInsets.only(bottom: 2.0),
                   child: SvgPicture.asset(
                     "assets/svgs/dashboard_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.svg",
-                    height: 28,
+                    height: 30,
                     color:
                         viewModel.currentIndex == 0
                             ? const Color(0xff5645F5)
@@ -83,7 +83,7 @@ class MainView extends StackedView<MainViewModel> {
                   padding: const EdgeInsets.only(bottom: 2.0),
                   child: SvgPicture.asset(
                     "assets/svgs/account_balance_wallet_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.svg",
-                    height: 28,
+                    height: 30,
                     color:
                         viewModel.currentIndex == 1
                             ? const Color(0xff5645F5)
@@ -99,7 +99,7 @@ class MainView extends StackedView<MainViewModel> {
                   padding: const EdgeInsets.only(bottom: 2.0),
                   child: SvgPicture.asset(
                     "assets/svgs/settings_tab.svg",
-                    height: 28,
+                    height: 30,
                     color:
                         viewModel.currentIndex == 2
                             ? const Color(0xff5645F5)

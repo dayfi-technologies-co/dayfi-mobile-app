@@ -39,31 +39,34 @@ class SettingsView extends StackedView<SettingsViewModel> {
         return AppScaffold(
           backgroundColor: const Color(0xffF6F5FE),
           body: SafeArea(
-              child: model.isLoading
-                  ? const Center(child: CupertinoActivityIndicator())
-                  : model.hasError // Use hasError for cleaner error checking
-                      ? Center(
-                          child: Text(model.error
-                              .toString())) // Consider improving error display
-                      : (model.wallets?.isEmpty ?? true) // Safer null check
-                          ? _buildBody(
-                              context,
-                              viewModel,
-                              Wallet(
-                                walletId: "",
-                                userId: "",
-                                walletReference: "",
-                                accountName: "",
-                                accountNumber: "",
-                                bankName: "",
-                                balance: "0",
-                                currency: "",
-                                provider: "",
-                                createdAt: "",
-                                updatedAt: "",
-                              ),
-                            )
-                          : _buildBody(context, viewModel, model.wallets![0])),
+            child:
+                model.isLoading
+                    ? const Center(child: CupertinoActivityIndicator())
+                    : model
+                        .hasError // Use hasError for cleaner error checking
+                    ? Center(
+                      child: Text(model.error.toString()),
+                    ) // Consider improving error display
+                    : (model.wallets?.isEmpty ?? true) // Safer null check
+                    ? _buildBody(
+                      context,
+                      viewModel,
+                      Wallet(
+                        walletId: "",
+                        userId: "",
+                        walletReference: "",
+                        accountName: "",
+                        accountNumber: "",
+                        bankName: "",
+                        balance: "0",
+                        currency: "",
+                        provider: "",
+                        createdAt: "",
+                        updatedAt: "",
+                      ),
+                    )
+                    : _buildBody(context, viewModel, model.wallets![0]),
+          ),
         );
       },
     );
@@ -110,125 +113,160 @@ class SettingsView extends StackedView<SettingsViewModel> {
             children: [
               for (int i = 0; i < viewModel.settingsSections.length; i++)
                 Column(
-                  children: [
-                    Container(
-                      width: MediaQuery.of(context).size.width,
-                      color: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 4.0,
-                        horizontal: 24.0,
-                      ),
-                      child: Text(
-                        viewModel.settingsSections[i].header,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF302D53),
-                        ),
-                      ),
-                    ),
-                    ListView(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
                       children: [
-                        for (int j = 0;
-                            j <
-                                viewModel.settingsSections[i]
-                                    .settingsSectionTiles.length;
-                            j++)
-                          InkWell(
-                            splashColor: Colors.transparent,
-                            highlightColor: Colors.transparent,
-                            splashFactory: NoSplash.splashFactory,
-                            onTap: () {
-                              final title = viewModel.settingsSections[i]
-                                  .settingsSectionTiles[j].title;
-
-                              final actions = {
-                                "Profile Information": () => viewModel
-                                    .navigationService
-                                    .navigateToProfileView(),
-                                "Log Out": () =>
-                                    _showLogOutBottomSheet(context, viewModel),
-                                "Reset Transaction PIN": () => viewModel
-                                    .navigationService
-                                    .navigateToTransactionPinSetView(),
-                                "Change Transaction PIN": () => viewModel
-                                    .navigationService
-                                    .navigateToTransactionPinChangeView(),
-                                "Change Password": () => viewModel
-                                    .navigationService
-                                    .navigateToPasswordChangeView(),
-                                "Saved Banks": () => viewModel.navigationService
-                                    .navigateToLinkedBanksView(),
-                                "FAQs": () => viewModel.navigationService
-                                    .navigateToFaqsView(),
-                                "Latest Updates": () => viewModel
-                                    .navigationService
-                                    .navigateToBlogView(),
-                                "Official Website": () async {
-                                  final url = Uri.parse('https://dayfi.co');
-                                  try {
-                                    await launchUrl(url,
-                                        mode: LaunchMode.inAppBrowserView);
-                                  } catch (e) {
-                                    print('Error launching URL: $e');
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content:
-                                            Text('Error launching URL: $e'),
-                                      ),
-                                    );
-                                  }
-                                },
-                              };
-                              final action = actions[title];
-                              if (action != null) action();
-                            },
-                            child: Container(
-                              width: MediaQuery.of(context).size.width,
-                              padding: const EdgeInsets.fromLTRB(
-                                  0.0, 18.0, 0.0, 22.5),
-                              margin:
-                                  const EdgeInsets.symmetric(horizontal: 24.0),
-                              decoration: BoxDecoration(
-                                color: Colors.transparent,
-                                border: j !=
-                                        viewModel.settingsSections[i]
-                                                .settingsSectionTiles.length -
-                                            1
-                                    ? Border(
-                                        bottom: BorderSide(
-                                          color: Colors.grey.shade300,
-                                          width: 1,
-                                        ),
-                                      )
-                                    : null,
-                              ),
-                              child: Row(
-                                children: [
-                                  _buildLeadingIcon(viewModel
-                                      .settingsSections[i]
-                                      .settingsSectionTiles[j]),
-                                  const SizedBox(width: 12),
-                                  _buildTitleAndDescription(
-                                    viewModel.settingsSections[i]
-                                        .settingsSectionTiles[j],
-                                    context,
-                                  ),
-                                  _buildTrailingChevron(),
-                                ],
-                              ),
+                        Container(
+                          width: MediaQuery.of(context).size.width,
+                          color: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 4.0,
+                            horizontal: 24.0,
+                          ),
+                          child: Text(
+                            viewModel.settingsSections[i].header,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF302D53),
                             ),
-                          )
-                        // .animate()
-                        // .fadeIn(
-                        //     duration: 320.00.ms, curve: Curves.easeInOutCirc)
-                        // .slideY(begin: 0.45, end: 0, duration: (600).ms),
+                          ),
+                        ),
+                        ListView(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          children: [
+                            for (
+                              int j = 0;
+                              j <
+                                  viewModel
+                                      .settingsSections[i]
+                                      .settingsSectionTiles
+                                      .length;
+                              j++
+                            )
+                              InkWell(
+                                splashColor: Colors.transparent,
+                                highlightColor: Colors.transparent,
+                                splashFactory: NoSplash.splashFactory,
+                                onTap: () {
+                                  final title =
+                                      viewModel
+                                          .settingsSections[i]
+                                          .settingsSectionTiles[j]
+                                          .title;
+
+                                  final actions = {
+                                    "Profile Information":
+                                        () =>
+                                            viewModel.navigationService
+                                                .navigateToProfileView(),
+                                    "Log Out":
+                                        () => _showLogOutBottomSheet(
+                                          context,
+                                          viewModel,
+                                        ),
+                                    "Reset Transaction PIN":
+                                        () =>
+                                            viewModel.navigationService
+                                                .navigateToTransactionPinSetView(),
+                                    "Change Transaction PIN":
+                                        () =>
+                                            viewModel.navigationService
+                                                .navigateToTransactionPinChangeView(),
+                                    "Change Password":
+                                        () =>
+                                            viewModel.navigationService
+                                                .navigateToPasswordChangeView(),
+                                    "Saved Banks":
+                                        () =>
+                                            viewModel.navigationService
+                                                .navigateToLinkedBanksView(),
+                                    "FAQs":
+                                        () =>
+                                            viewModel.navigationService
+                                                .navigateToFaqsView(),
+                                    "Latest Updates":
+                                        () =>
+                                            viewModel.navigationService
+                                                .navigateToBlogView(),
+                                    "Official Website": () async {
+                                      final url = Uri.parse('https://dayfi.co');
+                                      try {
+                                        await launchUrl(
+                                          url,
+                                          mode: LaunchMode.inAppBrowserView,
+                                        );
+                                      } catch (e) {
+                                        print('Error launching URL: $e');
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Error launching URL: $e',
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    },
+                                  };
+                                  final action = actions[title];
+                                  if (action != null) action();
+                                },
+                                child: Container(
+                                  width: MediaQuery.of(context).size.width,
+                                  padding: const EdgeInsets.fromLTRB(
+                                    0.0,
+                                    18.0,
+                                    0.0,
+                                    22.5,
+                                  ),
+                                  margin: const EdgeInsets.symmetric(
+                                    horizontal: 24.0,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.transparent,
+                                    border:
+                                        j !=
+                                                viewModel
+                                                        .settingsSections[i]
+                                                        .settingsSectionTiles
+                                                        .length -
+                                                    1
+                                            ? Border(
+                                              bottom: BorderSide(
+                                                color: Colors.grey.shade300,
+                                                width: 1,
+                                              ),
+                                            )
+                                            : null,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      _buildLeadingIcon(
+                                        viewModel
+                                            .settingsSections[i]
+                                            .settingsSectionTiles[j],
+                                      ),
+                                      const SizedBox(width: 12),
+                                      _buildTitleAndDescription(
+                                        viewModel
+                                            .settingsSections[i]
+                                            .settingsSectionTiles[j],
+                                        context,
+                                      ),
+                                      _buildTrailingChevron(),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            // .animate()
+                            // .fadeIn(
+                            //     duration: 320.00.ms, curve: Curves.easeInOutCirc)
+                            // .slideY(begin: 0.45, end: 0, duration: (600).ms),
+                          ],
+                        ),
                       ],
                     )
-                  ],
-                )
                     .animate()
                     .fadeIn(duration: 300.ms, curve: Curves.easeInOutCirc)
                     .slideY(begin: 0.0, end: 0, duration: (300).ms),
@@ -236,7 +274,7 @@ class SettingsView extends StackedView<SettingsViewModel> {
               // .fadeIn(duration: 320.00.ms, curve: Curves.easeInOutCirc)
               // .slideY(begin: 0.45, end: 0, duration: (600).ms),
             ],
-          )
+          ),
         ],
       ),
     );
@@ -265,11 +303,11 @@ class SettingsView extends StackedView<SettingsViewModel> {
           Text(
             tile.title,
             style: TextStyle(
-              fontSize: 15.sp,
-              fontWeight: FontWeight.w600,
+              fontSize: 15.00.sp,
+              fontWeight: FontWeight.w700,
               height: 1.450,
-              fontFamily: 'Boldonse',
-              letterSpacing: .255,
+              fontFamily: 'Karla',
+              letterSpacing: -.06,
               color: Color(0xff2A0079),
             ),
           ),
@@ -328,8 +366,9 @@ class SettingsView extends StackedView<SettingsViewModel> {
             CircleAvatar(
               radius: 24,
               backgroundColor: Colors.white,
-              backgroundImage:
-                  const NetworkImage('https://avatar.iran.liara.run/public/52'),
+              backgroundImage: const NetworkImage(
+                'https://avatar.iran.liara.run/public/52',
+              ),
             ),
             SizedBox(width: 16.w),
             Column(
@@ -338,16 +377,16 @@ class SettingsView extends StackedView<SettingsViewModel> {
                 wallet.dayfiId.toString() == "null"
                     ? const SizedBox()
                     : Text(
-                        "@${wallet.dayfiId}",
-                        style: TextStyle(
-                          fontFamily: 'Boldonse',
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                          letterSpacing: 0.00,
-                          height: 1.450,
-                          color: Color(0xff2A0079),
-                        ),
+                      "@${wallet.dayfiId}",
+                      style: TextStyle(
+                        fontFamily: 'Boldonse',
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                        letterSpacing: 0.00,
+                        height: 1.450,
+                        color: Color(0xff2A0079),
                       ),
+                    ),
                 SizedBox(height: wallet.dayfiId.toString() == "null" ? 0 : 6),
                 Text(
                   viewModel.user == null ||
@@ -373,37 +412,39 @@ class SettingsView extends StackedView<SettingsViewModel> {
         wallet.dayfiId.toString() == "null"
             ? const SizedBox()
             : GestureDetector(
-                onTap: () {
-                  Clipboard.setData(ClipboardData(text: wallet.dayfiId!));
-                },
-                child: Row(
-                  children: [
-                    Text(
-                      "copy",
-                      style: TextStyle(
-                        fontFamily: 'Karla',
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
-                        letterSpacing: 0.00,
-                        height: 1.450,
-                        color: Color(0xff5645F5), // innit
-                      ),
-                    ),
-                    SizedBox(width: 6),
-                    Icon(
-                      Icons.copy,
+              onTap: () {
+                Clipboard.setData(ClipboardData(text: wallet.dayfiId!));
+              },
+              child: Row(
+                children: [
+                  Text(
+                    "copy",
+                    style: TextStyle(
+                      fontFamily: 'Karla',
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                      letterSpacing: 0.00,
+                      height: 1.450,
                       color: Color(0xff5645F5), // innit
-                      size: 17,
                     ),
-                  ],
-                ),
+                  ),
+                  SizedBox(width: 6),
+                  Icon(
+                    Icons.copy,
+                    color: Color(0xff5645F5), // innit
+                    size: 17,
+                  ),
+                ],
               ),
+            ),
       ],
     );
   }
 
   void _showLogOutBottomSheet(
-      BuildContext context, SettingsViewModel viewModel) {
+    BuildContext context,
+    SettingsViewModel viewModel,
+  ) {
     showModalBottomSheet(
       // barrierColor: ,
       context: context,
@@ -478,7 +519,7 @@ class SettingsView extends StackedView<SettingsViewModel> {
         Text(
           'Are you sure?',
           style: TextStyle(
-            fontSize: 20.sp,
+            fontSize: 16.sp,
             fontWeight: FontWeight.w600,
             height: 1.2,
             fontFamily: 'Boldonse',
@@ -498,12 +539,9 @@ class SettingsView extends StackedView<SettingsViewModel> {
               fontWeight: FontWeight.w600,
               letterSpacing: 0.3,
               height: 1.450,
-              color: Theme.of(context)
-                  .textTheme
-                  .bodyLarge!
-                  .color!
-                  // ignore: deprecated_member_use
-                  .withOpacity(0.75),
+              color: Theme.of(context).textTheme.bodyLarge!.color!
+              // ignore: deprecated_member_use
+              .withOpacity(0.75),
             ),
           ),
         ),
@@ -512,7 +550,9 @@ class SettingsView extends StackedView<SettingsViewModel> {
   }
 
   Widget _buildBottomSheetButtons(
-      BuildContext context, SettingsViewModel viewModel) {
+    BuildContext context,
+    SettingsViewModel viewModel,
+  ) {
     return Column(
       children: [
         FilledBtn(

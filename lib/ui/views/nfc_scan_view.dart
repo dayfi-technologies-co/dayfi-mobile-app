@@ -115,7 +115,7 @@ class _NfcScanViewState extends State<NfcScanView>
         leading: IconButton(
           onPressed: () => Navigator.of(context).pop(),
           icon: const Icon(
-            Icons.arrow_back,
+            Icons.arrow_back_ios,
             color: Color(0xff5645F5),
           ),
         ),

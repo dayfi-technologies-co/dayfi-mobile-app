@@ -21,11 +21,15 @@ class PasscodeViewModel extends BaseViewModel {
   bool _isVerifying = false;
   bool _biometricAvailable = false;
   bool _isLoading = false;
+  List<BiometricType> _availableBiometrics = [];
 
   User? user;
 
   bool get isLoading => _isLoading;
   bool get isBiometricAvailable => _biometricAvailable;
+  List<BiometricType> get availableBiometrics => _availableBiometrics;
+  bool get hasFaceId => _availableBiometrics.contains(BiometricType.face);
+  bool get hasFingerprint => _availableBiometrics.contains(BiometricType.fingerprint);
   String get passcode => _passcode;
   bool get isVerifying => _isVerifying;
 
@@ -59,12 +63,20 @@ class PasscodeViewModel extends BaseViewModel {
     try {
       _biometricAvailable = await _localAuth.canCheckBiometrics &&
           await _localAuth.isDeviceSupported();
+      
+      if (_biometricAvailable) {
+        _availableBiometrics = await _localAuth.getAvailableBiometrics();
+      } else {
+        _availableBiometrics = [];
+      }
+      
       notifyListeners();
     } catch (e) {
       if (kDebugMode) {
         print('Error checking biometric availability: $e');
       }
       _biometricAvailable = false;
+      _availableBiometrics = [];
       notifyListeners();
     }
   }
@@ -75,8 +87,17 @@ class PasscodeViewModel extends BaseViewModel {
 
     try {
       await Future.delayed(const Duration(milliseconds: 3));
+      
+      // Determine the appropriate localized reason based on available biometrics
+      String localizedReason = 'Authenticate to access the app';
+      if (hasFaceId) {
+        localizedReason = 'Use Face ID to access the app';
+      } else if (hasFingerprint) {
+        localizedReason = 'Use Touch ID to access the app';
+      }
+      
       final isAuthenticated = await _localAuth.authenticate(
-        localizedReason: 'Authenticate to access the app',
+        localizedReason: localizedReason,
         options: const AuthenticationOptions(
           biometricOnly: true,
           stickyAuth: true,
@@ -90,9 +111,22 @@ class PasscodeViewModel extends BaseViewModel {
 
       return isAuthenticated;
     } catch (e) {
+      String errorMessage = 'Biometric authentication error: ${e.toString()}';
+      
+      // Provide more specific error messages based on the error type
+      if (e.toString().contains('NotAvailable')) {
+        errorMessage = 'Biometric authentication is not available on this device';
+      } else if (e.toString().contains('NotEnrolled')) {
+        errorMessage = 'No biometric data enrolled. Please set up Face ID or Touch ID in Settings';
+      } else if (e.toString().contains('LockedOut')) {
+        errorMessage = 'Biometric authentication is locked. Please use your passcode';
+      } else if (e.toString().contains('PermanentlyLockedOut')) {
+        errorMessage = 'Biometric authentication is permanently locked. Please use your passcode';
+      }
+      
       TopSnackbar.show(
         navigationService.navigatorKey!.currentContext!,
-        message: 'Biometric authentication error: ${e.toString()}',
+        message: errorMessage,
         isError: true,
       );
       return false;

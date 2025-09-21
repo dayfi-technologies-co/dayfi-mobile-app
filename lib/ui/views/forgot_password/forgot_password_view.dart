@@ -30,11 +30,14 @@ class ForgotPasswordView extends StackedView<ForgotPasswordViewModel> {
             resizeToAvoidBottomInset: false,
             body: ClipRRect(
               borderRadius: BorderRadius.circular(24),
-              child: Image.asset(
-                'assets/images/backgroud.png',
-                fit: BoxFit.cover,
-                width: MediaQuery.of(context).size.width,
-                height: MediaQuery.of(context).size.height,
+              child: Opacity(
+                opacity: .1,
+                child: Image.asset(
+                  'assets/images/background.png',
+                  fit: BoxFit.cover,
+                  width: MediaQuery.of(context).size.width,
+                  height: MediaQuery.of(context).size.height,
+                ),
               ),
             ),
           )
@@ -57,7 +60,7 @@ class ForgotPasswordView extends StackedView<ForgotPasswordViewModel> {
                     child: IconButton(
                       onPressed: () => viewModel.navigationService.back(),
                       icon: const Icon(
-                        Icons.arrow_back,
+                        Icons.arrow_back_ios,
                         color: Color(0xff5645F5),
                       ),
                     ),

@@ -108,7 +108,7 @@ Widget buildBottomSheetHeader(
       Text(
         title,
         style: TextStyle(
-          fontSize: 20.sp,
+          fontSize: 16.sp,
           fontWeight: FontWeight.w600,
           height: 1.2,
           fontFamily: 'Boldonse',

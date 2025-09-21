@@ -13,84 +13,82 @@ class ReenterPasscodeView extends StatelessWidget {
   Widget build(BuildContext context) {
     return ViewModelBuilder<ReenterPasscodeViewModel>.reactive(
       viewModelBuilder: () => ReenterPasscodeViewModel(),
-      builder: (context, model, child) => AppScaffold(
-        // resizeToAvoidBottomInset: false,
-        backgroundColor: Color(0xffF6F5FE),
-        body: Container(
-          height: MediaQuery.of(context).size.height,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
+      builder:
+          (context, model, child) => AppScaffold(
+            // resizeToAvoidBottomInset: false,
+            backgroundColor: Color(0xffF6F5FE),
+            body: Container(
+              height: MediaQuery.of(context).size.height,
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  verticalSpace(12.h),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 8.0),
-                    child: IconButton(
-                        onPressed: () {
-                          model.navigationService.back();
-                        },
-                        icon: const Icon(
-                          Icons.arrow_back,
-                          color: Color(0xff5645F5), // innit
-                        )),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      verticalSpace(12.h),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8.0),
+                        child: IconButton(
+                          onPressed: () {
+                            model.navigationService.back();
+                          },
+                          icon: const Icon(
+                            Icons.arrow_back_ios,
+                            color: Color(0xff5645F5), // innit
+                          ),
+                        ),
+                      ),
+                      verticalSpace(16.h),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                        child: Text(
+                          "Re-enter passcode",
+                          style: TextStyle(
+                            fontSize: 22.00,
+                            fontFamily: 'Boldonse',
+                            height: 1.2,
+                            letterSpacing: 0.00,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xff2A0079),
+                            // color: Color( 0xff5645F5), // innit
+                          ),
+                          textAlign: TextAlign.start,
+                        ),
+                      ),
+                      verticalSpace(8.h),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                        child: Text(
+                          "Enter 6-digit passcode to confirm",
+                          style: TextStyle(
+                            fontFamily: 'Karla',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.3,
+                            height: 1.450,
+                            color: Color(0xFF302D53),
+                          ),
+                          textAlign: TextAlign.start,
+                        ),
+                      ),
+                    ],
                   ),
-                  verticalSpace(16.h),
+                  Padding(padding: const EdgeInsets.fromLTRB(24, 0, 24, 0.0)),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                    child: Text(
-                      "Re-enter passcode",
-                      style: TextStyle(
-                        fontSize: 22.00,
-                        fontFamily: 'Boldonse',
-                        height: 1.2,
-                        letterSpacing: 0.00,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xff2A0079),
-                        // color: Color( 0xff5645F5), // innit
-                      ),
-                      textAlign: TextAlign.start,
+                    child: PasscodeWidget(
+                      passcodeLength: 6,
+                      currentPasscode: model.passcode,
+                      onPasscodeChanged:
+                          (value) => model.updatePasscode(context, value),
                     ),
                   ),
-                  verticalSpace(8.h),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                    child: Text(
-                      "Enter 6-digit passcode to confirm",
-                      style: TextStyle(
-                        fontFamily: 'Karla',
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.3,
-                        height: 1.450,
-                        color: Color(0xFF302D53),
-                      ),
-                      textAlign: TextAlign.start,
-                    ),
-                  ),
+                  Padding(padding: const EdgeInsets.fromLTRB(24, 0, 24, 0.0)),
                 ],
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 0, 24, 0.0),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: PasscodeWidget(
-                  passcodeLength: 6,
-                  currentPasscode: model.passcode,
-                  onPasscodeChanged: (value) =>
-                      model.updatePasscode(context, value),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 0, 24, 0.0),
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
     );
   }
 }
@@ -122,12 +120,14 @@ class PasscodeWidget extends StatelessWidget {
                 height: 22,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: index < currentPasscode.length
-                      ? const Color(0xff5645F5)
-                      : Colors.transparent,
+                  color:
+                      index < currentPasscode.length
+                          ? const Color(0xff5645F5)
+                          : Colors.transparent,
                   border: Border.all(
-                      color: const Color(0xff5645F5), // innit
-                      width: 2),
+                    color: const Color(0xff5645F5), // innit
+                    width: 2,
+                  ),
                 ),
               ),
             ),
@@ -161,15 +161,15 @@ class PasscodeWidget extends StatelessWidget {
               final number = (index + 1).toString();
               return _buildNumberButton(number);
             }),
-            const SizedBox
-                .shrink(), // Placeholder for the fingerprint button (not needed)
+            const SizedBox.shrink(), // Placeholder for the fingerprint button (not needed)
             _buildNumberButton('0'),
             _buildIconButton(
-              icon: Icons.arrow_back,
+              icon: Icons.arrow_back_ios,
               onTap: () {
                 if (currentPasscode.isNotEmpty) {
                   onPasscodeChanged(
-                      currentPasscode.substring(0, currentPasscode.length - 1));
+                    currentPasscode.substring(0, currentPasscode.length - 1),
+                  );
                 }
               },
             ),
@@ -195,7 +195,8 @@ class PasscodeWidget extends StatelessWidget {
           child: Text(
             number,
             style: const TextStyle(
-              fontSize: 28.00,
+              fontSize: 24.00,
+              fontFamily: 'Boldonse',
               fontWeight: FontWeight.w600,
               color: Colors.black87,
             ),

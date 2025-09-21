@@ -13,6 +13,7 @@ import 'package:stacked_shared/stacked_shared.dart';
 
 import '../data/storage/secure_storage_service.dart';
 import '../services/api/database_service.dart';
+import '../services/app_update_service.dart';
 
 final locator = StackedLocator.instance;
 
@@ -30,4 +31,5 @@ Future<void> setupLocator({
   locator.registerLazySingleton(() => NavigationService());
   locator.registerLazySingleton(() => SecureStorageService());
   locator.registerLazySingleton(() => DatabaseService());
+  locator.registerLazySingleton(() => AppUpdateService());
 }

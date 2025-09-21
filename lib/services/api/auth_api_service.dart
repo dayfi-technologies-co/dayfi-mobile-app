@@ -16,7 +16,7 @@ import 'package:bcrypt/bcrypt.dart';
 
 class AuthApiService {
   static const String _baseUrl =
-      'https://dayfi-app-31eb033892cf.herokuapp.com/api/v1';
+  'https://dayfi-staging-4417d7a6dfe0.herokuapp.com/api/v1';
 
   Future<AuthResponse> signup({
     required String firstName,
@@ -318,12 +318,7 @@ class AuthApiService {
       AuthResponse authResponse =
           AuthResponse.fromJson(json.decode(response.body));
 
-      // Save user details to secure storage
-      final secureStorage = SecureStorageService();
-      await secureStorage.write(
-        'user',
-        json.encode(authResponse.data.toJson()),
-      );
+      // Don't save user data during logout - this is handled by the viewmodel
       return authResponse;
     } else {
       throw Exception('Failed: ${response.body}');

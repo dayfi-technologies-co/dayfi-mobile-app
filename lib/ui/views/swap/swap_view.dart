@@ -42,7 +42,7 @@ class SwapView extends StackedView<SwapViewModel> {
         leading: IconButton(
           onPressed: () => model.navigationService.back(),
           icon: const Icon(
-            Icons.arrow_back,
+            Icons.arrow_back_ios,
             color: Color(0xff5645F5),
           ),
         ),

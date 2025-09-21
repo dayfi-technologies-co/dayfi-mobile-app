@@ -31,17 +31,28 @@ class SettingsViewModel extends BaseViewModel {
         ),
       ],
     ),
-    SettingsSectionModel(
-      header: 'Banks',
-      settingsSectionTiles: [
-        SettingSectionTileModel(
-          title: "Saved Banks",
-          description: "Manage your saved bank accounts",
-          icon:
-              "assets/svgs/account_balance_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.svg",
-        ),
-      ],
-    ),
+    // SettingsSectionModel(
+    //   header: 'Banks',
+    //   settingsSectionTiles: [
+    //     SettingSectionTileModel(
+    //       title: "Saved Banks",
+    //       description: "Manage your saved bank accounts",
+    //       icon:
+    //           "assets/svgs/account_balance_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.svg",
+    //     ),
+    //   ],
+    // ),
+    //    SettingsSectionModel(
+    //   header: 'Referral',
+    //   settingsSectionTiles: [
+    //     SettingSectionTileModel(
+    //       title: "Invite and Earn",
+    //       description: "Get rewards when you refer friends",
+    //       icon:
+    //           "assets/svgs/featured_seasonal_and_gifts_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.svg",
+    //     ),
+    //   ],
+    // ),
     SettingsSectionModel(
       header: 'Security Settings',
       settingsSectionTiles: [
@@ -66,17 +77,6 @@ class SettingsViewModel extends BaseViewModel {
           description: "Enhance your account security with 2FA",
           icon:
               "assets/svgs/encrypted_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.svg",
-        ),
-      ],
-    ),
-    SettingsSectionModel(
-      header: 'Referral',
-      settingsSectionTiles: [
-        SettingSectionTileModel(
-          title: "Invite and Earn",
-          description: "Get rewards when you refer friends",
-          icon:
-              "assets/svgs/featured_seasonal_and_gifts_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.svg",
         ),
       ],
     ),
@@ -142,15 +142,29 @@ class SettingsViewModel extends BaseViewModel {
         throw Exception('No token found. Please log in again.');
       }
 
+      // Ensure user is loaded before attempting logout
+      if (user == null) {
+        await loadUser();
+      }
+
+      if (user?.token == null) {
+        throw Exception('User token not available. Please log in again.');
+      }
+
       final response = await _apiService.logout(jwtToken: user!.token!);
 
       if (response.code == 200) {
+        // Clear all stored data
         await _secureStorage.delete('user_token');
         await _secureStorage.delete('user_passcode');
         await _secureStorage.delete('first_time_user');
         await _secureStorage.delete('user');
         await _secureStorage.delete('password');
         await _secureStorage.deleteAll();
+
+        // Clear user from memory
+        user = null;
+        notifyListeners();
 
         navigationService.clearStackAndShow(Routes.loginView);
       } else {
