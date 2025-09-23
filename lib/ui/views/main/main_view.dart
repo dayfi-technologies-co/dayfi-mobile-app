@@ -85,7 +85,7 @@ class MainView extends StackedView<MainViewModel> {
                 icon: Padding(
                   padding: const EdgeInsets.only(bottom: 2.0),
                   child: SvgPicture.asset(
-                    "assets/svgs/assets/svgs/coins_tab.svg",
+                    "assets/svgs/coins_tab.svg",
                     height: 30,
                     color:
                         viewModel.currentIndex == 1
