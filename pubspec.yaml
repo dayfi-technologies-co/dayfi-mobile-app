@@ -1,5 +1,5 @@
 name: dayfi
-description: "A new Flutter project."
+description: "Dayfi - Your digital financial companion"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -10,97 +10,130 @@ version: 1.0.0+1
 environment:
   sdk: ^3.7.2
 
-
 dependencies:
   flutter:
     sdk: flutter
-  flutter_localizations:
-    sdk: flutter
-  stacked: ^3.4.0
-  stacked_services: ^1.1.0
-  flutter_nfc_kit: ^3.6.0
-  collection: ^1.19.0
+
   cupertino_icons: ^1.0.8
-  drift: ^2.22.1
-  sqlite3_flutter_libs: ^0.5.39
-  path_provider: ^2.1.5
-  path: 
-  intl: ^0.20.2
-  url_launcher: ^6.3.1
-  webview_flutter: ^4.10.0
-  package_info_plus: ^8.1.2
-  ndef: ^0.3.4
-  flutter_secure_storage: ^10.0.0-beta.4
+  image_picker: ^1.1.2
+
+  # State management and async
+  flutter_riverpod: ^2.4.0
+  hooks_riverpod: ^2.4.0
+  flutter_hooks: ^0.20.5
+  freezed_annotation: ^2.4.1
+  dio: ^5.4.0
+  gap: ^3.0.1
+  device_info_plus: ^9.0.3
   flutter_screenutil: ^5.9.3
+  get_it: ^8.2.0
+  flutter_secure_storage: ^9.2.4
   shared_preferences: ^2.5.3
-  pin_code_fields: ^8.0.1
-  dio: ^5.8.0+1
-  dio_retry_plus: ^2.0.8
-  flutter_dotenv: ^6.0.0
-  flutter_svg: ^2.1.0
-  google_fonts: ^6.2.1
-  ml_card_scanner: ^0.2.3
-  lottie: ^3.3.1
-  loading_indicator: ^3.1.1
-  local_auth: ^2.3.0
-  card_scanner: ^1.0.2
-  fl_chart: ^1.0.0
-  encrypt: ^5.0.3
-  sqflite: ^2.4.2
-  pull_to_refresh: ^2.0.0
-  share_plus: ^11.0.0
-  bcrypt: ^1.1.3
-  flutter_animate: ^4.5.2
-  another_flushbar: ^1.12.30
-  cached_network_image: ^3.4.1
-  shimmer: ^3.0.0
-  flutter_widget_from_html: ^0.17.1
-  dotted_border: ^3.1.0
-  qr_flutter: ^4.1.0
-  
-  # nfc_manager:
+  firebase_analytics: ^12.0.1
+  firebase_core: ^4.1.0
+  firebase_messaging: ^16.0.1
+  firebase_crashlytics: ^5.0.1
+  path_provider: ^2.1.5
+  flutter_localization: ^0.3.3
+  flutter_svg: ^2.2.1
+  pinput: ^5.0.2
+  intl: ^0.20.2
 
 dev_dependencies:
-  analyzer: ^7.7.1
-  lints: ^6.0.0
   flutter_test:
     sdk: flutter
-  drift_dev: ^2.22.1
-  build_runner: ^2.4.14
-  flutter_launcher_icons: ^0.14.2
-  stacked_generator: ^2.0.0
+  flutter_lints: ^5.0.0
+  flutter_flavorizr: ^2.4.1
+  flutter_launcher_icons: ^0.12.0
+
+  # Code generation
+  build_runner: ^2.4.8
+  flutter_gen_runner: ^5.1.0+1
+
+flutter_gen:
+  integrations:
+    flutter_svg: true
+
+flavorizr:
+  app:
+    android:
+      flavorDimensions: "flavor-type"
+  flavors:
+    dev:
+      app:
+        name: "Dayfi Test"
+      android:
+        applicationId: "com.dayfi.test"
+      ios:
+        bundleId: "com.dayfi.test"
+        firebase:
+          config: "firebase/GoogleService-Info-dev.plist"
+    pilot:
+      app:
+        name: "Dayfi Pilot"
+      android:
+        applicationId: "com.dayfi.pilot"
+      ios:
+        bundleId: "com.dayfi.pilot"
+        firebase:
+          config: "firebase/GoogleService-Info-pilot.plist"
+    prod:
+      app:
+        name: "Dayfi"
+      android:
+        applicationId: "com.dayfi.prod"
+      ios:
+        bundleId: "com.dayfi.prod"
+        firebase:
+          config: "firebase/GoogleService-Info-prod.plist"
 
 flutter:
-  uses-material-design: true
   generate: true
-  # synthetic-package: false
-  assets:
-    - assets/
-    - assets/cards/
-    - assets/icons/
-    - assets/html/
-    - assets/images/
-    - assets/svgs/
-  fonts:
+  uses-material-design: true
 
-    - family: CabinetGrotesk
+  # To add assets to your application, add an assets section, like this:
+  assets:
+    - assets/images/
+    - assets/fonts/
+    - assets/icons/pngs/
+    - assets/icons/svgs/
+
+  # An image asset can refer to one or more resolution-specific "variants", see
+  # https://flutter.dev/to/resolution-aware-images
+
+  # For details regarding adding assets from package dependencies, see
+  # https://flutter.dev/to/asset-from-package
+
+  # Custom fonts configuration
+  fonts:
+    - family: Readex Pro
       fonts:
-        - asset: assets/fonts/cabinet_grotesk/CabinetGrotesk-Black.otf
-          weight: 900
-        - asset: assets/fonts/cabinet_grotesk/CabinetGrotesk-Bold.otf
-          weight: 700
-        - asset: assets/fonts/cabinet_grotesk/CabinetGrotesk-Extrabold.otf
-          weight: 800
-        - asset: assets/fonts/cabinet_grotesk/CabinetGrotesk-Extralight.otf
+        - asset: assets/fonts/ReadexPro-ExtraLight.ttf
           weight: 200
-        - asset: assets/fonts/cabinet_grotesk/CabinetGrotesk-Light.otf
+        - asset: assets/fonts/ReadexPro-Light.ttf
           weight: 300
-        - asset: assets/fonts/cabinet_grotesk/CabinetGrotesk-Medium.otf
-          weight: 500
-        - asset: assets/fonts/cabinet_grotesk/CabinetGrotesk-Regular.otf
+        - asset: assets/fonts/ReadexPro-Regular.ttf
           weight: 400
-        - asset: assets/fonts/cabinet_grotesk/CabinetGrotesk-Thin.otf
+        - asset: assets/fonts/ReadexPro-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/ReadexPro-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/ReadexPro-Bold.ttf
+          weight: 700
+    - family: Youth
+      fonts:
+        - asset: assets/fonts/Youth-Thin.otf
           weight: 100
+        - asset: assets/fonts/Youth-Light.otf
+          weight: 300
+        - asset: assets/fonts/Youth-Regular.otf
+          weight: 400
+        - asset: assets/fonts/Youth-Medium.otf
+          weight: 500
+        - asset: assets/fonts/Youth-Bold.otf
+          weight: 700
+        - asset: assets/fonts/Youth-Black.otf
+          weight: 900
 
     - family: SpaceGrotesk
       fonts:
@@ -116,9 +149,6 @@ flutter:
           weight: 600
         - asset: assets/fonts/space_grotesk/SpaceGrotesk-VariableFont_wght.ttf
 
-    - family: FatFrank
-      fonts:
-        - asset: assets/fonts/fonnts.com-FatFrank_Heavy.otf
     - family: Karla
       fonts:
         - asset: assets/fonts/karla/Karla-Regular.ttf
@@ -157,34 +187,6 @@ flutter:
           weight: 200
           style: italic
 
-    - family: Readex Pro
-      fonts:
-        - asset: assets/fonts/ReadexPro-ExtraLight.ttf
-          weight: 200
-        - asset: assets/fonts/ReadexPro-Light.ttf
-          weight: 300
-        - asset: assets/fonts/ReadexPro-Regular.ttf
-          weight: 400
-        - asset: assets/fonts/ReadexPro-Medium.ttf
-          weight: 500
-        - asset: assets/fonts/ReadexPro-SemiBold.ttf
-          weight: 600
-        - asset: assets/fonts/ReadexPro-Bold.ttf
-          weight: 700
-    - family: Youth
-      fonts:
-        - asset: assets/fonts/Youth-Thin.otf
-          weight: 100
-        - asset: assets/fonts/Youth-Light.otf
-          weight: 300
-        - asset: assets/fonts/Youth-Regular.otf
-          weight: 400
-        - asset: assets/fonts/Youth-Medium.otf
-          weight: 500
-        - asset: assets/fonts/Youth-Bold.otf
-          weight: 700
-        - asset: assets/fonts/Youth-Black.otf
-          weight: 900
     - family: Boldonse
       fonts:
         - asset: assets/fonts/boldonse.otf
