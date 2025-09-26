@@ -9,7 +9,6 @@ import '../../components/top_snack_bar.dart';
 
 class LoginViewModel extends BaseViewModel {
   final _apiService = AuthApiService();
-  final _dialogService = DialogService();
   final NavigationService _navigationService = locator<NavigationService>();
 
   String _email = '';
@@ -56,8 +55,9 @@ class LoginViewModel extends BaseViewModel {
   String? _validatePassword(String value) {
     if (value.isEmpty) return 'Password is required';
     if (value.length < 8) return 'Password must be at least 8 characters';
-    if (!RegExp(r'^(?=.*[A-Z])(?=.*[!@#$&*])(?=.*[0-9]).{8,}$')
-        .hasMatch(value)) {
+    if (!RegExp(
+      r'^(?=.*[A-Z])(?=.*[!@#$&*])(?=.*[0-9]).{8,}$',
+    ).hasMatch(value)) {
       return 'Password must contain uppercase, number, and special character';
     }
     return null;
@@ -74,23 +74,42 @@ class LoginViewModel extends BaseViewModel {
         password: _password,
       );
 
-      TopSnackbar.show(context, message: response.message);
-      await Future.delayed(const Duration(milliseconds: 500));
+      if (response.code == 200) {
+        print('Signin successful: ${response.message}');
 
-      navigationService.clearStackAndShow(Routes.createPasscodeView);
+        // Show success message
+        _showSnackBar(context, response.message, isError: false);
+
+        _navigationService.clearStackAndShow(Routes.createPasscodeView);
+        ;
+      } else {
+        print('Signin failed: ${response.message}');
+
+        // Show backend error message
+        _showSnackBar(context, response.message, isError: true);
+
+        // Set field-specific errors based on the message
+        // _setFieldErrorsFromMessage(response.message);
+      }
     } catch (e) {
-      final errorMessage = e.toString().contains("404")
-          ? "User not found. Please check your email."
-          : "An error occurred while logging in. Please try again.";
-
-      TopSnackbar.show(
+      print('Signin error: $e');
+      _showSnackBar(
+        // ignore: use_build_context_synchronously
         context,
-        message: errorMessage,
+        e.toString(),
         isError: true,
       );
     } finally {
-      await Future.delayed(const Duration(milliseconds: 500));
       setBusy(false);
+      notifyListeners();
     }
+  }
+
+  void _showSnackBar(
+    BuildContext context,
+    String message, {
+    bool isError = false,
+  }) {
+    TopSnackbar.show(context, message: message, isError: isError);
   }
 }

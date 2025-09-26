@@ -6,7 +6,6 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:dayfi/app/app.locator.dart';
 import 'package:dayfi/data/models/user_model.dart';
-import 'package:dayfi/data/models/wallet_reponse.dart';
 import 'package:dayfi/data/storage/secure_storage_service.dart';
 import 'package:dayfi/ui/views/amount_entry/amount_entry_view.dart';
 import 'package:dayfi/ui/views/recipient_details/recipient_account_model.dart';

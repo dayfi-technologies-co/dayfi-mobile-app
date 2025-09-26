@@ -13,7 +13,6 @@ import 'package:stacked_services/stacked_services.dart';
 
 class RecipientDetailsViewModel extends BaseViewModel {
   final AuthApiService _apiService = AuthApiService();
-  final DialogService _dialogService = locator<DialogService>();
   final NavigationService navigationService = locator<NavigationService>();
   final SecureStorageService _secureStorage = SecureStorageService();
   final DatabaseService _databaseService = DatabaseService();

@@ -52,10 +52,10 @@ class _HomeViewConstants {
   static const double paddingLarge = 24.0;
 
   // Animation
-  static const Duration animationDuration = Duration(milliseconds: 500);
-  static const Duration shortAnimationDuration = Duration(milliseconds: 250);
-  static const Duration initialDelay = Duration(milliseconds: 200);
-  static const Curve animationCurve = Curves.easeOutCubic;
+  static const Duration animationDuration = Duration(milliseconds: 200);
+  static const Duration shortAnimationDuration = Duration(milliseconds: 100);
+  static const Duration initialDelay = Duration(milliseconds: 50);
+  static const Curve animationCurve = Curves.easeOut;
 
   // Text
   static const String fontFamilyBold = 'Boldonse';
@@ -413,35 +413,37 @@ class HomeView extends StackedView<HomeViewModel> {
                     color: Color(0xff2A0079),
                   ),
                 ),
-                GestureDetector(
-                  onTap:
-                      () => _showBeforeCreatingWalletNoticeBottomSheet(
-                        context,
-                        viewModel,
-                        model.wallets ?? [],
+                model.wallets!.isEmpty
+                    ? const SizedBox()
+                    : GestureDetector(
+                      onTap:
+                          () => _showBeforeCreatingWalletNoticeBottomSheet(
+                            context,
+                            viewModel,
+                            model.wallets ?? [],
+                          ),
+                      child: Row(
+                        children: [
+                          SvgPicture.asset(
+                            "assets/svgs/add-sign.svg",
+                            color: Color(0xff5645F5),
+                            height: 12,
+                          ),
+                          SizedBox(width: 12.h),
+                          Text(
+                            "Add New Wallet",
+                            style: TextStyle(
+                              fontSize: 15.sp,
+                              fontWeight: FontWeight.w600,
+                              height: 1.450,
+                              fontFamily: _HomeViewConstants.fontFamilyKarla,
+                              letterSpacing: .255,
+                              color: Color(0xff5645F5), // innit
+                            ),
+                          ),
+                        ],
                       ),
-                  child: Row(
-                    children: [
-                      SvgPicture.asset(
-                        "assets/svgs/add-sign.svg",
-                        color: Color(0xff5645F5),
-                        height: 12,
-                      ),
-                      SizedBox(width: 12.h),
-                      Text(
-                        "Add New Wallet",
-                        style: TextStyle(
-                          fontSize: 15.sp,
-                          fontWeight: FontWeight.w600,
-                          height: 1.450,
-                          fontFamily: _HomeViewConstants.fontFamilyKarla,
-                          letterSpacing: .255,
-                          color: Color(0xff5645F5), // innit
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                    ),
               ],
             ),
           ),
@@ -939,6 +941,7 @@ class HomeView extends StackedView<HomeViewModel> {
               bool hasValidWallet =
                   wallets.isNotEmpty && wallets[0].dayfiId != null;
               bool hasGender = viewModel.user?.gender != null;
+              bool walletsEmpty = wallets.isEmpty;
 
               // Hide item if conditions are met
               if ((hasValidWallet && item.title == "Get a unique username") ||
@@ -964,119 +967,156 @@ class HomeView extends StackedView<HomeViewModel> {
                         updatedAt: '',
                       );
 
+              // Check if item should be disabled when wallets are empty
+              bool isDisabled =
+                  walletsEmpty &&
+                  (item.title == "Get a unique username" ||
+                      item.title == "Invest in stable coins" ||
+                      item.title == "Add new wallet" ||
+                      item.title == "Set up 2FA");
+
               return GestureDetector(
-                    onTap: () {
-                      switch (item.title) {
-                        case "Get a unique username":
-                          _showDayfiBottomSheet(
-                            context,
-                            viewModel,
-                            walletToPass,
-                          );
-                          break;
-                        case "Complete verification":
-                          _showKYCNoticeBottomSheet(
-                            context,
-                            viewModel,
-                            walletToPass,
-                          );
-                          break;
-                        case "Invest in stable coins":
-                          viewModel.navigationService
-                              .navigateToPrepaidInfoView();
-                          break;
-                        case "Add new wallet":
-                          _showBeforeCreatingWalletNoticeBottomSheet(
-                            context,
-                            viewModel,
-                            wallets,
-                          );
-                          break;
-                        default:
-                          print("Unknown menu item tapped: ${item.title}");
-                      }
-                    },
-                    child: Container(
-                      margin: EdgeInsets.symmetric(vertical: 5),
-                      padding: EdgeInsets.all(10.0),
-                      decoration: BoxDecoration(
-                        color: Color(0xffF6F5FE),
-                        borderRadius: BorderRadius.circular(4.0),
-                        border: Border.all(
-                          color: const Color(0xff5645F5).withOpacity(.25),
-                          width: 1.0,
+                    onTap:
+                        isDisabled
+                            ? null
+                            : () {
+                              switch (item.title) {
+                                case "Get a unique username":
+                                  _showDayfiBottomSheet(
+                                    context,
+                                    viewModel,
+                                    walletToPass,
+                                  );
+                                  break;
+                                case "Complete verification":
+                                  _showKYCNoticeBottomSheet(
+                                    context,
+                                    viewModel,
+                                    walletToPass,
+                                  );
+                                  break;
+                                case "Invest in stable coins":
+                                  viewModel.navigationService
+                                      .navigateToPrepaidInfoView();
+                                  break;
+                                case "Add new wallet":
+                                  _showBeforeCreatingWalletNoticeBottomSheet(
+                                    context,
+                                    viewModel,
+                                    wallets,
+                                  );
+                                  break;
+                                default:
+                                  print(
+                                    "Unknown menu item tapped: ${item.title}",
+                                  );
+                              }
+                            },
+                    child: Opacity(
+                      opacity: isDisabled ? 0.5 : 1.0,
+                      child: Container(
+                        margin: EdgeInsets.symmetric(vertical: 5),
+                        padding: EdgeInsets.all(10.0),
+                        decoration: BoxDecoration(
+                          color:
+                              isDisabled
+                                  ? Color(0xffF5F5F5)
+                                  : Color(0xffF6F5FE),
+                          borderRadius: BorderRadius.circular(4.0),
+                          border: Border.all(
+                            color:
+                                isDisabled
+                                    ? const Color(0xffE0E0E0).withOpacity(.5)
+                                    : const Color(0xff5645F5).withOpacity(.25),
+                            width: 1.0,
+                          ),
                         ),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                CircleAvatar(
-                                  radius: 16,
-                                  backgroundColor: Colors.white,
-                                  child: SvgPicture.asset(
-                                    item.icon,
-                                    color: Color(0xff5645F5),
-                                    height: 22,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  CircleAvatar(
+                                    radius: 16,
+                                    backgroundColor:
+                                        isDisabled
+                                            ? Color(0xffF0F0F0)
+                                            : Colors.white,
+                                    child: SvgPicture.asset(
+                                      item.icon,
+                                      color:
+                                          isDisabled
+                                              ? Color(0xff9E9E9E)
+                                              : Color(0xff5645F5),
+                                      height: 22,
+                                    ),
                                   ),
-                                ),
-                                SizedBox(width: 10),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        item.title,
-                                        style: TextStyle(
-                                          fontSize: 16.00.sp,
-                                          fontWeight: FontWeight.w700,
-                                          height: 1.450,
-                                          fontFamily:
-                                              _HomeViewConstants
-                                                  .fontFamilyKarla,
-                                          letterSpacing: -.06,
-                                          color: Color(0xff2A0079),
-                                          overflow: TextOverflow.ellipsis,
+                                  SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          item.title,
+                                          style: TextStyle(
+                                            fontSize: 16.00.sp,
+                                            fontWeight: FontWeight.w700,
+                                            height: 1.450,
+                                            fontFamily:
+                                                _HomeViewConstants
+                                                    .fontFamilyKarla,
+                                            letterSpacing: -.06,
+                                            color:
+                                                isDisabled
+                                                    ? Color(0xff9E9E9E)
+                                                    : Color(0xff2A0079),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
                                         ),
-                                      ),
-                                      SizedBox(height: 2),
-                                      Text(
-                                        item.description,
-                                        style: TextStyle(
-                                          fontSize: 12.sp,
-                                          fontWeight: FontWeight.w600,
-                                          height: 1.450,
-                                          fontFamily: 'Karla',
-                                          letterSpacing: .1,
-                                          color: Color(0xff304463),
+                                        SizedBox(height: 2),
+                                        Text(
+                                          item.description,
+                                          style: TextStyle(
+                                            fontSize: 12.sp,
+                                            fontWeight: FontWeight.w600,
+                                            height: 1.450,
+                                            fontFamily: 'Karla',
+                                            letterSpacing: .1,
+                                            color:
+                                                isDisabled
+                                                    ? Color(0xffB0B0B0)
+                                                    : Color(0xff304463),
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
+                                  SizedBox(width: 6),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              height: 19,
+                              width: 19,
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color:
+                                      isDisabled
+                                          ? Color(0xffE0E0E0)
+                                          : Color(0xff5645F5),
+                                  width: 1.5,
                                 ),
-                                SizedBox(width: 6),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            height: 19,
-                            width: 19,
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Color(0xff5645F5),
-                                width: 1.5,
-                              ),
-                              borderRadius: BorderRadius.circular(
-                                _HomeViewConstants.cardBorderRadius,
+                                borderRadius: BorderRadius.circular(
+                                  _HomeViewConstants.cardBorderRadius,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   )

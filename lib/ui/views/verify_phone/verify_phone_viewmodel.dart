@@ -192,7 +192,7 @@ class VerifyPhoneViewModel extends BaseViewModel {
     setBusy(true);
 
     try {
-      final response = await _apiService.updateProfile1(
+      await _apiService.updateProfile1(
         userId: user!.userId,
         country: country,
         state: state,

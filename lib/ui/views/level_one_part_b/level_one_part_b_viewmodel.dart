@@ -10,7 +10,6 @@ import '../../components/top_snack_bar.dart';
 
 class LevelOnePartBViewModel extends BaseViewModel {
   final NavigationService _navigationService = locator<NavigationService>();
-  final _dialogService = DialogService();
 
   String _phoneNumber = '';
   String dobDay = '';

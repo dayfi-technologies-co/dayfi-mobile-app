@@ -1,5 +1,4 @@
 import 'package:dayfi/data/models/transaction_history_model.dart';
-import 'package:dayfi/data/models/user_model.dart';
 import 'package:dayfi/data/models/wallet_reponse.dart';
 import 'package:dayfi/ui/views/transaction_details/transaction_details_viewmodel.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +7,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:dayfi/ui/common/app_scaffold.dart';
 import 'package:dayfi/ui/common/ui_helpers.dart';
 import 'package:dayfi/ui/components/buttons/filled_btn.dart';
-import 'package:dayfi/ui/components/buttons/filled_btn_small.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';

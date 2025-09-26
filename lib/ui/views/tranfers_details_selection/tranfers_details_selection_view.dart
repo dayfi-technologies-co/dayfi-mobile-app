@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:dayfi/data/models/wallet_reponse.dart';
 import 'package:dayfi/ui/components/buttons/filled_btn.dart';
 import 'package:dayfi/ui/components/input_fields/amount_custom_text_field.dart';
@@ -15,9 +14,7 @@ import 'package:dayfi/ui/common/ui_helpers.dart';
 
 import '../../common/amount_formatter.dart';
 import '../amount_entry/amount_entry_view.dart';
-import '../amount_entry/amount_entry_viewmodel.dart';
 import '../payment_setup/payment_setup_view.dart';
-import '../recipient_details/recipient_account_model.dart';
 
 class TransfersDetailsSelectionView
     extends StackedView<TransfersDetailsSelectionViewModel> {
@@ -29,7 +26,7 @@ class TransfersDetailsSelectionView
     required this.wallet,
   });
 
-  TextEditingController amount = TextEditingController();
+  final TextEditingController amount = TextEditingController();
 
   @override
   Widget builder(
@@ -248,20 +245,6 @@ class TransfersDetailsSelectionView
     );
   }
 
-  String _formatNumber(String value) {
-    // Remove all non-digit characters
-    value = value.replaceAll(RegExp(r'[^\d]'), '');
-
-    if (value.isEmpty) return '';
-
-    // Convert to number and format
-    final number = int.tryParse(value);
-    if (number == null) return '';
-
-    // Format with thousand separators
-    final formatted = NumberFormat("#,##0.${'0' * 2}", 'en_US').format(number);
-    return formatted;
-  }
 
   @override
   TransfersDetailsSelectionViewModel viewModelBuilder(
@@ -395,12 +378,12 @@ class _SendSummaryBottomSheetState extends State<SendSummaryBottomSheet> {
                         children: [
                           _SummaryRow(
                             label: 'Sending from',
-                            value: widget.walletType ?? 'NGN Wallet',
+                            value: widget.walletType,
                           ),
                           SizedBox(height: 12),
                           _SummaryRow(
                             label: 'Transferring to',
-                            value: widget.username ?? '@kols',
+                            value: widget.username,
                           ),
                           SizedBox(height: 12),
                           _SummaryRow(

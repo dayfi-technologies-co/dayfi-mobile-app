@@ -1,7 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import 'package:stacked/stacked.dart';
 import '../../common/app_scaffold.dart';
@@ -133,21 +132,6 @@ class BlogDetailView extends StackedView<BlogDetailViewModel> {
     );
   }
 
-  Widget _buildLeadingIcon(
-    BuildContext context,
-    BlogDetailViewModel viewModel,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.all(4.0),
-      child: CircleAvatar(
-        backgroundColor: Theme.of(context).colorScheme.secondary,
-        child: IconButton(
-          icon: SvgPicture.asset("assets/arrow-left.svg"),
-          onPressed: () => {viewModel.navigationService.back()},
-        ),
-      ),
-    );
-  }
 
   @override
   BlogDetailViewModel viewModelBuilder(

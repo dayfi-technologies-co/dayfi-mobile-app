@@ -1,8 +1,10 @@
 import 'package:dayfi/services/api/database_service.dart';
+import 'package:dayfi/services/app_update_service.dart';
 import 'package:dayfi/data/storage/secure_storage_service.dart';
 import 'package:dayfi/ui/bottom_sheets/notice/notice_sheet.dart';
 import 'package:dayfi/ui/dialogs/info_alert/info_alert_dialog.dart';
 import 'package:dayfi/ui/views/home/home_view.dart';
+import 'package:dayfi/ui/views/splash/splash_view.dart';
 import 'package:dayfi/ui/views/startup/startup_view.dart';
 import 'package:stacked/stacked_annotations.dart';
 import 'package:stacked_services/stacked_services.dart';
@@ -60,6 +62,7 @@ import 'package:dayfi/ui/views/virtual_card_details/virtual_card_details_view.da
 @StackedApp(
   routes: [
     MaterialRoute(page: HomeView),
+    MaterialRoute(page: SplashView),
     MaterialRoute(page: StartupView),
     MaterialRoute(page: SignupView),
     MaterialRoute(page: LoginView),
@@ -117,7 +120,8 @@ import 'package:dayfi/ui/views/virtual_card_details/virtual_card_details_view.da
     LazySingleton(classType: DialogService),
     LazySingleton(classType: NavigationService),
     LazySingleton(classType: SecureStorageService),
-    LazySingleton(classType: DatabaseService)
+    LazySingleton(classType: DatabaseService),
+    LazySingleton(classType: AppUpdateService)
     // @stacked-service
   ],
   bottomsheets: [

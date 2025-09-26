@@ -9,7 +9,6 @@ import '../../components/top_snack_bar.dart';
 
 class ForgotPasswordViewModel extends BaseViewModel {
   final _apiService = AuthApiService();
-  final _dialogService = DialogService();
   final NavigationService _navigationService = locator<NavigationService>();
 
   NavigationService get navigationService => _navigationService;

@@ -12,29 +12,44 @@ class $DumpedRecordsTable extends DumpedRecords
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
-      'id', aliasedName, false,
-      hasAutoIncrement: true,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
   static const VerificationMeta _timeMeta = const VerificationMeta('time');
   @override
   late final GeneratedColumn<DateTime> time = GeneratedColumn<DateTime>(
-      'time', aliasedName, false,
-      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+    'time',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _configMeta = const VerificationMeta('config');
   @override
   late final GeneratedColumn<String> config = GeneratedColumn<String>(
-      'config', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(DEFAULT_CONFIG));
+    'config',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(DEFAULT_CONFIG),
+  );
   static const VerificationMeta _dataMeta = const VerificationMeta('data');
   @override
   late final GeneratedColumn<String> data = GeneratedColumn<String>(
-      'data', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
+    'data',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   @override
   List<GeneratedColumn> get $columns => [id, time, config, data];
   @override
@@ -43,8 +58,10 @@ class $DumpedRecordsTable extends DumpedRecords
   String get actualTableName => $name;
   static const String $name = 'dumped_records';
   @override
-  VerificationContext validateIntegrity(Insertable<DumpedRecord> instance,
-      {bool isInserting = false}) {
+  VerificationContext validateIntegrity(
+    Insertable<DumpedRecord> instance, {
+    bool isInserting = false,
+  }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
@@ -52,17 +69,23 @@ class $DumpedRecordsTable extends DumpedRecords
     }
     if (data.containsKey('time')) {
       context.handle(
-          _timeMeta, time.isAcceptableOrUnknown(data['time']!, _timeMeta));
+        _timeMeta,
+        time.isAcceptableOrUnknown(data['time']!, _timeMeta),
+      );
     } else if (isInserting) {
       context.missing(_timeMeta);
     }
     if (data.containsKey('config')) {
-      context.handle(_configMeta,
-          config.isAcceptableOrUnknown(data['config']!, _configMeta));
+      context.handle(
+        _configMeta,
+        config.isAcceptableOrUnknown(data['config']!, _configMeta),
+      );
     }
     if (data.containsKey('data')) {
       context.handle(
-          _dataMeta, this.data.isAcceptableOrUnknown(data['data']!, _dataMeta));
+        _dataMeta,
+        this.data.isAcceptableOrUnknown(data['data']!, _dataMeta),
+      );
     } else if (isInserting) {
       context.missing(_dataMeta);
     }
@@ -75,14 +98,26 @@ class $DumpedRecordsTable extends DumpedRecords
   DumpedRecord map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return DumpedRecord(
-      id: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
-      time: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}time'])!,
-      config: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}config'])!,
-      data: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}data'])!,
+      id:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}id'],
+          )!,
+      time:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.dateTime,
+            data['${effectivePrefix}time'],
+          )!,
+      config:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}config'],
+          )!,
+      data:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}data'],
+          )!,
     );
   }
 
@@ -97,11 +132,12 @@ class DumpedRecord extends DataClass implements Insertable<DumpedRecord> {
   final DateTime time;
   final String config;
   final String data;
-  const DumpedRecord(
-      {required this.id,
-      required this.time,
-      required this.config,
-      required this.data});
+  const DumpedRecord({
+    required this.id,
+    required this.time,
+    required this.config,
+    required this.data,
+  });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -121,8 +157,10 @@ class DumpedRecord extends DataClass implements Insertable<DumpedRecord> {
     );
   }
 
-  factory DumpedRecord.fromJson(Map<String, dynamic> json,
-      {ValueSerializer? serializer}) {
+  factory DumpedRecord.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return DumpedRecord(
       id: serializer.fromJson<int>(json['id']),
@@ -142,14 +180,17 @@ class DumpedRecord extends DataClass implements Insertable<DumpedRecord> {
     };
   }
 
-  DumpedRecord copyWith(
-          {int? id, DateTime? time, String? config, String? data}) =>
-      DumpedRecord(
-        id: id ?? this.id,
-        time: time ?? this.time,
-        config: config ?? this.config,
-        data: data ?? this.data,
-      );
+  DumpedRecord copyWith({
+    int? id,
+    DateTime? time,
+    String? config,
+    String? data,
+  }) => DumpedRecord(
+    id: id ?? this.id,
+    time: time ?? this.time,
+    config: config ?? this.config,
+    data: data ?? this.data,
+  );
   DumpedRecord copyWithCompanion(DumpedRecordsCompanion data) {
     return DumpedRecord(
       id: data.id.present ? data.id.value : this.id,
@@ -198,8 +239,8 @@ class DumpedRecordsCompanion extends UpdateCompanion<DumpedRecord> {
     required DateTime time,
     this.config = const Value.absent(),
     required String data,
-  })  : time = Value(time),
-        data = Value(data);
+  }) : time = Value(time),
+       data = Value(data);
   static Insertable<DumpedRecord> custom({
     Expression<int>? id,
     Expression<DateTime>? time,
@@ -214,11 +255,12 @@ class DumpedRecordsCompanion extends UpdateCompanion<DumpedRecord> {
     });
   }
 
-  DumpedRecordsCompanion copyWith(
-      {Value<int>? id,
-      Value<DateTime>? time,
-      Value<String>? config,
-      Value<String>? data}) {
+  DumpedRecordsCompanion copyWith({
+    Value<int>? id,
+    Value<DateTime>? time,
+    Value<String>? config,
+    Value<String>? data,
+  }) {
     return DumpedRecordsCompanion(
       id: id ?? this.id,
       time: time ?? this.time,
@@ -266,45 +308,74 @@ class $SavedScriptsTable extends SavedScripts
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
-      'id', aliasedName, false,
-      hasAutoIncrement: true,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
   static const VerificationMeta _nameMeta = const VerificationMeta('name');
   @override
   late final GeneratedColumn<String> name = GeneratedColumn<String>(
-      'name', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _sourceMeta = const VerificationMeta('source');
   @override
   late final GeneratedColumn<String> source = GeneratedColumn<String>(
-      'source', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _creationTimeMeta =
-      const VerificationMeta('creationTime');
+    'source',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _creationTimeMeta = const VerificationMeta(
+    'creationTime',
+  );
   @override
   late final GeneratedColumn<DateTime> creationTime = GeneratedColumn<DateTime>(
-      'creation_time', aliasedName, false,
-      type: DriftSqlType.dateTime, requiredDuringInsert: true);
-  static const VerificationMeta _lastUsedMeta =
-      const VerificationMeta('lastUsed');
+    'creation_time',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _lastUsedMeta = const VerificationMeta(
+    'lastUsed',
+  );
   @override
   late final GeneratedColumn<DateTime> lastUsed = GeneratedColumn<DateTime>(
-      'last_used', aliasedName, true,
-      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+    'last_used',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, name, source, creationTime, lastUsed];
+  List<GeneratedColumn> get $columns => [
+    id,
+    name,
+    source,
+    creationTime,
+    lastUsed,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
   static const String $name = 'saved_scripts';
   @override
-  VerificationContext validateIntegrity(Insertable<SavedScript> instance,
-      {bool isInserting = false}) {
+  VerificationContext validateIntegrity(
+    Insertable<SavedScript> instance, {
+    bool isInserting = false,
+  }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
@@ -312,27 +383,36 @@ class $SavedScriptsTable extends SavedScripts
     }
     if (data.containsKey('name')) {
       context.handle(
-          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
     } else if (isInserting) {
       context.missing(_nameMeta);
     }
     if (data.containsKey('source')) {
-      context.handle(_sourceMeta,
-          source.isAcceptableOrUnknown(data['source']!, _sourceMeta));
+      context.handle(
+        _sourceMeta,
+        source.isAcceptableOrUnknown(data['source']!, _sourceMeta),
+      );
     } else if (isInserting) {
       context.missing(_sourceMeta);
     }
     if (data.containsKey('creation_time')) {
       context.handle(
+        _creationTimeMeta,
+        creationTime.isAcceptableOrUnknown(
+          data['creation_time']!,
           _creationTimeMeta,
-          creationTime.isAcceptableOrUnknown(
-              data['creation_time']!, _creationTimeMeta));
+        ),
+      );
     } else if (isInserting) {
       context.missing(_creationTimeMeta);
     }
     if (data.containsKey('last_used')) {
-      context.handle(_lastUsedMeta,
-          lastUsed.isAcceptableOrUnknown(data['last_used']!, _lastUsedMeta));
+      context.handle(
+        _lastUsedMeta,
+        lastUsed.isAcceptableOrUnknown(data['last_used']!, _lastUsedMeta),
+      );
     }
     return context;
   }
@@ -343,16 +423,30 @@ class $SavedScriptsTable extends SavedScripts
   SavedScript map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return SavedScript(
-      id: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
-      name: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
-      source: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}source'])!,
-      creationTime: attachedDatabase.typeMapping.read(
-          DriftSqlType.dateTime, data['${effectivePrefix}creation_time'])!,
-      lastUsed: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}last_used']),
+      id:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}id'],
+          )!,
+      name:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}name'],
+          )!,
+      source:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}source'],
+          )!,
+      creationTime:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.dateTime,
+            data['${effectivePrefix}creation_time'],
+          )!,
+      lastUsed: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_used'],
+      ),
     );
   }
 
@@ -368,12 +462,13 @@ class SavedScript extends DataClass implements Insertable<SavedScript> {
   final String source;
   final DateTime creationTime;
   final DateTime? lastUsed;
-  const SavedScript(
-      {required this.id,
-      required this.name,
-      required this.source,
-      required this.creationTime,
-      this.lastUsed});
+  const SavedScript({
+    required this.id,
+    required this.name,
+    required this.source,
+    required this.creationTime,
+    this.lastUsed,
+  });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -393,14 +488,17 @@ class SavedScript extends DataClass implements Insertable<SavedScript> {
       name: Value(name),
       source: Value(source),
       creationTime: Value(creationTime),
-      lastUsed: lastUsed == null && nullToAbsent
-          ? const Value.absent()
-          : Value(lastUsed),
+      lastUsed:
+          lastUsed == null && nullToAbsent
+              ? const Value.absent()
+              : Value(lastUsed),
     );
   }
 
-  factory SavedScript.fromJson(Map<String, dynamic> json,
-      {ValueSerializer? serializer}) {
+  factory SavedScript.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return SavedScript(
       id: serializer.fromJson<int>(json['id']),
@@ -422,27 +520,28 @@ class SavedScript extends DataClass implements Insertable<SavedScript> {
     };
   }
 
-  SavedScript copyWith(
-          {int? id,
-          String? name,
-          String? source,
-          DateTime? creationTime,
-          Value<DateTime?> lastUsed = const Value.absent()}) =>
-      SavedScript(
-        id: id ?? this.id,
-        name: name ?? this.name,
-        source: source ?? this.source,
-        creationTime: creationTime ?? this.creationTime,
-        lastUsed: lastUsed.present ? lastUsed.value : this.lastUsed,
-      );
+  SavedScript copyWith({
+    int? id,
+    String? name,
+    String? source,
+    DateTime? creationTime,
+    Value<DateTime?> lastUsed = const Value.absent(),
+  }) => SavedScript(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    source: source ?? this.source,
+    creationTime: creationTime ?? this.creationTime,
+    lastUsed: lastUsed.present ? lastUsed.value : this.lastUsed,
+  );
   SavedScript copyWithCompanion(SavedScriptsCompanion data) {
     return SavedScript(
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
       source: data.source.present ? data.source.value : this.source,
-      creationTime: data.creationTime.present
-          ? data.creationTime.value
-          : this.creationTime,
+      creationTime:
+          data.creationTime.present
+              ? data.creationTime.value
+              : this.creationTime,
       lastUsed: data.lastUsed.present ? data.lastUsed.value : this.lastUsed,
     );
   }
@@ -491,9 +590,9 @@ class SavedScriptsCompanion extends UpdateCompanion<SavedScript> {
     required String source,
     required DateTime creationTime,
     this.lastUsed = const Value.absent(),
-  })  : name = Value(name),
-        source = Value(source),
-        creationTime = Value(creationTime);
+  }) : name = Value(name),
+       source = Value(source),
+       creationTime = Value(creationTime);
   static Insertable<SavedScript> custom({
     Expression<int>? id,
     Expression<String>? name,
@@ -510,12 +609,13 @@ class SavedScriptsCompanion extends UpdateCompanion<SavedScript> {
     });
   }
 
-  SavedScriptsCompanion copyWith(
-      {Value<int>? id,
-      Value<String>? name,
-      Value<String>? source,
-      Value<DateTime>? creationTime,
-      Value<DateTime?>? lastUsed}) {
+  SavedScriptsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? name,
+    Value<String>? source,
+    Value<DateTime>? creationTime,
+    Value<DateTime?>? lastUsed,
+  }) {
     return SavedScriptsCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
@@ -568,24 +668,26 @@ abstract class _$Database extends GeneratedDatabase {
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities =>
-      [dumpedRecords, savedScripts];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [
+    dumpedRecords,
+    savedScripts,
+  ];
 }
 
-typedef $$DumpedRecordsTableCreateCompanionBuilder = DumpedRecordsCompanion
-    Function({
-  Value<int> id,
-  required DateTime time,
-  Value<String> config,
-  required String data,
-});
-typedef $$DumpedRecordsTableUpdateCompanionBuilder = DumpedRecordsCompanion
-    Function({
-  Value<int> id,
-  Value<DateTime> time,
-  Value<String> config,
-  Value<String> data,
-});
+typedef $$DumpedRecordsTableCreateCompanionBuilder =
+    DumpedRecordsCompanion Function({
+      Value<int> id,
+      required DateTime time,
+      Value<String> config,
+      required String data,
+    });
+typedef $$DumpedRecordsTableUpdateCompanionBuilder =
+    DumpedRecordsCompanion Function({
+      Value<int> id,
+      Value<DateTime> time,
+      Value<String> config,
+      Value<String> data,
+    });
 
 class $$DumpedRecordsTableFilterComposer
     extends Composer<_$Database, $DumpedRecordsTable> {
@@ -597,16 +699,24 @@ class $$DumpedRecordsTableFilterComposer
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnFilters<int> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnFilters(column));
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<DateTime> get time => $composableBuilder(
-      column: $table.time, builder: (column) => ColumnFilters(column));
+    column: $table.time,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get config => $composableBuilder(
-      column: $table.config, builder: (column) => ColumnFilters(column));
+    column: $table.config,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get data => $composableBuilder(
-      column: $table.data, builder: (column) => ColumnFilters(column));
+    column: $table.data,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$DumpedRecordsTableOrderingComposer
@@ -619,16 +729,24 @@ class $$DumpedRecordsTableOrderingComposer
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnOrderings<int> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnOrderings(column));
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<DateTime> get time => $composableBuilder(
-      column: $table.time, builder: (column) => ColumnOrderings(column));
+    column: $table.time,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get config => $composableBuilder(
-      column: $table.config, builder: (column) => ColumnOrderings(column));
+    column: $table.config,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get data => $composableBuilder(
-      column: $table.data, builder: (column) => ColumnOrderings(column));
+    column: $table.data,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$DumpedRecordsTableAnnotationComposer
@@ -653,93 +771,111 @@ class $$DumpedRecordsTableAnnotationComposer
       $composableBuilder(column: $table.data, builder: (column) => column);
 }
 
-class $$DumpedRecordsTableTableManager extends RootTableManager<
-    _$Database,
-    $DumpedRecordsTable,
-    DumpedRecord,
-    $$DumpedRecordsTableFilterComposer,
-    $$DumpedRecordsTableOrderingComposer,
-    $$DumpedRecordsTableAnnotationComposer,
-    $$DumpedRecordsTableCreateCompanionBuilder,
-    $$DumpedRecordsTableUpdateCompanionBuilder,
-    (
-      DumpedRecord,
-      BaseReferences<_$Database, $DumpedRecordsTable, DumpedRecord>
-    ),
-    DumpedRecord,
-    PrefetchHooks Function()> {
+class $$DumpedRecordsTableTableManager
+    extends
+        RootTableManager<
+          _$Database,
+          $DumpedRecordsTable,
+          DumpedRecord,
+          $$DumpedRecordsTableFilterComposer,
+          $$DumpedRecordsTableOrderingComposer,
+          $$DumpedRecordsTableAnnotationComposer,
+          $$DumpedRecordsTableCreateCompanionBuilder,
+          $$DumpedRecordsTableUpdateCompanionBuilder,
+          (
+            DumpedRecord,
+            BaseReferences<_$Database, $DumpedRecordsTable, DumpedRecord>,
+          ),
+          DumpedRecord,
+          PrefetchHooks Function()
+        > {
   $$DumpedRecordsTableTableManager(_$Database db, $DumpedRecordsTable table)
-      : super(TableManagerState(
+    : super(
+        TableManagerState(
           db: db,
           table: table,
-          createFilteringComposer: () =>
-              $$DumpedRecordsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$DumpedRecordsTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$DumpedRecordsTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback: ({
-            Value<int> id = const Value.absent(),
-            Value<DateTime> time = const Value.absent(),
-            Value<String> config = const Value.absent(),
-            Value<String> data = const Value.absent(),
-          }) =>
-              DumpedRecordsCompanion(
-            id: id,
-            time: time,
-            config: config,
-            data: data,
-          ),
-          createCompanionCallback: ({
-            Value<int> id = const Value.absent(),
-            required DateTime time,
-            Value<String> config = const Value.absent(),
-            required String data,
-          }) =>
-              DumpedRecordsCompanion.insert(
-            id: id,
-            time: time,
-            config: config,
-            data: data,
-          ),
-          withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
-              .toList(),
+          createFilteringComposer:
+              () => $$DumpedRecordsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer:
+              () =>
+                  $$DumpedRecordsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer:
+              () => $$DumpedRecordsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<DateTime> time = const Value.absent(),
+                Value<String> config = const Value.absent(),
+                Value<String> data = const Value.absent(),
+              }) => DumpedRecordsCompanion(
+                id: id,
+                time: time,
+                config: config,
+                data: data,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required DateTime time,
+                Value<String> config = const Value.absent(),
+                required String data,
+              }) => DumpedRecordsCompanion.insert(
+                id: id,
+                time: time,
+                config: config,
+                data: data,
+              ),
+          withReferenceMapper:
+              (p0) =>
+                  p0
+                      .map(
+                        (e) => (
+                          e.readTable(table),
+                          BaseReferences(db, table, e),
+                        ),
+                      )
+                      .toList(),
           prefetchHooksCallback: null,
-        ));
+        ),
+      );
 }
 
-typedef $$DumpedRecordsTableProcessedTableManager = ProcessedTableManager<
-    _$Database,
-    $DumpedRecordsTable,
-    DumpedRecord,
-    $$DumpedRecordsTableFilterComposer,
-    $$DumpedRecordsTableOrderingComposer,
-    $$DumpedRecordsTableAnnotationComposer,
-    $$DumpedRecordsTableCreateCompanionBuilder,
-    $$DumpedRecordsTableUpdateCompanionBuilder,
-    (
+typedef $$DumpedRecordsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$Database,
+      $DumpedRecordsTable,
       DumpedRecord,
-      BaseReferences<_$Database, $DumpedRecordsTable, DumpedRecord>
-    ),
-    DumpedRecord,
-    PrefetchHooks Function()>;
-typedef $$SavedScriptsTableCreateCompanionBuilder = SavedScriptsCompanion
-    Function({
-  Value<int> id,
-  required String name,
-  required String source,
-  required DateTime creationTime,
-  Value<DateTime?> lastUsed,
-});
-typedef $$SavedScriptsTableUpdateCompanionBuilder = SavedScriptsCompanion
-    Function({
-  Value<int> id,
-  Value<String> name,
-  Value<String> source,
-  Value<DateTime> creationTime,
-  Value<DateTime?> lastUsed,
-});
+      $$DumpedRecordsTableFilterComposer,
+      $$DumpedRecordsTableOrderingComposer,
+      $$DumpedRecordsTableAnnotationComposer,
+      $$DumpedRecordsTableCreateCompanionBuilder,
+      $$DumpedRecordsTableUpdateCompanionBuilder,
+      (
+        DumpedRecord,
+        BaseReferences<_$Database, $DumpedRecordsTable, DumpedRecord>,
+      ),
+      DumpedRecord,
+      PrefetchHooks Function()
+    >;
+typedef $$SavedScriptsTableCreateCompanionBuilder =
+    SavedScriptsCompanion Function({
+      Value<int> id,
+      required String name,
+      required String source,
+      required DateTime creationTime,
+      Value<DateTime?> lastUsed,
+    });
+typedef $$SavedScriptsTableUpdateCompanionBuilder =
+    SavedScriptsCompanion Function({
+      Value<int> id,
+      Value<String> name,
+      Value<String> source,
+      Value<DateTime> creationTime,
+      Value<DateTime?> lastUsed,
+    });
 
 class $$SavedScriptsTableFilterComposer
     extends Composer<_$Database, $SavedScriptsTable> {
@@ -751,19 +887,29 @@ class $$SavedScriptsTableFilterComposer
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnFilters<int> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnFilters(column));
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get name => $composableBuilder(
-      column: $table.name, builder: (column) => ColumnFilters(column));
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get source => $composableBuilder(
-      column: $table.source, builder: (column) => ColumnFilters(column));
+    column: $table.source,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<DateTime> get creationTime => $composableBuilder(
-      column: $table.creationTime, builder: (column) => ColumnFilters(column));
+    column: $table.creationTime,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<DateTime> get lastUsed => $composableBuilder(
-      column: $table.lastUsed, builder: (column) => ColumnFilters(column));
+    column: $table.lastUsed,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$SavedScriptsTableOrderingComposer
@@ -776,20 +922,29 @@ class $$SavedScriptsTableOrderingComposer
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnOrderings<int> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnOrderings(column));
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get name => $composableBuilder(
-      column: $table.name, builder: (column) => ColumnOrderings(column));
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get source => $composableBuilder(
-      column: $table.source, builder: (column) => ColumnOrderings(column));
+    column: $table.source,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<DateTime> get creationTime => $composableBuilder(
-      column: $table.creationTime,
-      builder: (column) => ColumnOrderings(column));
+    column: $table.creationTime,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<DateTime> get lastUsed => $composableBuilder(
-      column: $table.lastUsed, builder: (column) => ColumnOrderings(column));
+    column: $table.lastUsed,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$SavedScriptsTableAnnotationComposer
@@ -811,81 +966,104 @@ class $$SavedScriptsTableAnnotationComposer
       $composableBuilder(column: $table.source, builder: (column) => column);
 
   GeneratedColumn<DateTime> get creationTime => $composableBuilder(
-      column: $table.creationTime, builder: (column) => column);
+    column: $table.creationTime,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<DateTime> get lastUsed =>
       $composableBuilder(column: $table.lastUsed, builder: (column) => column);
 }
 
-class $$SavedScriptsTableTableManager extends RootTableManager<
-    _$Database,
-    $SavedScriptsTable,
-    SavedScript,
-    $$SavedScriptsTableFilterComposer,
-    $$SavedScriptsTableOrderingComposer,
-    $$SavedScriptsTableAnnotationComposer,
-    $$SavedScriptsTableCreateCompanionBuilder,
-    $$SavedScriptsTableUpdateCompanionBuilder,
-    (SavedScript, BaseReferences<_$Database, $SavedScriptsTable, SavedScript>),
-    SavedScript,
-    PrefetchHooks Function()> {
+class $$SavedScriptsTableTableManager
+    extends
+        RootTableManager<
+          _$Database,
+          $SavedScriptsTable,
+          SavedScript,
+          $$SavedScriptsTableFilterComposer,
+          $$SavedScriptsTableOrderingComposer,
+          $$SavedScriptsTableAnnotationComposer,
+          $$SavedScriptsTableCreateCompanionBuilder,
+          $$SavedScriptsTableUpdateCompanionBuilder,
+          (
+            SavedScript,
+            BaseReferences<_$Database, $SavedScriptsTable, SavedScript>,
+          ),
+          SavedScript,
+          PrefetchHooks Function()
+        > {
   $$SavedScriptsTableTableManager(_$Database db, $SavedScriptsTable table)
-      : super(TableManagerState(
+    : super(
+        TableManagerState(
           db: db,
           table: table,
-          createFilteringComposer: () =>
-              $$SavedScriptsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$SavedScriptsTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$SavedScriptsTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback: ({
-            Value<int> id = const Value.absent(),
-            Value<String> name = const Value.absent(),
-            Value<String> source = const Value.absent(),
-            Value<DateTime> creationTime = const Value.absent(),
-            Value<DateTime?> lastUsed = const Value.absent(),
-          }) =>
-              SavedScriptsCompanion(
-            id: id,
-            name: name,
-            source: source,
-            creationTime: creationTime,
-            lastUsed: lastUsed,
-          ),
-          createCompanionCallback: ({
-            Value<int> id = const Value.absent(),
-            required String name,
-            required String source,
-            required DateTime creationTime,
-            Value<DateTime?> lastUsed = const Value.absent(),
-          }) =>
-              SavedScriptsCompanion.insert(
-            id: id,
-            name: name,
-            source: source,
-            creationTime: creationTime,
-            lastUsed: lastUsed,
-          ),
-          withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
-              .toList(),
+          createFilteringComposer:
+              () => $$SavedScriptsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer:
+              () => $$SavedScriptsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer:
+              () =>
+                  $$SavedScriptsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> source = const Value.absent(),
+                Value<DateTime> creationTime = const Value.absent(),
+                Value<DateTime?> lastUsed = const Value.absent(),
+              }) => SavedScriptsCompanion(
+                id: id,
+                name: name,
+                source: source,
+                creationTime: creationTime,
+                lastUsed: lastUsed,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String name,
+                required String source,
+                required DateTime creationTime,
+                Value<DateTime?> lastUsed = const Value.absent(),
+              }) => SavedScriptsCompanion.insert(
+                id: id,
+                name: name,
+                source: source,
+                creationTime: creationTime,
+                lastUsed: lastUsed,
+              ),
+          withReferenceMapper:
+              (p0) =>
+                  p0
+                      .map(
+                        (e) => (
+                          e.readTable(table),
+                          BaseReferences(db, table, e),
+                        ),
+                      )
+                      .toList(),
           prefetchHooksCallback: null,
-        ));
+        ),
+      );
 }
 
-typedef $$SavedScriptsTableProcessedTableManager = ProcessedTableManager<
-    _$Database,
-    $SavedScriptsTable,
-    SavedScript,
-    $$SavedScriptsTableFilterComposer,
-    $$SavedScriptsTableOrderingComposer,
-    $$SavedScriptsTableAnnotationComposer,
-    $$SavedScriptsTableCreateCompanionBuilder,
-    $$SavedScriptsTableUpdateCompanionBuilder,
-    (SavedScript, BaseReferences<_$Database, $SavedScriptsTable, SavedScript>),
-    SavedScript,
-    PrefetchHooks Function()>;
+typedef $$SavedScriptsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$Database,
+      $SavedScriptsTable,
+      SavedScript,
+      $$SavedScriptsTableFilterComposer,
+      $$SavedScriptsTableOrderingComposer,
+      $$SavedScriptsTableAnnotationComposer,
+      $$SavedScriptsTableCreateCompanionBuilder,
+      $$SavedScriptsTableUpdateCompanionBuilder,
+      (
+        SavedScript,
+        BaseReferences<_$Database, $SavedScriptsTable, SavedScript>,
+      ),
+      SavedScript,
+      PrefetchHooks Function()
+    >;
 
 class $DatabaseManager {
   final _$Database _db;

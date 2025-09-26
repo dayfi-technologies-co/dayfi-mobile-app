@@ -268,8 +268,6 @@ class _PinEntryViewState extends State<PinEntryView> {
     required String pin,
     required User user,
   }) {
-    final expiry = (card['expiration'] as String?)?.split('/') ?? ['00', '00'];
-
     return <String, dynamic>{
       // 'cardNumber': card['card_number'],
       // 'cvv': card['cvv']?.toString() ?? '',

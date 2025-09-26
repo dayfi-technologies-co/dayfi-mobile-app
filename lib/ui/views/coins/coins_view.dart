@@ -68,45 +68,6 @@ class CoinsView extends StackedView<CoinsViewModel> {
     );
   }
 
-  Widget _buildErrorView(BuildContext context, CoinsViewModel viewModel) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              viewModel.errorMessage!,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 16,
-                color: Color(0xFF311122),
-              ),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: viewModel.fetchCoins,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xff5645F5),
-                foregroundColor: const Color(0xff5645F5),
-              ),
-              child: const Text(
-                'Retry',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontFamily: 'Karla',
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.3,
-                  height: 1.450,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildCoinListView(BuildContext context, CoinsViewModel model) {
     return SingleChildScrollView(

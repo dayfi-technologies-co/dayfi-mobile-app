@@ -8,7 +8,6 @@ import '../../components/top_snack_bar.dart';
 
 class LevelOnePartAViewModel extends BaseViewModel {
   final NavigationService _navigationService = locator<NavigationService>();
-  final _dialogService = DialogService();
 
   String countryOfOrigin = '';
   String _residenceAddress = '';

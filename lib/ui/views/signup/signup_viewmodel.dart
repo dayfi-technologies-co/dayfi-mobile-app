@@ -7,17 +7,74 @@ import 'package:stacked_services/stacked_services.dart';
 
 import '../../components/top_snack_bar.dart';
 
+class SignupState {
+  final String firstName;
+  final String lastName;
+  final String middleName;
+  final String email;
+  final String password;
+  final String confirmPassword;
+  final bool isBusy;
+  final bool isFormValid;
+
+  const SignupState({
+    required this.firstName,
+    required this.lastName,
+    required this.middleName,
+    required this.email,
+    required this.password,
+    required this.confirmPassword,
+    required this.isBusy,
+    required this.isFormValid,
+  });
+
+  SignupState copyWith({
+    String? firstName,
+    String? lastName,
+    String? middleName,
+    String? email,
+    String? password,
+    String? confirmPassword,
+    bool? isBusy,
+    bool? isFormValid,
+  }) {
+    return SignupState(
+      firstName: firstName ?? this.firstName,
+      lastName: lastName ?? this.lastName,
+      middleName: middleName ?? this.middleName,
+      email: email ?? this.email,
+      password: password ?? this.password,
+      confirmPassword: confirmPassword ?? this.confirmPassword,
+      isBusy: isBusy ?? this.isBusy,
+      isFormValid: isFormValid ?? this.isFormValid,
+    );
+  }
+}
+
 class SignupViewModel extends BaseViewModel {
   final _apiService = AuthApiService();
-  final _dialogService = DialogService();
   final NavigationService _navigationService = locator<NavigationService>();
 
   bool _isAgreed = false;
+  bool _isPasswordVisible = false;
+  bool _isConfirmPasswordVisible = false;
 
   bool get isAgreed => _isAgreed;
+  bool get isPasswordVisible => _isPasswordVisible;
+  bool get isConfirmPasswordVisible => _isConfirmPasswordVisible;
 
   void setAgreed(bool value) {
     _isAgreed = value;
+    notifyListeners();
+  }
+
+  void togglePasswordVisibility() {
+    _isPasswordVisible = !_isPasswordVisible;
+    notifyListeners();
+  }
+
+  void toggleConfirmPasswordVisibility() {
+    _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
     notifyListeners();
   }
 
@@ -39,6 +96,7 @@ class SignupViewModel extends BaseViewModel {
   String? get emailError => _emailError;
   String? get passwordError => _passwordError;
   String? get confirmPasswordError => _confirmPasswordError;
+  bool get isBusy => state.isBusy;
   NavigationService get navigationService => _navigationService;
 
   bool get isFormValid =>
@@ -57,35 +115,41 @@ class SignupViewModel extends BaseViewModel {
   void setFirstName(String value) {
     _firstName = value;
     _firstNameError = _validateName(value, 'First name');
+    state = state.copyWith(firstName: value, isFormValid: isFormValid);
     notifyListeners();
   }
 
   void setLastName(String value) {
     _lastName = value;
     _lastNameError = _validateName(value, 'Last name');
+    state = state.copyWith(lastName: value, isFormValid: isFormValid);
     notifyListeners();
   }
 
   void setMiddleName(String value) {
     _middleName = value;
+    state = state.copyWith(middleName: value, isFormValid: isFormValid);
     notifyListeners();
   }
 
   void setEmail(String value) {
     _email = value;
     _emailError = _validateEmail(value);
+    state = state.copyWith(email: value, isFormValid: isFormValid);
     notifyListeners();
   }
 
   void setPassword(String value) {
     _password = value;
     _passwordError = _validatePassword(value);
+    state = state.copyWith(password: value, isFormValid: isFormValid);
     notifyListeners();
   }
 
   void setConfirmPassword(String value) {
     _confirmPassword = value;
     _confirmPasswordError = _validateConfirmPassword(value);
+    state = state.copyWith(confirmPassword: value, isFormValid: isFormValid);
     notifyListeners();
   }
 
@@ -123,50 +187,101 @@ class SignupViewModel extends BaseViewModel {
     return null;
   }
 
-  Future<void> signup(BuildContext context) async {
-    if (!isFormValid) return;
+  // State management
+  late SignupState state = SignupState(
+    firstName: _firstName,
+    lastName: _lastName,
+    middleName: _middleName,
+    email: _email,
+    password: _password,
+    confirmPassword: _confirmPassword,
+    isBusy: false,
+    isFormValid: isFormValid,
+  );
 
-    setBusy(true);
+
+  // Helper methods
+  void _showSnackBar(BuildContext context, String message, {bool isError = false}) {
+    TopSnackbar.show(
+      context,
+      message: message,
+      isError: isError,
+    );
+  }
+
+  void _setFieldErrorsFromMessage(String message) {
+    // Reset all errors
+    _firstNameError = null;
+    _lastNameError = null;
+    _emailError = null;
+    _passwordError = null;
+    _confirmPasswordError = null;
+
+    // Set specific errors based on message content
+    if (message.toLowerCase().contains('email')) {
+      _emailError = message;
+    } else if (message.toLowerCase().contains('password')) {
+      _passwordError = message;
+    } else if (message.toLowerCase().contains('first name') || message.toLowerCase().contains('firstname')) {
+      _firstNameError = message;
+    } else if (message.toLowerCase().contains('last name') || message.toLowerCase().contains('lastname')) {
+      _lastNameError = message;
+    }
+
+    notifyListeners();
+  }
+
+  Future<void> signup(BuildContext context) async {
+    if (!state.isFormValid) return;
+
+    state = state.copyWith(isBusy: true);
+    notifyListeners();
 
     try {
+      print('Starting signup process for email: ${state.email}');
+
       final response = await _apiService.signup(
-        firstName: _firstName,
-        lastName: _lastName,
-        middleName: _middleName,
-        email: _email,
-        password: _password,
+        firstName: state.firstName,
+        lastName: state.lastName,
+        middleName: state.middleName,
+        email: state.email,
+        password: state.password,
       );
 
-      if (response.code == 200) {
-        TopSnackbar.show(
-          context,
-          message: response.message,
-        );
+      print('Signup response - Status: ${response.code}, Message: ${response.message}');
 
-        await Future.delayed(const Duration(milliseconds: 500));
-        navigationService.navigateToVerifyEmailView(
+      if (response.code == 200) {
+        print('Signup successful: ${response.message}');
+
+        // Show success message
+        _showSnackBar(context, response.message, isError: false);
+
+        // Navigate to verification screen
+        _navigationService.navigateToVerifyEmailView(
           isSignUp: true,
-          email: _email,
-          password: _password,
+          email: state.email,
+          password: state.password,
         );
       } else {
-        TopSnackbar.show(
-          context,
-          message: response.message,
-          isError: true,
-        );
+        print('Signup failed: ${response.message}');
+        
+        // Show backend error message
+        _showSnackBar(context, response.message, isError: true);
+        
+        // Set field-specific errors based on the message
+        _setFieldErrorsFromMessage(response.message);
       }
     } catch (e) {
-      final errorText = e.toString();
-
-      TopSnackbar.show(
+      print('Signup error: $e');
+      _showSnackBar(
+        // ignore: use_build_context_synchronously
         context,
-        message: 'Sign up error: $errorText',
+        e.toString(),
         isError: true,
       );
     } finally {
-      await Future.delayed(const Duration(milliseconds: 500));
-      setBusy(false);
+      state = state.copyWith(isBusy: false);
+      notifyListeners();
     }
   }
 }

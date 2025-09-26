@@ -1,74 +1,104 @@
 import 'dart:async';
-
-import 'package:flutter/cupertino.dart';
+import 'package:dayfi/app/app.locator.dart';
+import 'package:dayfi/app/app.router.dart';
+import 'package:dayfi/data/storage/secure_storage_service.dart';
+import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';
 import 'package:stacked_services/stacked_services.dart';
 
-import '../../../app/app.locator.dart';
-import '../../../data/storage/secure_storage_service.dart';
-
 class StartupViewModel extends BaseViewModel {
-  final NavigationService _navigationService = locator<NavigationService>();
-  final PageController _pageController = PageController();
-  final SecureStorageService secureStorage = locator<SecureStorageService>();
+  final _navigationService = locator<NavigationService>();
+  final _secureStorage = locator<SecureStorageService>();
 
-  final List<String> titles = [
-    // 'Borderless payment options for everyone.',
-    // 'Borderless payment options for everyone',
-    // 'Buy and Sell Crypto Easily Anytime',
-    'Your everyday\nmoney app',
-  ];
-
-  final List<String> descriptions = [
-    // 'Get paid instantly—accept contactless cards via NFC or camera.',
-    'Sending money shouldn\'t be the source of worry anymore, the solution is here.',
-    // 'Buy or sell top cryptocurrencies quickly and securely, all in one app.',
-  ];
-
-  double _animationValue = 0.0;
+  PageController? _pageController;
   int _currentPage = 0;
-  Timer? _timer;
+  Timer? _autoAdvanceTimer;
+  bool _isAutoAdvancing = true;
+  double _animationValue = 0.0;
 
-  // Getters
-  PageController get pageController => _pageController;
+  PageController get pageController => _pageController!;
   int get currentPage => _currentPage;
+  bool get isAutoAdvancing => _isAutoAdvancing;
   double get animationValue => _animationValue;
   NavigationService get navigationService => _navigationService;
 
-  StartupViewModel() {
-    _startAutoScroll();
-  }
+  List<String> get titles => [
+    'Connect with loved\nones globally',
+    'Worldwide reach,\nlocal touch',
+    'Bank-grade\nsecurity',
+    'Lightning-fast \ntransfers'
+  ];
 
-  void saveFirstTimeUser() {
-    secureStorage.write('first_time_user', 'false');
-  }
+  List<String> get descriptions => [
+    'Bridge distances with instant money transfers across borders.',
+    'Access 40+ countries with 30+ currencies at your fingertips.',
+    'Advanced encryption and fraud protection for every transaction.',
+    'Funds arrive in minutes, not days, to your recipients.'
+  ];
 
-  void setPageIndex(int index) {
-    _currentPage = index;
-    _animationValue = 0; // reset progress bar
-    notifyListeners();
-  }
-
-  void _startAutoScroll() {
-    _timer = Timer.periodic(const Duration(milliseconds: 50), (_) {
-      _animationValue += 0.01; // 50 ms * 100 ≈ 5 s
-      // if (_animationValue >= 1) {
-      //   _animationValue = 0;
-      //   final next = (_currentPage + 1) % titles.length;
-      //   _pageController.animateToPage(
-      //     next,
-      //     duration: const Duration(milliseconds: 350),
-      //     curve: Curves.easeInOut,
-      //   );
-      // }
-      notifyListeners();
-    });
+  void initialise() {
+    _pageController = PageController();
+    _startAutoAdvance();
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
-    _pageController.dispose();
+    _autoAdvanceTimer?.cancel();
+    _pageController?.dispose();
     super.dispose();
+  }
+
+  void _startAutoAdvance() {
+    _autoAdvanceTimer?.cancel();
+    _autoAdvanceTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
+      if (_pageController != null && _currentPage < titles.length - 1) {
+        _pageController!.nextPage(
+          duration: const Duration(milliseconds: 800),
+          curve: Curves.easeInOutCubic,
+        );
+      } else if (_currentPage == titles.length - 1) {
+        _stopAutoAdvance();
+      }
+    });
+  }
+
+  void _stopAutoAdvance() {
+    _autoAdvanceTimer?.cancel();
+    _isAutoAdvancing = false;
+    notifyListeners();
+  }
+
+  void setPageIndex(int index) {
+    _currentPage = index;
+    _animationValue = 1.0; // Reset animation value when page changes
+    notifyListeners();
+    
+    // Stop auto-advance if we reach the last page
+    if (index == titles.length - 1) {
+      _stopAutoAdvance();
+    }
+  }
+
+  void onPageChanged(int index) {
+    setPageIndex(index);
+  }
+
+  void onPageTapped() {
+    // Stop auto-advance when user manually interacts
+    if (_isAutoAdvancing) {
+      _stopAutoAdvance();
+    }
+  }
+
+  Future<void> saveFirstTimeUser() async {
+    await _secureStorage.write('first_time_user', 'false');
+  }
+
+  Future<void> replaceWithSignupView() async {
+    await _navigationService.replaceWithSignupView();
+  }
+
+  Future<void> replaceWithLoginView() async {
+    await _navigationService.replaceWithLoginView();
   }
 }

@@ -229,7 +229,6 @@ class SummaryBottomSheetViewModel extends BaseViewModel {
 }
 
 class PinInputViewModel extends BaseViewModel {
-  final _navigationService = locator<NavigationService>();
   List<String?> _pin = List.generate(4, (index) => null);
 
   List<String?> get pin => _pin;

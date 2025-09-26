@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer';
 
 import 'package:dayfi/app/app.router.dart';
 import 'package:flutter/cupertino.dart';
@@ -13,13 +12,11 @@ import '../../components/top_snack_bar.dart';
 
 class VerifyEmailViewModel extends BaseViewModel {
   final _apiService = AuthApiService();
-  final _dialogService = DialogService();
   final NavigationService navigationService = locator<NavigationService>();
 
   // TextEditingController otpCodeTextEditingController = TextEditingController();
   Timer? _timer;
   int _remainingSeconds = 60; // Start at 60 seconds
-  String _emailAddress = '';
   String otpCode = "";
 
   String? _otpCodeError;
@@ -34,7 +31,6 @@ class VerifyEmailViewModel extends BaseViewModel {
   bool get isFormValid => otpCode.isNotEmpty && _otpCodeError == null;
 
   VerifyEmailViewModel({String emailAddress = ''}) {
-    _emailAddress = emailAddress;
     startTimer();
   }
 

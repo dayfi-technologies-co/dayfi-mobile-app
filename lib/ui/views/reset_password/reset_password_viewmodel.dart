@@ -1,9 +1,6 @@
-import 'dart:developer';
-
 import 'package:dayfi/app/app.locator.dart';
 import 'package:dayfi/app/app.router.dart';
 import 'package:dayfi/services/api/auth_api_service.dart';
-import 'package:dayfi/ui/views/login/login_view.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:stacked/stacked.dart';
 import 'package:stacked_services/stacked_services.dart';
@@ -12,7 +9,6 @@ import '../../components/top_snack_bar.dart';
 
 class ResetPasswordViewModel extends BaseViewModel {
   final _apiService = AuthApiService();
-  final _dialogService = DialogService();
   final NavigationService _navigationService = locator<NavigationService>();
 
   String _confirmPassword = '';

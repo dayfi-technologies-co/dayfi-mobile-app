@@ -7,7 +7,6 @@ import 'package:dayfi/data/models/wallet_reponse.dart';
 import 'package:dayfi/ui/common/amount_formatter.dart';
 import 'package:dayfi/ui/common/app_scaffold.dart';
 import 'package:dayfi/ui/common/ui_helpers.dart';
-import 'package:dayfi/ui/common/loader.dart';
 import 'package:dayfi/ui/views/main/main_viewmodel.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';

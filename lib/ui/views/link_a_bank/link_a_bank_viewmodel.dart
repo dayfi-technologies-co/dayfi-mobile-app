@@ -15,7 +15,6 @@ import '../../components/top_snack_bar.dart';
 
 class LinkABankViewModel extends BaseViewModel {
   final AuthApiService _apiService = AuthApiService();
-  final DialogService _dialogService = locator<DialogService>();
   final NavigationService navigationService = locator<NavigationService>();
   final SecureStorageService _secureStorage = SecureStorageService();
   final DatabaseService _databaseService = DatabaseService();
@@ -127,10 +126,9 @@ class LinkABankViewModel extends BaseViewModel {
       _banks = await _apiService.fetchBanks(jwtToken: user?.token ?? '');
       await _databaseService.cacheBanks(_banks);
     } catch (e) {
-      final errorText = e.toString();
       // TopSnackbar.show(
       //   context,
-      //   message: 'Failed to load banks: $errorText',
+      //   message: 'Failed to load banks: ${e.toString()}',
       //   isError: true,
       // );
     } finally {
@@ -217,10 +215,9 @@ class LinkABankViewModel extends BaseViewModel {
       accountNam = '';
       _showAccountError = true;
 
-      final errorText = e.toString();
       // TopSnackbar.show(
       //   context,
-      //   message: 'Failed to resolve account: $errorText',
+      //   message: 'Failed to resolve account: ${e.toString()}',
       //   isError: true,
       // );
     } finally {
@@ -240,10 +237,9 @@ class LinkABankViewModel extends BaseViewModel {
           .map((e) => RecipientAccount.fromJson(e))
           .toList();
     } catch (e) {
-      final errorText = e.toString();
       // TopSnackbar.show(
       //   context,
-      //   message: 'Failed to load saved accounts: $errorText',
+      //   message: 'Failed to load saved accounts: ${e.toString()}',
       //   isError: true,
       // );
     } finally {

@@ -1,3 +1,4 @@
+// dart format width=80
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
 // **************************************************************************
@@ -5,89 +6,92 @@
 // **************************************************************************
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'dart:async' as _i56;
+import 'dart:async' as _i57;
 
-import 'package:dayfi/data/models/transaction_history_model.dart' as _i57;
-import 'package:dayfi/data/models/wallet_reponse.dart' as _i55;
-import 'package:dayfi/ui/views/add_funds/add_funds_view.dart' as _i25;
+import 'package:dayfi/data/models/transaction_history_model.dart' as _i58;
+import 'package:dayfi/data/models/wallet_reponse.dart' as _i56;
+import 'package:dayfi/ui/views/add_funds/add_funds_view.dart' as _i26;
 import 'package:dayfi/ui/views/add_funds_options/add_funds_options_view.dart'
-    as _i26;
-import 'package:dayfi/ui/views/amount_entry/amount_entry_view.dart' as _i40;
-import 'package:dayfi/ui/views/blog/blog_view.dart' as _i46;
-import 'package:dayfi/ui/views/blog/blog_viewmodel.dart' as _i58;
-import 'package:dayfi/ui/views/blog_detail/blog_detail_view.dart' as _i47;
-import 'package:dayfi/ui/views/cards/cards_view.dart' as _i35;
-import 'package:dayfi/ui/views/coin_detail/coin_detail_view.dart' as _i20;
-import 'package:dayfi/ui/views/coins/coins_view.dart' as _i16;
+    as _i27;
+import 'package:dayfi/ui/views/amount_entry/amount_entry_view.dart' as _i41;
+import 'package:dayfi/ui/views/blog/blog_view.dart' as _i47;
+import 'package:dayfi/ui/views/blog/blog_viewmodel.dart' as _i59;
+import 'package:dayfi/ui/views/blog_detail/blog_detail_view.dart' as _i48;
+import 'package:dayfi/ui/views/cards/cards_view.dart' as _i36;
+import 'package:dayfi/ui/views/coin_detail/coin_detail_view.dart' as _i21;
+import 'package:dayfi/ui/views/coins/coins_view.dart' as _i17;
 import 'package:dayfi/ui/views/create_passcode/create_passcode_view.dart'
-    as _i30;
-import 'package:dayfi/ui/views/digital_dollar/digital_dollar_view.dart' as _i50;
-import 'package:dayfi/ui/views/faqs/faqs_view.dart' as _i48;
-import 'package:dayfi/ui/views/forgot_password/forgot_password_view.dart'
-    as _i6;
-import 'package:dayfi/ui/views/home/home_view.dart' as _i2;
-import 'package:dayfi/ui/views/kyc_levels/kyc_levels_view.dart' as _i22;
-import 'package:dayfi/ui/views/kyc_success/kyc_success_view.dart' as _i34;
-import 'package:dayfi/ui/views/level_one_part_a/level_one_part_a_view.dart'
-    as _i18;
-import 'package:dayfi/ui/views/level_one_part_b/level_one_part_b_view.dart'
-    as _i19;
-import 'package:dayfi/ui/views/link_a_bank/link_a_bank_view.dart' as _i33;
-import 'package:dayfi/ui/views/linked_banks/linked_banks_view.dart' as _i32;
-import 'package:dayfi/ui/views/login/login_view.dart' as _i5;
-import 'package:dayfi/ui/views/main/main_view.dart' as _i10;
-import 'package:dayfi/ui/views/main/main_viewmodel.dart' as _i54;
-import 'package:dayfi/ui/views/passcode/passcode_view.dart' as _i29;
-import 'package:dayfi/ui/views/password_change/password_change_view.dart'
-    as _i15;
-import 'package:dayfi/ui/views/payment_setup/payment_setup_view.dart' as _i24;
-import 'package:dayfi/ui/views/personalise_card/personalise_card_view.dart'
-    as _i37;
-import 'package:dayfi/ui/views/prepaid_info/prepaid_info_view.dart' as _i36;
-import 'package:dayfi/ui/views/profile/profile_view.dart' as _i12;
-import 'package:dayfi/ui/views/recipient_details/recipient_details_view.dart'
-    as _i39;
-import 'package:dayfi/ui/views/reenter_passcode/reenter_passcode_view.dart'
     as _i31;
-import 'package:dayfi/ui/views/reset_password/reset_password_view.dart' as _i8;
-import 'package:dayfi/ui/views/send_funds/send_funds_view.dart' as _i27;
-import 'package:dayfi/ui/views/send_funds_options/send_funds_options_view.dart'
-    as _i28;
-import 'package:dayfi/ui/views/settings/settings_view.dart' as _i11;
-import 'package:dayfi/ui/views/signup/signup_view.dart' as _i4;
-import 'package:dayfi/ui/views/startup/startup_view.dart' as _i3;
-import 'package:dayfi/ui/views/success/success_view.dart' as _i9;
-import 'package:dayfi/ui/views/swap/swap_view.dart' as _i23;
-import 'package:dayfi/ui/views/tranfers_details_selection/tranfers_details_selection_view.dart'
+import 'package:dayfi/ui/views/digital_dollar/digital_dollar_view.dart' as _i51;
+import 'package:dayfi/ui/views/faqs/faqs_view.dart' as _i49;
+import 'package:dayfi/ui/views/forgot_password/forgot_password_view.dart'
+    as _i7;
+import 'package:dayfi/ui/views/home/home_view.dart' as _i2;
+import 'package:dayfi/ui/views/kyc_levels/kyc_levels_view.dart' as _i23;
+import 'package:dayfi/ui/views/kyc_success/kyc_success_view.dart' as _i35;
+import 'package:dayfi/ui/views/level_one_part_a/level_one_part_a_view.dart'
+    as _i19;
+import 'package:dayfi/ui/views/level_one_part_b/level_one_part_b_view.dart'
+    as _i20;
+import 'package:dayfi/ui/views/link_a_bank/link_a_bank_view.dart' as _i34;
+import 'package:dayfi/ui/views/linked_banks/linked_banks_view.dart' as _i33;
+import 'package:dayfi/ui/views/login/login_view.dart' as _i6;
+import 'package:dayfi/ui/views/main/main_view.dart' as _i11;
+import 'package:dayfi/ui/views/main/main_viewmodel.dart' as _i55;
+import 'package:dayfi/ui/views/passcode/passcode_view.dart' as _i30;
+import 'package:dayfi/ui/views/password_change/password_change_view.dart'
+    as _i16;
+import 'package:dayfi/ui/views/payment_setup/payment_setup_view.dart' as _i25;
+import 'package:dayfi/ui/views/personalise_card/personalise_card_view.dart'
     as _i38;
+import 'package:dayfi/ui/views/prepaid_info/prepaid_info_view.dart' as _i37;
+import 'package:dayfi/ui/views/profile/profile_view.dart' as _i13;
+import 'package:dayfi/ui/views/recipient_details/recipient_details_view.dart'
+    as _i40;
+import 'package:dayfi/ui/views/reenter_passcode/reenter_passcode_view.dart'
+    as _i32;
+import 'package:dayfi/ui/views/reset_password/reset_password_view.dart' as _i9;
+import 'package:dayfi/ui/views/send_funds/send_funds_view.dart' as _i28;
+import 'package:dayfi/ui/views/send_funds_options/send_funds_options_view.dart'
+    as _i29;
+import 'package:dayfi/ui/views/settings/settings_view.dart' as _i12;
+import 'package:dayfi/ui/views/signup/signup_view.dart' as _i5;
+import 'package:dayfi/ui/views/splash/splash_view.dart' as _i3;
+import 'package:dayfi/ui/views/startup/startup_view.dart' as _i4;
+import 'package:dayfi/ui/views/success/success_view.dart' as _i10;
+import 'package:dayfi/ui/views/swap/swap_view.dart' as _i24;
+import 'package:dayfi/ui/views/tranfers_details_selection/tranfers_details_selection_view.dart'
+    as _i39;
 import 'package:dayfi/ui/views/transaction_details/transaction_details_view.dart'
-    as _i44;
+    as _i45;
 import 'package:dayfi/ui/views/transaction_history/transaction_history_view.dart'
-    as _i49;
+    as _i50;
 import 'package:dayfi/ui/views/transaction_pin_change/transaction_pin_change_view.dart'
-    as _i14;
+    as _i15;
 import 'package:dayfi/ui/views/transaction_pin_confirm/transaction_pin_confirm_view.dart'
-    as _i42;
+    as _i43;
 import 'package:dayfi/ui/views/transaction_pin_new/transaction_pin_new_view.dart'
-    as _i41;
+    as _i42;
 import 'package:dayfi/ui/views/transaction_pin_set/transaction_pin_set_view.dart'
-    as _i13;
-import 'package:dayfi/ui/views/verify_email/verify_email_view.dart' as _i7;
-import 'package:dayfi/ui/views/verify_phone/verify_phone_view.dart' as _i17;
+    as _i14;
+import 'package:dayfi/ui/views/verify_email/verify_email_view.dart' as _i8;
+import 'package:dayfi/ui/views/verify_phone/verify_phone_view.dart' as _i18;
 import 'package:dayfi/ui/views/virtual_card_details/virtual_card_details_view.dart'
-    as _i52;
-import 'package:dayfi/ui/views/wallet/wallet_view.dart' as _i45;
+    as _i53;
+import 'package:dayfi/ui/views/wallet/wallet_view.dart' as _i46;
 import 'package:dayfi/ui/views/wallet_address_info/wallet_address_info_view.dart'
-    as _i51;
-import 'package:dayfi/ui/views/wallet_details/wallet_details_view.dart' as _i43;
-import 'package:dayfi/ui/views/wallets/wallets_view.dart' as _i21;
-import 'package:flutter/material.dart' as _i53;
+    as _i52;
+import 'package:dayfi/ui/views/wallet_details/wallet_details_view.dart' as _i44;
+import 'package:dayfi/ui/views/wallets/wallets_view.dart' as _i22;
 import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' as _i54;
 import 'package:stacked/stacked.dart' as _i1;
-import 'package:stacked_services/stacked_services.dart' as _i59;
+import 'package:stacked_services/stacked_services.dart' as _i60;
 
 class Routes {
   static const homeView = '/home-view';
+
+  static const splashView = '/splash-view';
 
   static const startupView = '/startup-view';
 
@@ -192,6 +196,7 @@ class Routes {
 
   static const all = <String>{
     homeView,
+    splashView,
     startupView,
     signupView,
     loginView,
@@ -247,615 +252,618 @@ class Routes {
 
 class StackedRouter extends _i1.RouterBase {
   final _routes = <_i1.RouteDef>[
-    _i1.RouteDef(
-      Routes.homeView,
-      page: _i2.HomeView,
-    ),
-    _i1.RouteDef(
-      Routes.startupView,
-      page: _i3.StartupView,
-    ),
-    _i1.RouteDef(
-      Routes.signupView,
-      page: _i4.SignupView,
-    ),
-    _i1.RouteDef(
-      Routes.loginView,
-      page: _i5.LoginView,
-    ),
-    _i1.RouteDef(
-      Routes.forgotPasswordView,
-      page: _i6.ForgotPasswordView,
-    ),
-    _i1.RouteDef(
-      Routes.verifyEmailView,
-      page: _i7.VerifyEmailView,
-    ),
-    _i1.RouteDef(
-      Routes.resetPasswordView,
-      page: _i8.ResetPasswordView,
-    ),
-    _i1.RouteDef(
-      Routes.successView,
-      page: _i9.SuccessView,
-    ),
-    _i1.RouteDef(
-      Routes.mainView,
-      page: _i10.MainView,
-    ),
-    _i1.RouteDef(
-      Routes.settingsView,
-      page: _i11.SettingsView,
-    ),
-    _i1.RouteDef(
-      Routes.profileView,
-      page: _i12.ProfileView,
-    ),
+    _i1.RouteDef(Routes.homeView, page: _i2.HomeView),
+    _i1.RouteDef(Routes.splashView, page: _i3.SplashView),
+    _i1.RouteDef(Routes.startupView, page: _i4.StartupView),
+    _i1.RouteDef(Routes.signupView, page: _i5.SignupView),
+    _i1.RouteDef(Routes.loginView, page: _i6.LoginView),
+    _i1.RouteDef(Routes.forgotPasswordView, page: _i7.ForgotPasswordView),
+    _i1.RouteDef(Routes.verifyEmailView, page: _i8.VerifyEmailView),
+    _i1.RouteDef(Routes.resetPasswordView, page: _i9.ResetPasswordView),
+    _i1.RouteDef(Routes.successView, page: _i10.SuccessView),
+    _i1.RouteDef(Routes.mainView, page: _i11.MainView),
+    _i1.RouteDef(Routes.settingsView, page: _i12.SettingsView),
+    _i1.RouteDef(Routes.profileView, page: _i13.ProfileView),
     _i1.RouteDef(
       Routes.transactionPinSetView,
-      page: _i13.TransactionPinSetView,
+      page: _i14.TransactionPinSetView,
     ),
     _i1.RouteDef(
       Routes.transactionPinChangeView,
-      page: _i14.TransactionPinChangeView,
+      page: _i15.TransactionPinChangeView,
     ),
-    _i1.RouteDef(
-      Routes.passwordChangeView,
-      page: _i15.PasswordChangeView,
-    ),
-    _i1.RouteDef(
-      Routes.coinsView,
-      page: _i16.CoinsView,
-    ),
-    _i1.RouteDef(
-      Routes.verifyPhoneView,
-      page: _i17.VerifyPhoneView,
-    ),
-    _i1.RouteDef(
-      Routes.levelOnePartAView,
-      page: _i18.LevelOnePartAView,
-    ),
-    _i1.RouteDef(
-      Routes.levelOnePartBView,
-      page: _i19.LevelOnePartBView,
-    ),
-    _i1.RouteDef(
-      Routes.coinDetailView,
-      page: _i20.CoinDetailView,
-    ),
-    _i1.RouteDef(
-      Routes.walletsView,
-      page: _i21.WalletsView,
-    ),
-    _i1.RouteDef(
-      Routes.kycLevelsView,
-      page: _i22.KycLevelsView,
-    ),
-    _i1.RouteDef(
-      Routes.swapView,
-      page: _i23.SwapView,
-    ),
-    _i1.RouteDef(
-      Routes.paymentSetupView,
-      page: _i24.PaymentSetupView,
-    ),
-    _i1.RouteDef(
-      Routes.addFundsView,
-      page: _i25.AddFundsView,
-    ),
-    _i1.RouteDef(
-      Routes.addFundsOptionsView,
-      page: _i26.AddFundsOptionsView,
-    ),
-    _i1.RouteDef(
-      Routes.sendFundsView,
-      page: _i27.SendFundsView,
-    ),
-    _i1.RouteDef(
-      Routes.sendFundsOptionsView,
-      page: _i28.SendFundsOptionsView,
-    ),
-    _i1.RouteDef(
-      Routes.passcodeView,
-      page: _i29.PasscodeView,
-    ),
-    _i1.RouteDef(
-      Routes.createPasscodeView,
-      page: _i30.CreatePasscodeView,
-    ),
-    _i1.RouteDef(
-      Routes.reenterPasscodeView,
-      page: _i31.ReenterPasscodeView,
-    ),
-    _i1.RouteDef(
-      Routes.linkedBanksView,
-      page: _i32.LinkedBanksView,
-    ),
-    _i1.RouteDef(
-      Routes.linkABankView,
-      page: _i33.LinkABankView,
-    ),
-    _i1.RouteDef(
-      Routes.kycSuccessView,
-      page: _i34.KycSuccessView,
-    ),
-    _i1.RouteDef(
-      Routes.cardsView,
-      page: _i35.CardsView,
-    ),
-    _i1.RouteDef(
-      Routes.prepaidInfoView,
-      page: _i36.PrepaidInfoView,
-    ),
-    _i1.RouteDef(
-      Routes.personaliseCardView,
-      page: _i37.PersonaliseCardView,
-    ),
+    _i1.RouteDef(Routes.passwordChangeView, page: _i16.PasswordChangeView),
+    _i1.RouteDef(Routes.coinsView, page: _i17.CoinsView),
+    _i1.RouteDef(Routes.verifyPhoneView, page: _i18.VerifyPhoneView),
+    _i1.RouteDef(Routes.levelOnePartAView, page: _i19.LevelOnePartAView),
+    _i1.RouteDef(Routes.levelOnePartBView, page: _i20.LevelOnePartBView),
+    _i1.RouteDef(Routes.coinDetailView, page: _i21.CoinDetailView),
+    _i1.RouteDef(Routes.walletsView, page: _i22.WalletsView),
+    _i1.RouteDef(Routes.kycLevelsView, page: _i23.KycLevelsView),
+    _i1.RouteDef(Routes.swapView, page: _i24.SwapView),
+    _i1.RouteDef(Routes.paymentSetupView, page: _i25.PaymentSetupView),
+    _i1.RouteDef(Routes.addFundsView, page: _i26.AddFundsView),
+    _i1.RouteDef(Routes.addFundsOptionsView, page: _i27.AddFundsOptionsView),
+    _i1.RouteDef(Routes.sendFundsView, page: _i28.SendFundsView),
+    _i1.RouteDef(Routes.sendFundsOptionsView, page: _i29.SendFundsOptionsView),
+    _i1.RouteDef(Routes.passcodeView, page: _i30.PasscodeView),
+    _i1.RouteDef(Routes.createPasscodeView, page: _i31.CreatePasscodeView),
+    _i1.RouteDef(Routes.reenterPasscodeView, page: _i32.ReenterPasscodeView),
+    _i1.RouteDef(Routes.linkedBanksView, page: _i33.LinkedBanksView),
+    _i1.RouteDef(Routes.linkABankView, page: _i34.LinkABankView),
+    _i1.RouteDef(Routes.kycSuccessView, page: _i35.KycSuccessView),
+    _i1.RouteDef(Routes.cardsView, page: _i36.CardsView),
+    _i1.RouteDef(Routes.prepaidInfoView, page: _i37.PrepaidInfoView),
+    _i1.RouteDef(Routes.personaliseCardView, page: _i38.PersonaliseCardView),
     _i1.RouteDef(
       Routes.transfersDetailsSelectionView,
-      page: _i38.TransfersDetailsSelectionView,
+      page: _i39.TransfersDetailsSelectionView,
     ),
-    _i1.RouteDef(
-      Routes.recipientDetailsView,
-      page: _i39.RecipientDetailsView,
-    ),
-    _i1.RouteDef(
-      Routes.amountEntryView,
-      page: _i40.AmountEntryView,
-    ),
+    _i1.RouteDef(Routes.recipientDetailsView, page: _i40.RecipientDetailsView),
+    _i1.RouteDef(Routes.amountEntryView, page: _i41.AmountEntryView),
     _i1.RouteDef(
       Routes.transactionPinNewView,
-      page: _i41.TransactionPinNewView,
+      page: _i42.TransactionPinNewView,
     ),
     _i1.RouteDef(
       Routes.transactionPinConfirmView,
-      page: _i42.TransactionPinConfirmView,
+      page: _i43.TransactionPinConfirmView,
     ),
-    _i1.RouteDef(
-      Routes.walletDetailsView,
-      page: _i43.WalletDetailsView,
-    ),
+    _i1.RouteDef(Routes.walletDetailsView, page: _i44.WalletDetailsView),
     _i1.RouteDef(
       Routes.transactionDetailsView,
-      page: _i44.TransactionDetailsView,
+      page: _i45.TransactionDetailsView,
     ),
-    _i1.RouteDef(
-      Routes.walletView,
-      page: _i45.WalletView,
-    ),
-    _i1.RouteDef(
-      Routes.blogView,
-      page: _i46.BlogView,
-    ),
-    _i1.RouteDef(
-      Routes.blogDetailView,
-      page: _i47.BlogDetailView,
-    ),
-    _i1.RouteDef(
-      Routes.faqsView,
-      page: _i48.FaqsView,
-    ),
+    _i1.RouteDef(Routes.walletView, page: _i46.WalletView),
+    _i1.RouteDef(Routes.blogView, page: _i47.BlogView),
+    _i1.RouteDef(Routes.blogDetailView, page: _i48.BlogDetailView),
+    _i1.RouteDef(Routes.faqsView, page: _i49.FaqsView),
     _i1.RouteDef(
       Routes.transactionHistoryView,
-      page: _i49.TransactionHistoryView,
+      page: _i50.TransactionHistoryView,
     ),
-    _i1.RouteDef(
-      Routes.digitalDollarView,
-      page: _i50.DigitalDollarView,
-    ),
+    _i1.RouteDef(Routes.digitalDollarView, page: _i51.DigitalDollarView),
     _i1.RouteDef(
       Routes.walletAddressInfoView,
-      page: _i51.WalletAddressInfoView,
+      page: _i52.WalletAddressInfoView,
     ),
     _i1.RouteDef(
       Routes.virtualCardDetailsView,
-      page: _i52.VirtualCardDetailsView,
+      page: _i53.VirtualCardDetailsView,
     ),
   ];
 
   final _pagesMap = <Type, _i1.StackedRouteFactory>{
     _i2.HomeView: (data) {
       final args = data.getArgs<HomeViewArguments>(nullOk: false);
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) =>
-            _i2.HomeView(key: args.key, mainModel: args.mainModel),
+      return _i54.MaterialPageRoute<dynamic>(
+        builder:
+            (context) => _i2.HomeView(key: args.key, mainModel: args.mainModel),
         settings: data,
       );
     },
-    _i3.StartupView: (data) {
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => const _i3.StartupView(),
+    _i3.SplashView: (data) {
+      final args = data.getArgs<SplashViewArguments>(
+        orElse: () => const SplashViewArguments(),
+      );
+      return _i54.MaterialPageRoute<dynamic>(
+        builder: (context) => _i3.SplashView(key: args.key),
         settings: data,
       );
     },
-    _i4.SignupView: (data) {
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => const _i4.SignupView(),
+    _i4.StartupView: (data) {
+      final args = data.getArgs<StartupViewArguments>(
+        orElse: () => const StartupViewArguments(),
+      );
+      return _i54.MaterialPageRoute<dynamic>(
+        builder: (context) => _i4.StartupView(key: args.key),
         settings: data,
       );
     },
-    _i5.LoginView: (data) {
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => const _i5.LoginView(),
+    _i5.SignupView: (data) {
+      final args = data.getArgs<SignupViewArguments>(
+        orElse: () => const SignupViewArguments(),
+      );
+      return _i54.MaterialPageRoute<dynamic>(
+        builder: (context) => _i5.SignupView(key: args.key),
         settings: data,
       );
     },
-    _i6.ForgotPasswordView: (data) {
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => const _i6.ForgotPasswordView(),
+    _i6.LoginView: (data) {
+      final args = data.getArgs<LoginViewArguments>(
+        orElse: () => const LoginViewArguments(),
+      );
+      return _i54.MaterialPageRoute<dynamic>(
+        builder: (context) => _i6.LoginView(key: args.key),
         settings: data,
       );
     },
-    _i7.VerifyEmailView: (data) {
+    _i7.ForgotPasswordView: (data) {
+      final args = data.getArgs<ForgotPasswordViewArguments>(
+        orElse: () => const ForgotPasswordViewArguments(),
+      );
+      return _i54.MaterialPageRoute<dynamic>(
+        builder: (context) => _i7.ForgotPasswordView(key: args.key),
+        settings: data,
+      );
+    },
+    _i8.VerifyEmailView: (data) {
       final args = data.getArgs<VerifyEmailViewArguments>(nullOk: false);
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => _i7.VerifyEmailView(
-            key: args.key,
-            isSignUp: args.isSignUp,
-            email: args.email,
-            password: args.password),
+      return _i54.MaterialPageRoute<dynamic>(
+        builder:
+            (context) => _i8.VerifyEmailView(
+              key: args.key,
+              isSignUp: args.isSignUp,
+              email: args.email,
+              password: args.password,
+            ),
         settings: data,
       );
     },
-    _i8.ResetPasswordView: (data) {
+    _i9.ResetPasswordView: (data) {
       final args = data.getArgs<ResetPasswordViewArguments>(nullOk: false);
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) =>
-            _i8.ResetPasswordView(key: args.key, email: args.email),
+      return _i54.MaterialPageRoute<dynamic>(
+        builder:
+            (context) =>
+                _i9.ResetPasswordView(key: args.key, email: args.email),
         settings: data,
       );
     },
-    _i9.SuccessView: (data) {
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => const _i9.SuccessView(),
+    _i10.SuccessView: (data) {
+      final args = data.getArgs<SuccessViewArguments>(
+        orElse: () => const SuccessViewArguments(),
+      );
+      return _i54.MaterialPageRoute<dynamic>(
+        builder: (context) => _i10.SuccessView(key: args.key),
         settings: data,
       );
     },
-    _i10.MainView: (data) {
+    _i11.MainView: (data) {
       final args = data.getArgs<MainViewArguments>(
         orElse: () => const MainViewArguments(),
       );
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => _i10.MainView(key: args.key, index: args.index),
+      return _i54.MaterialPageRoute<dynamic>(
+        builder: (context) => _i11.MainView(key: args.key, index: args.index),
         settings: data,
       );
     },
-    _i11.SettingsView: (data) {
+    _i12.SettingsView: (data) {
       final args = data.getArgs<SettingsViewArguments>(nullOk: false);
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) =>
-            _i11.SettingsView(key: args.key, mainModel: args.mainModel),
+      return _i54.MaterialPageRoute<dynamic>(
+        builder:
+            (context) =>
+                _i12.SettingsView(key: args.key, mainModel: args.mainModel),
         settings: data,
       );
     },
-    _i12.ProfileView: (data) {
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => const _i12.ProfileView(),
+    _i13.ProfileView: (data) {
+      final args = data.getArgs<ProfileViewArguments>(
+        orElse: () => const ProfileViewArguments(),
+      );
+      return _i54.MaterialPageRoute<dynamic>(
+        builder: (context) => _i13.ProfileView(key: args.key),
         settings: data,
       );
     },
-    _i13.TransactionPinSetView: (data) {
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => const _i13.TransactionPinSetView(),
+    _i14.TransactionPinSetView: (data) {
+      final args = data.getArgs<TransactionPinSetViewArguments>(
+        orElse: () => const TransactionPinSetViewArguments(),
+      );
+      return _i54.MaterialPageRoute<dynamic>(
+        builder: (context) => _i14.TransactionPinSetView(key: args.key),
         settings: data,
       );
     },
-    _i14.TransactionPinChangeView: (data) {
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => const _i14.TransactionPinChangeView(),
+    _i15.TransactionPinChangeView: (data) {
+      final args = data.getArgs<TransactionPinChangeViewArguments>(
+        orElse: () => const TransactionPinChangeViewArguments(),
+      );
+      return _i54.MaterialPageRoute<dynamic>(
+        builder: (context) => _i15.TransactionPinChangeView(key: args.key),
         settings: data,
       );
     },
-    _i15.PasswordChangeView: (data) {
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => const _i15.PasswordChangeView(),
+    _i16.PasswordChangeView: (data) {
+      final args = data.getArgs<PasswordChangeViewArguments>(
+        orElse: () => const PasswordChangeViewArguments(),
+      );
+      return _i54.MaterialPageRoute<dynamic>(
+        builder: (context) => _i16.PasswordChangeView(key: args.key),
         settings: data,
       );
     },
-    _i16.CoinsView: (data) {
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => const _i16.CoinsView(),
+    _i17.CoinsView: (data) {
+      final args = data.getArgs<CoinsViewArguments>(
+        orElse: () => const CoinsViewArguments(),
+      );
+      return _i54.MaterialPageRoute<dynamic>(
+        builder: (context) => _i17.CoinsView(key: args.key),
         settings: data,
       );
     },
-    _i17.VerifyPhoneView: (data) {
+    _i18.VerifyPhoneView: (data) {
       final args = data.getArgs<VerifyPhoneViewArguments>(nullOk: false);
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => _i17.VerifyPhoneView(
-            key: args.key,
-            phoneNumber: args.phoneNumber,
-            country: args.country,
-            state: args.state,
-            street: args.street,
-            city: args.city,
-            postalCode: args.postalCode,
-            address: args.address,
-            gender: args.gender,
-            dob: args.dob),
+      return _i54.MaterialPageRoute<dynamic>(
+        builder:
+            (context) => _i18.VerifyPhoneView(
+              key: args.key,
+              phoneNumber: args.phoneNumber,
+              country: args.country,
+              state: args.state,
+              street: args.street,
+              city: args.city,
+              postalCode: args.postalCode,
+              address: args.address,
+              gender: args.gender,
+              dob: args.dob,
+            ),
         settings: data,
       );
     },
-    _i18.LevelOnePartAView: (data) {
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => const _i18.LevelOnePartAView(),
+    _i19.LevelOnePartAView: (data) {
+      final args = data.getArgs<LevelOnePartAViewArguments>(
+        orElse: () => const LevelOnePartAViewArguments(),
+      );
+      return _i54.MaterialPageRoute<dynamic>(
+        builder: (context) => _i19.LevelOnePartAView(key: args.key),
         settings: data,
       );
     },
-    _i19.LevelOnePartBView: (data) {
+    _i20.LevelOnePartBView: (data) {
       final args = data.getArgs<LevelOnePartBViewArguments>(nullOk: false);
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => _i19.LevelOnePartBView(
-            key: args.key,
-            country: args.country,
-            state: args.state,
-            street: args.street,
-            city: args.city,
-            postalCode: args.postalCode,
-            address: args.address),
+      return _i54.MaterialPageRoute<dynamic>(
+        builder:
+            (context) => _i20.LevelOnePartBView(
+              key: args.key,
+              country: args.country,
+              state: args.state,
+              street: args.street,
+              city: args.city,
+              postalCode: args.postalCode,
+              address: args.address,
+            ),
         settings: data,
       );
     },
-    _i20.CoinDetailView: (data) {
+    _i21.CoinDetailView: (data) {
       final args = data.getArgs<CoinDetailViewArguments>(nullOk: false);
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => _i20.CoinDetailView(
-            key: args.key,
-            coinId: args.coinId,
-            coinName: args.coinName,
-            coinPrice: args.coinPrice,
-            priceChange: args.priceChange,
-            marketCap: args.marketCap,
-            popularity: args.popularity),
+      return _i54.MaterialPageRoute<dynamic>(
+        builder:
+            (context) => _i21.CoinDetailView(
+              key: args.key,
+              coinId: args.coinId,
+              coinName: args.coinName,
+              coinPrice: args.coinPrice,
+              priceChange: args.priceChange,
+              marketCap: args.marketCap,
+              popularity: args.popularity,
+            ),
         settings: data,
       );
     },
-    _i21.WalletsView: (data) {
+    _i22.WalletsView: (data) {
       final args = data.getArgs<WalletsViewArguments>(nullOk: false);
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) =>
-            _i21.WalletsView(key: args.key, mainModel: args.mainModel),
+      return _i54.MaterialPageRoute<dynamic>(
+        builder:
+            (context) =>
+                _i22.WalletsView(key: args.key, mainModel: args.mainModel),
         settings: data,
       );
     },
-    _i22.KycLevelsView: (data) {
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => const _i22.KycLevelsView(),
+    _i23.KycLevelsView: (data) {
+      final args = data.getArgs<KycLevelsViewArguments>(
+        orElse: () => const KycLevelsViewArguments(),
+      );
+      return _i54.MaterialPageRoute<dynamic>(
+        builder: (context) => _i23.KycLevelsView(key: args.key),
         settings: data,
       );
     },
-    _i23.SwapView: (data) {
+    _i24.SwapView: (data) {
       final args = data.getArgs<SwapViewArguments>(nullOk: false);
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) =>
-            _i23.SwapView(key: args.key, wallets: args.wallets),
+      return _i54.MaterialPageRoute<dynamic>(
+        builder:
+            (context) => _i24.SwapView(key: args.key, wallets: args.wallets),
         settings: data,
       );
     },
-    _i24.PaymentSetupView: (data) {
+    _i25.PaymentSetupView: (data) {
       final args = data.getArgs<PaymentSetupViewArguments>(nullOk: false);
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => _i24.PaymentSetupView(
-            key: args.key,
-            readCard: args.readCard,
-            selectedPaymentMethod: args.selectedPaymentMethod,
-            amount: args.amount,
-            isReceive: args.isReceive),
+      return _i54.MaterialPageRoute<dynamic>(
+        builder:
+            (context) => _i25.PaymentSetupView(
+              key: args.key,
+              readCard: args.readCard,
+              selectedPaymentMethod: args.selectedPaymentMethod,
+              amount: args.amount,
+              isReceive: args.isReceive,
+            ),
         settings: data,
       );
     },
-    _i25.AddFundsView: (data) {
+    _i26.AddFundsView: (data) {
       final args = data.getArgs<AddFundsViewArguments>(nullOk: false);
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => _i25.AddFundsView(
-            key: args.key,
-            currency: args.currency,
-            userIcon: args.userIcon,
-            name: args.name,
-            username: args.username,
-            addFundType: args.addFundType,
-            openNFCbottomSheet: args.openNFCbottomSheet),
+      return _i54.MaterialPageRoute<dynamic>(
+        builder:
+            (context) => _i26.AddFundsView(
+              key: args.key,
+              currency: args.currency,
+              userIcon: args.userIcon,
+              name: args.name,
+              username: args.username,
+              addFundType: args.addFundType,
+              openNFCbottomSheet: args.openNFCbottomSheet,
+            ),
         settings: data,
       );
     },
-    _i26.AddFundsOptionsView: (data) {
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => const _i26.AddFundsOptionsView(),
+    _i27.AddFundsOptionsView: (data) {
+      final args = data.getArgs<AddFundsOptionsViewArguments>(
+        orElse: () => const AddFundsOptionsViewArguments(),
+      );
+      return _i54.MaterialPageRoute<dynamic>(
+        builder: (context) => _i27.AddFundsOptionsView(key: args.key),
         settings: data,
       );
     },
-    _i27.SendFundsView: (data) {
+    _i28.SendFundsView: (data) {
       final args = data.getArgs<SendFundsViewArguments>(nullOk: false);
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => _i27.SendFundsView(
-            key: args.key,
-            currency: args.currency,
-            userIcon: args.userIcon,
-            name: args.name,
-            username: args.username,
-            sendFundType: args.sendFundType),
+      return _i54.MaterialPageRoute<dynamic>(
+        builder:
+            (context) => _i28.SendFundsView(
+              key: args.key,
+              currency: args.currency,
+              userIcon: args.userIcon,
+              name: args.name,
+              username: args.username,
+              sendFundType: args.sendFundType,
+            ),
         settings: data,
       );
     },
-    _i28.SendFundsOptionsView: (data) {
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => const _i28.SendFundsOptionsView(),
+    _i29.SendFundsOptionsView: (data) {
+      final args = data.getArgs<SendFundsOptionsViewArguments>(
+        orElse: () => const SendFundsOptionsViewArguments(),
+      );
+      return _i54.MaterialPageRoute<dynamic>(
+        builder: (context) => _i29.SendFundsOptionsView(key: args.key),
         settings: data,
       );
     },
-    _i29.PasscodeView: (data) {
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => const _i29.PasscodeView(),
+    _i30.PasscodeView: (data) {
+      final args = data.getArgs<PasscodeViewArguments>(
+        orElse: () => const PasscodeViewArguments(),
+      );
+      return _i54.MaterialPageRoute<dynamic>(
+        builder: (context) => _i30.PasscodeView(key: args.key),
         settings: data,
       );
     },
-    _i30.CreatePasscodeView: (data) {
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => const _i30.CreatePasscodeView(),
+    _i31.CreatePasscodeView: (data) {
+      final args = data.getArgs<CreatePasscodeViewArguments>(
+        orElse: () => const CreatePasscodeViewArguments(),
+      );
+      return _i54.MaterialPageRoute<dynamic>(
+        builder: (context) => _i31.CreatePasscodeView(key: args.key),
         settings: data,
       );
     },
-    _i31.ReenterPasscodeView: (data) {
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => const _i31.ReenterPasscodeView(),
+    _i32.ReenterPasscodeView: (data) {
+      final args = data.getArgs<ReenterPasscodeViewArguments>(
+        orElse: () => const ReenterPasscodeViewArguments(),
+      );
+      return _i54.MaterialPageRoute<dynamic>(
+        builder: (context) => _i32.ReenterPasscodeView(key: args.key),
         settings: data,
       );
     },
-    _i32.LinkedBanksView: (data) {
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => const _i32.LinkedBanksView(),
+    _i33.LinkedBanksView: (data) {
+      final args = data.getArgs<LinkedBanksViewArguments>(
+        orElse: () => const LinkedBanksViewArguments(),
+      );
+      return _i54.MaterialPageRoute<dynamic>(
+        builder: (context) => _i33.LinkedBanksView(key: args.key),
         settings: data,
       );
     },
-    _i33.LinkABankView: (data) {
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => const _i33.LinkABankView(),
+    _i34.LinkABankView: (data) {
+      final args = data.getArgs<LinkABankViewArguments>(
+        orElse: () => const LinkABankViewArguments(),
+      );
+      return _i54.MaterialPageRoute<dynamic>(
+        builder: (context) => _i34.LinkABankView(key: args.key),
         settings: data,
       );
     },
-    _i34.KycSuccessView: (data) {
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => const _i34.KycSuccessView(),
+    _i35.KycSuccessView: (data) {
+      final args = data.getArgs<KycSuccessViewArguments>(
+        orElse: () => const KycSuccessViewArguments(),
+      );
+      return _i54.MaterialPageRoute<dynamic>(
+        builder: (context) => _i35.KycSuccessView(key: args.key),
         settings: data,
       );
     },
-    _i35.CardsView: (data) {
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => const _i35.CardsView(),
+    _i36.CardsView: (data) {
+      final args = data.getArgs<CardsViewArguments>(
+        orElse: () => const CardsViewArguments(),
+      );
+      return _i54.MaterialPageRoute<dynamic>(
+        builder: (context) => _i36.CardsView(key: args.key),
         settings: data,
       );
     },
-    _i36.PrepaidInfoView: (data) {
+    _i37.PrepaidInfoView: (data) {
       final args = data.getArgs<PrepaidInfoViewArguments>(
         orElse: () => const PrepaidInfoViewArguments(),
       );
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) =>
-            _i36.PrepaidInfoView(key: args.key, isVCard: args.isVCard),
+      return _i54.MaterialPageRoute<dynamic>(
+        builder:
+            (context) =>
+                _i37.PrepaidInfoView(key: args.key, isVCard: args.isVCard),
         settings: data,
       );
     },
-    _i37.PersonaliseCardView: (data) {
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => const _i37.PersonaliseCardView(),
+    _i38.PersonaliseCardView: (data) {
+      final args = data.getArgs<PersonaliseCardViewArguments>(
+        orElse: () => const PersonaliseCardViewArguments(),
+      );
+      return _i54.MaterialPageRoute<dynamic>(
+        builder: (context) => _i38.PersonaliseCardView(key: args.key),
         settings: data,
       );
     },
-    _i38.TransfersDetailsSelectionView: (data) {
-      final args =
-          data.getArgs<TransfersDetailsSelectionViewArguments>(nullOk: false);
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => _i38.TransfersDetailsSelectionView(
-            key: args.key, dayfiId: args.dayfiId, wallet: args.wallet),
+    _i39.TransfersDetailsSelectionView: (data) {
+      final args = data.getArgs<TransfersDetailsSelectionViewArguments>(
+        nullOk: false,
+      );
+      return _i54.MaterialPageRoute<dynamic>(
+        builder:
+            (context) => _i39.TransfersDetailsSelectionView(
+              key: args.key,
+              dayfiId: args.dayfiId,
+              wallet: args.wallet,
+            ),
         settings: data,
       );
     },
-    _i39.RecipientDetailsView: (data) {
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => const _i39.RecipientDetailsView(),
+    _i40.RecipientDetailsView: (data) {
+      final args = data.getArgs<RecipientDetailsViewArguments>(
+        orElse: () => const RecipientDetailsViewArguments(),
+      );
+      return _i54.MaterialPageRoute<dynamic>(
+        builder: (context) => _i40.RecipientDetailsView(key: args.key),
         settings: data,
       );
     },
-    _i40.AmountEntryView: (data) {
+    _i41.AmountEntryView: (data) {
       final args = data.getArgs<AmountEntryViewArguments>(nullOk: false);
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => _i40.AmountEntryView(
-            key: args.key,
-            accountNumber: args.accountNumber,
-            bankCode: args.bankCode,
-            accountName: args.accountName,
-            bankName: args.bankName,
-            beneficiaryName: args.beneficiaryName,
-            wallet: args.wallet),
+      return _i54.MaterialPageRoute<dynamic>(
+        builder:
+            (context) => _i41.AmountEntryView(
+              key: args.key,
+              accountNumber: args.accountNumber,
+              bankCode: args.bankCode,
+              accountName: args.accountName,
+              bankName: args.bankName,
+              beneficiaryName: args.beneficiaryName,
+              wallet: args.wallet,
+            ),
         settings: data,
       );
     },
-    _i41.TransactionPinNewView: (data) {
+    _i42.TransactionPinNewView: (data) {
       final args = data.getArgs<TransactionPinNewViewArguments>(nullOk: false);
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) =>
-            _i41.TransactionPinNewView(args.oldPIN, key: args.key),
+      return _i54.MaterialPageRoute<dynamic>(
+        builder:
+            (context) => _i42.TransactionPinNewView(args.oldPIN, key: args.key),
         settings: data,
       );
     },
-    _i42.TransactionPinConfirmView: (data) {
-      final args =
-          data.getArgs<TransactionPinConfirmViewArguments>(nullOk: false);
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) =>
-            _i42.TransactionPinConfirmView(key: args.key, pin: args.pin),
+    _i43.TransactionPinConfirmView: (data) {
+      final args = data.getArgs<TransactionPinConfirmViewArguments>(
+        nullOk: false,
+      );
+      return _i54.MaterialPageRoute<dynamic>(
+        builder:
+            (context) =>
+                _i43.TransactionPinConfirmView(key: args.key, pin: args.pin),
         settings: data,
       );
     },
-    _i43.WalletDetailsView: (data) {
+    _i44.WalletDetailsView: (data) {
       final args = data.getArgs<WalletDetailsViewArguments>(nullOk: false);
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) =>
-            _i43.WalletDetailsView(key: args.key, wallet: args.wallet),
+      return _i54.MaterialPageRoute<dynamic>(
+        builder:
+            (context) =>
+                _i44.WalletDetailsView(key: args.key, wallet: args.wallet),
         settings: data,
       );
     },
-    _i44.TransactionDetailsView: (data) {
+    _i45.TransactionDetailsView: (data) {
       final args = data.getArgs<TransactionDetailsViewArguments>(nullOk: false);
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => _i44.TransactionDetailsView(args.wallet,
-            key: args.key, transaction: args.transaction),
+      return _i54.MaterialPageRoute<dynamic>(
+        builder:
+            (context) => _i45.TransactionDetailsView(
+              args.wallet,
+              key: args.key,
+              transaction: args.transaction,
+            ),
         settings: data,
       );
     },
-    _i45.WalletView: (data) {
+    _i46.WalletView: (data) {
       final args = data.getArgs<WalletViewArguments>(nullOk: false);
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => _i45.WalletView(
-            args.wallet, args.walletTransactions, args.wallets,
-            key: args.key),
+      return _i54.MaterialPageRoute<dynamic>(
+        builder:
+            (context) => _i46.WalletView(
+              args.wallet,
+              args.walletTransactions,
+              args.wallets,
+              key: args.key,
+            ),
         settings: data,
       );
     },
-    _i46.BlogView: (data) {
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => const _i46.BlogView(),
+    _i47.BlogView: (data) {
+      final args = data.getArgs<BlogViewArguments>(
+        orElse: () => const BlogViewArguments(),
+      );
+      return _i54.MaterialPageRoute<dynamic>(
+        builder: (context) => _i47.BlogView(key: args.key),
         settings: data,
       );
     },
-    _i47.BlogDetailView: (data) {
+    _i48.BlogDetailView: (data) {
       final args = data.getArgs<BlogDetailViewArguments>(nullOk: false);
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) =>
-            _i47.BlogDetailView(key: args.key, blog: args.blog),
+      return _i54.MaterialPageRoute<dynamic>(
+        builder:
+            (context) => _i48.BlogDetailView(key: args.key, blog: args.blog),
         settings: data,
       );
     },
-    _i48.FaqsView: (data) {
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => const _i48.FaqsView(),
+    _i49.FaqsView: (data) {
+      final args = data.getArgs<FaqsViewArguments>(
+        orElse: () => const FaqsViewArguments(),
+      );
+      return _i54.MaterialPageRoute<dynamic>(
+        builder: (context) => _i49.FaqsView(key: args.key),
         settings: data,
       );
     },
-    _i49.TransactionHistoryView: (data) {
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => const _i49.TransactionHistoryView(),
+    _i50.TransactionHistoryView: (data) {
+      final args = data.getArgs<TransactionHistoryViewArguments>(
+        orElse: () => const TransactionHistoryViewArguments(),
+      );
+      return _i54.MaterialPageRoute<dynamic>(
+        builder: (context) => _i50.TransactionHistoryView(key: args.key),
         settings: data,
       );
     },
-    _i50.DigitalDollarView: (data) {
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => _i50.DigitalDollarView(),
+    _i51.DigitalDollarView: (data) {
+      return _i54.MaterialPageRoute<dynamic>(
+        builder: (context) => _i51.DigitalDollarView(),
         settings: data,
       );
     },
-    _i51.WalletAddressInfoView: (data) {
+    _i52.WalletAddressInfoView: (data) {
       final args = data.getArgs<WalletAddressInfoViewArguments>(nullOk: false);
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => _i51.WalletAddressInfoView(
-            address: args.address,
-            currency: args.currency,
-            network: args.network),
+      return _i54.MaterialPageRoute<dynamic>(
+        builder:
+            (context) => _i52.WalletAddressInfoView(
+              address: args.address,
+              currency: args.currency,
+              network: args.network,
+            ),
         settings: data,
       );
     },
-    _i52.VirtualCardDetailsView: (data) {
-      return _i53.MaterialPageRoute<dynamic>(
-        builder: (context) => const _i52.VirtualCardDetailsView(),
+    _i53.VirtualCardDetailsView: (data) {
+      final args = data.getArgs<VirtualCardDetailsViewArguments>(
+        orElse: () => const VirtualCardDetailsViewArguments(),
+      );
+      return _i54.MaterialPageRoute<dynamic>(
+        builder: (context) => _i53.VirtualCardDetailsView(key: args.key),
         settings: data,
       );
     },
@@ -869,14 +877,11 @@ class StackedRouter extends _i1.RouterBase {
 }
 
 class HomeViewArguments {
-  const HomeViewArguments({
-    this.key,
-    required this.mainModel,
-  });
+  const HomeViewArguments({this.key, required this.mainModel});
 
-  final _i53.Key? key;
+  final _i54.Key? key;
 
-  final _i54.MainViewModel mainModel;
+  final _i55.MainViewModel mainModel;
 
   @override
   String toString() {
@@ -895,6 +900,116 @@ class HomeViewArguments {
   }
 }
 
+class SplashViewArguments {
+  const SplashViewArguments({this.key});
+
+  final _i54.Key? key;
+
+  @override
+  String toString() {
+    return '{"key": "$key"}';
+  }
+
+  @override
+  bool operator ==(covariant SplashViewArguments other) {
+    if (identical(this, other)) return true;
+    return other.key == key;
+  }
+
+  @override
+  int get hashCode {
+    return key.hashCode;
+  }
+}
+
+class StartupViewArguments {
+  const StartupViewArguments({this.key});
+
+  final _i54.Key? key;
+
+  @override
+  String toString() {
+    return '{"key": "$key"}';
+  }
+
+  @override
+  bool operator ==(covariant StartupViewArguments other) {
+    if (identical(this, other)) return true;
+    return other.key == key;
+  }
+
+  @override
+  int get hashCode {
+    return key.hashCode;
+  }
+}
+
+class SignupViewArguments {
+  const SignupViewArguments({this.key});
+
+  final _i54.Key? key;
+
+  @override
+  String toString() {
+    return '{"key": "$key"}';
+  }
+
+  @override
+  bool operator ==(covariant SignupViewArguments other) {
+    if (identical(this, other)) return true;
+    return other.key == key;
+  }
+
+  @override
+  int get hashCode {
+    return key.hashCode;
+  }
+}
+
+class LoginViewArguments {
+  const LoginViewArguments({this.key});
+
+  final _i54.Key? key;
+
+  @override
+  String toString() {
+    return '{"key": "$key"}';
+  }
+
+  @override
+  bool operator ==(covariant LoginViewArguments other) {
+    if (identical(this, other)) return true;
+    return other.key == key;
+  }
+
+  @override
+  int get hashCode {
+    return key.hashCode;
+  }
+}
+
+class ForgotPasswordViewArguments {
+  const ForgotPasswordViewArguments({this.key});
+
+  final _i54.Key? key;
+
+  @override
+  String toString() {
+    return '{"key": "$key"}';
+  }
+
+  @override
+  bool operator ==(covariant ForgotPasswordViewArguments other) {
+    if (identical(this, other)) return true;
+    return other.key == key;
+  }
+
+  @override
+  int get hashCode {
+    return key.hashCode;
+  }
+}
+
 class VerifyEmailViewArguments {
   const VerifyEmailViewArguments({
     this.key,
@@ -903,7 +1018,7 @@ class VerifyEmailViewArguments {
     this.password = "",
   });
 
-  final _i53.Key? key;
+  final _i54.Key? key;
 
   final bool isSignUp;
 
@@ -935,12 +1050,9 @@ class VerifyEmailViewArguments {
 }
 
 class ResetPasswordViewArguments {
-  const ResetPasswordViewArguments({
-    this.key,
-    required this.email,
-  });
+  const ResetPasswordViewArguments({this.key, required this.email});
 
-  final _i53.Key? key;
+  final _i54.Key? key;
 
   final String email;
 
@@ -961,13 +1073,32 @@ class ResetPasswordViewArguments {
   }
 }
 
-class MainViewArguments {
-  const MainViewArguments({
-    this.key,
-    this.index = 0,
-  });
+class SuccessViewArguments {
+  const SuccessViewArguments({this.key});
 
-  final _i53.Key? key;
+  final _i54.Key? key;
+
+  @override
+  String toString() {
+    return '{"key": "$key"}';
+  }
+
+  @override
+  bool operator ==(covariant SuccessViewArguments other) {
+    if (identical(this, other)) return true;
+    return other.key == key;
+  }
+
+  @override
+  int get hashCode {
+    return key.hashCode;
+  }
+}
+
+class MainViewArguments {
+  const MainViewArguments({this.key, this.index = 0});
+
+  final _i54.Key? key;
 
   final int index;
 
@@ -989,14 +1120,11 @@ class MainViewArguments {
 }
 
 class SettingsViewArguments {
-  const SettingsViewArguments({
-    this.key,
-    required this.mainModel,
-  });
+  const SettingsViewArguments({this.key, required this.mainModel});
 
-  final _i53.Key? key;
+  final _i54.Key? key;
 
-  final _i54.MainViewModel mainModel;
+  final _i55.MainViewModel mainModel;
 
   @override
   String toString() {
@@ -1015,6 +1143,116 @@ class SettingsViewArguments {
   }
 }
 
+class ProfileViewArguments {
+  const ProfileViewArguments({this.key});
+
+  final _i54.Key? key;
+
+  @override
+  String toString() {
+    return '{"key": "$key"}';
+  }
+
+  @override
+  bool operator ==(covariant ProfileViewArguments other) {
+    if (identical(this, other)) return true;
+    return other.key == key;
+  }
+
+  @override
+  int get hashCode {
+    return key.hashCode;
+  }
+}
+
+class TransactionPinSetViewArguments {
+  const TransactionPinSetViewArguments({this.key});
+
+  final _i54.Key? key;
+
+  @override
+  String toString() {
+    return '{"key": "$key"}';
+  }
+
+  @override
+  bool operator ==(covariant TransactionPinSetViewArguments other) {
+    if (identical(this, other)) return true;
+    return other.key == key;
+  }
+
+  @override
+  int get hashCode {
+    return key.hashCode;
+  }
+}
+
+class TransactionPinChangeViewArguments {
+  const TransactionPinChangeViewArguments({this.key});
+
+  final _i54.Key? key;
+
+  @override
+  String toString() {
+    return '{"key": "$key"}';
+  }
+
+  @override
+  bool operator ==(covariant TransactionPinChangeViewArguments other) {
+    if (identical(this, other)) return true;
+    return other.key == key;
+  }
+
+  @override
+  int get hashCode {
+    return key.hashCode;
+  }
+}
+
+class PasswordChangeViewArguments {
+  const PasswordChangeViewArguments({this.key});
+
+  final _i54.Key? key;
+
+  @override
+  String toString() {
+    return '{"key": "$key"}';
+  }
+
+  @override
+  bool operator ==(covariant PasswordChangeViewArguments other) {
+    if (identical(this, other)) return true;
+    return other.key == key;
+  }
+
+  @override
+  int get hashCode {
+    return key.hashCode;
+  }
+}
+
+class CoinsViewArguments {
+  const CoinsViewArguments({this.key});
+
+  final _i54.Key? key;
+
+  @override
+  String toString() {
+    return '{"key": "$key"}';
+  }
+
+  @override
+  bool operator ==(covariant CoinsViewArguments other) {
+    if (identical(this, other)) return true;
+    return other.key == key;
+  }
+
+  @override
+  int get hashCode {
+    return key.hashCode;
+  }
+}
+
 class VerifyPhoneViewArguments {
   const VerifyPhoneViewArguments({
     this.key,
@@ -1029,7 +1267,7 @@ class VerifyPhoneViewArguments {
     required this.dob,
   });
 
-  final _i53.Key? key;
+  final _i54.Key? key;
 
   final String phoneNumber;
 
@@ -1084,6 +1322,28 @@ class VerifyPhoneViewArguments {
   }
 }
 
+class LevelOnePartAViewArguments {
+  const LevelOnePartAViewArguments({this.key});
+
+  final _i54.Key? key;
+
+  @override
+  String toString() {
+    return '{"key": "$key"}';
+  }
+
+  @override
+  bool operator ==(covariant LevelOnePartAViewArguments other) {
+    if (identical(this, other)) return true;
+    return other.key == key;
+  }
+
+  @override
+  int get hashCode {
+    return key.hashCode;
+  }
+}
+
 class LevelOnePartBViewArguments {
   const LevelOnePartBViewArguments({
     this.key,
@@ -1095,7 +1355,7 @@ class LevelOnePartBViewArguments {
     required this.address,
   });
 
-  final _i53.Key? key;
+  final _i54.Key? key;
 
   final String country;
 
@@ -1149,7 +1409,7 @@ class CoinDetailViewArguments {
     required this.popularity,
   });
 
-  final _i53.Key? key;
+  final _i54.Key? key;
 
   final String coinId;
 
@@ -1193,14 +1453,11 @@ class CoinDetailViewArguments {
 }
 
 class WalletsViewArguments {
-  const WalletsViewArguments({
-    this.key,
-    required this.mainModel,
-  });
+  const WalletsViewArguments({this.key, required this.mainModel});
 
-  final _i53.Key? key;
+  final _i54.Key? key;
 
-  final _i54.MainViewModel mainModel;
+  final _i55.MainViewModel mainModel;
 
   @override
   String toString() {
@@ -1219,15 +1476,34 @@ class WalletsViewArguments {
   }
 }
 
+class KycLevelsViewArguments {
+  const KycLevelsViewArguments({this.key});
+
+  final _i54.Key? key;
+
+  @override
+  String toString() {
+    return '{"key": "$key"}';
+  }
+
+  @override
+  bool operator ==(covariant KycLevelsViewArguments other) {
+    if (identical(this, other)) return true;
+    return other.key == key;
+  }
+
+  @override
+  int get hashCode {
+    return key.hashCode;
+  }
+}
+
 class SwapViewArguments {
-  const SwapViewArguments({
-    this.key,
-    required this.wallets,
-  });
+  const SwapViewArguments({this.key, required this.wallets});
 
-  final _i53.Key? key;
+  final _i54.Key? key;
 
-  final List<_i55.Wallet> wallets;
+  final List<_i56.Wallet> wallets;
 
   @override
   String toString() {
@@ -1255,13 +1531,13 @@ class PaymentSetupViewArguments {
     this.isReceive = true,
   });
 
-  final _i53.Key? key;
+  final _i54.Key? key;
 
-  final _i56.Future<bool> Function() readCard;
+  final _i57.Future<bool> Function() readCard;
 
   final String selectedPaymentMethod;
 
-  final _i53.TextEditingController amount;
+  final _i54.TextEditingController amount;
 
   final bool isReceive;
 
@@ -1301,7 +1577,7 @@ class AddFundsViewArguments {
     required this.openNFCbottomSheet,
   });
 
-  final _i53.Key? key;
+  final _i54.Key? key;
 
   final String currency;
 
@@ -1344,6 +1620,28 @@ class AddFundsViewArguments {
   }
 }
 
+class AddFundsOptionsViewArguments {
+  const AddFundsOptionsViewArguments({this.key});
+
+  final _i54.Key? key;
+
+  @override
+  String toString() {
+    return '{"key": "$key"}';
+  }
+
+  @override
+  bool operator ==(covariant AddFundsOptionsViewArguments other) {
+    if (identical(this, other)) return true;
+    return other.key == key;
+  }
+
+  @override
+  int get hashCode {
+    return key.hashCode;
+  }
+}
+
 class SendFundsViewArguments {
   const SendFundsViewArguments({
     this.key,
@@ -1354,7 +1652,7 @@ class SendFundsViewArguments {
     required this.sendFundType,
   });
 
-  final _i53.Key? key;
+  final _i54.Key? key;
 
   final String currency;
 
@@ -1393,13 +1691,186 @@ class SendFundsViewArguments {
   }
 }
 
-class PrepaidInfoViewArguments {
-  const PrepaidInfoViewArguments({
-    this.key,
-    this.isVCard = false,
-  });
+class SendFundsOptionsViewArguments {
+  const SendFundsOptionsViewArguments({this.key});
 
-  final _i53.Key? key;
+  final _i54.Key? key;
+
+  @override
+  String toString() {
+    return '{"key": "$key"}';
+  }
+
+  @override
+  bool operator ==(covariant SendFundsOptionsViewArguments other) {
+    if (identical(this, other)) return true;
+    return other.key == key;
+  }
+
+  @override
+  int get hashCode {
+    return key.hashCode;
+  }
+}
+
+class PasscodeViewArguments {
+  const PasscodeViewArguments({this.key});
+
+  final _i54.Key? key;
+
+  @override
+  String toString() {
+    return '{"key": "$key"}';
+  }
+
+  @override
+  bool operator ==(covariant PasscodeViewArguments other) {
+    if (identical(this, other)) return true;
+    return other.key == key;
+  }
+
+  @override
+  int get hashCode {
+    return key.hashCode;
+  }
+}
+
+class CreatePasscodeViewArguments {
+  const CreatePasscodeViewArguments({this.key});
+
+  final _i54.Key? key;
+
+  @override
+  String toString() {
+    return '{"key": "$key"}';
+  }
+
+  @override
+  bool operator ==(covariant CreatePasscodeViewArguments other) {
+    if (identical(this, other)) return true;
+    return other.key == key;
+  }
+
+  @override
+  int get hashCode {
+    return key.hashCode;
+  }
+}
+
+class ReenterPasscodeViewArguments {
+  const ReenterPasscodeViewArguments({this.key});
+
+  final _i54.Key? key;
+
+  @override
+  String toString() {
+    return '{"key": "$key"}';
+  }
+
+  @override
+  bool operator ==(covariant ReenterPasscodeViewArguments other) {
+    if (identical(this, other)) return true;
+    return other.key == key;
+  }
+
+  @override
+  int get hashCode {
+    return key.hashCode;
+  }
+}
+
+class LinkedBanksViewArguments {
+  const LinkedBanksViewArguments({this.key});
+
+  final _i54.Key? key;
+
+  @override
+  String toString() {
+    return '{"key": "$key"}';
+  }
+
+  @override
+  bool operator ==(covariant LinkedBanksViewArguments other) {
+    if (identical(this, other)) return true;
+    return other.key == key;
+  }
+
+  @override
+  int get hashCode {
+    return key.hashCode;
+  }
+}
+
+class LinkABankViewArguments {
+  const LinkABankViewArguments({this.key});
+
+  final _i54.Key? key;
+
+  @override
+  String toString() {
+    return '{"key": "$key"}';
+  }
+
+  @override
+  bool operator ==(covariant LinkABankViewArguments other) {
+    if (identical(this, other)) return true;
+    return other.key == key;
+  }
+
+  @override
+  int get hashCode {
+    return key.hashCode;
+  }
+}
+
+class KycSuccessViewArguments {
+  const KycSuccessViewArguments({this.key});
+
+  final _i54.Key? key;
+
+  @override
+  String toString() {
+    return '{"key": "$key"}';
+  }
+
+  @override
+  bool operator ==(covariant KycSuccessViewArguments other) {
+    if (identical(this, other)) return true;
+    return other.key == key;
+  }
+
+  @override
+  int get hashCode {
+    return key.hashCode;
+  }
+}
+
+class CardsViewArguments {
+  const CardsViewArguments({this.key});
+
+  final _i54.Key? key;
+
+  @override
+  String toString() {
+    return '{"key": "$key"}';
+  }
+
+  @override
+  bool operator ==(covariant CardsViewArguments other) {
+    if (identical(this, other)) return true;
+    return other.key == key;
+  }
+
+  @override
+  int get hashCode {
+    return key.hashCode;
+  }
+}
+
+class PrepaidInfoViewArguments {
+  const PrepaidInfoViewArguments({this.key, this.isVCard = false});
+
+  final _i54.Key? key;
 
   final bool isVCard;
 
@@ -1420,6 +1891,28 @@ class PrepaidInfoViewArguments {
   }
 }
 
+class PersonaliseCardViewArguments {
+  const PersonaliseCardViewArguments({this.key});
+
+  final _i54.Key? key;
+
+  @override
+  String toString() {
+    return '{"key": "$key"}';
+  }
+
+  @override
+  bool operator ==(covariant PersonaliseCardViewArguments other) {
+    if (identical(this, other)) return true;
+    return other.key == key;
+  }
+
+  @override
+  int get hashCode {
+    return key.hashCode;
+  }
+}
+
 class TransfersDetailsSelectionViewArguments {
   const TransfersDetailsSelectionViewArguments({
     this.key,
@@ -1427,11 +1920,11 @@ class TransfersDetailsSelectionViewArguments {
     required this.wallet,
   });
 
-  final _i53.Key? key;
+  final _i54.Key? key;
 
   final String dayfiId;
 
-  final _i55.Wallet wallet;
+  final _i56.Wallet wallet;
 
   @override
   String toString() {
@@ -1452,6 +1945,28 @@ class TransfersDetailsSelectionViewArguments {
   }
 }
 
+class RecipientDetailsViewArguments {
+  const RecipientDetailsViewArguments({this.key});
+
+  final _i54.Key? key;
+
+  @override
+  String toString() {
+    return '{"key": "$key"}';
+  }
+
+  @override
+  bool operator ==(covariant RecipientDetailsViewArguments other) {
+    if (identical(this, other)) return true;
+    return other.key == key;
+  }
+
+  @override
+  int get hashCode {
+    return key.hashCode;
+  }
+}
+
 class AmountEntryViewArguments {
   const AmountEntryViewArguments({
     this.key,
@@ -1463,7 +1978,7 @@ class AmountEntryViewArguments {
     required this.wallet,
   });
 
-  final _i53.Key? key;
+  final _i54.Key? key;
 
   final String accountNumber;
 
@@ -1475,7 +1990,7 @@ class AmountEntryViewArguments {
 
   final String beneficiaryName;
 
-  final _i55.Wallet wallet;
+  final _i56.Wallet wallet;
 
   @override
   String toString() {
@@ -1507,14 +2022,11 @@ class AmountEntryViewArguments {
 }
 
 class TransactionPinNewViewArguments {
-  const TransactionPinNewViewArguments({
-    required this.oldPIN,
-    this.key,
-  });
+  const TransactionPinNewViewArguments({required this.oldPIN, this.key});
 
   final String? oldPIN;
 
-  final _i53.Key? key;
+  final _i54.Key? key;
 
   @override
   String toString() {
@@ -1534,12 +2046,9 @@ class TransactionPinNewViewArguments {
 }
 
 class TransactionPinConfirmViewArguments {
-  const TransactionPinConfirmViewArguments({
-    this.key,
-    required this.pin,
-  });
+  const TransactionPinConfirmViewArguments({this.key, required this.pin});
 
-  final _i53.Key? key;
+  final _i54.Key? key;
 
   final String pin;
 
@@ -1561,14 +2070,11 @@ class TransactionPinConfirmViewArguments {
 }
 
 class WalletDetailsViewArguments {
-  const WalletDetailsViewArguments({
-    this.key,
-    required this.wallet,
-  });
+  const WalletDetailsViewArguments({this.key, required this.wallet});
 
-  final _i53.Key? key;
+  final _i54.Key? key;
 
-  final _i55.Wallet wallet;
+  final _i56.Wallet wallet;
 
   @override
   String toString() {
@@ -1594,11 +2100,11 @@ class TransactionDetailsViewArguments {
     required this.transaction,
   });
 
-  final _i55.Wallet wallet;
+  final _i56.Wallet wallet;
 
-  final _i53.Key? key;
+  final _i54.Key? key;
 
-  final _i57.WalletTransaction transaction;
+  final _i58.WalletTransaction transaction;
 
   @override
   String toString() {
@@ -1627,13 +2133,13 @@ class WalletViewArguments {
     this.key,
   });
 
-  final _i55.Wallet wallet;
+  final _i56.Wallet wallet;
 
-  final List<_i57.WalletTransaction> walletTransactions;
+  final List<_i58.WalletTransaction> walletTransactions;
 
-  final List<_i55.Wallet> wallets;
+  final List<_i56.Wallet> wallets;
 
-  final _i53.Key? key;
+  final _i54.Key? key;
 
   @override
   String toString() {
@@ -1658,15 +2164,34 @@ class WalletViewArguments {
   }
 }
 
+class BlogViewArguments {
+  const BlogViewArguments({this.key});
+
+  final _i54.Key? key;
+
+  @override
+  String toString() {
+    return '{"key": "$key"}';
+  }
+
+  @override
+  bool operator ==(covariant BlogViewArguments other) {
+    if (identical(this, other)) return true;
+    return other.key == key;
+  }
+
+  @override
+  int get hashCode {
+    return key.hashCode;
+  }
+}
+
 class BlogDetailViewArguments {
-  const BlogDetailViewArguments({
-    this.key,
-    required this.blog,
-  });
+  const BlogDetailViewArguments({this.key, required this.blog});
 
-  final _i53.Key? key;
+  final _i54.Key? key;
 
-  final _i58.Article blog;
+  final _i59.Article blog;
 
   @override
   String toString() {
@@ -1682,6 +2207,50 @@ class BlogDetailViewArguments {
   @override
   int get hashCode {
     return key.hashCode ^ blog.hashCode;
+  }
+}
+
+class FaqsViewArguments {
+  const FaqsViewArguments({this.key});
+
+  final _i54.Key? key;
+
+  @override
+  String toString() {
+    return '{"key": "$key"}';
+  }
+
+  @override
+  bool operator ==(covariant FaqsViewArguments other) {
+    if (identical(this, other)) return true;
+    return other.key == key;
+  }
+
+  @override
+  int get hashCode {
+    return key.hashCode;
+  }
+}
+
+class TransactionHistoryViewArguments {
+  const TransactionHistoryViewArguments({this.key});
+
+  final _i54.Key? key;
+
+  @override
+  String toString() {
+    return '{"key": "$key"}';
+  }
+
+  @override
+  bool operator ==(covariant TransactionHistoryViewArguments other) {
+    if (identical(this, other)) return true;
+    return other.key == key;
+  }
+
+  @override
+  int get hashCode {
+    return key.hashCode;
   }
 }
 
@@ -1717,82 +2286,140 @@ class WalletAddressInfoViewArguments {
   }
 }
 
-extension NavigatorStateExtension on _i59.NavigationService {
+class VirtualCardDetailsViewArguments {
+  const VirtualCardDetailsViewArguments({this.key});
+
+  final _i54.Key? key;
+
+  @override
+  String toString() {
+    return '{"key": "$key"}';
+  }
+
+  @override
+  bool operator ==(covariant VirtualCardDetailsViewArguments other) {
+    if (identical(this, other)) return true;
+    return other.key == key;
+  }
+
+  @override
+  int get hashCode {
+    return key.hashCode;
+  }
+}
+
+extension NavigatorStateExtension on _i60.NavigationService {
   Future<dynamic> navigateToHomeView({
-    _i53.Key? key,
-    required _i54.MainViewModel mainModel,
+    _i54.Key? key,
+    required _i55.MainViewModel mainModel,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return navigateTo<dynamic>(Routes.homeView,
-        arguments: HomeViewArguments(key: key, mainModel: mainModel),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return navigateTo<dynamic>(
+      Routes.homeView,
+      arguments: HomeViewArguments(key: key, mainModel: mainModel),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> navigateToStartupView([
+  Future<dynamic> navigateToSplashView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return navigateTo<dynamic>(Routes.startupView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return navigateTo<dynamic>(
+      Routes.splashView,
+      arguments: SplashViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> navigateToSignupView([
+  Future<dynamic> navigateToStartupView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return navigateTo<dynamic>(Routes.signupView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return navigateTo<dynamic>(
+      Routes.startupView,
+      arguments: StartupViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> navigateToLoginView([
+  Future<dynamic> navigateToSignupView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return navigateTo<dynamic>(Routes.loginView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return navigateTo<dynamic>(
+      Routes.signupView,
+      arguments: SignupViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> navigateToForgotPasswordView([
+  Future<dynamic> navigateToLoginView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return navigateTo<dynamic>(Routes.forgotPasswordView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return navigateTo<dynamic>(
+      Routes.loginView,
+      arguments: LoginViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
+  }
+
+  Future<dynamic> navigateToForgotPasswordView({
+    _i54.Key? key,
+    int? routerId,
+    bool preventDuplicates = true,
+    Map<String, String>? parameters,
+    Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
+    transition,
+  }) async {
+    return navigateTo<dynamic>(
+      Routes.forgotPasswordView,
+      arguments: ForgotPasswordViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> navigateToVerifyEmailView({
-    _i53.Key? key,
+    _i54.Key? key,
     bool isSignUp = false,
     required String email,
     String password = "",
@@ -1800,154 +2427,190 @@ extension NavigatorStateExtension on _i59.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return navigateTo<dynamic>(Routes.verifyEmailView,
-        arguments: VerifyEmailViewArguments(
-            key: key, isSignUp: isSignUp, email: email, password: password),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return navigateTo<dynamic>(
+      Routes.verifyEmailView,
+      arguments: VerifyEmailViewArguments(
+        key: key,
+        isSignUp: isSignUp,
+        email: email,
+        password: password,
+      ),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> navigateToResetPasswordView({
-    _i53.Key? key,
+    _i54.Key? key,
     required String email,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return navigateTo<dynamic>(Routes.resetPasswordView,
-        arguments: ResetPasswordViewArguments(key: key, email: email),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return navigateTo<dynamic>(
+      Routes.resetPasswordView,
+      arguments: ResetPasswordViewArguments(key: key, email: email),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> navigateToSuccessView([
+  Future<dynamic> navigateToSuccessView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return navigateTo<dynamic>(Routes.successView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return navigateTo<dynamic>(
+      Routes.successView,
+      arguments: SuccessViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> navigateToMainView({
-    _i53.Key? key,
+    _i54.Key? key,
     int index = 0,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return navigateTo<dynamic>(Routes.mainView,
-        arguments: MainViewArguments(key: key, index: index),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return navigateTo<dynamic>(
+      Routes.mainView,
+      arguments: MainViewArguments(key: key, index: index),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> navigateToSettingsView({
-    _i53.Key? key,
-    required _i54.MainViewModel mainModel,
+    _i54.Key? key,
+    required _i55.MainViewModel mainModel,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return navigateTo<dynamic>(Routes.settingsView,
-        arguments: SettingsViewArguments(key: key, mainModel: mainModel),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return navigateTo<dynamic>(
+      Routes.settingsView,
+      arguments: SettingsViewArguments(key: key, mainModel: mainModel),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> navigateToProfileView([
+  Future<dynamic> navigateToProfileView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return navigateTo<dynamic>(Routes.profileView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return navigateTo<dynamic>(
+      Routes.profileView,
+      arguments: ProfileViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> navigateToTransactionPinSetView([
+  Future<dynamic> navigateToTransactionPinSetView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return navigateTo<dynamic>(Routes.transactionPinSetView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return navigateTo<dynamic>(
+      Routes.transactionPinSetView,
+      arguments: TransactionPinSetViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> navigateToTransactionPinChangeView([
+  Future<dynamic> navigateToTransactionPinChangeView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return navigateTo<dynamic>(Routes.transactionPinChangeView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return navigateTo<dynamic>(
+      Routes.transactionPinChangeView,
+      arguments: TransactionPinChangeViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> navigateToPasswordChangeView([
+  Future<dynamic> navigateToPasswordChangeView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return navigateTo<dynamic>(Routes.passwordChangeView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return navigateTo<dynamic>(
+      Routes.passwordChangeView,
+      arguments: PasswordChangeViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> navigateToCoinsView([
+  Future<dynamic> navigateToCoinsView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return navigateTo<dynamic>(Routes.coinsView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return navigateTo<dynamic>(
+      Routes.coinsView,
+      arguments: CoinsViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> navigateToVerifyPhoneView({
-    _i53.Key? key,
+    _i54.Key? key,
     required String phoneNumber,
     required String country,
     required String state,
@@ -1961,42 +2624,49 @@ extension NavigatorStateExtension on _i59.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return navigateTo<dynamic>(Routes.verifyPhoneView,
-        arguments: VerifyPhoneViewArguments(
-            key: key,
-            phoneNumber: phoneNumber,
-            country: country,
-            state: state,
-            street: street,
-            city: city,
-            postalCode: postalCode,
-            address: address,
-            gender: gender,
-            dob: dob),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return navigateTo<dynamic>(
+      Routes.verifyPhoneView,
+      arguments: VerifyPhoneViewArguments(
+        key: key,
+        phoneNumber: phoneNumber,
+        country: country,
+        state: state,
+        street: street,
+        city: city,
+        postalCode: postalCode,
+        address: address,
+        gender: gender,
+        dob: dob,
+      ),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> navigateToLevelOnePartAView([
+  Future<dynamic> navigateToLevelOnePartAView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return navigateTo<dynamic>(Routes.levelOnePartAView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return navigateTo<dynamic>(
+      Routes.levelOnePartAView,
+      arguments: LevelOnePartAViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> navigateToLevelOnePartBView({
-    _i53.Key? key,
+    _i54.Key? key,
     required String country,
     required String state,
     required String street,
@@ -2007,25 +2677,28 @@ extension NavigatorStateExtension on _i59.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return navigateTo<dynamic>(Routes.levelOnePartBView,
-        arguments: LevelOnePartBViewArguments(
-            key: key,
-            country: country,
-            state: state,
-            street: street,
-            city: city,
-            postalCode: postalCode,
-            address: address),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return navigateTo<dynamic>(
+      Routes.levelOnePartBView,
+      arguments: LevelOnePartBViewArguments(
+        key: key,
+        country: country,
+        state: state,
+        street: street,
+        city: city,
+        postalCode: postalCode,
+        address: address,
+      ),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> navigateToCoinDetailView({
-    _i53.Key? key,
+    _i54.Key? key,
     required String coinId,
     required String coinName,
     required dynamic coinPrice,
@@ -2036,98 +2709,112 @@ extension NavigatorStateExtension on _i59.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return navigateTo<dynamic>(Routes.coinDetailView,
-        arguments: CoinDetailViewArguments(
-            key: key,
-            coinId: coinId,
-            coinName: coinName,
-            coinPrice: coinPrice,
-            priceChange: priceChange,
-            marketCap: marketCap,
-            popularity: popularity),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return navigateTo<dynamic>(
+      Routes.coinDetailView,
+      arguments: CoinDetailViewArguments(
+        key: key,
+        coinId: coinId,
+        coinName: coinName,
+        coinPrice: coinPrice,
+        priceChange: priceChange,
+        marketCap: marketCap,
+        popularity: popularity,
+      ),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> navigateToWalletsView({
-    _i53.Key? key,
-    required _i54.MainViewModel mainModel,
+    _i54.Key? key,
+    required _i55.MainViewModel mainModel,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return navigateTo<dynamic>(Routes.walletsView,
-        arguments: WalletsViewArguments(key: key, mainModel: mainModel),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return navigateTo<dynamic>(
+      Routes.walletsView,
+      arguments: WalletsViewArguments(key: key, mainModel: mainModel),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> navigateToKycLevelsView([
+  Future<dynamic> navigateToKycLevelsView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return navigateTo<dynamic>(Routes.kycLevelsView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return navigateTo<dynamic>(
+      Routes.kycLevelsView,
+      arguments: KycLevelsViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> navigateToSwapView({
-    _i53.Key? key,
-    required List<_i55.Wallet> wallets,
+    _i54.Key? key,
+    required List<_i56.Wallet> wallets,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return navigateTo<dynamic>(Routes.swapView,
-        arguments: SwapViewArguments(key: key, wallets: wallets),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return navigateTo<dynamic>(
+      Routes.swapView,
+      arguments: SwapViewArguments(key: key, wallets: wallets),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> navigateToPaymentSetupView({
-    _i53.Key? key,
-    required _i56.Future<bool> Function() readCard,
+    _i54.Key? key,
+    required _i57.Future<bool> Function() readCard,
     required String selectedPaymentMethod,
-    required _i53.TextEditingController amount,
+    required _i54.TextEditingController amount,
     bool isReceive = true,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return navigateTo<dynamic>(Routes.paymentSetupView,
-        arguments: PaymentSetupViewArguments(
-            key: key,
-            readCard: readCard,
-            selectedPaymentMethod: selectedPaymentMethod,
-            amount: amount,
-            isReceive: isReceive),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return navigateTo<dynamic>(
+      Routes.paymentSetupView,
+      arguments: PaymentSetupViewArguments(
+        key: key,
+        readCard: readCard,
+        selectedPaymentMethod: selectedPaymentMethod,
+        amount: amount,
+        isReceive: isReceive,
+      ),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> navigateToAddFundsView({
-    _i53.Key? key,
+    _i54.Key? key,
     required String currency,
     required String userIcon,
     required String name,
@@ -2138,39 +2825,46 @@ extension NavigatorStateExtension on _i59.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return navigateTo<dynamic>(Routes.addFundsView,
-        arguments: AddFundsViewArguments(
-            key: key,
-            currency: currency,
-            userIcon: userIcon,
-            name: name,
-            username: username,
-            addFundType: addFundType,
-            openNFCbottomSheet: openNFCbottomSheet),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return navigateTo<dynamic>(
+      Routes.addFundsView,
+      arguments: AddFundsViewArguments(
+        key: key,
+        currency: currency,
+        userIcon: userIcon,
+        name: name,
+        username: username,
+        addFundType: addFundType,
+        openNFCbottomSheet: openNFCbottomSheet,
+      ),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> navigateToAddFundsOptionsView([
+  Future<dynamic> navigateToAddFundsOptionsView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return navigateTo<dynamic>(Routes.addFundsOptionsView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return navigateTo<dynamic>(
+      Routes.addFundsOptionsView,
+      arguments: AddFundsOptionsViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> navigateToSendFundsView({
-    _i53.Key? key,
+    _i54.Key? key,
     required String currency,
     required String userIcon,
     required String name,
@@ -2180,377 +2874,458 @@ extension NavigatorStateExtension on _i59.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return navigateTo<dynamic>(Routes.sendFundsView,
-        arguments: SendFundsViewArguments(
-            key: key,
-            currency: currency,
-            userIcon: userIcon,
-            name: name,
-            username: username,
-            sendFundType: sendFundType),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return navigateTo<dynamic>(
+      Routes.sendFundsView,
+      arguments: SendFundsViewArguments(
+        key: key,
+        currency: currency,
+        userIcon: userIcon,
+        name: name,
+        username: username,
+        sendFundType: sendFundType,
+      ),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> navigateToSendFundsOptionsView([
+  Future<dynamic> navigateToSendFundsOptionsView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return navigateTo<dynamic>(Routes.sendFundsOptionsView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return navigateTo<dynamic>(
+      Routes.sendFundsOptionsView,
+      arguments: SendFundsOptionsViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> navigateToPasscodeView([
+  Future<dynamic> navigateToPasscodeView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return navigateTo<dynamic>(Routes.passcodeView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return navigateTo<dynamic>(
+      Routes.passcodeView,
+      arguments: PasscodeViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> navigateToCreatePasscodeView([
+  Future<dynamic> navigateToCreatePasscodeView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return navigateTo<dynamic>(Routes.createPasscodeView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return navigateTo<dynamic>(
+      Routes.createPasscodeView,
+      arguments: CreatePasscodeViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> navigateToReenterPasscodeView([
+  Future<dynamic> navigateToReenterPasscodeView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return navigateTo<dynamic>(Routes.reenterPasscodeView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return navigateTo<dynamic>(
+      Routes.reenterPasscodeView,
+      arguments: ReenterPasscodeViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> navigateToLinkedBanksView([
+  Future<dynamic> navigateToLinkedBanksView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return navigateTo<dynamic>(Routes.linkedBanksView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return navigateTo<dynamic>(
+      Routes.linkedBanksView,
+      arguments: LinkedBanksViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> navigateToLinkABankView([
+  Future<dynamic> navigateToLinkABankView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return navigateTo<dynamic>(Routes.linkABankView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return navigateTo<dynamic>(
+      Routes.linkABankView,
+      arguments: LinkABankViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> navigateToKycSuccessView([
+  Future<dynamic> navigateToKycSuccessView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return navigateTo<dynamic>(Routes.kycSuccessView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return navigateTo<dynamic>(
+      Routes.kycSuccessView,
+      arguments: KycSuccessViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> navigateToCardsView([
+  Future<dynamic> navigateToCardsView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return navigateTo<dynamic>(Routes.cardsView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return navigateTo<dynamic>(
+      Routes.cardsView,
+      arguments: CardsViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> navigateToPrepaidInfoView({
-    _i53.Key? key,
+    _i54.Key? key,
     bool isVCard = false,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return navigateTo<dynamic>(Routes.prepaidInfoView,
-        arguments: PrepaidInfoViewArguments(key: key, isVCard: isVCard),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return navigateTo<dynamic>(
+      Routes.prepaidInfoView,
+      arguments: PrepaidInfoViewArguments(key: key, isVCard: isVCard),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> navigateToPersonaliseCardView([
+  Future<dynamic> navigateToPersonaliseCardView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return navigateTo<dynamic>(Routes.personaliseCardView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return navigateTo<dynamic>(
+      Routes.personaliseCardView,
+      arguments: PersonaliseCardViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> navigateToTransfersDetailsSelectionView({
-    _i53.Key? key,
+    _i54.Key? key,
     required String dayfiId,
-    required _i55.Wallet wallet,
+    required _i56.Wallet wallet,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return navigateTo<dynamic>(Routes.transfersDetailsSelectionView,
-        arguments: TransfersDetailsSelectionViewArguments(
-            key: key, dayfiId: dayfiId, wallet: wallet),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return navigateTo<dynamic>(
+      Routes.transfersDetailsSelectionView,
+      arguments: TransfersDetailsSelectionViewArguments(
+        key: key,
+        dayfiId: dayfiId,
+        wallet: wallet,
+      ),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> navigateToRecipientDetailsView([
+  Future<dynamic> navigateToRecipientDetailsView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return navigateTo<dynamic>(Routes.recipientDetailsView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return navigateTo<dynamic>(
+      Routes.recipientDetailsView,
+      arguments: RecipientDetailsViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> navigateToAmountEntryView({
-    _i53.Key? key,
+    _i54.Key? key,
     required String accountNumber,
     required String bankCode,
     required String accountName,
     required String bankName,
     required String beneficiaryName,
-    required _i55.Wallet wallet,
+    required _i56.Wallet wallet,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return navigateTo<dynamic>(Routes.amountEntryView,
-        arguments: AmountEntryViewArguments(
-            key: key,
-            accountNumber: accountNumber,
-            bankCode: bankCode,
-            accountName: accountName,
-            bankName: bankName,
-            beneficiaryName: beneficiaryName,
-            wallet: wallet),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return navigateTo<dynamic>(
+      Routes.amountEntryView,
+      arguments: AmountEntryViewArguments(
+        key: key,
+        accountNumber: accountNumber,
+        bankCode: bankCode,
+        accountName: accountName,
+        bankName: bankName,
+        beneficiaryName: beneficiaryName,
+        wallet: wallet,
+      ),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> navigateToTransactionPinNewView({
     required String? oldPIN,
-    _i53.Key? key,
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return navigateTo<dynamic>(Routes.transactionPinNewView,
-        arguments: TransactionPinNewViewArguments(oldPIN: oldPIN, key: key),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return navigateTo<dynamic>(
+      Routes.transactionPinNewView,
+      arguments: TransactionPinNewViewArguments(oldPIN: oldPIN, key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> navigateToTransactionPinConfirmView({
-    _i53.Key? key,
+    _i54.Key? key,
     required String pin,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return navigateTo<dynamic>(Routes.transactionPinConfirmView,
-        arguments: TransactionPinConfirmViewArguments(key: key, pin: pin),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return navigateTo<dynamic>(
+      Routes.transactionPinConfirmView,
+      arguments: TransactionPinConfirmViewArguments(key: key, pin: pin),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> navigateToWalletDetailsView({
-    _i53.Key? key,
-    required _i55.Wallet wallet,
+    _i54.Key? key,
+    required _i56.Wallet wallet,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return navigateTo<dynamic>(Routes.walletDetailsView,
-        arguments: WalletDetailsViewArguments(key: key, wallet: wallet),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return navigateTo<dynamic>(
+      Routes.walletDetailsView,
+      arguments: WalletDetailsViewArguments(key: key, wallet: wallet),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> navigateToTransactionDetailsView({
-    required _i55.Wallet wallet,
-    _i53.Key? key,
-    required _i57.WalletTransaction transaction,
+    required _i56.Wallet wallet,
+    _i54.Key? key,
+    required _i58.WalletTransaction transaction,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return navigateTo<dynamic>(Routes.transactionDetailsView,
-        arguments: TransactionDetailsViewArguments(
-            wallet: wallet, key: key, transaction: transaction),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return navigateTo<dynamic>(
+      Routes.transactionDetailsView,
+      arguments: TransactionDetailsViewArguments(
+        wallet: wallet,
+        key: key,
+        transaction: transaction,
+      ),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> navigateToWalletView({
-    required _i55.Wallet wallet,
-    required List<_i57.WalletTransaction> walletTransactions,
-    required List<_i55.Wallet> wallets,
-    _i53.Key? key,
+    required _i56.Wallet wallet,
+    required List<_i58.WalletTransaction> walletTransactions,
+    required List<_i56.Wallet> wallets,
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return navigateTo<dynamic>(Routes.walletView,
-        arguments: WalletViewArguments(
-            wallet: wallet,
-            walletTransactions: walletTransactions,
-            wallets: wallets,
-            key: key),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return navigateTo<dynamic>(
+      Routes.walletView,
+      arguments: WalletViewArguments(
+        wallet: wallet,
+        walletTransactions: walletTransactions,
+        wallets: wallets,
+        key: key,
+      ),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> navigateToBlogView([
+  Future<dynamic> navigateToBlogView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return navigateTo<dynamic>(Routes.blogView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return navigateTo<dynamic>(
+      Routes.blogView,
+      arguments: BlogViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> navigateToBlogDetailView({
-    _i53.Key? key,
-    required _i58.Article blog,
+    _i54.Key? key,
+    required _i59.Article blog,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return navigateTo<dynamic>(Routes.blogDetailView,
-        arguments: BlogDetailViewArguments(key: key, blog: blog),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return navigateTo<dynamic>(
+      Routes.blogDetailView,
+      arguments: BlogDetailViewArguments(key: key, blog: blog),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> navigateToFaqsView([
+  Future<dynamic> navigateToFaqsView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return navigateTo<dynamic>(Routes.faqsView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return navigateTo<dynamic>(
+      Routes.faqsView,
+      arguments: FaqsViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> navigateToTransactionHistoryView([
+  Future<dynamic> navigateToTransactionHistoryView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return navigateTo<dynamic>(Routes.transactionHistoryView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return navigateTo<dynamic>(
+      Routes.transactionHistoryView,
+      arguments: TransactionHistoryViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> navigateToDigitalDollarView([
@@ -2558,13 +3333,16 @@ extension NavigatorStateExtension on _i59.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   ]) async {
-    return navigateTo<dynamic>(Routes.digitalDollarView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return navigateTo<dynamic>(
+      Routes.digitalDollarView,
+
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> navigateToWalletAddressInfoView({
@@ -2575,106 +3353,151 @@ extension NavigatorStateExtension on _i59.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return navigateTo<dynamic>(Routes.walletAddressInfoView,
-        arguments: WalletAddressInfoViewArguments(
-            address: address, currency: currency, network: network),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return navigateTo<dynamic>(
+      Routes.walletAddressInfoView,
+      arguments: WalletAddressInfoViewArguments(
+        address: address,
+        currency: currency,
+        network: network,
+      ),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> navigateToVirtualCardDetailsView([
+  Future<dynamic> navigateToVirtualCardDetailsView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return navigateTo<dynamic>(Routes.virtualCardDetailsView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return navigateTo<dynamic>(
+      Routes.virtualCardDetailsView,
+      arguments: VirtualCardDetailsViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> replaceWithHomeView({
-    _i53.Key? key,
-    required _i54.MainViewModel mainModel,
+    _i54.Key? key,
+    required _i55.MainViewModel mainModel,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return replaceWith<dynamic>(Routes.homeView,
-        arguments: HomeViewArguments(key: key, mainModel: mainModel),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return replaceWith<dynamic>(
+      Routes.homeView,
+      arguments: HomeViewArguments(key: key, mainModel: mainModel),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> replaceWithStartupView([
+  Future<dynamic> replaceWithSplashView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return replaceWith<dynamic>(Routes.startupView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return replaceWith<dynamic>(
+      Routes.splashView,
+      arguments: SplashViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> replaceWithSignupView([
+  Future<dynamic> replaceWithStartupView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return replaceWith<dynamic>(Routes.signupView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return replaceWith<dynamic>(
+      Routes.startupView,
+      arguments: StartupViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> replaceWithLoginView([
+  Future<dynamic> replaceWithSignupView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return replaceWith<dynamic>(Routes.loginView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return replaceWith<dynamic>(
+      Routes.signupView,
+      arguments: SignupViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> replaceWithForgotPasswordView([
+  Future<dynamic> replaceWithLoginView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return replaceWith<dynamic>(Routes.forgotPasswordView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return replaceWith<dynamic>(
+      Routes.loginView,
+      arguments: LoginViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
+  }
+
+  Future<dynamic> replaceWithForgotPasswordView({
+    _i54.Key? key,
+    int? routerId,
+    bool preventDuplicates = true,
+    Map<String, String>? parameters,
+    Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
+    transition,
+  }) async {
+    return replaceWith<dynamic>(
+      Routes.forgotPasswordView,
+      arguments: ForgotPasswordViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> replaceWithVerifyEmailView({
-    _i53.Key? key,
+    _i54.Key? key,
     bool isSignUp = false,
     required String email,
     String password = "",
@@ -2682,154 +3505,190 @@ extension NavigatorStateExtension on _i59.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return replaceWith<dynamic>(Routes.verifyEmailView,
-        arguments: VerifyEmailViewArguments(
-            key: key, isSignUp: isSignUp, email: email, password: password),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return replaceWith<dynamic>(
+      Routes.verifyEmailView,
+      arguments: VerifyEmailViewArguments(
+        key: key,
+        isSignUp: isSignUp,
+        email: email,
+        password: password,
+      ),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> replaceWithResetPasswordView({
-    _i53.Key? key,
+    _i54.Key? key,
     required String email,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return replaceWith<dynamic>(Routes.resetPasswordView,
-        arguments: ResetPasswordViewArguments(key: key, email: email),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return replaceWith<dynamic>(
+      Routes.resetPasswordView,
+      arguments: ResetPasswordViewArguments(key: key, email: email),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> replaceWithSuccessView([
+  Future<dynamic> replaceWithSuccessView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return replaceWith<dynamic>(Routes.successView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return replaceWith<dynamic>(
+      Routes.successView,
+      arguments: SuccessViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> replaceWithMainView({
-    _i53.Key? key,
+    _i54.Key? key,
     int index = 0,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return replaceWith<dynamic>(Routes.mainView,
-        arguments: MainViewArguments(key: key, index: index),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return replaceWith<dynamic>(
+      Routes.mainView,
+      arguments: MainViewArguments(key: key, index: index),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> replaceWithSettingsView({
-    _i53.Key? key,
-    required _i54.MainViewModel mainModel,
+    _i54.Key? key,
+    required _i55.MainViewModel mainModel,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return replaceWith<dynamic>(Routes.settingsView,
-        arguments: SettingsViewArguments(key: key, mainModel: mainModel),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return replaceWith<dynamic>(
+      Routes.settingsView,
+      arguments: SettingsViewArguments(key: key, mainModel: mainModel),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> replaceWithProfileView([
+  Future<dynamic> replaceWithProfileView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return replaceWith<dynamic>(Routes.profileView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return replaceWith<dynamic>(
+      Routes.profileView,
+      arguments: ProfileViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> replaceWithTransactionPinSetView([
+  Future<dynamic> replaceWithTransactionPinSetView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return replaceWith<dynamic>(Routes.transactionPinSetView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return replaceWith<dynamic>(
+      Routes.transactionPinSetView,
+      arguments: TransactionPinSetViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> replaceWithTransactionPinChangeView([
+  Future<dynamic> replaceWithTransactionPinChangeView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return replaceWith<dynamic>(Routes.transactionPinChangeView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return replaceWith<dynamic>(
+      Routes.transactionPinChangeView,
+      arguments: TransactionPinChangeViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> replaceWithPasswordChangeView([
+  Future<dynamic> replaceWithPasswordChangeView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return replaceWith<dynamic>(Routes.passwordChangeView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return replaceWith<dynamic>(
+      Routes.passwordChangeView,
+      arguments: PasswordChangeViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> replaceWithCoinsView([
+  Future<dynamic> replaceWithCoinsView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return replaceWith<dynamic>(Routes.coinsView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return replaceWith<dynamic>(
+      Routes.coinsView,
+      arguments: CoinsViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> replaceWithVerifyPhoneView({
-    _i53.Key? key,
+    _i54.Key? key,
     required String phoneNumber,
     required String country,
     required String state,
@@ -2843,42 +3702,49 @@ extension NavigatorStateExtension on _i59.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return replaceWith<dynamic>(Routes.verifyPhoneView,
-        arguments: VerifyPhoneViewArguments(
-            key: key,
-            phoneNumber: phoneNumber,
-            country: country,
-            state: state,
-            street: street,
-            city: city,
-            postalCode: postalCode,
-            address: address,
-            gender: gender,
-            dob: dob),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return replaceWith<dynamic>(
+      Routes.verifyPhoneView,
+      arguments: VerifyPhoneViewArguments(
+        key: key,
+        phoneNumber: phoneNumber,
+        country: country,
+        state: state,
+        street: street,
+        city: city,
+        postalCode: postalCode,
+        address: address,
+        gender: gender,
+        dob: dob,
+      ),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> replaceWithLevelOnePartAView([
+  Future<dynamic> replaceWithLevelOnePartAView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return replaceWith<dynamic>(Routes.levelOnePartAView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return replaceWith<dynamic>(
+      Routes.levelOnePartAView,
+      arguments: LevelOnePartAViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> replaceWithLevelOnePartBView({
-    _i53.Key? key,
+    _i54.Key? key,
     required String country,
     required String state,
     required String street,
@@ -2889,25 +3755,28 @@ extension NavigatorStateExtension on _i59.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return replaceWith<dynamic>(Routes.levelOnePartBView,
-        arguments: LevelOnePartBViewArguments(
-            key: key,
-            country: country,
-            state: state,
-            street: street,
-            city: city,
-            postalCode: postalCode,
-            address: address),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return replaceWith<dynamic>(
+      Routes.levelOnePartBView,
+      arguments: LevelOnePartBViewArguments(
+        key: key,
+        country: country,
+        state: state,
+        street: street,
+        city: city,
+        postalCode: postalCode,
+        address: address,
+      ),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> replaceWithCoinDetailView({
-    _i53.Key? key,
+    _i54.Key? key,
     required String coinId,
     required String coinName,
     required dynamic coinPrice,
@@ -2918,98 +3787,112 @@ extension NavigatorStateExtension on _i59.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return replaceWith<dynamic>(Routes.coinDetailView,
-        arguments: CoinDetailViewArguments(
-            key: key,
-            coinId: coinId,
-            coinName: coinName,
-            coinPrice: coinPrice,
-            priceChange: priceChange,
-            marketCap: marketCap,
-            popularity: popularity),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return replaceWith<dynamic>(
+      Routes.coinDetailView,
+      arguments: CoinDetailViewArguments(
+        key: key,
+        coinId: coinId,
+        coinName: coinName,
+        coinPrice: coinPrice,
+        priceChange: priceChange,
+        marketCap: marketCap,
+        popularity: popularity,
+      ),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> replaceWithWalletsView({
-    _i53.Key? key,
-    required _i54.MainViewModel mainModel,
+    _i54.Key? key,
+    required _i55.MainViewModel mainModel,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return replaceWith<dynamic>(Routes.walletsView,
-        arguments: WalletsViewArguments(key: key, mainModel: mainModel),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return replaceWith<dynamic>(
+      Routes.walletsView,
+      arguments: WalletsViewArguments(key: key, mainModel: mainModel),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> replaceWithKycLevelsView([
+  Future<dynamic> replaceWithKycLevelsView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return replaceWith<dynamic>(Routes.kycLevelsView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return replaceWith<dynamic>(
+      Routes.kycLevelsView,
+      arguments: KycLevelsViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> replaceWithSwapView({
-    _i53.Key? key,
-    required List<_i55.Wallet> wallets,
+    _i54.Key? key,
+    required List<_i56.Wallet> wallets,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return replaceWith<dynamic>(Routes.swapView,
-        arguments: SwapViewArguments(key: key, wallets: wallets),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return replaceWith<dynamic>(
+      Routes.swapView,
+      arguments: SwapViewArguments(key: key, wallets: wallets),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> replaceWithPaymentSetupView({
-    _i53.Key? key,
-    required _i56.Future<bool> Function() readCard,
+    _i54.Key? key,
+    required _i57.Future<bool> Function() readCard,
     required String selectedPaymentMethod,
-    required _i53.TextEditingController amount,
+    required _i54.TextEditingController amount,
     bool isReceive = true,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return replaceWith<dynamic>(Routes.paymentSetupView,
-        arguments: PaymentSetupViewArguments(
-            key: key,
-            readCard: readCard,
-            selectedPaymentMethod: selectedPaymentMethod,
-            amount: amount,
-            isReceive: isReceive),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return replaceWith<dynamic>(
+      Routes.paymentSetupView,
+      arguments: PaymentSetupViewArguments(
+        key: key,
+        readCard: readCard,
+        selectedPaymentMethod: selectedPaymentMethod,
+        amount: amount,
+        isReceive: isReceive,
+      ),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> replaceWithAddFundsView({
-    _i53.Key? key,
+    _i54.Key? key,
     required String currency,
     required String userIcon,
     required String name,
@@ -3020,39 +3903,46 @@ extension NavigatorStateExtension on _i59.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return replaceWith<dynamic>(Routes.addFundsView,
-        arguments: AddFundsViewArguments(
-            key: key,
-            currency: currency,
-            userIcon: userIcon,
-            name: name,
-            username: username,
-            addFundType: addFundType,
-            openNFCbottomSheet: openNFCbottomSheet),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return replaceWith<dynamic>(
+      Routes.addFundsView,
+      arguments: AddFundsViewArguments(
+        key: key,
+        currency: currency,
+        userIcon: userIcon,
+        name: name,
+        username: username,
+        addFundType: addFundType,
+        openNFCbottomSheet: openNFCbottomSheet,
+      ),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> replaceWithAddFundsOptionsView([
+  Future<dynamic> replaceWithAddFundsOptionsView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return replaceWith<dynamic>(Routes.addFundsOptionsView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return replaceWith<dynamic>(
+      Routes.addFundsOptionsView,
+      arguments: AddFundsOptionsViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> replaceWithSendFundsView({
-    _i53.Key? key,
+    _i54.Key? key,
     required String currency,
     required String userIcon,
     required String name,
@@ -3062,377 +3952,458 @@ extension NavigatorStateExtension on _i59.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return replaceWith<dynamic>(Routes.sendFundsView,
-        arguments: SendFundsViewArguments(
-            key: key,
-            currency: currency,
-            userIcon: userIcon,
-            name: name,
-            username: username,
-            sendFundType: sendFundType),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return replaceWith<dynamic>(
+      Routes.sendFundsView,
+      arguments: SendFundsViewArguments(
+        key: key,
+        currency: currency,
+        userIcon: userIcon,
+        name: name,
+        username: username,
+        sendFundType: sendFundType,
+      ),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> replaceWithSendFundsOptionsView([
+  Future<dynamic> replaceWithSendFundsOptionsView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return replaceWith<dynamic>(Routes.sendFundsOptionsView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return replaceWith<dynamic>(
+      Routes.sendFundsOptionsView,
+      arguments: SendFundsOptionsViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> replaceWithPasscodeView([
+  Future<dynamic> replaceWithPasscodeView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return replaceWith<dynamic>(Routes.passcodeView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return replaceWith<dynamic>(
+      Routes.passcodeView,
+      arguments: PasscodeViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> replaceWithCreatePasscodeView([
+  Future<dynamic> replaceWithCreatePasscodeView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return replaceWith<dynamic>(Routes.createPasscodeView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return replaceWith<dynamic>(
+      Routes.createPasscodeView,
+      arguments: CreatePasscodeViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> replaceWithReenterPasscodeView([
+  Future<dynamic> replaceWithReenterPasscodeView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return replaceWith<dynamic>(Routes.reenterPasscodeView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return replaceWith<dynamic>(
+      Routes.reenterPasscodeView,
+      arguments: ReenterPasscodeViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> replaceWithLinkedBanksView([
+  Future<dynamic> replaceWithLinkedBanksView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return replaceWith<dynamic>(Routes.linkedBanksView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return replaceWith<dynamic>(
+      Routes.linkedBanksView,
+      arguments: LinkedBanksViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> replaceWithLinkABankView([
+  Future<dynamic> replaceWithLinkABankView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return replaceWith<dynamic>(Routes.linkABankView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return replaceWith<dynamic>(
+      Routes.linkABankView,
+      arguments: LinkABankViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> replaceWithKycSuccessView([
+  Future<dynamic> replaceWithKycSuccessView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return replaceWith<dynamic>(Routes.kycSuccessView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return replaceWith<dynamic>(
+      Routes.kycSuccessView,
+      arguments: KycSuccessViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> replaceWithCardsView([
+  Future<dynamic> replaceWithCardsView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return replaceWith<dynamic>(Routes.cardsView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return replaceWith<dynamic>(
+      Routes.cardsView,
+      arguments: CardsViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> replaceWithPrepaidInfoView({
-    _i53.Key? key,
+    _i54.Key? key,
     bool isVCard = false,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return replaceWith<dynamic>(Routes.prepaidInfoView,
-        arguments: PrepaidInfoViewArguments(key: key, isVCard: isVCard),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return replaceWith<dynamic>(
+      Routes.prepaidInfoView,
+      arguments: PrepaidInfoViewArguments(key: key, isVCard: isVCard),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> replaceWithPersonaliseCardView([
+  Future<dynamic> replaceWithPersonaliseCardView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return replaceWith<dynamic>(Routes.personaliseCardView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return replaceWith<dynamic>(
+      Routes.personaliseCardView,
+      arguments: PersonaliseCardViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> replaceWithTransfersDetailsSelectionView({
-    _i53.Key? key,
+    _i54.Key? key,
     required String dayfiId,
-    required _i55.Wallet wallet,
+    required _i56.Wallet wallet,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return replaceWith<dynamic>(Routes.transfersDetailsSelectionView,
-        arguments: TransfersDetailsSelectionViewArguments(
-            key: key, dayfiId: dayfiId, wallet: wallet),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return replaceWith<dynamic>(
+      Routes.transfersDetailsSelectionView,
+      arguments: TransfersDetailsSelectionViewArguments(
+        key: key,
+        dayfiId: dayfiId,
+        wallet: wallet,
+      ),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> replaceWithRecipientDetailsView([
+  Future<dynamic> replaceWithRecipientDetailsView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return replaceWith<dynamic>(Routes.recipientDetailsView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return replaceWith<dynamic>(
+      Routes.recipientDetailsView,
+      arguments: RecipientDetailsViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> replaceWithAmountEntryView({
-    _i53.Key? key,
+    _i54.Key? key,
     required String accountNumber,
     required String bankCode,
     required String accountName,
     required String bankName,
     required String beneficiaryName,
-    required _i55.Wallet wallet,
+    required _i56.Wallet wallet,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return replaceWith<dynamic>(Routes.amountEntryView,
-        arguments: AmountEntryViewArguments(
-            key: key,
-            accountNumber: accountNumber,
-            bankCode: bankCode,
-            accountName: accountName,
-            bankName: bankName,
-            beneficiaryName: beneficiaryName,
-            wallet: wallet),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return replaceWith<dynamic>(
+      Routes.amountEntryView,
+      arguments: AmountEntryViewArguments(
+        key: key,
+        accountNumber: accountNumber,
+        bankCode: bankCode,
+        accountName: accountName,
+        bankName: bankName,
+        beneficiaryName: beneficiaryName,
+        wallet: wallet,
+      ),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> replaceWithTransactionPinNewView({
     required String? oldPIN,
-    _i53.Key? key,
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return replaceWith<dynamic>(Routes.transactionPinNewView,
-        arguments: TransactionPinNewViewArguments(oldPIN: oldPIN, key: key),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return replaceWith<dynamic>(
+      Routes.transactionPinNewView,
+      arguments: TransactionPinNewViewArguments(oldPIN: oldPIN, key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> replaceWithTransactionPinConfirmView({
-    _i53.Key? key,
+    _i54.Key? key,
     required String pin,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return replaceWith<dynamic>(Routes.transactionPinConfirmView,
-        arguments: TransactionPinConfirmViewArguments(key: key, pin: pin),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return replaceWith<dynamic>(
+      Routes.transactionPinConfirmView,
+      arguments: TransactionPinConfirmViewArguments(key: key, pin: pin),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> replaceWithWalletDetailsView({
-    _i53.Key? key,
-    required _i55.Wallet wallet,
+    _i54.Key? key,
+    required _i56.Wallet wallet,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return replaceWith<dynamic>(Routes.walletDetailsView,
-        arguments: WalletDetailsViewArguments(key: key, wallet: wallet),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return replaceWith<dynamic>(
+      Routes.walletDetailsView,
+      arguments: WalletDetailsViewArguments(key: key, wallet: wallet),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> replaceWithTransactionDetailsView({
-    required _i55.Wallet wallet,
-    _i53.Key? key,
-    required _i57.WalletTransaction transaction,
+    required _i56.Wallet wallet,
+    _i54.Key? key,
+    required _i58.WalletTransaction transaction,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return replaceWith<dynamic>(Routes.transactionDetailsView,
-        arguments: TransactionDetailsViewArguments(
-            wallet: wallet, key: key, transaction: transaction),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return replaceWith<dynamic>(
+      Routes.transactionDetailsView,
+      arguments: TransactionDetailsViewArguments(
+        wallet: wallet,
+        key: key,
+        transaction: transaction,
+      ),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> replaceWithWalletView({
-    required _i55.Wallet wallet,
-    required List<_i57.WalletTransaction> walletTransactions,
-    required List<_i55.Wallet> wallets,
-    _i53.Key? key,
+    required _i56.Wallet wallet,
+    required List<_i58.WalletTransaction> walletTransactions,
+    required List<_i56.Wallet> wallets,
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return replaceWith<dynamic>(Routes.walletView,
-        arguments: WalletViewArguments(
-            wallet: wallet,
-            walletTransactions: walletTransactions,
-            wallets: wallets,
-            key: key),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return replaceWith<dynamic>(
+      Routes.walletView,
+      arguments: WalletViewArguments(
+        wallet: wallet,
+        walletTransactions: walletTransactions,
+        wallets: wallets,
+        key: key,
+      ),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> replaceWithBlogView([
+  Future<dynamic> replaceWithBlogView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return replaceWith<dynamic>(Routes.blogView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return replaceWith<dynamic>(
+      Routes.blogView,
+      arguments: BlogViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> replaceWithBlogDetailView({
-    _i53.Key? key,
-    required _i58.Article blog,
+    _i54.Key? key,
+    required _i59.Article blog,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return replaceWith<dynamic>(Routes.blogDetailView,
-        arguments: BlogDetailViewArguments(key: key, blog: blog),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return replaceWith<dynamic>(
+      Routes.blogDetailView,
+      arguments: BlogDetailViewArguments(key: key, blog: blog),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> replaceWithFaqsView([
+  Future<dynamic> replaceWithFaqsView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return replaceWith<dynamic>(Routes.faqsView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return replaceWith<dynamic>(
+      Routes.faqsView,
+      arguments: FaqsViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> replaceWithTransactionHistoryView([
+  Future<dynamic> replaceWithTransactionHistoryView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return replaceWith<dynamic>(Routes.transactionHistoryView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return replaceWith<dynamic>(
+      Routes.transactionHistoryView,
+      arguments: TransactionHistoryViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> replaceWithDigitalDollarView([
@@ -3440,13 +4411,16 @@ extension NavigatorStateExtension on _i59.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   ]) async {
-    return replaceWith<dynamic>(Routes.digitalDollarView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return replaceWith<dynamic>(
+      Routes.digitalDollarView,
+
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
   Future<dynamic> replaceWithWalletAddressInfoView({
@@ -3457,28 +4431,37 @@ extension NavigatorStateExtension on _i59.NavigationService {
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
+    transition,
   }) async {
-    return replaceWith<dynamic>(Routes.walletAddressInfoView,
-        arguments: WalletAddressInfoViewArguments(
-            address: address, currency: currency, network: network),
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    return replaceWith<dynamic>(
+      Routes.walletAddressInfoView,
+      arguments: WalletAddressInfoViewArguments(
+        address: address,
+        currency: currency,
+        network: network,
+      ),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 
-  Future<dynamic> replaceWithVirtualCardDetailsView([
+  Future<dynamic> replaceWithVirtualCardDetailsView({
+    _i54.Key? key,
     int? routerId,
     bool preventDuplicates = true,
     Map<String, String>? parameters,
     Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
-        transition,
-  ]) async {
-    return replaceWith<dynamic>(Routes.virtualCardDetailsView,
-        id: routerId,
-        preventDuplicates: preventDuplicates,
-        parameters: parameters,
-        transition: transition);
+    transition,
+  }) async {
+    return replaceWith<dynamic>(
+      Routes.virtualCardDetailsView,
+      arguments: VirtualCardDetailsViewArguments(key: key),
+      id: routerId,
+      preventDuplicates: preventDuplicates,
+      parameters: parameters,
+      transition: transition,
+    );
   }
 }

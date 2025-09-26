@@ -295,7 +295,6 @@ class SettingsView extends StackedView<SettingsViewModel> {
   }
 
   Widget _buildTitleAndDescription(tile, BuildContext context) {
-    final isLogOut = tile.title == "Log Out";
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

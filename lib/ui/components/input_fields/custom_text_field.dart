@@ -82,7 +82,7 @@ class CustomTextField extends StatelessWidget {
         verticalSpace(label == "" ? 0 : 4),
         TextFormField(
           // autofocus: autofocus,
-          maxLines: minLines,
+          maxLines: obscureText ? 1 : minLines,
           maxLengthEnforcement: MaxLengthEnforcement.enforced,
           onTap: onTap,
           enableInteractiveSelection: enableInteractiveSelection,
@@ -256,7 +256,7 @@ class ReadOnlyCustomTextField extends StatelessWidget {
         verticalSpace(4),
         TextFormField(
           // autofocus: autofocus,
-          maxLines: minLines,
+          maxLines: obscureText ? 1 : minLines,
           maxLengthEnforcement: MaxLengthEnforcement.enforced,
           onTap: onTap,
           enableInteractiveSelection: enableInteractiveSelection,
