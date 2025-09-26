@@ -41,11 +41,11 @@ class AppColors {
   static const Color neutral50 = Color(0xFFF7F7F7);
   static const Color neutral100 = Color(0xFFF5F5F5);
   static const Color neutral200 = Color(0xFFEBEBEB);
-  static const Color neutral300 = Color(0xFFD1D1D1);
+  static const Color neutral300 = Color(0xFFB2862C);
   static const Color neutral400 = Color(0xFFA3A3A3);
-  static const Color neutral500 = Color(0xFF7B7B7B);
+  static const Color neutral500 = Color(0xFF6C4E08);
   static const Color neutral600 = Color(0xFF5C5C5C);
-  static const Color neutral700 = Color(0xFF333333);
+  static const Color neutral700 = Color(0xFF6E4028);
   static const Color neutral800 = Color(0xFF262626);
   static const Color neutral900 = Color(0xFF1C1C1C);
   static const Color neutral950 = Color(0xFF111111);
@@ -116,7 +116,7 @@ class AppColors {
   static const Color purple200 = Color(0xFFCAC0FF);
   static const Color purple300 = Color(0xFFA897FF);
   static const Color purple400 = Color(0xFF8C71F6);
-  static const Color purple500 = Color(0xFF7D52F4);
+  static const Color purple500 = Color(0xFF6A31A2);
   static const Color purple600 = Color(0xFF693EE0);
   static const Color purple700 = Color(0xFF5B2CC9);
   static const Color purple800 = Color(0xFF4C25A7);

@@ -1,3 +1,5 @@
+import 'package:dayfi/common/utils/ui_helpers.dart';
+import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -67,114 +69,125 @@ class CustomTextField extends StatelessWidget {
               style: TextStyle(
                 fontFamily: 'Karla',
                 fontSize: 14,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -.1,
+                fontWeight: FontWeight.w400,
+                letterSpacing: -.6,
                 height: 1.450,
                 color:
-                    label == "hidden" ? Colors.transparent : Color(0xff2A0079),
+                    label == "hidden"
+                        ? Colors.transparent
+                        : Theme.of(
+                          context,
+                        ).textTheme.bodyLarge!.color!.withOpacity(.75),
               ),
               textAlign: TextAlign.start,
               overflow: TextOverflow.ellipsis,
             )
             : const SizedBox(),
         SizedBox(height: label == "" ? 0 : 4),
-        TextFormField(
-          // autofocus: autofocus,
-          maxLines: minLines,
-          maxLengthEnforcement: MaxLengthEnforcement.enforced,
-          onTap: onTap,
-          enableInteractiveSelection: enableInteractiveSelection,
-          textCapitalization:
-              textCapitalization ?? TextCapitalization.sentences,
-          autovalidateMode: AutovalidateMode.onUserInteraction,
-          maxLength: obscureText ? null : maxLength,
-          controller: controller,
-          cursorColor: const Color(0xff5645F5), // innit
-          textInputAction: textInputAction,
-          keyboardType: keyboardType,
-          readOnly: shouldReadOnly,
-          obscureText: obscureText,
-          onChanged: onChanged,
-          validator: validator,
-          inputFormatters: [
-            formatter ?? FilteringTextInputFormatter.singleLineFormatter,
-          ],
-          style: const TextStyle(
-            fontFamily: 'Karla',
-            fontSize: 14,
-            letterSpacing: -.1,
-            fontWeight: FontWeight.w600,
-            height: 1.450,
-            color: Color(0xff2A0079),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12.0.r),
+            boxShadow: [
+              BoxShadow(
+                color:
+                    errorText.toString() != "null"
+                        ? isDayfiId
+                            ? Colors.green.withOpacity(0.3)
+                            : Colors.red.withOpacity(0.3)
+                        : const Color.fromARGB(
+                          255,
+                          123,
+                          36,
+                          211,
+                        ).withOpacity(0.05),
+                blurRadius: 1.0,
+                offset: const Offset(0, 2),
+                spreadRadius: 0,
+              ),
+            ],
           ),
-          decoration: InputDecoration(
-            counterText: "",
-            errorText: errorText,
-            hintText: hintText,
-            hintStyle: TextStyle(
+          child: TextFormField(
+            // autofocus: autofocus,
+            maxLines: obscureText ? 1 : minLines,
+            maxLengthEnforcement: MaxLengthEnforcement.enforced,
+            onTap: onTap,
+            enableInteractiveSelection: enableInteractiveSelection,
+            textCapitalization:
+                textCapitalization ?? TextCapitalization.sentences,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            maxLength: obscureText ? null : maxLength,
+            controller: controller,
+            cursorColor: AppColors.purple500, // innit
+            textInputAction: textInputAction,
+            keyboardType: keyboardType,
+            readOnly: shouldReadOnly,
+            obscureText: obscureText,
+            onChanged: onChanged,
+            validator: validator,
+            inputFormatters: [
+              formatter ?? FilteringTextInputFormatter.singleLineFormatter,
+            ],
+            style: const TextStyle(
               fontFamily: 'Karla',
-              fontSize: 14,
-              letterSpacing: -.1,
-              fontWeight: FontWeight.w500,
+              fontSize: 16,
+              letterSpacing: -.6,
+              fontWeight: FontWeight.w400,
               height: 1.450,
-              color: Theme.of(context).textTheme.bodyLarge!.color!
-              // ignore: deprecated_member_use
-              .withOpacity(.65),
+              color: AppColors.neutral900,
             ),
-            filled: true,
-            fillColor:
-                errorText.toString() != "null"
-                    ? isDayfiId
-                        ? Colors.greenAccent.withOpacity(.08)
-                        : const Color.fromARGB(255, 255, 217, 214)
-                    : Colors.white,
-            contentPadding: EdgeInsets.symmetric(
-              vertical: 14.h,
-              horizontal: 14.w,
-            ),
-            errorStyle: TextStyle(
-              fontFamily: 'Karla',
-              fontSize: errorFontSize,
-              color: Colors.red.shade800,
-              letterSpacing: -.3,
-            ),
-            prefixIcon: prefixIcon,
-            prefix: prefix,
-            suffixIcon: suffixIcon,
-            focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(
-                // color: Color( 0xff5645F5), // innit
-                color: const Color(0xff5645F5), // innit
-                width: 1.w,
+            decoration: InputDecoration(
+              counterText: "",
+              errorText: errorText,
+              hintText: hintText,
+              hintStyle: TextStyle(
+                fontFamily: 'Karla',
+                fontSize: 16,
+                letterSpacing: -.6,
+                fontWeight: FontWeight.w500,
+                height: 1.450,
+                overflow: TextOverflow.ellipsis,
+                color: Theme.of(context).textTheme.bodyLarge!.color!
+                // ignore: deprecated_member_use
+                .withOpacity(.2),
               ),
-              borderRadius: BorderRadius.all(Radius.circular(8.r)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderSide: BorderSide(
-                color: const Color(0xff5645F5).withOpacity(.2),
-                width: 1.w,
+              filled: true,
+              fillColor:
+                  errorText.toString() != "null"
+                      ? isDayfiId
+                          ? Colors.greenAccent.withOpacity(.08)
+                          : const Color.fromARGB(255, 255, 217, 214)
+                      : Colors.white,
+              contentPadding: EdgeInsets.symmetric(
+                vertical: 14.h,
+                horizontal: 10.w,
               ),
-              borderRadius: BorderRadius.all(Radius.circular(8.r)),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderSide: BorderSide(
-                color:
-                    isDayfiId
-                        ? Colors.green.shade800.withOpacity(.85)
-                        : Colors.red.shade800.withOpacity(.85),
-                width: 1.w,
+              errorStyle: TextStyle(
+                fontFamily: 'Karla',
+                fontSize: errorFontSize ?? 13.sp,
+                color: Colors.red.shade800,
+                letterSpacing: -.6,
+                fontWeight: FontWeight.w400,
+                height: 1.4,
               ),
-              borderRadius: BorderRadius.all(Radius.circular(8.r)),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderSide: BorderSide(
-                color:
-                    isDayfiId
-                        ? Colors.green.shade800.withOpacity(.85)
-                        : Colors.red.shade800.withOpacity(.85),
-                width: 1.w,
+              prefixIcon: prefixIcon,
+              prefix: prefix,
+              suffixIcon: suffixIcon,
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide.none,
+                borderRadius: BorderRadius.all(Radius.circular(12.0.r)),
               ),
-              borderRadius: BorderRadius.all(Radius.circular(8.r)),
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide.none,
+                borderRadius: BorderRadius.all(Radius.circular(12.0.r)),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderSide: BorderSide.none,
+                borderRadius: BorderRadius.all(Radius.circular(12.0.r)),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderSide: BorderSide.none,
+                borderRadius: BorderRadius.all(Radius.circular(12.0.r)),
+              ),
             ),
           ),
         ),
@@ -243,7 +256,7 @@ class ReadOnlyCustomTextField extends StatelessWidget {
           style: const TextStyle(
             fontFamily: 'Karla',
             fontSize: 14,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w400,
             letterSpacing: -.1,
             height: 1.450,
             color: Color(0xFF302D53),
@@ -251,10 +264,10 @@ class ReadOnlyCustomTextField extends StatelessWidget {
           textAlign: TextAlign.start,
           overflow: TextOverflow.ellipsis,
         ),
-        const SizedBox(height: 4),
+        verticalSpace(label == "" ? 0 : 4),
         TextFormField(
           // autofocus: autofocus,
-          maxLines: minLines,
+          maxLines: obscureText ? 1 : minLines,
           maxLengthEnforcement: MaxLengthEnforcement.enforced,
           onTap: onTap,
           enableInteractiveSelection: enableInteractiveSelection,
@@ -263,7 +276,7 @@ class ReadOnlyCustomTextField extends StatelessWidget {
           autovalidateMode: AutovalidateMode.onUserInteraction,
           maxLength: obscureText ? null : maxLength,
           controller: controller,
-          cursorColor: const Color(0xff5645F5), // innit
+          cursorColor: AppColors.purple500, // innit
           textInputAction: textInputAction,
           keyboardType: keyboardType,
           readOnly: true,
@@ -276,7 +289,7 @@ class ReadOnlyCustomTextField extends StatelessWidget {
           style: const TextStyle(
             fontFamily: 'Karla',
             fontSize: 14,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w400,
             height: 1.450,
             color: Color(0xFF302D53),
           ),
@@ -300,6 +313,7 @@ class ReadOnlyCustomTextField extends StatelessWidget {
               horizontal: 14.w,
             ),
             errorStyle: TextStyle(
+              fontFamily: 'Karla',
               fontSize: 12,
               color: Colors.red.shade800,
               letterSpacing: -.3,
@@ -310,22 +324,22 @@ class ReadOnlyCustomTextField extends StatelessWidget {
             focusedBorder: UnderlineInputBorder(
               borderSide: BorderSide(
                 // color: Color( 0xff5645F5), // innit
-                color: const Color(0xff5645F5), // innit
+                color: AppColors.purple500, // innit
                 width: 1.w,
               ),
               borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(8.r),
-                topRight: Radius.circular(8.r),
+                topLeft: Radius.circular(8.0.r),
+                topRight: Radius.circular(8.0.r),
               ),
             ),
             enabledBorder: UnderlineInputBorder(
               borderSide: BorderSide(
-                color: const Color(0xff5645F5).withOpacity(.2),
+                color: AppColors.purple500.withOpacity(.2),
                 width: 1.w,
               ),
               borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(8.r),
-                topRight: Radius.circular(8.r),
+                topLeft: Radius.circular(8.0.r),
+                topRight: Radius.circular(8.0.r),
               ),
             ),
             focusedErrorBorder: UnderlineInputBorder(
@@ -334,8 +348,8 @@ class ReadOnlyCustomTextField extends StatelessWidget {
                 width: 1.w,
               ),
               borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(8.r),
-                topRight: Radius.circular(8.r),
+                topLeft: Radius.circular(8.0.r),
+                topRight: Radius.circular(8.0.r),
               ),
             ),
             errorBorder: UnderlineInputBorder(
@@ -344,8 +358,8 @@ class ReadOnlyCustomTextField extends StatelessWidget {
                 width: 1.w,
               ),
               borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(8.r),
-                topRight: Radius.circular(8.r),
+                topLeft: Radius.circular(8.0.r),
+                topRight: Radius.circular(8.0.r),
               ),
             ),
           ),

@@ -216,7 +216,7 @@ class SecondaryButton extends StatelessWidget {
                     width: loadingIndicatorSize ?? 20.w,
                     height: loadingIndicatorSize ?? 20.w,
                     child: CircularProgressIndicator(
-                      strokeWidth: 2,
+                      strokeWidth: 1.50,
                       valueColor: AlwaysStoppedAnimation<Color>(
                         loadingIndicatorColor ?? effectiveTextColor,
                       ),
@@ -230,15 +230,16 @@ class SecondaryButton extends StatelessWidget {
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 4.w),
                     child: Text(
-                      text.toUpperCase(),
+                      text,
                       style: TextStyle(
                         color: effectiveTextColor,
                         fontSize: fontSize ?? 18.sp,
+                        
                         fontFamily:
                             fontFamily ?? AppTypography.secondaryFontFamily,
-                        fontWeight: fontWeight ?? AppTypography.bold,
+                        fontWeight: fontWeight ?? AppTypography.medium,
                         height: lineHeight ?? 1.78,
-                        letterSpacing: letterSpacing ?? 0.18,
+                        letterSpacing: -.8,
                       ),
                       textAlign: TextAlign.center,
                     ),

@@ -24,7 +24,7 @@ class AppTypography {
   static const String primaryFontFamily = 'Readex Pro';
 
   /// Secondary font family - Youth (for display, headings, labels)
-  static const String secondaryFontFamily = 'Youth';
+  static const String secondaryFontFamily = 'Karla';
 
   /// Monospace font family - For code and numbers
   static const String monospaceFontFamily = 'SF Mono';
@@ -66,7 +66,7 @@ class AppTypography {
     fontSize: 48,
     height: 1.167, // 56px line height
     letterSpacing: -0.8,
-    fontWeight: FontWeight.w700, // Bold for maximum impact
+    fontWeight: FontWeight.w600, // Bold for maximum impact
     fontFamily: secondaryFontFamily, // Youth
   );
 
@@ -97,7 +97,7 @@ class AppTypography {
     fontSize: 28,
     height: 1.286, // 36px line height
     letterSpacing: 0,
-    fontWeight: FontWeight.w700, // Bold for H1
+    fontWeight: FontWeight.w600, // Bold for H1
     fontFamily: secondaryFontFamily, // Youth
   );
 
@@ -137,7 +137,7 @@ class AppTypography {
     fontSize: 24,
     height: 1.167, // 28px line height
     letterSpacing: 0,
-    fontWeight: FontWeight.w600, // Semibold for large titles
+    fontWeight: FontWeight.w400, // Semibold for large titles
     fontFamily: primaryFontFamily, // Readex Pro
   );
 
@@ -288,7 +288,7 @@ class AppTypography {
     fontSize: 28,
     height: 1.286, // 36px line height
     letterSpacing: 0,
-    fontWeight: FontWeight.w700, // Bold for app branding
+    fontWeight: FontWeight.w600, // Bold for app branding
     fontFamily: secondaryFontFamily, // Youth
   );
 
@@ -297,7 +297,7 @@ class AppTypography {
     fontSize: 20,
     height: 1.2, // 24px line height
     letterSpacing: 0,
-    fontWeight: FontWeight.w600, // Semibold for card titles
+    fontWeight: FontWeight.w400, // Semibold for card titles
     fontFamily: primaryFontFamily, // Readex Pro
   );
 
@@ -306,7 +306,7 @@ class AppTypography {
     fontSize: 16,
     height: 1.25, // 20px line height
     letterSpacing: 0,
-    fontWeight: FontWeight.w600, // Semibold for buttons
+    fontWeight: FontWeight.w400, // Semibold for buttons
     fontFamily: primaryFontFamily, // Readex Pro
   );
 
@@ -333,7 +333,7 @@ class AppTypography {
     fontSize: 32,
     height: 1.125, // 36px line height
     letterSpacing: -0.6,
-    fontWeight: FontWeight.w700,
+    fontWeight: FontWeight.w600,
     fontFamily: monospaceFontFamily,
   );
 
@@ -342,7 +342,7 @@ class AppTypography {
     fontSize: 24,
     height: 1.167, // 28px line height
     letterSpacing: -0.8,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.w400,
     fontFamily: monospaceFontFamily,
   );
 
@@ -351,7 +351,7 @@ class AppTypography {
     fontSize: 18,
     height: 1.333, // 24px line height
     letterSpacing: 0,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.w400,
     fontFamily: monospaceFontFamily,
   );
 

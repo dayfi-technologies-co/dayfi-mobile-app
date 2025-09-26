@@ -19,11 +19,11 @@ class F {
   static String get baseUrl {
     switch (appFlavor) {
       case Flavor.dev:
-        return "https://api-dev.dayfi.com/gateway";
+        return "https://dayfi-staging-4417d7a6dfe0.herokuapp.com/api/v1";
       case Flavor.pilot:
-        return "https://api-pilot.dayfi.com/gateway";
+        return "https://dayfi-staging-4417d7a6dfe0.herokuapp.com/api/v1";
       case Flavor.prod:
-        return "https://api.dayfi.com/gateway";
+        return "https://dayfi-staging-4417d7a6dfe0.herokuapp.com/api/v1";
     }
   }
 

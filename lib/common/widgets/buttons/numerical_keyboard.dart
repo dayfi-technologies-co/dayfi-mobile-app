@@ -77,7 +77,7 @@ class NumericalKeyboard extends StatelessWidget {
               style: AppTypography.bodyLarge.copyWith(
                 // color: ,
                 fontSize: 12.sp,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w600,
               ),
             )),
         n);

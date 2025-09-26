@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dayfi/routes/route.dart';
 
 import 'navigator_key.dart';
 
@@ -96,6 +97,13 @@ class AppRouter {
 
   void dismissKeyboard() {
     FocusManager.instance.primaryFocus?.unfocus();
+  }
+
+  Future<T?> replaceWithPasscode<T extends Object?>() {
+    return navigatorState.pushNamedAndRemoveUntil<T>(
+      AppRoute.passcodeView,
+      (Route route) => false,
+    );
   }
 }
 

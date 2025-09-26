@@ -180,7 +180,7 @@ class PrimaryButton extends StatelessWidget {
       height: 40.h,
       horizontalPadding: 8.w,
       verticalPadding: 6.h,
-      borderRadius: 8.r,
+      borderRadius: 20.r,
       borderWidth: 0,
       fontSize: 16.sp,
       fontWeight: AppTypography.semibold, // FontWeight.w600
@@ -218,7 +218,7 @@ class PrimaryButton extends StatelessWidget {
       height: 56.h,
       horizontalPadding: 12.w,
       verticalPadding: 10.h,
-      borderRadius: 12.r,
+      borderRadius: 28.r,
       borderWidth: 0,
       fontSize: 20.sp,
       fontWeight: AppTypography.bold,
@@ -243,27 +243,20 @@ class PrimaryButton extends StatelessWidget {
             ? (textColor ?? AppColors.neutral0).withOpacity(0.7)
             : textColor ?? AppColors.neutral0;
 
-    final effectiveBorderColor =
-        isDisabled
-            ? (borderColor ?? Colors.transparent).withOpacity(0.5)
-            : borderColor ?? Colors.transparent;
 
     return Container(
       width: fullWidth ? double.infinity : width,
       height: height,
-      padding: EdgeInsets.symmetric(
-        horizontal: horizontalPadding ?? 10.w,
-        vertical: verticalPadding ?? 8.h,
-      ),
+      // padding: EdgeInsets.symmetric(
+      //   horizontal: horizontalPadding ?? 10.w,
+      //   vertical: verticalPadding ?? 8.h,
+      // ),
       clipBehavior: Clip.antiAlias,
       decoration: ShapeDecoration(
         color: effectiveBackgroundColor,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(borderRadius ?? 10.r),
-          side: BorderSide(
-            color: effectiveBorderColor,
-            width: borderWidth ?? 0,
-          ),
+          side: BorderSide.none,
         ),
         shadows:
             elevation != null && elevation! > 0
@@ -296,7 +289,7 @@ class PrimaryButton extends StatelessWidget {
                     width: loadingIndicatorSize ?? 20.w,
                     height: loadingIndicatorSize ?? 20.w,
                     child: CircularProgressIndicator(
-                      strokeWidth: 2,
+                      strokeWidth: 1.50,
                       valueColor: AlwaysStoppedAnimation<Color>(
                         loadingIndicatorColor ?? effectiveTextColor,
                       ),
@@ -310,15 +303,15 @@ class PrimaryButton extends StatelessWidget {
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 4.w),
                     child: Text(
-                      text.toUpperCase(),
+                      text,
                       style: TextStyle(
                         color: effectiveTextColor,
                         fontSize: fontSize ?? 18.sp,
                         fontFamily:
                             fontFamily ?? AppTypography.secondaryFontFamily,
-                        fontWeight: fontWeight ?? AppTypography.bold,
+                        fontWeight: fontWeight ?? AppTypography.medium,
                         height: lineHeight ?? 1.78,
-                        letterSpacing: letterSpacing ?? 0.18,
+                        letterSpacing: -.6,
                       ),
                       textAlign: TextAlign.center,
                     ),

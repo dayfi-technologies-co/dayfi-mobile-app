@@ -1,0 +1,381 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:dayfi/core/theme/app_colors.dart';
+import 'package:dayfi/features/auth/create_passcode/vm/create_passcode_viewmodel.dart';
+import 'package:dayfi/common/widgets/buttons/primary_button.dart';
+
+class CreatePasscodeView extends ConsumerStatefulWidget {
+  final bool isFromSignup;
+  
+  const CreatePasscodeView({
+    super.key,
+    this.isFromSignup = false,
+  });
+
+  @override
+  ConsumerState<CreatePasscodeView> createState() => _CreatePasscodeViewState();
+}
+
+class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
+  @override
+  void initState() {
+    super.initState();
+    // Show security dialog after the widget is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _showSecurityDialog();
+    });
+  }
+
+  void _showSecurityDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: const Color(0xffFEF9F3),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24.r),
+          ),
+          child: Container(
+            padding: EdgeInsets.all(28.w),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Security icon with enhanced styling
+                Container(
+                  width: 80.w,
+                  height: 80.w,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppColors.purple500.withOpacity(0.1),
+                        AppColors.purple500.withOpacity(0.05),
+                      ],
+                    ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.purple500.withOpacity(0.1),
+                        blurRadius: 20,
+                        spreadRadius: 2,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  // child: Icon(
+                  //   Icons.security_rounded,
+                  //   color: AppColors.purple500,
+                  //   size: 40.w,
+                  // ),
+                ),
+
+                SizedBox(height: 24.h),
+
+                // Title with auth view styling
+                Text(
+                  'For your security, please avoid easy-to-guess passcodes. e.g. 1234, 2222',
+                  style: TextStyle(
+                    fontFamily: 'CabinetGrotesk',
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.neutral900,
+                    letterSpacing: -0.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+
+                SizedBox(height: 16.h),
+
+                // Continue button with auth view styling
+                PrimaryButton(
+                  text: 'Continue',
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  backgroundColor: AppColors.purple500,
+                  textColor: AppColors.neutral0,
+                  borderRadius: 38,
+                  height: 56.h,
+                  width: double.infinity,
+                  fullWidth: true,
+                  fontFamily: 'Karla',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w400,
+                  letterSpacing: -0.48,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final createPasscodeState = ref.watch(createPasscodeProvider(widget.isFromSignup));
+    final createPasscodeNotifier = ref.read(createPasscodeProvider(widget.isFromSignup).notifier);
+
+    return GestureDetector(
+      onTap: () {
+        // Dismiss keyboard and remove focus from all text fields
+        FocusManager.instance.primaryFocus?.unfocus();
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Scaffold(
+        backgroundColor: const Color(0xffFEF9F3),
+        resizeToAvoidBottomInset: false,
+        body: GestureDetector(
+          onTap: () {
+            FocusManager.instance.primaryFocus?.unfocus();
+          },
+          child: SafeArea(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  AppBar(
+                    scrolledUnderElevation: 0,
+                    backgroundColor: const Color(0xffFEF9F3),
+                    elevation: 0,
+                    leading: IconButton(
+                      onPressed: () {
+                        createPasscodeNotifier.resetForm();
+                        Navigator.pop(context);
+                      },
+                      icon: const Icon(Icons.arrow_back_ios_new),
+                    ),
+                    title: Text(
+                      "Create passcode",
+                      style: TextStyle(
+                        fontFamily: 'CabinetGrotesk',
+                        fontSize: 30.00,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        SizedBox(height: 12.h),
+
+                        // Subtitle
+                        Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 24.w),
+                              child: Text(
+                                "Please create a 4-digit passcode for your account. This will be used to quickly access your account.",
+                                style: TextStyle(
+                                  color: AppColors.neutral800,
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.w400, //
+                                  fontFamily: 'Karla',
+                                  letterSpacing: -.6,
+                                  height: 1.4,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            )
+                            .animate()
+                            .fadeIn(
+                              delay: 100.ms,
+                              duration: 300.ms,
+                              curve: Curves.easeOutCubic,
+                            )
+                            .slideY(
+                              begin: 0.2,
+                              end: 0,
+                              delay: 100.ms,
+                              duration: 300.ms,
+                              curve: Curves.easeOutCubic,
+                            ),
+
+                        SizedBox(height: 40.h),
+                      ],
+                    ),
+                  ),
+
+                  // Passcode widget
+                  Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 24.w),
+                        child: PasscodeWidget(
+                          passcodeLength: 4,
+                          currentPasscode: createPasscodeState.passcode,
+                          onPasscodeChanged:
+                              createPasscodeNotifier.updatePasscode,
+                        ),
+                      )
+                      .animate()
+                      .fadeIn(
+                        delay: 200.ms,
+                        duration: 300.ms,
+                        curve: Curves.easeOutCubic,
+                      )
+                      .slideY(
+                        begin: 0.3,
+                        end: 0,
+                        delay: 200.ms,
+                        duration: 300.ms,
+                        curve: Curves.easeOutCubic,
+                      )
+                      .scale(
+                        begin: const Offset(0.98, 0.98),
+                        end: const Offset(1.0, 1.0),
+                        delay: 200.ms,
+                        duration: 300.ms,
+                        curve: Curves.easeOutCubic,
+                      ),
+                  SizedBox(height: 16.h),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24.w),
+                    child: Text(
+                      " ",
+                      style: TextStyle(
+                        fontFamily: 'Karla',
+                        fontSize: 13.sp,
+                        color: Colors.red.shade800,
+                        letterSpacing: -0.4,
+                        fontWeight: FontWeight.w400,
+                        height: 1.4,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  SizedBox(height: 40.h),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class PasscodeWidget extends StatelessWidget {
+  final int passcodeLength;
+  final String currentPasscode;
+  final Function(String) onPasscodeChanged;
+
+  const PasscodeWidget({
+    super.key,
+    required this.passcodeLength,
+    required this.currentPasscode,
+    required this.onPasscodeChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SizedBox(height: MediaQuery.of(context).size.width * 0.2),
+
+        // Passcode dots
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(
+            passcodeLength,
+            (index) => Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6.0),
+              child: Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color:
+                      index < currentPasscode.length
+                          ? AppColors.purple500
+                          : Colors.transparent,
+                  border: Border.all(color: AppColors.purple500, width: 2),
+                ),
+              ),
+            ),
+          ),
+        ),
+
+        SizedBox(height: 32.h),
+        SizedBox(height: 32.h),
+
+        // Number pad
+        GridView.count(
+          crossAxisCount: 3,
+          shrinkWrap: true,
+          childAspectRatio: 1.5,
+          mainAxisSpacing: 16,
+          crossAxisSpacing: 16,
+          physics: const NeverScrollableScrollPhysics(),
+          children: [
+            ...List.generate(9, (index) {
+              final number = (index + 1).toString();
+              return _buildNumberButton(number);
+            }),
+            const SizedBox.shrink(), // Empty space
+            _buildNumberButton('0'),
+            _buildIconButton(
+              icon: Icons.arrow_back_ios,
+              onTap: () {
+                if (currentPasscode.isNotEmpty) {
+                  onPasscodeChanged(
+                    currentPasscode.substring(0, currentPasscode.length - 1),
+                  );
+                }
+              },
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNumberButton(String number) {
+    return InkWell(
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
+      borderRadius: BorderRadius.circular(100),
+      onTap: () {
+        if (currentPasscode.length < passcodeLength) {
+          onPasscodeChanged(currentPasscode + number);
+        }
+      },
+      child: Container(
+        decoration: const BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white,
+        ),
+        child: Center(
+          child: Text(
+            number,
+            style: const TextStyle(
+              fontSize: 32.00,
+              fontFamily: 'CabinetGrotesk',
+              fontWeight: FontWeight.w400,
+              color: Colors.black87,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIconButton({
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: const BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.transparent,
+        ),
+        child: Center(child: Icon(icon, color: AppColors.purple500)),
+      ),
+    );
+  }
+}

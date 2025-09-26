@@ -22,14 +22,14 @@ class AnalyticsService {
   }
 
   void _setAnalyticUserData() async {
-    UserModel user = UserModel.fromJson(await localCache.getUser());
-    _analytics.setUserId(id: user.id);
+    User user = User.fromJson(await localCache.getUser());
+    _analytics.setUserId(id: user.userId);
     _analytics.setUserProperty(
       name: "Name",
       value: '${user.lastName} ${user.firstName}',
     );
     _analytics.setUserProperty(name: "Email", value: user.email);
-    _analytics.setUserProperty(name: "Mobile", value: user.phoneNumber);
+    _analytics.setUserProperty(name: "Mobile", value: user.phoneNumber ?? '');
   }
 
   ///Log analytics event with name of the event [name] and event data [parameters]
@@ -38,7 +38,7 @@ class AnalyticsService {
     Map<String, Object>? parameters = const {},
   }) async {
     try {
-      UserModel user = UserModel.fromJson(await localCache.getUser());
+      User user = User.fromJson(await localCache.getUser());
       parameters?.addAll({
         "email": user.email,
         "Name": '${user.lastName} ${user.firstName}',

@@ -1,23 +1,23 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-class SecureStorage {
+class SecureStorageService {
   final storage = const FlutterSecureStorage();
 
-  Future<String> getValue(String key) async {
+  Future<String> read(String key) async {
     String? value = await storage.read(key: key);
     return value ?? "";
   }
 
-  Future<Map<String, String>> getValues() async {
+  Future<Map<String, String>> readAll() async {
     var result = await storage.readAll();
     return result;
   }
 
-  void deleteKey(dynamic key) async => await storage.delete(key: key);
+  Future<void> delete(String key) async => await storage.delete(key: key);
 
-  void emptyDB() async => await storage.deleteAll();
+  Future<void> deleteAll() async => await storage.deleteAll();
 
-  void writeKey(String key, String value) async {
+  Future<void> write(String key, String value) async {
     await storage.write(key: key, value: value);
   }
 }

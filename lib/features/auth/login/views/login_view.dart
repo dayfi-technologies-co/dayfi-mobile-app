@@ -1,29 +1,377 @@
+import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
+import 'package:dayfi/common/widgets/eye_icon.dart';
+import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:dayfi/common/widgets/upload_icon.dart';
+import 'package:flutter/gestures.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:dayfi/features/auth/login/vm/login_viewmodel.dart';
+import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 
-class LoginView extends StatefulHookConsumerWidget {
-  const LoginView({super.key});
+class LoginView extends ConsumerWidget {
+  final bool showBackButton;
+  
+  const LoginView({
+    super.key,
+    this.showBackButton = true,
+  });
 
   @override
-  ConsumerState<ConsumerStatefulWidget> createState() => _LoginViewState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final loginState = ref.watch(loginProvider);
+    final loginNotifier = ref.read(loginProvider.notifier);
 
-class _LoginViewState extends ConsumerState<LoginView> {
-  @override
-  Widget build(BuildContext context) {
-    final loginViewModel = ref.watch(loginViewModelProvider);
-    return Scaffold(
-      appBar: AppBar(title: const Text('Login View')),
-      body: Column(
-        children: [
-          Container(alignment: Alignment.center, child: Text('Login View ${loginViewModel.getUserName()}')),
-          ImageUploadTile(description: 'Upload your profile picture', onImagePicked: (file) {
-            // Handle image upload - file path: ${file?.path}
-          }),
-        ],
+    return PopScope(
+      canPop: showBackButton, // Only allow back if showBackButton is true
+      onPopInvoked: (didPop) {
+        if (showBackButton) {
+          // Reset form when back button is pressed
+          loginNotifier.resetForm();
+        }
+      },
+      child: GestureDetector(
+      onTap: () {
+        // Dismiss keyboard and remove focus from all text fields
+        FocusManager.instance.primaryFocus?.unfocus();
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Scaffold(
+        backgroundColor: const Color(0xffFEF9F3),
+        resizeToAvoidBottomInset: false,
+        body: GestureDetector(
+          onTap: () {
+            FocusManager.instance.primaryFocus?.unfocus();
+          },
+          child: SafeArea(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AppBar(
+                    scrolledUnderElevation: 0,
+                    backgroundColor: const Color(0xffFEF9F3),
+                    elevation: 0,
+                    leading: showBackButton ? IconButton(
+                      onPressed: () {
+                        loginNotifier.resetForm();
+                        Navigator.pop(context);
+                      },
+                      icon: const Icon(Icons.arrow_back_ios_new),
+                    ) : const SizedBox.shrink(),
+                    title: Text(
+                      "Sign in",
+                      style: TextStyle(
+                        fontFamily: 'CabinetGrotesk',
+                        fontSize: 30.00,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(height: 12.h),
+
+                        // Subtitle
+                        Center(
+                          child: Text(
+                            "Please enter your email and password\nto access your account",
+                            style: TextStyle(
+                              color: AppColors.neutral800,
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w400, //
+                              fontFamily: 'Karla',
+                              letterSpacing: -.6,
+                              height: 1.4,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        )
+                        .animate()
+                        .fadeIn(
+                          delay: 100.ms,
+                          duration: 300.ms,
+                          curve: Curves.easeOutCubic,
+                        )
+                        .slideY(
+                          begin: 0.2,
+                          end: 0,
+                          delay: 100.ms,
+                          duration: 300.ms,
+                          curve: Curves.easeOutCubic,
+                        ),
+
+                        SizedBox(height: 36.h),
+
+                        // Email field
+                        CustomTextField(
+                          label: "Email Address",
+                          hintText: "Enter your email address here",
+                          onChanged: loginNotifier.setEmail,
+                          keyboardType: TextInputType.emailAddress,
+                          textCapitalization: TextCapitalization.none,
+                        )
+                        .animate()
+                        .fadeIn(
+                          delay: 200.ms,
+                          duration: 300.ms,
+                          curve: Curves.easeOutCubic,
+                        )
+                        .slideY(
+                          begin: 0.3,
+                          end: 0,
+                          delay: 200.ms,
+                          duration: 300.ms,
+                          curve: Curves.easeOutCubic,
+                        )
+                        .scale(
+                          begin: const Offset(0.98, 0.98),
+                          end: const Offset(1.0, 1.0),
+                          delay: 200.ms,
+                          duration: 300.ms,
+                          curve: Curves.easeOutCubic,
+                        )
+                        .shimmer(
+                          delay: 400.ms,
+                          duration: 800.ms,
+                          color: AppColors.purple500.withOpacity(0.1),
+                          angle: 15,
+                        ),
+
+                        if (loginState.emailError.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4.0, left: 14),
+                            child: Text(
+                              loginState.emailError,
+                              style: const TextStyle(
+                                color: Colors.red,
+                                fontSize: 13,
+                                fontFamily: 'Karla',
+                                letterSpacing: -.6,
+                                fontWeight: FontWeight.w400,
+                                height: 1.4,
+                              ),
+                            ),
+                          )
+                        else
+                          const SizedBox.shrink(),
+
+                        SizedBox(height: 17.5.h),
+
+                        // Password field
+                        CustomTextField(
+                          label: "Password",
+                          hintText: "Enter your password here",
+                          onChanged: loginNotifier.setPassword,
+                          keyboardType: TextInputType.visiblePassword,
+                          obscureText: loginState.isPasswordVisible,
+                          suffixIcon: IconButton(
+                            icon: EyeIcon(
+                              isVisible: loginState.isPasswordVisible,
+                              color: AppColors.neutral500,
+                              size: 20.0,
+                            ),
+                            onPressed:
+                                () => loginNotifier.togglePasswordVisibility(),
+                          ),
+                        )
+                        .animate()
+                        .fadeIn(
+                          delay: 300.ms,
+                          duration: 300.ms,
+                          curve: Curves.easeOutCubic,
+                        )
+                        .slideY(
+                          begin: 0.3,
+                          end: 0,
+                          delay: 300.ms,
+                          duration: 300.ms,
+                          curve: Curves.easeOutCubic,
+                        )
+                        .scale(
+                          begin: const Offset(0.98, 0.98),
+                          end: const Offset(1.0, 1.0),
+                          delay: 300.ms,
+                          duration: 300.ms,
+                          curve: Curves.easeOutCubic,
+                        )
+                        .shimmer(
+                          delay: 500.ms,
+                          duration: 800.ms,
+                          color: AppColors.purple500.withOpacity(0.1),
+                          angle: 15,
+                        ),
+
+                        if (loginState.passwordError.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4.0, left: 14),
+                            child: Text(
+                              loginState.passwordError,
+                              style: const TextStyle(
+                                color: Colors.red,
+                                fontSize: 13,
+                                fontFamily: 'Karla',
+                                letterSpacing: -.6,
+                                fontWeight: FontWeight.w400,
+                                height: 1.4,
+                              ),
+                            ),
+                          )
+                        else
+                          const SizedBox.shrink(),
+
+                        SizedBox(height: 17.5.h),
+
+                        // Forgot password link
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: Text.rich(
+                            textAlign: TextAlign.end,
+                            TextSpan(
+                              text: "I forgot my password!",
+                              style: TextStyle(
+                                fontFamily: 'Karla',
+                                color: AppColors.purple500,
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: -.3,
+                                height: 1.4,
+                              ),
+                              recognizer:
+                                  TapGestureRecognizer()
+                                    ..onTap =
+                                        () =>
+                                            loginNotifier
+                                                .navigateToForgotPassword(),
+                            ),
+                          ),
+                        )
+                        .animate()
+                        .fadeIn(
+                          delay: 400.ms,
+                          duration: 300.ms,
+                          curve: Curves.easeOutCubic,
+                        )
+                        .slideY(
+                          begin: 0.1,
+                          end: 0,
+                          delay: 400.ms,
+                          duration: 300.ms,
+                          curve: Curves.easeOutCubic,
+                        ),
+
+                        SizedBox(height: 72.h),
+
+                        // Login button
+                        PrimaryButton(
+                          borderRadius: 38,
+                          text: "Sign in",
+                          onPressed:
+                              loginState.isFormValid && !loginState.isBusy
+                                  ? () => loginNotifier.login(context)
+                                  : null,
+                          enabled: loginState.isFormValid && !loginState.isBusy,
+                          isLoading: loginState.isBusy,
+                          backgroundColor:
+                              loginState.isFormValid
+                                  ? AppColors.purple500
+                                  : AppColors.purple200,
+                          height: 60.h,
+                          textColor: AppColors.neutral0,
+                          fontFamily: 'Karla',
+                          letterSpacing: -.48,
+                          fontSize: 18,
+                          width: 375.w,
+                          fullWidth: true,
+                        )
+                        .animate()
+                        .fadeIn(
+                          delay: 500.ms,
+                          duration: 300.ms,
+                          curve: Curves.easeOutCubic,
+                        )
+                        .slideY(
+                          begin: 0.2,
+                          end: 0,
+                          delay: 500.ms,
+                          duration: 300.ms,
+                          curve: Curves.easeOutCubic,
+                        )
+                        .scale(
+                          begin: const Offset(0.95, 0.95),
+                          end: const Offset(1.0, 1.0),
+                          delay: 500.ms,
+                          duration: 300.ms,
+                          curve: Curves.easeOutCubic,
+                        ),
+
+                        SizedBox(height: 24.h),
+
+                        // Signup link
+                        Center(
+                          child: Text.rich(
+                            textAlign: TextAlign.center,
+                            TextSpan(
+                              text: "I don't have an account",
+                              style: TextStyle(
+                                fontFamily: 'Karla',
+                                color: AppColors.neutral700,
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w400,
+                                letterSpacing: -.6,
+                                height: 1.450,
+                              ),
+                              children: [
+                                TextSpan(
+                                  text: "\nCreate account",
+                                  style: TextStyle(
+                                    fontFamily: 'Karla',
+                                    color: AppColors.purple500,
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: -.3,
+                                    height: 1.4,
+                                  ),
+                                  recognizer:
+                                      TapGestureRecognizer()
+                                        ..onTap =
+                                            () =>
+                                                loginNotifier
+                                                    .navigateToSignup(),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                        .animate()
+                        .fadeIn(
+                          delay: 600.ms,
+                          duration: 300.ms,
+                          curve: Curves.easeOutCubic,
+                        )
+                        .slideY(
+                          begin: 0.1,
+                          end: 0,
+                          delay: 600.ms,
+                          duration: 300.ms,
+                          curve: Curves.easeOutCubic,
+                        ),
+
+                        SizedBox(height: 40.h),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
+    ),
     );
   }
 }

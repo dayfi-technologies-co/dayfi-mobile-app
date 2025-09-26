@@ -11,11 +11,11 @@ class CrashlyticsService {
 
   Future<void> reportError(error, stackTrace) async {
     try {
-      UserModel user = UserModel.fromJson(await localCache.getUser());
-      crashlytics.setUserIdentifier(user.id);
+      User user = User.fromJson(await localCache.getUser());
+      crashlytics.setUserIdentifier(user.userId);
       crashlytics.setCustomKey("Name", '${user.lastName} ${user.firstName}');
       crashlytics.setCustomKey("Email", user.email);
-      crashlytics.setCustomKey("Mobile", user.phoneNumber);
+      crashlytics.setCustomKey("Mobile", user.phoneNumber ?? '');
       crashlytics.recordError(error, stackTrace);
     } catch (error) {
       AppLogger.error(error);

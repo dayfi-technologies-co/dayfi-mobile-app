@@ -4,7 +4,7 @@ import 'package:dayfi/common/widgets/loading_bottom_sheet_controller.dart';
 import 'package:dayfi/core/navigation/navigation.dart';
 import 'package:dayfi/flavors.dart';
 import 'package:dayfi/services/remote/auth_service.dart';
-import 'package:dayfi/core/network/network_service.dart';
+import 'package:dayfi/services/remote/network/network_service.dart';
 
 import 'package:dayfi/services/local/secure_storage.dart';
 import 'package:dayfi/services/local/local_cache.dart';
@@ -28,11 +28,11 @@ Future<void> setupLocator() async {
 
   locator.registerLazySingleton(() => AppRouter());
 
-  locator.registerLazySingleton(() => SecureStorage());
+  locator.registerLazySingleton(() => SecureStorageService());
 
   locator.registerLazySingleton(
     () => LocalCache(
-      storage: locator<SecureStorage>(),
+      storage: locator<SecureStorageService>(),
       sharedPreferences: locator<SharedPreferences>(),
     ),
   );
@@ -44,7 +44,7 @@ Future<void> setupLocator() async {
 
 //get singleton classes
 final appRouter = locator<AppRouter>();
-final secureStorage = locator<SecureStorage>();
+final secureStorage = locator<SecureStorageService>();
 final localCache = locator<LocalCache>();
 final appStrings = locator<AppStrings>();
 final sharedPreferences = locator<SharedPreferences>();

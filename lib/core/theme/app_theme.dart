@@ -577,7 +577,7 @@ class AppTheme {
       centerTitle: true,
       titleTextStyle: TextStyle(
         fontSize: 18,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w400,
         color: AppColors.neutral900,
       ),
       systemOverlayStyle: SystemUiOverlayStyle.dark,
@@ -677,7 +677,7 @@ class AppTheme {
       centerTitle: true,
       titleTextStyle: TextStyle(
         fontSize: 18,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w400,
         color: AppColors.neutral100,
       ),
       systemOverlayStyle: SystemUiOverlayStyle.light,

@@ -24,22 +24,36 @@ class OtpVerificationTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final defaultDecoration = BoxDecoration(
-      color: AppColors.neutral200,
+      // color: AppColors.transparent,
       borderRadius: BorderRadius.circular(12.r),
       border: Border.all(color: Colors.transparent, width: 1.5),
     );
 
     final focusedDecoration = defaultDecoration.copyWith(
-      color: Colors.white,
+      color: Colors.transparent,
       border: Border.all(color: AppColors.neutral900, width: 1.5),
     );
 
     final submittedDecoration = defaultDecoration.copyWith(
-      color: Colors.white,
+      color: Colors.transparent,
       border: Border.all(color: AppColors.neutral500, width: 1.5),
     );
 
     return Pinput(
+      errorPinTheme: PinTheme(
+        width: 64.w,
+        height: 72.h,
+        textStyle: AppTypography.displaySmall,
+        decoration: submittedDecoration,
+      ),
+      errorTextStyle: const TextStyle(
+        color: Colors.red,
+        fontSize: 13,
+        fontFamily: 'Karla',
+         letterSpacing: -.6,
+        fontWeight: FontWeight.w400,
+        height: 1.4,
+      ),
       length: length,
       controller: controller,
       focusNode: focusNode,
@@ -48,19 +62,19 @@ class OtpVerificationTextField extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.start,
       defaultPinTheme: PinTheme(
         width: 64.w,
-        height: 64.h,
+        height: 72.h,
         textStyle: AppTypography.displaySmall,
         decoration: defaultDecoration,
       ),
       focusedPinTheme: PinTheme(
         width: 64.w,
-        height: 64.h,
+        height: 72.h,
         textStyle: AppTypography.displaySmall,
         decoration: focusedDecoration,
       ),
       submittedPinTheme: PinTheme(
         width: 64.w,
-        height: 64.h,
+        height: 72.h,
         textStyle: AppTypography.displaySmall,
         decoration: submittedDecoration,
       ),

@@ -5,14 +5,14 @@ import 'package:dayfi/common/constants/storage_keys.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
 
 class LocalCache {
-  late SecureStorage storage;
+  late SecureStorageService storage;
   late SharedPreferences sharedPreferences;
 
   LocalCache({required this.storage, required this.sharedPreferences});
 
   Future<void> deleteToken() async {
     try {
-      storage.deleteKey(StorageKeys.token);
+      await storage.delete(StorageKeys.token);
     } catch (e) {
       AppLogger.error('Error deleting token: $e');
     }
@@ -29,7 +29,7 @@ class LocalCache {
 
   Future<String> getToken() async {
     try {
-      return await storage.getValue(StorageKeys.token);
+      return await storage.read(StorageKeys.token);
     } catch (e) {
       AppLogger.error('Error getting token: $e');
       return "";
@@ -37,12 +37,12 @@ class LocalCache {
   }
 
   Future<Map<String, dynamic>> getUser() async {
-    final jsonData = await storage.getValue(StorageKeys.user);
+    final jsonData = await storage.read(StorageKeys.user);
     return json.decode(jsonData.isNotEmpty ? jsonData : '{}');
   }
 
   set setUser(Map<String, dynamic> map) =>
-      storage.writeKey(StorageKeys.user, json.encode(map));
+      storage.write(StorageKeys.user, json.encode(map));
 
   Future<void> removeFromLocalCache(String key) async {
     await sharedPreferences.remove(key);
@@ -50,7 +50,7 @@ class LocalCache {
 
   Future<void> saveToken(String token) async {
     try {
-      storage.writeKey(StorageKeys.token, token);
+      await storage.write(StorageKeys.token, token);
     } catch (e) {
       AppLogger.error('Error saving token: $e');
     }

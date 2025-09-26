@@ -11,23 +11,14 @@
 		331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331C807B294A618700263BE5 /* RunnerTests.swift */; };
 		33F3E6446B6BE2D2189470E3 /* devLaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AB5C74F7CDC6348C661A68D9 /* devLaunchScreen.storyboard */; };
 		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
-		3FAC34E7CAC6CCFF38166F09 /* pilotProfile.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 65D9B96D84ECF867DD582B3F /* pilotProfile.xcconfig */; };
 		4405C4F90A67235A715FD65D /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B0137F2253C71EF9E61EA48F /* Pods_Runner.framework */; };
-		456EA984EFC489399EFA14D3 /* pilotRelease.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 1BBF2B55D77429A06AB4295C /* pilotRelease.xcconfig */; };
 		4AD24D57F0E7198BF8C8B7BD /* prodLaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F7694089521EB2188B0CF47D /* prodLaunchScreen.storyboard */; };
-		54492B5281A5972B03CA202D /* pilotDebug.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = DDF2EB98F0D9C4D744585B02 /* pilotDebug.xcconfig */; };
-		62E0CB078AFE6C36B49C7F61 /* prodDebug.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 9C6B2A0349BBAD2D3D4BFB33 /* prodDebug.xcconfig */; };
 		74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74858FAE1ED2DC5600515810 /* AppDelegate.swift */; };
-		7872B729888760BFDFE94F25 /* devRelease.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 23CBA521E4233AC8B4730F14 /* devRelease.xcconfig */; };
-		82B6779D60B0551FFC481615 /* devDebug.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = D1A603F614A4F05C68C9190C /* devDebug.xcconfig */; };
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
 		A26D5DD36CB811D4BD0175AF /* pilotLaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 96ED393883ED7665728DBA70 /* pilotLaunchScreen.storyboard */; };
-		C1F8AB1C7EEBD0284C53026E /* devProfile.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = A8AF95D4347CEDDFE00C6A85 /* devProfile.xcconfig */; };
 		C8CD210829AD3FEE084CEC52 /* Pods_RunnerTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 220CE1B520D8F725043B880F /* Pods_RunnerTests.framework */; };
-		DF7732AE9AA4A6C803A9E6CA /* prodProfile.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = D47035B242E26CD8EAAA61CD /* prodProfile.xcconfig */; };
-		E2756ACD77ACC6F4DE9E4692 /* prodRelease.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 76AA5515AF00EBFAD79BA127 /* prodRelease.xcconfig */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -336,15 +327,6 @@
 				3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */,
 				97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */,
 				97C146FC1CF9000F007C117D /* Main.storyboard in Resources */,
-				82B6779D60B0551FFC481615 /* devDebug.xcconfig in Resources */,
-				C1F8AB1C7EEBD0284C53026E /* devProfile.xcconfig in Resources */,
-				7872B729888760BFDFE94F25 /* devRelease.xcconfig in Resources */,
-				54492B5281A5972B03CA202D /* pilotDebug.xcconfig in Resources */,
-				3FAC34E7CAC6CCFF38166F09 /* pilotProfile.xcconfig in Resources */,
-				456EA984EFC489399EFA14D3 /* pilotRelease.xcconfig in Resources */,
-				62E0CB078AFE6C36B49C7F61 /* prodDebug.xcconfig in Resources */,
-				DF7732AE9AA4A6C803A9E6CA /* prodProfile.xcconfig in Resources */,
-				E2756ACD77ACC6F4DE9E4692 /* prodRelease.xcconfig in Resources */,
 				33F3E6446B6BE2D2189470E3 /* devLaunchScreen.storyboard in Resources */,
 				A26D5DD36CB811D4BD0175AF /* pilotLaunchScreen.storyboard in Resources */,
 				4AD24D57F0E7198BF8C8B7BD /* prodLaunchScreen.storyboard in Resources */,
