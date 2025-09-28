@@ -114,6 +114,9 @@ class LoginNotifier extends StateNotifier<LoginState> {
         if (response.data?.user != null) {
           await _secureStorage.write('user', json.encode(response.data!.user!.toJson()));
         }
+        
+        // Save password temporarily for passcode creation (will be cleared after)
+        await _secureStorage.write('password', state.password);
 
         // Show success message
         // _showSnackBar(context, response.message, isError: false);

@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:dayfi/core/theme/app_colors.dart';
-import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/features/send/views/send_view.dart';
 import 'package:dayfi/features/transactions/views/transactions_view.dart';
 import 'package:dayfi/features/recipients/views/recipients_view.dart';
 import 'package:dayfi/features/profile/views/profile_view.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class MainView extends ConsumerStatefulWidget {
   const MainView({super.key});
@@ -27,64 +26,63 @@ class _MainViewState extends ConsumerState<MainView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
+    return PopScope(
+      canPop: false, // Disable device back button
+      onPopInvoked: (didPop) {
+        // Optional: Show a dialog or snackbar to inform user
+        // For now, we'll just prevent the back action silently
+      },
+      child: Scaffold(
+        extendBody: true, // 👈 makes nav bar float over body
+        body: IndexedStack(index: _currentIndex, children: _screens),
       bottomNavigationBar: Container(
+        margin: EdgeInsets.fromLTRB(48.w, 0, 48.w, 36.h), // float up a bit
         decoration: BoxDecoration(
-          color: AppColors.neutral0,
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(100.r),
           boxShadow: [
             BoxShadow(
-              color: AppColors.neutral200.withOpacity(0.3),
-              blurRadius: 8,
-              offset: const Offset(0, -2),
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
             ),
           ],
         ),
-        child: SafeArea(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildNavItem(
-                  index: 0,
-                  icon: Icons.send_rounded,
-                  label: 'Send',
-                  isSelected: _currentIndex == 0,
-                ),
-                _buildNavItem(
-                  index: 1,
-                  icon: Icons.receipt_long_rounded,
-                  label: 'Transactions',
-                  isSelected: _currentIndex == 1,
-                ),
-                _buildNavItem(
-                  index: 2,
-                  icon: Icons.people_rounded,
-                  label: 'Recipients',
-                  isSelected: _currentIndex == 2,
-                ),
-                _buildNavItem(
-                  index: 3,
-                  icon: Icons.person_rounded,
-                  label: 'Profile',
-                  isSelected: _currentIndex == 3,
-                ),
-              ],
-            ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 0.w, vertical: 0.h),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavItem(
+                index: 0,
+                icon: "assets/icons/svgs/Box.svg",
+                isSelected: _currentIndex == 0,
+              ),
+              _buildNavItem(
+                index: 1,
+                icon: "assets/icons/svgs/Box.svg",
+                isSelected: _currentIndex == 1,
+              ),
+              _buildNavItem(
+                index: 2,
+                icon: "assets/icons/svgs/Box.svg",
+                isSelected: _currentIndex == 2,
+              ),
+              _buildNavItem(
+                index: 3,
+                icon: "assets/icons/svgs/Box.svg",
+                isSelected: _currentIndex == 3,
+              ),
+            ],
           ),
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildNavItem({
     required int index,
-    required IconData icon,
-    required String label,
+    required String icon,
     required bool isSelected,
   }) {
     return GestureDetector(
@@ -93,29 +91,16 @@ class _MainViewState extends ConsumerState<MainView> {
           _currentIndex = index;
         });
       },
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: EdgeInsets.all(12.w),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary100 : Colors.transparent,
-          borderRadius: BorderRadius.circular(12.r),
+          // color: isSelected ? AppColors.purple500 : Colors.transparent,
+          borderRadius: BorderRadius.circular(50.r),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              color: isSelected ? AppColors.primary500 : AppColors.neutral400,
-              size: 24.sp,
-            ),
-            SizedBox(height: 4.h),
-            Text(
-              label,
-              style: AppTypography.labelSmall.copyWith(
-                color: isSelected ? AppColors.primary500 : AppColors.neutral400,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-              ),
-            ),
-          ],
+        child: Opacity(
+          opacity: isSelected ? 1 : 0.25,
+          child: SvgPicture.asset(icon, height: 32.sp),
         ),
       ),
     );

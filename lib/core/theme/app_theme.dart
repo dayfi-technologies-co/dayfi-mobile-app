@@ -28,6 +28,9 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.light,
 
+      // Scaffold Background
+      scaffoldBackgroundColor: const Color(0xffFEF9F3),
+
       // Color Scheme
       colorScheme: _lightColorScheme,
 
@@ -192,6 +195,9 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
+
+      // Scaffold Background
+      scaffoldBackgroundColor: AppColors.neutral950,
 
       // Color Scheme
       colorScheme: _darkColorScheme,
@@ -570,7 +576,7 @@ class AppTheme {
 
   static AppBarTheme get _lightAppBarTheme {
     return const AppBarTheme(
-      backgroundColor: AppColors.surfaceLight,
+      backgroundColor: Color(0xffFEF9F3),
       foregroundColor: AppColors.neutral900,
       elevation: 0,
       scrolledUnderElevation: 1,
@@ -670,7 +676,7 @@ class AppTheme {
 
   static AppBarTheme get _darkAppBarTheme {
     return const AppBarTheme(
-      backgroundColor: AppColors.surfaceDark,
+      backgroundColor: AppColors.neutral950,
       foregroundColor: AppColors.neutral100,
       elevation: 0,
       scrolledUnderElevation: 1,

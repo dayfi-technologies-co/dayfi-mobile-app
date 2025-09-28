@@ -22,8 +22,9 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
   @override
   void initState() {
     super.initState();
-    // Show security dialog after the widget is built
+    // Reset form when view is initialized
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(createPasscodeProvider(widget.isFromSignup).notifier).resetForm();
       _showSecurityDialog();
     });
   }
@@ -34,7 +35,7 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return Dialog(
-          backgroundColor: const Color(0xffFEF9F3),
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24.r),
           ),
@@ -78,11 +79,10 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
                 // Title with auth view styling
                 Text(
                   'For your security, please avoid easy-to-guess passcodes. e.g. 1234, 2222',
-                  style: TextStyle(
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontFamily: 'CabinetGrotesk',
                     fontSize: 20.sp,
                     fontWeight: FontWeight.w400,
-                    color: AppColors.neutral900,
                     letterSpacing: -0.5,
                   ),
                   textAlign: TextAlign.center,
@@ -105,7 +105,7 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
                   fontFamily: 'Karla',
                   fontSize: 18,
                   fontWeight: FontWeight.w400,
-                  letterSpacing: -0.48,
+                  letterSpacing: -.8,
                 ),
               ],
             ),
@@ -127,7 +127,7 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
       },
       behavior: HitTestBehavior.opaque,
       child: Scaffold(
-        backgroundColor: const Color(0xffFEF9F3),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         resizeToAvoidBottomInset: false,
         body: GestureDetector(
           onTap: () {
@@ -140,7 +140,7 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
                 children: [
                   AppBar(
                     scrolledUnderElevation: 0,
-                    backgroundColor: const Color(0xffFEF9F3),
+                    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                     elevation: 0,
                     leading: IconButton(
                       onPressed: () {
@@ -151,7 +151,7 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
                     ),
                     title: Text(
                       "Create passcode",
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         fontFamily: 'CabinetGrotesk',
                         fontSize: 30.00,
                         fontWeight: FontWeight.w500,
@@ -171,10 +171,9 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
                               padding: EdgeInsets.symmetric(horizontal: 24.w),
                               child: Text(
                                 "Please create a 4-digit passcode for your account. This will be used to quickly access your account.",
-                                style: TextStyle(
-                                  color: AppColors.neutral800,
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                   fontSize: 16.sp,
-                                  fontWeight: FontWeight.w400, //
+                                  fontWeight: FontWeight.w400,
                                   fontFamily: 'Karla',
                                   letterSpacing: -.6,
                                   height: 1.4,

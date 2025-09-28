@@ -84,7 +84,7 @@ class _SplashViewState extends ConsumerState<SplashView> {
               children: [
                 Text(
                   'Powered by',
-                  style: TextStyle(
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColors.neutral500,
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w400,

@@ -5,7 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/features/auth/reenter_passcode/vm/reenter_passcode_viewmodel.dart';
 
-class ReenterPasscodeView extends ConsumerWidget {
+class ReenterPasscodeView extends ConsumerStatefulWidget {
   final bool isFromSignup;
   
   const ReenterPasscodeView({
@@ -14,9 +14,23 @@ class ReenterPasscodeView extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final reenterPasscodeState = ref.watch(reenterPasscodeProvider(isFromSignup));
-    final reenterPasscodeNotifier = ref.read(reenterPasscodeProvider(isFromSignup).notifier);
+  ConsumerState<ReenterPasscodeView> createState() => _ReenterPasscodeViewState();
+}
+
+class _ReenterPasscodeViewState extends ConsumerState<ReenterPasscodeView> {
+  @override
+  void initState() {
+    super.initState();
+    // Reset form when view is initialized
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(reenterPasscodeProvider(widget.isFromSignup).notifier).resetForm();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final reenterPasscodeState = ref.watch(reenterPasscodeProvider(widget.isFromSignup));
+    final reenterPasscodeNotifier = ref.read(reenterPasscodeProvider(widget.isFromSignup).notifier);
 
     return GestureDetector(
       onTap: () {
@@ -25,7 +39,7 @@ class ReenterPasscodeView extends ConsumerWidget {
       },
       behavior: HitTestBehavior.opaque,
       child: Scaffold(
-        backgroundColor: const Color(0xffFEF9F3),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         resizeToAvoidBottomInset: false,
         body: GestureDetector(
           onTap: () {
@@ -38,7 +52,7 @@ class ReenterPasscodeView extends ConsumerWidget {
                 children: [
                   AppBar(
                     scrolledUnderElevation: 0,
-                    backgroundColor: const Color(0xffFEF9F3),
+                    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                     elevation: 0,
                     leading: IconButton(
                       onPressed: () {
@@ -49,7 +63,7 @@ class ReenterPasscodeView extends ConsumerWidget {
                     ),
                     title: Text(
                       "Confirm passcode",
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         fontFamily: 'CabinetGrotesk',
                         fontSize: 30.00,
                         fontWeight: FontWeight.w500,
@@ -69,10 +83,9 @@ class ReenterPasscodeView extends ConsumerWidget {
                               padding: EdgeInsets.symmetric(horizontal: 24.w),
                               child: Text(
                                 "Please enter your 4-digit passcode again to confirm. This ensures you remember it correctly.",
-                                style: TextStyle(
-                                  color: AppColors.neutral800,
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                   fontSize: 16.sp,
-                                  fontWeight: FontWeight.w400, //
+                                  fontWeight: FontWeight.w400,
                                   fontFamily: 'Karla',
                                   letterSpacing: -.6,
                                   height: 1.4,

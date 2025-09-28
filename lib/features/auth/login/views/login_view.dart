@@ -9,7 +9,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:dayfi/features/auth/login/vm/login_viewmodel.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 
-class LoginView extends ConsumerWidget {
+class LoginView extends ConsumerStatefulWidget {
   final bool showBackButton;
   
   const LoginView({
@@ -18,14 +18,28 @@ class LoginView extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<LoginView> createState() => _LoginViewState();
+}
+
+class _LoginViewState extends ConsumerState<LoginView> {
+  @override
+  void initState() {
+    super.initState();
+    // Reset form when view is initialized (handles logout navigation)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(loginProvider.notifier).resetForm();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final loginState = ref.watch(loginProvider);
     final loginNotifier = ref.read(loginProvider.notifier);
 
     return PopScope(
-      canPop: showBackButton, // Only allow back if showBackButton is true
+      canPop: widget.showBackButton, // Only allow back if showBackButton is true
       onPopInvoked: (didPop) {
-        if (showBackButton) {
+        if (widget.showBackButton) {
           // Reset form when back button is pressed
           loginNotifier.resetForm();
         }
@@ -37,7 +51,7 @@ class LoginView extends ConsumerWidget {
       },
       behavior: HitTestBehavior.opaque,
       child: Scaffold(
-        backgroundColor: const Color(0xffFEF9F3),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         resizeToAvoidBottomInset: false,
         body: GestureDetector(
           onTap: () {
@@ -50,9 +64,9 @@ class LoginView extends ConsumerWidget {
                 children: [
                   AppBar(
                     scrolledUnderElevation: 0,
-                    backgroundColor: const Color(0xffFEF9F3),
+                    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                     elevation: 0,
-                    leading: showBackButton ? IconButton(
+                    leading: widget.showBackButton ? IconButton(
                       onPressed: () {
                         loginNotifier.resetForm();
                         Navigator.pop(context);
@@ -61,7 +75,7 @@ class LoginView extends ConsumerWidget {
                     ) : const SizedBox.shrink(),
                     title: Text(
                       "Sign in",
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         fontFamily: 'CabinetGrotesk',
                         fontSize: 30.00,
                         fontWeight: FontWeight.w500,
@@ -80,10 +94,9 @@ class LoginView extends ConsumerWidget {
                         Center(
                           child: Text(
                             "Please enter your email and password\nto access your account",
-                            style: TextStyle(
-                              color: AppColors.neutral800,
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               fontSize: 16.sp,
-                              fontWeight: FontWeight.w400, //
+                              fontWeight: FontWeight.w400,
                               fontFamily: 'Karla',
                               letterSpacing: -.6,
                               height: 1.4,
@@ -283,7 +296,7 @@ class LoginView extends ConsumerWidget {
                           height: 60.h,
                           textColor: AppColors.neutral0,
                           fontFamily: 'Karla',
-                          letterSpacing: -.48,
+                          letterSpacing: -.8,
                           fontSize: 18,
                           width: 375.w,
                           fullWidth: true,
@@ -317,14 +330,13 @@ class LoginView extends ConsumerWidget {
                             textAlign: TextAlign.center,
                             TextSpan(
                               text: "I don't have an account",
-                              style: TextStyle(
-                                fontFamily: 'Karla',
-                                color: AppColors.neutral700,
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.w400,
-                                letterSpacing: -.6,
-                                height: 1.450,
-                              ),
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    fontFamily: 'Karla',
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.w400,
+                                    letterSpacing: -.6,
+                                    height: 1.4,
+                                  ),
                               children: [
                                 TextSpan(
                                   text: "\nCreate account",

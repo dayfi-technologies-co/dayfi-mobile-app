@@ -1,9 +1,12 @@
+import 'package:dayfi/common/widgets/buttons/primary_button.dart';
+import 'package:dayfi/common/widgets/text_fields/amount_custom_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/features/send/vm/send_viewmodel.dart';
+import 'package:flutter_svg/svg.dart';
 
 class SendView extends ConsumerStatefulWidget {
   const SendView({super.key});
@@ -34,72 +37,108 @@ class _SendViewState extends ConsumerState<SendView> {
     final sendState = ref.watch(sendViewModelProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.neutral50,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.neutral0,
+        scrolledUnderElevation: 0,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
-        centerTitle: true,
+        leading: const SizedBox.shrink(),
+        leadingWidth: 0,
         title: Text(
-          'Send Money',
-          style: AppTypography.headlineSmall.copyWith(
-            color: AppColors.neutral900,
+          "Swap",
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+            fontFamily: 'CabinetGrotesk',
+            fontSize: 30.00,
             fontWeight: FontWeight.w400,
           ),
         ),
         actions: [
-          IconButton(
-            onPressed: () {
-              // TODO: Implement notifications
-            },
-            icon: Icon(
-              Icons.notifications_outlined,
-              color: AppColors.primary500,
-              size: 24.sp,
+          Padding(
+            padding: const EdgeInsets.only(right: 24.0),
+            child: InkWell(
+              splashColor: Colors.transparent,
+              highlightColor: Colors.transparent,
+              splashFactory: NoSplash.splashFactory,
+              onTap: () => {},
+              child: CircleAvatar(
+                radius: 18.0,
+                backgroundColor: Theme.of(context).colorScheme.surface,
+                child: SvgPicture.asset(
+                  'assets/svgs/notifications_unread_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.svg',
+                  height: 22,
+                  color: AppColors.primary500,
+                ),
+              ),
             ),
           ),
         ],
       ),
+
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16.w),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Transfer Limit Card
-            if (sendState.showUpgradePrompt)
-              _buildUpgradeCard(),
-            
+            if (sendState.showUpgradePrompt) _buildUpgradeCard(),
+
             SizedBox(height: 16.h),
-            
+
             // You Send Section
             _buildSendSection(sendState),
-            
+
             SizedBox(height: 24.h),
-            
-            // Transaction Details
-            _buildTransactionDetails(sendState),
-            
-            SizedBox(height: 24.h),
-            
-            // Receiver Gets Section
-            _buildReceiverSection(sendState),
-            
-            SizedBox(height: 24.h),
-            
-            // Delivery Method
-            _buildDeliveryMethod(sendState),
-            
-            SizedBox(height: 32.h),
-            
+
+            // // Transaction Details
+            // _buildTransactionDetails(sendState),
+
+            // SizedBox(height: 24.h),
+
+            // // Receiver Gets Section
+            // _buildReceiverSection(sendState),
+
+            // SizedBox(height: 24.h),
+
+            // // Delivery Method
+            // _buildDeliveryMethod(sendState),
+
+            // SizedBox(height: 32.h),
+
             // Continue Button
             _buildContinueButton(sendState),
-            
+
             SizedBox(height: 24.h),
-            
+
             // Partnership Info
             _buildPartnershipInfo(),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildCurrencyInput({
+    required String label,
+    required TextEditingController controller,
+    required Function(String) onChanged,
+    required String currency,
+    required String flagAsset,
+    bool isReadOnly = false,
+    // required SwapViewModel viewModel,
+    required Widget suffixIcon,
+  }) {
+    return AmountCustomTextField(
+      label: label,
+      hintText: "0.0",
+      labelText: isReadOnly ? "Destination Amount" : "Source Amount",
+      controller: controller,
+      shouldReadOnly: isReadOnly,
+      keyboardType: TextInputType.number,
+      textInputAction: TextInputAction.done,
+      // formatter: [NumberFormatter(viewModel)],
+      onChanged: onChanged,
+      enableInteractiveSelection: false,
+      suffixIcon: suffixIcon,
     );
   }
 
@@ -110,23 +149,19 @@ class _SendViewState extends ConsumerState<SendView> {
       decoration: BoxDecoration(
         color: AppColors.neutral0,
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: AppColors.warning200),
+        border: Border.all(color: AppColors.warning400.withOpacity(0.5)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.warning400.withOpacity(0.1),
+            blurRadius: 2.0,
+            offset: const Offset(0, 2),
+            spreadRadius: 0.5,
+          ),
+        ],
       ),
       child: Row(
         children: [
-          Container(
-            width: 40.w,
-            height: 40.w,
-            decoration: BoxDecoration(
-              color: AppColors.warning100,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.person_outline,
-              color: AppColors.warning600,
-              size: 20.sp,
-            ),
-          ),
+          SvgPicture.asset("assets/icons/svgs/Box.svg", height: 32.sp),
           SizedBox(width: 12.w),
           Expanded(
             child: Column(
@@ -135,23 +170,35 @@ class _SendViewState extends ConsumerState<SendView> {
                 Text(
                   'Increase transfer limit',
                   style: AppTypography.titleMedium.copyWith(
-                    color: AppColors.neutral900,
-                    fontWeight: FontWeight.w400,
+                    fontFamily: 'CabinetGrotesk',
+                    fontSize: 19.00,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
                 SizedBox(height: 4.h),
                 RichText(
                   text: TextSpan(
-                    text: 'You\'re currently on Tier 1. Submit required documents to access Tier 2 and send higher amounts. ',
-                    style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.neutral600,
+                    text:
+                        'You\'re currently on Tier 1. Submit required documents to access Tier 2 and send higher amounts. ',
+                    style: TextStyle(
+                      color: AppColors.neutral800,
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w400,
+                      fontFamily: 'Karla',
+                      letterSpacing: -.3,
+                      height: 1.2,
                     ),
                     children: [
                       TextSpan(
                         text: 'Upgrade now.',
-                        style: AppTypography.bodySmall.copyWith(
-                          color: AppColors.primary500,
+                        style: TextStyle(
+                          color: const Color.fromARGB(255, 21, 68, 221),
+                          fontSize: 12.sp,
                           fontWeight: FontWeight.w400,
+                          fontFamily: 'Karla',
+                          letterSpacing: -.6,
+                          height: 1.2,
+                          // decoration: TextDecoration.underline,
                         ),
                       ),
                     ],
@@ -188,9 +235,14 @@ class _SendViewState extends ConsumerState<SendView> {
             children: [
               Expanded(
                 child: Text(
-                  sendState.sendAmount.isEmpty ? '₦0.00' : '₦${sendState.sendAmount}',
+                  sendState.sendAmount.isEmpty
+                      ? '₦0.00'
+                      : '₦${sendState.sendAmount}',
                   style: AppTypography.displaySmall.copyWith(
-                    color: sendState.sendAmount.isEmpty ? AppColors.neutral400 : AppColors.neutral900,
+                    color:
+                        sendState.sendAmount.isEmpty
+                            ? AppColors.neutral400
+                            : AppColors.neutral900,
                     fontWeight: FontWeight.w400,
                   ),
                 ),
@@ -251,11 +303,7 @@ class _SendViewState extends ConsumerState<SendView> {
             color: iconColor.withOpacity(0.1),
             shape: BoxShape.circle,
           ),
-          child: Icon(
-            icon,
-            color: iconColor,
-            size: 16.sp,
-          ),
+          child: Icon(icon, color: iconColor, size: 16.sp),
         ),
         SizedBox(width: 12.w),
         Expanded(
@@ -300,9 +348,14 @@ class _SendViewState extends ConsumerState<SendView> {
             children: [
               Expanded(
                 child: Text(
-                  sendState.receiverAmount.isEmpty ? '₦0.00' : '₦${sendState.receiverAmount}',
+                  sendState.receiverAmount.isEmpty
+                      ? '₦0.00'
+                      : '₦${sendState.receiverAmount}',
                   style: AppTypography.displaySmall.copyWith(
-                    color: sendState.receiverAmount.isEmpty ? AppColors.neutral400 : AppColors.neutral900,
+                    color:
+                        sendState.receiverAmount.isEmpty
+                            ? AppColors.neutral400
+                            : AppColors.neutral900,
                     fontWeight: FontWeight.w400,
                   ),
                 ),
@@ -424,59 +477,72 @@ class _SendViewState extends ConsumerState<SendView> {
   }
 
   Widget _buildContinueButton(SendState sendState) {
-    final isEnabled = sendState.sendAmount.isNotEmpty && 
-                     double.tryParse(sendState.sendAmount) != null &&
-                     double.parse(sendState.sendAmount) > 0;
-
-    return SizedBox(
-      width: double.infinity,
-      height: 48.h,
-      child: ElevatedButton(
-        onPressed: isEnabled ? () {
-          // TODO: Implement continue action
-        } : null,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: isEnabled ? AppColors.primary500 : AppColors.neutral300,
-          foregroundColor: AppColors.neutral0,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.r),
-          ),
-        ),
-        child: Text(
-          'Continue',
-          style: AppTypography.titleMedium.copyWith(
-            color: AppColors.neutral0,
-            fontWeight: FontWeight.w400,
-          ),
-        ),
-      ),
+    return PrimaryButton(
+      borderRadius: 38,
+      text: "Continue",
+      onPressed: null,
+      backgroundColor: AppColors.purple500,
+      height: 60.h,
+      textColor: AppColors.neutral0,
+      fontFamily: 'Karla',
+      letterSpacing: -.8,
+      fontSize: 18,
+      width: 375.w,
+      fullWidth: true,
     );
   }
 
   Widget _buildPartnershipInfo() {
-    return Column(
-      children: [
-        Center(
-          child: Text(
-            'Swap is powered by Flutterwave in partnership with Kadavra BDC and Wema Bank.',
-            style: AppTypography.bodySmall.copyWith(
-              color: AppColors.neutral500,
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 32.w),
+      child: Column(
+        children: [
+          Center(
+            child: Text(
+              'DayFi is powered by Yellow Card in partnership with Smile ID.',
+              style: AppTypography.bodySmall.copyWith(
+                fontFamily: 'Karla',
+                color: AppColors.neutral800,
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w400,
+                letterSpacing: -.6,
+                height: 1.2,
+              ),
+              textAlign: TextAlign.center,
             ),
-            textAlign: TextAlign.center,
           ),
-        ),
-        SizedBox(height: 4.h),
-        Center(
-          child: Text(
-            'Flutterwave Technology Solutions Limited Licensed by the Central Bank of Nigeria.',
-            style: AppTypography.bodySmall.copyWith(
-              color: AppColors.neutral500,
+          SizedBox(height: 14.h),
+          Center(
+            child: Text(
+              'Yellow Card Financial Services is regulated by the relevant authorities in its operating regions.',
+              style: AppTypography.bodySmall.copyWith(
+                fontFamily: 'Karla',
+                color: AppColors.neutral800,
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w400,
+                letterSpacing: -.6,
+                height: 1.2,
+              ),
+              textAlign: TextAlign.center,
             ),
-            textAlign: TextAlign.center,
           ),
-        ),
-      ],
+          SizedBox(height: 14.h),
+          Center(
+            child: Text(
+              'Version 1.0.0',
+              style: AppTypography.bodySmall.copyWith(
+                fontFamily: 'Karla',
+                color: AppColors.neutral800,
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w400,
+                letterSpacing: -.6,
+                height: 1.2,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -487,48 +553,48 @@ class _SendViewState extends ConsumerState<SendView> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
       ),
-      builder: (context) => Container(
-        padding: EdgeInsets.all(16.w),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40.w,
-              height: 4.h,
-              decoration: BoxDecoration(
-                color: AppColors.neutral300,
-                borderRadius: BorderRadius.circular(2.r),
-              ),
-            ),
-            SizedBox(height: 16.h),
-            Text(
-              'Select Currency',
-              style: AppTypography.titleLarge.copyWith(
-                color: AppColors.neutral900,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-            SizedBox(height: 16.h),
-            ...['NGN', 'USD', 'GBP', 'EUR'].map((currency) => 
-              ListTile(
-                title: Text(
-                  currency,
-                  style: AppTypography.bodyLarge.copyWith(
-                    color: AppColors.neutral900,
+      builder:
+          (context) => Container(
+            padding: EdgeInsets.all(16.w),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40.w,
+                  height: 4.h,
+                  decoration: BoxDecoration(
+                    color: AppColors.neutral300,
+                    borderRadius: BorderRadius.circular(2.r),
                   ),
                 ),
-                onTap: () {
-                  ref.read(sendViewModelProvider.notifier).updateCurrency(
-                    currency, 
-                    isSendCurrency,
-                  );
-                  Navigator.pop(context);
-                },
-              ),
+                SizedBox(height: 16.h),
+                Text(
+                  'Select Currency',
+                  style: AppTypography.titleLarge.copyWith(
+                    color: AppColors.neutral900,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                SizedBox(height: 16.h),
+                ...['NGN', 'USD', 'GBP', 'EUR'].map(
+                  (currency) => ListTile(
+                    title: Text(
+                      currency,
+                      style: AppTypography.bodyLarge.copyWith(
+                        color: AppColors.neutral900,
+                      ),
+                    ),
+                    onTap: () {
+                      ref
+                          .read(sendViewModelProvider.notifier)
+                          .updateCurrency(currency, isSendCurrency);
+                      Navigator.pop(context);
+                    },
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
     );
   }
 }

@@ -102,7 +102,7 @@ class CustomTextField extends StatelessWidget {
                         ).withOpacity(0.05),
                 blurRadius: 1.0,
                 offset: const Offset(0, 2),
-                spreadRadius: 0,
+                spreadRadius: 0.25,
               ),
             ],
           ),
@@ -118,6 +118,7 @@ class CustomTextField extends StatelessWidget {
             maxLength: obscureText ? null : maxLength,
             controller: controller,
             cursorColor: AppColors.purple500, // innit
+            
             textInputAction: textInputAction,
             keyboardType: keyboardType,
             readOnly: shouldReadOnly,
@@ -127,28 +128,25 @@ class CustomTextField extends StatelessWidget {
             inputFormatters: [
               formatter ?? FilteringTextInputFormatter.singleLineFormatter,
             ],
-            style: const TextStyle(
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               fontFamily: 'Karla',
               fontSize: 16,
               letterSpacing: -.6,
               fontWeight: FontWeight.w400,
               height: 1.450,
-              color: AppColors.neutral900,
             ),
             decoration: InputDecoration(
               counterText: "",
               errorText: errorText,
               hintText: hintText,
-              hintStyle: TextStyle(
+              hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 fontFamily: 'Karla',
                 fontSize: 16,
                 letterSpacing: -.6,
                 fontWeight: FontWeight.w500,
                 height: 1.450,
                 overflow: TextOverflow.ellipsis,
-                color: Theme.of(context).textTheme.bodyLarge!.color!
-                // ignore: deprecated_member_use
-                .withOpacity(.2),
+                color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(.25),
               ),
               filled: true,
               fillColor:
@@ -156,7 +154,7 @@ class CustomTextField extends StatelessWidget {
                       ? isDayfiId
                           ? Colors.greenAccent.withOpacity(.08)
                           : const Color.fromARGB(255, 255, 217, 214)
-                      : Colors.white,
+                      : Theme.of(context).colorScheme.surface,
               contentPadding: EdgeInsets.symmetric(
                 vertical: 14.h,
                 horizontal: 10.w,

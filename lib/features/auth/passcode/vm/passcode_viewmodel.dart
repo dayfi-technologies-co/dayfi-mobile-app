@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/services/local/secure_storage.dart';
-import 'package:dayfi/services/remote/auth_service.dart';
+// import 'package:dayfi/services/remote/auth_service.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/models/user_model.dart';
 
@@ -48,7 +48,7 @@ class PasscodeState {
 
 class PasscodeNotifier extends StateNotifier<PasscodeState> {
   final SecureStorageService _secureStorage = locator<SecureStorageService>();
-  final AuthService _authService = locator<AuthService>();
+  // final AuthService _authService = locator<AuthService>();
 
   PasscodeNotifier() : super(const PasscodeState());
 
@@ -102,11 +102,11 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
     }
   }
 
-  Future<User?> _loadUserFromStorage() async {
-    final userJson = await _secureStorage.read('user');
-    if (userJson.isEmpty) return null;
-    return User.fromJson(json.decode(userJson));
-  }
+  // Future<User?> _loadUserFromStorage() async {
+  //   final userJson = await _secureStorage.read('user');
+  //   if (userJson.isEmpty) return null;
+  //   return User.fromJson(json.decode(userJson));
+  // }
 
   Future<void> _verifyPasscode() async {
     state = state.copyWith(isVerifying: true);
@@ -115,15 +115,8 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
       final storedPasscode = await _secureStorage.read('user_passcode');
 
       if (state.passcode == storedPasscode) {
-        final password = await _secureStorage.read('password');
-        final user = await _loadUserFromStorage();
-
-        if (user == null || password.isEmpty) {
-          _showErrorSnackBar('Unable to verify your account. Please sign in again.');
-          return;
-        }
-
-        await _authService.login(email: user.email, password: password);
+        // Passcode is correct, navigate directly to main view
+        // No need to re-login since user already has valid token
         await Future.delayed(const Duration(milliseconds: 500));
         appRouter.pushNamed(AppRoute.mainView);
       } else {
@@ -150,7 +143,7 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
     try {
       // Clear stored data
       await _secureStorage.delete('user');
-      await _secureStorage.delete('password');
+      await _secureStorage.delete('user_token');
       await _secureStorage.delete('user_passcode');
       
       // Navigate to login (hide back button)

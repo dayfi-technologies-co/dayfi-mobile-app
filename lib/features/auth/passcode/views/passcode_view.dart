@@ -49,7 +49,7 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
 
         // Main content
         Scaffold(
-          backgroundColor: const Color(0xffFEF9F3),
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           body: SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(

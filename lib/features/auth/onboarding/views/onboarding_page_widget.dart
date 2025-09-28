@@ -31,7 +31,7 @@ class OnboardingPageWidget extends StatelessWidget {
                         Text(
                               page.title,
                               textAlign: TextAlign.start,
-                              style: TextStyle(
+                              style: Theme.of(context).textTheme.displayLarge?.copyWith(
                                 color: AppColors.neutral900,
                                 fontSize: 60.sp,
                                 fontWeight: FontWeight.w600,
@@ -64,7 +64,7 @@ class OnboardingPageWidget extends StatelessWidget {
                         Text(
                               page.subtitle,
                               textAlign: TextAlign.start,
-                              style: TextStyle(
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                 color: AppColors.neutral700,
                                 fontSize: 16.sp,
                                 fontWeight: FontWeight.w400,

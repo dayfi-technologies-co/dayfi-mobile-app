@@ -1,74 +1,107 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/services/remote/auth_service.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/routes/route.dart';
 
-class ResetPasswordViewModel extends ChangeNotifier {
-  final AuthService _authService = locator<AuthService>();
+class ResetPasswordState {
+  final String password;
+  final String confirmPassword;
+  final String passwordError;
+  final String confirmPasswordError;
+  final bool isBusy;
+  final bool isPasswordVisible;
+  final bool isConfirmPasswordVisible;
 
-  String _confirmPassword = '';
-  String _password = '';
-  String? _confirmPasswordError;
-  String? _passwordError;
-  bool _isBusy = false;
-  bool _isPasswordVisible = false;
-  bool _isConfirmPasswordVisible = false;
+  const ResetPasswordState({
+    this.password = '',
+    this.confirmPassword = '',
+    this.passwordError = '',
+    this.confirmPasswordError = '',
+    this.isBusy = false,
+    this.isPasswordVisible = false,
+    this.isConfirmPasswordVisible = false,
+  });
 
-  String? get confirmPasswordError => _confirmPasswordError;
-  String? get passwordError => _passwordError;
-  bool get isBusy => _isBusy;
-  bool get isPasswordVisible => _isPasswordVisible;
-  bool get isConfirmPasswordVisible => _isConfirmPasswordVisible;
+  ResetPasswordState copyWith({
+    String? password,
+    String? confirmPassword,
+    String? passwordError,
+    String? confirmPasswordError,
+    bool? isBusy,
+    bool? isPasswordVisible,
+    bool? isConfirmPasswordVisible,
+  }) {
+    return ResetPasswordState(
+      password: password ?? this.password,
+      confirmPassword: confirmPassword ?? this.confirmPassword,
+      passwordError: passwordError ?? this.passwordError,
+      confirmPasswordError: confirmPasswordError ?? this.confirmPasswordError,
+      isBusy: isBusy ?? this.isBusy,
+      isPasswordVisible: isPasswordVisible ?? this.isPasswordVisible,
+      isConfirmPasswordVisible: isConfirmPasswordVisible ?? this.isConfirmPasswordVisible,
+    );
+  }
 
   bool get isFormValid =>
-      _confirmPassword.isNotEmpty &&
-      _password.isNotEmpty &&
-      _confirmPasswordError == null &&
-      _passwordError == null;
+      password.isNotEmpty &&
+      confirmPassword.isNotEmpty &&
+      passwordError.isEmpty &&
+      confirmPasswordError.isEmpty;
+}
+
+class ResetPasswordViewModel extends StateNotifier<ResetPasswordState> {
+  final AuthService _authService = locator<AuthService>();
+
+  ResetPasswordViewModel() : super(const ResetPasswordState());
 
   void setConfirmPassword(String value) {
-    _confirmPassword = value;
-    _confirmPasswordError = _validateConfirmPassword(value);
-    notifyListeners();
+    state = state.copyWith(
+      confirmPassword: value,
+      confirmPasswordError: _validateConfirmPassword(value),
+    );
   }
 
   void setPassword(String value) {
-    _password = value;
-    _passwordError = _validatePassword(value);
+    state = state.copyWith(
+      password: value,
+      passwordError: _validatePassword(value),
+    );
+    
     // Re-validate confirm password when password changes
-    if (_confirmPassword.isNotEmpty) {
-      _confirmPasswordError = _validateConfirmPassword(_confirmPassword);
+    if (state.confirmPassword.isNotEmpty) {
+      state = state.copyWith(
+        confirmPasswordError: _validateConfirmPassword(state.confirmPassword),
+      );
     }
-    notifyListeners();
   }
 
-  String? _validateConfirmPassword(String value) {
+  String _validateConfirmPassword(String value) {
     if (value.isEmpty) return 'Please type your password again';
-    if (value != _password) return 'Both passwords must be exactly the same';
-    return null;
+    if (value != state.password) return 'Both passwords must be exactly the same';
+    return '';
   }
 
-  String? _validatePassword(String value) {
+  String _validatePassword(String value) {
     if (value.isEmpty) return 'Please create a password';
     if (value.length < 8) return 'Password must be at least 8 characters long';
     if (!RegExp(r'^(?=.*[A-Z])(?=.*[!@#$&*])(?=.*[0-9]).{8,}$')
         .hasMatch(value)) {
       return 'Password must include: 1 uppercase letter, 1 number, and 1 special character (!@#\$&*)';
     }
-    return null;
+    return '';
   }
 
   Future<void> resetPassword(String email, BuildContext context) async {
-    if (!isFormValid) return;
+    if (!state.isFormValid) return;
 
-    _isBusy = true;
-    notifyListeners();
+    state = state.copyWith(isBusy: true);
 
     try {
       final response = await _authService.resetPassword(
         email: email,
-        password: _password,
+        password: state.password,
       );
 
       if (!response.error) {
@@ -99,23 +132,23 @@ class ResetPasswordViewModel extends ChangeNotifier {
         isError: true,
       );
     } finally {
-      _isBusy = false;
-      notifyListeners();
+      state = state.copyWith(isBusy: false);
     }
   }
 
   void togglePasswordVisibility() {
-    _isPasswordVisible = !_isPasswordVisible;
-    notifyListeners();
+    state = state.copyWith(isPasswordVisible: !state.isPasswordVisible);
   }
 
   void toggleConfirmPasswordVisibility() {
-    _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
-    notifyListeners();
+    state = state.copyWith(isConfirmPasswordVisible: !state.isConfirmPasswordVisible);
   }
 
-  @override
-  void dispose() {
-    super.dispose();
+  void resetForm() {
+    state = const ResetPasswordState();
   }
 }
+
+final resetPasswordProvider = StateNotifierProvider<ResetPasswordViewModel, ResetPasswordState>(
+  (ref) => ResetPasswordViewModel(),
+);

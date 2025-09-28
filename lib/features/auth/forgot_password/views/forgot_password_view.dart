@@ -23,7 +23,7 @@ class ForgotPasswordView extends ConsumerWidget {
       },
       behavior: HitTestBehavior.opaque,
       child: Scaffold(
-        backgroundColor: const Color(0xffFEF9F3),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         resizeToAvoidBottomInset: false,
         body: GestureDetector(
           onTap: () {
@@ -36,7 +36,7 @@ class ForgotPasswordView extends ConsumerWidget {
                 children: [
                   AppBar(
                     scrolledUnderElevation: 0,
-                    backgroundColor: const Color(0xffFEF9F3),
+                    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                     elevation: 0,
                     leading: IconButton(
                       onPressed: () => Navigator.pop(context),
@@ -44,7 +44,7 @@ class ForgotPasswordView extends ConsumerWidget {
                     ),
                     title: Text(
                       "Reset Password",
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         fontFamily: 'CabinetGrotesk',
                         fontSize: 30.00,
                         fontWeight: FontWeight.w500,
@@ -62,10 +62,9 @@ class ForgotPasswordView extends ConsumerWidget {
                         Center(
                               child: Text(
                                 "We'll help you create a new password.\nEnter your email address below.",
-                                style: TextStyle(
-                                  color: AppColors.neutral800,
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                   fontSize: 16.sp,
-                                  fontWeight: FontWeight.w400, //
+                                  fontWeight: FontWeight.w400,
                                   fontFamily: 'Karla',
                                   letterSpacing: -.6,
                                   height: 1.4,
@@ -129,7 +128,7 @@ class ForgotPasswordView extends ConsumerWidget {
                             padding: const EdgeInsets.only(top: 4.0, left: 14),
                             child: Text(
                               forgotPasswordState.emailError,
-                              style: const TextStyle(
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                 color: Colors.red,
                                 fontSize: 13,
                                 fontFamily: 'Karla',
@@ -164,7 +163,7 @@ class ForgotPasswordView extends ConsumerWidget {
                               height: 60.h,
                               textColor: AppColors.neutral0,
                               fontFamily: 'Karla',
-                              letterSpacing: -.48,
+                              letterSpacing: -.8,
                               fontSize: 18,
                               width: 375.w,
                               fullWidth: true,
@@ -198,9 +197,8 @@ class ForgotPasswordView extends ConsumerWidget {
                                 textAlign: TextAlign.center,
                                 TextSpan(
                                   text: "I remember my password now",
-                                  style: TextStyle(
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                     fontFamily: 'Karla',
-                                    color: AppColors.neutral800,
                                     fontSize: 16.sp,
                                     fontWeight: FontWeight.w400,
                                     letterSpacing: -.6,
@@ -209,7 +207,7 @@ class ForgotPasswordView extends ConsumerWidget {
                                   children: [
                                     TextSpan(
                                       text: "\nGo back to sign in",
-                                      style: TextStyle(
+                                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                         fontFamily: 'Karla',
                                         color: AppColors.purple500,
                                         fontSize: 16.sp,

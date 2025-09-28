@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:dayfi/core/navigation/navigator_key.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/core/theme/app_theme.dart';
+import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/theme_provider.dart';
 import 'package:dayfi/core/theme/app_theme_extensions.dart';
 import 'package:dayfi/app_locator.dart';
@@ -44,11 +45,13 @@ class MyApp extends ConsumerWidget {
                 debugShowCheckedModeBanner: false,
                 title: AppConstants.appName,
                 theme: themeData.copyWith(
+                  scaffoldBackgroundColor: const Color(0xffFEF9F3),
                   extensions:
                       AppThemeExtensionsFactory.createLightExtensions().values
                           .toList(),
                 ),
                 darkTheme: AppTheme.darkTheme.copyWith(
+                  scaffoldBackgroundColor: AppColors.neutral950,
                   extensions:
                       AppThemeExtensionsFactory.createDarkExtensions().values
                           .toList(),

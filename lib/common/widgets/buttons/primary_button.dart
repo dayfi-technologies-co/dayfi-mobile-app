@@ -289,33 +289,33 @@ class PrimaryButton extends StatelessWidget {
                     width: loadingIndicatorSize ?? 20.w,
                     height: loadingIndicatorSize ?? 20.w,
                     child: CircularProgressIndicator(
-                      strokeWidth: 1.50,
+                      strokeWidth: 2,
                       valueColor: AlwaysStoppedAnimation<Color>(
                         loadingIndicatorColor ?? effectiveTextColor,
                       ),
                     ),
                   ),
-                  SizedBox(width: 8.w),
-                ],
-                if (child != null)
-                  child!
-                else
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 4.w),
-                    child: Text(
-                      text,
-                      style: TextStyle(
-                        color: effectiveTextColor,
-                        fontSize: fontSize ?? 18.sp,
-                        fontFamily:
-                            fontFamily ?? AppTypography.secondaryFontFamily,
-                        fontWeight: fontWeight ?? AppTypography.medium,
-                        height: lineHeight ?? 1.78,
-                        letterSpacing: -.6,
+                ] else ...[
+                  if (child != null)
+                    child!
+                  else
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 4.w),
+                      child: Text(
+                        text,
+                        style: TextStyle(
+                          color: effectiveTextColor,
+                          fontSize: fontSize ?? 18.sp,
+                          fontFamily:
+                              fontFamily ?? AppTypography.secondaryFontFamily,
+                          fontWeight: fontWeight ?? AppTypography.medium,
+                          height: lineHeight ?? 1.78,
+                          letterSpacing: -.8,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                      textAlign: TextAlign.center,
                     ),
-                  ),
+                ],
               ],
             ),
           ),

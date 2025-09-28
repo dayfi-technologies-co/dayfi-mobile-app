@@ -5,6 +5,7 @@ import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/features/recipients/vm/recipients_viewmodel.dart';
 import 'package:dayfi/features/recipients/models/recipient_model.dart';
+import 'package:flutter_svg/svg.dart';
 
 class RecipientsView extends ConsumerStatefulWidget {
   const RecipientsView({super.key});
@@ -35,34 +36,37 @@ class _RecipientsViewState extends ConsumerState<RecipientsView> {
     final recipientsState = ref.watch(recipientsViewModelProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.neutral50,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.neutral0,
+        scrolledUnderElevation: 0,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
-        centerTitle: true,
+        leading: const SizedBox.shrink(),
+        leadingWidth: 0,
         title: Text(
-          'Recipients',
-          style: AppTypography.headlineSmall.copyWith(
-            color: AppColors.neutral900,
+          "Recipients",
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+            fontFamily: 'CabinetGrotesk',
+            fontSize: 30.00,
             fontWeight: FontWeight.w400,
           ),
         ),
         actions: [
-          IconButton(
-            onPressed: () {
-              _showAddRecipientDialog();
-            },
-            icon: Container(
-              width: 32.w,
-              height: 32.w,
-              decoration: BoxDecoration(
-                color: AppColors.primary500,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.add,
-                color: AppColors.neutral0,
-                size: 18.sp,
+          Padding(
+            padding: const EdgeInsets.only(right: 24.0),
+            child: InkWell(
+              splashColor: Colors.transparent,
+              highlightColor: Colors.transparent,
+              splashFactory: NoSplash.splashFactory,
+              onTap: () => {_showAddRecipientDialog()},
+              child: CircleAvatar(
+                radius: 18.0,
+                backgroundColor: Theme.of(context).colorScheme.surface,
+                // child: SvgPicture.asset(
+                //   'assets/svgs/notifications_unread_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.svg',
+                //   height: 22,
+                //   color: AppColors.primary500,
+                // ),
               ),
             ),
           ),
@@ -71,48 +75,51 @@ class _RecipientsViewState extends ConsumerState<RecipientsView> {
       body: Column(
         children: [
           // Search Bar
-          Container(
-            color: AppColors.neutral0,
-            padding: EdgeInsets.all(16.w),
-            child: Container(
-              height: 48.h,
-              decoration: BoxDecoration(
-                color: AppColors.neutral100,
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-              child: TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: 'Search...',
-                  hintStyle: AppTypography.bodyMedium.copyWith(
-                    color: AppColors.neutral400,
-                  ),
-                  prefixIcon: Icon(
-                    Icons.search,
-                    color: AppColors.neutral400,
-                    size: 20.sp,
-                  ),
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 16.w,
-                    vertical: 12.h,
-                  ),
-                ),
-                onChanged: (value) {
-                  ref.read(recipientsViewModelProvider.notifier).searchRecipients(value);
-                },
-              ),
-            ),
-          ),
-          
-          // Recipients List
-          Expanded(
-            child: recipientsState.isLoading
-                ? _buildLoadingState()
-                : recipientsState.filteredRecipients.isEmpty
-                    ? _buildEmptyState()
-                    : _buildRecipientsList(recipientsState),
-          ),
+          // Container(
+          //   color: AppColors.neutral0,
+          //   padding: EdgeInsets.all(16.w),
+          //   child: Container(
+          //     height: 48.h,
+          //     decoration: BoxDecoration(
+          //       color: AppColors.neutral100,
+          //       borderRadius: BorderRadius.circular(12.r),
+          //     ),
+          //     child: TextField(
+          //       controller: _searchController,
+          //       decoration: InputDecoration(
+          //         hintText: 'Search...',
+          //         hintStyle: AppTypography.bodyMedium.copyWith(
+          //           color: AppColors.neutral400,
+          //         ),
+          //         prefixIcon: Icon(
+          //           Icons.search,
+          //           color: AppColors.neutral400,
+          //           size: 20.sp,
+          //         ),
+          //         border: InputBorder.none,
+          //         contentPadding: EdgeInsets.symmetric(
+          //           horizontal: 16.w,
+          //           vertical: 12.h,
+          //         ),
+          //       ),
+          //       onChanged: (value) {
+          //         ref
+          //             .read(recipientsViewModelProvider.notifier)
+          //             .searchRecipients(value);
+          //       },
+          //     ),
+          //   ),
+          // ),
+
+          // // Recipients List
+          // Expanded(
+          //   child:
+          //       recipientsState.isLoading
+          //           ? _buildLoadingState()
+          //           : recipientsState.filteredRecipients.isEmpty
+          //           ? _buildEmptyState()
+          //           : _buildRecipientsList(recipientsState),
+          // ),
         ],
       ),
     );
@@ -123,9 +130,7 @@ class _RecipientsViewState extends ConsumerState<RecipientsView> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(
-            color: AppColors.primary500,
-          ),
+          CircularProgressIndicator(color: AppColors.primary500),
           SizedBox(height: 16.h),
           Text(
             'Loading recipients...',
@@ -244,9 +249,9 @@ class _RecipientsViewState extends ConsumerState<RecipientsView> {
               ),
             ),
           ),
-          
+
           SizedBox(width: 12.w),
-          
+
           // Recipient Details
           Expanded(
             child: Column(
@@ -269,7 +274,7 @@ class _RecipientsViewState extends ConsumerState<RecipientsView> {
               ],
             ),
           ),
-          
+
           // Send Button
           ElevatedButton(
             onPressed: () {
@@ -356,7 +361,7 @@ class _AddRecipientDialogState extends ConsumerState<AddRecipientDialog> {
             ),
           ),
           SizedBox(height: 16.h),
-          
+
           // Title
           Text(
             'Add Recipient',
@@ -366,7 +371,7 @@ class _AddRecipientDialogState extends ConsumerState<AddRecipientDialog> {
             ),
           ),
           SizedBox(height: 24.h),
-          
+
           // Form
           Form(
             key: _formKey,
@@ -384,7 +389,7 @@ class _AddRecipientDialogState extends ConsumerState<AddRecipientDialog> {
                   },
                 ),
                 SizedBox(height: 16.h),
-                
+
                 _buildTextField(
                   controller: _bankNameController,
                   label: 'Bank Name',
@@ -397,7 +402,7 @@ class _AddRecipientDialogState extends ConsumerState<AddRecipientDialog> {
                   },
                 ),
                 SizedBox(height: 16.h),
-                
+
                 _buildTextField(
                   controller: _accountNumberController,
                   label: 'Account Number',
@@ -414,7 +419,7 @@ class _AddRecipientDialogState extends ConsumerState<AddRecipientDialog> {
                   },
                 ),
                 SizedBox(height: 16.h),
-                
+
                 _buildTextField(
                   controller: _emailController,
                   label: 'Email (Optional)',
@@ -422,7 +427,7 @@ class _AddRecipientDialogState extends ConsumerState<AddRecipientDialog> {
                   keyboardType: TextInputType.emailAddress,
                 ),
                 SizedBox(height: 32.h),
-                
+
                 // Add Button
                 SizedBox(
                   width: double.infinity,
@@ -510,22 +515,21 @@ class _AddRecipientDialogState extends ConsumerState<AddRecipientDialog> {
         name: _nameController.text.trim(),
         bankName: _bankNameController.text.trim(),
         accountNumber: _accountNumberController.text.trim(),
-        email: _emailController.text.trim().isNotEmpty 
-            ? _emailController.text.trim() 
-            : null,
+        email:
+            _emailController.text.trim().isNotEmpty
+                ? _emailController.text.trim()
+                : null,
         createdAt: DateTime.now(),
       );
-      
+
       ref.read(recipientsViewModelProvider.notifier).addRecipient(recipient);
       Navigator.pop(context);
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             'Recipient added successfully',
-            style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.neutral0,
-            ),
+            style: AppTypography.bodyMedium.copyWith(color: AppColors.neutral0),
           ),
           backgroundColor: AppColors.success500,
           behavior: SnackBarBehavior.floating,

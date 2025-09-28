@@ -35,15 +35,18 @@ class _TransactionsViewState extends ConsumerState<TransactionsView> {
     final transactionsState = ref.watch(transactionsViewModelProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.neutral50,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.neutral0,
+        scrolledUnderElevation: 0,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
-        centerTitle: true,
+        leading: const SizedBox.shrink(),
+        leadingWidth: 0,
         title: Text(
-          'Transactions',
-          style: AppTypography.headlineSmall.copyWith(
-            color: AppColors.neutral900,
+          "Transactions",
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+            fontFamily: 'CabinetGrotesk',
+            fontSize: 30.00,
             fontWeight: FontWeight.w400,
           ),
         ),
@@ -51,48 +54,48 @@ class _TransactionsViewState extends ConsumerState<TransactionsView> {
       body: Column(
         children: [
           // Search Bar
-          Container(
-            color: AppColors.neutral0,
-            padding: EdgeInsets.all(16.w),
-            child: Container(
-              height: 48.h,
-              decoration: BoxDecoration(
-                color: AppColors.neutral100,
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-              child: TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: 'Search transactions',
-                  hintStyle: AppTypography.bodyMedium.copyWith(
-                    color: AppColors.neutral400,
-                  ),
-                  prefixIcon: Icon(
-                    Icons.search,
-                    color: AppColors.neutral400,
-                    size: 20.sp,
-                  ),
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 16.w,
-                    vertical: 12.h,
-                  ),
-                ),
-                onChanged: (value) {
-                  ref.read(transactionsViewModelProvider.notifier).searchTransactions(value);
-                },
-              ),
-            ),
-          ),
-          
-          // Transactions List
-          Expanded(
-            child: transactionsState.isLoading
-                ? _buildLoadingState()
-                : transactionsState.filteredTransactions.isEmpty
-                    ? _buildEmptyState()
-                    : _buildTransactionsList(transactionsState),
-          ),
+          // Container(
+          //   color: const Color(0xffFEF9F3),
+          //   padding: EdgeInsets.all(16.w),
+          //   child: Container(
+          //     height: 48.h,
+          //     decoration: BoxDecoration(
+          //       color: AppColors.neutral100,
+          //       borderRadius: BorderRadius.circular(12.r),
+          //     ),
+          //     child: TextField(
+          //       controller: _searchController,
+          //       decoration: InputDecoration(
+          //         hintText: 'Search transactions',
+          //         hintStyle: AppTypography.bodyMedium.copyWith(
+          //           color: AppColors.neutral400,
+          //         ),
+          //         prefixIcon: Icon(
+          //           Icons.search,
+          //           color: AppColors.neutral400,
+          //           size: 20.sp,
+          //         ),
+          //         border: InputBorder.none,
+          //         contentPadding: EdgeInsets.symmetric(
+          //           horizontal: 16.w,
+          //           vertical: 12.h,
+          //         ),
+          //       ),
+          //       onChanged: (value) {
+          //         ref.read(transactionsViewModelProvider.notifier).searchTransactions(value);
+          //       },
+          //     ),
+          //   ),
+          // ),
+
+          // // Transactions List
+          // Expanded(
+          //   child: transactionsState.isLoading
+          //       ? _buildLoadingState()
+          //       : transactionsState.filteredTransactions.isEmpty
+          //           ? _buildEmptyState()
+          //           : _buildTransactionsList(transactionsState),
+          // ),
         ],
       ),
     );
@@ -103,9 +106,7 @@ class _TransactionsViewState extends ConsumerState<TransactionsView> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(
-            color: AppColors.primary500,
-          ),
+          CircularProgressIndicator(color: AppColors.primary500),
           SizedBox(height: 16.h),
           Text(
             'Loading transactions...',
@@ -163,10 +164,11 @@ class _TransactionsViewState extends ConsumerState<TransactionsView> {
       itemCount: state.filteredTransactions.length,
       itemBuilder: (context, index) {
         final transaction = state.filteredTransactions[index];
-        final isFirstInGroup = index == 0 || 
-            _getDateString(transaction.date) != 
-            _getDateString(state.filteredTransactions[index - 1].date);
-        
+        final isFirstInGroup =
+            index == 0 ||
+            _getDateString(transaction.date) !=
+                _getDateString(state.filteredTransactions[index - 1].date);
+
         return Column(
           children: [
             if (isFirstInGroup) ...[
@@ -201,7 +203,7 @@ class _TransactionsViewState extends ConsumerState<TransactionsView> {
       margin: EdgeInsets.only(bottom: 8.h),
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color: AppColors.neutral0,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(
           color: _getStatusColor(transaction.status).withOpacity(0.2),
@@ -223,9 +225,9 @@ class _TransactionsViewState extends ConsumerState<TransactionsView> {
               size: 20.sp,
             ),
           ),
-          
+
           SizedBox(width: 12.w),
-          
+
           // Transaction Details
           Expanded(
             child: Column(
@@ -233,8 +235,7 @@ class _TransactionsViewState extends ConsumerState<TransactionsView> {
               children: [
                 Text(
                   transaction.recipientName,
-                  style: AppTypography.titleMedium.copyWith(
-                    color: AppColors.neutral900,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w400,
                   ),
                 ),
@@ -249,12 +250,11 @@ class _TransactionsViewState extends ConsumerState<TransactionsView> {
               ],
             ),
           ),
-          
+
           // Amount
           Text(
             '₦${transaction.amount.toStringAsFixed(0)}',
-            style: AppTypography.titleMedium.copyWith(
-              color: AppColors.neutral900,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w400,
             ),
           ),
@@ -307,15 +307,25 @@ class _TransactionsViewState extends ConsumerState<TransactionsView> {
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
     final transactionDate = DateTime(date.year, date.month, date.day);
-    
+
     if (transactionDate == today) {
       return 'Today';
     } else if (transactionDate == yesterday) {
       return 'Yesterday';
     } else {
       final months = [
-        'January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December'
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December',
       ];
       return '${date.day}th ${months[date.month - 1]} ${date.year}';
     }

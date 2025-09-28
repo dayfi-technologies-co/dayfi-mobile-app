@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
@@ -7,7 +8,7 @@ import 'package:dayfi/common/widgets/eye_icon.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/features/auth/reset_password/vm/reset_password_viewmodel.dart';
 
-class ResetPasswordView extends StatefulWidget {
+class ResetPasswordView extends ConsumerWidget {
   final String email;
   
   const ResetPasswordView({
@@ -16,26 +17,9 @@ class ResetPasswordView extends StatefulWidget {
   });
 
   @override
-  State<ResetPasswordView> createState() => _ResetPasswordViewState();
-}
-
-class _ResetPasswordViewState extends State<ResetPasswordView> {
-  late ResetPasswordViewModel _viewModel;
-
-  @override
-  void initState() {
-    super.initState();
-    _viewModel = ResetPasswordViewModel();
-  }
-
-  @override
-  void dispose() {
-    _viewModel.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final resetPasswordState = ref.watch(resetPasswordProvider);
+    final resetPasswordNotifier = ref.read(resetPasswordProvider.notifier);
     return GestureDetector(
       onTap: () {
         // Dismiss keyboard and remove focus from all text fields
@@ -43,7 +27,7 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
       },
       behavior: HitTestBehavior.opaque,
       child: Scaffold(
-        backgroundColor: const Color(0xffFEF9F3),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         resizeToAvoidBottomInset: false,
         body: GestureDetector(
           onTap: () {
@@ -56,15 +40,15 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
                 children: [
                   AppBar(
                     scrolledUnderElevation: 0,
-                    backgroundColor: const Color(0xffFEF9F3),
+                    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                     elevation: 0,
                     leading: IconButton(
                       onPressed: () => Navigator.pop(context),
                       icon: const Icon(Icons.arrow_back_ios_new),
                     ),
                     title: Text(
-                      "Create new password",
-                      style: TextStyle(
+                      "Create password",
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         fontFamily: 'CabinetGrotesk',
                         fontSize: 30.00,
                         fontWeight: FontWeight.w500,
@@ -81,11 +65,10 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
                         // Subtitle
                         Center(
                           child: Text(
-                            "Please create a strong password for your account.\nMake sure it's something you can remember but others can't guess.",
-                            style: TextStyle(
-                              color: AppColors.neutral800,
+                            "Create a strong password with at least 8 characters, including uppercase, numbers, and special characters",
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               fontSize: 16.sp,
-                              fontWeight: FontWeight.w400, //
+                              fontWeight: FontWeight.w400,
                               fontFamily: 'Karla',
                               letterSpacing: -.6,
                               height: 1.4,
@@ -112,20 +95,20 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
                         // Password field
                         CustomTextField(
                           label: "New Password",
-                          hintText: "Create a new password here",
-                          errorText: _viewModel.passwordError,
-                          onChanged: _viewModel.setPassword,
+                            hintText: "Create a strong password",
+                          // errorText: resetPasswordState.passwordError,
+                          onChanged: resetPasswordNotifier.setPassword,
                           keyboardType: TextInputType.visiblePassword,
                           textInputAction: TextInputAction.next,
                           textCapitalization: TextCapitalization.none,
-                          obscureText: !_viewModel.isPasswordVisible,
+                          obscureText: !resetPasswordState.isPasswordVisible,
                           suffixIcon: IconButton(
                             icon: EyeIcon(
-                              isVisible: _viewModel.isPasswordVisible,
+                              isVisible: resetPasswordState.isPasswordVisible,
                               color: AppColors.neutral500,
                               size: 20.0,
                             ),
-                            onPressed: () => _viewModel.togglePasswordVisibility(),
+                            onPressed: () => resetPasswordNotifier.togglePasswordVisibility(),
                           ),
                         )
                         .animate()
@@ -155,24 +138,43 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
                           angle: 15,
                         ),
 
+                        // Password error text
+                        if (resetPasswordState.passwordError.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4.0, left: 14),
+                            child: Text(
+                              resetPasswordState.passwordError,
+                              style: const TextStyle(
+                                color: Colors.red,
+                                fontSize: 13,
+                                fontFamily: 'Karla',
+                                letterSpacing: -.6,
+                                fontWeight: FontWeight.w400,
+                                height: 1.4,
+                              ),
+                            ),
+                          )
+                        else
+                          const SizedBox.shrink(),
+
                         SizedBox(height: 18.h),
 
                         // Confirm Password field
                         CustomTextField(
                           label: "Confirm new password",
                           hintText: "Type your new password again",
-                          errorText: _viewModel.confirmPasswordError,
-                          onChanged: _viewModel.setConfirmPassword,
+                          // errorText: resetPasswordState.confirmPasswordError,
+                          onChanged: resetPasswordNotifier.setConfirmPassword,
                           keyboardType: TextInputType.visiblePassword,
                           textInputAction: TextInputAction.done,
-                          obscureText: !_viewModel.isConfirmPasswordVisible,
+                          obscureText: !resetPasswordState.isConfirmPasswordVisible,
                           suffixIcon: IconButton(
                             icon: EyeIcon(
-                              isVisible: _viewModel.isConfirmPasswordVisible,
+                              isVisible: resetPasswordState.isConfirmPasswordVisible,
                               color: AppColors.neutral500,
                               size: 20.0,
                             ),
-                            onPressed: () => _viewModel.toggleConfirmPasswordVisibility(),
+                            onPressed: () => resetPasswordNotifier.toggleConfirmPasswordVisibility(),
                           ),
                         )
                         .animate()
@@ -202,24 +204,43 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
                           angle: 15,
                         ),
 
+                        // Confirm Password error text
+                        if (resetPasswordState.confirmPasswordError.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4.0, left: 14),
+                            child: Text(
+                              resetPasswordState.confirmPasswordError,
+                              style: const TextStyle(
+                                color: Colors.red,
+                                fontSize: 13,
+                                fontFamily: 'Karla',
+                                letterSpacing: -.6,
+                                fontWeight: FontWeight.w400,
+                                height: 1.4,
+                              ),
+                            ),
+                          )
+                        else
+                          const SizedBox.shrink(),
+
                         SizedBox(height: 72.h),
 
                         // Submit button
                         PrimaryButton(
                           borderRadius: 38,
                           text: "Save my new password",
-                          onPressed: _viewModel.isFormValid && !_viewModel.isBusy
-                              ? () => _viewModel.resetPassword(widget.email, context)
+                          onPressed: resetPasswordState.isFormValid && !resetPasswordState.isBusy
+                              ? () => resetPasswordNotifier.resetPassword(email, context)
                               : null,
-                          enabled: _viewModel.isFormValid && !_viewModel.isBusy,
-                          isLoading: _viewModel.isBusy,
-                          backgroundColor: _viewModel.isFormValid
+                          enabled: resetPasswordState.isFormValid && !resetPasswordState.isBusy,
+                          isLoading: resetPasswordState.isBusy,
+                          backgroundColor: resetPasswordState.isFormValid
                               ? AppColors.purple500
                               : AppColors.purple200,
                           height: 60.h,
                           textColor: AppColors.neutral0,
                           fontFamily: 'Karla',
-                          letterSpacing: -.48,
+                          letterSpacing: -.8,
                           fontSize: 18,
                           width: 375.w,
                           fullWidth: true,

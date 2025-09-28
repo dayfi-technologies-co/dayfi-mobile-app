@@ -52,9 +52,8 @@ class PinTextField extends StatelessWidget {
 
       obscureText: obscureText,
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-      textStyle: TextStyle(
+      textStyle: Theme.of(context).textTheme.headlineMedium?.copyWith(
         fontSize: 24.sp,
-        color: AppColors.neutral900,
         fontWeight: FontWeight.w400,
         fontFamily: 'Karla',
         letterSpacing: 0,
@@ -70,9 +69,9 @@ class PinTextField extends StatelessWidget {
         fieldWidth: width ?? 48.0.w,
         borderRadius: BorderRadius.circular(12.r),
         shape: PinCodeFieldShape.box,
-        inactiveFillColor: Colors.white,
-        activeFillColor: Colors.white,
-        selectedFillColor: Colors.white,
+        inactiveFillColor: Theme.of(context).colorScheme.surface,
+        activeFillColor: Theme.of(context).colorScheme.surface,
+        selectedFillColor: Theme.of(context).colorScheme.surface,
         inactiveColor: AppColors.purple500.withOpacity(.2),
         activeColor: AppColors.purple500.withOpacity(.2),
         selectedColor: AppColors.purple500,

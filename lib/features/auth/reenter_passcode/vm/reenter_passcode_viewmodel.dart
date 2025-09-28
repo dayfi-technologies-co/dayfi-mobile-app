@@ -86,8 +86,9 @@ class ReenterPasscodeNotifier extends StateNotifier<ReenterPasscodeState> {
         // Save the passcode permanently
         await _secureStorage.write('user_passcode', state.passcode);
 
-        // Clean up temporary passcode
+        // Clean up temporary passcode and password
         await _secureStorage.delete('temp_passcode');
+        await _secureStorage.delete('password');
 
         // Show success dialog before navigating
         _showSuccessDialog(context);
@@ -191,7 +192,7 @@ class ReenterPasscodeNotifier extends StateNotifier<ReenterPasscodeState> {
                   fontFamily: 'Karla',
                   fontSize: 18,
                   fontWeight: FontWeight.w400,
-                  letterSpacing: -0.48,
+                  letterSpacing: -.8,
                 ),
               ],
             ),

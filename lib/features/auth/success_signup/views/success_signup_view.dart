@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dayfi/app_locator.dart';
 
 class SuccessSignupView extends ConsumerWidget {
   const SuccessSignupView({super.key});
@@ -12,16 +13,19 @@ class SuccessSignupView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      backgroundColor: const Color(0xffFEF9F3),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         children: [
           // Background with gradient
           Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Color(0xffFEF9F3), Color(0xffFEF9F3)],
+                colors: [
+                  Theme.of(context).scaffoldBackgroundColor,
+                  Theme.of(context).scaffoldBackgroundColor,
+                ],
               ),
             ),
           ),
@@ -217,13 +221,12 @@ class SuccessSignupView extends ConsumerWidget {
                     padding: EdgeInsets.symmetric(horizontal: 12.w),
                     child: Text(
                       "Welcome onboard!",
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                         fontFamily: 'CabinetGrotesk',
                         fontSize: 28.sp,
                         height: 1.15,
                         letterSpacing: 0.00,
                         fontWeight: FontWeight.w500,
-                        color: AppColors.neutral900,
                         shadows: [
                           Shadow(
                             blurRadius: 4.0,
@@ -257,14 +260,12 @@ class SuccessSignupView extends ConsumerWidget {
                     child: Text(
                       "Account created! Start sending money to your loved ones",
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontFamily: 'Karla',
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w400, //
                         letterSpacing: -.6,
                         height: 1.4,
-                        color: AppColors.neutral700,
-                        // color: Colors.white,
                       ),
                     ),
                   )
@@ -294,7 +295,8 @@ class SuccessSignupView extends ConsumerWidget {
       child: SizedBox(
         child: PrimaryButton(
               onPressed: () {
-                Navigator.pushReplacementNamed(context, AppRoute.mainView);
+                // Navigate to main view leaving the all route memory behind, so as when user presses back button, it will not go back to the signup view
+                appRouter.pushReplacementNamed(AppRoute.mainView);
               },
               text: "Let's go!",
               backgroundColor: AppColors.purple500,
@@ -306,7 +308,7 @@ class SuccessSignupView extends ConsumerWidget {
               fontFamily: 'Karla',
               fontSize: 18,
               fontWeight: FontWeight.w400,
-              letterSpacing: -.48,
+              letterSpacing: -.8,
             )
             .animate()
             .fadeIn(delay: 400.ms, duration: 300.ms, curve: Curves.easeOutCubic)
