@@ -12,8 +12,11 @@ import 'package:dayfi/features/auth/reenter_passcode/views/reenter_passcode_view
 import 'package:dayfi/features/auth/forgot_password/views/forgot_password_view.dart';
 import 'package:dayfi/features/auth/reset_password/views/reset_password_view.dart';
 import 'package:dayfi/features/auth/passcode/views/passcode_view.dart';
+import 'package:dayfi/features/auth/complete_personal_information/views/complete_personal_information_view.dart';
+import 'package:dayfi/features/auth/biometric_setup/views/biometric_setup_view.dart';
 import 'package:dayfi/features/main/views/main_view.dart';
 import 'package:dayfi/features/auth/onboarding/views/onboarding_view.dart';
+import 'package:dayfi/features/profile/edit_profile/views/edit_profile_view.dart';
 
 class VerifyEmailViewArguments {
   final bool isSignUp;
@@ -41,7 +44,10 @@ class AppRoute {
   static const String forgotPasswordView = '/forgotPasswordView';
   static const String resetPasswordView = '/resetPasswordView';
   static const String passcodeView = '/passcodeView';
+  static const String completePersonalInfoView = '/completePersonalInfoView';
+  static const String biometricSetupView = '/biometricSetupView';
   static const String mainView = '/mainView';
+  static const String editProfileView = '/editProfileView';
 
   static Route getRoute(RouteSettings routeSettings) {
     globalrouteSettings = routeSettings;
@@ -81,8 +87,14 @@ class AppRoute {
         return _getPageRoute(routeSettings, ResetPasswordView(email: email));
       case passcodeView:
         return _getPageRoute(routeSettings, const PasscodeView());
+      case completePersonalInfoView:
+        return _getPageRoute(routeSettings, const CompletePersonalInformationView());
+      case biometricSetupView:
+        return _getPageRoute(routeSettings, const BiometricSetupView());
       case mainView:
         return _getPageRoute(routeSettings, const MainView());
+      case editProfileView:
+        return _getPageRoute(routeSettings, const EditProfileView());
 
       default:
         return _getPageRoute(routeSettings, const LoginView());

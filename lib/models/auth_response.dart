@@ -52,7 +52,7 @@ class AuthData {
   factory AuthData.fromJson(Map<String, dynamic> data) {
     return AuthData(
       token: data['token'],
-      user: data['user'] != null ? User.fromJson(data['user']) : null,
+      user: data.containsKey('user_id') ? User.fromJson(data) : null,
     );
   }
 

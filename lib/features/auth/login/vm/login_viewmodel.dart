@@ -7,6 +7,7 @@ import 'package:dayfi/services/local/secure_storage.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/routes/route.dart';
+import 'package:dayfi/common/constants/storage_keys.dart';
 
 class LoginState {
   final String email;
@@ -107,14 +108,17 @@ class LoginNotifier extends StateNotifier<LoginState> {
         AppLogger.info('Login successful: ${response.message}');
 
         // Save user token and data
-        await _secureStorage.write('user_token', response.data?.token ?? '');
-        await _secureStorage.write('first_time_user', 'false');
-        
+        await _secureStorage.write(StorageKeys.token, response.data?.token ?? '');
+        await _secureStorage.write(StorageKeys.isFirstTime, 'false');
+
         // Save user data if available
         if (response.data?.user != null) {
-          await _secureStorage.write('user', json.encode(response.data!.user!.toJson()));
+          await _secureStorage.write(
+            StorageKeys.user,
+            json.encode(response.data!.user!.toJson()),
+          );
         }
-        
+
         // Save password temporarily for passcode creation (will be cleared after)
         await _secureStorage.write('password', state.password);
 
@@ -126,15 +130,34 @@ class LoginNotifier extends StateNotifier<LoginState> {
       } else {
         AppLogger.error('Login failed: ${response.message}');
 
-        // Show backend error message
-        TopSnackbar.show(context, message: response.message, isError: true);
+        // Check if it's a 401 error with activation message
+        if (response.message.toLowerCase().contains('activate your account')) {
+          AppLogger.info(
+            'Account needs activation, navigating to verify email screen',
+          );
 
-        // Set field-specific errors based on the message
-        _setFieldErrorsFromMessage(response.message);
+          // Navigate to verify email screen and automatically resend OTP
+          _navigateToVerifyEmailAndResendOTP(context, state.email);
+        } else {
+          // Show backend error message for other errors
+          TopSnackbar.show(context, message: response.message, isError: true);
+
+          // Set field-specific errors based on the message
+          _setFieldErrorsFromMessage(response.message);
+        }
       }
     } catch (e) {
-      AppLogger.error('Login error: $e');
-      TopSnackbar.show(context, message: e.toString(), isError: true);
+      if (e.toString().toLowerCase().contains('activate your account')) {
+        AppLogger.info(
+          'Account needs activation, navigating to verify email screen',
+        );
+
+        // Navigate to verify email screen and automatically resend OTP
+        _navigateToVerifyEmailAndResendOTP(context, state.email);
+      } else {
+        AppLogger.error('Login error: $e');
+        TopSnackbar.show(context, message: e.toString(), isError: true);
+      }
     } finally {
       state = state.copyWith(isBusy: false);
     }
@@ -161,6 +184,42 @@ class LoginNotifier extends StateNotifier<LoginState> {
     );
   }
 
+  // Navigate to verify email screen and automatically resend OTP
+  void _navigateToVerifyEmailAndResendOTP(BuildContext context, String email) {
+    // Navigate to verify email screen
+    appRouter.pushNamed(
+      AppRoute.verifyEmailView,
+      arguments: VerifyEmailViewArguments(
+        isSignUp: true, // This is for login flow, not signup
+        email: email,
+        password: state.password, // Pass the password for potential use
+      ),
+    );
+
+    // Show a message that OTP will be resent automatically
+    TopSnackbar.show(
+      context,
+      message:
+          'Please check your email for verification code. A new code will be sent automatically.',
+      isError: false,
+    );
+
+    // Automatically resend OTP after a short delay to ensure the screen is loaded
+   _authService
+          .resendOTP(email: email)
+          .then((response) {
+            if (response.statusCode == 200) {
+              AppLogger.info('OTP resent successfully: ${response.message}');
+            } else {
+              AppLogger.error('Failed to resend OTP: ${response.message}');
+            }
+          })
+          .catchError((e) {
+            AppLogger.error('Error resending OTP: $e');
+          });
+
+ 
+  }
 
   void navigateToForgotPassword() {
     appRouter.pushNamed(AppRoute.forgotPasswordView);

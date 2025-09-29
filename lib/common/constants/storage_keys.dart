@@ -1,6 +1,7 @@
 class StorageKeys {
   // Secure Storage Keys (sensitive data)
   static const String token = 'userTokenId';
+  static const String passcode = 'user_passcode';
   static const String loggedInAlready = "isReturning";
   static const String hideUserBalance = "hideBalance";
   static const String faceIDTouchID = "faceIdTouchId";
@@ -15,6 +16,7 @@ class StorageKeys {
   static const String userPhone = "userPhone";
   static const String isLoggedIn = "isLoggedIn";
   static const String isFirstTime = "isFirstTime";
+  static const String hasSeenWelcome = "hasSeenWelcome";
   static const String themeMode = "themeMode";
   static const String languageCode = "languageCode";
   static const String biometricEnabled = "biometricEnabled";

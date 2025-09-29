@@ -1,38 +1,57 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dayfi/app_locator.dart';
-import 'package:dayfi/common/constants/storage_keys.dart';
+import 'package:dayfi/models/user_model.dart';
+import 'package:dayfi/common/utils/app_logger.dart';
 
 class ProfileState {
-  final String userName;
-  final String userEmail;
-  final String userPhone;
-  final String tier;
+  final User? user;
   final bool isLoading;
+  final String? errorMessage;
   final String? profileImageUrl;
 
   const ProfileState({
-    this.userName = 'Kolawole Paul Oluwafemi',
-    this.userEmail = 'kolawole.paul@email.com',
-    this.userPhone = '+234 812 345 6789',
-    this.tier = 'Tier 1',
+    this.user,
     this.isLoading = false,
+    this.errorMessage,
     this.profileImageUrl,
   });
 
+  // Computed properties for easy access
+  String get userName {
+    if (user == null) return 'Loading...';
+    
+    final firstName = user!.firstName.trim();
+    final middleName = user!.middleName?.trim();
+    final lastName = user!.lastName.trim();
+    
+    // Build name parts, only including non-empty parts
+    final nameParts = <String>[];
+    if (firstName.isNotEmpty) nameParts.add(firstName);
+    if (middleName != null && middleName.isNotEmpty) nameParts.add(middleName);
+    if (lastName.isNotEmpty) nameParts.add(lastName);
+    
+    final fullName = nameParts.join(' ');
+    return fullName.isEmpty ? 'User' : fullName;
+  }
+
+  String get userEmail => user?.email ?? 'Loading...';
+  String get userPhone => user?.phoneNumber ?? 'Not provided';
+  String get tier {
+    if (user?.level == null || user!.level!.isEmpty) return 'Tier 1';
+    return user!.level!.replaceAll('level-', 'Tier ');
+  }
+  String get userStatus => user?.status ?? 'Unknown';
+
   ProfileState copyWith({
-    String? userName,
-    String? userEmail,
-    String? userPhone,
-    String? tier,
+    User? user,
     bool? isLoading,
+    String? errorMessage,
     String? profileImageUrl,
   }) {
     return ProfileState(
-      userName: userName ?? this.userName,
-      userEmail: userEmail ?? this.userEmail,
-      userPhone: userPhone ?? this.userPhone,
-      tier: tier ?? this.tier,
+      user: user ?? this.user,
       isLoading: isLoading ?? this.isLoading,
+      errorMessage: errorMessage ?? this.errorMessage,
       profileImageUrl: profileImageUrl ?? this.profileImageUrl,
     );
   }
@@ -42,42 +61,109 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
   ProfileViewModel() : super(const ProfileState());
 
   Future<void> loadUserProfile() async {
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true, errorMessage: null);
     
     try {
-      // Simulate API call to load user profile
-      await Future.delayed(const Duration(seconds: 1));
+      AppLogger.info('Loading user profile from storage...');
       
-      // In a real app, this would come from the API or local storage
-      // For now, we'll use the default values from the initial state
+      // Get user data from secure storage
+      final userData = await localCache.getUser();
       
-      state = state.copyWith(isLoading: false);
+      if (userData.isNotEmpty) {
+        // Parse user data to User model
+        final user = User.fromJson(userData);
+        AppLogger.info('User profile loaded successfully: ${user.firstName} ${user.lastName}');
+        
+        state = state.copyWith(
+          user: user,
+          isLoading: false,
+          errorMessage: null,
+        );
+      } else {
+        AppLogger.warning('No user data found in storage');
+        state = state.copyWith(
+          isLoading: false,
+          errorMessage: 'No user data found. Please login again.',
+        );
+      }
     } catch (e) {
-      state = state.copyWith(isLoading: false);
-      // Handle error
+      AppLogger.error('Error loading user profile: $e');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Failed to load profile. Please try again.',
+      );
     }
   }
 
   Future<void> updateProfile({
-    String? userName,
-    String? userEmail,
-    String? userPhone,
+    String? firstName,
+    String? lastName,
+    String? middleName,
+    String? email,
+    String? phoneNumber,
   }) async {
-    state = state.copyWith(isLoading: true);
+    if (state.user == null) {
+      AppLogger.warning('Cannot update profile: No user data available');
+      return;
+    }
+
+    state = state.copyWith(isLoading: true, errorMessage: null);
     
     try {
-      // Simulate API call to update profile
-      await Future.delayed(const Duration(seconds: 1));
+      AppLogger.info('Updating user profile...');
+      
+      // Create updated user object
+      final updatedUser = User(
+        userId: state.user!.userId,
+        email: email ?? state.user!.email,
+        password: state.user!.password, // Keep existing password
+        userType: state.user!.userType,
+        firstName: firstName ?? state.user!.firstName,
+        lastName: lastName ?? state.user!.lastName,
+        middleName: middleName ?? state.user!.middleName,
+        gender: state.user!.gender,
+        dateOfBirth: state.user!.dateOfBirth,
+        country: state.user!.country,
+        state: state.user!.state,
+        city: state.user!.city,
+        street: state.user!.street,
+        postalCode: state.user!.postalCode,
+        address: state.user!.address,
+        phoneNumber: phoneNumber ?? state.user!.phoneNumber,
+        idType: state.user!.idType,
+        idNumber: state.user!.idNumber,
+        status: state.user!.status,
+        refreshToken: state.user!.refreshToken,
+        isDeleted: state.user!.isDeleted,
+        verificationToken: state.user!.verificationToken,
+        verificationTokenExpiryTime: state.user!.verificationTokenExpiryTime,
+        passwordResetToken: state.user!.passwordResetToken,
+        passwordResetTokenExpiryTime: state.user!.passwordResetTokenExpiryTime,
+        verificationEmail: state.user!.verificationEmail,
+        createdAt: state.user!.createdAt,
+        updatedAt: DateTime.now().toIso8601String(), // Update timestamp
+        token: state.user!.token,
+        expires: state.user!.expires,
+        level: state.user!.level,
+        transactionPin: state.user!.transactionPin,
+      );
+
+      // Save updated user to storage
+      localCache.setUser = updatedUser.toJson();
+      
+      AppLogger.info('User profile updated successfully');
       
       state = state.copyWith(
-        userName: userName ?? state.userName,
-        userEmail: userEmail ?? state.userEmail,
-        userPhone: userPhone ?? state.userPhone,
+        user: updatedUser,
         isLoading: false,
+        errorMessage: null,
       );
     } catch (e) {
-      state = state.copyWith(isLoading: false);
-      // Handle error
+      AppLogger.error('Error updating profile: $e');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Failed to update profile. Please try again.',
+      );
     }
   }
 
@@ -99,19 +185,74 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
   }
 
   Future<void> upgradeTier() async {
-    state = state.copyWith(isLoading: true);
+    if (state.user == null) {
+      AppLogger.warning('Cannot upgrade tier: No user data available');
+      return;
+    }
+
+    state = state.copyWith(isLoading: true, errorMessage: null);
     
     try {
+      AppLogger.info('Upgrading user tier...');
+      
       // Simulate API call to upgrade tier
       await Future.delayed(const Duration(seconds: 1));
       
+      // Create updated user with new tier
+      final currentLevel = state.user!.level ?? 'level-0';
+      final newLevel = currentLevel == 'level-0' ? 'level-1' : 'level-2';
+      
+      final updatedUser = User(
+        userId: state.user!.userId,
+        email: state.user!.email,
+        password: state.user!.password,
+        userType: state.user!.userType,
+        firstName: state.user!.firstName,
+        lastName: state.user!.lastName,
+        middleName: state.user!.middleName,
+        gender: state.user!.gender,
+        dateOfBirth: state.user!.dateOfBirth,
+        country: state.user!.country,
+        state: state.user!.state,
+        city: state.user!.city,
+        street: state.user!.street,
+        postalCode: state.user!.postalCode,
+        address: state.user!.address,
+        phoneNumber: state.user!.phoneNumber,
+        idType: state.user!.idType,
+        idNumber: state.user!.idNumber,
+        status: state.user!.status,
+        refreshToken: state.user!.refreshToken,
+        isDeleted: state.user!.isDeleted,
+        verificationToken: state.user!.verificationToken,
+        verificationTokenExpiryTime: state.user!.verificationTokenExpiryTime,
+        passwordResetToken: state.user!.passwordResetToken,
+        passwordResetTokenExpiryTime: state.user!.passwordResetTokenExpiryTime,
+        verificationEmail: state.user!.verificationEmail,
+        createdAt: state.user!.createdAt,
+        updatedAt: DateTime.now().toIso8601String(),
+        token: state.user!.token,
+        expires: state.user!.expires,
+        level: newLevel,
+        transactionPin: state.user!.transactionPin,
+      );
+
+      // Save updated user to storage
+      localCache.setUser = updatedUser.toJson();
+      
+      AppLogger.info('User tier upgraded successfully to $newLevel');
+      
       state = state.copyWith(
-        tier: 'Tier 2',
+        user: updatedUser,
         isLoading: false,
+        errorMessage: null,
       );
     } catch (e) {
-      state = state.copyWith(isLoading: false);
-      // Handle error
+      AppLogger.error('Error upgrading tier: $e');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Failed to upgrade tier. Please try again.',
+      );
     }
   }
 
@@ -119,17 +260,24 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
     state = state.copyWith(isLoading: true);
     
     try {
-      // Clear user data from local storage
-      await localCache.deleteToken();
-      await localCache.removeFromLocalCache(StorageKeys.user);
+      AppLogger.info('User logging out...');
+      
+      // Clear all user data from storage
+      await localCache.clearAllUserData();
+      
+      // Reset profile state to initial state
+      state = const ProfileState();
       
       // Navigate to login screen (hide back button)
       appRouter.pushNamedAndRemoveAllBehind('/loginView', arguments: false);
       
-      state = state.copyWith(isLoading: false);
+      AppLogger.info('User logged out successfully');
     } catch (e) {
-      state = state.copyWith(isLoading: false);
-      // Handle error
+      AppLogger.error('Error during logout: $e');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Error during logout. Please try again.',
+      );
     }
   }
 
@@ -137,18 +285,27 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
     state = state.copyWith(isLoading: true);
     
     try {
+      AppLogger.info('Deleting user account...');
+      
       // Simulate API call to delete account
       await Future.delayed(const Duration(seconds: 2));
       
-      // Clear all data and navigate to login (hide back button)
-      await localCache.deleteToken();
-      await localCache.removeFromLocalCache(StorageKeys.user);
+      // Clear all user data from storage
+      await localCache.clearAllUserData();
+      
+      // Reset profile state to initial state
+      state = const ProfileState();
+      
+      // Navigate to login screen (hide back button)
       appRouter.pushNamedAndRemoveAllBehind('/loginView', arguments: false);
       
-      state = state.copyWith(isLoading: false);
+      AppLogger.info('User account deleted successfully');
     } catch (e) {
-      state = state.copyWith(isLoading: false);
-      // Handle error
+      AppLogger.error('Error deleting account: $e');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Error deleting account. Please try again.',
+      );
     }
   }
 

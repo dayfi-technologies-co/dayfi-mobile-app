@@ -99,7 +99,7 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
                   backgroundColor: AppColors.purple500,
                   textColor: AppColors.neutral0,
                   borderRadius: 38,
-                  height: 56.h,
+                  height: 60.h,
                   width: double.infinity,
                   fullWidth: true,
                   fontFamily: 'Karla',
@@ -153,7 +153,7 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
                       "Create passcode",
                       style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         fontFamily: 'CabinetGrotesk',
-                        fontSize: 30.00,
+                        fontSize: 28.00,
                         fontWeight: FontWeight.w500,
                       ),
                     ),

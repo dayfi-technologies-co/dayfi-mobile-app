@@ -8,6 +8,7 @@ import 'package:dayfi/services/remote/network/network_service.dart';
 
 import 'package:dayfi/services/local/secure_storage.dart';
 import 'package:dayfi/services/local/local_cache.dart';
+import 'package:dayfi/services/local/connectivity_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 GetIt locator = GetIt.instance;
@@ -40,6 +41,9 @@ Future<void> setupLocator() async {
   locator.registerLazySingleton(() => AppStrings());
 
   locator.registerLazySingleton(() => LoadingModalController.instance);
+  
+  // Initialize connectivity service
+  await ConnectivityService.initialize();
 }
 
 //get singleton classes

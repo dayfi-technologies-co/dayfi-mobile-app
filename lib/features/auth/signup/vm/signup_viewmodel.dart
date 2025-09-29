@@ -255,7 +255,8 @@ class SignupNotifier extends StateNotifier<SignupState> {
 
   String _validateConfirmPassword(String value) {
     if (value.isEmpty) return 'Please type your password again';
-    if (value != state.password) return 'Both passwords must be exactly the same';
+    if (value != state.password)
+      return 'Both passwords must be exactly the same';
     return '';
   }
 
@@ -276,7 +277,9 @@ class SignupNotifier extends StateNotifier<SignupState> {
         password: state.password,
       );
 
-      AppLogger.info('Signup response - Status: ${response.statusCode}, Error: ${response.error}, Message: ${response.message}');
+      AppLogger.info(
+        'Signup response - Status: ${response.statusCode}, Error: ${response.error}, Message: ${response.message}',
+      );
 
       if (response.statusCode == 200) {
         AppLogger.info('Signup successful: ${response.message}');
@@ -295,21 +298,40 @@ class SignupNotifier extends StateNotifier<SignupState> {
         );
       } else {
         AppLogger.error('Signup failed: ${response.message}');
-        
-        // Show backend error message
-        TopSnackbar.show(context, message: response.message, isError: true);
-        
-        // Set field-specific errors based on the message
-        _setFieldErrorsFromMessage(response.message);
+
+        // Check if it's a 401 error with activation message
+        if (response.message.toLowerCase().contains('activate your account')) {
+          AppLogger.info(
+            'Account needs activation, navigating to verify email screen',
+          );
+
+          // Navigate to verify email screen and automatically resend OTP
+          _navigateToVerifyEmailAndResendOTP(context, state.email);
+        } else {
+          // Show backend error message for other errors
+          TopSnackbar.show(context, message: response.message, isError: true);
+
+          // Set field-specific errors based on the message
+          _setFieldErrorsFromMessage(response.message);
+        }
       }
     } catch (e) {
-      AppLogger.error('Signup error: $e');
-      TopSnackbar.show(
-        // ignore: use_build_context_synchronously
-        context,
-        message: e.toString(),
-        isError: true,
-      );
+      if (e.toString().toLowerCase().contains('activate your account')) {
+        AppLogger.info(
+          'Account needs activation, navigating to verify email screen',
+        );
+
+        // Navigate to verify email screen and automatically resend OTP
+        _navigateToVerifyEmailAndResendOTP(context, state.email);
+      } else {
+        AppLogger.error('Signup error: $e');
+        TopSnackbar.show(
+          // ignore: use_build_context_synchronously
+          context,
+          message: e.toString(),
+          isError: true,
+        );
+      }
     } finally {
       state = state.copyWith(isBusy: false);
     }
@@ -327,9 +349,11 @@ class SignupNotifier extends StateNotifier<SignupState> {
       emailError = message;
     } else if (message.toLowerCase().contains('password')) {
       passwordError = message;
-    } else if (message.toLowerCase().contains('first name') || message.toLowerCase().contains('firstname')) {
+    } else if (message.toLowerCase().contains('first name') ||
+        message.toLowerCase().contains('firstname')) {
       firstNameError = message;
-    } else if (message.toLowerCase().contains('last name') || message.toLowerCase().contains('lastname')) {
+    } else if (message.toLowerCase().contains('last name') ||
+        message.toLowerCase().contains('lastname')) {
       lastNameError = message;
     } else {
       // If no specific field is mentioned, show as general error
@@ -344,6 +368,41 @@ class SignupNotifier extends StateNotifier<SignupState> {
     );
   }
 
+  // Navigate to verify email screen and automatically resend OTP
+  void _navigateToVerifyEmailAndResendOTP(BuildContext context, String email) {
+    // Navigate to verify email screen
+    appRouter.pushNamed(
+      AppRoute.verifyEmailView,
+      arguments: VerifyEmailViewArguments(
+        isSignUp: true, // This is for signup flow
+        email: email,
+        password: state.password, // Pass the password for potential use
+      ),
+    );
+
+    // Show a message that OTP will be resent automatically
+    TopSnackbar.show(
+      context,
+      message:
+          'Please check your email for verification code. A new code will be sent automatically.',
+      isError: false,
+    );
+
+    // Automatically resend OTP after a short delay to ensure the screen is loaded
+
+    _authService
+        .resendOTP(email: email)
+        .then((response) {
+          if (response.statusCode == 200) {
+            AppLogger.info('OTP resent successfully: ${response.message}');
+          } else {
+            AppLogger.error('Failed to resend OTP: ${response.message}');
+          }
+        })
+        .catchError((e) {
+          AppLogger.error('Error resending OTP: $e');
+        });
+  }
 
   // Navigation methods
   void navigateToLogin() {

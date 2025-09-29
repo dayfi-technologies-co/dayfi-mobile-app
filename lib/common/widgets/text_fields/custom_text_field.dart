@@ -4,6 +4,30 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+class CapitalizeFirstLetterFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.text.isEmpty) {
+      return newValue;
+    }
+    
+    // Capitalize the first letter
+    String capitalizedText = newValue.text;
+    if (capitalizedText.isNotEmpty) {
+      capitalizedText = capitalizedText[0].toUpperCase() + 
+          (capitalizedText.length > 1 ? capitalizedText.substring(1) : '');
+    }
+    
+    return TextEditingValue(
+      text: capitalizedText,
+      selection: newValue.selection,
+    );
+  }
+}
+
 class CustomTextField extends StatelessWidget {
   final String? label;
   final TextInputType? keyboardType;
@@ -29,6 +53,7 @@ class CustomTextField extends StatelessWidget {
   final String? errorText;
   final double? errorFontSize;
   final bool isDayfiId;
+  final bool capitalizeFirstLetter;
 
   const CustomTextField({
     super.key,
@@ -56,6 +81,7 @@ class CustomTextField extends StatelessWidget {
     this.errorText,
     this.errorFontSize,
     this.isDayfiId = false,
+    this.capitalizeFirstLetter = false,
   });
 
   @override
@@ -132,7 +158,7 @@ class CustomTextField extends StatelessWidget {
               fontFamily: 'Karla',
               fontSize: 16,
               letterSpacing: -.6,
-              fontWeight: FontWeight.w400,
+              fontWeight: FontWeight.w500,
               height: 1.450,
             ),
             decoration: InputDecoration(

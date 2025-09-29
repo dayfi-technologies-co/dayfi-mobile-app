@@ -215,7 +215,7 @@ class PrimaryButton extends StatelessWidget {
       textColor: textColor ?? AppColors.neutral0,
       borderColor: borderColor,
       width: 375.w,
-      height: 56.h,
+      height: 60.h,
       horizontalPadding: 12.w,
       verticalPadding: 10.h,
       borderRadius: 28.r,

@@ -49,12 +49,11 @@ class PinTextField extends StatelessWidget {
       textInputAction: textInputAction,
       cursorWidth: 1,
       enableActiveFill: true,
-
       obscureText: obscureText,
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
       textStyle: Theme.of(context).textTheme.headlineMedium?.copyWith(
         fontSize: 24.sp,
-        fontWeight: FontWeight.w400,
+       fontWeight: FontWeight.w500,
         fontFamily: 'Karla',
         letterSpacing: 0,
       ),

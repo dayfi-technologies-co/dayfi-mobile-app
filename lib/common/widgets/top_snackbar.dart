@@ -47,7 +47,7 @@ class TopSnackbar {
                 fontSize: 14,
                 fontFamily: 'Karla',
                 fontWeight: FontWeight.w400,
-                letterSpacing: -0.01,
+                letterSpacing: -0.4,
                 height: 1.4,
                 color: textColor,
               ),

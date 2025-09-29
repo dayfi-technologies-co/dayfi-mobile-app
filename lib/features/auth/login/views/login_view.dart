@@ -77,12 +77,11 @@ class _LoginViewState extends ConsumerState<LoginView> {
                       "Sign in",
                       style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         fontFamily: 'CabinetGrotesk',
-                        fontSize: 30.00,
+                        fontSize: 28.00,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
-
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Column(

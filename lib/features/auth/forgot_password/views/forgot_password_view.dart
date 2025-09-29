@@ -46,7 +46,7 @@ class ForgotPasswordView extends ConsumerWidget {
                       "Reset Password",
                       style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         fontFamily: 'CabinetGrotesk',
-                        fontSize: 30.00,
+                        fontSize: 28.00,
                         fontWeight: FontWeight.w500,
                       ),
                     ),

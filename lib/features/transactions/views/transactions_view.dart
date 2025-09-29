@@ -46,8 +46,8 @@ class _TransactionsViewState extends ConsumerState<TransactionsView> {
           "Transactions",
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
             fontFamily: 'CabinetGrotesk',
-            fontSize: 30.00,
-            fontWeight: FontWeight.w400,
+            fontSize: 28.00,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ),

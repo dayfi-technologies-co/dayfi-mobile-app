@@ -55,7 +55,7 @@ class SignupView extends ConsumerWidget {
                         context,
                       ).textTheme.headlineMedium?.copyWith(
                         fontFamily: 'CabinetGrotesk',
-                        fontSize: 30.00,
+                        fontSize: 28.00,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -273,6 +273,7 @@ class SignupView extends ConsumerWidget {
                               hintText:
                                   "Enter your middle name (if you have one)",
                               keyboardType: TextInputType.name,
+                              textCapitalization: TextCapitalization.words,
                               onChanged: signupNotifier.setMiddleName,
                             )
                             .animate()
@@ -376,9 +377,11 @@ class SignupView extends ConsumerWidget {
                             style: Theme.of(
                               context,
                             ).textTheme.bodySmall?.copyWith(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w400,
-                              fontFamily: 'Karla',
+                             fontFamily: 'Karla',
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                letterSpacing: -.6,
+                height: 1.450,
                             ),
                           ),
                           SizedBox(height: 8.h),
@@ -804,9 +807,11 @@ class SignupView extends ConsumerWidget {
                         isValid
                             ? null
                             : Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'Karla',
+                   fontFamily: 'Karla',
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                letterSpacing: -.6,
+                height: 1.450,
                   ),
                 ),
               ],

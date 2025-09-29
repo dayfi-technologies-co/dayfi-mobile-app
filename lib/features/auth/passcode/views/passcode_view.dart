@@ -59,7 +59,7 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Spacer(flex: 2),
+                  const Spacer(flex: 1),
 
                   // User avatar
                   CircleAvatar(
@@ -82,11 +82,12 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
 
                   // Welcome text
                   Text(
-                        'Welcome back,',
+                        'Welcome back, ${(passcodeState.user != null && passcodeState.user!.firstName.isNotEmpty) ? passcodeState.user!.firstName : ''}',
                         style: TextStyle(
                           fontFamily: 'CabinetGrotesk',
-                          fontSize: 30.00,
+                          fontSize: 28.00,
                           fontWeight: FontWeight.w500,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       )
                       .animate()
@@ -102,36 +103,6 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
                         curve: Curves.easeOutCubic,
                         delay: 100.ms,
                       ),
-
-                  SizedBox(height: 8.h),
-
-                  // User name
-                  if (passcodeState.user != null &&
-                      passcodeState.user!.firstName.isNotEmpty)
-                    Text(
-                          passcodeState.user!.firstName,
-                          style: TextStyle(
-                            fontSize: 18.sp,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.3,
-                            height: 1.450,
-                            color: AppColors.neutral900,
-                            fontFamily: 'Karla',
-                          ),
-                        )
-                        .animate()
-                        .fadeIn(
-                          duration: 500.ms,
-                          curve: Curves.easeOutCubic,
-                          delay: 200.ms,
-                        )
-                        .slideY(
-                          begin: 0.1,
-                          end: 0,
-                          duration: 500.ms,
-                          curve: Curves.easeOutCubic,
-                          delay: 200.ms,
-                        ),
 
                   SizedBox(height: 12.h),
                   // Instruction text
@@ -222,7 +193,7 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
                       }),
                     ),
 
-                  SizedBox(height: MediaQuery.of(context).size.width * .25),
+                  SizedBox(height: MediaQuery.of(context).size.width * .2),
 
                   // Number pad
                   GridView.count(

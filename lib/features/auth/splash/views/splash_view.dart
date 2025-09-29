@@ -6,6 +6,7 @@ import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/services/local/secure_storage.dart';
+import 'package:dayfi/common/constants/storage_keys.dart';
 
 class SplashView extends ConsumerStatefulWidget {
   const SplashView({super.key});
@@ -25,9 +26,9 @@ class _SplashViewState extends ConsumerState<SplashView> {
 
   Future<void> _checkUserStateAndNavigate() async {
     try {
-      final firstTime = await _secureStorage.read('first_time_user');
-      final token = await _secureStorage.read('user_token');
-      final passcode = await _secureStorage.read('user_passcode');
+      final firstTime = await _secureStorage.read(StorageKeys.isFirstTime);
+      final token = await _secureStorage.read(StorageKeys.token);
+      final passcode = await _secureStorage.read(StorageKeys.passcode);
 
       final bool isFirstTimeUser = firstTime.isEmpty || firstTime == 'true';
       final String userToken = token;
@@ -42,9 +43,13 @@ class _SplashViewState extends ConsumerState<SplashView> {
         if (isFirstTimeUser && userToken.isEmpty) {
           Navigator.of(context).pushReplacementNamed(AppRoute.onboardingView);
         } else if (userToken.isEmpty) {
-          Navigator.of(context).pushReplacementNamed(AppRoute.loginView, arguments: false);
+          Navigator.of(
+            context,
+          ).pushReplacementNamed(AppRoute.loginView, arguments: false);
         } else if (userPasscode.isEmpty) {
-          Navigator.of(context).pushReplacementNamed(AppRoute.loginView, arguments: false);
+          Navigator.of(
+            context,
+          ).pushReplacementNamed(AppRoute.loginView, arguments: false);
         } else {
           Navigator.of(context).pushReplacementNamed(AppRoute.passcodeView);
         }
@@ -66,14 +71,18 @@ class _SplashViewState extends ConsumerState<SplashView> {
         fit: StackFit.expand,
         children: [
           // Main content centered
-          // Center(
-          //   child: Column(
-          //     mainAxisAlignment: MainAxisAlignment.center,
-          //     children: [
-          //       // SEND APP text with glow effects
-          //     ],
-          //   ),
-          // ),
+          Center(
+            child: Text(
+              'send\'r',
+              style: TextStyle(
+                fontFamily: 'Boldonse',
+                fontSize: 28.sp,
+                fontWeight: FontWeight.w900,
+                color: AppColors.neutral900,
+                height: 1.3,
+              ),
+            ),
+          ),
 
           // Powered by section at bottom
           Positioned(
@@ -91,20 +100,21 @@ class _SplashViewState extends ConsumerState<SplashView> {
                     fontFamily: 'Karla',
                   ),
                 ),
-                SizedBox(height: 8.h),
+                SizedBox(height: 4.h),
 
                 // Dayfi logo placeholder
-                // Center(
-                //   child: Text(
-                //     'flutterwave',
-                //     style: TextStyle(
-                //       color: AppColors.neutral0,
-                //       fontSize: 16.sp,
-                //       fontWeight: FontWeight.w400,
-                //       fontFamily: 'ReadexPro',
-                //     ),
-                //   ),
-                // ),
+                Center(
+                  child: Text(
+                    'dayfi',
+                    style: TextStyle(
+                      fontFamily: 'Boldonse',
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.neutral900,
+                      height: 1.3,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),

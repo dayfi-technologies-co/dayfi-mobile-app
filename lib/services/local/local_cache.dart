@@ -57,25 +57,41 @@ class LocalCache {
   }
 
   Future<void> saveToLocalCache({required String key, required value}) async {
-    AppLogger.debug('Data being saved: key: $key, value: $value');
+    try {
+      await sharedPreferences.setString(key, value.toString());
+    } catch (e) {
+      AppLogger.error('Error saving to local cache: $e');
+    }
+  }
 
-    if (value is String) {
-      await sharedPreferences.setString(key, value);
-    }
-    if (value is bool) {
-      await sharedPreferences.setBool(key, value);
-    }
-    if (value is int) {
-      await sharedPreferences.setInt(key, value);
-    }
-    if (value is double) {
-      await sharedPreferences.setDouble(key, value);
-    }
-    if (value is List<String>) {
-      await sharedPreferences.setStringList(key, value);
-    }
-    if (value is Map) {
-      await sharedPreferences.setString(key, json.encode(value));
+  /// Clear all user-related data from both secure storage and shared preferences
+  Future<void> clearAllUserData() async {
+    try {
+      AppLogger.info('Clearing all user data...');
+      
+      // Clear secure storage data
+      await storage.delete(StorageKeys.token);
+      await storage.delete(StorageKeys.user);
+      await storage.delete('password');
+      await storage.delete(StorageKeys.isFirstTime);
+      await storage.delete(StorageKeys.hasSeenWelcome);
+      
+      // Clear shared preferences data
+      await sharedPreferences.remove(StorageKeys.userId);
+      await sharedPreferences.remove(StorageKeys.userEmail);
+      await sharedPreferences.remove(StorageKeys.userPhone);
+      await sharedPreferences.remove(StorageKeys.isLoggedIn);
+      await sharedPreferences.remove(StorageKeys.accountBalance);
+      await sharedPreferences.remove(StorageKeys.lastLogin);
+      await sharedPreferences.remove(StorageKeys.biometricEnabled);
+      await sharedPreferences.remove(StorageKeys.hideUserBalance);
+      await sharedPreferences.remove(StorageKeys.faceIDTouchID);
+      await sharedPreferences.remove(StorageKeys.facedIdToSharedPrefKey);
+      await sharedPreferences.remove(StorageKeys.fxInflowSheet);
+      
+      AppLogger.info('All user data cleared successfully');
+    } catch (e) {
+      AppLogger.error('Error clearing user data: $e');
     }
   }
 

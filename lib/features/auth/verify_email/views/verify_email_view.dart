@@ -65,7 +65,7 @@ class VerifyEmailView extends ConsumerWidget {
                       isSignUp ? "Verify your email" : "Verify reset code",
                       style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         fontFamily: 'CabinetGrotesk',
-                        fontSize: 30.00,
+                        fontSize: 28.00,
                         fontWeight: FontWeight.w500,
                       ),
                     ),

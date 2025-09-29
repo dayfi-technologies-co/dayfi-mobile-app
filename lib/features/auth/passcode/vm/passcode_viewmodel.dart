@@ -6,6 +6,7 @@ import 'package:dayfi/services/local/secure_storage.dart';
 // import 'package:dayfi/services/remote/auth_service.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/models/user_model.dart';
+import 'package:dayfi/common/constants/storage_keys.dart';
 
 class PasscodeState {
   final String passcode;
@@ -54,7 +55,7 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
 
   Future<void> loadUser() async {
     try {
-      final userJson = await _secureStorage.read('user');
+      final userJson = await _secureStorage.read(StorageKeys.user);
       if (userJson.isNotEmpty) {
         final user = User.fromJson(json.decode(userJson));
         state = state.copyWith(user: user);
@@ -112,7 +113,7 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
     state = state.copyWith(isVerifying: true);
 
     try {
-      final storedPasscode = await _secureStorage.read('user_passcode');
+      final storedPasscode = await _secureStorage.read(StorageKeys.passcode);
 
       if (state.passcode == storedPasscode) {
         // Passcode is correct, navigate directly to main view
@@ -142,9 +143,9 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
     state = state.copyWith(isLoading: true);
     try {
       // Clear stored data
-      await _secureStorage.delete('user');
-      await _secureStorage.delete('user_token');
-      await _secureStorage.delete('user_passcode');
+      await _secureStorage.delete(StorageKeys.user);
+      await _secureStorage.delete(StorageKeys.token);
+      await _secureStorage.delete(StorageKeys.passcode);
       
       // Navigate to login (hide back button)
       appRouter.pushNamed(AppRoute.loginView, arguments: false);

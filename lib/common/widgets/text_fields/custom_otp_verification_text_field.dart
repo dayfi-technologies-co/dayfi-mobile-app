@@ -50,7 +50,7 @@ class OtpVerificationTextField extends StatelessWidget {
         color: Colors.red,
         fontSize: 13,
         fontFamily: 'Karla',
-         letterSpacing: -.6,
+        letterSpacing: -.6,
         fontWeight: FontWeight.w400,
         height: 1.4,
       ),

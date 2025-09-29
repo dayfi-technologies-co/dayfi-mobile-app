@@ -8,6 +8,7 @@ import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
+import 'package:dayfi/common/constants/storage_keys.dart';
 
 class ReenterPasscodeState {
   final String passcode;
@@ -84,7 +85,7 @@ class ReenterPasscodeNotifier extends StateNotifier<ReenterPasscodeState> {
         AppLogger.info('Passcode verification successful');
 
         // Save the passcode permanently
-        await _secureStorage.write('user_passcode', state.passcode);
+        await _secureStorage.write(StorageKeys.passcode, state.passcode);
 
         // Clean up temporary passcode and password
         await _secureStorage.delete('temp_passcode');
@@ -180,13 +181,16 @@ class ReenterPasscodeNotifier extends StateNotifier<ReenterPasscodeState> {
                     if (isFromSignup) {
                       appRouter.pushNamed(AppRoute.successSignupView);
                     } else {
-                      appRouter.pushNamed(AppRoute.mainView);
+                      // For login flow, check if biometrics are enabled
+                      // If not, show complete personal information screen
+                      // For now, always show complete personal info for login
+                      appRouter.pushNamed(AppRoute.biometricSetupView);
                     }
                   },
                   backgroundColor: AppColors.purple500,
                   textColor: AppColors.neutral0,
                   borderRadius: 38,
-                  height: 56.h,
+                  height: 60.h,
                   width: double.infinity,
                   fullWidth: true,
                   fontFamily: 'Karla',

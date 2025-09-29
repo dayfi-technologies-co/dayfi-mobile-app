@@ -48,8 +48,8 @@ class _SendViewState extends ConsumerState<SendView> {
           "Swap",
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
             fontFamily: 'CabinetGrotesk',
-            fontSize: 30.00,
-            fontWeight: FontWeight.w400,
+            fontSize: 28.00,
+            fontWeight: FontWeight.w500,
           ),
         ),
         actions: [
@@ -64,7 +64,7 @@ class _SendViewState extends ConsumerState<SendView> {
                 radius: 18.0,
                 backgroundColor: Theme.of(context).colorScheme.surface,
                 child: SvgPicture.asset(
-                  'assets/svgs/notifications_unread_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.svg',
+                  'assets/icons/svgs/notifications_unread_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.svg',
                   height: 22,
                   color: AppColors.primary500,
                 ),
@@ -75,7 +75,7 @@ class _SendViewState extends ConsumerState<SendView> {
       ),
 
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16.w),
+        padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 8.h),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -85,9 +85,9 @@ class _SendViewState extends ConsumerState<SendView> {
             SizedBox(height: 16.h),
 
             // You Send Section
-            _buildSendSection(sendState),
+            // _buildSendSection(sendState),
 
-            SizedBox(height: 24.h),
+            // SizedBox(height: 24.h),
 
             // // Transaction Details
             // _buildTransactionDetails(sendState),
@@ -149,10 +149,10 @@ class _SendViewState extends ConsumerState<SendView> {
       decoration: BoxDecoration(
         color: AppColors.neutral0,
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: AppColors.warning400.withOpacity(0.5)),
+        // border: Border.all(color: AppColors.warning400.withOpacity(0.5)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.warning400.withOpacity(0.1),
+            color: AppColors.neutral500.withOpacity(0.1),
             blurRadius: 2.0,
             offset: const Offset(0, 2),
             spreadRadius: 0.5,
@@ -161,7 +161,7 @@ class _SendViewState extends ConsumerState<SendView> {
       ),
       child: Row(
         children: [
-          SvgPicture.asset("assets/icons/svgs/Box.svg", height: 32.sp),
+          Image.asset("assets/icons/pngs/account.png", height: 32.sp),
           SizedBox(width: 12.w),
           Expanded(
             child: Column(
@@ -514,7 +514,7 @@ class _SendViewState extends ConsumerState<SendView> {
           SizedBox(height: 14.h),
           Center(
             child: Text(
-              'Yellow Card Financial Services is regulated by the relevant authorities in its operating regions.',
+              'Financial services are regulated by the relevant authorities in their operating regions.',
               style: AppTypography.bodySmall.copyWith(
                 fontFamily: 'Karla',
                 color: AppColors.neutral800,
