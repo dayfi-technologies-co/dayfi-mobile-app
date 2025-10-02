@@ -159,7 +159,7 @@ class ForgotPasswordView extends ConsumerWidget {
                               backgroundColor:
                                   forgotPasswordState.isFormValid
                                       ? AppColors.purple500
-                                      : AppColors.purple200,
+                                      : AppColors.purple100,
                               height: 60.h,
                               textColor: AppColors.neutral0,
                               fontFamily: 'Karla',

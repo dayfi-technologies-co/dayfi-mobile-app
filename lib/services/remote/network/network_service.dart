@@ -33,18 +33,19 @@ class NetworkService {
   }
 
   /// Initialize essential class properties
-  void _initialiseDio() async {
-    String token = await localCache.getToken();
-    dio = Dio(
-      BaseOptions(
-        connectTimeout: const Duration(milliseconds: connectTimeOut),
-        receiveTimeout: const Duration(milliseconds: receiveTimeOut),
-        baseUrl: baseUrl ?? F.baseUrl,
-      ),
-    );
-    dio!.interceptors
-      ..add(AppInterceptor(token))
-      ..add(LogInterceptor(requestBody: true, logPrint: printDioLogs));
+  void _initialiseDio() {
+    if (dio == null) {
+      dio = Dio(
+        BaseOptions(
+          connectTimeout: const Duration(milliseconds: connectTimeOut),
+          receiveTimeout: const Duration(milliseconds: receiveTimeOut),
+          baseUrl: baseUrl ?? F.baseUrl,
+        ),
+      );
+      dio!.interceptors
+        ..add(AppInterceptor(''))
+        ..add(LogInterceptor(requestBody: true, logPrint: printDioLogs));
+    }
   }
 
   addInterceptor() {}
@@ -79,6 +80,11 @@ class NetworkService {
     classTag = '',
   }) async {
     _initialiseDio();
+    
+    if (dio == null) {
+      throw Exception('Dio is not initialized');
+    }
+    
     Response response;
     var params = queryParams ?? {};
     if (params.keys.contains("searchTerm")) {

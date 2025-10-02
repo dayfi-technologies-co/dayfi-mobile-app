@@ -236,7 +236,7 @@ class ResetPasswordView extends ConsumerWidget {
                           isLoading: resetPasswordState.isBusy,
                           backgroundColor: resetPasswordState.isFormValid
                               ? AppColors.purple500
-                              : AppColors.purple200,
+                              : AppColors.purple100,
                           height: 60.h,
                           textColor: AppColors.neutral0,
                           fontFamily: 'Karla',

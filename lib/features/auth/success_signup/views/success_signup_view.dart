@@ -73,7 +73,7 @@ class SuccessSignupView extends ConsumerWidget {
             left: -50.w,
             child: _buildFloatingCircle(
               size: 120.w,
-              color: AppColors.purple200.withOpacity(0.3),
+              color: AppColors.purple100.withOpacity(0.3),
             ),
           ),
           Positioned(
@@ -97,7 +97,7 @@ class SuccessSignupView extends ConsumerWidget {
             right: -40.w,
             child: _buildFloatingCircle(
               size: 60.w,
-              color: AppColors.purple200.withOpacity(0.3),
+              color: AppColors.purple100.withOpacity(0.3),
             ),
           ),
         ],

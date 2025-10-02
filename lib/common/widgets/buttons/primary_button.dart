@@ -109,7 +109,7 @@ class PrimaryButton extends StatelessWidget {
     this.child,
     this.fullWidth = false,
     this.elevation,
-    this.shadowColor,
+    this.shadowColor, 
   });
 
   /// Creates a primary button with default Dayfi styling

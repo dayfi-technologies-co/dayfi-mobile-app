@@ -71,18 +71,18 @@ class _SplashViewState extends ConsumerState<SplashView> {
         fit: StackFit.expand,
         children: [
           // Main content centered
-          Center(
-            child: Text(
-              'send\'r',
-              style: TextStyle(
-                fontFamily: 'Boldonse',
-                fontSize: 28.sp,
-                fontWeight: FontWeight.w900,
-                color: AppColors.neutral900,
-                height: 1.3,
-              ),
-            ),
-          ),
+          // Center(
+          //   child: Text(
+          //     'send\'r',
+          //     style: TextStyle(
+          //       fontFamily: 'Boldonse',
+          //       fontSize: 28.sp,
+          //       fontWeight: FontWeight.w900,
+          //       color: AppColors.neutral900,
+          //       height: 1.3,
+          //     ),
+          //   ),
+          // ),
 
           // Powered by section at bottom
           Positioned(

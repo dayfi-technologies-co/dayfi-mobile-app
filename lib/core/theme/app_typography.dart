@@ -21,7 +21,7 @@ class AppTypography {
   // ============================================================================
 
   /// Primary font family - Readex Pro (for titles, body, micro)
-  static const String primaryFontFamily = 'Readex Pro';
+  static const String primaryFontFamily = 'Karla';
 
   /// Secondary font family - Youth (for display, headings, labels)
   static const String secondaryFontFamily = 'Karla';

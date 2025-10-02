@@ -7,4 +7,11 @@ class UrlConfig {
   static const String resendOtp = '/auth/resend-otp';
   static const String resetPassword = '/auth/reset-password';
   static const String updateProfile = '/auth/update-profile';
+  
+  //Payment Endpoints
+  static const String resolveBank = '/payments/resolve-bank';
+  static const String createCollection = '/payments/create-collections';
+  static const String fetchChannels = '/payments/channels';
+  static const String fetchNetworks = '/payments/networks';
+  static const String fetchRates = '/payments/rates';
 }

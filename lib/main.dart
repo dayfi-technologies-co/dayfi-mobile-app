@@ -10,7 +10,9 @@ import 'package:dayfi/firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  F.appFlavor = Flavor.values.firstWhere((element) => element.name == appFlavor);
+  F.appFlavor = Flavor.values.firstWhere(
+    (element) => element.name == appFlavor,
+  );
 
   try {
     await Firebase.initializeApp(
@@ -25,7 +27,10 @@ void main() async {
   }
 
   await setupLocator();
-  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]).then((_) {
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]).then((_) {
     runApp(const MyApp());
   });
 }
