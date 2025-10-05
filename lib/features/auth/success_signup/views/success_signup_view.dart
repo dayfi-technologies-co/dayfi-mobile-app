@@ -191,7 +191,7 @@ class SuccessSignupView extends ConsumerWidget {
                     fontFamily: 'CabinetGrotesk',
                     fontSize: 28.sp,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.neutral900,
+                    color: Theme.of(context).colorScheme.onSurface,
                     height: 1.2,
                     letterSpacing: -.6,
                   ),

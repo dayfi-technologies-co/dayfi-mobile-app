@@ -7,14 +7,12 @@ import 'package:dayfi/features/auth/reenter_passcode/vm/reenter_passcode_viewmod
 
 class ReenterPasscodeView extends ConsumerStatefulWidget {
   final bool isFromSignup;
-  
-  const ReenterPasscodeView({
-    super.key,
-    this.isFromSignup = false,
-  });
+
+  const ReenterPasscodeView({super.key, this.isFromSignup = false});
 
   @override
-  ConsumerState<ReenterPasscodeView> createState() => _ReenterPasscodeViewState();
+  ConsumerState<ReenterPasscodeView> createState() =>
+      _ReenterPasscodeViewState();
 }
 
 class _ReenterPasscodeViewState extends ConsumerState<ReenterPasscodeView> {
@@ -23,14 +21,20 @@ class _ReenterPasscodeViewState extends ConsumerState<ReenterPasscodeView> {
     super.initState();
     // Reset form when view is initialized
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(reenterPasscodeProvider(widget.isFromSignup).notifier).resetForm();
+      ref
+          .read(reenterPasscodeProvider(widget.isFromSignup).notifier)
+          .resetForm();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final reenterPasscodeState = ref.watch(reenterPasscodeProvider(widget.isFromSignup));
-    final reenterPasscodeNotifier = ref.read(reenterPasscodeProvider(widget.isFromSignup).notifier);
+    final reenterPasscodeState = ref.watch(
+      reenterPasscodeProvider(widget.isFromSignup),
+    );
+    final reenterPasscodeNotifier = ref.read(
+      reenterPasscodeProvider(widget.isFromSignup).notifier,
+    );
 
     return GestureDetector(
       onTap: () {
@@ -63,7 +67,9 @@ class _ReenterPasscodeViewState extends ConsumerState<ReenterPasscodeView> {
                     ),
                     title: Text(
                       "Confirm passcode",
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      style: Theme.of(
+                        context,
+                      ).textTheme.headlineMedium?.copyWith(
                         fontFamily: 'CabinetGrotesk',
                         fontSize: 28.00,
                         fontWeight: FontWeight.w500,
@@ -83,7 +89,9 @@ class _ReenterPasscodeViewState extends ConsumerState<ReenterPasscodeView> {
                               padding: EdgeInsets.symmetric(horizontal: 24.w),
                               child: Text(
                                 "Please enter your 4-digit passcode again to confirm. This ensures you remember it correctly.",
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.bodyMedium?.copyWith(
                                   fontSize: 16.sp,
                                   fontWeight: FontWeight.w400,
                                   fontFamily: 'Karla',
@@ -144,8 +152,7 @@ class _ReenterPasscodeViewState extends ConsumerState<ReenterPasscodeView> {
                         delay: 200.ms,
                         duration: 300.ms,
                         curve: Curves.easeOutCubic,
-                      )
-                     ,
+                      ),
 
                   // Error message
                   if (reenterPasscodeState.errorMessage.isNotEmpty) ...[
@@ -253,32 +260,35 @@ class PasscodeWidget extends StatelessWidget {
   }
 
   Widget _buildNumberButton(String number) {
-    return InkWell(
-      splashColor: Colors.transparent,
-      highlightColor: Colors.transparent,
-      borderRadius: BorderRadius.circular(100),
-      onTap: () {
-        if (currentPasscode.length < passcodeLength) {
-          onPasscodeChanged(currentPasscode + number);
-        }
-      },
-      child: Container(
-        decoration: const BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.white,
-        ),
-        child: Center(
-          child: Text(
-            number,
-            style: const TextStyle(
-              fontSize: 32.00,
-              fontFamily: 'CabinetGrotesk',
-              fontWeight: FontWeight.w400,
-              color: Colors.black87,
+    return Builder(
+      builder:
+          (context) => InkWell(
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            borderRadius: BorderRadius.circular(100),
+            onTap: () {
+              if (currentPasscode.length < passcodeLength) {
+                onPasscodeChanged(currentPasscode + number);
+              }
+            },
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Theme.of(context).colorScheme.surface,
+              ),
+              child: Center(
+                child: Text(
+                  number,
+                  style: TextStyle(
+                    fontSize: 32.00,
+                    fontFamily: 'CabinetGrotesk',
+                    fontWeight: FontWeight.w400,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+              ),
             ),
           ),
-        ),
-      ),
     );
   }
 

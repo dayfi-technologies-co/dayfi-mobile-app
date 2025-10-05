@@ -259,8 +259,15 @@ class CompletePersonalInfoNotifier extends StateNotifier<CompletePersonalInfoSta
 
       if (success) {
         AppLogger.info('Personal information submitted successfully');
-        // Navigate to biometric setup screen
-        appRouter.pushNamed(AppRoute.biometricSetupView);
+        // Check if biometric setup has been completed
+        final biometricSetupCompleted = await _secureStorage.read(StorageKeys.biometricSetupCompleted);
+        if (biometricSetupCompleted == 'true') {
+          // Biometric setup already completed, go to main view
+          appRouter.pushNamed(AppRoute.mainView);
+        } else {
+          // Biometric setup not completed, show biometric setup screen
+          appRouter.pushNamed(AppRoute.biometricSetupView);
+        }
       }
     } catch (e) {
       AppLogger.error('Error submitting personal information: $e');

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 /// A reusable secondary button widget that follows the Dayfi design system.
 ///
@@ -215,11 +216,9 @@ class SecondaryButton extends StatelessWidget {
                   SizedBox(
                     width: loadingIndicatorSize ?? 20.w,
                     height: loadingIndicatorSize ?? 20.w,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 1.50,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        loadingIndicatorColor ?? effectiveTextColor,
-                      ),
+                    child: LoadingAnimationWidget.horizontalRotatingDots(
+                      color: loadingIndicatorColor ?? effectiveTextColor,
+                      size: loadingIndicatorSize ?? 20,
                     ),
                   ),
                   SizedBox(width: 8.w),

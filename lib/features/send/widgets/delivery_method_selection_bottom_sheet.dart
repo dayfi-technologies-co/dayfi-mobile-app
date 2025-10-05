@@ -53,7 +53,7 @@ class DeliveryMethodSelectionBottomSheet extends StatelessWidget {
                       fontFamily: 'CabinetGrotesk',
                       fontSize: 18.sp,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.neutral800,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                 ),
@@ -121,7 +121,7 @@ class DeliveryMethodSelectionBottomSheet extends StatelessWidget {
                               padding: EdgeInsets.all(16.w),
                               decoration: BoxDecoration(
                                 color: isSelected 
-                                    ? AppColors.primary50 
+                                    ? Theme.of(context).colorScheme.primaryContainer 
                                     : AppColors.neutral0,
                                 borderRadius: BorderRadius.circular(12.r),
                                 border: isSelected 
@@ -179,7 +179,7 @@ class DeliveryMethodSelectionBottomSheet extends StatelessWidget {
                                                 fontWeight: FontWeight.w600,
                                                 color: isSelected 
                                                     ? AppColors.primary700 
-                                                    : AppColors.neutral800,
+                                                    : Theme.of(context).colorScheme.onSurface,
                                               ),
                                             ),
                                             SizedBox(height: 2.h),

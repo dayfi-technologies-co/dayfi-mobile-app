@@ -164,7 +164,7 @@ class ReenterPasscodeNotifier extends StateNotifier<ReenterPasscodeState> {
                     fontFamily: 'CabinetGrotesk',
                     fontSize: 20.sp,
                     fontWeight: FontWeight.w400,
-                    color: AppColors.neutral900,
+                    color: Theme.of(context).colorScheme.onSurface,
                     letterSpacing: -0.5,
                   ),
                   textAlign: TextAlign.center,
@@ -175,16 +175,21 @@ class ReenterPasscodeNotifier extends StateNotifier<ReenterPasscodeState> {
                 // Continue button with auth view styling
                 PrimaryButton(
                   text: 'Okay',
-                  onPressed: () {
+                  onPressed: () async {
                     Navigator.of(context).pop();
                     // Navigate based on flow
                     if (isFromSignup) {
                       appRouter.pushNamed(AppRoute.successSignupView);
                     } else {
-                      // For login flow, check if biometrics are enabled
-                      // If not, show complete personal information screen
-                      // For now, always show complete personal info for login
-                      appRouter.pushNamed(AppRoute.biometricSetupView);
+                      // For login flow, check if biometric setup has been completed
+                      final biometricSetupCompleted = await _secureStorage.read(StorageKeys.biometricSetupCompleted);
+                      if (biometricSetupCompleted == 'true') {
+                        // Biometric setup already completed, go to main view
+                        appRouter.pushNamed(AppRoute.mainView);
+                      } else {
+                        // Biometric setup not completed, show biometric setup screen
+                        appRouter.pushNamed(AppRoute.biometricSetupView);
+                      }
                     }
                   },
                   backgroundColor: AppColors.purple500,

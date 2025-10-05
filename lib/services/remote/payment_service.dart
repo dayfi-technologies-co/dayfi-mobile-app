@@ -62,72 +62,6 @@ class PaymentService {
     }
   }
 
-  /// Create collection request
-  /// POST /api/v1/payments/create-collections
-  Future<PaymentResponse> createCollection({
-    required double amount,
-    required String currency,
-    required String channelId,
-    required String country,
-    required double localAmount,
-    required String reason,
-    required Recipient recipient,
-    required Source source,
-    Map<String, dynamic>? metadata,
-  }) async {
-    try {
-      Map<String, dynamic> map = {};
-      map['amount'] = amount;
-      map['currency'] = currency;
-      map['channelId'] = channelId;
-      map['country'] = country;
-      map['localAmount'] = localAmount;
-      map['reason'] = reason;
-      map['recipient'] = recipient.toJson();
-      map['source'] = source.toJson();
-
-      if (metadata != null) {
-        map['metadata'] = metadata;
-      }
-
-      log('CreateCollection request data: $map');
-      log('CreateCollection URL: ${F.baseUrl}${UrlConfig.createCollection}');
-
-      final response = await _networkService.call(
-        F.baseUrl + UrlConfig.createCollection,
-        RequestMethod.post,
-        data: map,
-      );
-
-      log('CreateCollection raw response: ${response.data}');
-
-      // Handle response data - check if it's a Map or String
-      Map<String, dynamic> responseData;
-      if (response.data is Map<String, dynamic>) {
-        responseData = response.data;
-        log('Response data is Map: $responseData');
-      } else if (response.data is String) {
-        // Try to parse JSON string
-        responseData = json.decode(response.data);
-        log('Response data parsed from String: $responseData');
-      } else {
-        log('Invalid response format: ${response.data.runtimeType}');
-        throw Exception('Invalid response format');
-      }
-
-      final paymentResponse = PaymentResponse.fromJson(responseData);
-
-      log(
-        'CreateCollection response - Status: ${paymentResponse.statusCode}, Error: ${paymentResponse.error}, Message: ${paymentResponse.message}',
-      );
-
-      return paymentResponse;
-    } catch (e) {
-      log('Error in createCollection: $e');
-      rethrow;
-    }
-  }
-
   /// Fetch available payment channels
   /// GET /api/v1/payments/channels
   Future<PaymentResponse> fetchChannels() async {
@@ -254,6 +188,48 @@ class PaymentService {
       return paymentResponse;
     } catch (e) {
       log('Error in fetchRates: $e');
+      rethrow;
+    }
+  }
+
+  /// Create collection request
+  /// POST /api/v1/payments/create-collections
+  Future<PaymentResponse> createCollection(
+    Map<String, dynamic> requestData,
+  ) async {
+    try {
+      log('CreateCollection request data: $requestData');
+      final response = await _networkService.call(
+        '${F.baseUrl}/payments/create-collections',
+        RequestMethod.post,
+        data: requestData,
+      );
+
+      log('CreateCollection raw response: ${response.data}');
+
+      // Handle response data - check if it's a Map or String
+      Map<String, dynamic> responseData;
+      if (response.data is Map<String, dynamic>) {
+        responseData = response.data;
+        log('Response data is Map: $responseData');
+      } else if (response.data is String) {
+        // Try to parse JSON string
+        responseData = json.decode(response.data);
+        log('Response data parsed from String: $responseData');
+      } else {
+        log('Invalid response format: ${response.data.runtimeType}');
+        throw Exception('Invalid response format');
+      }
+
+      final paymentResponse = PaymentResponse.fromJson(responseData);
+
+      log(
+        'CreateCollection response - Status: ${paymentResponse.statusCode}, Error: ${paymentResponse.error}, Message: ${paymentResponse.message}',
+      );
+
+      return paymentResponse;
+    } catch (e) {
+      log('Error in createCollection: $e');
       rethrow;
     }
   }

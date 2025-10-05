@@ -333,33 +333,34 @@ class PasscodeWidget extends StatelessWidget {
   }
 
   Widget _buildNumberButton(String number) {
-    return InkWell(
-      splashColor: Colors.transparent,
-      highlightColor: Colors.transparent,
-      borderRadius: BorderRadius.circular(100),
-      onTap: () {
-        if (currentPasscode.length < passcodeLength) {
-          onPasscodeChanged(currentPasscode + number);
-        }
-      },
-      child: Container(
-        decoration: const BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.white,
-        ),
+    return Builder(
+      builder: (context) => InkWell(
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        borderRadius: BorderRadius.circular(100),
+        onTap: () {
+          if (currentPasscode.length < passcodeLength) {
+            onPasscodeChanged(currentPasscode + number);
+          }
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Theme.of(context).colorScheme.surface,
+          ),
         child: Center(
           child: Text(
             number,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 32.00,
               fontFamily: 'CabinetGrotesk',
               fontWeight: FontWeight.w400,
-              color: Colors.black87,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildIconButton({

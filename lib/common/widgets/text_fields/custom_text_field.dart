@@ -94,7 +94,7 @@ class CustomTextField extends StatelessWidget {
               label!,
               style: TextStyle(
                 fontFamily: 'Karla',
-                fontSize: 14,
+                fontSize: 15,
                 fontWeight: FontWeight.w400,
                 letterSpacing: -.6,
                 height: 1.450,
@@ -167,7 +167,7 @@ class CustomTextField extends StatelessWidget {
               hintText: hintText,
               hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 fontFamily: 'Karla',
-                fontSize: 16,
+                fontSize: 15,
                 letterSpacing: -.6,
                 fontWeight: FontWeight.w500,
                 height: 1.450,
@@ -310,12 +310,12 @@ class ReadOnlyCustomTextField extends StatelessWidget {
           inputFormatters: [
             formatter ?? FilteringTextInputFormatter.singleLineFormatter,
           ],
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Karla',
             fontSize: 14,
             fontWeight: FontWeight.w400,
             height: 1.450,
-            color: Color(0xFF302D53),
+            color: Theme.of(context).colorScheme.onSurface,
           ),
           decoration: InputDecoration(
             counterText: "",
@@ -331,7 +331,7 @@ class ReadOnlyCustomTextField extends StatelessWidget {
               .withOpacity(.5),
             ),
             filled: true,
-            fillColor: const Color.fromARGB(255, 0, 0, 0).withOpacity(.075),
+            fillColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(.3),
             contentPadding: EdgeInsets.symmetric(
               vertical: 14.h,
               horizontal: 14.w,

@@ -7,6 +7,7 @@ import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/common/widgets/buttons/secondary_button.dart';
 import 'package:dayfi/features/auth/biometric_setup/vm/biometric_setup_viewmodel.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class BiometricSetupView extends ConsumerStatefulWidget {
   const BiometricSetupView({super.key});
@@ -84,7 +85,7 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
                     fontFamily: 'CabinetGrotesk',
                     fontSize: 28.sp,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.neutral900,
+                    color: Theme.of(context).colorScheme.onSurface,
                     height: 1.2,
                     letterSpacing: -.6,
                   ),
@@ -123,7 +124,9 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
                     height: 1.4,
                     color:
                         state.isAvailable && state.isEnrolled
-                            ? AppColors.neutral600
+                            ? Theme.of(
+                              context,
+                            ).textTheme.bodyLarge!.color!.withOpacity(.75)
                             : AppColors.error500,
                   ),
                   textAlign: TextAlign.center,
@@ -144,8 +147,9 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
 
             if (state.isBusy) ...[
               SizedBox(height: 24.h),
-              const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.purple500),
+              LoadingAnimationWidget.horizontalRotatingDots(
+                color: AppColors.purple500,
+                size: 20,
               ),
             ],
           ],
@@ -326,7 +330,7 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
                       fontFamily: 'CabinetGrotesk',
                       fontSize: 20.sp,
                       fontWeight: FontWeight.w400,
-                      color: AppColors.neutral900,
+                      color: Theme.of(context).colorScheme.onSurface,
                       letterSpacing: -0.5,
                     ),
                     textAlign: TextAlign.center,

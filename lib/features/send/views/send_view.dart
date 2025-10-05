@@ -10,6 +10,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/common/utils/string_utils.dart';
 import 'package:dayfi/common/utils/number_formatter.dart';
 import 'send_recipient_view.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class SendView extends ConsumerStatefulWidget {
   const SendView({super.key});
@@ -18,7 +19,8 @@ class SendView extends ConsumerStatefulWidget {
   ConsumerState<SendView> createState() => _SendViewState();
 }
 
-class _SendViewState extends ConsumerState<SendView> with WidgetsBindingObserver {
+class _SendViewState extends ConsumerState<SendView>
+    with WidgetsBindingObserver {
   final TextEditingController _sendAmountController = TextEditingController();
   final TextEditingController _receiveAmountController =
       TextEditingController();
@@ -209,14 +211,15 @@ class _SendViewState extends ConsumerState<SendView> with WidgetsBindingObserver
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     final sendState = ref.watch(sendViewModelProvider);
 
     // Ensure keyboard is dismissed when building the widget
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && !_sendAmountFocus.hasFocus && !_receiveAmountFocus.hasFocus) {
+      if (mounted &&
+          !_sendAmountFocus.hasFocus &&
+          !_receiveAmountFocus.hasFocus) {
         FocusScope.of(context).unfocus();
       }
     });
@@ -240,7 +243,7 @@ class _SendViewState extends ConsumerState<SendView> with WidgetsBindingObserver
               fontFamily: 'CabinetGrotesk',
               fontSize: 28.sp,
               fontWeight: FontWeight.w600,
-              color: AppColors.neutral800,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           centerTitle: true,
@@ -305,7 +308,7 @@ class _SendViewState extends ConsumerState<SendView> with WidgetsBindingObserver
       width: double.infinity,
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color: AppColors.neutral0,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12.r),
         // border: Border.all(color: AppColors.warning400.withOpacity(0.5)),
         boxShadow: [
@@ -339,7 +342,7 @@ class _SendViewState extends ConsumerState<SendView> with WidgetsBindingObserver
                     text:
                         'You\'re currently on Tier 1. Submit required documents to access Tier 2 and send higher amounts. ',
                     style: TextStyle(
-                      color: AppColors.neutral800,
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w400,
                       fontFamily: 'Karla',
@@ -350,7 +353,7 @@ class _SendViewState extends ConsumerState<SendView> with WidgetsBindingObserver
                       TextSpan(
                         text: 'Upgrade now.',
                         style: TextStyle(
-                          color: const Color.fromARGB(255, 21, 68, 221),
+                          color: Theme.of(context).colorScheme.primary,
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w400,
                           fontFamily: 'Karla',
@@ -393,7 +396,7 @@ class _SendViewState extends ConsumerState<SendView> with WidgetsBindingObserver
         Container(
           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(12.r),
             boxShadow: [
               BoxShadow(color: AppColors.neutral500.withOpacity(0.1)),
@@ -433,7 +436,7 @@ class _SendViewState extends ConsumerState<SendView> with WidgetsBindingObserver
                   context,
                 ).colorScheme.onSurfaceVariant.withOpacity(.25),
               ),
-              fillColor: Colors.white,
+              fillColor: Theme.of(context).colorScheme.surface,
               border: InputBorder.none,
               enabledBorder: InputBorder.none,
               focusedBorder: InputBorder.none,
@@ -449,7 +452,7 @@ class _SendViewState extends ConsumerState<SendView> with WidgetsBindingObserver
                   padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
                   margin: EdgeInsets.only(right: 0.w),
                   decoration: BoxDecoration(
-                    color: AppColors.primary50,
+                    color: Theme.of(context).colorScheme.primaryContainer,
                     borderRadius: BorderRadius.circular(40.r),
                   ),
                   child: Row(
@@ -510,7 +513,7 @@ class _SendViewState extends ConsumerState<SendView> with WidgetsBindingObserver
         Container(
           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(12.r),
             boxShadow: [
               BoxShadow(color: AppColors.neutral500.withOpacity(0.1)),
@@ -550,7 +553,7 @@ class _SendViewState extends ConsumerState<SendView> with WidgetsBindingObserver
                   context,
                 ).colorScheme.onSurfaceVariant.withOpacity(.25),
               ),
-              fillColor: Colors.white,
+              fillColor: Theme.of(context).colorScheme.surface,
               border: InputBorder.none,
               enabledBorder: InputBorder.none,
               focusedBorder: InputBorder.none,
@@ -566,7 +569,7 @@ class _SendViewState extends ConsumerState<SendView> with WidgetsBindingObserver
                   padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
                   margin: EdgeInsets.only(right: 0.w),
                   decoration: BoxDecoration(
-                    color: AppColors.primary50,
+                    color: Theme.of(context).colorScheme.primaryContainer,
                     borderRadius: BorderRadius.circular(40.r),
                   ),
                   child: Row(
@@ -646,7 +649,6 @@ class _SendViewState extends ConsumerState<SendView> with WidgetsBindingObserver
     }
   }
 
-
   Widget _buildRecipientDeliveryMethodSection(SendState state) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -669,7 +671,7 @@ class _SendViewState extends ConsumerState<SendView> with WidgetsBindingObserver
         SizedBox(height: 4),
         Container(
           decoration: BoxDecoration(
-            color: AppColors.neutral0,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(12.r),
             // boxShadow: [
             //   BoxShadow(
@@ -713,18 +715,21 @@ class _SendViewState extends ConsumerState<SendView> with WidgetsBindingObserver
                         fontFamily: 'CabinetGrotesk',
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w600,
-
                         color:
                             state.selectedDeliveryMethod.isEmpty
-                                ? AppColors.neutral400
-                                : AppColors.neutral800,
+                                ? Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.4)
+                                : Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     SizedBox(height: 2.h),
                     Text(
                       'Arrives in minutes',
                       style: AppTypography.bodyLarge.copyWith(
-                        color: AppColors.neutral800,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.7),
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w400,
                         fontFamily: 'Karla',
@@ -736,7 +741,6 @@ class _SendViewState extends ConsumerState<SendView> with WidgetsBindingObserver
                 ),
               ],
             ),
-
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -757,7 +761,9 @@ class _SendViewState extends ConsumerState<SendView> with WidgetsBindingObserver
                       ),
                   icon: Icon(
                     Icons.chevron_right,
-                    color: AppColors.neutral600,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.6),
                     size: 20.sp,
                   ),
                   padding: EdgeInsets.zero,
@@ -804,20 +810,20 @@ class _SendViewState extends ConsumerState<SendView> with WidgetsBindingObserver
                       letterSpacing: -.3,
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.neutral600,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.6),
                     ),
                   ),
                 ],
               ),
               if (state.isRatesLoading) ...[
                 SizedBox(
-                  width: 12.w,
-                  height: 12.w,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.0,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      AppColors.primary600,
-                    ),
+                  width: 20.w,
+                  height: 20.w,
+                  child: LoadingAnimationWidget.horizontalRotatingDots(
+                    color: AppColors.primary600,
+                    size: 20,
                   ),
                 ),
                 // SizedBox(width: 8.w),
@@ -837,7 +843,7 @@ class _SendViewState extends ConsumerState<SendView> with WidgetsBindingObserver
                     fontFamily: 'CabinetGrotesk',
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.neutral800,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ],
@@ -860,21 +866,21 @@ class _SendViewState extends ConsumerState<SendView> with WidgetsBindingObserver
                       letterSpacing: -.3,
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.neutral600,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.6),
                     ),
                   ),
                 ],
               ),
 
               if (state.isRatesLoading) ...[
-                SizedBox(
-                  width: 12.w,
-                  height: 12.w,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.0,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      AppColors.primary600,
-                    ),
+               SizedBox(
+                  width: 20.w,
+                  height: 20.w,
+                  child: LoadingAnimationWidget.horizontalRotatingDots(
+                    color: AppColors.primary600,
+                    size: 20,
                   ),
                 ),
                 // SizedBox(width: 8.w),
@@ -902,7 +908,7 @@ class _SendViewState extends ConsumerState<SendView> with WidgetsBindingObserver
                     fontFamily: 'CabinetGrotesk',
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.neutral800,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ],
@@ -924,21 +930,21 @@ class _SendViewState extends ConsumerState<SendView> with WidgetsBindingObserver
                       letterSpacing: -.3,
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.neutral600,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.6),
                     ),
                   ),
                 ],
               ),
 
               if (state.isRatesLoading) ...[
-                SizedBox(
-                  width: 12.w,
-                  height: 12.w,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.0,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      AppColors.primary600,
-                    ),
+               SizedBox(
+                  width: 20.w,
+                  height: 20.w,
+                  child: LoadingAnimationWidget.horizontalRotatingDots(
+                    color: AppColors.primary600,
+                    size: 20,
                   ),
                 ),
                 // SizedBox(width: 8.w),
@@ -958,13 +964,15 @@ class _SendViewState extends ConsumerState<SendView> with WidgetsBindingObserver
                     fontFamily: 'Karla',
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.neutral800,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ] else ...[
                 Icon(
                   Icons.info_outline,
-                  color: AppColors.neutral500,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.5),
                   size: 20.sp,
                 ),
                 SizedBox(width: 8.w),
@@ -974,7 +982,7 @@ class _SendViewState extends ConsumerState<SendView> with WidgetsBindingObserver
                     fontFamily: 'Karla',
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.neutral800,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ],
@@ -1004,7 +1012,6 @@ class _SendViewState extends ConsumerState<SendView> with WidgetsBindingObserver
       ),
     );
   }
-
 
   void _navigateToRecipientScreen(SendState state) {
     // Get the selected recipient channel to find the network
@@ -1061,7 +1068,9 @@ class _SendViewState extends ConsumerState<SendView> with WidgetsBindingObserver
       isLoading: state.isLoading,
       height: 60.h,
       backgroundColor:
-          !isAmountValid ? AppColors.purple100 : AppColors.purple500,
+          !isAmountValid
+              ? Theme.of(context).colorScheme.onSurface.withOpacity(0.12)
+              : AppColors.purple500,
       textColor: AppColors.neutral0,
       fontFamily: 'Karla',
       letterSpacing: -.8,
@@ -1149,7 +1158,7 @@ class _SendViewState extends ConsumerState<SendView> with WidgetsBindingObserver
                           fontFamily: 'CabinetGrotesk',
                           fontSize: 18.sp,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.neutral800,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       GestureDetector(
@@ -1160,7 +1169,7 @@ class _SendViewState extends ConsumerState<SendView> with WidgetsBindingObserver
                           "assets/icons/pngs/cancelicon.png",
                           height: 22.h,
                           width: 22.w,
-                          color: AppColors.neutral800,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                     ],
@@ -1411,7 +1420,7 @@ class _SendViewState extends ConsumerState<SendView> with WidgetsBindingObserver
                           fontFamily: 'CabinetGrotesk',
                           fontSize: 18.sp,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.neutral800,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       GestureDetector(
@@ -1422,7 +1431,7 @@ class _SendViewState extends ConsumerState<SendView> with WidgetsBindingObserver
                           "assets/icons/pngs/cancelicon.png",
                           height: 22.h,
                           width: 22.w,
-                          color: AppColors.neutral800,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                     ],
@@ -1630,7 +1639,7 @@ class _SendViewState extends ConsumerState<SendView> with WidgetsBindingObserver
                           fontFamily: 'CabinetGrotesk',
                           fontSize: 18.sp,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.neutral800,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       GestureDetector(
@@ -1641,7 +1650,7 @@ class _SendViewState extends ConsumerState<SendView> with WidgetsBindingObserver
                           "assets/icons/pngs/cancelicon.png",
                           height: 22.h,
                           width: 22.w,
-                          color: AppColors.neutral800,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                     ],
@@ -1681,7 +1690,7 @@ class _SendViewState extends ConsumerState<SendView> with WidgetsBindingObserver
                             Text(
                               'Arrives in minutes - ${(channel.settlementType).toString()}',
                               style: AppTypography.bodyLarge.copyWith(
-                                color: AppColors.neutral800,
+                                color: Theme.of(context).colorScheme.onSurface,
                                 fontSize: 12.sp,
                                 fontWeight: FontWeight.w400,
                                 fontFamily: 'Karla',
@@ -1742,6 +1751,4 @@ class _SendViewState extends ConsumerState<SendView> with WidgetsBindingObserver
           ),
     );
   }
-
-
 }

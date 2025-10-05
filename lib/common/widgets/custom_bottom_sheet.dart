@@ -253,7 +253,7 @@ class CustomBottomSheet extends StatelessWidget {
             Text(
               title!,
               style: AppTypography.headlineH4.copyWith(
-                color: AppColors.neutral900,
+                color: Theme.of(context).colorScheme.onSurface,
                 fontWeight: FontWeight.bold,
               ),
             ),

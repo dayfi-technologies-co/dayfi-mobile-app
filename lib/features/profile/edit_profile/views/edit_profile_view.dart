@@ -100,7 +100,9 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
       }
     });
 
-    return Scaffold(
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         scrolledUnderElevation: 0,
@@ -110,7 +112,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
           onPressed: () => Navigator.pop(context),
           icon: Icon(
             Icons.arrow_back_ios,
-            color: AppColors.neutral900,
+            color: Theme.of(context).colorScheme.onSurface,
             size: 20.sp,
           ),
         ),
@@ -204,7 +206,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
           ),
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildFirstNameField(
@@ -410,7 +412,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
           backgroundColor:
               state.isFormValid && state.isDirty
                   ? AppColors.purple500
-                  : AppColors.purple100,
+                  : Theme.of(context).colorScheme.onSurface.withOpacity(0.12),
           height: 60.h,
           textColor: AppColors.neutral0,
           fontFamily: 'Karla',

@@ -29,12 +29,14 @@ class _SplashViewState extends ConsumerState<SplashView> {
       final firstTime = await _secureStorage.read(StorageKeys.isFirstTime);
       final token = await _secureStorage.read(StorageKeys.token);
       final passcode = await _secureStorage.read(StorageKeys.passcode);
+      final biometricSetupCompleted = await _secureStorage.read(StorageKeys.biometricSetupCompleted);
 
       final bool isFirstTimeUser = firstTime.isEmpty || firstTime == 'true';
       final String userToken = token;
       final String userPasscode = passcode;
+      final bool hasCompletedBiometricSetup = biometricSetupCompleted == 'true';
 
-      print("Navigating with: $isFirstTimeUser, $userToken, $userPasscode");
+      print("Navigating with: $isFirstTimeUser, $userToken, $userPasscode, $hasCompletedBiometricSetup");
 
       // Add a small delay for splash screen effect
       await Future.delayed(const Duration(milliseconds: 1500));
@@ -50,6 +52,9 @@ class _SplashViewState extends ConsumerState<SplashView> {
           Navigator.of(
             context,
           ).pushReplacementNamed(AppRoute.loginView, arguments: false);
+        } else if (!hasCompletedBiometricSetup) {
+          // If user has token and passcode but hasn't completed biometric setup, go to biometric setup
+          Navigator.of(context).pushReplacementNamed(AppRoute.biometricSetupView);
         } else {
           Navigator.of(context).pushReplacementNamed(AppRoute.passcodeView);
         }
@@ -110,7 +115,7 @@ class _SplashViewState extends ConsumerState<SplashView> {
                       fontFamily: 'Boldonse',
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w900,
-                      color: AppColors.neutral900,
+               color: AppColors.neutral900,
                       height: 1.3,
                     ),
                   ),

@@ -64,7 +64,7 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
                   // User avatar
                   CircleAvatar(
                         radius: 40,
-                        backgroundColor: Colors.white,
+                        backgroundColor: Theme.of(context).colorScheme.surface,
                         // backgroundImage: const NetworkImage(
                         //   'https://avatar.iran.liara.run/public/52',
                         // ),
@@ -111,7 +111,7 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
                         child: Text(
                           'Enter your 4-digit passcode to continue.',
                           style: TextStyle(
-                            color: AppColors.neutral800,
+                            // color: AppColors.neutral800,
                             fontSize: 16.sp,
                             fontWeight: FontWeight.w400, //
                             fontFamily: 'Karla',
@@ -339,9 +339,9 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
     return GestureDetector(
           onTap: () => notifier.addDigit(number),
           child: Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
             ),
             child: Center(
               child: Text(
@@ -350,7 +350,7 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
                   fontSize: 32.00,
                   fontFamily: 'CabinetGrotesk',
                   fontWeight: FontWeight.w400,
-                  color: AppColors.neutral900,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             ),

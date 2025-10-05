@@ -20,6 +20,7 @@ class StorageKeys {
   static const String themeMode = "themeMode";
   static const String languageCode = "languageCode";
   static const String biometricEnabled = "biometricEnabled";
+  static const String biometricSetupCompleted = "biometricSetupCompleted";
   static const String accountBalance = "accountBalance";
   static const String lastLogin = "lastLogin";
 }

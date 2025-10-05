@@ -172,7 +172,7 @@ class _MainViewState extends ConsumerState<MainView> {
   Widget _buildWelcomeBottomSheet() {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.neutral0,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(16.r),
           topRight: Radius.circular(16.r),
@@ -189,10 +189,9 @@ class _MainViewState extends ConsumerState<MainView> {
               children: [
                 GestureDetector(
                   onTap: () => _dismissWelcomeBottomSheet(context),
-
                   child: Icon(
                     Icons.close,
-                    color: AppColors.neutral800,
+                    color: Theme.of(context).colorScheme.onSurface,
                     size: 28.w,
                   ),
                 ),
@@ -208,7 +207,7 @@ class _MainViewState extends ConsumerState<MainView> {
                 fontFamily: 'CabinetGrotesk',
                 fontSize: 28.sp,
                 fontWeight: FontWeight.w700,
-                color: AppColors.neutral900,
+                color: Theme.of(context).colorScheme.onSurface,
                 height: 1.2,
               ),
               textAlign: TextAlign.center,
@@ -292,13 +291,13 @@ class _MainViewState extends ConsumerState<MainView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+                Text(
                 title,
                 style: AppTypography.headlineSmall.copyWith(
                   fontFamily: 'CabinetGrotesk',
                   fontSize: 18.sp,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.neutral900,
+                  color: Theme.of(context).colorScheme.onSurface,
                   height: 1.3,
                 ),
               ),

@@ -6,6 +6,7 @@ import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/common/widgets/text_fields/pin_text_field.dart';
 import 'package:dayfi/features/auth/verify_email/vm/verify_email_viewmodel.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class VerifyEmailView extends ConsumerWidget {
   final bool isSignUp;
@@ -203,14 +204,11 @@ class VerifyEmailView extends ConsumerWidget {
                                   children: [
                                     if (verifyState.isResending) ...[
                                       SizedBox(
-                                        width: 16.r,
-                                        height: 16.r,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 1.50,
-                                          valueColor:
-                                              AlwaysStoppedAnimation<Color>(
-                                                AppColors.neutral0,
-                                              ),
+                                        width: 20.r,
+                                        height: 20.r,
+                                        child: LoadingAnimationWidget.horizontalRotatingDots(
+                                          color: AppColors.neutral0,
+                                          size: 20,
                                         ),
                                       ),
                                       SizedBox(width: 8.w),

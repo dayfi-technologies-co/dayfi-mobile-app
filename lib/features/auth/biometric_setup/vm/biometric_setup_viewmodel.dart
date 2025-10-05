@@ -6,6 +6,7 @@ import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/services/local/biometric_service.dart';
 import 'package:dayfi/services/local/secure_storage.dart';
+import 'package:dayfi/common/constants/storage_keys.dart';
 
 class BiometricSetupState {
   final bool isAvailable;
@@ -146,6 +147,8 @@ class BiometricSetupNotifier extends StateNotifier<BiometricSetupState> {
       if (authenticated) {
         // Save biometric preference
         await _secureStorage.write('biometric_enabled', 'true');
+        // Mark biometric setup as completed
+        await _secureStorage.write(StorageKeys.biometricSetupCompleted, 'true');
         
         AppLogger.info('Biometric authentication enabled successfully');
         
@@ -191,6 +194,8 @@ class BiometricSetupNotifier extends StateNotifier<BiometricSetupState> {
       
       // Save preference to skip biometrics
       await _secureStorage.write('biometric_enabled', 'false');
+      // Mark biometric setup as completed (even though skipped)
+      await _secureStorage.write(StorageKeys.biometricSetupCompleted, 'true');
       
       state = state.copyWith(isEnabled: false);
       

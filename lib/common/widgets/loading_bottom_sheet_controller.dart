@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/gen/assets.gen.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class _LoadingModalWidget extends StatefulWidget {
   final String title;
@@ -302,10 +303,9 @@ class _LoadingModalState extends State<_LoadingModalWidget>
       child: AnimatedBuilder(
         animation: _spinnerController,
         builder: (context, child) {
-          return CircularProgressIndicator(
-            strokeWidth: 3.0,
-            backgroundColor: AppColors.neutral950.withOpacity(0.1),
-            valueColor: AlwaysStoppedAnimation<Color>(AppColors.neutral950),
+          return LoadingAnimationWidget.horizontalRotatingDots(
+            color: AppColors.neutral950,
+            size: 20,
           );
         },
       ),

@@ -1,11 +1,16 @@
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/common/widgets/buttons/secondary_button.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
+import 'package:dayfi/features/legal/terms_of_use.dart';
+import 'package:dayfi/features/legal/privacy_notice.dart';
+import 'package:intercom_flutter/intercom_flutter.dart';
+import 'package:dayfi/common/widgets/top_snackbar.dart';
 
 // Constants for consistent styling
 class _ProfileConstants {
@@ -149,8 +154,22 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
     // TODO: Navigate to change PIN
   }
 
-  void _navigateToContactUs() {
-    // TODO: Navigate to contact us
+  void _navigateToContactUs() async {
+    try {
+      debugPrint('Attempting to open Intercom messenger...');
+      await Intercom.instance.displayMessenger();
+      debugPrint('Intercom messenger opened successfully');
+    } catch (e) {
+      debugPrint('Intercom error: $e');
+      // Fallback in case Intercom fails
+      if (mounted) {
+        TopSnackbar.show(
+          context,
+          message: 'Unable to open support chat. Please try again later.',
+          isError: true,
+        );
+      }
+    }
   }
 
   void _navigateToFAQs() {
@@ -158,11 +177,21 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
   }
 
   void _navigateToTermsAndConditions() {
-    // TODO: Navigate to terms and conditions
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const TermsOfUseView(),
+      ),
+    );
   }
 
   void _navigateToPrivacyNotice() {
-    // TODO: Navigate to privacy notice
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const PrivacyNoticeView(),
+      ),
+    );
   }
 
   @override
@@ -249,7 +278,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
         decoration: BoxDecoration(
-          color: AppColors.neutral0,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(
             _ProfileConstants.tierContainerBorderRadius.r,
           ),
@@ -280,17 +309,17 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
 
   // User Name Widget
   Widget _buildUserName(ProfileState profileState) {
-    return Text(
-      profileState.userName,
-      style: AppTypography.headlineSmall.copyWith(
-        color: AppColors.neutral900,
-        fontSize: 30.sp,
-        fontWeight: FontWeight.w600,
-        fontFamily: 'CabinetGrotesk',
-        height: .95,
-      ),
-      textAlign: TextAlign.center,
-    );
+    return       Text(
+        profileState.userName,
+        style: AppTypography.headlineSmall.copyWith(
+          color: Theme.of(context).colorScheme.onSurface,
+          fontSize: 30.sp,
+          fontWeight: FontWeight.w600,
+          fontFamily: 'CabinetGrotesk',
+          height: .95,
+        ),
+        textAlign: TextAlign.center,
+      );
   }
 
   // Content Section Widget
@@ -429,7 +458,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
       decoration: BoxDecoration(
-        color: AppColors.neutral0,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(
           _ProfileConstants.containerBorderRadius.r,
         ),
@@ -495,7 +524,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
       decoration: BoxDecoration(
-        color: AppColors.neutral0,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(
           _ProfileConstants.containerBorderRadius.r,
         ),
@@ -554,7 +583,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
         color:
             iconColor == AppColors.error500
                 ? AppColors.error500
-                : AppColors.neutral800,
+                : Theme.of(context).colorScheme.onSurface,
         fontSize: 18.sp,
         fontWeight: FontWeight.w400,
         letterSpacing: -1,
@@ -587,7 +616,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
           children: [
             _buildIconContainer(iconColor),
             SizedBox(width: 16.w),
-            Expanded(child: _buildItemText(title, AppColors.neutral800)),
+            Expanded(child: _buildItemText(title, Theme.of(context).colorScheme.onSurface)),
             _buildActionBadge(actionText, actionColor),
             SizedBox(width: 8.w),
             _buildChevronIcon(),
@@ -631,7 +660,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
   // Logout Dialog Widget
   Widget _buildLogoutDialog() {
     return Dialog(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
       child: Container(
         padding: EdgeInsets.all(28.w),
@@ -675,17 +704,17 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
 
   // Dialog Title
   Widget _buildDialogTitle() {
-    return Text(
-      'Are you sure you want to logout?',
-      style: TextStyle(
-        fontFamily: 'CabinetGrotesk',
-        fontSize: 20.sp,
-        fontWeight: FontWeight.w400,
-        color: AppColors.neutral900,
-        letterSpacing: -0.5,
-      ),
-      textAlign: TextAlign.center,
-    );
+    return       Text(
+        'Are you sure you want to logout?',
+        style: TextStyle(
+          fontFamily: 'CabinetGrotesk',
+          fontSize: 20.sp,
+          fontWeight: FontWeight.w400,
+          color: Theme.of(context).colorScheme.onSurface,
+          letterSpacing: -0.5,
+        ),
+        textAlign: TextAlign.center,
+      );
   }
 
   // Dialog Buttons
@@ -748,7 +777,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
               'DayFi is powered by Yellow Card in partnership with Smile ID.',
               style: AppTypography.bodySmall.copyWith(
                 fontFamily: 'Karla',
-                color: AppColors.neutral800,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.75),
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w400,
                 letterSpacing: -.6,
@@ -763,7 +792,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
               'Financial services are regulated by the relevant authorities in their operating regions.',
               style: AppTypography.bodySmall.copyWith(
                 fontFamily: 'Karla',
-                color: AppColors.neutral800,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.75),
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w400,
                 letterSpacing: -.6,
@@ -778,7 +807,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
               'Version 1.0.0',
               style: AppTypography.bodySmall.copyWith(
                 fontFamily: 'Karla',
-                color: AppColors.neutral800,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.75),
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w400,
                 letterSpacing: -.6,

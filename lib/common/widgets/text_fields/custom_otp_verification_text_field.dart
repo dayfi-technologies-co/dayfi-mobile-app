@@ -31,7 +31,7 @@ class OtpVerificationTextField extends StatelessWidget {
 
     final focusedDecoration = defaultDecoration.copyWith(
       color: Colors.transparent,
-      border: Border.all(color: AppColors.neutral900, width: 1.5),
+      border: Border.all(color: Theme.of(context).colorScheme.onSurface, width: 1.5),
     );
 
     final submittedDecoration = defaultDecoration.copyWith(

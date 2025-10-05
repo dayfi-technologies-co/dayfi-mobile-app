@@ -134,6 +134,7 @@ class SendViewModel extends StateNotifier<SendState> {
       print('Failed to fetch currencies: $e');
     } finally {
       state = state.copyWith(isLoading: false);
+      _calculateTotal(); // Calculate initial total
     }
   }
 
@@ -362,6 +363,7 @@ class SendViewModel extends StateNotifier<SendState> {
     print('🔄 updateSendAmount called with: $amount');
     state = state.copyWith(sendAmount: amount);
     _updateReceiveAmountFromSend();
+    _calculateTotal();
   }
 
   void updateReceiveAmount(String amount) {
@@ -412,6 +414,17 @@ class SendViewModel extends StateNotifier<SendState> {
 
   void updateSenderDeliveryMethod(String method) {
     state = state.copyWith(selectedSenderDeliveryMethod: method);
+  }
+
+  void _calculateTotal() {
+    final sendAmount = double.tryParse(state.sendAmount.replaceAll(RegExp(r'[^\d.]'), ''));
+    final fee = double.tryParse(state.fee.replaceAll(RegExp(r'[^\d.]'), ''));
+    
+    if (sendAmount != null && fee != null) {
+      final total = sendAmount + fee;
+      state = state.copyWith(totalToPay: total.toStringAsFixed(2));
+      print('💰 Calculated total: $sendAmount + $fee = $total');
+    }
   }
 
   // Getter to access the current exchange rate

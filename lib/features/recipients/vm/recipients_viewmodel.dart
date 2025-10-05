@@ -1,162 +1,90 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dayfi/features/recipients/models/recipient_model.dart';
+import 'package:dayfi/models/wallet_transaction.dart';
+import 'package:dayfi/services/remote/wallet_service.dart';
+import 'package:dayfi/app_locator.dart';
 
 class RecipientsState {
-  final List<Recipient> recipients;
-  final List<Recipient> filteredRecipients;
+  final List<Beneficiary> beneficiaries;
+  final List<Beneficiary> filteredBeneficiaries;
   final bool isLoading;
+  final String? errorMessage;
   final String searchQuery;
 
-  const RecipientsState({
-    this.recipients = const [],
-    this.filteredRecipients = const [],
+  RecipientsState({
+    this.beneficiaries = const [],
+    this.filteredBeneficiaries = const [],
     this.isLoading = false,
+    this.errorMessage,
     this.searchQuery = '',
   });
 
   RecipientsState copyWith({
-    List<Recipient>? recipients,
-    List<Recipient>? filteredRecipients,
+    List<Beneficiary>? beneficiaries,
+    List<Beneficiary>? filteredBeneficiaries,
     bool? isLoading,
+    String? errorMessage,
     String? searchQuery,
   }) {
     return RecipientsState(
-      recipients: recipients ?? this.recipients,
-      filteredRecipients: filteredRecipients ?? this.filteredRecipients,
+      beneficiaries: beneficiaries ?? this.beneficiaries,
+      filteredBeneficiaries: filteredBeneficiaries ?? this.filteredBeneficiaries,
       isLoading: isLoading ?? this.isLoading,
+      errorMessage: errorMessage,
       searchQuery: searchQuery ?? this.searchQuery,
     );
   }
 }
 
-class RecipientsViewModel extends StateNotifier<RecipientsState> {
-  RecipientsViewModel() : super(const RecipientsState());
+class RecipientsNotifier extends StateNotifier<RecipientsState> {
+  final WalletService _walletService;
 
-  Future<void> loadRecipients() async {
-    state = state.copyWith(isLoading: true);
+  RecipientsNotifier(this._walletService) : super(RecipientsState());
+
+  Future<void> loadBeneficiaries() async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
     
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 1));
-    
-    // Mock data - in real app, this would come from API
-    final mockRecipients = [
-      Recipient(
-        id: '1',
-        name: 'IFEOLUWA DORCAS OLUWAFEMI',
-        bankName: 'Opay',
-        accountNumber: '7042441564',
-        email: 'ifeoluwad@email.com',
-        createdAt: DateTime.now().subtract(const Duration(days: 5)),
-      ),
-      Recipient(
-        id: '2',
-        name: 'KOLAWOLE PAUL OLUWAFEMI',
-        bankName: 'Opay',
-        accountNumber: '8131208415',
-        email: 'kolawolep@email.com',
-        createdAt: DateTime.now().subtract(const Duration(days: 3)),
-      ),
-      Recipient(
-        id: '3',
-        name: 'ADEBAYO JOHNSON',
-        bankName: 'GTBank',
-        accountNumber: '0123456789',
-        email: 'adebayoj@email.com',
-        createdAt: DateTime.now().subtract(const Duration(days: 10)),
-      ),
-      Recipient(
-        id: '4',
-        name: 'FATIMA IBRAHIM',
-        bankName: 'Access Bank',
-        accountNumber: '1234567890',
-        email: 'fatimai@email.com',
-        createdAt: DateTime.now().subtract(const Duration(days: 7)),
-      ),
-      Recipient(
-        id: '5',
-        name: 'CHIDI OKAFOR',
-        bankName: 'First Bank',
-        accountNumber: '2345678901',
-        email: 'chidio@email.com',
-        createdAt: DateTime.now().subtract(const Duration(days: 2)),
-      ),
-    ];
-    
-    state = state.copyWith(
-      recipients: mockRecipients,
-      filteredRecipients: mockRecipients,
-      isLoading: false,
-    );
+    try {
+      final beneficiaries = await _walletService.getUniqueBeneficiaries();
+      state = state.copyWith(
+        beneficiaries: beneficiaries,
+        filteredBeneficiaries: beneficiaries,
+        isLoading: false,
+      );
+    } catch (e) {
+      print('Error loading beneficiaries: $e');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Failed to load recipients: ${e.toString()}',
+      );
+    }
   }
 
-  void searchRecipients(String query) {
+  void searchBeneficiaries(String query) {
     if (query.isEmpty) {
       state = state.copyWith(
         searchQuery: query,
-        filteredRecipients: state.recipients,
+        filteredBeneficiaries: state.beneficiaries,
       );
       return;
     }
 
-    final filtered = state.recipients.where((recipient) {
-      return recipient.name.toLowerCase().contains(query.toLowerCase()) ||
-             recipient.bankName.toLowerCase().contains(query.toLowerCase()) ||
-             recipient.accountNumber.contains(query) ||
-             (recipient.email?.toLowerCase().contains(query.toLowerCase()) ?? false);
+    final filtered = state.beneficiaries.where((beneficiary) {
+      return beneficiary.name.toLowerCase().contains(query.toLowerCase()) ||
+             beneficiary.phone.contains(query) ||
+             beneficiary.email.toLowerCase().contains(query.toLowerCase());
     }).toList();
 
     state = state.copyWith(
       searchQuery: query,
-      filteredRecipients: filtered,
+      filteredBeneficiaries: filtered,
     );
   }
 
-  void addRecipient(Recipient recipient) {
-    final updatedRecipients = [...state.recipients, recipient];
-    state = state.copyWith(
-      recipients: updatedRecipients,
-      filteredRecipients: _filterRecipients(updatedRecipients, state.searchQuery),
-    );
-  }
-
-  void updateRecipient(Recipient recipient) {
-    final updatedRecipients = state.recipients.map((r) {
-      return r.id == recipient.id ? recipient : r;
-    }).toList();
-    
-    state = state.copyWith(
-      recipients: updatedRecipients,
-      filteredRecipients: _filterRecipients(updatedRecipients, state.searchQuery),
-    );
-  }
-
-  void deleteRecipient(String recipientId) {
-    final updatedRecipients = state.recipients
-        .where((r) => r.id != recipientId)
-        .toList();
-    
-    state = state.copyWith(
-      recipients: updatedRecipients,
-      filteredRecipients: _filterRecipients(updatedRecipients, state.searchQuery),
-    );
-  }
-
-  List<Recipient> _filterRecipients(List<Recipient> recipients, String query) {
-    if (query.isEmpty) return recipients;
-    
-    return recipients.where((recipient) {
-      return recipient.name.toLowerCase().contains(query.toLowerCase()) ||
-             recipient.bankName.toLowerCase().contains(query.toLowerCase()) ||
-             recipient.accountNumber.contains(query) ||
-             (recipient.email?.toLowerCase().contains(query.toLowerCase()) ?? false);
-    }).toList();
-  }
-
-  void refreshRecipients() {
-    loadRecipients();
+  void clearError() {
+    state = state.copyWith(errorMessage: null);
   }
 }
 
-final recipientsViewModelProvider = StateNotifierProvider<RecipientsViewModel, RecipientsState>((ref) {
-  return RecipientsViewModel();
+final recipientsProvider = StateNotifierProvider<RecipientsNotifier, RecipientsState>((ref) {
+  return RecipientsNotifier(locator<WalletService>());
 });

@@ -1,144 +1,174 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dayfi/features/transactions/models/transaction_model.dart';
+import 'package:dayfi/models/wallet_transaction.dart';
+import 'package:dayfi/services/remote/wallet_service.dart';
+import 'package:dayfi/app_locator.dart';
 
 class TransactionsState {
-  final List<Transaction> transactions;
-  final List<Transaction> filteredTransactions;
+  final List<WalletTransaction> transactions;
+  final List<TransactionGroup> groupedTransactions;
   final bool isLoading;
+  final String? errorMessage;
   final String searchQuery;
 
-  const TransactionsState({
+  TransactionsState({
     this.transactions = const [],
-    this.filteredTransactions = const [],
+    this.groupedTransactions = const [],
     this.isLoading = false,
+    this.errorMessage,
     this.searchQuery = '',
   });
 
   TransactionsState copyWith({
-    List<Transaction>? transactions,
-    List<Transaction>? filteredTransactions,
+    List<WalletTransaction>? transactions,
+    List<TransactionGroup>? groupedTransactions,
     bool? isLoading,
+    String? errorMessage,
     String? searchQuery,
   }) {
     return TransactionsState(
       transactions: transactions ?? this.transactions,
-      filteredTransactions: filteredTransactions ?? this.filteredTransactions,
+      groupedTransactions: groupedTransactions ?? this.groupedTransactions,
       isLoading: isLoading ?? this.isLoading,
+      errorMessage: errorMessage,
       searchQuery: searchQuery ?? this.searchQuery,
     );
   }
 }
 
-class TransactionsViewModel extends StateNotifier<TransactionsState> {
-  TransactionsViewModel() : super(const TransactionsState());
+class TransactionGroup {
+  final String date;
+  final List<WalletTransaction> transactions;
+
+  TransactionGroup({
+    required this.date,
+    required this.transactions,
+  });
+}
+
+class TransactionsNotifier extends StateNotifier<TransactionsState> {
+  final WalletService _walletService;
+
+  TransactionsNotifier(this._walletService) : super(TransactionsState());
 
   Future<void> loadTransactions() async {
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true, errorMessage: null);
     
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 1));
-    
-    // Mock data - in real app, this would come from API
-    final mockTransactions = [
-      Transaction(
-        id: '1',
-        recipientName: 'IFEOLUWA DORCAS OLUWAFEMI',
-        amount: 20001,
-        date: DateTime(2025, 9, 26),
-        status: TransactionStatus.requiresAction,
-        reference: 'TXN001',
-        description: 'School fees payment',
-      ),
-      Transaction(
-        id: '2',
-        recipientName: 'KOLAWOLE PAUL OLUWAFEMI',
-        amount: 20001,
-        date: DateTime(2025, 9, 24),
-        status: TransactionStatus.requiresAction,
-        reference: 'TXN002',
-        description: 'Living expenses',
-      ),
-      Transaction(
-        id: '3',
-        recipientName: 'ADEBAYO JOHNSON',
-        amount: 15000,
-        date: DateTime(2025, 9, 20),
-        status: TransactionStatus.completed,
-        reference: 'TXN003',
-        description: 'Book purchase',
-      ),
-      Transaction(
-        id: '4',
-        recipientName: 'FATIMA IBRAHIM',
-        amount: 25000,
-        date: DateTime(2025, 9, 18),
-        status: TransactionStatus.completed,
-        reference: 'TXN004',
-        description: 'Tuition fees',
-      ),
-      Transaction(
-        id: '5',
-        recipientName: 'CHIDI OKAFOR',
-        amount: 12000,
-        date: DateTime(2025, 9, 15),
-        status: TransactionStatus.failed,
-        reference: 'TXN005',
-        description: 'Accommodation',
-      ),
-      Transaction(
-        id: '6',
-        recipientName: 'AMINA YUSUF',
-        amount: 18000,
-        date: DateTime(2025, 9, 12),
-        status: TransactionStatus.pending,
-        reference: 'TXN006',
-        description: 'Medical expenses',
-      ),
-    ];
-    
-    state = state.copyWith(
-      transactions: mockTransactions,
-      filteredTransactions: mockTransactions,
-      isLoading: false,
-    );
+    try {
+      final response = await _walletService.getWalletTransactions();
+      print('🔍 Transactions loaded: ${response.data.transactions.length}');
+      for (var transaction in response.data.transactions) {
+        print('Transaction: ${transaction.id} | Amount: ${transaction.sendAmount} | Status: ${transaction.status}');
+      }
+      
+      final groupedTransactions = _groupTransactionsByDate(response.data.transactions);
+      
+      state = state.copyWith(
+        transactions: response.data.transactions,
+        groupedTransactions: groupedTransactions,
+        isLoading: false,
+      );
+    } catch (e) {
+      print('Error loading transactions: $e');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Failed to load transactions: ${e.toString()}',
+      );
+    }
   }
 
   void searchTransactions(String query) {
     if (query.isEmpty) {
+      final groupedTransactions = _groupTransactionsByDate(state.transactions);
       state = state.copyWith(
         searchQuery: query,
-        filteredTransactions: state.transactions,
+        groupedTransactions: groupedTransactions,
       );
       return;
     }
 
     final filtered = state.transactions.where((transaction) {
-      return transaction.recipientName.toLowerCase().contains(query.toLowerCase()) ||
-             transaction.reference?.toLowerCase().contains(query.toLowerCase()) == true ||
-             transaction.description?.toLowerCase().contains(query.toLowerCase()) == true;
+      return transaction.beneficiary.name.toLowerCase().contains(query.toLowerCase()) ||
+             transaction.beneficiary.phone.contains(query) ||
+             transaction.beneficiary.email.toLowerCase().contains(query.toLowerCase()) ||
+             transaction.status.toLowerCase().contains(query.toLowerCase());
     }).toList();
+
+    final groupedTransactions = _groupTransactionsByDate(filtered);
 
     state = state.copyWith(
       searchQuery: query,
-      filteredTransactions: filtered,
+      groupedTransactions: groupedTransactions,
     );
   }
 
-  void refreshTransactions() {
-    loadTransactions();
+  List<TransactionGroup> _groupTransactionsByDate(List<WalletTransaction> transactions) {
+    final Map<String, List<WalletTransaction>> grouped = {};
+    
+    for (final transaction in transactions) {
+      final date = _formatDate(transaction.timestamp);
+      if (!grouped.containsKey(date)) {
+        grouped[date] = [];
+      }
+      grouped[date]!.add(transaction);
+    }
+
+    return grouped.entries
+        .map((entry) => TransactionGroup(
+              date: entry.key,
+              transactions: entry.value,
+            ))
+        .toList()
+      ..sort((a, b) => b.date.compareTo(a.date)); // Sort by date descending
   }
 
-  void retryTransaction(String transactionId) {
-    // TODO: Implement retry logic
-    print('Retrying transaction: $transactionId');
+  String _formatDate(String timestamp) {
+    try {
+      final date = DateTime.parse(timestamp);
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final yesterday = today.subtract(const Duration(days: 1));
+      final transactionDate = DateTime(date.year, date.month, date.day);
+
+      if (transactionDate == today) {
+        return 'Today';
+      } else if (transactionDate == yesterday) {
+        return 'Yesterday';
+      } else {
+        final months = [
+          'January', 'February', 'March', 'April', 'May', 'June',
+          'July', 'August', 'September', 'October', 'November', 'December'
+        ];
+        final day = date.day;
+        final month = months[date.month - 1];
+        final year = date.year;
+        return '$day${_getOrdinalSuffix(day)} $month $year';
+      }
+    } catch (e) {
+      return 'Unknown Date';
+    }
   }
 
-  void cancelTransaction(String transactionId) {
-    // TODO: Implement cancel logic
-    print('Cancelling transaction: $transactionId');
+  String _getOrdinalSuffix(int day) {
+    if (day >= 11 && day <= 13) {
+      return 'th';
+    }
+    switch (day % 10) {
+      case 1:
+        return 'st';
+      case 2:
+        return 'nd';
+      case 3:
+        return 'rd';
+      default:
+        return 'th';
+    }
+  }
+
+  void clearError() {
+    state = state.copyWith(errorMessage: null);
   }
 }
 
-final transactionsViewModelProvider = StateNotifierProvider<TransactionsViewModel, TransactionsState>((ref) {
-  return TransactionsViewModel();
+final transactionsProvider = StateNotifierProvider<TransactionsNotifier, TransactionsState>((ref) {
+  return TransactionsNotifier(locator<WalletService>());
 });

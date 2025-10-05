@@ -65,7 +65,7 @@ class AmountCustomTextField extends StatelessWidget {
           label!,
           style: theme.textTheme.bodySmall?.copyWith(
             fontFamily: 'Karla',
-            fontSize: 12,
+            fontSize: 15,
             fontWeight: FontWeight.w600,
             letterSpacing: -.1,
             height: 1.450,
@@ -95,7 +95,7 @@ class AmountCustomTextField extends StatelessWidget {
               formatter ?? [FilteringTextInputFormatter.singleLineFormatter],
           style: TextStyle(
             fontFamily: 'Karla', //
-            fontSize: 18,
+            fontSize: 15,
             fontWeight: FontWeight.w600,
             height: 1.450,
             letterSpacing: -.1,
@@ -106,7 +106,7 @@ class AmountCustomTextField extends StatelessWidget {
             hintText: hintText,
             hintStyle: TextStyle(
               fontFamily: 'Karla', //
-              fontSize: 16,
+              fontSize: 15,
               fontWeight: FontWeight.w600,
               height: 1.450,
               letterSpacing: -.1,
@@ -115,7 +115,7 @@ class AmountCustomTextField extends StatelessWidget {
             filled: true,
             labelText: labelText,
             labelStyle: TextStyle(
-              fontSize: 16,
+              fontSize: 14,
               fontWeight: FontWeight.w600,
               letterSpacing: -.01,
               fontFamily: "Karla",
