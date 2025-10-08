@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:developer';
 import 'package:dayfi/flavors.dart';
 import 'package:dayfi/models/wallet_transaction.dart';
 import 'package:dayfi/services/remote/network/network_service.dart';
@@ -36,44 +35,27 @@ class WalletService {
         queryParams: queryParams,
       );
 
-      log('WalletTransactions raw response: ${response.data}');
-      log('Response data type: ${response.data.runtimeType}');
-
       // Convert response.data to Map<String, dynamic>
       Map<String, dynamic> responseData;
       
       if (response.data is Map<String, dynamic>) {
         responseData = response.data as Map<String, dynamic>;
-        log('Response data is already Map: $responseData');
       } else if (response.data is String) {
-        log('Response data is String, parsing JSON...');
         try {
           responseData = json.decode(response.data as String) as Map<String, dynamic>;
-          log('Successfully parsed JSON: $responseData');
         } catch (jsonError) {
-          log('JSON decode error: $jsonError');
-          log('Raw string data: ${response.data}');
           throw Exception('Failed to parse JSON response: $jsonError');
         }
       } else {
-        log('Unexpected response type: ${response.data.runtimeType}');
-        log('Response data: ${response.data}');
         throw Exception('Unexpected response type: ${response.data.runtimeType}');
       }
-
-      log('Final response data: $responseData');
       
       try {
-        final result = WalletTransactionResponse.fromJson(responseData);
-        log('Successfully created WalletTransactionResponse');
-        return result;
+        return WalletTransactionResponse.fromJson(responseData);
       } catch (parseError) {
-        log('Failed to parse WalletTransactionResponse: $parseError');
-        log('Response data structure: $responseData');
         throw Exception('Failed to parse wallet transaction response: $parseError');
       }
     } catch (e) {
-      log('Error in getWalletTransactions: $e');
       throw Exception('Failed to fetch wallet transactions: $e');
     }
   }

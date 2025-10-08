@@ -1,12 +1,13 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/services/local/secure_storage.dart';
-// import 'package:dayfi/services/remote/auth_service.dart';
+import 'package:dayfi/services/remote/auth_service.dart';
+import 'package:dayfi/services/local/biometric_service.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/models/user_model.dart';
 import 'package:dayfi/common/constants/storage_keys.dart';
+import 'package:dayfi/common/utils/app_logger.dart';
 
 class PasscodeState {
   final String passcode;
@@ -15,6 +16,7 @@ class PasscodeState {
   final bool isLoading;
   final User? user;
   final String errorMessage;
+  final String biometricType;
 
   const PasscodeState({
     this.passcode = '',
@@ -23,10 +25,11 @@ class PasscodeState {
     this.isLoading = false,
     this.user,
     this.errorMessage = '',
+    this.biometricType = '',
   });
 
-  bool get hasFaceId => false; // Simplified for now
-  bool get hasFingerprint => false; // Simplified for now
+  bool get hasFaceId => isBiometricAvailable && biometricType.contains('Face');
+  bool get hasFingerprint => isBiometricAvailable && biometricType.contains('Fingerprint');
 
   PasscodeState copyWith({
     String? passcode,
@@ -35,6 +38,7 @@ class PasscodeState {
     bool? isLoading,
     User? user,
     String? errorMessage,
+    String? biometricType,
   }) {
     return PasscodeState(
       passcode: passcode ?? this.passcode,
@@ -43,13 +47,14 @@ class PasscodeState {
       isLoading: isLoading ?? this.isLoading,
       user: user ?? this.user,
       errorMessage: errorMessage ?? this.errorMessage,
+      biometricType: biometricType ?? this.biometricType,
     );
   }
 }
 
 class PasscodeNotifier extends StateNotifier<PasscodeState> {
   final SecureStorageService _secureStorage = locator<SecureStorageService>();
-  // final AuthService _authService = locator<AuthService>();
+  final AuthService _authService = locator<AuthService>();
 
   PasscodeNotifier() : super(const PasscodeState());
 
@@ -60,12 +65,46 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
         final user = User.fromJson(json.decode(userJson));
         state = state.copyWith(user: user);
       }
-      // Simplified biometric check - always false for now
-      state = state.copyWith(isBiometricAvailable: false);
+      
+      // Check if biometric authentication is available and enabled
+      await _checkBiometricAvailability();
     } catch (e) {
-      if (kDebugMode) {
-        print('Error loading user: $e');
+      AppLogger.error('Error loading user: $e');
+      // Error loading user - handled by UI state
+    }
+  }
+
+  Future<void> _checkBiometricAvailability() async {
+    try {
+      // Check if biometrics are available on device
+      final bool isAvailable = await BiometricService.isBiometricAvailable();
+      
+      if (isAvailable) {
+        // Check if biometrics are enabled for this app
+        final String? biometricEnabled = await _secureStorage.read('biometric_enabled');
+        final bool isEnabled = biometricEnabled == 'true';
+        
+        if (isEnabled) {
+          // Get biometric type for display
+          final String biometricType = await BiometricService.getPrimaryBiometricType();
+          
+          state = state.copyWith(
+            isBiometricAvailable: true,
+            biometricType: biometricType,
+          );
+          
+          AppLogger.info('Biometric authentication available: $biometricType');
+        } else {
+          state = state.copyWith(isBiometricAvailable: false);
+          AppLogger.info('Biometric authentication not enabled for this app');
+        }
+      } else {
+        state = state.copyWith(isBiometricAvailable: false);
+        AppLogger.info('Biometric authentication not available on device');
       }
+    } catch (e) {
+      AppLogger.error('Error checking biometric availability: $e');
+      state = state.copyWith(isBiometricAvailable: false);
     }
   }
 
@@ -86,17 +125,36 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
     }
   }
 
-  // Simplified biometric authentication - always returns false for now
   Future<bool> authenticateWithBiometrics() async {
+    if (!state.isBiometricAvailable) {
+      _showErrorSnackBar('Biometric authentication is not available');
+      return false;
+    }
+
     state = state.copyWith(isVerifying: true);
 
     try {
-      await Future.delayed(const Duration(milliseconds: 300));
+      AppLogger.info('Starting biometric authentication...');
       
-      // For now, always return false since local_auth is not available
-      return false;
+      // Authenticate using biometrics with platform-specific messaging
+      final bool authenticated = await BiometricService.authenticateWithPlatformMessaging(
+        customReason: 'Authenticate to access your account',
+      );
+
+      if (authenticated) {
+        AppLogger.info('Biometric authentication successful');
+        
+        // If biometric authentication succeeds, proceed with login
+        await _authenticateAndNavigate();
+        return true;
+      } else {
+        AppLogger.info('Biometric authentication failed or was cancelled');
+        _showErrorSnackBar('Biometric authentication failed. Please use your passcode.');
+        return false;
+      }
     } catch (e) {
-      _showErrorSnackBar('Biometric authentication is not available on this device');
+      AppLogger.error('Error during biometric authentication: $e');
+      _showErrorSnackBar('Biometric authentication error. Please use your passcode.');
       return false;
     } finally {
       state = state.copyWith(isVerifying: false);
@@ -116,20 +174,76 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
       final storedPasscode = await _secureStorage.read(StorageKeys.passcode);
 
       if (state.passcode == storedPasscode) {
-        // Passcode is correct, navigate directly to main view
-        // No need to re-login since user already has valid token
+        // Passcode is correct, now re-authenticate to get fresh JWT token
         await Future.delayed(const Duration(milliseconds: 500));
-        appRouter.pushNamed(AppRoute.mainView);
+        await _authenticateAndNavigate();
       } else {
         state = state.copyWith(passcode: '');
         _showErrorSnackBar('Wrong passcode. Please try again.');
       }
     } catch (e) {
+      AppLogger.error('Error verifying passcode: $e');
       state = state.copyWith(passcode: '');
       _showErrorSnackBar('Something went wrong. Please try again.');
     } finally {
       await Future.delayed(const Duration(milliseconds: 500));
       state = state.copyWith(isVerifying: false);
+    }
+  }
+
+  /// Shared authentication and navigation logic for both passcode and biometric auth
+  Future<void> _authenticateAndNavigate() async {
+    try {
+      // Retrieve saved login credentials
+      final savedEmail = await _secureStorage.read(StorageKeys.email);
+      final savedPassword = await _secureStorage.read(StorageKeys.password);
+
+      if (savedEmail.isNotEmpty && savedPassword.isNotEmpty) {
+        try {
+          // Re-authenticate to get fresh JWT token
+          final response = await _authService.login(
+            email: savedEmail,
+            password: savedPassword,
+          );
+
+          if (response.statusCode == 200) {
+            // Save fresh token
+            await _secureStorage.write(
+              StorageKeys.token,
+              response.data?.token ?? '',
+            );
+
+            // Save updated user data if available
+            if (response.data?.user != null) {
+              await _secureStorage.write(
+                StorageKeys.user,
+                json.encode(response.data!.user!.toJson()),
+              );
+            }
+
+            // Navigate to main view
+            appRouter.pushNamed(AppRoute.mainView);
+          } else {
+            // If re-authentication fails, clear credentials and show error
+            await _clearStoredCredentials();
+            _showErrorSnackBar('Session expired. Please login again.');
+            appRouter.pushNamed(AppRoute.loginView);
+          }
+        } catch (e) {
+          AppLogger.error('Error during re-authentication: $e');
+          // If re-authentication fails, clear credentials and show error
+          await _clearStoredCredentials();
+          _showErrorSnackBar('Session expired. Please login again.');
+          appRouter.pushNamed(AppRoute.loginView);
+        }
+      } else {
+        // No saved credentials found, redirect to login
+        _showErrorSnackBar('Please login again.');
+        appRouter.pushNamed(AppRoute.loginView);
+      }
+    } catch (e) {
+      AppLogger.error('Error in authentication and navigation: $e');
+      _showErrorSnackBar('Login failed. Please try again.');
     }
   }
 
@@ -139,14 +253,20 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
     state = state.copyWith(errorMessage: message);
   }
 
+  Future<void> _clearStoredCredentials() async {
+    await _secureStorage.delete(StorageKeys.email);
+    await _secureStorage.delete(StorageKeys.password);
+    await _secureStorage.delete(StorageKeys.token);
+    await _secureStorage.delete(StorageKeys.user);
+  }
+
   Future<void> logout() async {
     state = state.copyWith(isLoading: true);
     try {
-      // Clear stored data
-      await _secureStorage.delete(StorageKeys.user);
-      await _secureStorage.delete(StorageKeys.token);
+      // Clear all stored data including credentials
+      await _clearStoredCredentials();
       await _secureStorage.delete(StorageKeys.passcode);
-      
+
       // Navigate to login (hide back button)
       appRouter.pushNamed(AppRoute.loginView, arguments: false);
     } catch (e) {
@@ -159,9 +279,15 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
   void clearError() {
     state = state.copyWith(errorMessage: '');
   }
+
+  void resetForm() {
+    state = const PasscodeState();
+  }
 }
 
 // Provider
-final passcodeProvider = StateNotifierProvider<PasscodeNotifier, PasscodeState>((ref) {
-  return PasscodeNotifier();
-});
+final passcodeProvider = StateNotifierProvider<PasscodeNotifier, PasscodeState>(
+  (ref) {
+    return PasscodeNotifier();
+  },
+);

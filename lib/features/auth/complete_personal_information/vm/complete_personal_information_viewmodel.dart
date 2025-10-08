@@ -241,6 +241,7 @@ class CompletePersonalInfoNotifier extends StateNotifier<CompletePersonalInfoSta
     state = state.copyWith(isBusy: true);
 
     try {
+      analyticsService.logEvent(name: 'complete_profile_started');
       AppLogger.info('Submitting personal information...');
 
       // Call API to update user profile
@@ -259,18 +260,16 @@ class CompletePersonalInfoNotifier extends StateNotifier<CompletePersonalInfoSta
 
       if (success) {
         AppLogger.info('Personal information submitted successfully');
-        // Check if biometric setup has been completed
-        final biometricSetupCompleted = await _secureStorage.read(StorageKeys.biometricSetupCompleted);
-        if (biometricSetupCompleted == 'true') {
-          // Biometric setup already completed, go to main view
-          appRouter.pushNamed(AppRoute.mainView);
-        } else {
-          // Biometric setup not completed, show biometric setup screen
-          appRouter.pushNamed(AppRoute.biometricSetupView);
-        }
+        analyticsService.logEvent(name: 'complete_profile_completed');
+        // Navigate to upload documents for KYC Tier 2 verification
+        appRouter.pushNamed(AppRoute.uploadDocumentsView);
       }
     } catch (e) {
       AppLogger.error('Error submitting personal information: $e');
+      analyticsService.logEvent(
+        name: 'complete_profile_failed',
+        parameters: { 'reason': e.toString() },
+      );
       // Don't show generic error message here since _updateUserProfile already shows the specific error
       // The specific error message is already displayed by _updateUserProfile method
     } finally {

@@ -55,10 +55,6 @@ class TransactionsNotifier extends StateNotifier<TransactionsState> {
     
     try {
       final response = await _walletService.getWalletTransactions();
-      print('🔍 Transactions loaded: ${response.data.transactions.length}');
-      for (var transaction in response.data.transactions) {
-        print('Transaction: ${transaction.id} | Amount: ${transaction.sendAmount} | Status: ${transaction.status}');
-      }
       
       final groupedTransactions = _groupTransactionsByDate(response.data.transactions);
       
@@ -68,10 +64,9 @@ class TransactionsNotifier extends StateNotifier<TransactionsState> {
         isLoading: false,
       );
     } catch (e) {
-      print('Error loading transactions: $e');
       state = state.copyWith(
         isLoading: false,
-        errorMessage: 'Failed to load transactions: ${e.toString()}',
+        errorMessage: 'Failed to load transactions. Please try again.',
       );
     }
   }

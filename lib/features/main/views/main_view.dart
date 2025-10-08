@@ -12,6 +12,8 @@ import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/services/local/secure_storage.dart';
 import 'package:dayfi/common/constants/storage_keys.dart';
+import 'package:dayfi/routes/route.dart';
+import 'package:dayfi/common/utils/app_logger.dart';
 
 class MainView extends ConsumerStatefulWidget {
   const MainView({super.key});
@@ -37,6 +39,7 @@ class _MainViewState extends ConsumerState<MainView> {
     // Check if welcome has been shown and show it only once
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAndShowWelcome();
+      _checkBiometricSetup();
     });
   }
 
@@ -54,13 +57,150 @@ class _MainViewState extends ConsumerState<MainView> {
         }
       }
     } catch (e) {
-      print('Error checking welcome status: $e');
+      // Handle error silently
       // If there's an error, show welcome as fallback
       await Future.delayed(const Duration(milliseconds: 500));
       if (mounted) {
         _showWelcomeBottomSheet();
       }
     }
+  }
+
+  Future<void> _checkBiometricSetup() async {
+    try {
+      // Check if biometric setup has been completed
+      final biometricSetupCompleted = await _secureStorage.read(StorageKeys.biometricSetupCompleted);
+      
+      // If biometric setup is not completed, show a reminder after a delay
+      if (biometricSetupCompleted != 'true') {
+        await Future.delayed(const Duration(seconds: 2)); // Wait a bit after app loads
+        if (mounted) {
+          _showBiometricReminder();
+        }
+      }
+    } catch (e) {
+      // Handle error silently
+      AppLogger.error('Error checking biometric setup: $e');
+    }
+  }
+
+  void _showBiometricReminder() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24.r),
+          ),
+          child: Container(
+            padding: EdgeInsets.all(28.w),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Biometric icon
+                Container(
+                  width: 80.w,
+                  height: 80.w,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [AppColors.purple400, AppColors.purple600],
+                    ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.purple500.withOpacity(0.3),
+                        blurRadius: 20,
+                        spreadRadius: 2,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    Icons.security,
+                    color: Colors.white,
+                    size: 40.w,
+                  ),
+                ),
+
+                SizedBox(height: 24.h),
+
+                // Title
+                Text(
+                  'Enable Biometric Security',
+                  style: AppTypography.titleLarge.copyWith(
+                    fontFamily: 'CabinetGrotesk',
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+
+                SizedBox(height: 16.h),
+
+                // Description
+                Text(
+                  'Add an extra layer of security to your account with biometric authentication. You can enable this later in settings if you prefer.',
+                  style: AppTypography.bodyMedium.copyWith(
+                    fontFamily: 'Karla',
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w400,
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    height: 1.4,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+
+                SizedBox(height: 24.h),
+
+                // Enable button
+                PrimaryButton(
+                  text: 'Enable Biometrics',
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    appRouter.pushNamed(AppRoute.biometricSetupView);
+                  },
+                  backgroundColor: AppColors.purple500,
+                  textColor: AppColors.neutral0,
+                  borderRadius: 38,
+                  height: 60.h,
+                  width: double.infinity,
+                  fullWidth: true,
+                  fontFamily: 'Karla',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w400,
+                  letterSpacing: -0.8,
+                ),
+                SizedBox(height: 12.h),
+
+                // Skip button
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    // Mark as completed so we don't show this again
+                    _secureStorage.write(StorageKeys.biometricSetupCompleted, 'true');
+                    _secureStorage.write('biometric_enabled', 'false');
+                  },
+                  child: Text(
+                    'Skip for now',
+                    style: AppTypography.bodyMedium.copyWith(
+                      fontFamily: 'Karla',
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.neutral500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override

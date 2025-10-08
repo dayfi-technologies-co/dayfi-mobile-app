@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
-import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/services/remote/payment_service.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/features/send/views/send_add_recipients_view.dart';
@@ -31,7 +30,7 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
   }
 
   void _loadSelectedData() {
-    print('📋 Selected Data: ${widget.selectedData}');
+    // Log selected data for debugging if needed
   }
 
   Future<void> _resolveAccount() async {

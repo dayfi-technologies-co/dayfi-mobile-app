@@ -1,9 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dayfi/app_locator.dart';
-import 'package:dayfi/flavors.dart';
 import 'package:dayfi/services/remote/payment_service.dart';
-import 'package:dayfi/services/remote/network/url_config.dart';
 import 'package:dayfi/models/payment_response.dart';
+import 'package:dayfi/common/utils/app_logger.dart';
 
 class CountryOption {
   final String code;
@@ -33,6 +32,7 @@ class SendState {
   final bool isLoading;
   final List<String> availableCurrencies;
   final List<Channel> channels;
+  final List<Network> networks;
   final List<Channel> availableDeliveryMethods;
   final String selectedDeliveryMethod;
   final String selectedSenderDeliveryMethod;
@@ -48,13 +48,14 @@ class SendState {
     this.receiverCurrency = 'RWF',
     this.sendCountry = 'NG',
     this.receiverCountry = 'RW',
-    this.fee = '10.00',
+    this.fee = '0.00',
     this.totalToPay = '0.00',
     this.exchangeRate = '₦1 = ₦1',
     this.showUpgradePrompt = true,
     this.isLoading = false,
     this.availableCurrencies = const [],
     this.channels = const [],
+    this.networks = const [],
     this.availableDeliveryMethods = const [],
     this.selectedDeliveryMethod = '',
     this.selectedSenderDeliveryMethod = '',
@@ -78,6 +79,7 @@ class SendState {
     bool? isLoading,
     List<String>? availableCurrencies,
     List<Channel>? channels,
+    List<Network>? networks,
     List<Channel>? availableDeliveryMethods,
     String? selectedDeliveryMethod,
     String? selectedSenderDeliveryMethod,
@@ -100,6 +102,7 @@ class SendState {
       isLoading: isLoading ?? this.isLoading,
       availableCurrencies: availableCurrencies ?? this.availableCurrencies,
       channels: channels ?? this.channels,
+      networks: networks ?? this.networks,
       availableDeliveryMethods:
           availableDeliveryMethods ?? this.availableDeliveryMethods,
       selectedDeliveryMethod:
@@ -120,6 +123,9 @@ class SendViewModel extends StateNotifier<SendState> {
   SendViewModel() : super(const SendState());
 
   Future<void> initialize() async {
+    // Reset state to clear any cached data
+    _resetSendState();
+    
     // Initialize any required data
     state = state.copyWith(isLoading: true);
 
@@ -131,15 +137,26 @@ class SendViewModel extends StateNotifier<SendState> {
       await _setupDefaultSelections();
     } catch (e) {
       // If API fails, keep default currencies
-      print('Failed to fetch currencies: $e');
+      AppLogger.error('Failed to fetch currencies: $e');
     } finally {
       state = state.copyWith(isLoading: false);
       _calculateTotal(); // Calculate initial total
     }
   }
 
+  void _resetSendState() {
+    // Reset all form fields to default values
+    state = state.copyWith(
+      sendAmount: '',
+      receiverAmount: '',
+      fee: '0.00',
+      totalToPay: '0.00',
+      exchangeRate: '₦1 = ₦1',
+    );
+  }
+
   Future<void> _setupDefaultSelections() async {
-    print('🎯 Setting up default selections...');
+    AppLogger.debug('Setting up default selections');
     
     // Set default send currency to NGN
     await _setDefaultSendCurrency('NG', 'NGN');
@@ -149,7 +166,7 @@ class SendViewModel extends StateNotifier<SendState> {
   }
 
   Future<void> _setDefaultSendCurrency(String country, String currency) async {
-    print('🎯 Setting default send currency: $country - $currency');
+    AppLogger.debug('Setting default send currency: $country - $currency');
     
     // Find the first available sender delivery method for this country-currency combination
     String? firstSenderDeliveryMethod;
@@ -188,7 +205,7 @@ class SendViewModel extends StateNotifier<SendState> {
   }
 
   Future<void> _setDefaultReceiveCurrency(String country, String currency) async {
-    print('🎯 Setting default receive currency: $country - $currency');
+    AppLogger.debug('Setting default receive currency: $country - $currency');
     
     // Find the first available delivery method for this country-currency combination
     String? firstDeliveryMethod;
@@ -228,25 +245,14 @@ class SendViewModel extends StateNotifier<SendState> {
 
   Future<void> _fetchAvailableCurrencies() async {
     try {
-      print('🔄 Fetching currencies from channels API...');
-      print('🌐 Base URL: ${F.baseUrl}');
-      print('🔗 Full URL: ${F.baseUrl}${UrlConfig.fetchChannels}');
+      AppLogger.debug('Fetching currencies from channels API');
 
       final response = await _paymentService.fetchChannels();
-
-      print(
-        '📡 API Response - Error: ${response.error}, Message: ${response.message}',
-      );
-      print('📡 Status Code: ${response.statusCode}');
-      print('📊 Channels count: ${response.data?.channels?.length ?? 0}');
 
       // Check if we have valid data and channels
       if (response.data?.channels != null &&
           response.data!.channels!.isNotEmpty) {
         final channels = response.data!.channels!;
-        print(
-          '📋 Raw channels data: ${channels.take(3).map((c) => '${c.currency ?? 'N/A'} (${c.country ?? 'N/A'})').join(', ')}...',
-        );
 
         // Only proceed if the API call was successful
         if (!response.error) {
@@ -260,23 +266,67 @@ class SendViewModel extends StateNotifier<SendState> {
                   .toList()
                 ..sort();
 
-          print('💰 Extracted currencies: $currencies');
+          // Fetch networks alongside channels
+          await _fetchNetworks();
+          
           state = state.copyWith(
             availableCurrencies: currencies,
             channels: channels,
           );
-          print('✅ Updated state with ${currencies.length} currencies and ${channels.length} channels');
+          AppLogger.info('Updated state with ${currencies.length} currencies and ${channels.length} channels');
         } else {
-          print('❌ API call failed with error: ${response.message}');
+          AppLogger.warning('Channels API call failed: ${response.message}');
+          throw Exception('Failed to fetch channels: ${response.message}');
         }
       } else {
-        print('❌ No channels data available');
-        print('🔍 Response data: ${response.data}');
+        AppLogger.warning('No channels data available');
+        throw Exception('No channels data available');
       }
     } catch (e) {
-      print('💥 Error fetching currencies: $e');
-      print('🔍 Error type: ${e.runtimeType}');
+      AppLogger.error('Error fetching currencies: $e');
+      rethrow;
     }
+  }
+
+  Future<void> _fetchNetworks() async {
+    try {
+      AppLogger.debug('Fetching networks from API');
+
+      final response = await _paymentService.fetchNetworks();
+
+      // Check if we have valid data and networks
+      if (response.data?.networks != null &&
+          response.data!.networks!.isNotEmpty) {
+        final networks = response.data!.networks!;
+
+        // Only proceed if the API call was successful
+        if (!response.error) {
+          state = state.copyWith(networks: networks);
+          AppLogger.info('Updated state with ${networks.length} networks');
+        } else {
+          AppLogger.warning('Networks API call failed: ${response.message}');
+          // Don't throw error - networks are optional, continue with empty list
+        }
+      } else {
+        AppLogger.warning('No networks data available');
+        // Don't throw error - networks are optional, continue with empty list
+      }
+    } catch (e) {
+      AppLogger.error('Error fetching networks: $e');
+      // Don't rethrow - networks are optional, continue with empty list
+    }
+  }
+
+  /// Find the network that contains the given channel ID
+  Network? _findNetworkForChannel(String? channelId) {
+    if (channelId == null || state.networks.isEmpty) return null;
+    
+    for (final network in state.networks) {
+      if (network.channelIds?.contains(channelId) == true) {
+        return network;
+      }
+    }
+    return null;
   }
 
   void updateSendCountry(String country, String currency) {
@@ -360,7 +410,7 @@ class SendViewModel extends StateNotifier<SendState> {
   }
 
   void updateSendAmount(String amount) {
-    print('🔄 updateSendAmount called with: $amount');
+    AppLogger.debug('updateSendAmount: $amount');
     state = state.copyWith(sendAmount: amount);
     _updateReceiveAmountFromSend();
     _calculateTotal();
@@ -373,22 +423,22 @@ class SendViewModel extends StateNotifier<SendState> {
 
   void _updateReceiveAmountFromSend() {
     final sendAmount = double.tryParse(state.sendAmount);
-    print('🔄 _updateReceiveAmountFromSend: sendAmount=$sendAmount');
+    AppLogger.debug('_updateReceiveAmountFromSend: sendAmount=$sendAmount');
     if (sendAmount != null && sendAmount > 0) {
       final exchangeRate = _calculateExchangeRate();
-      print('🔄 Exchange rate: $exchangeRate');
+      AppLogger.debug('Exchange rate: $exchangeRate');
       if (exchangeRate != null) {
         final convertedAmount = sendAmount * exchangeRate;
-        print('🔄 Converted amount: $convertedAmount');
+        AppLogger.debug('Converted amount: $convertedAmount');
         state = state.copyWith(
           receiverAmount: convertedAmount.toStringAsFixed(2),
         );
-        print('🔄 Updated receiverAmount to: ${state.receiverAmount}');
+        AppLogger.debug('Updated receiverAmount to: ${state.receiverAmount}');
       } else {
-        print('❌ Exchange rate is null');
+        AppLogger.warning('Exchange rate is null');
       }
     } else {
-      print('❌ Send amount is null or <= 0');
+      AppLogger.warning('Send amount is null or <= 0');
       state = state.copyWith(receiverAmount: '');
     }
   }
@@ -420,10 +470,13 @@ class SendViewModel extends StateNotifier<SendState> {
     final sendAmount = double.tryParse(state.sendAmount.replaceAll(RegExp(r'[^\d.]'), ''));
     final fee = double.tryParse(state.fee.replaceAll(RegExp(r'[^\d.]'), ''));
     
-    if (sendAmount != null && fee != null) {
+    if (sendAmount != null && sendAmount > 0 && fee != null) {
       final total = sendAmount + fee;
       state = state.copyWith(totalToPay: total.toStringAsFixed(2));
-      print('💰 Calculated total: $sendAmount + $fee = $total');
+      AppLogger.debug('Calculated total: $sendAmount + $fee = $total');
+    } else {
+      // Reset total to 0 when no amount is entered
+      state = state.copyWith(totalToPay: '0.00');
     }
   }
 
@@ -483,21 +536,17 @@ class SendViewModel extends StateNotifier<SendState> {
 
   double? _calculateExchangeRate() {
     if (state.sendCurrencyRates == null || state.receiveCurrencyRates == null) {
-      print('❌ Missing rates: send=${state.sendCurrencyRates != null}, receive=${state.receiveCurrencyRates != null}');
+      AppLogger.debug('Missing rates: send=${state.sendCurrencyRates != null}, receive=${state.receiveCurrencyRates != null}');
       return null;
     }
 
     final sendSellRate = double.tryParse(state.sendCurrencyRates!['sell']?.toString() ?? '');
     final receiveBuyRate = double.tryParse(state.receiveCurrencyRates!['buy']?.toString() ?? '');
 
-    print('🔍 Exchange Rate Calculation:');
-    print('   NGN Sell Rate: $sendSellRate');
-    print('   GHS Buy Rate: $receiveBuyRate');
-    print('   NGN Rates: ${state.sendCurrencyRates}');
-    print('   GHS Rates: ${state.receiveCurrencyRates}');
+    AppLogger.debug('Exchange Rate Calculation: NGN sell=$sendSellRate, GHS buy=$receiveBuyRate');
 
     if (sendSellRate == null || receiveBuyRate == null || receiveBuyRate == 0) {
-      print('❌ Invalid rates: sendSell=$sendSellRate, receiveBuy=$receiveBuyRate');
+      AppLogger.warning('Invalid rates: sendSell=$sendSellRate, receiveBuy=$receiveBuyRate');
       return null;
     }
 
@@ -506,7 +555,7 @@ class SendViewModel extends StateNotifier<SendState> {
     // The correct calculation should be: (GHS Buy Rate) / (NGN Sell Rate)
     // This gives us: 1 NGN = X GHS
     final rate = receiveBuyRate / sendSellRate;
-    print('✅ Calculated rate: $receiveBuyRate / $sendSellRate = $rate');
+    AppLogger.debug('Calculated rate: $receiveBuyRate / $sendSellRate = $rate');
     return rate;
   }
 
@@ -570,22 +619,19 @@ class SendViewModel extends StateNotifier<SendState> {
 
   Future<void> _fetchRates(String currency) async {
     try {
-      print('🔄 Fetching rates for currency: $currency');
+      AppLogger.debug('Fetching rates for currency: $currency');
       state = state.copyWith(isRatesLoading: true);
       
       final response = await _paymentService.fetchRates(currency: currency);
       
-      print('📊 Response status: ${response.statusCode}');
-      print('📊 Response data type: ${response.data.runtimeType}');
+      AppLogger.debug('Rates response status: ${response.statusCode}');
       
       if (response.statusCode == 200 && response.data != null) {
         final paymentData = response.data as PaymentData;
         final rates = paymentData.rates;
-        print('📊 Rates from PaymentData: $rates');
         
         if (rates != null && rates.isNotEmpty) {
           final rate = rates.first;
-          print('📊 First rate: buy=${rate.buy}, sell=${rate.sell}, code=${rate.code}');
           
           // Convert Rate object to Map for storage
           final rateData = {
@@ -597,15 +643,13 @@ class SendViewModel extends StateNotifier<SendState> {
             'updatedAt': rate.updatedAt ?? '',
           };
           
-          print('📊 Converted rate data: $rateData');
-          print('📊 Current send currency: ${state.sendCurrency}');
-          print('📊 Current receive currency: ${state.receiverCurrency}');
+          AppLogger.debug('Updated rate data for $currency');
           
           if (currency == state.sendCurrency) {
-            print('📊 Setting send currency rates');
+            AppLogger.debug('Setting send currency rates');
             state = state.copyWith(sendCurrencyRates: rateData);
           } else if (currency == state.receiverCurrency) {
-            print('📊 Setting receive currency rates');
+            AppLogger.debug('Setting receive currency rates');
             state = state.copyWith(receiveCurrencyRates: rateData);
           }
           
@@ -614,7 +658,7 @@ class SendViewModel extends StateNotifier<SendState> {
         }
       }
     } catch (e) {
-      print('Error fetching rates for $currency: $e');
+      AppLogger.error('Error fetching rates for $currency: $e');
     } finally {
       state = state.copyWith(isRatesLoading: false);
     }

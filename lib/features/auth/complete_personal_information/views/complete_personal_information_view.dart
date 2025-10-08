@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
@@ -32,6 +33,11 @@ class _CompletePersonalInformationViewState
   void initState() {
     super.initState();
     _initializeControllers();
+    
+    // Reset form state when view is initialized (handles logout navigation)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(completePersonalInfoProvider.notifier).resetForm();
+    });
   }
 
   void _initializeControllers() {
@@ -88,147 +94,154 @@ class _CompletePersonalInformationViewState
 
     return WillPopScope(
       onWillPop: () async => false, // Disable device back button
-      child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      child: GestureDetector(
+        onTap: () {
+          FocusManager.instance.primaryFocus?.unfocus();
+        },
+        child: Scaffold(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
 
-        body: SafeArea(
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AppBar(
-                  scrolledUnderElevation: 0,
-                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                  elevation: 0,
-                  automaticallyImplyLeading: false, // Remove back button
-                  title: Text(
-                    "Complete Your Profile",
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontFamily: 'CabinetGrotesk',
-                      fontSize: 28.00,
-                      fontWeight: FontWeight.w500,
+          body: SafeArea(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AppBar(
+                    scrolledUnderElevation: 0,
+                    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                    elevation: 0,
+                    automaticallyImplyLeading: false, // Remove back button
+                    title: Text(
+                      "Complete Your Profile",
+                      style: Theme.of(
+                        context,
+                      ).textTheme.headlineMedium?.copyWith(
+                        fontFamily: 'CabinetGrotesk',
+                        fontSize: 28.00,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
-                ),
-                Form(
-                  key: _formKey,
-                  child: SingleChildScrollView(
-                    controller: _scrollController,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 24.w,
-                      vertical: 4.h,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Subtitle
-                        Text(
-                          "Please provide your personal information to complete your account setup.",
-                          style: Theme.of(
-                            context,
-                          ).textTheme.bodyMedium?.copyWith(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w400,
-                            fontFamily: 'Karla',
-                            letterSpacing: -.6,
-                            height: 1.4,
+                  Form(
+                    key: _formKey,
+                    child: SingleChildScrollView(
+                      controller: _scrollController,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 24.w,
+                        vertical: 4.h,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Subtitle
+                          Text(
+                            "Please provide your personal information to complete your account setup.",
+                            style: Theme.of(
+                              context,
+                            ).textTheme.bodyMedium?.copyWith(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w400,
+                              fontFamily: 'Karla',
+                              letterSpacing: -.6,
+                              height: 1.4,
+                            ),
+                            textAlign: TextAlign.center,
                           ),
-                          textAlign: TextAlign.center,
-                        ),
-                        SizedBox(height: 36.h),
+                          SizedBox(height: 36.h),
 
-                        // Date of Birth
-                        _buildDateOfBirthField(
-                          personalInfoState,
-                          personalInfoNotifier,
-                        ),
-                        SizedBox(height: 18.h),
+                          // Date of Birth
+                          _buildDateOfBirthField(
+                            personalInfoState,
+                            personalInfoNotifier,
+                          ),
+                          SizedBox(height: 18.h),
 
-                        // Country
-                        _buildCountryField(
-                          personalInfoState,
-                          personalInfoNotifier,
-                        ),
-                        SizedBox(height: 18.h),
+                          // Country
+                          _buildCountryField(
+                            personalInfoState,
+                            personalInfoNotifier,
+                          ),
+                          SizedBox(height: 18.h),
 
-                        // Phone Number
-                        _buildPhoneNumberField(
-                          personalInfoState,
-                          personalInfoNotifier,
-                        ),
-                        SizedBox(height: 18.h),
+                          // Phone Number
+                          _buildPhoneNumberField(
+                            personalInfoState,
+                            personalInfoNotifier,
+                          ),
+                          SizedBox(height: 18.h),
 
-                        // Address
-                        _buildAddressField(
-                          personalInfoState,
-                          personalInfoNotifier,
-                        ),
-                        SizedBox(height: 18.h),
+                          // Address
+                          _buildAddressField(
+                            personalInfoState,
+                            personalInfoNotifier,
+                          ),
+                          SizedBox(height: 18.h),
 
-                        // Postal Code
-                        _buildPostalCodeField(
-                          personalInfoState,
-                          personalInfoNotifier,
-                        ),
-                        SizedBox(height: 18.h),
+                          // Postal Code
+                          _buildPostalCodeField(
+                            personalInfoState,
+                            personalInfoNotifier,
+                          ),
+                          SizedBox(height: 18.h),
 
-                        // State
-                        _buildStateField(
-                          personalInfoState,
-                          personalInfoNotifier,
-                        ),
-                        SizedBox(height: 18.h),
+                          // State
+                          _buildStateField(
+                            personalInfoState,
+                            personalInfoNotifier,
+                          ),
+                          SizedBox(height: 18.h),
 
-                        // City
-                        _buildCityField(
-                          personalInfoState,
-                          personalInfoNotifier,
-                        ),
-                        SizedBox(height: 18.h),
+                          // City
+                          _buildCityField(
+                            personalInfoState,
+                            personalInfoNotifier,
+                          ),
+                          SizedBox(height: 18.h),
 
-                        // Occupation
-                        _buildOccupationField(
-                          personalInfoState,
-                          personalInfoNotifier,
-                        ),
-                        SizedBox(height: 18.h),
+                          // Occupation
+                          _buildOccupationField(
+                            personalInfoState,
+                            personalInfoNotifier,
+                          ),
+                          SizedBox(height: 18.h),
 
-                        // Referral Code (Optional)
-                        _buildReferralCodeField(
-                          personalInfoState,
-                          personalInfoNotifier,
-                        ),
-                        SizedBox(height: 40.h),
+                          // Referral Code (Optional)
+                          _buildReferralCodeField(
+                            personalInfoState,
+                            personalInfoNotifier,
+                          ),
+                          SizedBox(height: 40.h),
 
-                        // Submit Button
-                        PrimaryButton(
-                          borderRadius: 38,
-                          text: "Complete Profile",
-                          onPressed:
-                              personalInfoState.isFormValid &&
-                                      !personalInfoState.isBusy
-                                  ? () => personalInfoNotifier
-                                      .submitPersonalInfo(context)
-                                  : null,
-                          backgroundColor:
-                              personalInfoState.isFormValid
-                                  ? AppColors.purple500
-                                  : AppColors.purple100,
-                          height: 60.h,
-                          textColor: AppColors.neutral0,
-                          fontFamily: 'Karla',
-                          letterSpacing: -.8,
-                          fontSize: 18,
-                          width: double.infinity,
-                          fullWidth: true,
-                          isLoading: personalInfoState.isBusy,
-                        ),
-                        SizedBox(height: 50.h),
-                      ],
+                          // Submit Button
+                          PrimaryButton(
+                            borderRadius: 38,
+                            text: "Complete Profile",
+                            onPressed:
+                                personalInfoState.isFormValid &&
+                                        !personalInfoState.isBusy
+                                    ? () => personalInfoNotifier
+                                        .submitPersonalInfo(context)
+                                    : null,
+                            backgroundColor:
+                                personalInfoState.isFormValid
+                                    ? AppColors.purple500
+                                    : AppColors.purple100,
+                            height: 60.h,
+                            textColor: AppColors.neutral0,
+                            fontFamily: 'Karla',
+                            letterSpacing: -.8,
+                            fontSize: 18,
+                            width: double.infinity,
+                            fullWidth: true,
+                            isLoading: personalInfoState.isBusy,
+                          ),
+                          SizedBox(height: 50.h),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -331,6 +344,7 @@ class _CompletePersonalInformationViewState
           label: "Phone Number",
           hintText: "Enter your phone number",
           controller: _phoneNumberController,
+          maxLength: 11,
           onChanged: notifier.setPhoneNumber,
           keyboardType: TextInputType.phone,
         ),
@@ -405,8 +419,9 @@ class _CompletePersonalInformationViewState
           label: "Postal Code",
           hintText: "Enter your postal code",
           controller: _postalCodeController,
+          maxLength: 6,
           onChanged: notifier.setPostalCode,
-          keyboardType: TextInputType.text,
+          keyboardType: TextInputType.number,
         ),
         if (state.postalCodeError.isNotEmpty)
           Padding(
@@ -649,111 +664,85 @@ class _CountryBottomSheet extends StatefulWidget {
 
 class _CountryBottomSheetState extends State<_CountryBottomSheet> {
   final List<Map<String, String>> _countries = [
-    {'name': 'Nigeria', 'code': '+234', 'flag': '🇳🇬'},
-    {'name': 'United States', 'code': '+1', 'flag': '🇺🇸'},
-    {'name': 'United Kingdom', 'code': '+44', 'flag': '🇬🇧'},
-    {'name': 'Canada', 'code': '+1', 'flag': '🇨🇦'},
-    {'name': 'Germany', 'code': '+49', 'flag': '🇩🇪'},
-    {'name': 'France', 'code': '+33', 'flag': '🇫🇷'},
-    {'name': 'Australia', 'code': '+61', 'flag': '🇦🇺'},
-    {'name': 'Japan', 'code': '+81', 'flag': '🇯🇵'},
-    {'name': 'South Korea', 'code': '+82', 'flag': '🇰🇷'},
-    {'name': 'India', 'code': '+91', 'flag': '🇮🇳'},
+    {
+      'name': 'Nigeria',
+      'code': 'NG',
+      'flag': 'assets/icons/svgs/world_flags/nigeria.svg',
+    },
   ];
-
-  List<Map<String, String>> _filteredCountries = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _filteredCountries = _countries;
-  }
-
-  void _filterCountries(String query) {
-    setState(() {
-      _filteredCountries =
-          _countries
-              .where(
-                (country) => country['name']!.toLowerCase().contains(
-                  query.toLowerCase(),
-                ),
-              )
-              .toList();
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.height * 0.7,
+      height: MediaQuery.of(context).size.height * 0.92,
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
       child: Column(
         children: [
-          // Handle bar
-          Container(
-            width: 40.w,
-            height: 4.h,
-            margin: EdgeInsets.symmetric(vertical: 12.h),
-            decoration: BoxDecoration(
-              color: AppColors.neutral300,
-              borderRadius: BorderRadius.circular(2.r),
-            ),
-          ),
-
-          // Header
+          SizedBox(height: 18.h),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 24.w),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                SizedBox(height: 22.h, width: 22.w),
                 Text(
                   'Select Country',
-                  style: AppTypography.headlineSmall.copyWith(
+                  style: AppTypography.titleLarge.copyWith(
                     fontFamily: 'CabinetGrotesk',
-                    fontSize: 20.sp,
+                    fontSize: 18.sp,
                     fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
-                const Spacer(),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pop(context);
+                  },
+                  child: Image.asset(
+                    "assets/icons/pngs/cancelicon.png",
+                    height: 22.h,
+                    width: 22.w,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                 ),
               ],
             ),
           ),
-
-          // Search field
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
-            child: TextField(
-              onChanged: _filterCountries,
-              decoration: InputDecoration(
-                hintText: 'Search countries...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-              ),
-            ),
-          ),
-
-          // Countries list
+          SizedBox(height: 16.h),
           Expanded(
             child: ListView.builder(
-              itemCount: _filteredCountries.length,
+              padding: EdgeInsets.symmetric(horizontal: 24.w),
+              itemCount: _countries.length,
               itemBuilder: (context, index) {
-                final country = _filteredCountries[index];
+                final country = _countries[index];
                 return ListTile(
-                  leading: Text(
-                    country['flag']!,
-                    style: TextStyle(fontSize: 24.sp),
-                  ),
-                  title: Text(country['name']!),
-                  subtitle: Text(country['code']!),
+                  contentPadding: EdgeInsets.symmetric(vertical: 4.h),
                   onTap: () => widget.onCountrySelected(country['name']!),
+                  title: Row(
+                    children: [
+                      SvgPicture.asset(country['flag']!, height: 24.000.h),
+                      SizedBox(width: 12.w),
+                      Text(
+                        country['name']!,
+                        style: AppTypography.bodyLarge.copyWith(
+                          fontFamily: 'Karla',
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  trailing: Text(
+                    country['code']!,
+                    style: AppTypography.bodyLarge.copyWith(
+                      fontFamily: 'Karla',
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 );
               },
             ),
@@ -820,73 +809,87 @@ class _OccupationBottomSheetState extends State<_OccupationBottomSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.height * 0.6,
+      height: MediaQuery.of(context).size.height * 0.92,
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
       child: Column(
         children: [
-          // Handle bar
-          Container(
-            width: 40.w,
-            height: 4.h,
-            margin: EdgeInsets.symmetric(vertical: 12.h),
-            decoration: BoxDecoration(
-              color: AppColors.neutral300,
-              borderRadius: BorderRadius.circular(2.r),
-            ),
-          ),
-
-          // Header
+          SizedBox(height: 18.h),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 24.w),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                SizedBox(height: 22.h, width: 22.w),
                 Text(
                   'Select Occupation',
-                  style: AppTypography.headlineSmall.copyWith(
+                  style: AppTypography.titleLarge.copyWith(
                     fontFamily: 'CabinetGrotesk',
-                    fontSize: 20.sp,
+                    fontSize: 18.sp,
                     fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
-                const Spacer(),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pop(context);
+                  },
+                  child: Image.asset(
+                    "assets/icons/pngs/cancelicon.png",
+                    height: 22.h,
+                    width: 22.w,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                 ),
               ],
             ),
           ),
-
+          SizedBox(height: 16.h),
           // Search field
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
-            child: TextField(
-              onChanged: _filterOccupations,
-              decoration: InputDecoration(
-                hintText: 'Search occupations...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-              ),
+            child: CustomTextField(
+              onChanged: (value) => _filterOccupations(value),
+              hintText: 'Search occupations...',
+              prefixIcon: const Icon(Icons.search),
+              borderRadius: 40,
             ),
           ),
-
           // Occupations list
           Expanded(
-            child: ListView.builder(
-              itemCount: _filteredOccupations.length,
-              itemBuilder: (context, index) {
-                final occupation = _filteredOccupations[index];
-                return ListTile(
-                  title: Text(occupation),
-                  onTap: () => widget.onOccupationSelected(occupation),
-                );
-              },
-            ),
+            child: _filteredOccupations.isEmpty
+                ? Center(
+                    child: Text(
+                      'No occupations found',
+                      style: AppTypography.bodyLarge.copyWith(
+                        fontFamily: 'Karla',
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w500,
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: EdgeInsets.symmetric(horizontal: 24.w),
+                    itemCount: _filteredOccupations.length,
+                    itemBuilder: (context, index) {
+                      final occupation = _filteredOccupations[index];
+                      return ListTile(
+                        contentPadding: EdgeInsets.symmetric(vertical: 4.h),
+                        onTap: () => widget.onOccupationSelected(occupation),
+                        title: Text(
+                          occupation,
+                          style: AppTypography.bodyLarge.copyWith(
+                            fontFamily: 'Karla',
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
           ),
         ],
       ),

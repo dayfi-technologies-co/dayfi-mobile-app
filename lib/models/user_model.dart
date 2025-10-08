@@ -31,6 +31,8 @@ class User {
   final String? expires; // Made nullable
   final String? level; // Added from JSON
   final String? transactionPin; // Added from JSON
+  final bool isIdVerified; // Added from JSON
+  final bool isBiometricsSetup; // Added from JSON
 
   User({
     required this.userId,
@@ -65,6 +67,8 @@ class User {
     this.expires, // Made nullable in constructor
     this.level, // Added to constructor
     this.transactionPin, // Added to constructor
+    required this.isIdVerified, // Added to constructor
+    required this.isBiometricsSetup, // Added to constructor
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -103,6 +107,8 @@ class User {
       expires: json['expires'] as String?,
       level: json['level'] as String?,
       transactionPin: json['transaction_pin'] as String?,
+      isIdVerified: json['is_id_verified'] as bool? ?? false,
+      isBiometricsSetup: json['is_biometrics_setup'] as bool? ?? false,
     );
   }
 
@@ -140,6 +146,8 @@ class User {
       'expires': expires,
       'level': level,
       'transaction_pin': transactionPin,
+      'is_id_verified': isIdVerified,
+      'is_biometrics_setup': isBiometricsSetup,
     };
   }
 }

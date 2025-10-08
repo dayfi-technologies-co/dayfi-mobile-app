@@ -51,5 +51,9 @@
 	<string>This app uses Face ID to provide secure and convenient authentication for accessing your account.</string>
 	<key>NSBiometricUsageDescription</key>
 	<string>This app uses biometric authentication (Touch ID or Face ID) to provide secure and convenient access to your account.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 </dict>
 </plist>

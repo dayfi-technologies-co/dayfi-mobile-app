@@ -11,6 +11,9 @@ import 'package:dayfi/common/utils/string_utils.dart';
 import 'package:dayfi/common/utils/number_formatter.dart';
 import 'send_recipient_view.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:dayfi/app_locator.dart';
+import 'package:dayfi/common/utils/tier_utils.dart';
+import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
 
 class SendView extends ConsumerStatefulWidget {
   const SendView({super.key});
@@ -143,6 +146,7 @@ class _SendViewState extends ConsumerState<SendView>
       // Ensure no text field has focus when the widget is first built
       FocusScope.of(context).unfocus();
       await ref.read(sendViewModelProvider.notifier).initialize();
+      analyticsService.trackScreenView(screenName: 'SendView');
     });
 
     // Listen to state changes and update controllers
@@ -304,6 +308,18 @@ class _SendViewState extends ConsumerState<SendView>
   }
 
   Widget _buildUpgradeCard() {
+    final profileState = ref.watch(profileViewModelProvider);
+    final user = profileState.user;
+    
+    // Only show upgrade card if user can upgrade
+    if (!TierUtils.canUpgrade(user)) {
+      return const SizedBox.shrink();
+    }
+    
+    final tierDescription = TierUtils.getTierDescription(user);
+    final nextTierInfo = TierUtils.getNextTierInfo(user);
+    final tierIconPath = TierUtils.getTierIconPath(user);
+    
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(16.w),
@@ -339,8 +355,7 @@ class _SendViewState extends ConsumerState<SendView>
                 SizedBox(height: 4.h),
                 RichText(
                   text: TextSpan(
-                    text:
-                        'You\'re currently on Tier 1. Submit required documents to access Tier 2 and send higher amounts. ',
+                    text: tierDescription,
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.onSurface,
                       fontSize: 12.sp,
@@ -351,9 +366,9 @@ class _SendViewState extends ConsumerState<SendView>
                     ),
                     children: [
                       TextSpan(
-                        text: 'Upgrade now.',
+                        text: ' $nextTierInfo.',
                         style: TextStyle(
-                          color: Theme.of(context).colorScheme.primary,
+                          color: Color(0xFF2787A1),
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w400,
                           fontFamily: 'Karla',
@@ -411,7 +426,6 @@ class _SendViewState extends ConsumerState<SendView>
             enableInteractiveSelection: true,
             onChanged: (value) {
               if (!_isUpdatingSendController) {
-                print('🔄 Send amount field changed to: $value');
                 // Remove commas before sending to view model for calculations
                 String cleanValue = NumberFormatterUtils.removeCommas(value);
                 ref
@@ -528,7 +542,6 @@ class _SendViewState extends ConsumerState<SendView>
             enableInteractiveSelection: true,
             onChanged: (value) {
               if (!_isUpdatingReceiveController) {
-                print('🔄 Receive amount field changed to: $value');
                 // Remove commas before sending to view model for calculations
                 String cleanValue = NumberFormatterUtils.removeCommas(value);
                 ref
@@ -875,7 +888,7 @@ class _SendViewState extends ConsumerState<SendView>
               ),
 
               if (state.isRatesLoading) ...[
-               SizedBox(
+                SizedBox(
                   width: 20.w,
                   height: 20.w,
                   child: LoadingAnimationWidget.horizontalRotatingDots(
@@ -939,7 +952,7 @@ class _SendViewState extends ConsumerState<SendView>
               ),
 
               if (state.isRatesLoading) ...[
-               SizedBox(
+                SizedBox(
                   width: 20.w,
                   height: 20.w,
                   child: LoadingAnimationWidget.horizontalRotatingDots(
@@ -1013,6 +1026,18 @@ class _SendViewState extends ConsumerState<SendView>
     );
   }
 
+  /// Find the network that contains the given channel ID
+  Network? _findNetworkForChannel(String? channelId, List<Network> networks) {
+    if (channelId == null || networks.isEmpty) return null;
+    
+    for (final network in networks) {
+      if (network.channelIds?.contains(channelId) == true) {
+        return network;
+      }
+    }
+    return null;
+  }
+
   void _navigateToRecipientScreen(SendState state) {
     // Get the selected recipient channel to find the network
     final recipientChannels =
@@ -1029,7 +1054,13 @@ class _SendViewState extends ConsumerState<SendView>
             )
             .toList();
 
-    // For now, we'll use a placeholder network ID
+    // Find the network for the selected channel
+    final selectedChannel = recipientChannels.isNotEmpty ? recipientChannels.first : null;
+    final selectedNetwork = selectedChannel != null 
+        ? _findNetworkForChannel(selectedChannel.id, state.networks)
+        : null;
+
+    // Use real network data with fallbacks
     final selectedData = {
       'sendAmount': state.sendAmount,
       'receiveAmount': state.receiverAmount,
@@ -1039,10 +1070,9 @@ class _SendViewState extends ConsumerState<SendView>
       'receiveCountry': state.receiverCountry,
       'senderDeliveryMethod': state.selectedSenderDeliveryMethod,
       'recipientDeliveryMethod': state.selectedDeliveryMethod,
-      'networkId':
-          recipientChannels.isNotEmpty ? recipientChannels.first.id : null,
-      'networkName': 'Selected Network', // TODO: Get actual network name
-      'accountNumberType': 'phone', // TODO: Get from selected network
+      'networkId': selectedChannel?.id,
+      'networkName': selectedNetwork?.name ?? selectedChannel?.channelType ?? 'Selected Network',
+      'accountNumberType': selectedNetwork?.accountNumberType ?? 'phone',
     };
 
     Navigator.push(
@@ -1068,9 +1098,7 @@ class _SendViewState extends ConsumerState<SendView>
       isLoading: state.isLoading,
       height: 60.h,
       backgroundColor:
-          !isAmountValid
-              ? Theme.of(context).colorScheme.onSurface.withOpacity(0.12)
-              : AppColors.purple500,
+          !isAmountValid ? AppColors.purple100 : AppColors.purple500,
       textColor: AppColors.neutral0,
       fontFamily: 'Karla',
       letterSpacing: -.8,
@@ -1082,14 +1110,6 @@ class _SendViewState extends ConsumerState<SendView>
   }
 
   void _showSendCountryBottomSheet(SendState state) {
-    // Debug: Print all channels to see what we have
-    print('🔍 Send - All channels: ${state.channels.length}');
-    for (var channel in state.channels.take(5)) {
-      print(
-        'Send Channel: ${channel.country} - ${channel.currency} | Type: ${channel.rampType} | Status: ${channel.status}',
-      );
-    }
-
     // Filter channels for deposit (send) countries - where user can send FROM
     final depositChannels =
         state.channels
@@ -1118,10 +1138,6 @@ class _SendViewState extends ConsumerState<SendView>
             '${b.country ?? ''} - ${b.currency ?? ''}',
           ),
         );
-
-    print(
-      '🔍 Send - Deposit channels found: ${depositChannels.length} (${finalDepositChannels.length} unique)',
-    );
 
     showModalBottomSheet(
       context: context,
@@ -1323,14 +1339,6 @@ class _SendViewState extends ConsumerState<SendView>
   }
 
   void _showReceiveCountryBottomSheet(SendState state) {
-    // Debug: Print all channels to see what we have
-    print('🔍 All channels: ${state.channels.length}');
-    for (var channel in state.channels.take(5)) {
-      print(
-        'Channel: ${channel.country} - ${channel.currency} | Type: ${channel.rampType} | Status: ${channel.status}',
-      );
-    }
-
     // Filter channels for withdrawal (receive) countries - where user can send TO
     final withdrawalChannels =
         state.channels
@@ -1353,20 +1361,15 @@ class _SendViewState extends ConsumerState<SendView>
       }
     }
 
-    final finalWithdrawalChannels =
+    List<Channel> finalWithdrawalChannels =
         uniqueWithdrawalChannels.values.toList()..sort(
           (a, b) => '${a.country ?? ''} - ${a.currency ?? ''}'.compareTo(
             '${b.country ?? ''} - ${b.currency ?? ''}',
           ),
         );
 
-    print(
-      '🔍 Withdrawal channels found: ${withdrawalChannels.length} (${finalWithdrawalChannels.length} unique)',
-    );
-
     // If no withdrawal channels, let's try a different approach
     if (finalWithdrawalChannels.isEmpty) {
-      print('⚠️ No withdrawal channels found, trying alternative filtering...');
       // Try filtering by different criteria but still only withdrawal-related channels
       final alternativeChannels =
           state.channels
@@ -1380,9 +1383,11 @@ class _SendViewState extends ConsumerState<SendView>
                         channel.rampType == 'payout'),
               )
               .toList();
-      print(
-        '🔍 Alternative withdrawal channels: ${alternativeChannels.length}',
-      );
+
+      // Use alternative channels if available
+      if (alternativeChannels.isNotEmpty) {
+        finalWithdrawalChannels = alternativeChannels;
+      }
     }
 
     showModalBottomSheet(
@@ -1736,10 +1741,9 @@ class _SendViewState extends ConsumerState<SendView>
                         // ),
                         trailing:
                             state.selectedDeliveryMethod == channel.channelType
-                                ? Icon(
-                                  Icons.circle,
-                                  color: AppColors.primary600,
-                                  size: 10,
+                                ? SvgPicture.asset(
+                                  'assets/icons/svgs/circle-check.svg',
+                                  color: AppColors.purple500,
                                 )
                                 : null,
                       );

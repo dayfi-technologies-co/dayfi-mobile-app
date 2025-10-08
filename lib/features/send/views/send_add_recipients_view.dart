@@ -44,6 +44,10 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
     _selectedCountry = widget.selectedData['receiveCountry'] ?? '';
     _selectedNetworkId = widget.selectedData['networkId'] ?? '';
 
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      analyticsService.trackScreenView(screenName: 'SendAddRecipientsView');
+    });
+
     // Add listener to account number field for auto-resolution
     _accountNumberController.addListener(_onAccountNumberChanged);
   }
@@ -102,7 +106,6 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
           _resolveError = null;
         });
 
-        print('✅ Account resolved successfully: $accountName');
       } else {
         setState(() {
           _resolveError = response.message;
@@ -415,6 +418,10 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
   void _validateAndContinue() {
     if (_formKey.currentState!.validate() &&
         _nameController.text.trim().isNotEmpty) {
+      analyticsService.logEvent(name: 'recipient_added', parameters: {
+        'country': _selectedCountry,
+        'networkId': _selectedNetworkId,
+      });
       final recipientData = {
         'name': _nameController.text.trim(),
         'country': _selectedCountry,

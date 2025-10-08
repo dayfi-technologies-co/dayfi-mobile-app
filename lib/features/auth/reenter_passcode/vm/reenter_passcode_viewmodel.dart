@@ -181,8 +181,10 @@ class ReenterPasscodeNotifier extends StateNotifier<ReenterPasscodeState> {
                     if (isFromSignup) {
                       appRouter.pushNamed(AppRoute.successSignupView);
                     } else {
-                      // For login flow, check if biometric setup has been completed
+                      // Check if biometric setup is needed
                       final biometricSetupCompleted = await _secureStorage.read(StorageKeys.biometricSetupCompleted);
+                      final biometricEnabled = await _secureStorage.read('biometric_enabled');
+                      
                       if (biometricSetupCompleted == 'true') {
                         // Biometric setup already completed, go to main view
                         appRouter.pushNamed(AppRoute.mainView);

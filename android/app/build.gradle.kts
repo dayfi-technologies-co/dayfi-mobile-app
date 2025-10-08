@@ -22,11 +22,10 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.dayfi.app"
+        // Application ID will be set by product flavors (dev, pilot, prod)
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 23  // Minimum SDK for biometric support
+        minSdk = flutter.minSdkVersion  // Minimum SDK for biometric support
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

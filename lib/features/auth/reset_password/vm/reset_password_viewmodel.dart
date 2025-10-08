@@ -4,6 +4,7 @@ import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/services/remote/auth_service.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/routes/route.dart';
+import 'package:dayfi/common/constants/analytics_events.dart';
 
 class ResetPasswordState {
   final String password;
@@ -99,12 +100,20 @@ class ResetPasswordViewModel extends StateNotifier<ResetPasswordState> {
     state = state.copyWith(isBusy: true);
 
     try {
+      analyticsService.logEvent(
+        name: AnalyticsEvents.apiCallStarted,
+        parameters: { 'action': 'reset_password', 'email': email },
+      );
       final response = await _authService.resetPassword(
         email: email,
         password: state.password,
       );
 
       if (!response.error) {
+        analyticsService.logEvent(
+          name: 'password_reset_completed',
+          parameters: { 'email': email },
+        );
         TopSnackbar.show(
           context,
           message: response.message,
@@ -119,6 +128,10 @@ class ResetPasswordViewModel extends StateNotifier<ResetPasswordState> {
           (route) => false,
         );
       } else {
+        analyticsService.logEvent(
+          name: 'password_reset_failed',
+          parameters: { 'email': email, 'reason': response.message },
+        );
         TopSnackbar.show(
           context,
           message: response.message,
@@ -126,6 +139,10 @@ class ResetPasswordViewModel extends StateNotifier<ResetPasswordState> {
         );
       }
     } catch (e) {
+      analyticsService.logEvent(
+        name: 'password_reset_failed',
+        parameters: { 'email': email, 'reason': e.toString() },
+      );
       TopSnackbar.show(
         context,
         message: 'Error: ${e.toString()}',

@@ -168,6 +168,12 @@ class EditProfileNotifier extends StateNotifier<EditProfileState> {
     }
   }
 
+  // Force reload user data (useful when switching users)
+  Future<void> reloadUserData() async {
+    AppLogger.info('Force reloading user data for edit profile...');
+    _loadUserData();
+  }
+
   void setFirstName(String value) {
     final firstNameError = _validateName(value, 'First name');
     state = state.copyWith(
@@ -341,7 +347,7 @@ class EditProfileNotifier extends StateNotifier<EditProfileState> {
     }
   }
 
-  Future<void> updateProfile() async {
+  Future<void> updateProfile({Function()? onSuccess, Function(String)? onError}) async {
     if (!state.isFormValid || state.user == null) {
       AppLogger.warning('Cannot update profile: Form invalid or no user data');
       return;
@@ -354,15 +360,15 @@ class EditProfileNotifier extends StateNotifier<EditProfileState> {
       
       // Call the API to update profile
       final response = await _authService.updateProfile(
-        country: state.country.isEmpty ? state.user!.country ?? '' : state.country,
-        state: state.state.isEmpty ? state.user!.state ?? '' : state.state,
-        street: state.user!.street ?? '',
-        city: state.city.isEmpty ? state.user!.city ?? '' : state.city,
-        postalCode: state.postalCode.isEmpty ? state.user!.postalCode ?? '' : state.postalCode,
-        address: state.address.isEmpty ? state.user!.address ?? '' : state.address,
-        gender: _normalizeGender(state.gender.isEmpty ? state.user!.gender ?? '' : state.gender),
-        dob: state.dateOfBirth.isEmpty ? state.user!.dateOfBirth ?? '' : state.dateOfBirth,
-        phoneNumber: state.phoneNumber,
+        country: state.country.isNotEmpty ? state.country : (state.user!.country?.isNotEmpty == true ? state.user!.country! : 'Nigeria'),
+        state: state.state.isNotEmpty ? state.state : (state.user!.state?.isNotEmpty == true ? state.user!.state! : 'Lagos'),
+        street: state.user!.street?.isNotEmpty == true ? state.user!.street! : 'Not provided',
+        city: state.city.isNotEmpty ? state.city : (state.user!.city?.isNotEmpty == true ? state.user!.city! : 'Lagos'),
+        postalCode: state.postalCode.isNotEmpty ? state.postalCode : (state.user!.postalCode?.isNotEmpty == true ? state.user!.postalCode! : '100001'),
+        address: state.address.isNotEmpty ? state.address : (state.user!.address?.isNotEmpty == true ? state.user!.address! : 'Not provided'),
+        gender: _normalizeGender(state.gender.isNotEmpty ? state.gender : (state.user!.gender?.isNotEmpty == true ? state.user!.gender! : 'male')),
+        dob: state.dateOfBirth.isNotEmpty ? state.dateOfBirth : (state.user!.dateOfBirth?.isNotEmpty == true ? state.user!.dateOfBirth! : '1990-01-01'),
+        // phoneNumber: not sent since users can't change it
         userId: state.user!.userId,
         bvn: state.user!.idNumber?.isNotEmpty == true ? state.user!.idNumber! : '00000000000', // Provide default BVN if empty
       );
@@ -374,38 +380,40 @@ class EditProfileNotifier extends StateNotifier<EditProfileState> {
         
         // Create updated user object with API response data
         final updatedUser = User(
-          userId: state.user!.userId,
-          email: state.email,
+          userId: response.data?.user?.userId ?? state.user!.userId,
+          email: response.data?.user?.email ?? state.email,
           password: state.user!.password, // Keep existing password
-          userType: state.user!.userType,
-          firstName: state.firstName,
-          lastName: state.lastName,
-          middleName: state.middleName.isEmpty ? null : state.middleName,
-          gender: state.gender.isEmpty ? state.user!.gender : state.gender,
-          dateOfBirth: state.dateOfBirth.isEmpty ? state.user!.dateOfBirth : state.dateOfBirth,
-          country: state.country.isEmpty ? state.user!.country : state.country,
-          state: state.state.isEmpty ? state.user!.state : state.state,
-          city: state.city.isEmpty ? state.user!.city : state.city,
-          street: state.user!.street,
-          postalCode: state.postalCode.isEmpty ? state.user!.postalCode : state.postalCode,
-          address: state.address.isEmpty ? state.user!.address : state.address,
-          phoneNumber: state.phoneNumber,
-          idType: state.user!.idType,
-          idNumber: state.user!.idNumber,
-          status: state.user!.status,
-          refreshToken: state.user!.refreshToken,
-          isDeleted: state.user!.isDeleted,
-          verificationToken: state.user!.verificationToken,
-          verificationTokenExpiryTime: state.user!.verificationTokenExpiryTime,
-          passwordResetToken: state.user!.passwordResetToken,
-          passwordResetTokenExpiryTime: state.user!.passwordResetTokenExpiryTime,
-          verificationEmail: state.user!.verificationEmail,
-          createdAt: state.user!.createdAt,
-          updatedAt: DateTime.now().toIso8601String(), // Update timestamp
-          token: state.user!.token,
-          expires: state.user!.expires,
-          level: state.user!.level,
-          transactionPin: state.user!.transactionPin,
+          userType: response.data?.user?.userType ?? state.user!.userType,
+          firstName: response.data?.user?.firstName ?? state.firstName,
+          lastName: response.data?.user?.lastName ?? state.lastName,
+          middleName: response.data?.user?.middleName ?? (state.middleName.isEmpty ? null : state.middleName),
+          gender: response.data?.user?.gender ?? state.gender,
+          dateOfBirth: response.data?.user?.dateOfBirth ?? state.dateOfBirth,
+          country: response.data?.user?.country ?? state.country,
+          state: response.data?.user?.state ?? state.state,
+          city: response.data?.user?.city ?? state.city,
+          street: response.data?.user?.street ?? state.user!.street,
+          postalCode: response.data?.user?.postalCode ?? state.postalCode,
+          address: response.data?.user?.address ?? state.address,
+          phoneNumber: response.data?.user?.phoneNumber ?? state.phoneNumber,
+          idType: response.data?.user?.idType ?? state.user!.idType,
+          idNumber: response.data?.user?.idNumber ?? state.user!.idNumber,
+          status: response.data?.user?.status ?? state.user!.status,
+          refreshToken: response.data?.user?.refreshToken ?? state.user!.refreshToken,
+          isDeleted: response.data?.user?.isDeleted ?? state.user!.isDeleted,
+          verificationToken: response.data?.user?.verificationToken ?? state.user!.verificationToken,
+          verificationTokenExpiryTime: response.data?.user?.verificationTokenExpiryTime ?? state.user!.verificationTokenExpiryTime,
+          passwordResetToken: response.data?.user?.passwordResetToken ?? state.user!.passwordResetToken,
+          passwordResetTokenExpiryTime: response.data?.user?.passwordResetTokenExpiryTime ?? state.user!.passwordResetTokenExpiryTime,
+          verificationEmail: response.data?.user?.verificationEmail ?? state.user!.verificationEmail,
+          createdAt: response.data?.user?.createdAt ?? state.user!.createdAt,
+          updatedAt: response.data?.user?.updatedAt ?? DateTime.now().toIso8601String(),
+          token: state.user!.token, // Keep existing token
+          expires: state.user!.expires, // Keep existing expires
+          level: response.data?.user?.level ?? state.user!.level,
+          transactionPin: response.data?.user?.transactionPin ?? state.user!.transactionPin,
+          isIdVerified: response.data?.user?.isIdVerified ?? state.user!.isIdVerified,
+          isBiometricsSetup: response.data?.user?.isBiometricsSetup ?? state.user!.isBiometricsSetup,
         );
 
         // Save updated user to local storage
@@ -417,24 +425,36 @@ class EditProfileNotifier extends StateNotifier<EditProfileState> {
           errorMessage: null,
           isDirty: false,
         );
+        
+        // Call success callback
+        onSuccess?.call();
       } else {
         AppLogger.error('Profile update failed: ${response.message}');
+        final errorMessage = response.message.isNotEmpty ? response.message : 'Failed to update profile. Please try again.';
         state = state.copyWith(
           isLoading: false,
-          errorMessage: response.message.isNotEmpty ? response.message : 'Failed to update profile. Please try again.',
+          errorMessage: errorMessage,
         );
+        onError?.call(errorMessage);
       }
     } catch (e) {
       AppLogger.error('Error updating profile: $e');
+      final errorMessage = 'Failed to update profile. Please try again.';
       state = state.copyWith(
         isLoading: false,
-        errorMessage: 'Failed to update profile. Please try again.',
+        errorMessage: errorMessage,
       );
+      onError?.call(errorMessage);
     }
   }
 
   void clearError() {
     state = state.copyWith(errorMessage: null);
+  }
+
+  // Reset form to initial state
+  void resetForm() {
+    state = const EditProfileState();
   }
 }
 

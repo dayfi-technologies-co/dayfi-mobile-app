@@ -17,8 +17,8 @@ class EyeIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return SvgPicture.asset(
       isVisible 
-        ? 'assets/icons/svgs/eye_open.svg'
-        : 'assets/icons/svgs/eye_closed.svg',
+        ? 'assets/icons/svgs/eye.svg'
+        : 'assets/icons/svgs/eye-off.svg',
       width: size,
       height: size,
       colorFilter: color != null 

@@ -13,10 +13,12 @@ import 'package:dayfi/features/auth/forgot_password/views/forgot_password_view.d
 import 'package:dayfi/features/auth/reset_password/views/reset_password_view.dart';
 import 'package:dayfi/features/auth/passcode/views/passcode_view.dart';
 import 'package:dayfi/features/auth/complete_personal_information/views/complete_personal_information_view.dart';
+import 'package:dayfi/features/auth/upload_documents/views/upload_documents_view.dart';
 import 'package:dayfi/features/auth/biometric_setup/views/biometric_setup_view.dart';
 import 'package:dayfi/features/main/views/main_view.dart';
 import 'package:dayfi/features/auth/onboarding/views/onboarding_view.dart';
 import 'package:dayfi/features/profile/edit_profile/views/edit_profile_view.dart';
+import 'package:dayfi/features/profile/account_limits/views/account_limits_view.dart';
 
 class VerifyEmailViewArguments {
   final bool isSignUp;
@@ -45,9 +47,11 @@ class AppRoute {
   static const String resetPasswordView = '/resetPasswordView';
   static const String passcodeView = '/passcodeView';
   static const String completePersonalInfoView = '/completePersonalInfoView';
+  static const String uploadDocumentsView = '/uploadDocumentsView';
   static const String biometricSetupView = '/biometricSetupView';
   static const String mainView = '/mainView';
   static const String editProfileView = '/editProfileView';
+  static const String accountLimitsView = '/accountLimitsView';
 
   static Route getRoute(RouteSettings routeSettings) {
     globalrouteSettings = routeSettings;
@@ -89,12 +93,20 @@ class AppRoute {
         return _getPageRoute(routeSettings, const PasscodeView());
       case completePersonalInfoView:
         return _getPageRoute(routeSettings, const CompletePersonalInformationView());
+      case uploadDocumentsView:
+        // Check if arguments contain showBackButton parameter
+        final showBackButton = routeSettings.arguments is Map<String, dynamic>
+            ? (routeSettings.arguments as Map<String, dynamic>)['showBackButton'] as bool? ?? false
+            : false;
+        return _getPageRoute(routeSettings, UploadDocumentsView(showBackButton: showBackButton));
       case biometricSetupView:
         return _getPageRoute(routeSettings, const BiometricSetupView());
       case mainView:
         return _getPageRoute(routeSettings, const MainView());
       case editProfileView:
         return _getPageRoute(routeSettings, const EditProfileView());
+      case accountLimitsView:
+        return _getPageRoute(routeSettings, const AccountLimitsView());
 
       default:
         return _getPageRoute(routeSettings, const LoginView());

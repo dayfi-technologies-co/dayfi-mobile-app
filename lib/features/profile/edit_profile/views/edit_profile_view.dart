@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
@@ -21,6 +22,11 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
   final _scrollController = ScrollController();
 
   // Text controllers
+  late TextEditingController _firstNameController;
+  late TextEditingController _lastNameController;
+  late TextEditingController _middleNameController;
+  late TextEditingController _phoneNumberController;
+  late TextEditingController _emailController;
   late TextEditingController _dateOfBirthController;
   late TextEditingController _countryController;
   late TextEditingController _addressController;
@@ -33,9 +39,18 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
   void initState() {
     super.initState();
     _initializeControllers();
+    // Force reload user data when screen opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(editProfileProvider.notifier).reloadUserData();
+    });
   }
 
   void _initializeControllers() {
+    _firstNameController = TextEditingController();
+    _lastNameController = TextEditingController();
+    _middleNameController = TextEditingController();
+    _phoneNumberController = TextEditingController();
+    _emailController = TextEditingController();
     _dateOfBirthController = TextEditingController();
     _countryController = TextEditingController();
     _addressController = TextEditingController();
@@ -45,21 +60,32 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
     _genderController = TextEditingController();
   }
 
-  void _initializeControllersWithData(EditProfileState state) {
+  void _updateControllersWithCurrentData(EditProfileState state) {
     if (state.user != null) {
+      // Always update controller text with current state values
+      _firstNameController.text = state.firstName;
+      _lastNameController.text = state.lastName;
+      _middleNameController.text = state.middleName;
+      _phoneNumberController.text = state.phoneNumber;
+      _emailController.text = state.email;
       _dateOfBirthController.text = _formatDateForDisplay(state.dateOfBirth);
       _countryController.text = state.country;
       _addressController.text = state.address;
       _postalCodeController.text = state.postalCode;
       _stateController.text = state.state;
       _cityController.text = state.city;
-      _genderController.text = state.gender;
+      _genderController.text = '';
     }
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _middleNameController.dispose();
+    _phoneNumberController.dispose();
+    _emailController.dispose();
     _dateOfBirthController.dispose();
     _countryController.dispose();
     _addressController.dispose();
@@ -86,11 +112,11 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
     final editProfileState = ref.watch(editProfileProvider);
     final editProfileNotifier = ref.read(editProfileProvider.notifier);
 
-    // Listen for successful updates and initialize controllers
+    // Listen for state changes and update controllers
     ref.listen<EditProfileState>(editProfileProvider, (previous, next) {
-      // Initialize controllers when user data is first loaded
-      if (previous?.user == null && next.user != null) {
-        _initializeControllersWithData(next);
+      // Always update controllers with current data when user data is available
+      if (next.user != null) {
+        _updateControllersWithCurrentData(next);
       }
 
       // Show error messages only
@@ -101,112 +127,127 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
     });
 
     return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
+      onTap: () {
+        FocusManager.instance.primaryFocus?.unfocus();
+      },
       child: Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        scrolledUnderElevation: 0,
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: Icon(
-            Icons.arrow_back_ios,
-            color: Theme.of(context).colorScheme.onSurface,
-            size: 20.sp,
+        appBar: AppBar(
+          scrolledUnderElevation: 0,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          elevation: 0,
+          leading: IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: Icon(
+              Icons.arrow_back_ios,
+              color: AppColors.neutral900,
+              // size: 20.sp,
+            ),
+          ),
+          title: Text(
+            "Edit Profile",
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              fontFamily: 'CabinetGrotesk',
+              fontSize: 28.00,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
-        title: Text(
-          "Edit Profile",
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontFamily: 'CabinetGrotesk',
-            fontSize: 28.00,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          controller: _scrollController,
-          child: Form(
-            key: _formKey,
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 4.h),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Subtitle
-                  Text(
-                    "Update your personal information below.",
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w400,
-                      fontFamily: 'Karla',
-                      letterSpacing: -.6,
-                      height: 1.4,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            child: Form(
+              key: _formKey,
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 4.h),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Subtitle
+                    Text(
+                      "Update your personal information below.",
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w400,
+                        fontFamily: 'Karla',
+                        letterSpacing: -.6,
+                        height: 1.4,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(height: 36.h),
+                    SizedBox(height: 36.h),
 
-                  // First Name
-                  _buildFirstNameField(editProfileState, editProfileNotifier),
-                  SizedBox(height: 18.h),
+                    // First Name
+                    _buildFirstNameField(editProfileState, editProfileNotifier),
+                    SizedBox(height: 18.h),
 
-                  // Last Name
-                  _buildLastNameField(editProfileState, editProfileNotifier),
-                  SizedBox(height: 18.h),
+                    // Last Name
+                    _buildLastNameField(editProfileState, editProfileNotifier),
+                    SizedBox(height: 18.h),
 
-                  // Middle Name (Optional)
-                  _buildMiddleNameField(editProfileState, editProfileNotifier),
-                  SizedBox(height: 18.h),
+                    // Middle Name (Optional)
+                    _buildMiddleNameField(
+                      editProfileState,
+                      editProfileNotifier,
+                    ),
+                    SizedBox(height: 18.h),
 
-                  // Email
-                  _buildEmailField(editProfileState, editProfileNotifier),
-                  SizedBox(height: 18.h),
+                    // Email
+                    _buildEmailField(editProfileState, editProfileNotifier),
+                    SizedBox(height: 18.h),
 
-                  // Phone Number
-                  _buildPhoneNumberField(editProfileState, editProfileNotifier),
-                  SizedBox(height: 18.h),
+                    // Phone Number
+                    _buildPhoneNumberField(
+                      editProfileState,
+                      editProfileNotifier,
+                    ),
+                    SizedBox(height: 18.h),
 
-                  // Date of Birth
-                  _buildDateOfBirthField(editProfileState, editProfileNotifier),
-                  SizedBox(height: 18.h),
+                    // Date of Birth
+                    _buildDateOfBirthField(
+                      editProfileState,
+                      editProfileNotifier,
+                    ),
+                    SizedBox(height: 18.h),
 
-                  // Country
-                  _buildCountryField(editProfileState, editProfileNotifier),
-                  SizedBox(height: 18.h),
+                    // Country
+                    _buildCountryField(editProfileState, editProfileNotifier),
+                    SizedBox(height: 18.h),
 
-                  // Address
-                  _buildAddressField(editProfileState, editProfileNotifier),
-                  SizedBox(height: 18.h),
+                    // Address
+                    _buildAddressField(editProfileState, editProfileNotifier),
+                    SizedBox(height: 18.h),
 
-                  // Postal Code
-                  _buildPostalCodeField(editProfileState, editProfileNotifier),
-                  SizedBox(height: 18.h),
+                    // Postal Code
+                    _buildPostalCodeField(
+                      editProfileState,
+                      editProfileNotifier,
+                    ),
+                    SizedBox(height: 18.h),
 
-                  // State
-                  _buildStateField(editProfileState, editProfileNotifier),
-                  SizedBox(height: 18.h),
+                    // State
+                    _buildStateField(editProfileState, editProfileNotifier),
+                    SizedBox(height: 18.h),
 
-                  // City
-                  _buildCityField(editProfileState, editProfileNotifier),
-                  SizedBox(height: 18.h),
+                    // City
+                    _buildCityField(editProfileState, editProfileNotifier),
+                    SizedBox(height: 18.h),
 
-                  // Gender
-                  _buildGenderField(editProfileState, editProfileNotifier),
-                  SizedBox(height: 40.h),
+                    // Gender
+                    _buildGenderField(editProfileState, editProfileNotifier),
+                    SizedBox(height: 40.h),
 
-                  // Action Buttons
-                  _buildActionButtons(editProfileState, editProfileNotifier),
-                  SizedBox(height: 50.h),
-                ],
+                    // Action Buttons
+                    _buildActionButtons(editProfileState, editProfileNotifier),
+                    SizedBox(height: 50.h),
+                  ],
+                ),
               ),
             ),
           ),
         ),
       ),
-    ));
+    );
   }
 
   Widget _buildFirstNameField(
@@ -219,17 +260,15 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
         CustomTextField(
           label: "First Name",
           hintText: "Enter your first name",
-          controller: TextEditingController(text: state.firstName),
+          controller: _firstNameController,
           onChanged: notifier.setFirstName,
           keyboardType: TextInputType.name,
           textCapitalization: TextCapitalization.words,
-          // validator: (value) {
-          //   if (value == null || value.trim().isEmpty) {
-          //     return 'First name is required';
-          //   }
-          //   return null;
-          // },
+          shouldReadOnly: true, // User cannot directly change first name
+          enableInteractiveSelection:
+              false, // Disable text selection and context menu
         ),
+
         if (state.firstNameError.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 4.0, left: 14),
@@ -261,17 +300,15 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
         CustomTextField(
           label: "Last Name",
           hintText: "Enter your last name",
-          controller: TextEditingController(text: state.lastName),
+          controller: _lastNameController,
           onChanged: notifier.setLastName,
           keyboardType: TextInputType.name,
           textCapitalization: TextCapitalization.words,
-          validator: (value) {
-            if (value == null || value.trim().isEmpty) {
-              return 'Last name is required';
-            }
-            return null;
-          },
+          shouldReadOnly: true, // User cannot directly change last name
+          enableInteractiveSelection:
+              false, // Disable text selection and context menu
         ),
+
         if (state.lastNameError.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 4.0, left: 14),
@@ -300,7 +337,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
     return CustomTextField(
       label: "Middle Name (Optional)",
       hintText: "Enter your middle name",
-      controller: TextEditingController(text: state.middleName),
+      controller: _middleNameController,
       onChanged: notifier.setMiddleName,
       keyboardType: TextInputType.name,
       textCapitalization: TextCapitalization.words,
@@ -317,18 +354,12 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
         CustomTextField(
           label: "Email Address",
           hintText: "Enter your email address",
-          controller: TextEditingController(text: state.email),
+          controller: _emailController,
           onChanged: notifier.setEmail,
           keyboardType: TextInputType.emailAddress,
-          validator: (value) {
-            if (value == null || value.trim().isEmpty) {
-              return 'Email is required';
-            }
-            if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-              return 'Please enter a valid email address';
-            }
-            return null;
-          },
+          shouldReadOnly: true, // User cannot change email address
+          enableInteractiveSelection:
+              false, // Disable text selection and context menu
         ),
         if (state.emailError.isNotEmpty)
           Padding(
@@ -361,19 +392,15 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
         CustomTextField(
           label: "Phone Number",
           hintText: "Enter your phone number",
-          controller: TextEditingController(text: state.phoneNumber),
+          controller: _phoneNumberController,
           onChanged: notifier.setPhoneNumber,
           keyboardType: TextInputType.phone,
-          validator: (value) {
-            if (value == null || value.trim().isEmpty) {
-              return 'Phone number is required';
-            }
-            if (value.trim().length < 10) {
-              return 'Please enter a valid phone number';
-            }
-            return null;
-          },
+          maxLength: 11,
+          shouldReadOnly: true, // User cannot directly change phone number
+          enableInteractiveSelection:
+              false, // Disable text selection and context menu
         ),
+
         if (state.phoneNumberError.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 4.0, left: 14),
@@ -412,7 +439,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
           backgroundColor:
               state.isFormValid && state.isDirty
                   ? AppColors.purple500
-                  : Theme.of(context).colorScheme.onSurface.withOpacity(0.12),
+                  : AppColors.purple100,
           height: 60.h,
           textColor: AppColors.neutral0,
           fontFamily: 'Karla',
@@ -576,7 +603,9 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
       final formattedDate =
           "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
       notifier.setDateOfBirth(formattedDate);
-      _dateOfBirthController.text = _formatDateForDisplay(formattedDate); // Update the controller text
+      _dateOfBirthController.text = _formatDateForDisplay(
+        formattedDate,
+      ); // Update the controller text
     }
   }
 
@@ -611,6 +640,207 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
           ),
     );
   }
+
+  void _showNameChangeRequestDialog(String fieldName, String currentValue) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Request $fieldName Change',
+            style: AppTypography.titleMedium.copyWith(
+              fontFamily: 'CabinetGrotesk',
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Current $fieldName: $currentValue',
+                style: AppTypography.bodyMedium.copyWith(
+                  fontFamily: 'Karla',
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              SizedBox(height: 16.h),
+              Text(
+                'To change your $fieldName, you\'ll need to:',
+                style: AppTypography.bodyMedium.copyWith(fontFamily: 'Karla'),
+              ),
+              SizedBox(height: 12.h),
+              _buildRequirementItem('1. Upload a valid ID document'),
+              _buildRequirementItem('2. Provide a reason for the change'),
+              _buildRequirementItem('3. Wait for manual verification'),
+              SizedBox(height: 16.h),
+              Text(
+                'This process may take 1-3 business days. Your account will be temporarily restricted during verification.',
+                style: AppTypography.bodySmall.copyWith(
+                  fontFamily: 'Karla',
+                  color: AppColors.neutral600,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'Cancel',
+                style: AppTypography.bodyMedium.copyWith(
+                  color: AppColors.neutral600,
+                  fontFamily: 'Karla',
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _showNameChangeForm(fieldName, currentValue);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.purple500,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+              ),
+              child: Text(
+                'Continue',
+                style: AppTypography.bodyMedium.copyWith(
+                  color: Colors.white,
+                  fontFamily: 'Karla',
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showPhoneVerificationDialog(String currentPhone) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Verify Phone Number Change',
+            style: AppTypography.titleMedium.copyWith(
+              fontFamily: 'CabinetGrotesk',
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Current Phone: $currentPhone',
+                style: AppTypography.bodyMedium.copyWith(
+                  fontFamily: 'Karla',
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              SizedBox(height: 16.h),
+              Text(
+                'To change your phone number, you\'ll need to:',
+                style: AppTypography.bodyMedium.copyWith(fontFamily: 'Karla'),
+              ),
+              SizedBox(height: 12.h),
+              _buildRequirementItem('1. Enter your new phone number'),
+              _buildRequirementItem('2. Verify via SMS code'),
+              _buildRequirementItem('3. Confirm the change'),
+              SizedBox(height: 16.h),
+              Text(
+                'A verification code will be sent to your new number.',
+                style: AppTypography.bodySmall.copyWith(
+                  fontFamily: 'Karla',
+                  color: AppColors.neutral600,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'Cancel',
+                style: AppTypography.bodyMedium.copyWith(
+                  color: AppColors.neutral600,
+                  fontFamily: 'Karla',
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _showPhoneChangeForm(currentPhone);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.purple500,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+              ),
+              child: Text(
+                'Continue',
+                style: AppTypography.bodyMedium.copyWith(
+                  color: Colors.white,
+                  fontFamily: 'Karla',
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildRequirementItem(String text) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 8.h),
+      child: Row(
+        children: [
+          Container(
+            width: 6.w,
+            height: 6.h,
+            decoration: BoxDecoration(
+              color: AppColors.purple500,
+              shape: BoxShape.circle,
+            ),
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Text(
+              text,
+              style: AppTypography.bodySmall.copyWith(fontFamily: 'Karla'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showNameChangeForm(String fieldName, String currentValue) {
+    // TODO: Implement name change form with ID upload
+    TopSnackbar.show(
+      context,
+      message: 'Name change form coming soon! Please contact support.',
+      isError: false,
+    );
+  }
+
+  void _showPhoneChangeForm(String currentPhone) {
+    // TODO: Implement phone change form with SMS verification
+    TopSnackbar.show(
+      context,
+      message: 'Phone verification form coming soon! Please contact support.',
+      isError: false,
+    );
+  }
 }
 
 // Country Bottom Sheet
@@ -625,111 +855,85 @@ class _CountryBottomSheet extends StatefulWidget {
 
 class _CountryBottomSheetState extends State<_CountryBottomSheet> {
   final List<Map<String, String>> _countries = [
-    {'name': 'Nigeria', 'code': '+234', 'flag': '🇳🇬'},
-    {'name': 'United States', 'code': '+1', 'flag': '🇺🇸'},
-    {'name': 'United Kingdom', 'code': '+44', 'flag': '🇬🇧'},
-    {'name': 'Canada', 'code': '+1', 'flag': '🇨🇦'},
-    {'name': 'Germany', 'code': '+49', 'flag': '🇩🇪'},
-    {'name': 'France', 'code': '+33', 'flag': '🇫🇷'},
-    {'name': 'Australia', 'code': '+61', 'flag': '🇦🇺'},
-    {'name': 'Japan', 'code': '+81', 'flag': '🇯🇵'},
-    {'name': 'South Korea', 'code': '+82', 'flag': '🇰🇷'},
-    {'name': 'India', 'code': '+91', 'flag': '🇮🇳'},
+    {
+      'name': 'Nigeria',
+      'code': 'NG',
+      'flag': 'assets/icons/svgs/world_flags/nigeria.svg',
+    },
   ];
-
-  List<Map<String, String>> _filteredCountries = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _filteredCountries = _countries;
-  }
-
-  void _filterCountries(String query) {
-    setState(() {
-      _filteredCountries =
-          _countries
-              .where(
-                (country) => country['name']!.toLowerCase().contains(
-                  query.toLowerCase(),
-                ),
-              )
-              .toList();
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.height * 0.7,
+      height: MediaQuery.of(context).size.height * 0.92,
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
       child: Column(
         children: [
-          // Handle bar
-          Container(
-            width: 40.w,
-            height: 4.h,
-            margin: EdgeInsets.symmetric(vertical: 12.h),
-            decoration: BoxDecoration(
-              color: AppColors.neutral300,
-              borderRadius: BorderRadius.circular(2.r),
-            ),
-          ),
-
-          // Header
+          SizedBox(height: 18.h),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 24.w),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                SizedBox(height: 22.h, width: 22.w),
                 Text(
                   'Select Country',
-                  style: AppTypography.headlineSmall.copyWith(
+                  style: AppTypography.titleLarge.copyWith(
                     fontFamily: 'CabinetGrotesk',
-                    fontSize: 20.sp,
+                    fontSize: 18.sp,
                     fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
-                const Spacer(),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pop(context);
+                  },
+                  child: Image.asset(
+                    "assets/icons/pngs/cancelicon.png",
+                    height: 22.h,
+                    width: 22.w,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                 ),
               ],
             ),
           ),
-
-          // Search field
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
-            child: TextField(
-              onChanged: _filterCountries,
-              decoration: InputDecoration(
-                hintText: 'Search countries...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-              ),
-            ),
-          ),
-
-          // Countries list
+          SizedBox(height: 16.h),
           Expanded(
             child: ListView.builder(
-              itemCount: _filteredCountries.length,
+              padding: EdgeInsets.symmetric(horizontal: 24.w),
+              itemCount: _countries.length,
               itemBuilder: (context, index) {
-                final country = _filteredCountries[index];
+                final country = _countries[index];
                 return ListTile(
-                  leading: Text(
-                    country['flag']!,
-                    style: TextStyle(fontSize: 24.sp),
-                  ),
-                  title: Text(country['name']!),
-                  subtitle: Text(country['code']!),
+                  contentPadding: EdgeInsets.symmetric(vertical: 4.h),
                   onTap: () => widget.onCountrySelected(country['name']!),
+                  title: Row(
+                    children: [
+                      SvgPicture.asset(country['flag']!, height: 24.000.h),
+                      SizedBox(width: 12.w),
+                      Text(
+                        country['name']!,
+                        style: AppTypography.bodyLarge.copyWith(
+                          fontFamily: 'Karla',
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  trailing: Text(
+                    country['code']!,
+                    style: AppTypography.bodyLarge.copyWith(
+                      fontFamily: 'Karla',
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 );
               },
             ),
@@ -751,64 +955,65 @@ class _GenderBottomSheet extends StatefulWidget {
 }
 
 class _GenderBottomSheetState extends State<_GenderBottomSheet> {
-  final List<String> _genders = [
-    'Male',
-    'Female',
-    'Other',
-    'Prefer not to say',
-  ];
+  final List<String> _genders = ['Male', 'Female', 'Prefer not to say'];
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.height * 0.4,
+      height: MediaQuery.of(context).size.height * 0.92,
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
       child: Column(
         children: [
-          // Handle bar
-          Container(
-            width: 40.w,
-            height: 4.h,
-            margin: EdgeInsets.symmetric(vertical: 12.h),
-            decoration: BoxDecoration(
-              color: AppColors.neutral300,
-              borderRadius: BorderRadius.circular(2.r),
-            ),
-          ),
-
-          // Header
+          SizedBox(height: 18.h),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 24.w),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                SizedBox(height: 22.h, width: 22.w),
                 Text(
                   'Select Gender',
-                  style: AppTypography.headlineSmall.copyWith(
+                  style: AppTypography.titleLarge.copyWith(
                     fontFamily: 'CabinetGrotesk',
-                    fontSize: 20.sp,
+                    fontSize: 18.sp,
                     fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
-                const Spacer(),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pop(context);
+                  },
+                  child: Image.asset(
+                    "assets/icons/pngs/cancelicon.png",
+                    height: 22.h,
+                    width: 22.w,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                 ),
               ],
             ),
           ),
-
-          // Genders list
+          SizedBox(height: 16.h),
           Expanded(
             child: ListView.builder(
+              padding: EdgeInsets.symmetric(horizontal: 24.w),
               itemCount: _genders.length,
               itemBuilder: (context, index) {
                 final gender = _genders[index];
                 return ListTile(
-                  title: Text(gender),
+                  contentPadding: EdgeInsets.symmetric(vertical: 4.h),
+                  title: Text(
+                    gender,
+                    style: AppTypography.bodyLarge.copyWith(
+                      fontFamily: 'Karla',
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                   onTap: () => widget.onGenderSelected(gender),
                 );
               },

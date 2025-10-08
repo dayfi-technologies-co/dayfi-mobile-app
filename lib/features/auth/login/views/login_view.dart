@@ -291,7 +291,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                           backgroundColor:
                               loginState.isFormValid
                                   ? AppColors.purple500
-                                  : Theme.of(context).colorScheme.onSurface.withOpacity(0.12),
+                                  : AppColors.purple100,
                           height: 60.h,
                           textColor: AppColors.neutral0,
                           fontFamily: 'Karla',

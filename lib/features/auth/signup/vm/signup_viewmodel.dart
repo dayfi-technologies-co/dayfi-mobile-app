@@ -6,6 +6,7 @@ import 'package:dayfi/services/remote/network/network_service.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/routes/route.dart';
+import 'package:dayfi/common/constants/analytics_events.dart';
 
 class SignupState {
   final String firstName;
@@ -267,6 +268,11 @@ class SignupNotifier extends StateNotifier<SignupState> {
     state = state.copyWith(isBusy: true);
 
     try {
+      // Analytics: signup started
+      analyticsService.logEvent(
+        name: AnalyticsEvents.signupStarted,
+        parameters: { 'email': state.email },
+      );
       AppLogger.info('Starting signup process for email: ${state.email}');
 
       final response = await _authService.signup(
@@ -283,6 +289,10 @@ class SignupNotifier extends StateNotifier<SignupState> {
 
       if (response.statusCode == 200) {
         AppLogger.info('Signup successful: ${response.message}');
+        analyticsService.logEvent(
+          name: AnalyticsEvents.signupCompleted,
+          parameters: { 'email': state.email },
+        );
 
         // Show success message
         TopSnackbar.show(context, message: response.message, isError: false);
@@ -298,6 +308,10 @@ class SignupNotifier extends StateNotifier<SignupState> {
         );
       } else {
         AppLogger.error('Signup failed: ${response.message}');
+        analyticsService.logEvent(
+          name: AnalyticsEvents.signupFailed,
+          parameters: { 'email': state.email, 'reason': response.message },
+        );
 
         // Check if it's a 401 error with activation message
         if (response.message.toLowerCase().contains('activate your account')) {
@@ -325,6 +339,10 @@ class SignupNotifier extends StateNotifier<SignupState> {
         _navigateToVerifyEmailAndResendOTP(context, state.email);
       } else {
         AppLogger.error('Signup error: $e');
+        analyticsService.logEvent(
+          name: AnalyticsEvents.signupFailed,
+          parameters: { 'email': state.email, 'reason': e.toString() },
+        );
         TopSnackbar.show(
           // ignore: use_build_context_synchronously
           context,

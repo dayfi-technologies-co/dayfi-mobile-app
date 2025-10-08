@@ -1,7 +1,8 @@
+import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/common/widgets/buttons/secondary_button.dart';
+import 'package:dayfi/routes/route.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
@@ -11,6 +12,8 @@ import 'package:dayfi/features/legal/terms_of_use.dart';
 import 'package:dayfi/features/legal/privacy_notice.dart';
 import 'package:intercom_flutter/intercom_flutter.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
+import 'package:dayfi/common/utils/tier_utils.dart';
+import 'package:dayfi/services/notification_service.dart';
 
 // Constants for consistent styling
 class _ProfileConstants {
@@ -79,7 +82,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
       'iconColor': AppColors.success500,
       'title': 'Referrals',
       'subtitle': 'Invite friends and earn rewards',
-      'actionText': 'Get ₦5000',
+      'actionText': "Coming soon", // 'Get ₦5000',
       'actionColor': AppColors.success500,
       'onTap': () => _navigateToReferrals(),
     },
@@ -135,7 +138,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
   }
 
   void _navigateToAccountLimits() {
-    // TODO: Navigate to account limits
+    appRouter.pushNamed(AppRoute.accountLimitsView);
   }
 
   void _navigateToPaymentMethods() {
@@ -143,7 +146,10 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
   }
 
   void _navigateToDocumentUpload() {
-    // TODO: Navigate to document upload
+    appRouter.pushNamed(
+      AppRoute.uploadDocumentsView,
+      arguments: {'showBackButton': true},
+    );
   }
 
   void _navigateToReferrals() {
@@ -151,16 +157,13 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
   }
 
   void _navigateToChangePin() {
-    // TODO: Navigate to change PIN
+    // appRouter.pushNamed(AppRoute.reenterPasscodeView);
   }
 
   void _navigateToContactUs() async {
     try {
-      debugPrint('Attempting to open Intercom messenger...');
       await Intercom.instance.displayMessenger();
-      debugPrint('Intercom messenger opened successfully');
     } catch (e) {
-      debugPrint('Intercom error: $e');
       // Fallback in case Intercom fails
       if (mounted) {
         TopSnackbar.show(
@@ -174,6 +177,30 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
 
   void _navigateToFAQs() {
     // TODO: Navigate to FAQs
+  }
+
+  // Test notification method (temporary for testing)
+  void _testNotification() async {
+    print('🔔 Test notification button pressed');
+    try {
+      final notificationService = NotificationService();
+      
+      // Test 1: Regular notification
+      await notificationService.triggerSignUpSuccess("Test User");
+      
+      // Test 2: Force notification
+      await Future.delayed(Duration(seconds: 1));
+      await notificationService.forceShowNotification();
+      
+      // Check if notifications are enabled
+      final isEnabled = await notificationService.areNotificationsEnabled();
+      print('🔔 Notifications enabled: $isEnabled');
+      
+      print('🔔 Try minimizing the app now to see notifications!');
+      
+    } catch (e) {
+      print('❌ Error in test notification: $e');
+    }
   }
 
   void _navigateToTermsAndConditions() {
@@ -266,13 +293,30 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
             height: _ProfileConstants.profileImageHeight.h,
           ),
         ),
-        if (!profileState.isLoading) _buildTierBadge(),
+        if (!profileState.isLoading) _buildTierBadge(profileState),
       ],
     );
   }
 
   // Tier Badge Widget
-  Widget _buildTierBadge() {
+  Widget _buildTierBadge(ProfileState profileState) {
+    final tierDisplayName = TierUtils.getTierDisplayName(profileState.user);
+    final tierIconPath = TierUtils.getTierIconPath(profileState.user);
+    final tierColor = TierUtils.getTierColor(profileState.user);
+    
+    // Get color based on tier
+    Color tierColorValue;
+    switch (tierColor) {
+      case 'success600':
+        tierColorValue = AppColors.success600;
+        break;
+      case 'warning600':
+        tierColorValue = AppColors.warning600;
+        break;
+      default:
+        tierColorValue = AppColors.info600;
+    }
+
     return Positioned(
       bottom: 0,
       child: Container(
@@ -286,14 +330,14 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
         child: Row(
           children: [
             Image.asset(
-              'assets/icons/pngs/tier1.png',
+              tierIconPath,
               height: _ProfileConstants.tierImageHeight.h,
             ),
             SizedBox(width: 4.h),
             Text(
-              "Tier 1",
+              tierDisplayName,
               style: AppTypography.labelMedium.copyWith(
-                color: AppColors.info600,
+                color: tierColorValue,
                 fontSize: 16.sp,
                 fontFamily: AppTypography.secondaryFontFamily,
                 fontWeight: AppTypography.regular,
@@ -799,6 +843,14 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                 height: 1.2,
               ),
               textAlign: TextAlign.center,
+            ),
+          ),
+          SizedBox(height: 14.h),
+          // Test notification button (temporary)
+          Center(
+            child: ElevatedButton(
+              onPressed: _testNotification,
+              child: Text('Test Notification'),
             ),
           ),
           SizedBox(height: 14.h),

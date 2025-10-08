@@ -8,6 +8,7 @@ import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/common/constants/storage_keys.dart';
+import 'package:dayfi/common/constants/analytics_events.dart';
 
 class LoginState {
   final String email;
@@ -93,6 +94,11 @@ class LoginNotifier extends StateNotifier<LoginState> {
     state = state.copyWith(isBusy: true);
 
     try {
+      // Analytics: login started
+      analyticsService.logEvent(
+        name: AnalyticsEvents.loginStarted,
+        parameters: { 'email': state.email },
+      );
       AppLogger.info('Starting login process for email: ${state.email}');
 
       final response = await _authService.login(
@@ -106,6 +112,11 @@ class LoginNotifier extends StateNotifier<LoginState> {
 
       if (response.statusCode == 200) {
         AppLogger.info('Login successful: ${response.message}');
+        // Analytics: login completed
+        analyticsService.logEvent(
+          name: AnalyticsEvents.loginCompleted,
+          parameters: { 'email': state.email },
+        );
 
         // Save user token and data
         await _secureStorage.write(StorageKeys.token, response.data?.token ?? '');
@@ -119,8 +130,9 @@ class LoginNotifier extends StateNotifier<LoginState> {
           );
         }
 
-        // Save password temporarily for passcode creation (will be cleared after)
-        await _secureStorage.write('password', state.password);
+        // Save login credentials for passcode verification flow
+        await _secureStorage.write(StorageKeys.email, state.email);
+        await _secureStorage.write(StorageKeys.password, state.password);
 
         // Show success message
         // _showSnackBar(context, response.message, isError: false);
@@ -129,6 +141,11 @@ class LoginNotifier extends StateNotifier<LoginState> {
         appRouter.pushNamed(AppRoute.createPasscodeView, arguments: false);
       } else {
         AppLogger.error('Login failed: ${response.message}');
+        // Analytics: login failed
+        analyticsService.logEvent(
+          name: AnalyticsEvents.loginFailed,
+          parameters: { 'email': state.email, 'reason': response.message },
+        );
 
         // Check if it's a 401 error with activation message
         if (response.message.toLowerCase().contains('activate your account')) {
@@ -156,6 +173,10 @@ class LoginNotifier extends StateNotifier<LoginState> {
         _navigateToVerifyEmailAndResendOTP(context, state.email);
       } else {
         AppLogger.error('Login error: $e');
+        analyticsService.logEvent(
+          name: AnalyticsEvents.loginFailed,
+          parameters: { 'email': state.email, 'reason': e.toString() },
+        );
         TopSnackbar.show(context, message: e.toString(), isError: true);
       }
     } finally {

@@ -6,6 +6,7 @@ import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/services/local/biometric_service.dart';
 import 'package:dayfi/services/local/secure_storage.dart';
+import 'package:dayfi/services/remote/auth_service.dart';
 import 'package:dayfi/common/constants/storage_keys.dart';
 
 class BiometricSetupState {
@@ -54,6 +55,7 @@ class BiometricSetupState {
 
 class BiometricSetupNotifier extends StateNotifier<BiometricSetupState> {
   final SecureStorageService _secureStorage = locator<SecureStorageService>();
+  final AuthService _authService = locator<AuthService>();
 
   BiometricSetupNotifier() : super(const BiometricSetupState()) {
     _initializeBiometrics();
@@ -145,7 +147,16 @@ class BiometricSetupNotifier extends StateNotifier<BiometricSetupState> {
       );
 
       if (authenticated) {
-        // Save biometric preference
+        try {
+          // Update biometrics on backend
+          await _authService.updateBiometrics(isBiometricsSetup: true);
+          AppLogger.info('Biometric status updated on backend successfully');
+        } catch (e) {
+          AppLogger.error('Failed to update biometric status on backend: $e');
+          // Continue with local setup even if backend fails
+        }
+
+        // Save biometric preference locally
         await _secureStorage.write('biometric_enabled', 'true');
         // Mark biometric setup as completed
         await _secureStorage.write(StorageKeys.biometricSetupCompleted, 'true');
@@ -191,6 +202,15 @@ class BiometricSetupNotifier extends StateNotifier<BiometricSetupState> {
   Future<void> skipBiometrics(BuildContext context) async {
     try {
       AppLogger.info('Skipping biometric setup...');
+      
+      try {
+        // Update biometrics on backend as false
+        await _authService.updateBiometrics(isBiometricsSetup: false);
+        AppLogger.info('Biometric status updated on backend successfully');
+      } catch (e) {
+        AppLogger.error('Failed to update biometric status on backend: $e');
+        // Continue with local setup even if backend fails
+      }
       
       // Save preference to skip biometrics
       await _secureStorage.write('biometric_enabled', 'false');

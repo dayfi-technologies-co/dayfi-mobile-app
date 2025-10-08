@@ -1,4 +1,5 @@
 import 'package:get_it/get_it.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dayfi/common/utils/app_strings.dart';
 import 'package:dayfi/common/widgets/loading_bottom_sheet_controller.dart';
 import 'package:dayfi/core/navigation/navigation.dart';
@@ -11,9 +12,14 @@ import 'package:dayfi/services/remote/network/network_service.dart';
 import 'package:dayfi/services/local/secure_storage.dart';
 import 'package:dayfi/services/local/local_cache.dart';
 import 'package:dayfi/services/local/connectivity_service.dart';
+import 'package:dayfi/services/local/analytics_service.dart';
+import 'package:dayfi/services/kyc/kyc_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 GetIt locator = GetIt.instance;
+
+// Global provider container reference for resetting providers
+ProviderContainer? _globalProviderContainer;
 
 Future<void> setupLocator() async {
   //ensure stored user data is cleared
@@ -50,6 +56,12 @@ Future<void> setupLocator() async {
 
   locator.registerLazySingleton(() => LoadingModalController.instance);
   
+  // Initialize analytics service
+  locator.registerLazySingleton(() => AnalyticsService());
+  
+  // Initialize KYC service
+  locator.registerLazySingleton(() => KycService(secureStorage: locator<SecureStorageService>()));
+  
   // Initialize connectivity service
   await ConnectivityService.initialize();
 }
@@ -65,3 +77,14 @@ final authService = locator<AuthService>();
 final paymentService = locator<PaymentService>();
 final walletService = locator<WalletService>();
 final loadingModalController = locator<LoadingModalController>();
+final analyticsService = locator<AnalyticsService>();
+final kycService = locator<KycService>();
+
+// Provider container management
+void setGlobalProviderContainer(ProviderContainer container) {
+  _globalProviderContainer = container;
+}
+
+ProviderContainer? getGlobalProviderContainer() {
+  return _globalProviderContainer;
+}

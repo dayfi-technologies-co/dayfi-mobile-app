@@ -54,6 +54,7 @@ class CustomTextField extends StatelessWidget {
   final double? errorFontSize;
   final bool isDayfiId;
   final bool capitalizeFirstLetter;
+  final double borderRadius;
 
   const CustomTextField({
     super.key,
@@ -82,6 +83,7 @@ class CustomTextField extends StatelessWidget {
     this.errorFontSize,
     this.isDayfiId = false,
     this.capitalizeFirstLetter = false,
+    this.borderRadius = 12,
   });
 
   @override
@@ -89,7 +91,7 @@ class CustomTextField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        label != ""
+        label != null && label != ""
             ? Text(
               label!,
               style: TextStyle(
@@ -103,16 +105,16 @@ class CustomTextField extends StatelessWidget {
                         ? Colors.transparent
                         : Theme.of(
                           context,
-                        ).textTheme.bodyLarge!.color!.withOpacity(.75),
+                        ).textTheme.bodyLarge?.color?.withOpacity(.75) ?? Colors.black,
               ),
               textAlign: TextAlign.start,
               overflow: TextOverflow.ellipsis,
             )
             : const SizedBox(),
-        SizedBox(height: label == "" ? 0 : 4),
+        SizedBox(height: (label == null || label == "") ? 0 : 4),
         Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12.0.r),
+            borderRadius: BorderRadius.circular(borderRadius.r),
             boxShadow: [
               BoxShadow(
                 color:
@@ -167,7 +169,7 @@ class CustomTextField extends StatelessWidget {
               hintText: hintText,
               hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 fontFamily: 'Karla',
-                fontSize: 15,
+                fontSize: 16,
                 letterSpacing: -.6,
                 fontWeight: FontWeight.w500,
                 height: 1.450,
@@ -198,19 +200,19 @@ class CustomTextField extends StatelessWidget {
               suffixIcon: suffixIcon,
               focusedBorder: OutlineInputBorder(
                 borderSide: BorderSide.none,
-                borderRadius: BorderRadius.all(Radius.circular(12.0.r)),
+                borderRadius: BorderRadius.all(Radius.circular(borderRadius.r)),
               ),
               enabledBorder: OutlineInputBorder(
                 borderSide: BorderSide.none,
-                borderRadius: BorderRadius.all(Radius.circular(12.0.r)),
+                borderRadius: BorderRadius.all(Radius.circular(borderRadius.r)),
               ),
               focusedErrorBorder: OutlineInputBorder(
                 borderSide: BorderSide.none,
-                borderRadius: BorderRadius.all(Radius.circular(12.0.r)),
+                borderRadius: BorderRadius.all(Radius.circular(borderRadius.r)),
               ),
               errorBorder: OutlineInputBorder(
                 borderSide: BorderSide.none,
-                borderRadius: BorderRadius.all(Radius.circular(12.0.r)),
+                borderRadius: BorderRadius.all(Radius.circular(borderRadius.r)),
               ),
             ),
           ),
@@ -275,20 +277,22 @@ class ReadOnlyCustomTextField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label!,
-          style: const TextStyle(
-            fontFamily: 'Karla',
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
-            letterSpacing: -.1,
-            height: 1.450,
-            color: Color(0xFF302D53),
-          ),
-          textAlign: TextAlign.start,
-          overflow: TextOverflow.ellipsis,
-        ),
-        verticalSpace(label == "" ? 0 : 4),
+        label != null
+            ? Text(
+              label!,
+              style: const TextStyle(
+                fontFamily: 'Karla',
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                letterSpacing: -.1,
+                height: 1.450,
+                color: Color(0xFF302D53),
+              ),
+              textAlign: TextAlign.start,
+              overflow: TextOverflow.ellipsis,
+            )
+            : const SizedBox(),
+        verticalSpace((label == null || label == "") ? 0 : 4),
         TextFormField(
           // autofocus: autofocus,
           maxLines: obscureText ? 1 : minLines,
@@ -326,9 +330,7 @@ class ReadOnlyCustomTextField extends StatelessWidget {
               fontSize: 14,
               fontWeight: FontWeight.w500,
               height: 1.450,
-              color: Theme.of(context).textTheme.bodyLarge!.color!
-              // ignore: deprecated_member_use
-              .withOpacity(.5),
+              color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(.5) ?? Colors.black.withOpacity(.5),
             ),
             filled: true,
             fillColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(.3),

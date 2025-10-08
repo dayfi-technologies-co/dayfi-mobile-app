@@ -7,6 +7,7 @@ import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
 import 'package:dayfi/features/transactions/vm/transactions_viewmodel.dart';
 import 'package:dayfi/models/wallet_transaction.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:dayfi/app_locator.dart';
 
 class TransactionsView extends ConsumerStatefulWidget {
   const TransactionsView({super.key});
@@ -15,7 +16,8 @@ class TransactionsView extends ConsumerStatefulWidget {
   ConsumerState<TransactionsView> createState() => _TransactionsViewState();
 }
 
-class _TransactionsViewState extends ConsumerState<TransactionsView> with WidgetsBindingObserver {
+class _TransactionsViewState extends ConsumerState<TransactionsView>
+    with WidgetsBindingObserver {
   final TextEditingController _searchController = TextEditingController();
 
   @override
@@ -24,6 +26,7 @@ class _TransactionsViewState extends ConsumerState<TransactionsView> with Widget
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(transactionsProvider.notifier).loadTransactions();
+      analyticsService.trackScreenView(screenName: 'TransactionsView');
     });
   }
 
@@ -78,134 +81,143 @@ class _TransactionsViewState extends ConsumerState<TransactionsView> with Widget
           },
           child: Column(
             children: [
-            // Search Bar
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
-              child: CustomTextField(
-                controller: _searchController,
-                label: '',
-                hintText: 'Search transactions',
-                prefixIcon: Icon(
-                  Icons.search,
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withOpacity(0.6),
-                  size: 20.sp,
+              // Search Bar
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 8.h),
+                child: CustomTextField(
+                  controller: _searchController,
+                  label: '',
+                  hintText: 'Search transactions',
+                  borderRadius: 40,
+                  prefixIcon: Icon(
+                    Icons.search,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.6),
+                    size: 20.sp,
+                  ),
+                  onChanged: (value) {
+                    ref
+                        .read(transactionsProvider.notifier)
+                        .searchTransactions(value);
+                  },
                 ),
-                onChanged: (value) {
-                  ref
-                      .read(transactionsProvider.notifier)
-                      .searchTransactions(value);
-                },
               ),
-            ),
 
-            // Transactions List
-            Expanded(
-              child: Padding(
-                padding: EdgeInsetsGeometry.only(bottom: 0.h),
-                child:
-                    transactionsState.isLoading
-                        ? Center(
-                          child: LoadingAnimationWidget.horizontalRotatingDots(
-                            color: AppColors.purple500,
-                            size: 20,
-                          ),
-                        )
-                        : transactionsState.errorMessage != null
-                        ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              // Icon(
-                              //   Icons.error_outline,
-                              //   size: 48.sp,
-                              //   color: Theme.of(
-                              //     context,
-                              //   ).colorScheme.onSurface.withOpacity(0.6),
-                              // ),
-                              // SizedBox(height: 16.h),
-                              Text(
-                                'Failed to load transactions',
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.bodyLarge?.copyWith(
-                                  fontFamily: 'CabinetGrotesk',
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 18.sp,
-                                  height: 1.4,
-                                  letterSpacing: -.4,
-                                  color: Theme.of(
+              // Transactions List
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsetsGeometry.only(bottom: 0.h),
+                  child:
+                      transactionsState.isLoading
+                          ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                LoadingAnimationWidget.horizontalRotatingDots(
+                                  color: AppColors.purple500,
+                                  size: 20,
+                                ),
+                                SizedBox(height: 100.h),
+                              ],
+                            ),
+                          )
+                          : transactionsState.errorMessage != null
+                          ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                // Icon(
+                                //   Icons.error_outline,
+                                //   size: 48.sp,
+                                //   color: Theme.of(
+                                //     context,
+                                //   ).colorScheme.onSurface.withOpacity(0.6),
+                                // ),
+                                // SizedBox(height: 16.h),
+                                Text(
+                                  'Failed to load transactions',
+                                  style: Theme.of(
                                     context,
-                                  ).colorScheme.onSurface.withOpacity(0.8),
+                                  ).textTheme.bodyLarge?.copyWith(
+                                    fontFamily: 'CabinetGrotesk',
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 18.sp,
+                                    height: 1.4,
+                                    letterSpacing: -.4,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface.withOpacity(0.8),
+                                  ),
+                                  textAlign: TextAlign.center,
                                 ),
-                                textAlign: TextAlign.center,
-                              ),
-                              SizedBox(height: 8.h),
-                              Text(
-                                transactionsState.errorMessage!,
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.bodyLarge?.copyWith(
-                                  fontSize: 16.sp,
-                                  fontWeight: FontWeight.w400,
-                                  fontFamily: 'Karla',
-                                  letterSpacing: -.6,
-                                  height: 1.4,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ),
-                        )
-                        : transactionsState.groupedTransactions.isEmpty
-                        ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              // Icon(
-                              //   Icons.receipt_long_outlined,
-                              //   size: 48.sp,
-                              //   color: Theme.of(
-                              //     context,
-                              //   ).colorScheme.onSurface.withOpacity(0.6),
-                              // ),
-                              // SizedBox(height: 16.h),
-                              Text(
-                                'No transactions found',
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.bodyLarge?.copyWith(
-                                  fontFamily: 'CabinetGrotesk',
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 18.sp,
-                                  height: 1.4,
-                                  letterSpacing: -.4,
-                                  color: Theme.of(
+                                SizedBox(height: 8.h),
+                                Text(
+                                  transactionsState.errorMessage!,
+                                  style: Theme.of(
                                     context,
-                                  ).colorScheme.onSurface.withOpacity(0.8),
+                                  ).textTheme.bodyLarge?.copyWith(
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.w400,
+                                    fontFamily: 'Karla',
+                                    letterSpacing: -.6,
+                                    height: 1.4,
+                                  ),
+                                  textAlign: TextAlign.center,
                                 ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
+                                SizedBox(height: 100.h),
+                              ],
+                            ),
+                          )
+                          : transactionsState.groupedTransactions.isEmpty
+                          ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                // Icon(
+                                //   Icons.receipt_long_outlined,
+                                //   size: 48.sp,
+                                //   color: Theme.of(
+                                //     context,
+                                //   ).colorScheme.onSurface.withOpacity(0.6),
+                                // ),
+                                // SizedBox(height: 16.h),
+                                Text(
+                                  'No transactions found',
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.bodyLarge?.copyWith(
+                                    fontFamily: 'CabinetGrotesk',
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 18.sp,
+                                    height: 1.4,
+                                    letterSpacing: -.4,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface.withOpacity(0.8),
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                SizedBox(height: 100.h),
+                              ],
+                            ),
+                          )
+                          : ListView.builder(
+                            padding: EdgeInsets.symmetric(horizontal: 24.w),
+                            itemCount:
+                                transactionsState.groupedTransactions.length,
+                            itemBuilder: (context, index) {
+                              final group =
+                                  transactionsState.groupedTransactions[index];
+                              return _buildTransactionGroup(group);
+                            },
                           ),
-                        )
-                        : ListView.builder(
-                          padding: EdgeInsets.symmetric(horizontal: 24.w),
-                          itemCount:
-                              transactionsState.groupedTransactions.length,
-                          itemBuilder: (context, index) {
-                            final group =
-                                transactionsState.groupedTransactions[index];
-                            return _buildTransactionGroup(group);
-                          },
-                        ),
+                ),
               ),
-            ),
-        ],
-      ),
+            ],
           ),
         ),
+      ),
     );
   }
 
@@ -215,39 +227,52 @@ class _TransactionsViewState extends ConsumerState<TransactionsView> with Widget
       children: [
         // Date Header
         Padding(
-          padding: EdgeInsets.only(bottom: 12.h, top: 8.h),
+          padding: EdgeInsets.only(bottom: 8.h, top: 16.h),
           child: Text(
             group.date,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               fontFamily: 'Karla',
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w500,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              letterSpacing: -.6,
+              height: 1.450,
+              color: Theme.of(
+                context,
+              ).textTheme.bodyLarge!.color!.withOpacity(.75),
             ),
           ),
         ),
 
         // Transactions for this date
-        ...group.transactions.map(
-          (transaction) => _buildTransactionCard(transaction),
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(12.r),
+          ),
+          child: Column(
+            children: [
+              for (int i = 0; i < group.transactions.length; i++)
+                _buildTransactionCard(
+                  group.transactions[i],
+                  bottomMargin: i == group.transactions.length - 1 ? 8 : 24,
+                ),
+            ],
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildTransactionCard(WalletTransaction transaction) {
+  Widget _buildTransactionCard(
+    WalletTransaction transaction, {
+    double bottomMargin = 24,
+  }) {
     return Container(
-      margin: EdgeInsets.only(bottom: 12.h),
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-          width: 1.0,
-        ),
-      ),
+      margin: EdgeInsets.only(bottom: bottomMargin.h, top: 8.h),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
           // Status Icon
           Container(
@@ -263,19 +288,21 @@ class _TransactionsViewState extends ConsumerState<TransactionsView> with Widget
               size: 20.sp,
             ),
           ),
-          SizedBox(width: 16.w),
+          SizedBox(width: 8.w),
 
           // Transaction Info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 Text(
-                  transaction.beneficiary.name,
+                  transaction.beneficiary.name.toUpperCase(),
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     fontFamily: 'Karla',
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 18.sp,
+                    letterSpacing: -.6,
+                    fontWeight: FontWeight.w400,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
@@ -284,18 +311,27 @@ class _TransactionsViewState extends ConsumerState<TransactionsView> with Widget
                   _getStatusText(transaction.status),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontFamily: 'Karla',
-                    fontSize: 14.sp,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    letterSpacing: -.6,
+                    height: 1.450,
                     color: _getStatusColor(transaction.status),
                   ),
                 ),
-                if (transaction.reason != null && transaction.reason!.isNotEmpty) ...[
-                  SizedBox(height: 2.h),
+                if (transaction.reason != null &&
+                    transaction.reason!.isNotEmpty) ...[
+                  // SizedBox(height: 2.h),
                   Text(
                     transaction.reason!,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       fontFamily: 'Karla',
+                      fontWeight: FontWeight.w400,
+                      letterSpacing: -.6,
+                      height: 1.450,
                       fontSize: 12.sp,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.6),
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -350,9 +386,9 @@ class _TransactionsViewState extends ConsumerState<TransactionsView> with Widget
     switch (status.toLowerCase()) {
       case 'success-collection':
         return 'Completed';
-      case 'pending':
+      case 'pending-collection':
         return 'Pending';
-      case 'failed':
+      case 'failed-collection':
         return 'Failed';
       default:
         return 'Unknown';
@@ -362,11 +398,31 @@ class _TransactionsViewState extends ConsumerState<TransactionsView> with Widget
   String _getTransactionAmount(WalletTransaction transaction) {
     // Use actual amounts from the transaction data
     if (transaction.sendAmount != null && transaction.sendAmount! > 0) {
-      return 'NGN ${transaction.sendAmount!.toStringAsFixed(2)}';
-    } else if (transaction.receiveAmount != null && transaction.receiveAmount! > 0) {
-      return 'NGN ${transaction.receiveAmount!.toStringAsFixed(2)}';
+      return '₦${_formatNumber(transaction.sendAmount!)}';
+    } else if (transaction.receiveAmount != null &&
+        transaction.receiveAmount! > 0) {
+      return '₦${_formatNumber(transaction.receiveAmount!)}';
     } else {
       return 'N/A';
     }
+  }
+
+  String _formatNumber(double amount) {
+    // Format number with thousands separators
+    String formatted = amount.toStringAsFixed(2);
+    List<String> parts = formatted.split('.');
+    String integerPart = parts[0];
+    String decimalPart = parts.length > 1 ? parts[1] : '00';
+
+    // Add commas for thousands separators
+    String formattedInteger = '';
+    for (int i = 0; i < integerPart.length; i++) {
+      if (i > 0 && (integerPart.length - i) % 3 == 0) {
+        formattedInteger += ',';
+      }
+      formattedInteger += integerPart[i];
+    }
+
+    return '$formattedInteger.$decimalPart';
   }
 }

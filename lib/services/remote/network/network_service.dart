@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/services/remote/network/api_error.dart';
 import 'package:dayfi/services/remote/network/app_interceptor.dart';
@@ -19,7 +20,10 @@ void printWrapped(String text) {
 
 /// A top level function to print dio logs
 void printDioLogs(Object object) {
-  printWrapped(object.toString());
+  // Only log in debug mode for production
+  if (kDebugMode) {
+    printWrapped(object.toString());
+  }
 }
 
 class NetworkService {

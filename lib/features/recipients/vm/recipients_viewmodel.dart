@@ -51,10 +51,9 @@ class RecipientsNotifier extends StateNotifier<RecipientsState> {
         isLoading: false,
       );
     } catch (e) {
-      print('Error loading beneficiaries: $e');
       state = state.copyWith(
         isLoading: false,
-        errorMessage: 'Failed to load recipients: ${e.toString()}',
+        errorMessage: 'Failed to load recipients. Please try again.',
       );
     }
   }

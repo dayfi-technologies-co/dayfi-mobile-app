@@ -17,7 +17,8 @@ class RecipientsView extends ConsumerStatefulWidget {
   ConsumerState<RecipientsView> createState() => _RecipientsViewState();
 }
 
-class _RecipientsViewState extends ConsumerState<RecipientsView> with WidgetsBindingObserver {
+class _RecipientsViewState extends ConsumerState<RecipientsView>
+    with WidgetsBindingObserver {
   final TextEditingController _searchController = TextEditingController();
 
   @override
@@ -56,17 +57,17 @@ class _RecipientsViewState extends ConsumerState<RecipientsView> with WidgetsBin
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        scrolledUnderElevation: 0,
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        leading: const SizedBox.shrink(),
-        leadingWidth: 0,
-        title: Text(
-          "Recipients",
+        appBar: AppBar(
+          scrolledUnderElevation: 0,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          elevation: 0,
+          leading: const SizedBox.shrink(),
+          leadingWidth: 0,
+          title: Text(
+            "Recipients",
             style: AppTypography.titleLarge.copyWith(
-            fontFamily: 'CabinetGrotesk',
+              fontFamily: 'CabinetGrotesk',
               fontSize: 28.sp,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface,
@@ -99,153 +100,174 @@ class _RecipientsViewState extends ConsumerState<RecipientsView> with WidgetsBin
           },
           child: Column(
             children: [
-            // Search Bar
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
-              child: CustomTextField(
-                controller: _searchController,
-                label: '',
-                hintText: 'Search...',
-                prefixIcon: Icon(
-                  Icons.search,
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withOpacity(0.6),
-                  size: 20.sp,
+              // Search Bar
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 8.h),
+                child: CustomTextField(
+                  controller: _searchController,
+                  label: '',
+                  hintText: 'Search...',
+                  borderRadius: 40,
+                  prefixIcon: Icon(
+                    Icons.search,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.6),
+                    size: 20.sp,
+                  ),
+                  onChanged: (value) {
+                    ref
+                        .read(recipientsProvider.notifier)
+                        .searchBeneficiaries(value);
+                  },
                 ),
-                onChanged: (value) {
-                  ref
-                      .read(recipientsProvider.notifier)
-                      .searchBeneficiaries(value);
-                },
               ),
-            ),
 
-            // Recipients List
-            Expanded(
-              child: Padding(
-                padding: EdgeInsetsGeometry.only(bottom: 0.h),
-                child:
-                    recipientsState.isLoading
-                        ? Center(
-                          child: LoadingAnimationWidget.horizontalRotatingDots(
-                            color: AppColors.purple500,
-                            size: 20,
-                          ),
-                        )
-                        : recipientsState.errorMessage != null
-                        ? Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-                              // Icon(
-                              //   Icons.error_outline,
-                              //   size: 48.sp,
-                              //   color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                              // ),
-                              // SizedBox(height: 16.h),
-                              Text(
-                                'Failed to load recipients',
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.bodyLarge?.copyWith(
-                                  fontFamily: 'CabinetGrotesk',
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 18.sp,
-                                  height: 1.4,
-                                  letterSpacing: -.4,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurface.withOpacity(0.8),
+              // Recipients List
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsetsGeometry.only(bottom: 0.h),
+                  child:
+                      recipientsState.isLoading
+                          ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                LoadingAnimationWidget.horizontalRotatingDots(
+                                  color: AppColors.purple500,
+                                  size: 20,
                                 ),
-                                textAlign: TextAlign.center,
-                              ),
-                              SizedBox(height: 8.h),
-          Text(
-                                recipientsState.errorMessage!,
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.bodyLarge?.copyWith(
-                                  fontSize: 16.sp,
-                                  fontWeight: FontWeight.w400,
-                                  fontFamily: 'Karla',
-                                  letterSpacing: -.6,
-                                  height: 1.4,
-                                ),
-                                textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-                        )
-                        : recipientsState.filteredBeneficiaries.isEmpty
-                        ? Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-                              // Icon(
-                              //   Icons.person_outline,
-                              //   size: 48.sp,
-                              //   color: Theme.of(
-                              //     context,
-                              //   ).colorScheme.onSurface.withOpacity(0.6),
-                              // ),
-                              // SizedBox(height: 16.h),
-          Text(
-                                'No recipients found',
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.bodyLarge?.copyWith(
-                                  fontFamily: 'CabinetGrotesk',
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 18.sp,
-                                  height: 1.4,
-                                  letterSpacing: -.4,
-                                  color: Theme.of(
+                                SizedBox(height: 100.h),
+                              ],
+                            ),
+                          )
+                          : recipientsState.errorMessage != null
+                          ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                // Icon(
+                                //   Icons.error_outline,
+                                //   size: 48.sp,
+                                //   color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                // ),
+                                // SizedBox(height: 16.h),
+                                Text(
+                                  'Failed to load recipients',
+                                  style: Theme.of(
                                     context,
-                                  ).colorScheme.onSurface.withOpacity(0.8),
-            ),
-            textAlign: TextAlign.center,
-          ),
-                            ],
+                                  ).textTheme.bodyLarge?.copyWith(
+                                    fontFamily: 'CabinetGrotesk',
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 18.sp,
+                                    height: 1.4,
+                                    letterSpacing: -.4,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface.withOpacity(0.8),
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                SizedBox(height: 8.h),
+                                Text(
+                                  recipientsState.errorMessage!,
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.bodyLarge?.copyWith(
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.w400,
+                                    fontFamily: 'Karla',
+                                    letterSpacing: -.6,
+                                    height: 1.4,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                SizedBox(height: 100.h),
+                              ],
+                            ),
+                          )
+                          : recipientsState.filteredBeneficiaries.isEmpty
+                          ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                // Icon(
+                                //   Icons.person_outline,
+                                //   size: 48.sp,
+                                //   color: Theme.of(
+                                //     context,
+                                //   ).colorScheme.onSurface.withOpacity(0.6),
+                                // ),
+                                Text(
+                                  'No recipients found',
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.bodyLarge?.copyWith(
+                                    fontFamily: 'CabinetGrotesk',
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 18.sp,
+                                    height: 1.4,
+                                    letterSpacing: -.4,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface.withOpacity(0.8),
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                SizedBox(height: 100.h),
+                              ],
+                            ),
+                          )
+                          : ListView.builder(
+                            shrinkWrap: true,
+                            padding: EdgeInsets.symmetric(horizontal: 24.w),
+                            itemCount:
+                                recipientsState.filteredBeneficiaries.length,
+                            itemBuilder: (context, index) {
+                              final beneficiary =
+                                  recipientsState.filteredBeneficiaries[index];
+                              return _buildRecipientCard(
+                                beneficiary,
+                                bottomMargin:
+                                    index ==
+                                            recipientsState
+                                                    .filteredBeneficiaries
+                                                    .length -
+                                                1
+                                        ? 8
+                                        : 24,
+                              );
+                            },
                           ),
-                        )
-                        : ListView.builder(
-                          padding: EdgeInsets.symmetric(horizontal: 24.w),
-                          itemCount:
-                              recipientsState.filteredBeneficiaries.length,
-                          itemBuilder: (context, index) {
-                            final beneficiary =
-                                recipientsState.filteredBeneficiaries[index];
-                            return _buildRecipientCard(beneficiary);
-                          },
+                ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
-          ),
+        ),
       ),
     );
   }
 
-  Widget _buildRecipientCard(Beneficiary beneficiary) {
+  Widget _buildRecipientCard(
+    Beneficiary beneficiary, {
+    double bottomMargin = 8,
+  }) {
     return Container(
-      margin: EdgeInsets.only(bottom: 16.h),
-      padding: EdgeInsets.all(16.w),
+      margin: EdgeInsets.only(bottom: 8.h, top: 8.h),
+      padding: EdgeInsets.symmetric(
+        horizontal: 16.w,
+        vertical: 16.h,
+      ),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-          width: 1.0,
-        ),
       ),
       child: Row(
         children: [
           // Avatar
           Container(
-            width: 48.w,
-            height: 48.w,
+            width: 40.w,
+            height: 40.w,
             decoration: BoxDecoration(
               color: AppColors.purple500,
               shape: BoxShape.circle,
@@ -255,14 +277,15 @@ class _RecipientsViewState extends ConsumerState<RecipientsView> with WidgetsBin
                 _getInitials(beneficiary.name),
                 style: TextStyle(
                   color: AppColors.neutral0,
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w600,
                   fontFamily: 'Karla',
+                  fontSize: 16.sp,
+                  letterSpacing: -.6,
+                  fontWeight: FontWeight.w400,
                 ),
               ),
             ),
           ),
-          SizedBox(width: 16.w),
+          SizedBox(width: 8.w),
 
           // Beneficiary Info
           Expanded(
@@ -270,32 +293,39 @@ class _RecipientsViewState extends ConsumerState<RecipientsView> with WidgetsBin
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  beneficiary.name,
+                  beneficiary.name.toUpperCase(),
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     fontFamily: 'Karla',
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 18.sp,
+                    letterSpacing: -.6,
+                    fontWeight: FontWeight.w400,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
-                SizedBox(height: 4.h),
-                Text(
-                  '${_getAccountType(beneficiary)} - ${_getAccountNumber(beneficiary)}',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontFamily: 'Karla',
-                    fontSize: 14.sp,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withOpacity(0.6),
-                  ),
-                ),
+                // SizedBox(height: 4.h),
+                // Text(
+                //   '${_getAccountType(beneficiary)} - ${_getAccountNumber(beneficiary)}',
+                //   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                //     fontFamily: 'Karla',
+                //     fontSize: 14.sp,
+                //     fontWeight: FontWeight.w400,
+                //     letterSpacing: -.6,
+                //     height: 1.450,
+                //     color: Theme.of(
+                //       context,
+                //     ).colorScheme.onSurface.withOpacity(0.6),
+                //   ),
+                // ),
                 if (beneficiary.country.isNotEmpty) ...[
-                  SizedBox(height: 2.h),
+                  SizedBox(height: 6.h),
                   Text(
                     '${beneficiary.country} • ${beneficiary.phone.isNotEmpty ? beneficiary.phone : 'No phone'}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       fontFamily: 'Karla',
                       fontSize: 12.sp,
+                      fontWeight: FontWeight.w400,
+                      letterSpacing: -.6,
+                      height: 1.450,
                       color: Theme.of(
                         context,
                       ).colorScheme.onSurface.withOpacity(0.5),
@@ -310,13 +340,14 @@ class _RecipientsViewState extends ConsumerState<RecipientsView> with WidgetsBin
           PrimaryButton(
             text: 'Send',
             onPressed: () => _navigateToSend(beneficiary),
-            height: 36.h,
-            width: 80.w,
+            height: 32.h,
+            width: 68.w,
             backgroundColor: AppColors.purple500,
             textColor: AppColors.neutral0,
             fontFamily: 'Karla',
             fontSize: 14.sp,
             borderRadius: 20.r,
+            fontWeight: FontWeight.w400,
           ),
         ],
       ),

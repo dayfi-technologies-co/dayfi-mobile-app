@@ -2,6 +2,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/models/user_model.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
+import 'package:dayfi/features/auth/signup/vm/signup_viewmodel.dart';
+import 'package:dayfi/features/auth/complete_personal_information/vm/complete_personal_information_viewmodel.dart';
+import 'package:dayfi/features/auth/login/vm/login_viewmodel.dart';
+import 'package:dayfi/features/auth/passcode/vm/passcode_viewmodel.dart';
+import 'package:dayfi/features/auth/verify_email/vm/verify_email_viewmodel.dart';
+import 'package:dayfi/features/auth/reset_password/vm/reset_password_viewmodel.dart';
+import 'package:dayfi/features/auth/upload_documents/vm/upload_documents_viewmodel.dart';
+import 'package:dayfi/features/profile/edit_profile/vm/edit_profile_viewmodel.dart';
 
 class ProfileState {
   final User? user;
@@ -146,6 +154,8 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
         expires: state.user!.expires,
         level: state.user!.level,
         transactionPin: state.user!.transactionPin,
+        isIdVerified: state.user!.isIdVerified,
+        isBiometricsSetup: state.user!.isBiometricsSetup,
       );
 
       // Save updated user to storage
@@ -168,19 +178,23 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
   }
 
   Future<void> uploadProfileImage(String imagePath) async {
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true, errorMessage: null);
     
     try {
-      // Simulate API call to upload image
+      // TODO: Implement actual API call to upload image
       await Future.delayed(const Duration(seconds: 2));
       
       state = state.copyWith(
         profileImageUrl: imagePath,
         isLoading: false,
+        errorMessage: null,
       );
     } catch (e) {
-      state = state.copyWith(isLoading: false);
-      // Handle error
+      AppLogger.error('Error uploading profile image: $e');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Failed to upload image. Please try again.',
+      );
     }
   }
 
@@ -195,57 +209,13 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
     try {
       AppLogger.info('Upgrading user tier...');
       
-      // Simulate API call to upgrade tier
-      await Future.delayed(const Duration(seconds: 1));
-      
-      // Create updated user with new tier
-      final currentLevel = state.user!.level ?? 'level-0';
-      final newLevel = currentLevel == 'level-0' ? 'level-1' : 'level-2';
-      
-      final updatedUser = User(
-        userId: state.user!.userId,
-        email: state.user!.email,
-        password: state.user!.password,
-        userType: state.user!.userType,
-        firstName: state.user!.firstName,
-        lastName: state.user!.lastName,
-        middleName: state.user!.middleName,
-        gender: state.user!.gender,
-        dateOfBirth: state.user!.dateOfBirth,
-        country: state.user!.country,
-        state: state.user!.state,
-        city: state.user!.city,
-        street: state.user!.street,
-        postalCode: state.user!.postalCode,
-        address: state.user!.address,
-        phoneNumber: state.user!.phoneNumber,
-        idType: state.user!.idType,
-        idNumber: state.user!.idNumber,
-        status: state.user!.status,
-        refreshToken: state.user!.refreshToken,
-        isDeleted: state.user!.isDeleted,
-        verificationToken: state.user!.verificationToken,
-        verificationTokenExpiryTime: state.user!.verificationTokenExpiryTime,
-        passwordResetToken: state.user!.passwordResetToken,
-        passwordResetTokenExpiryTime: state.user!.passwordResetTokenExpiryTime,
-        verificationEmail: state.user!.verificationEmail,
-        createdAt: state.user!.createdAt,
-        updatedAt: DateTime.now().toIso8601String(),
-        token: state.user!.token,
-        expires: state.user!.expires,
-        level: newLevel,
-        transactionPin: state.user!.transactionPin,
-      );
-
-      // Save updated user to storage
-      localCache.setUser = updatedUser.toJson();
-      
-      AppLogger.info('User tier upgraded successfully to $newLevel');
+      // TODO: Implement actual API call to upgrade tier
+      // This should call the backend API to upgrade the user's tier
+      // and return the updated user data
       
       state = state.copyWith(
-        user: updatedUser,
         isLoading: false,
-        errorMessage: null,
+        errorMessage: 'Tier upgrade feature is not yet implemented.',
       );
     } catch (e) {
       AppLogger.error('Error upgrading tier: $e');
@@ -268,6 +238,9 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
       // Reset profile state to initial state
       state = const ProfileState();
       
+      // Reset all form providers to clean state
+      _resetAllFormProviders();
+      
       // Navigate to login screen (hide back button)
       appRouter.pushNamedAndRemoveAllBehind('/loginView', arguments: false);
       
@@ -282,24 +255,19 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
   }
 
   Future<void> deleteAccount() async {
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true, errorMessage: null);
     
     try {
       AppLogger.info('Deleting user account...');
       
-      // Simulate API call to delete account
-      await Future.delayed(const Duration(seconds: 2));
+      // TODO: Implement actual API call to delete account
+      // This should call the backend API to delete the user's account
+      // and handle the response appropriately
       
-      // Clear all user data from storage
-      await localCache.clearAllUserData();
-      
-      // Reset profile state to initial state
-      state = const ProfileState();
-      
-      // Navigate to login screen (hide back button)
-      appRouter.pushNamedAndRemoveAllBehind('/loginView', arguments: false);
-      
-      AppLogger.info('User account deleted successfully');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Account deletion feature is not yet implemented.',
+      );
     } catch (e) {
       AppLogger.error('Error deleting account: $e');
       state = state.copyWith(
@@ -310,44 +278,104 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
   }
 
   Future<void> changePassword(String currentPassword, String newPassword) async {
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true, errorMessage: null);
     
     try {
-      // Simulate API call to change password
+      // TODO: Implement actual API call to change password
       await Future.delayed(const Duration(seconds: 1));
       
-      state = state.copyWith(isLoading: false);
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: null,
+      );
     } catch (e) {
-      state = state.copyWith(isLoading: false);
-      // Handle error
+      AppLogger.error('Error changing password: $e');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Failed to change password. Please try again.',
+      );
     }
   }
 
   Future<void> enableTwoFactorAuth() async {
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true, errorMessage: null);
     
     try {
-      // Simulate API call to enable 2FA
+      // TODO: Implement actual API call to enable 2FA
       await Future.delayed(const Duration(seconds: 1));
       
-      state = state.copyWith(isLoading: false);
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: null,
+      );
     } catch (e) {
-      state = state.copyWith(isLoading: false);
-      // Handle error
+      AppLogger.error('Error enabling 2FA: $e');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Failed to enable 2FA. Please try again.',
+      );
     }
   }
 
   Future<void> disableTwoFactorAuth() async {
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true, errorMessage: null);
     
     try {
-      // Simulate API call to disable 2FA
+      // TODO: Implement actual API call to disable 2FA
       await Future.delayed(const Duration(seconds: 1));
       
-      state = state.copyWith(isLoading: false);
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: null,
+      );
     } catch (e) {
-      state = state.copyWith(isLoading: false);
-      // Handle error
+      AppLogger.error('Error disabling 2FA: $e');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Failed to disable 2FA. Please try again.',
+      );
+    }
+  }
+
+  /// Reset all form providers to their initial state
+  void _resetAllFormProviders() {
+    try {
+      AppLogger.info('Resetting all form providers...');
+      
+      // Get the global provider container
+      final container = getGlobalProviderContainer();
+      if (container == null) {
+        AppLogger.warning('Global provider container not available');
+        return;
+      }
+      
+      // Reset signup form
+      container.read(signupProvider.notifier).resetForm();
+      
+      // Reset complete personal information form
+      container.read(completePersonalInfoProvider.notifier).resetForm();
+      
+      // Reset login form
+      container.read(loginProvider.notifier).resetForm();
+      
+      // Reset passcode form
+      container.read(passcodeProvider.notifier).resetForm();
+      
+      // Reset verify email form
+      container.read(verifyEmailProvider.notifier).resetForm();
+      
+      // Reset reset password form
+      container.read(resetPasswordProvider.notifier).resetForm();
+      
+      // Reset upload documents form
+      container.read(uploadDocumentsProvider.notifier).resetForm();
+      
+      // Reset edit profile form
+      container.read(editProfileProvider.notifier).resetForm();
+      
+      AppLogger.info('All form providers reset successfully');
+    } catch (e) {
+      AppLogger.error('Error resetting form providers: $e');
     }
   }
 }

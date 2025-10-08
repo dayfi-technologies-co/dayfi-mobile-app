@@ -3,6 +3,11 @@ PODS:
     - Flutter
   - device_info_plus (0.0.1):
     - Flutter
+  - FingerprintJS (1.6.0):
+    - FingerprintJS/Core (= 1.6.0)
+  - FingerprintJS/Core (1.6.0):
+    - FingerprintJS/SystemControl
+  - FingerprintJS/SystemControl (1.6.0)
   - Firebase/CoreOnly (12.2.0):
     - FirebaseCore (~> 12.2.0)
   - Firebase/Crashlytics (12.2.0):
@@ -86,6 +91,8 @@ PODS:
     - nanopb (~> 3.30910.0)
     - PromisesSwift (~> 2.1)
   - Flutter (1.0.0)
+  - flutter_local_notifications (0.0.1):
+    - Flutter
   - flutter_localization (0.0.1):
     - Flutter
   - flutter_secure_storage (6.0.0):
@@ -155,6 +162,13 @@ PODS:
   - local_auth_darwin (0.0.1):
     - Flutter
     - FlutterMacOS
+  - lottie-ios (4.5.2)
+  - Mixpanel-swift (5.1.0):
+    - Mixpanel-swift/Complete (= 5.1.0)
+  - Mixpanel-swift/Complete (5.1.0)
+  - mixpanel_flutter (2.4.4):
+    - Flutter
+    - Mixpanel-swift (= 5.1.0)
   - nanopb (3.30910.0):
     - nanopb/decode (= 3.30910.0)
     - nanopb/encode (= 3.30910.0)
@@ -166,9 +180,23 @@ PODS:
   - PromisesObjC (2.4.0)
   - PromisesSwift (2.4.0):
     - PromisesObjC (= 2.4.0)
+  - Sentry (8.55.0):
+    - Sentry/Core (= 8.55.0)
+  - Sentry/Core (8.55.0)
   - shared_preferences_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
+  - smile_id (11.2.2):
+    - Flutter
+    - SmileID (= 11.1.1)
+  - SmileID (11.1.1):
+    - FingerprintJS (= 1.6.0)
+    - lottie-ios (= 4.5.2)
+    - Sentry (= 8.55.0)
+    - SmileIDSecurity (= 11.1.1)
+    - ZIPFoundation (= 0.9.19)
+  - SmileIDSecurity (11.1.1)
+  - ZIPFoundation (0.9.19)
 
 DEPENDENCIES:
   - connectivity_plus (from `.symlinks/plugins/connectivity_plus/ios`)
@@ -178,16 +206,20 @@ DEPENDENCIES:
   - firebase_crashlytics (from `.symlinks/plugins/firebase_crashlytics/ios`)
   - firebase_messaging (from `.symlinks/plugins/firebase_messaging/ios`)
   - Flutter (from `Flutter`)
+  - flutter_local_notifications (from `.symlinks/plugins/flutter_local_notifications/ios`)
   - flutter_localization (from `.symlinks/plugins/flutter_localization/ios`)
   - flutter_secure_storage (from `.symlinks/plugins/flutter_secure_storage/ios`)
   - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
   - intercom_flutter (from `.symlinks/plugins/intercom_flutter/ios`)
   - local_auth_darwin (from `.symlinks/plugins/local_auth_darwin/darwin`)
+  - mixpanel_flutter (from `.symlinks/plugins/mixpanel_flutter/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
   - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
+  - smile_id (from `.symlinks/plugins/smile_id/ios`)
 
 SPEC REPOS:
   trunk:
+    - FingerprintJS
     - Firebase
     - FirebaseAnalytics
     - FirebaseCore
@@ -203,9 +235,15 @@ SPEC REPOS:
     - GoogleDataTransport
     - GoogleUtilities
     - Intercom
+    - lottie-ios
+    - Mixpanel-swift
     - nanopb
     - PromisesObjC
     - PromisesSwift
+    - Sentry
+    - SmileID
+    - SmileIDSecurity
+    - ZIPFoundation
 
 EXTERNAL SOURCES:
   connectivity_plus:
@@ -222,6 +260,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/firebase_messaging/ios"
   Flutter:
     :path: Flutter
+  flutter_local_notifications:
+    :path: ".symlinks/plugins/flutter_local_notifications/ios"
   flutter_localization:
     :path: ".symlinks/plugins/flutter_localization/ios"
   flutter_secure_storage:
@@ -232,14 +272,19 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/intercom_flutter/ios"
   local_auth_darwin:
     :path: ".symlinks/plugins/local_auth_darwin/darwin"
+  mixpanel_flutter:
+    :path: ".symlinks/plugins/mixpanel_flutter/ios"
   path_provider_foundation:
     :path: ".symlinks/plugins/path_provider_foundation/darwin"
   shared_preferences_foundation:
     :path: ".symlinks/plugins/shared_preferences_foundation/darwin"
+  smile_id:
+    :path: ".symlinks/plugins/smile_id/ios"
 
 SPEC CHECKSUMS:
   connectivity_plus: 2a701ffec2c0ae28a48cf7540e279787e77c447d
   device_info_plus: c6fb39579d0f423935b0c9ce7ee2f44b71b9fce6
+  FingerprintJS: 3a0c3e7f5035ecae199e5e5836200d9b20f1266a
   Firebase: 26f6f8d460603af3df970ad505b16b15f5e2e9a1
   firebase_analytics: 9c18d3099ede6fd5a64f01d663aea7c1912b2307
   firebase_core: c92b2e526c46f625784f19c07121cd533536d0e7
@@ -255,6 +300,7 @@ SPEC CHECKSUMS:
   FirebaseRemoteConfigInterop: 0896fd52ab72586a355c8f389ff85aaa9e5375e1
   FirebaseSessions: f4692789e770bec66ce17d772c0e9561c4f11737
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
+  flutter_local_notifications: 4cde75091f6327eb8517fa068a0a5950212d2086
   flutter_localization: f43b18844a2b3d2c71fd64f04ffd6b1e64dd54d4
   flutter_secure_storage: d33dac7ae2ea08509be337e775f6b59f1ff45f12
   GoogleAdsOnDeviceConversion: 9090c435cde08903e8dd1ba2c77fbec9e46d9afe
@@ -265,11 +311,19 @@ SPEC CHECKSUMS:
   Intercom: 6922723f79e2a2fb2e48b35837b56785214cf526
   intercom_flutter: a671dcd5f5b115fc6172311f7d817556c93c3115
   local_auth_darwin: 63c73d6d28cc3e239be2b6aa460ea6e317cd5100
+  lottie-ios: 96784afc26ea031d3e2b6cae342a4b8915072489
+  Mixpanel-swift: 7b26468fc0e2e521104e51d65c4bbf7cab8162f8
+  mixpanel_flutter: c2bb8345c90bef15512a1b812ec800b52f8614b6
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
   path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   PromisesSwift: 9d77319bbe72ebf6d872900551f7eeba9bce2851
+  Sentry: f7dddfabe691274d6d630f04621e1345f9d6b9e0
   shared_preferences_foundation: fcdcbc04712aee1108ac7fda236f363274528f78
+  smile_id: 44a22c8abb8735772de338d09e1acecf4cf5de30
+  SmileID: 814fac7c88593349680276789688496f1a948403
+  SmileIDSecurity: 2849074a33fa738cb7478f90b32b7f7333a14630
+  ZIPFoundation: b8c29ea7ae353b309bc810586181fd073cb3312c
 
 PODFILE CHECKSUM: a0e54f25868ce1691626a4b3f2a91d1e1b7b1f18
 

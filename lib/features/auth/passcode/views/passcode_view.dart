@@ -70,13 +70,7 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
                         // ),
                       )
                       .animate()
-                      .fadeIn(duration: 500.ms, curve: Curves.easeOutCubic)
-                      .scale(
-                        begin: const Offset(0.8, 0.8),
-                        end: const Offset(1.0, 1.0),
-                        duration: 500.ms,
-                        curve: Curves.easeOutCubic,
-                      ),
+                      .fadeIn(duration: 300.ms, curve: Curves.easeOutCubic),
 
                   const SizedBox(height: 16),
 
@@ -92,16 +86,9 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
                       )
                       .animate()
                       .fadeIn(
-                        duration: 500.ms,
+                        duration: 300.ms,
                         curve: Curves.easeOutCubic,
-                        delay: 100.ms,
-                      )
-                      .slideY(
-                        begin: -0.1,
-                        end: 0,
-                        duration: 500.ms,
-                        curve: Curves.easeOutCubic,
-                        delay: 100.ms,
+                        delay: 50.ms,
                       ),
 
                   SizedBox(height: 12.h),
@@ -123,16 +110,9 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
                       )
                       .animate()
                       .fadeIn(
-                        duration: 500.ms,
+                        duration: 300.ms,
                         curve: Curves.easeOutCubic,
-                        delay: 400.ms,
-                      )
-                      .slideY(
-                        begin: 0.1,
-                        end: 0,
-                        duration: 500.ms,
-                        curve: Curves.easeOutCubic,
-                        delay: 400.ms,
+                        delay: 150.ms,
                       ),
 
                   SizedBox(height: 40.h),
@@ -142,16 +122,9 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
                     CupertinoActivityIndicator(color: AppColors.purple500)
                         .animate()
                         .fadeIn(
-                          duration: 500.ms,
+                          duration: 300.ms,
                           curve: Curves.easeOutCubic,
-                          delay: 300.ms,
-                        )
-                        .scale(
-                          begin: const Offset(0.8, 0.8),
-                          end: const Offset(1.0, 1.0),
-                          duration: 500.ms,
-                          curve: Curves.easeOutCubic,
-                          delay: 300.ms,
+                          delay: 200.ms,
                         )
                   else
                     Row(
@@ -179,16 +152,9 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
                             )
                             .animate()
                             .fadeIn(
-                              duration: 500.ms,
+                              duration: 300.ms,
                               curve: Curves.easeOutCubic,
-                              delay: Duration(milliseconds: 300 + (index * 50)),
-                            )
-                            .scale(
-                              begin: const Offset(0.8, 0.8),
-                              end: const Offset(1.0, 1.0),
-                              duration: 500.ms,
-                              curve: Curves.easeOutCubic,
-                              delay: Duration(milliseconds: 300 + (index * 50)),
+                              delay: Duration(milliseconds: 200 + (index * 30)),
                             );
                       }),
                     ),
@@ -212,6 +178,7 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
                               index,
                             );
                           }),
+                       
                           _buildIconButton(
                             iconSvg:
                                 passcodeState.hasFaceId
@@ -221,29 +188,28 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
                                 passcodeState.hasFaceId
                                     ? Icons.face
                                     : Icons.fingerprint,
-                            onTap:
-                                passcodeState.isBiometricAvailable
-                                    ? () async {
-                                      final authenticated =
-                                          await passcodeNotifier
-                                              .authenticateWithBiometrics();
-                                      if (!authenticated) {
-                                        TopSnackbar.show(
-                                          context,
-                                          message:
-                                              'Biometric authentication failed. Please use your passcode.',
-                                          isError: true,
-                                        );
-                                      }
-                                    }
-                                    : () {
-                                      TopSnackbar.show(
-                                        context,
-                                        message:
-                                            'Biometric authentication is not available on this device',
-                                        isError: true,
-                                      );
-                                    },
+                            onTap: passcodeState.isBiometricAvailable
+                                ? () async {
+                                  final authenticated =
+                                      await passcodeNotifier
+                                          .authenticateWithBiometrics();
+                                  if (!authenticated) {
+                                    TopSnackbar.show(
+                                      context,
+                                      message:
+                                          'Biometric authentication failed. Please use your passcode.',
+                                      isError: true,
+                                    );
+                                  }
+                                }
+                                : () {
+                                  TopSnackbar.show(
+                                    context,
+                                    message:
+                                        'Biometric authentication is not available on this device',
+                                    isError: true,
+                                  );
+                                },
                             index: 9,
                           ),
                           _buildNumberButton('0', passcodeNotifier, 10),
@@ -257,16 +223,9 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
                       )
                       .animate()
                       .fadeIn(
-                        duration: 500.ms,
+                        duration: 300.ms,
                         curve: Curves.easeOutCubic,
-                        delay: 500.ms,
-                      )
-                      .slideY(
-                        begin: 0.1,
-                        end: 0,
-                        duration: 500.ms,
-                        curve: Curves.easeOutCubic,
-                        delay: 500.ms,
+                        delay: 300.ms,
                       ),
 
                   const SizedBox(height: 32),
@@ -309,16 +268,9 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
                       )
                       .animate()
                       .fadeIn(
-                        duration: 500.ms,
+                        duration: 300.ms,
                         curve: Curves.easeOutCubic,
-                        delay: 600.ms,
-                      )
-                      .slideY(
-                        begin: 0.1,
-                        end: 0,
-                        duration: 500.ms,
-                        curve: Curves.easeOutCubic,
-                        delay: 600.ms,
+                        delay: 400.ms,
                       ),
 
                   const Spacer(flex: 1),
@@ -358,16 +310,9 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
         )
         .animate()
         .fadeIn(
-          duration: 500.ms,
+          duration: 300.ms,
           curve: Curves.easeOutCubic,
-          delay: Duration(milliseconds: 500 + (index * 50)),
-        )
-        .scale(
-          begin: const Offset(0.8, 0.8),
-          end: const Offset(1.0, 1.0),
-          duration: 500.ms,
-          curve: Curves.easeOutCubic,
-          delay: Duration(milliseconds: 500 + (index * 50)),
+          delay: Duration(milliseconds: 300 + (index * 20)),
         );
   }
 
@@ -378,6 +323,8 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
     required int index,
   }) {
     return InkWell(
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
           onTap: onTap,
           child: Container(
             decoration: const BoxDecoration(
@@ -405,16 +352,9 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
         )
         .animate()
         .fadeIn(
-          duration: 500.ms,
+          duration: 300.ms,
           curve: Curves.easeOutCubic,
-          delay: Duration(milliseconds: 500 + (index * 50)),
-        )
-        .scale(
-          begin: const Offset(0.8, 0.8),
-          end: const Offset(1.0, 1.0),
-          duration: 500.ms,
-          curve: Curves.easeOutCubic,
-          delay: Duration(milliseconds: 500 + (index * 50)),
+          delay: Duration(milliseconds: 300 + (index * 20)),
         );
   }
 }

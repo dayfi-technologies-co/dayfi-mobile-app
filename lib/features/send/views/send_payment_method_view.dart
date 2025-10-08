@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
@@ -242,31 +243,6 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
     );
   }
 
-  Widget _buildSummaryRow(String label, String value, {bool isTotal = false}) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            fontFamily: 'Karla',
-            fontSize: 12.sp,
-            fontWeight: FontWeight.w500,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-          ),
-        ),
-        Text(
-          value,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            fontFamily: 'CabinetGrotesk',
-            fontSize: 12.sp,
-            fontWeight: isTotal ? FontWeight.w600 : FontWeight.w500,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-        ),
-      ],
-    );
-  }
 
   void _processPayment() async {
     setState(() {
@@ -275,6 +251,17 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
 
     try {
       final sendState = ref.read(sendViewModelProvider);
+      
+      // Analytics: collection creation started
+      analyticsService.logEvent(
+        name: 'collection_creation_started',
+        parameters: {
+          'amount': sendState.sendAmount,
+          'currency': sendState.sendCurrency,
+          'recipient_country': sendState.receiverCountry,
+          'delivery_method': sendState.selectedDeliveryMethod,
+        },
+      );
       
       // Get the real channel information
       // First, let's try to find channels that match the recipient country and currency
@@ -286,11 +273,6 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
               channel.channelType == sendState.selectedDeliveryMethod)
           .toList();
       
-      // Debug: Print available channels and their rampTypes
-      print('🔍 Available channels for ${sendState.receiverCountry}/${sendState.receiverCurrency}:');
-      for (var channel in recipientChannels) {
-        print('Channel: ${channel.id} | Type: ${channel.channelType} | RampType: ${channel.rampType} | Status: ${channel.status}');
-      }
       
       // Try to find a channel with a valid rampType for collections
       // For create-collections, we might need channels with 'deposit' or 'collection' rampType
@@ -305,7 +287,6 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
       
       final selectedChannel = validChannels.isNotEmpty ? validChannels.first : recipientChannels.isNotEmpty ? recipientChannels.first : null;
       
-      print('🎯 Selected channel: ${selectedChannel?.id} | RampType: ${selectedChannel?.rampType}');
       
       // If no valid channel is found, show an error
       if (selectedChannel == null) {
@@ -356,9 +337,31 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
         });
 
         if (!response.error && response.data != null) {
+          // Analytics: collection creation completed
+          analyticsService.logEvent(
+            name: 'collection_creation_completed',
+            parameters: {
+              'amount': sendState.sendAmount,
+              'currency': sendState.sendCurrency,
+              'recipient_country': sendState.receiverCountry,
+              'delivery_method': sendState.selectedDeliveryMethod,
+              'collection_id': response.data?.id ?? 'unknown',
+            },
+          );
           // Show bank details bottom sheet
           _showBankDetailsBottomSheet(response.data!);
         } else {
+          // Analytics: collection creation failed
+          analyticsService.logEvent(
+            name: 'collection_creation_failed',
+            parameters: {
+              'amount': sendState.sendAmount,
+              'currency': sendState.sendCurrency,
+              'recipient_country': sendState.receiverCountry,
+              'delivery_method': sendState.selectedDeliveryMethod,
+              'reason': response.message.isNotEmpty ? response.message : 'Payment processing failed',
+            },
+          );
           TopSnackbar.show(
             context,
             message: response.message.isNotEmpty ? response.message : 'Payment processing failed',
@@ -371,6 +374,20 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
         setState(() {
           _isLoading = false;
         });
+        
+        // Analytics: collection creation failed (exception)
+        final sendState = ref.read(sendViewModelProvider);
+        analyticsService.logEvent(
+          name: 'collection_creation_failed',
+          parameters: {
+            'amount': sendState.sendAmount,
+            'currency': sendState.sendCurrency,
+            'recipient_country': sendState.receiverCountry,
+            'delivery_method': sendState.selectedDeliveryMethod,
+            'reason': e.toString(),
+            'error_type': 'exception',
+          },
+        );
         
         // Check if it's a DioException with specific error message
         String errorMessage = 'Error processing payment: $e';
@@ -658,7 +675,11 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
               SizedBox(width: 8.w),
               GestureDetector(
                 onTap: () {
-                  // TODO: Implement copy to clipboard
+                  Clipboard.setData(ClipboardData(text: value));
+                  TopSnackbar.show(
+                    context,
+                    message: 'Account number copied to clipboard',
+                  );
                 },
                 child: Icon(
                   Icons.copy,
@@ -762,7 +783,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                       // Refresh recipients
                       ref.read(recipientsProvider.notifier).loadBeneficiaries();
                     } catch (e) {
-                      print('Error refreshing data: $e');
+                      // Handle error silently or show user-friendly message
                     }
                     
                     Navigator.of(context).pop(); // Go back to main screen

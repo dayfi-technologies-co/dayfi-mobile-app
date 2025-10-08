@@ -13,12 +13,30 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'services/local/analytics_service.dart';
 
+class ProviderScopeObserver extends ProviderObserver {
+  @override
+  void didUpdateProvider(
+    ProviderBase<Object?> provider,
+    Object? previousValue,
+    Object? newValue,
+    ProviderContainer container,
+  ) {
+    // Set the global container reference when the first provider is created
+    if (getGlobalProviderContainer() == null) {
+      setGlobalProviderContainer(container);
+    }
+  }
+}
+
 class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ProviderScope(
+      observers: [
+        ProviderScopeObserver(),
+      ],
       overrides: [
         // Override the theme provider with SharedPreferences
         themeProvider.overrideWith((ref) {

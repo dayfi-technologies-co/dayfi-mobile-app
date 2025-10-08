@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:developer';
 import 'package:dayfi/flavors.dart';
 import 'package:dayfi/models/api_response.dart';
 import 'package:dayfi/models/auth_response.dart';
@@ -81,7 +80,7 @@ class AuthService {
       );
 
       final authResponse = AuthResponse.fromJson(response.data);
-      
+
       if (!authResponse.error) {
         // Save user details to secure storage
         final secureStorage = SecureStorageService();
@@ -93,15 +92,9 @@ class AuthService {
 
         // save new user - store user data directly, not nested
         final userJson = json.encode(authResponse.data.user?.toJson());
-        log('Storing user data: $userJson');
-        await secureStorage.write(
-          StorageKeys.user,
-          userJson,
-        );
+        await secureStorage.write(StorageKeys.user, userJson);
         await secureStorage.write('password', password);
         await secureStorage.write(StorageKeys.token, authResponse.data.token!);
-
-        log(authResponse.data.toJson().toString());
       }
 
       return authResponse;
@@ -110,9 +103,7 @@ class AuthService {
     }
   }
 
-  Future<AuthResponse> forgotPassword({
-    required String email,
-  }) async {
+  Future<AuthResponse> forgotPassword({required String email}) async {
     try {
       Map<String, dynamic> map = {};
       map['email'] = email;
@@ -147,24 +138,15 @@ class AuthService {
       );
 
       final authResponse = AuthResponse.fromJson(response.data);
-      
+
       if (!authResponse.error && type == "email") {
-        log('verifyOtp: Calling login for email verification');
         await login(email: email, password: password);
-        log('verifyOtp: Login completed');
       } else if (!authResponse.error) {
         // For non-email verification (like password reset), store user data if available
-        log('verifyOtp: Storing user data for non-email verification');
         final secureStorage = SecureStorageService();
         if (authResponse.data?.user != null) {
           final userJson = json.encode(authResponse.data!.user!.toJson());
-          log('verifyOtp: Storing user data: $userJson');
-          await secureStorage.write(
-            StorageKeys.user,
-            userJson,
-          );
-        } else {
-          log('verifyOtp: No user data available in authResponse.data');
+          await secureStorage.write(StorageKeys.user, userJson);
         }
       }
 
@@ -174,9 +156,7 @@ class AuthService {
     }
   }
 
-  Future<AuthResponse> resendOTP({
-    required String email,
-  }) async {
+  Future<AuthResponse> resendOTP({required String email}) async {
     try {
       Map<String, dynamic> map = {};
       map['email'] = email;
@@ -223,13 +203,11 @@ class AuthService {
     required String address,
     required String gender,
     required String dob,
-    required String phoneNumber,
+    String? phoneNumber,
     required String userId,
     required String bvn,
   }) async {
     try {
-      log('Starting updateProfile API call for user: $userId');
-      
       Map<String, dynamic> map = {};
       map['country'] = country;
       map['state'] = state;
@@ -239,11 +217,10 @@ class AuthService {
       map['address'] = address;
       map['gender'] = gender;
       map['dateOfBirth'] = dob;
-      map['phoneNumber'] = phoneNumber;
+      if (phoneNumber != null && phoneNumber.isNotEmpty) {
+        map['phoneNumber'] = phoneNumber;
+      }
       map['bvn'] = bvn;
-
-      log('UpdateProfile request data: $map');
-      log('UpdateProfile URL: ${F.baseUrl}${UrlConfig.updateProfile}/$userId');
 
       final response = await _networkService.call(
         '${F.baseUrl}${UrlConfig.updateProfile}/$userId',
@@ -251,42 +228,49 @@ class AuthService {
         data: map,
       );
 
-      log('UpdateProfile raw response: ${response.data}');
-
       // Handle response data - check if it's a Map or String
       Map<String, dynamic> responseData;
       if (response.data is Map<String, dynamic>) {
         responseData = response.data;
-        log('Response data is Map: $responseData');
       } else if (response.data is String) {
         // Try to parse JSON string
         responseData = json.decode(response.data);
-        log('Response data parsed from String: $responseData');
       } else {
-        log('Invalid response format: ${response.data.runtimeType}');
         throw Exception('Invalid response format');
       }
 
       final authResponse = AuthResponse.fromJson(responseData);
-      
-      log('UpdateProfile response - Status: ${authResponse.statusCode}, Error: ${authResponse.error}, Message: ${authResponse.message}');
-      
+
       if (!authResponse.error) {
-        log('UpdateProfile successful, saving user data to storage');
         // Save user details to secure storage
         final secureStorage = SecureStorageService();
         await secureStorage.write(
           StorageKeys.user,
           json.encode(authResponse.data.user?.toJson()),
         );
-        log('User data saved to storage successfully');
-      } else {
-        log('UpdateProfile failed: ${authResponse.message}');
       }
 
       return authResponse;
     } catch (e) {
-      log('Error in updateProfile: $e');
+      rethrow;
+    }
+  }
+
+  Future<AuthResponse> updateBiometrics({
+    required bool isBiometricsSetup,
+  }) async {
+    try {
+      Map<String, dynamic> map = {};
+      map['isBiometricsSetup'] = isBiometricsSetup;
+
+      final response = await _networkService.call(
+        '${F.baseUrl}${UrlConfig.updateBiometrics}',
+        RequestMethod.patch,
+        data: map,
+      );
+
+      return AuthResponse.fromJson(response.data);
+    } catch (e) {
       rethrow;
     }
   }

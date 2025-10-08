@@ -94,6 +94,25 @@ class _SendReviewViewState extends ConsumerState<SendReviewView> {
     super.dispose();
   }
 
+  String _formatNumber(double amount) {
+    // Format number with thousands separators
+    String formatted = amount.toStringAsFixed(2);
+    List<String> parts = formatted.split('.');
+    String integerPart = parts[0];
+    String decimalPart = parts.length > 1 ? parts[1] : '00';
+    
+    // Add commas for thousands separators
+    String formattedInteger = '';
+    for (int i = 0; i < integerPart.length; i++) {
+      if (i > 0 && (integerPart.length - i) % 3 == 0) {
+        formattedInteger += ',';
+      }
+      formattedInteger += integerPart[i];
+    }
+    
+    return '$formattedInteger.$decimalPart';
+  }
+
   @override
   Widget build(BuildContext context) {
     final sendState = ref.watch(sendViewModelProvider);
@@ -223,18 +242,18 @@ class _SendReviewViewState extends ConsumerState<SendReviewView> {
 
           _buildDetailRow(
             'Transfer Amount',
-            '${widget.selectedData['sendAmount']} ${widget.selectedData['sendCurrency']}',
+            '₦${_formatNumber(double.tryParse(widget.selectedData['sendAmount']?.toString() ?? '0') ?? 0)}',
           ),
           _buildDetailRow(
             'Total to Recipient',
-            '${widget.selectedData['receiveAmount']} ${widget.selectedData['receiveCurrency']}',
+            '₦${_formatNumber(double.tryParse(widget.selectedData['receiveAmount']?.toString() ?? '0') ?? 0)}',
           ),
           _buildDetailRow(
             'Exchange Rate',
             sendState.exchangeRate,
           ),
-          _buildDetailRow('Transfer Fee', '${sendState.sendCurrency} ${sendState.fee}'),
-          _buildDetailRow('Transfer Taxes', '${sendState.sendCurrency} 0.00'),
+          _buildDetailRow('Transfer Fee', '₦${_formatNumber(double.tryParse(sendState.fee?.toString() ?? '0') ?? 0)}'),
+          _buildDetailRow('Transfer Taxes', '₦0.00'),
 
           Divider(
             color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
@@ -243,7 +262,7 @@ class _SendReviewViewState extends ConsumerState<SendReviewView> {
 
           _buildDetailRow(
             'Total',
-            '${sendState.sendCurrency} ${sendState.totalToPay}',
+            '₦${_formatNumber(double.tryParse(sendState.totalToPay?.toString() ?? '0') ?? 0)}',
             isTotal: true,
           ),
 
@@ -317,6 +336,33 @@ class _SendReviewViewState extends ConsumerState<SendReviewView> {
     );
   }
 
+  String _getReasonEmoji(String reason) {
+    switch (reason) {
+      case 'Family Support':
+        return '👨‍👩‍👧‍👦';
+      case 'Education':
+        return '🎓';
+      case 'Medical Expenses':
+        return '🏥';
+      case 'Business Investment':
+        return '💼';
+      case 'Emergency':
+        return '🚨';
+      case 'Travel':
+        return '✈️';
+      case 'Gift':
+        return '🎁';
+      case 'Rent/Mortgage':
+        return '🏠';
+      case 'Utilities':
+        return '⚡';
+      case 'Food & Groceries':
+        return '🛒';
+      default:
+        return '💰';
+    }
+  }
+
   void _showReasonBottomSheet() {
     showModalBottomSheet(
       context: context,
@@ -324,7 +370,7 @@ class _SendReviewViewState extends ConsumerState<SendReviewView> {
       backgroundColor: Colors.transparent,
       builder:
           (context) => Container(
-            height: MediaQuery.of(context).size.height * 0.6,
+            height: MediaQuery.of(context).size.height * 0.92,
             decoration: BoxDecoration(
               color: Theme.of(context).scaffoldBackgroundColor,
               borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
@@ -371,15 +417,16 @@ class _SendReviewViewState extends ConsumerState<SendReviewView> {
                       final isSelected = _selectedReason == reason;
                       return ListTile(
                         contentPadding: EdgeInsets.symmetric(vertical: 4.h),
+                        leading: Text(
+                          _getReasonEmoji(reason),
+                          style: TextStyle(fontSize: 24.sp),
+                        ),
                         title: Text(
                           reason,
-                          style: Theme.of(
-                            context,
-                          ).textTheme.bodyLarge?.copyWith(
+                          style: AppTypography.bodyLarge.copyWith(
                             fontFamily: 'Karla',
                             fontSize: 16.sp,
                             fontWeight: FontWeight.w500,
-                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                         trailing:
