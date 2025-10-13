@@ -6,8 +6,10 @@ import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
 import 'package:dayfi/features/transactions/vm/transactions_viewmodel.dart';
 import 'package:dayfi/models/wallet_transaction.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:dayfi/app_locator.dart';
+import 'package:dayfi/routes/route.dart';
 
 class TransactionsView extends ConsumerStatefulWidget {
   const TransactionsView({super.key});
@@ -203,7 +205,11 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                             ),
                           )
                           : ListView.builder(
-                            padding: EdgeInsets.symmetric(horizontal: 24.w),
+                            padding: EdgeInsets.only(
+                              left: 24.w,
+                              right: 24.w,
+                              bottom: 124.h,
+                            ),
                             itemCount:
                                 transactionsState.groupedTransactions.length,
                             itemBuilder: (context, index) {
@@ -268,90 +274,98 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
     WalletTransaction transaction, {
     double bottomMargin = 24,
   }) {
-    return Container(
-      margin: EdgeInsets.only(bottom: bottomMargin.h, top: 8.h),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          // Status Icon
-          Container(
-            width: 40.w,
-            height: 40.w,
-            decoration: BoxDecoration(
-              color: _getStatusColor(transaction.status).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8.r),
+    return InkWell(
+      onTap: () {
+        appRouter.pushNamed(
+          AppRoute.transactionDetailsView,
+          arguments: transaction,
+        );
+      },
+      child: Container(
+        margin: EdgeInsets.only(bottom: bottomMargin.h, top: 8.h),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            // Status Icon
+            Container(
+              width: 40.w,
+              height: 40.w,
+              decoration: BoxDecoration(
+                color: _getStatusColor(transaction.status).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(16.r),
+              ),
+              child: SvgPicture.asset(
+                _getStatusIcon(transaction.status),
+                color: _getStatusColor(transaction.status),
+                height: 20.sp,
+              ),
             ),
-            child: Icon(
-              _getStatusIcon(transaction.status),
-              color: _getStatusColor(transaction.status),
-              size: 20.sp,
-            ),
-          ),
-          SizedBox(width: 8.w),
+            SizedBox(width: 8.w),
 
-          // Transaction Info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Text(
-                  transaction.beneficiary.name.toUpperCase(),
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    fontFamily: 'Karla',
-                    fontSize: 18.sp,
-                    letterSpacing: -.6,
-                    fontWeight: FontWeight.w400,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  _getStatusText(transaction.status),
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontFamily: 'Karla',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    letterSpacing: -.6,
-                    height: 1.450,
-                    color: _getStatusColor(transaction.status),
-                  ),
-                ),
-                if (transaction.reason != null &&
-                    transaction.reason!.isNotEmpty) ...[
-                  // SizedBox(height: 2.h),
+            // Transaction Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
                   Text(
-                    transaction.reason!,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    transaction.beneficiary.name.toUpperCase(),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontFamily: 'Karla',
+                      fontSize: 18.sp,
+                      letterSpacing: -.6,
+                      fontWeight: FontWeight.w400,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  SizedBox(height: 2.h),
+                  Text(
+                    _getStatusText(transaction.status),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontFamily: 'Karla',
+                      fontSize: 14,
                       fontWeight: FontWeight.w400,
                       letterSpacing: -.6,
                       height: 1.450,
-                      fontSize: 12.sp,
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withOpacity(0.6),
+                      color: _getStatusColor(transaction.status),
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
+                  if (transaction.reason != null &&
+                      transaction.reason!.isNotEmpty) ...[
+                    // SizedBox(height: 2.h),
+                    Text(
+                      transaction.reason!,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontFamily: 'Karla',
+                        fontWeight: FontWeight.w400,
+                        letterSpacing: -.6,
+                        height: 1.450,
+                        fontSize: 12.sp,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.6),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
 
-          // Amount
-          Text(
-            _getTransactionAmount(transaction),
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              fontFamily: 'Karla',
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.onSurface,
+            // Amount
+            Text(
+              _getTransactionAmount(transaction),
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                fontFamily: 'Karla',
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -360,25 +374,25 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
     switch (status.toLowerCase()) {
       case 'success-collection':
         return AppColors.success500;
-      case 'pending':
+      case 'pending-collection':
         return AppColors.warning500;
-      case 'failed':
+      case 'failed-collection':
         return AppColors.error500;
       default:
         return AppColors.neutral500;
     }
   }
 
-  IconData _getStatusIcon(String status) {
+  String _getStatusIcon(String status) {
     switch (status.toLowerCase()) {
       case 'success-collection':
-        return Icons.check_circle;
-      case 'pending':
-        return Icons.schedule;
-      case 'failed':
-        return Icons.error;
+        return 'assets/icons/svgs/circle-check.svg';
+      case 'pending-collection':
+        return "assets/icons/svgs/exclamation-circle.svg";
+      case 'failed-collection':
+        return "assets/icons/svgs/circle-x.svg";
       default:
-        return Icons.info;
+        return "assets/icons/svgs/info-circle.svg";
     }
   }
 

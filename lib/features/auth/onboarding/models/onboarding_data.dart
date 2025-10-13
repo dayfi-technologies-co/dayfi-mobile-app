@@ -13,7 +13,7 @@ class OnboardingData {
     ),
     OnboardingPage(
       title: '20+\ncountries, 15 currencies',
-      subtitle: 'Send money to your recipients in their local currency.',
+      subtitle: 'Send money to your Beneficiaries in their local currency.',
       description:
           'Experience global connectivity with local banking convenience.',
       illustrationPath: 'assets/icons/svgs/Card.svg',
@@ -35,7 +35,7 @@ class OnboardingData {
     ),
     OnboardingPage(
       title: 'Send\nmoney in minutes',
-      subtitle: 'Recipients typically receive funds almost instantly.',
+      subtitle: 'Beneficiaries typically receive funds almost instantly.',
       description: 'Experience the speed of modern financial technology.',
       illustrationPath: 'assets/icons/svgs/Transfer.svg',
       decorativeElements: ['hand_stopwatch'],

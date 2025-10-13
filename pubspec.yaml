@@ -25,6 +25,7 @@ dependencies:
   dio: ^5.4.0
   gap: ^3.0.1
   device_info_plus: ^9.0.3
+  package_info_plus: ^8.0.2
   flutter_screenutil: ^5.9.3
   get_it: ^8.2.0
   flutter_secure_storage: ^9.2.4

@@ -9,6 +9,7 @@ import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/common/constants/storage_keys.dart';
 import 'package:dayfi/common/constants/analytics_events.dart';
+import 'package:dayfi/common/utils/connectivity_utils.dart';
 
 class LoginState {
   final String email;
@@ -173,11 +174,15 @@ class LoginNotifier extends StateNotifier<LoginState> {
         _navigateToVerifyEmailAndResendOTP(context, state.email);
       } else {
         AppLogger.error('Login error: $e');
+        
+        // Get user-friendly error message
+        final errorMessage = await ConnectivityUtils.getErrorMessage(e);
+        
         analyticsService.logEvent(
           name: AnalyticsEvents.loginFailed,
-          parameters: { 'email': state.email, 'reason': e.toString() },
+          parameters: { 'email': state.email, 'reason': errorMessage },
         );
-        TopSnackbar.show(context, message: e.toString(), isError: true);
+        TopSnackbar.show(context, message: errorMessage, isError: true);
       }
     } finally {
       state = state.copyWith(isBusy: false);

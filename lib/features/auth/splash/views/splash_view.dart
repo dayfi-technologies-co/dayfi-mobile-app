@@ -6,6 +6,7 @@ import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/services/local/secure_storage.dart';
+import 'package:dayfi/services/version_service.dart';
 import 'package:dayfi/common/constants/storage_keys.dart';
 
 class SplashView extends ConsumerStatefulWidget {
@@ -17,6 +18,7 @@ class SplashView extends ConsumerStatefulWidget {
 
 class _SplashViewState extends ConsumerState<SplashView> {
   final SecureStorageService _secureStorage = locator<SecureStorageService>();
+  final VersionService _versionService = locator<VersionService>();
 
   @override
   void initState() {
@@ -26,18 +28,31 @@ class _SplashViewState extends ConsumerState<SplashView> {
 
   Future<void> _checkUserStateAndNavigate() async {
     try {
+      // First, check if this is a new app version and clear data if needed
+      await _versionService.isNewVersion();
+      
       final firstTime = await _secureStorage.read(StorageKeys.isFirstTime);
       final token = await _secureStorage.read(StorageKeys.token);
       final passcode = await _secureStorage.read(StorageKeys.passcode);
+      final userData = await _secureStorage.read(StorageKeys.user);
 
       final bool isFirstTimeUser = firstTime.isEmpty || firstTime == 'true';
       final String userToken = token;
       final String userPasscode = passcode;
+      final String userJson = userData;
 
       // Add a small delay for splash screen effect
       await Future.delayed(const Duration(milliseconds: 1500));
 
       if (mounted) {
+        // Validate data consistency - if we have a token but no user data, something is wrong
+        if (userToken.isNotEmpty && userJson.isEmpty) {
+          // Clear inconsistent data and redirect to login
+          await _clearInconsistentData();
+          Navigator.of(context).pushReplacementNamed(AppRoute.loginView, arguments: false);
+          return;
+        }
+
         if (isFirstTimeUser && userToken.isEmpty) {
           Navigator.of(context).pushReplacementNamed(AppRoute.onboardingView);
         } else if (userToken.isEmpty) {
@@ -65,6 +80,19 @@ class _SplashViewState extends ConsumerState<SplashView> {
     }
   }
 
+  /// Clear inconsistent data when token exists but user data is missing
+  Future<void> _clearInconsistentData() async {
+    try {
+      await _secureStorage.delete(StorageKeys.token);
+      await _secureStorage.delete(StorageKeys.email);
+      await _secureStorage.delete(StorageKeys.password);
+      await _secureStorage.delete(StorageKeys.passcode);
+      await _secureStorage.delete(StorageKeys.user);
+    } catch (e) {
+      // Log error but don't throw - we want to continue with navigation
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -75,7 +103,7 @@ class _SplashViewState extends ConsumerState<SplashView> {
           // Main content centered
           Center(
             child: Text(
-              "GO!",
+              "skrrt",
               style: TextStyle(
                 fontFamily: 'Boldonse',
                 fontSize: 28.sp,

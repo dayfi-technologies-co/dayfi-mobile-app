@@ -9,6 +9,8 @@ import 'package:dayfi/common/widgets/buttons/secondary_button.dart';
 import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/features/profile/edit_profile/vm/edit_profile_viewmodel.dart';
+import 'package:dayfi/common/utils/platform_date_picker.dart';
+import 'package:dayfi/common/utils/platform_location_picker.dart';
 
 class EditProfileView extends ConsumerStatefulWidget {
   const EditProfileView({super.key});
@@ -550,20 +552,33 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
   ) {
     return CustomTextField(
       label: "State",
-      hintText: "Enter your state",
+      hintText: "Select your state",
       controller: _stateController,
       onChanged: notifier.setState,
-      keyboardType: TextInputType.text,
+      suffixIcon: Icon(
+        Icons.keyboard_arrow_down,
+        color: AppColors.neutral400,
+        size: 20.sp,
+      ),
+      shouldReadOnly: true,
+      onTap: () => _showStatePicker(notifier),
     );
   }
 
   Widget _buildCityField(EditProfileState state, EditProfileNotifier notifier) {
     return CustomTextField(
       label: "City",
-      hintText: "Enter your city",
+      hintText:
+          state.state.isNotEmpty ? "Select your city" : "Select state first",
       controller: _cityController,
       onChanged: notifier.setCity,
-      keyboardType: TextInputType.text,
+      suffixIcon: Icon(
+        Icons.keyboard_arrow_down,
+        color: AppColors.neutral400,
+        size: 20.sp,
+      ),
+      shouldReadOnly: true,
+      onTap: state.state.isNotEmpty ? () => _showCityPicker(notifier) : null,
     );
   }
 
@@ -587,15 +602,12 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
   }
 
   void _showDatePicker(EditProfileNotifier notifier) async {
-    final DateTime? picked = await showDatePicker(
+    final DateTime? picked = await PlatformDatePicker.showDateOfBirthPicker(
       context: context,
       initialDate: DateTime.now().subtract(
         const Duration(days: 7300), // ~20 years ago as default
       ),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now().subtract(
-        const Duration(days: 6570), // Exactly 18 years ago
-      ),
+      title: 'Select Date of Birth',
     );
 
     if (picked != null) {
@@ -840,6 +852,40 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
       message: 'Phone verification form coming soon! Please contact support.',
       isError: false,
     );
+  }
+
+  void _showStatePicker(EditProfileNotifier notifier) async {
+    final currentState = ref.read(editProfileProvider);
+    final String? selectedState = await PlatformLocationPicker.showStatePicker(
+      context: context,
+      selectedState: currentState.state.isNotEmpty ? currentState.state : null,
+      title: 'Select State',
+    );
+
+    if (selectedState != null) {
+      notifier.setState(selectedState);
+      _stateController.text = selectedState;
+      // Clear city when state changes
+      notifier.setCity('');
+      _cityController.clear();
+    }
+  }
+
+  void _showCityPicker(EditProfileNotifier notifier) async {
+    final currentState = ref.read(editProfileProvider);
+    if (currentState.state.isEmpty) return;
+
+    final String? selectedCity = await PlatformLocationPicker.showCityPicker(
+      context: context,
+      state: currentState.state,
+      selectedCity: currentState.city.isNotEmpty ? currentState.city : null,
+      title: 'Select City in ${currentState.state}',
+    );
+
+    if (selectedCity != null) {
+      notifier.setCity(selectedCity);
+      _cityController.text = selectedCity;
+    }
   }
 }
 

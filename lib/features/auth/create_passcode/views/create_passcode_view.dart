@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/features/auth/create_passcode/vm/create_passcode_viewmodel.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class CreatePasscodeView extends ConsumerStatefulWidget {
   final bool isFromSignup;
@@ -72,6 +73,7 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
                   //   color: AppColors.purple500,
                   //   size: 40.w,
                   // ),
+                  child: SvgPicture.asset('assets/icons/svgs/cautionn.svg'),
                 ),
 
                 SizedBox(height: 24.h),

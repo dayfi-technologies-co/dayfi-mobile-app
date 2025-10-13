@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:dayfi/flavors.dart';
 import 'package:dayfi/models/wallet_transaction.dart';
+import 'package:dayfi/models/beneficiary_with_source.dart';
+import 'package:dayfi/models/payment_response.dart' as payment;
 import 'package:dayfi/services/remote/network/network_service.dart';
 
 class WalletService {
@@ -82,6 +84,47 @@ class WalletService {
       return uniqueBeneficiaries.values.toList();
     } catch (e) {
       throw Exception('Failed to fetch beneficiaries: $e');
+    }
+  }
+
+  Future<List<BeneficiaryWithSource>> getUniqueBeneficiariesWithSource({
+    String? search,
+  }) async {
+    try {
+      final response = await getWalletTransactions(
+        search: search,
+        limit: 100, // Get more records to ensure we have unique beneficiaries
+      );
+
+      // Extract unique beneficiaries with source data based on name + account details
+      final Map<String, BeneficiaryWithSource> uniqueBeneficiaries = {};
+      
+      for (final transaction in response.data.transactions) {
+        final beneficiary = transaction.beneficiary;
+        final source = transaction.source;
+        
+        // Create a unique key combining beneficiary name, account number, and network ID
+        // This ensures no duplicates based on the display string and name
+        final uniqueKey = '${beneficiary.name}_${source.accountNumber}_${source.networkId}';
+        
+        if (!uniqueBeneficiaries.containsKey(uniqueKey)) {
+          // Convert wallet_transaction Source to payment_response Source
+          final paymentSource = payment.Source(
+            accountType: source.accountType,
+            accountNumber: source.accountNumber,
+            networkId: source.networkId,
+          );
+          
+          uniqueBeneficiaries[uniqueKey] = BeneficiaryWithSource(
+            beneficiary: beneficiary,
+            source: paymentSource,
+          );
+        }
+      }
+
+      return uniqueBeneficiaries.values.toList();
+    } catch (e) {
+      throw Exception('Failed to fetch beneficiaries with source: $e');
     }
   }
 }

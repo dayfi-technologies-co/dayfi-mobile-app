@@ -182,7 +182,7 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
                           _buildIconButton(
                             iconSvg:
                                 passcodeState.hasFaceId
-                                    ? "assets/icons/svgs/face_id.svg"
+                                    ? "assets/icons/svgs/face-id.svg"
                                     : "assets/icons/svgs/fingerprint.svg",
                             icon:
                                 passcodeState.hasFaceId
@@ -258,7 +258,7 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
                                 recognizer:
                                     TapGestureRecognizer()
                                       ..onTap = () {
-                                        passcodeNotifier.logout();
+                                        passcodeNotifier.logout(ref);
                                       },
                               ),
                             ],

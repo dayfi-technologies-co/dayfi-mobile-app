@@ -4,6 +4,7 @@ import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/services/remote/auth_service.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/routes/route.dart';
+import 'package:dayfi/common/utils/connectivity_utils.dart';
 
 class ForgotPasswordState {
   final String email;
@@ -81,10 +82,11 @@ class ForgotPasswordViewModel extends StateNotifier<ForgotPasswordState> {
         );
       }
     } catch (e) {
-      final errorText = e.toString();
+      // Get user-friendly error message
+      final errorMessage = await ConnectivityUtils.getErrorMessage(e);
       TopSnackbar.show(
         context,
-        message: 'Forgot password error: $errorText',
+        message: errorMessage,
         isError: true,
       );
     } finally {

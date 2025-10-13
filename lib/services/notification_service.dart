@@ -35,24 +35,60 @@ class NotificationService {
   /// Initialize local notifications
   Future<void> _initLocalNotifications() async {
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const iosSettings = DarwinInitializationSettings(
+    final iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
       requestSoundPermission: true,
       onDidReceiveLocalNotification: _onDidReceiveLocalNotification,
     );
     
-    const initSettings = InitializationSettings(
+    final initSettings = InitializationSettings(
       android: androidSettings,
       iOS: iosSettings,
     );
     
-    await _localNotifications.initialize(initSettings);
+    await _localNotifications.initialize(
+      initSettings,
+      onDidReceiveNotificationResponse: _onDidReceiveNotificationResponse,
+    );
+    
+    // Create notification channels for Android
+    await _createNotificationChannels();
+  }
+
+  /// Create notification channels for Android
+  Future<void> _createNotificationChannels() async {
+    const androidChannel = AndroidNotificationChannel(
+      'dayfi_channel',
+      'DayFi Notifications',
+      description: 'Notifications for DayFi app events',
+      importance: Importance.max,
+      playSound: true,
+      enableVibration: true,
+    );
+
+    await _localNotifications
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(androidChannel);
+  }
+
+  /// Handle notification response (when user taps notification)
+  void _onDidReceiveNotificationResponse(NotificationResponse response) {
+    AppLogger.info('Notification tapped: ${response.payload}');
+    // Handle notification tap based on payload
+    if (response.payload != null) {
+      try {
+        // Parse payload and handle navigation
+        // This can be expanded based on your needs
+      } catch (e) {
+        AppLogger.error('Error handling notification response: $e');
+      }
+    }
   }
 
   /// Handle iOS local notification tap
   void _onDidReceiveLocalNotification(int id, String? title, String? body, String? payload) {
-    print('🔔 iOS local notification received: $title - $body');
+    AppLogger.info('iOS local notification received: $title - $body');
   }
 
   /// Initialize Firebase messaging
@@ -80,7 +116,6 @@ class NotificationService {
     // Get and store FCM token
     _fcmToken = await _messaging.getToken();
     AppLogger.info('FCM Token: $_fcmToken');
-    print('🔥 FCM Token: $_fcmToken'); // Also print to console for easy copying
 
     // Set up message handlers
     FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
@@ -144,50 +179,73 @@ class NotificationService {
     String body,
     Map<String, dynamic> data,
   ) async {
-    print('🔔 Creating local notification: $title - $body');
-    
-    const androidDetails = AndroidNotificationDetails(
-      'dayfi_channel',
-      'DayFi Notifications',
-      channelDescription: 'Notifications for DayFi app events',
-      importance: Importance.max,
-      priority: Priority.high,
-      icon: '@mipmap/ic_launcher',
-    );
-
-    const iosDetails = DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-      sound: 'default',
-      badgeNumber: 1,
-    );
-
-    const notificationDetails = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
-
     try {
+      AppLogger.info('Attempting to show local notification: $title');
+      
+      // Check if local notifications are initialized
+      if (!_isInitialized) {
+        AppLogger.warning('NotificationService not initialized, initializing now...');
+        await init();
+      }
+    
+      final androidDetails = AndroidNotificationDetails(
+        'dayfi_channel',
+        'DayFi Notifications',
+        channelDescription: 'Notifications for DayFi app events',
+        importance: Importance.max,
+        priority: Priority.high,
+        icon: '@mipmap/ic_launcher',
+        showWhen: true,
+        enableVibration: true,
+        playSound: true,
+        styleInformation: BigTextStyleInformation(
+          body,
+          contentTitle: title,
+        ),
+      );
+
+      const iosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+        sound: 'default',
+        badgeNumber: 1,
+        interruptionLevel: InterruptionLevel.active,
+      );
+
+      final notificationDetails = NotificationDetails(
+        android: androidDetails,
+        iOS: iosDetails,
+      );
+
+      final notificationId = DateTime.now().millisecondsSinceEpoch.remainder(100000);
       await _localNotifications.show(
-        DateTime.now().millisecondsSinceEpoch.remainder(100000),
+        notificationId,
         title,
         body,
         notificationDetails,
         payload: data.toString(),
       );
-      print('✅ Local notification shown successfully');
       
-      // For iOS, also check if we need to request permissions again
-      if (Platform.isIOS) {
-        final settings = await _messaging.getNotificationSettings();
-        print('🔔 iOS notification settings: ${settings.authorizationStatus}');
-      }
+      AppLogger.info('Local notification shown successfully with ID: $notificationId');
       
     } catch (e) {
-      print('❌ Error showing local notification: $e');
-      rethrow;
+      AppLogger.error('Error showing local notification: $e');
+      // Don't rethrow in production - notifications are non-critical
     }
+  }
+
+  /// Show a local notification directly (public method)
+  Future<void> showLocalNotification(
+    String title,
+    String body, {
+    Map<String, dynamic>? data,
+  }) async {
+    await _showLocalNotification(
+      title,
+      body,
+      data ?? {},
+    );
   }
 
   /// Get FCM token
@@ -204,26 +262,26 @@ class NotificationService {
 
   /// Trigger sign up success notification
   Future<void> triggerSignUpSuccess(String userName) async {
-    print('🔔 Attempting to show notification for: $userName');
     try {
       await _showLocalNotification(
-        'Welcome to DayFi! 🎉',
-        'Hi $userName! Your account has been successfully created.',
+        'Welcome to DayFi',
+        'Your account is ready. Send money to those who matter.',
         {
           'type': 'signup_success',
           'action': 'navigate_to_profile',
           'userName': userName,
         },
       );
-      print('✅ Notification triggered successfully');
+      AppLogger.info('Sign up success notification triggered for: $userName');
     } catch (e) {
-      print('❌ Error triggering notification: $e');
+      AppLogger.error('Error triggering sign up notification: $e');
     }
   }
 
-  /// Force show notification (for testing)
+  /// Force show notification (for testing - remove in production)
+  @Deprecated('This method is for testing only. Remove in production builds.')
   Future<void> forceShowNotification() async {
-    print('🔔 Force showing notification...');
+    AppLogger.info('Force showing test notification...');
     try {
       await _showLocalNotification(
         'Test Notification! 🔔',
@@ -233,9 +291,70 @@ class NotificationService {
           'action': 'test',
         },
       );
-      print('✅ Force notification shown');
+      AppLogger.info('Force notification shown successfully');
     } catch (e) {
-      print('❌ Error showing force notification: $e');
+      AppLogger.error('Error showing force notification: $e');
+    }
+  }
+
+  /// Test welcome notification (for testing)
+  Future<void> testWelcomeNotification() async {
+    AppLogger.info('Testing welcome notification...');
+    try {
+      await showLocalNotification(
+        'Welcome to DayFi! 🎉',
+        'Your account is ready. Send money to those who matter.',
+        data: {
+          'type': 'welcome',
+          'action': 'navigate_to_profile',
+        },
+      );
+      AppLogger.info('Welcome notification test completed');
+    } catch (e) {
+      AppLogger.error('Error testing welcome notification: $e');
+    }
+  }
+
+  /// Simple notification test (no Firebase required - remove in production)
+  @Deprecated('This method is for testing only. Remove in production builds.')
+  Future<void> simpleNotificationTest() async {
+    AppLogger.info('Testing simple notification...');
+    try {
+      const androidDetails = AndroidNotificationDetails(
+        'test_channel',
+        'Test Notifications',
+        channelDescription: 'Simple test notifications',
+        importance: Importance.max,
+        priority: Priority.high,
+        icon: '@mipmap/ic_launcher',
+        showWhen: true,
+        enableVibration: true,
+        playSound: true,
+      );
+
+      const iosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+        sound: 'default',
+        badgeNumber: 1,
+        interruptionLevel: InterruptionLevel.active,
+      );
+
+      const notificationDetails = NotificationDetails(
+        android: androidDetails,
+        iOS: iosDetails,
+      );
+
+      await _localNotifications.show(
+        999,
+        'Simple Test! 🎉',
+        'This is a simple notification test',
+        notificationDetails,
+      );
+      AppLogger.info('Simple notification test completed successfully');
+    } catch (e) {
+      AppLogger.error('Error in simple notification test: $e');
     }
   }
 
@@ -246,18 +365,23 @@ class NotificationService {
     required String currency,
     required String transactionId,
   }) async {
-    await _showLocalNotification(
-      'Transfer Successful! ✅',
-      'You sent $currency $amount to $recipientName',
-      {
-        'type': 'send_success',
-        'action': 'navigate_to_transaction',
-        'transactionId': transactionId,
-        'amount': amount,
-        'currency': currency,
-        'recipient': recipientName,
-      },
-    );
+    try {
+      await _showLocalNotification(
+        'Transfer Complete',
+        '$currency $amount sent to $recipientName',
+        {
+          'type': 'send_success',
+          'action': 'navigate_to_transaction',
+          'transactionId': transactionId,
+          'amount': amount,
+          'currency': currency,
+          'recipient': recipientName,
+        },
+      );
+      AppLogger.info('Send success notification triggered for transaction: $transactionId');
+    } catch (e) {
+      AppLogger.error('Error triggering send success notification: $e');
+    }
   }
 
   /// Trigger receive money notification
@@ -267,18 +391,23 @@ class NotificationService {
     required String currency,
     required String transactionId,
   }) async {
-    await _showLocalNotification(
-      'Money Received! 💰',
-      '$senderName sent you $currency $amount',
-      {
-        'type': 'receive_money',
-        'action': 'navigate_to_transaction',
-        'transactionId': transactionId,
-        'amount': amount,
-        'currency': currency,
-        'sender': senderName,
-      },
-    );
+    try {
+      await _showLocalNotification(
+        'Money Received',
+        '$currency $amount from $senderName',
+        {
+          'type': 'receive_money',
+          'action': 'navigate_to_transaction',
+          'transactionId': transactionId,
+          'amount': amount,
+          'currency': currency,
+          'sender': senderName,
+        },
+      );
+      AppLogger.info('Receive money notification triggered for transaction: $transactionId');
+    } catch (e) {
+      AppLogger.error('Error triggering receive money notification: $e');
+    }
   }
 
   /// Trigger tier upgrade notification
@@ -286,41 +415,56 @@ class NotificationService {
     required String newTier,
     required String newLimits,
   }) async {
-    await _showLocalNotification(
-      'Tier Upgraded! 🚀',
-      'Congratulations! You\'re now on $newTier with $newLimits',
-      {
-        'type': 'tier_upgrade',
-        'action': 'navigate_to_account_limits',
-        'newTier': newTier,
-        'newLimits': newLimits,
-      },
-    );
+    try {
+      await _showLocalNotification(
+        'Account Upgraded',
+        'You\'re now on $newTier with $newLimits',
+        {
+          'type': 'tier_upgrade',
+          'action': 'navigate_to_account_limits',
+          'newTier': newTier,
+          'newLimits': newLimits,
+        },
+      );
+      AppLogger.info('Tier upgrade notification triggered for: $newTier');
+    } catch (e) {
+      AppLogger.error('Error triggering tier upgrade notification: $e');
+    }
   }
 
   /// Trigger KYC verification success
   Future<void> triggerKycSuccess() async {
-    await _showLocalNotification(
-      'Verification Complete! ✅',
-      'Your identity has been successfully verified',
-      {
-        'type': 'kyc_success',
-        'action': 'navigate_to_profile',
-      },
-    );
+    try {
+      await _showLocalNotification(
+        'Verification Complete',
+        'Your identity has been verified',
+        {
+          'type': 'kyc_success',
+          'action': 'navigate_to_profile',
+        },
+      );
+      AppLogger.info('KYC success notification triggered');
+    } catch (e) {
+      AppLogger.error('Error triggering KYC success notification: $e');
+    }
   }
 
   /// Trigger payment method added
   Future<void> triggerPaymentMethodAdded(String methodType) async {
-    await _showLocalNotification(
-      'Payment Method Added! 💳',
-      'Your $methodType has been successfully added',
-      {
-        'type': 'payment_method_added',
-        'action': 'navigate_to_payment_methods',
-        'methodType': methodType,
-      },
-    );
+    try {
+      await _showLocalNotification(
+        'Payment Method Added',
+        'Your $methodType has been added',
+        {
+          'type': 'payment_method_added',
+          'action': 'navigate_to_payment_methods',
+          'methodType': methodType,
+        },
+      );
+      AppLogger.info('Payment method added notification triggered for: $methodType');
+    } catch (e) {
+      AppLogger.error('Error triggering payment method added notification: $e');
+    }
   }
 
   /// Trigger security alert
@@ -328,26 +472,43 @@ class NotificationService {
     required String alertType,
     required String message,
   }) async {
-    await _showLocalNotification(
-      'Security Alert! 🔒',
-      message,
-      {
-        'type': 'security_alert',
-        'action': 'navigate_to_security',
-        'alertType': alertType,
-      },
-    );
+    try {
+      await _showLocalNotification(
+        'Security Alert',
+        message,
+        {
+          'type': 'security_alert',
+          'action': 'navigate_to_security',
+          'alertType': alertType,
+        },
+      );
+      AppLogger.info('Security alert notification triggered: $alertType');
+    } catch (e) {
+      AppLogger.error('Error triggering security alert notification: $e');
+    }
   }
 
   /// Clear all notifications
   Future<void> clearAllNotifications() async {
-    await _localNotifications.cancelAll();
+    try {
+      await _localNotifications.cancelAll();
+      AppLogger.info('All notifications cleared');
+    } catch (e) {
+      AppLogger.error('Error clearing notifications: $e');
+    }
   }
 
   /// Check if notifications are enabled
   Future<bool> areNotificationsEnabled() async {
-    final settings = await _messaging.getNotificationSettings();
-    return settings.authorizationStatus == AuthorizationStatus.authorized;
+    try {
+      final settings = await _messaging.getNotificationSettings();
+      final isEnabled = settings.authorizationStatus == AuthorizationStatus.authorized;
+      AppLogger.info('Notifications enabled: $isEnabled');
+      return isEnabled;
+    } catch (e) {
+      AppLogger.error('Error checking notification status: $e');
+      return false;
+    }
   }
 
   /// Wait for APNS token on iOS

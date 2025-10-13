@@ -7,6 +7,7 @@ import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/common/constants/analytics_events.dart';
+import 'package:dayfi/common/utils/connectivity_utils.dart';
 
 class SignupState {
   final String firstName;
@@ -256,8 +257,9 @@ class SignupNotifier extends StateNotifier<SignupState> {
 
   String _validateConfirmPassword(String value) {
     if (value.isEmpty) return 'Please type your password again';
-    if (value != state.password)
+    if (value != state.password) {
       return 'Both passwords must be exactly the same';
+    }
     return '';
   }
 
@@ -339,14 +341,20 @@ class SignupNotifier extends StateNotifier<SignupState> {
         _navigateToVerifyEmailAndResendOTP(context, state.email);
       } else {
         AppLogger.error('Signup error: $e');
+        AppLogger.error('Signup error type: ${e.runtimeType}');
+        
+        // Get user-friendly error message
+        final errorMessage = await ConnectivityUtils.getErrorMessage(e);
+        AppLogger.info('Parsed error message: $errorMessage');
+        
         analyticsService.logEvent(
           name: AnalyticsEvents.signupFailed,
-          parameters: { 'email': state.email, 'reason': e.toString() },
+          parameters: { 'email': state.email, 'reason': errorMessage },
         );
         TopSnackbar.show(
           // ignore: use_build_context_synchronously
           context,
-          message: e.toString(),
+          message: errorMessage,
           isError: true,
         );
       }

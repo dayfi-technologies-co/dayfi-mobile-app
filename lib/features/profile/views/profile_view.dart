@@ -181,43 +181,45 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
 
   // Test notification method (temporary for testing)
   void _testNotification() async {
-    print('🔔 Test notification button pressed');
+    // print('🔔 Test notification button pressed');
     try {
       final notificationService = NotificationService();
-      
-      // Test 1: Regular notification
+
+      // // Test 1: Simple notification (no Firebase required)
+      // print('🔔 Testing simple notification...');
+      // await notificationService.simpleNotificationTest();
+
+      // Test 2: Regular notification
+      await Future.delayed(Duration(seconds: 2));
+      // print('🔔 Testing regular notification...');
       await notificationService.triggerSignUpSuccess("Test User");
-      
-      // Test 2: Force notification
-      await Future.delayed(Duration(seconds: 1));
-      await notificationService.forceShowNotification();
-      
+
+      // Test 3: Force notification
+      // await Future.delayed(Duration(seconds: 2));
+      // print('🔔 Testing force notification...');
+      // await notificationService.forceShowNotification();
+
       // Check if notifications are enabled
-      final isEnabled = await notificationService.areNotificationsEnabled();
-      print('🔔 Notifications enabled: $isEnabled');
-      
-      print('🔔 Try minimizing the app now to see notifications!');
-      
+      // final isEnabled = await notificationService.areNotificationsEnabled();
+      // print('🔔 Notifications enabled: $isEnabled');
+
+      // print('🔔 Try minimizing the app now to see notifications!');
     } catch (e) {
-      print('❌ Error in test notification: $e');
+      // print('❌ Error in test notification: $e');
     }
   }
 
   void _navigateToTermsAndConditions() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const TermsOfUseView(),
-      ),
+      MaterialPageRoute(builder: (context) => const TermsOfUseView()),
     );
   }
 
   void _navigateToPrivacyNotice() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const PrivacyNoticeView(),
-      ),
+      MaterialPageRoute(builder: (context) => const PrivacyNoticeView()),
     );
   }
 
@@ -303,7 +305,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
     final tierDisplayName = TierUtils.getTierDisplayName(profileState.user);
     final tierIconPath = TierUtils.getTierIconPath(profileState.user);
     final tierColor = TierUtils.getTierColor(profileState.user);
-    
+
     // Get color based on tier
     Color tierColorValue;
     switch (tierColor) {
@@ -353,17 +355,17 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
 
   // User Name Widget
   Widget _buildUserName(ProfileState profileState) {
-    return       Text(
-        profileState.userName,
-        style: AppTypography.headlineSmall.copyWith(
-          color: Theme.of(context).colorScheme.onSurface,
-          fontSize: 30.sp,
-          fontWeight: FontWeight.w600,
-          fontFamily: 'CabinetGrotesk',
-          height: .95,
-        ),
-        textAlign: TextAlign.center,
-      );
+    return Text(
+      profileState.userName,
+      style: AppTypography.headlineSmall.copyWith(
+        color: Theme.of(context).colorScheme.onSurface,
+        fontSize: 30.sp,
+        fontWeight: FontWeight.w600,
+        fontFamily: 'CabinetGrotesk',
+        height: .95,
+      ),
+      textAlign: TextAlign.center,
+    );
   }
 
   // Content Section Widget
@@ -381,7 +383,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
           _buildLogoutButton(),
           SizedBox(height: 50.h),
           _buildPartnershipInfo(),
-          SizedBox(height: 400.h),
+          SizedBox(height: 112.h),
         ],
       ),
     );
@@ -392,10 +394,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
     return PrimaryButton(
       borderRadius: _ProfileConstants.buttonBorderRadius,
       text: "Edit Profile",
-      onPressed:
-          profileState.isLoading
-              ? null
-              : _navigateToEditProfile,
+      onPressed: profileState.isLoading ? null : _navigateToEditProfile,
       backgroundColor:
           profileState.isLoading ? AppColors.neutral300 : AppColors.purple500,
       height: _ProfileConstants.buttonHeight.h,
@@ -660,7 +659,12 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
           children: [
             _buildIconContainer(iconColor),
             SizedBox(width: 16.w),
-            Expanded(child: _buildItemText(title, Theme.of(context).colorScheme.onSurface)),
+            Expanded(
+              child: _buildItemText(
+                title,
+                Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
             _buildActionBadge(actionText, actionColor),
             SizedBox(width: 8.w),
             _buildChevronIcon(),
@@ -748,17 +752,17 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
 
   // Dialog Title
   Widget _buildDialogTitle() {
-    return       Text(
-        'Are you sure you want to logout?',
-        style: TextStyle(
-          fontFamily: 'CabinetGrotesk',
-          fontSize: 20.sp,
-          fontWeight: FontWeight.w400,
-          color: Theme.of(context).colorScheme.onSurface,
-          letterSpacing: -0.5,
-        ),
-        textAlign: TextAlign.center,
-      );
+    return Text(
+      'Are you sure you want to logout?',
+      style: TextStyle(
+        fontFamily: 'CabinetGrotesk',
+        fontSize: 20.sp,
+        fontWeight: FontWeight.w400,
+        color: Theme.of(context).colorScheme.onSurface,
+        letterSpacing: -0.5,
+      ),
+      textAlign: TextAlign.center,
+    );
   }
 
   // Dialog Buttons
@@ -778,7 +782,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
       text: 'Yes, Logout',
       onPressed: () {
         Navigator.pop(context);
-        ref.read(profileViewModelProvider.notifier).logout();
+        ref.read(profileViewModelProvider.notifier).logout(ref);
       },
       backgroundColor: AppColors.purple500,
       textColor: AppColors.neutral0,
@@ -798,7 +802,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
     return SecondaryButton(
       text: 'Cancel',
       onPressed: () => Navigator.pop(context),
-      borderColor: AppColors.purple500,
+      borderColor: Colors.transparent,
       textColor: AppColors.purple500,
       width: double.infinity,
       fullWidth: true,
@@ -816,27 +820,31 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
       padding: EdgeInsets.symmetric(horizontal: 32.w),
       child: Column(
         children: [
-          Center(
-            child: Text(
-              'DayFi is powered by Yellow Card in partnership with Smile ID.',
-              style: AppTypography.bodySmall.copyWith(
-                fontFamily: 'Karla',
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.75),
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w400,
-                letterSpacing: -.6,
-                height: 1.2,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          SizedBox(height: 14.h),
+          // Center(
+          //   child: Text(
+          //     'DayFi is powered by Yellow Card in partnership with Smile ID.',
+          //     style: AppTypography.bodySmall.copyWith(
+          //       fontFamily: 'Karla',
+          //       color: Theme.of(
+          //         context,
+          //       ).colorScheme.onSurface.withOpacity(0.75),
+          //       fontSize: 14.sp,
+          //       fontWeight: FontWeight.w400,
+          //       letterSpacing: -.6,
+          //       height: 1.2,
+          //     ),
+          //     textAlign: TextAlign.center,
+          //   ),
+          // ),
+          // SizedBox(height: 14.h),
           Center(
             child: Text(
               'Financial services are regulated by the relevant authorities in their operating regions.',
               style: AppTypography.bodySmall.copyWith(
                 fontFamily: 'Karla',
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.75),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withOpacity(0.75),
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w400,
                 letterSpacing: -.6,
@@ -847,19 +855,21 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
           ),
           SizedBox(height: 14.h),
           // Test notification button (temporary)
-          Center(
-            child: ElevatedButton(
-              onPressed: _testNotification,
-              child: Text('Test Notification'),
-            ),
-          ),
-          SizedBox(height: 14.h),
+          // Center(
+          //   child: ElevatedButton(
+          //     onPressed: _testNotification,
+          //     child: Text('Test Notification'),
+          //   ),
+          // ),
+          // SizedBox(height: 14.h),
           Center(
             child: Text(
               'Version 1.0.0',
               style: AppTypography.bodySmall.copyWith(
                 fontFamily: 'Karla',
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.75),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withOpacity(0.75),
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w400,
                 letterSpacing: -.6,

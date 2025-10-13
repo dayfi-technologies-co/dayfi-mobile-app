@@ -98,11 +98,15 @@ class TransactionsNotifier extends StateNotifier<TransactionsState> {
 
   List<TransactionGroup> _groupTransactionsByDate(List<WalletTransaction> transactions) {
     final Map<String, List<WalletTransaction>> grouped = {};
+    final Map<String, DateTime> dateMap = {}; // Store actual DateTime for sorting
     
     for (final transaction in transactions) {
       final date = _formatDate(transaction.timestamp);
+      final actualDate = _parseTransactionDate(transaction.timestamp);
+      
       if (!grouped.containsKey(date)) {
         grouped[date] = [];
+        dateMap[date] = actualDate;
       }
       grouped[date]!.add(transaction);
     }
@@ -113,7 +117,15 @@ class TransactionsNotifier extends StateNotifier<TransactionsState> {
               transactions: entry.value,
             ))
         .toList()
-      ..sort((a, b) => b.date.compareTo(a.date)); // Sort by date descending
+      ..sort((a, b) => dateMap[b.date]!.compareTo(dateMap[a.date]!)); // Sort by actual DateTime descending
+  }
+
+  DateTime _parseTransactionDate(String timestamp) {
+    try {
+      return DateTime.parse(timestamp);
+    } catch (e) {
+      return DateTime.now(); // Fallback to current date if parsing fails
+    }
   }
 
   String _formatDate(String timestamp) {

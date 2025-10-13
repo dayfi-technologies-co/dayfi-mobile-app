@@ -6,6 +6,7 @@ import 'package:dayfi/services/remote/auth_service.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/routes/route.dart';
+import 'package:dayfi/common/utils/connectivity_utils.dart';
 
 class VerifyEmailState {
   final String otpCode;
@@ -118,9 +119,13 @@ class VerifyEmailNotifier extends StateNotifier<VerifyEmailState> {
       }
     } catch (e) {
       AppLogger.error('Error resending OTP: $e');
+      
+      // Get user-friendly error message
+      final errorMessage = await ConnectivityUtils.getErrorMessage(e);
+      
       TopSnackbar.show(
         context,
-        message: e.toString(),
+        message: errorMessage,
         isError: true,
       );
     } finally {
@@ -164,8 +169,12 @@ class VerifyEmailNotifier extends StateNotifier<VerifyEmailState> {
       }
     } catch (e) {
       AppLogger.error('Error verifying signup: $e');
-      state = state.copyWith(errorMessage: e.toString());
-      TopSnackbar.show(context, message: e.toString(), isError: true);
+      
+      // Get user-friendly error message
+      final errorMessage = await ConnectivityUtils.getErrorMessage(e);
+      
+      state = state.copyWith(errorMessage: errorMessage);
+      TopSnackbar.show(context, message: errorMessage, isError: true);
     } finally {
       state = state.copyWith(isVerifying: false);
     }
@@ -206,8 +215,12 @@ class VerifyEmailNotifier extends StateNotifier<VerifyEmailState> {
       }
     } catch (e) {
       AppLogger.error('Error verifying forgot password: $e');
-      state = state.copyWith(errorMessage: e.toString());
-      TopSnackbar.show(context, message: e.toString(), isError: true);
+      
+      // Get user-friendly error message
+      final errorMessage = await ConnectivityUtils.getErrorMessage(e);
+      
+      state = state.copyWith(errorMessage: errorMessage);
+      TopSnackbar.show(context, message: errorMessage, isError: true);
     } finally {
       state = state.copyWith(isVerifying: false);
     }

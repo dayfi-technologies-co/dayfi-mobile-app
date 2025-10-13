@@ -14,6 +14,7 @@ import 'package:dayfi/services/local/local_cache.dart';
 import 'package:dayfi/services/local/connectivity_service.dart';
 import 'package:dayfi/services/local/analytics_service.dart';
 import 'package:dayfi/services/kyc/kyc_service.dart';
+import 'package:dayfi/services/version_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 GetIt locator = GetIt.instance;
@@ -62,6 +63,9 @@ Future<void> setupLocator() async {
   // Initialize KYC service
   locator.registerLazySingleton(() => KycService(secureStorage: locator<SecureStorageService>()));
   
+  // Initialize version service
+  locator.registerLazySingleton(() => VersionService(sharedPreferences));
+  
   // Initialize connectivity service
   await ConnectivityService.initialize();
 }
@@ -79,6 +83,7 @@ final walletService = locator<WalletService>();
 final loadingModalController = locator<LoadingModalController>();
 final analyticsService = locator<AnalyticsService>();
 final kycService = locator<KycService>();
+final versionService = locator<VersionService>();
 
 // Provider container management
 void setGlobalProviderContainer(ProviderContainer container) {

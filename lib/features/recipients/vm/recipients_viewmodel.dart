@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dayfi/models/wallet_transaction.dart';
+import 'package:dayfi/models/beneficiary_with_source.dart';
 import 'package:dayfi/services/remote/wallet_service.dart';
 import 'package:dayfi/app_locator.dart';
 
 class RecipientsState {
-  final List<Beneficiary> beneficiaries;
-  final List<Beneficiary> filteredBeneficiaries;
+  final List<BeneficiaryWithSource> beneficiaries;
+  final List<BeneficiaryWithSource> filteredBeneficiaries;
   final bool isLoading;
   final String? errorMessage;
   final String searchQuery;
@@ -19,8 +19,8 @@ class RecipientsState {
   });
 
   RecipientsState copyWith({
-    List<Beneficiary>? beneficiaries,
-    List<Beneficiary>? filteredBeneficiaries,
+    List<BeneficiaryWithSource>? beneficiaries,
+    List<BeneficiaryWithSource>? filteredBeneficiaries,
     bool? isLoading,
     String? errorMessage,
     String? searchQuery,
@@ -44,10 +44,14 @@ class RecipientsNotifier extends StateNotifier<RecipientsState> {
     state = state.copyWith(isLoading: true, errorMessage: null);
     
     try {
-      final beneficiaries = await _walletService.getUniqueBeneficiaries();
+      final beneficiaries = await _walletService.getUniqueBeneficiariesWithSource();
+      
+      // Additional client-side deduplication using Set to ensure no duplicates
+      final uniqueBeneficiaries = beneficiaries.toSet().toList();
+      
       state = state.copyWith(
-        beneficiaries: beneficiaries,
-        filteredBeneficiaries: beneficiaries,
+        beneficiaries: uniqueBeneficiaries,
+        filteredBeneficiaries: uniqueBeneficiaries,
         isLoading: false,
       );
     } catch (e) {
@@ -67,7 +71,8 @@ class RecipientsNotifier extends StateNotifier<RecipientsState> {
       return;
     }
 
-    final filtered = state.beneficiaries.where((beneficiary) {
+    final filtered = state.beneficiaries.where((beneficiaryWithSource) {
+      final beneficiary = beneficiaryWithSource.beneficiary;
       return beneficiary.name.toLowerCase().contains(query.toLowerCase()) ||
              beneficiary.phone.contains(query) ||
              beneficiary.email.toLowerCase().contains(query.toLowerCase());
@@ -81,6 +86,23 @@ class RecipientsNotifier extends StateNotifier<RecipientsState> {
 
   void clearError() {
     state = state.copyWith(errorMessage: null);
+  }
+
+  /// Validates that there are no duplicate account details in the current beneficiaries list
+  /// Checks for duplicates based on name + account number + network ID (same as display string logic)
+  bool validateNoDuplicates() {
+    final beneficiaries = state.beneficiaries;
+    final seen = <String>{};
+    
+    for (final beneficiaryWithSource in beneficiaries) {
+      final key = '${beneficiaryWithSource.beneficiary.name}_${beneficiaryWithSource.source.accountNumber}_${beneficiaryWithSource.source.networkId}';
+      if (seen.contains(key)) {
+        return false; // Duplicate found
+      }
+      seen.add(key);
+    }
+    
+    return true; // No duplicates found
   }
 }
 

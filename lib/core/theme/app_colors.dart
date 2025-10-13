@@ -41,11 +41,11 @@ class AppColors {
   static const Color neutral50 = Color(0xFFF7F7F7);
   static const Color neutral100 = Color(0xFFF5F5F5);
   static const Color neutral200 = Color(0xFFEBEBEB);
-  static const Color neutral300 = Color(0xFFB2862C);
+  static const Color neutral300 = Color.fromARGB(255, 178, 178, 178);
   static const Color neutral400 = Color(0xFFA3A3A3);
-  static const Color neutral500 = Color(0xFF6C4E08);
+  static const Color neutral500 = Color.fromARGB(255, 96, 96, 96);
   static const Color neutral600 = Color(0xFF5C5C5C);
-  static const Color neutral700 = Color(0xFF6E4028);
+  static const Color neutral700 = Color.fromARGB(255, 129, 129, 129);
   static const Color neutral800 = Color(0xFF262626);
   static const Color neutral900 = Color(0xFF1C1C1C);
   static const Color neutral950 = Color(0xFF111111);

@@ -4,6 +4,7 @@ class OnboardingPage {
   final String description;
   final String illustrationPath;
   final List<String> decorativeElements;
+  final Map<String, Map<String, double>> decorativeElementPositions;
 
   const OnboardingPage({
     required this.title,
@@ -11,5 +12,6 @@ class OnboardingPage {
     required this.description,
     required this.illustrationPath,
     this.decorativeElements = const [],
+    this.decorativeElementPositions = const {},
   });
 }

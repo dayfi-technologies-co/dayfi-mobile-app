@@ -1,4 +1,5 @@
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
+import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -14,6 +15,7 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/common/utils/tier_utils.dart';
 import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
+import 'package:dayfi/features/notifications/views/notifications_view.dart';
 
 class SendView extends ConsumerStatefulWidget {
   const SendView({super.key});
@@ -27,6 +29,7 @@ class _SendViewState extends ConsumerState<SendView>
   final TextEditingController _sendAmountController = TextEditingController();
   final TextEditingController _receiveAmountController =
       TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
   final FocusNode _sendAmountFocus = FocusNode();
   final FocusNode _receiveAmountFocus = FocusNode();
 
@@ -197,6 +200,7 @@ class _SendViewState extends ConsumerState<SendView>
     WidgetsBinding.instance.removeObserver(this);
     _sendAmountController.dispose();
     _receiveAmountController.dispose();
+    _searchController.dispose();
     _sendAmountFocus.dispose();
     _receiveAmountFocus.dispose();
     super.dispose();
@@ -251,18 +255,27 @@ class _SendViewState extends ConsumerState<SendView>
             ),
           ),
           centerTitle: true,
-          // actions: [
-          //   IconButton(
-          //     onPressed: () {
-          //       // Handle notification action
-          //     },
-          //     icon: Icon(
-          //       Icons.notifications_outlined,
-          //       color: AppColors.neutral600,
-          //       size: 28.sp,
-          //     ),
-          //   ),
-          // ],
+          actions: [
+            Padding(
+              padding: EdgeInsets.only(right: 18.w),
+              child: InkWell(
+                splashColor: Colors.transparent,
+                highlightColor: Colors.transparent,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => NotificationsView(),
+                    ),
+                  );
+                },
+                child: SvgPicture.asset(
+                  "assets/icons/svgs/notificationn.svg",
+                  height: 32.sp,
+                ),
+              ),
+            ),
+          ],
         ),
         body: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 8.0.h),
@@ -299,7 +312,7 @@ class _SendViewState extends ConsumerState<SendView>
 
               // Send Button
               _buildSendButton(sendState),
-              SizedBox(height: 400.h),
+              SizedBox(height: 112.h),
             ],
           ),
         ),
@@ -310,16 +323,15 @@ class _SendViewState extends ConsumerState<SendView>
   Widget _buildUpgradeCard() {
     final profileState = ref.watch(profileViewModelProvider);
     final user = profileState.user;
-    
+
     // Only show upgrade card if user can upgrade
     if (!TierUtils.canUpgrade(user)) {
       return const SizedBox.shrink();
     }
-    
+
     final tierDescription = TierUtils.getTierDescription(user);
     final nextTierInfo = TierUtils.getNextTierInfo(user);
-    final tierIconPath = TierUtils.getTierIconPath(user);
-    
+
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(16.w),
@@ -620,16 +632,16 @@ class _SendViewState extends ConsumerState<SendView>
     );
   }
 
-  String _getDeliveryMethodDisplayName(String? method) {
+  /// Get simplified delivery method type (just the main category)
+  String _getDeliveryMethodType(String? method) {
     if (method == null || method.isEmpty) {
-      return 'Select delivery method';
+      return 'Select method';
     }
 
-    // Convert raw channel types to user-friendly display names
     switch (method.toLowerCase()) {
       case 'bank_transfer':
       case 'bank':
-        return 'Bank Transfer';
+        return 'Bank';
       case 'mobile_money':
       case 'momo':
       case 'mobilemoney':
@@ -641,24 +653,121 @@ class _SendViewState extends ConsumerState<SendView>
         return 'Cash Pickup';
       case 'wallet':
       case 'digital_wallet':
-        return 'Digital Wallet';
+        return 'Wallet';
       case 'card':
       case 'card_payment':
-        return 'Card Payment';
+        return 'Card';
       case 'crypto':
       case 'cryptocurrency':
-        return 'Cryptocurrency';
+        return 'Crypto';
       default:
-        // For any unknown types, capitalize first letter of each word
         return method
             .split('_')
-            .map(
-              (word) =>
-                  word.isNotEmpty
-                      ? word[0].toUpperCase() + word.substring(1).toLowerCase()
-                      : word,
-            )
+            .map((word) => word[0].toUpperCase() + word.substring(1))
             .join(' ');
+    }
+  }
+
+  /// Get delivery duration based on method type
+  String _getDeliveryDuration(String? method) {
+    if (method == null || method.isEmpty) {
+      return 'Select method';
+    }
+
+    switch (method.toLowerCase()) {
+      case 'bank_transfer':
+      case 'bank':
+        return 'Arrives in 1-2 hours';
+      case 'mobile_money':
+      case 'momo':
+      case 'mobilemoney':
+        return 'Arrives in minutes';
+      case 'spenn':
+        return 'Arrives in minutes';
+      case 'cash_pickup':
+      case 'cash':
+        return 'Arrives in 24 hours';
+      case 'wallet':
+      case 'digital_wallet':
+        return 'Arrives in minutes';
+      case 'card':
+      case 'card_payment':
+        return 'Arrives in 1-3 hours';
+      case 'crypto':
+      case 'cryptocurrency':
+        return 'Arrives in 10-30 minutes';
+      default:
+        return 'Arrives in 1-2 hours';
+    }
+  }
+
+  Widget _getDeliveryMethodIcon(String? method) {
+    if (method == null || method.isEmpty) {
+      return SvgPicture.asset(
+        'assets/icons/svgs/paymentt.svg',
+        height: 32.sp,
+        width: 32.sp,
+      );
+    }
+
+    // Return specific icons for different delivery methods
+    switch (method.toLowerCase()) {
+      case 'bank_transfer':
+      case 'bank':
+        return SvgPicture.asset(
+          'assets/icons/svgs/bankk.svg',
+          height: 32.sp,
+          width: 32.sp,
+        );
+      case 'mobile_money':
+      case 'momo':
+      case 'mobilemoney':
+        return SvgPicture.asset(
+          'assets/icons/svgs/mobilee.svg',
+          height: 32.sp,
+          width: 32.sp,
+        );
+      case 'spenn':
+        return SvgPicture.asset(
+          'assets/icons/svgs/wallett.svg',
+          height: 32.sp,
+          width: 32.sp,
+        );
+      case 'cash_pickup':
+      case 'cash':
+        return SvgPicture.asset(
+          'assets/icons/svgs/paymentt.svg',
+          height: 32.sp,
+          width: 32.sp,
+        );
+      case 'wallet':
+      case 'digital_wallet':
+        return SvgPicture.asset(
+          'assets/icons/svgs/wallett.svg',
+          height: 32.sp,
+          width: 32.sp,
+        );
+      case 'card':
+      case 'card_payment':
+        return SvgPicture.asset(
+          'assets/icons/svgs/cardd.svg',
+          height: 32.sp,
+          width: 32.sp,
+        );
+      case 'crypto':
+      case 'cryptocurrency':
+        return SvgPicture.asset(
+          'assets/icons/svgs/cryptoo.svg',
+          height: 32.sp,
+          width: 32.sp,
+        );
+      default:
+        // Default icon for unknown delivery methods
+        return SvgPicture.asset(
+          'assets/icons/svgs/paymentt.svg',
+          height: 32.sp,
+          width: 32.sp,
+        );
     }
   }
 
@@ -711,19 +820,18 @@ class _SendViewState extends ConsumerState<SendView>
                 ),
             title: Row(
               children: [
-                SvgPicture.asset(
-                  _getFlagPath(state.receiverCountry),
-                  color: AppColors.orange300,
-                  height: 24.000.h,
-                ),
+                _getDeliveryMethodIcon(state.selectedDeliveryMethod),
                 SizedBox(width: 12.w),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _getDeliveryMethodDisplayName(
-                        state.selectedDeliveryMethod,
-                      ),
+                      _getDeliveryMethodType(state.selectedDeliveryMethod) ==
+                              "P2p"
+                          ? "Peer-to-Peer"
+                          : _getDeliveryMethodType(
+                            state.selectedDeliveryMethod,
+                          ),
                       style: AppTypography.bodyLarge.copyWith(
                         fontFamily: 'CabinetGrotesk',
                         fontSize: 14.sp,
@@ -738,7 +846,7 @@ class _SendViewState extends ConsumerState<SendView>
                     ),
                     SizedBox(height: 2.h),
                     Text(
-                      'Arrives in minutes',
+                      _getDeliveryDuration(state.selectedDeliveryMethod),
                       style: AppTypography.bodyLarge.copyWith(
                         color: Theme.of(
                           context,
@@ -754,35 +862,10 @@ class _SendViewState extends ConsumerState<SendView>
                 ),
               ],
             ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // if (state.selectedDeliveryMethod.isNotEmpty)
-                //   Icon(
-                //     Icons.check_circle,
-                //     color: AppColors.primary600,
-                //     size: 20.sp,
-                //   ),
-                // SizedBox(width: 8.w),
-                IconButton(
-                  onPressed:
-                      () => _showChannelTypesBottomSheet(
-                        context,
-                        state.receiverCountry,
-                        state.receiverCurrency,
-                        state,
-                      ),
-                  icon: Icon(
-                    Icons.chevron_right,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withOpacity(0.6),
-                    size: 20.sp,
-                  ),
-                  padding: EdgeInsets.zero,
-                  constraints: BoxConstraints(),
-                ),
-              ],
+            trailing: Icon(
+              Icons.chevron_right,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              size: 20.sp,
             ),
           ),
         ),
@@ -972,7 +1055,9 @@ class _SendViewState extends ConsumerState<SendView>
                 // ),
               ] else if (state.exchangeRate.isNotEmpty) ...[
                 Text(
-                  state.exchangeRate,
+                  state.receiverCurrency == 'NGN'
+                      ? '₦1 = ₦1'
+                      : state.exchangeRate,
                   style: AppTypography.bodyLarge.copyWith(
                     fontFamily: 'Karla',
                     fontSize: 14.sp,
@@ -981,21 +1066,13 @@ class _SendViewState extends ConsumerState<SendView>
                   ),
                 ),
               ] else ...[
-                Icon(
-                  Icons.info_outline,
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withOpacity(0.5),
-                  size: 20.sp,
-                ),
-                SizedBox(width: 8.w),
-                Text(
-                  'Select currencies to see exchange rate',
-                  style: AppTypography.bodyLarge.copyWith(
-                    fontFamily: 'Karla',
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.onSurface,
+               
+                SizedBox(
+                  width: 20.w,
+                  height: 20.w,
+                  child: LoadingAnimationWidget.horizontalRotatingDots(
+                    color: AppColors.primary600,
+                    size: 20,
                   ),
                 ),
               ],
@@ -1029,7 +1106,7 @@ class _SendViewState extends ConsumerState<SendView>
   /// Find the network that contains the given channel ID
   Network? _findNetworkForChannel(String? channelId, List<Network> networks) {
     if (channelId == null || networks.isEmpty) return null;
-    
+
     for (final network in networks) {
       if (network.channelIds?.contains(channelId) == true) {
         return network;
@@ -1039,6 +1116,9 @@ class _SendViewState extends ConsumerState<SendView>
   }
 
   void _navigateToRecipientScreen(SendState state) {
+    // Dismiss keyboard when continue button is pressed
+    FocusScope.of(context).unfocus();
+
     // Get the selected recipient channel to find the network
     final recipientChannels =
         state.channels
@@ -1055,10 +1135,16 @@ class _SendViewState extends ConsumerState<SendView>
             .toList();
 
     // Find the network for the selected channel
-    final selectedChannel = recipientChannels.isNotEmpty ? recipientChannels.first : null;
-    final selectedNetwork = selectedChannel != null 
-        ? _findNetworkForChannel(selectedChannel.id, state.networks)
-        : null;
+    final selectedChannel =
+        recipientChannels.isNotEmpty ? recipientChannels.first : null;
+    final selectedNetwork =
+        selectedChannel != null
+            ? _findNetworkForChannel(selectedChannel.id, state.networks)
+            : null;
+
+    // Debug logs for channel IDs
+    print('🔵 SENDER CHANNEL ID: ${state.selectedSenderChannelId}');
+    print('🟢 RECIPIENT CHANNEL ID: ${selectedChannel?.id}');
 
     // Use real network data with fallbacks
     final selectedData = {
@@ -1070,8 +1156,16 @@ class _SendViewState extends ConsumerState<SendView>
       'receiveCountry': state.receiverCountry,
       'senderDeliveryMethod': state.selectedSenderDeliveryMethod,
       'recipientDeliveryMethod': state.selectedDeliveryMethod,
-      'networkId': selectedChannel?.id,
-      'networkName': selectedNetwork?.name ?? selectedChannel?.channelType ?? 'Selected Network',
+      'senderChannelId':
+          state
+              .selectedSenderChannelId, // Sender's channel ID for source.networkId
+      'recipientChannelId':
+          selectedChannel?.id, // Recipient's channel ID for channelId
+      'networkId': selectedChannel?.id, // Keep for backward compatibility
+      'networkName':
+          selectedNetwork?.name ??
+          selectedChannel?.channelType ??
+          'Selected Network',
       'accountNumberType': selectedNetwork?.accountNumberType ?? 'phone',
     };
 
@@ -1088,7 +1182,7 @@ class _SendViewState extends ConsumerState<SendView>
     final isAmountValid = viewModel.isSendAmountValid;
 
     return PrimaryButton(
-      text: 'Continue',
+      text: _getSendButtonText(state, viewModel, isAmountValid),
       onPressed:
           state.isLoading || !isAmountValid
               ? null
@@ -1109,7 +1203,39 @@ class _SendViewState extends ConsumerState<SendView>
     );
   }
 
+  String _getSendButtonText(SendState state, SendViewModel viewModel, bool isAmountValid) {
+    if (state.isLoading) {
+      return 'Loading...';
+    }
+    
+    if (!isAmountValid) {
+      if (state.sendAmount.isEmpty) {
+        return 'Enter amount to continue';
+      }
+      
+      final sendAmount = double.tryParse(state.sendAmount);
+      if (sendAmount == null || sendAmount <= 0) {
+        return 'Enter valid amount';
+      }
+      
+      if (viewModel.sendMinimumLimit != null && sendAmount < viewModel.sendMinimumLimit!) {
+        final minAmount = StringUtils.formatCurrency(
+          viewModel.sendMinimumLimit!.toStringAsFixed(2), 
+          state.sendCurrency
+        ).split('.')[0];
+        return 'Minimum amount is $minAmount';
+      }
+      
+      return 'Enter valid amount';
+    }
+    
+    return 'Continue';
+  }
+
   void _showSendCountryBottomSheet(SendState state) {
+    // Dismiss keyboard when opening bottom sheet
+    FocusScope.of(context).unfocus();
+
     // Filter channels for deposit (send) countries - where user can send FROM
     final depositChannels =
         state.channels
@@ -1252,6 +1378,7 @@ class _SendViewState extends ConsumerState<SendView>
                                   vertical: 4.h,
                                 ),
                                 onTap: () {
+                                  FocusScope.of(context).unfocus();
                                   ref
                                       .read(sendViewModelProvider.notifier)
                                       .updateSendCountry(
@@ -1259,6 +1386,8 @@ class _SendViewState extends ConsumerState<SendView>
                                         channel.currency!,
                                       );
                                   Navigator.pop(context);
+
+                                  print(channel.id);
                                 },
                                 title: Row(
                                   children: [
@@ -1339,12 +1468,19 @@ class _SendViewState extends ConsumerState<SendView>
   }
 
   void _showReceiveCountryBottomSheet(SendState state) {
+    // Dismiss keyboard when opening bottom sheet
+    FocusScope.of(context).unfocus();
+
     // Filter channels for withdrawal (receive) countries - where user can send TO
     final withdrawalChannels =
         state.channels
             .where(
               (channel) =>
-                  channel.rampType == 'withdrawal' &&
+                  (channel.rampType == 'withdrawal' ||
+                      channel.rampType == 'withdraw' ||
+                      channel.rampType == 'payout' ||
+                      channel.rampType == 'deposit' ||
+                      channel.rampType == 'receive') &&
                   channel.status == 'active' &&
                   channel.currency != null &&
                   channel.country != null,
@@ -1380,7 +1516,9 @@ class _SendViewState extends ConsumerState<SendView>
                     channel.country != null &&
                     (channel.rampType == 'withdrawal' ||
                         channel.rampType == 'withdraw' ||
-                        channel.rampType == 'payout'),
+                        channel.rampType == 'payout' ||
+                        channel.rampType == 'deposit' ||
+                        channel.rampType == 'receive'),
               )
               .toList();
 
@@ -1395,193 +1533,252 @@ class _SendViewState extends ConsumerState<SendView>
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder:
-          (context) => Container(
-            height: MediaQuery.of(context).size.height * 0.92,
-            decoration: BoxDecoration(
-              color: Theme.of(context).scaffoldBackgroundColor,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-            ),
-            child: Column(
-              children: [
-                // Container(
-                //   width: 40.w,
-                //   height: 4.h,
-                //   margin: EdgeInsets.symmetric(vertical: 12.h),
-                //   decoration: BoxDecoration(
-                //     color: AppColors.neutral300,
-                //     borderRadius: BorderRadius.circular(2.r),
-                //   ),
-                // ),
-                SizedBox(height: 18.h),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 24.w),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      SizedBox(height: 22.h, width: 22.w),
-                      Text(
-                        'Receiving currency',
-                        style: AppTypography.titleLarge.copyWith(
-                          fontFamily: 'CabinetGrotesk',
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.w600,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.pop(context);
-                        },
-                        child: Image.asset(
-                          "assets/icons/pngs/cancelicon.png",
-                          height: 22.h,
-                          width: 22.w,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
-                      ),
-                    ],
+          (context) => StatefulBuilder(
+            builder: (context, setModalState) {
+              return Container(
+                height: MediaQuery.of(context).size.height * 0.92,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(20.r),
                   ),
                 ),
-                SizedBox(height: 16.h),
-                Expanded(
-                  child: Builder(
-                    builder: (context) {
-                      final channelsToShow =
-                          finalWithdrawalChannels.isEmpty
-                              ? (() {
-                                final fallbackChannels =
-                                    state.channels
-                                        .where(
-                                          (c) =>
-                                              c.status == 'active' &&
-                                              c.currency != null &&
-                                              c.country != null &&
-                                              (c.rampType == 'withdrawal' ||
-                                                  c.rampType == 'withdraw' ||
-                                                  c.rampType == 'payout'),
-                                        )
-                                        .toList();
-
-                                // Deduplicate fallback channels too
-                                final uniqueFallbackChannels =
-                                    <String, Channel>{};
-                                for (final channel in fallbackChannels) {
-                                  final key =
-                                      '${channel.country} - ${channel.currency}';
-                                  if (!uniqueFallbackChannels.containsKey(
-                                        key,
-                                      ) ||
-                                      (channel.max ?? 0) >
-                                          (uniqueFallbackChannels[key]?.max ??
-                                              0)) {
-                                    uniqueFallbackChannels[key] = channel;
-                                  }
-                                }
-
-                                final deduplicatedFallback =
-                                    uniqueFallbackChannels.values.toList()..sort(
-                                      (
-                                        a,
-                                        b,
-                                      ) => '${a.country ?? ''} - ${a.currency ?? ''}'
-                                          .compareTo(
-                                            '${b.country ?? ''} - ${b.currency ?? ''}',
-                                          ),
-                                    );
-                                return deduplicatedFallback;
-                              })()
-                              : finalWithdrawalChannels;
-
-                      return ListView.builder(
-                        padding: EdgeInsets.symmetric(horizontal: 24.w),
-                        itemCount: channelsToShow.length,
-                        itemBuilder: (context, index) {
-                          final channel = channelsToShow[index];
-                          return ListTile(
-                            contentPadding: EdgeInsets.symmetric(vertical: 4.h),
+                child: Column(
+                  children: [
+                    SizedBox(height: 18.h),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 24.w),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          SizedBox(height: 22.h, width: 22.w),
+                          Text(
+                            'Receiving currency',
+                            style: AppTypography.titleLarge.copyWith(
+                              fontFamily: 'CabinetGrotesk',
+                              fontSize: 18.sp,
+                              fontWeight: FontWeight.w600,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                          ),
+                          GestureDetector(
                             onTap: () {
-                              ref
-                                  .read(sendViewModelProvider.notifier)
-                                  .updateReceiveCountry(
-                                    channel.country!,
-                                    channel.currency!,
-                                  );
                               Navigator.pop(context);
                             },
-                            title: Row(
-                              children: [
-                                SvgPicture.asset(
-                                  _getFlagPath(channel.country),
-                                  height: 24.000.h,
+                            child: Image.asset(
+                              "assets/icons/pngs/cancelicon.png",
+                              height: 22.h,
+                              width: 22.w,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 16.h),
+                    // Search field
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 24.w),
+                      child: CustomTextField(
+                        controller: _searchController,
+                        label: '',
+                        hintText: 'Search countries',
+                        borderRadius: 40,
+                        prefixIcon: Icon(
+                          Icons.search,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.6),
+                          size: 20.sp,
+                        ),
+                        onChanged: (value) {
+                          setModalState(() {});
+                        },
+                      ),
+                    ),
+                    SizedBox(height: 16.h),
+                    Expanded(
+                      child: Builder(
+                        builder: (context) {
+                          // Get all channels
+                          final allChannels =
+                              finalWithdrawalChannels.isEmpty
+                                  ? (() {
+                                    final fallbackChannels =
+                                        state.channels
+                                            .where(
+                                              (c) =>
+                                                  c.status == 'active' &&
+                                                  c.currency != null &&
+                                                  c.country != null &&
+                                                  (c.rampType == 'withdrawal' ||
+                                                      c.rampType ==
+                                                          'withdraw' ||
+                                                      c.rampType == 'payout' ||
+                                                      c.rampType == 'deposit' ||
+                                                      c.rampType == 'receive'),
+                                            )
+                                            .toList();
+
+                                    // Deduplicate fallback channels
+                                    final uniqueFallbackChannels =
+                                        <String, Channel>{};
+                                    for (final channel in fallbackChannels) {
+                                      final key =
+                                          '${channel.country} - ${channel.currency}';
+                                      if (!uniqueFallbackChannels.containsKey(
+                                            key,
+                                          ) ||
+                                          (channel.max ?? 0) >
+                                              (uniqueFallbackChannels[key]
+                                                      ?.max ??
+                                                  0)) {
+                                        uniqueFallbackChannels[key] = channel;
+                                      }
+                                    }
+
+                                    return uniqueFallbackChannels.values
+                                        .toList();
+                                  })()
+                                  : finalWithdrawalChannels;
+
+                          // Additional deduplication to ensure no duplicates
+                          final uniqueChannels = <String, Channel>{};
+                          for (final channel in allChannels) {
+                            final key =
+                                '${channel.country} - ${channel.currency}';
+                            if (!uniqueChannels.containsKey(key)) {
+                              uniqueChannels[key] = channel;
+                            }
+                          }
+                          final deduplicatedChannels =
+                              uniqueChannels.values.toList();
+
+                          // Sort alphabetically by country name
+                          deduplicatedChannels.sort((a, b) {
+                            final countryA = _getCountryName(a.country);
+                            final countryB = _getCountryName(b.country);
+                            return countryA.compareTo(countryB);
+                          });
+
+                          // Filter based on search
+                          final searchQuery =
+                              _searchController.text.toLowerCase();
+                          final filteredChannels =
+                              deduplicatedChannels.where((channel) {
+                                if (searchQuery.isEmpty) return true;
+
+                                final countryName =
+                                    _getCountryName(
+                                      channel.country,
+                                    ).toLowerCase();
+                                final currency =
+                                    channel.currency?.toLowerCase() ?? '';
+                                final countryCode =
+                                    channel.country?.toLowerCase() ?? '';
+
+                                return countryName.contains(searchQuery) ||
+                                    currency.contains(searchQuery) ||
+                                    countryCode.contains(searchQuery);
+                              }).toList();
+
+                          return ListView.builder(
+                            padding: EdgeInsets.symmetric(horizontal: 24.w),
+                            itemCount: filteredChannels.length,
+                            itemBuilder: (context, index) {
+                              final channel = filteredChannels[index];
+                              return ListTile(
+                                contentPadding: EdgeInsets.symmetric(
+                                  vertical: 4.h,
                                 ),
-                                SizedBox(width: 12.w),
-                                Text(
-                                  _getCountryName(channel.country),
+                                onTap: () {
+                                  FocusScope.of(context).unfocus();
+                                  ref
+                                      .read(sendViewModelProvider.notifier)
+                                      .updateReceiveCountry(
+                                        channel.country!,
+                                        channel.currency!,
+                                      );
+                                  Navigator.pop(context);
+                                },
+                                // subtitle: Column(
+                                //   crossAxisAlignment: CrossAxisAlignment.start,
+                                //   children: [
+                                //     Text(
+                                //       '${channel.vendorId ?? 'Unknown'} - ${channel.channelType ?? 'Unknown'} - ${channel.settlementType ?? 'Unknown'}',
+                                //       style: AppTypography.bodySmall.copyWith(
+                                //         fontFamily: 'Karla',
+                                //         fontSize: 12.sp,
+                                //         color: AppColors.primary600,
+                                //         fontWeight: FontWeight.w500,
+                                //       ),
+                                //     ),
+                                //     SizedBox(height: 1.h),
+                                //     Text(
+                                //       '${channel.rampType ?? 'Unknown'} - ${channel.status ?? 'Unknown'}',
+                                //       style: AppTypography.bodySmall.copyWith(
+                                //         fontFamily: 'Karla',
+                                //         fontSize: 11.sp,
+                                //         color: AppColors.neutral600,
+                                //         fontWeight: FontWeight.w400,
+                                //       ),
+                                //     ),
+                                //     SizedBox(height: 2.h),
+                                //     Text(
+                                //       'Min: ${channel.min} ${channel.currency} | Max: ${channel.max} ${channel.currency}',
+                                //       style: AppTypography.bodySmall.copyWith(
+                                //         fontFamily: 'Karla',
+                                //         fontSize: 12.sp,
+                                //         color: AppColors.neutral500,
+                                //       ),
+                                //     ),
+                                //   ],
+                                // ),
+                                // state.receiverCountry == channel.country &&
+                                //         state.receiverCurrency ==
+                                //             channel.currency
+                                //     ? Icon(
+                                //       Icons.check_circle,
+                                //       color: AppColors.primary600,
+                                //     )
+                                //     : null,
+                                title: Row(
+                                  children: [
+                                    SvgPicture.asset(
+                                      _getFlagPath(channel.country),
+                                      height: 24.000.h,
+                                    ),
+                                    SizedBox(width: 12.w),
+                                    Text(
+                                      _getCountryName(channel.country),
+                                      style: AppTypography.bodyLarge.copyWith(
+                                        fontFamily: 'Karla',
+                                        fontSize: 16.sp,
+                                        letterSpacing: -.4,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                trailing: Text(
+                                  '${channel.currency}',
                                   style: AppTypography.bodyLarge.copyWith(
                                     fontFamily: 'Karla',
-                                    fontSize: 16.sp,
+                                    fontSize: 14.sp,
+                                    letterSpacing: -.4,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
-                              ],
-                            ),
-                            trailing: Text(
-                              '${channel.currency}',
-                              style: AppTypography.bodyLarge.copyWith(
-                                fontFamily: 'Karla',
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            // subtitle: Column(
-                            //   crossAxisAlignment: CrossAxisAlignment.start,
-                            //   children: [
-                            //     Text(
-                            //       '${channel.vendorId ?? 'Unknown'} - ${channel.channelType ?? 'Unknown'} - ${channel.settlementType ?? 'Unknown'}',
-                            //       style: AppTypography.bodySmall.copyWith(
-                            //         fontFamily: 'Karla',
-                            //         fontSize: 12.sp,
-                            //         color: AppColors.primary600,
-                            //         fontWeight: FontWeight.w500,
-                            //       ),
-                            //     ),
-                            //     SizedBox(height: 1.h),
-                            //     Text(
-                            //       '${channel.rampType ?? 'Unknown'} - ${channel.status ?? 'Unknown'}',
-                            //       style: AppTypography.bodySmall.copyWith(
-                            //         fontFamily: 'Karla',
-                            //         fontSize: 11.sp,
-                            //         color: AppColors.neutral600,
-                            //         fontWeight: FontWeight.w400,
-                            //       ),
-                            //     ),
-                            //     SizedBox(height: 2.h),
-                            //     Text(
-                            //       'Min: ${channel.min} ${channel.currency} | Max: ${channel.max} ${channel.currency}',
-                            //       style: AppTypography.bodySmall.copyWith(
-                            //         fontFamily: 'Karla',
-                            //         fontSize: 12.sp,
-                            //         color: AppColors.neutral500,
-                            //       ),
-                            //     ),
-                            //   ],
-                            // ),
-                            // state.receiverCountry == channel.country &&
-                            //         state.receiverCurrency ==
-                            //             channel.currency
-                            //     ? Icon(
-                            //       Icons.check_circle,
-                            //       color: AppColors.primary600,
-                            //     )
-                            //     : null,
+                              );
+                            },
                           );
                         },
-                      );
-                    },
-                  ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              );
+            },
           ),
     );
   }
@@ -1592,6 +1789,8 @@ class _SendViewState extends ConsumerState<SendView>
     String currency,
     SendState state,
   ) {
+    // Dismiss keyboard when opening bottom sheet
+    FocusScope.of(context).unfocus();
     // Filter channels for the specific country-currency combination
     final countryCurrencyChannels =
         state.channels
@@ -1602,7 +1801,9 @@ class _SendViewState extends ConsumerState<SendView>
                   channel.status == 'active' &&
                   (channel.rampType == 'withdrawal' ||
                       channel.rampType == 'withdraw' ||
-                      channel.rampType == 'payout'),
+                      channel.rampType == 'payout' ||
+                      channel.rampType == 'deposit' ||
+                      channel.rampType == 'receive'),
             )
             .toList()
           ..sort(
@@ -1667,24 +1868,44 @@ class _SendViewState extends ConsumerState<SendView>
                     padding: EdgeInsets.symmetric(horizontal: 24.w),
                     itemCount: countryCurrencyChannels.length,
                     itemBuilder: (context, index) {
+                      //  final selectedChannel = state.channels.firstWhere(
+                      //     (channel) =>
+                      //         channel.country == state.receiverCountry &&
+                      //         channel.currency == state.receiverCurrency &&
+                      //         channel.channelType == state.selectedDeliveryMethod,
+                      //     orElse:
+                      //         () => state.channels.isNotEmpty ? state.channels.first : Channel(),
+                      //   );
+
+                      //   final networkName = ref
+                      //       .read(sendViewModelProvider.notifier)
+                      //       .getNetworkNameForChannel(selectedChannel);
+                      //   final networkNameText =
+                      //       networkName ??
+                      //       _getDeliveryMethodDisplayName(selectedChannel.channelType);
+
                       final channel = countryCurrencyChannels[index];
+
                       return ListTile(
                         contentPadding: EdgeInsets.symmetric(vertical: 8.h),
                         onTap: () {
+                          FocusScope.of(context).unfocus();
                           ref
                               .read(sendViewModelProvider.notifier)
                               .updateDeliveryMethod(
                                 channel.channelType ?? 'Unknown',
                               );
+
+                          print('channel.id: ${channel.id}');
                           Navigator.pop(context);
                         },
+                        leading: _getDeliveryMethodIcon(channel.channelType),
+                        // SizedBox(width: 12.w),,
                         title: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              _getDeliveryMethodDisplayName(
-                                channel.channelType,
-                              ),
+                              "${_getDeliveryMethodType(channel.channelType) == "P2p" ? "Peer-to-Peer" : _getDeliveryMethodType(channel.channelType)} [${channel.channelType.toString().toUpperCase()}]",
                               style: AppTypography.bodyLarge.copyWith(
                                 fontFamily: 'CabinetGrotesk',
                                 fontSize: 16.sp,
@@ -1693,7 +1914,7 @@ class _SendViewState extends ConsumerState<SendView>
                             ),
                             SizedBox(height: 2.h),
                             Text(
-                              'Arrives in minutes - ${(channel.settlementType).toString()}',
+                              _getDeliveryDuration(channel.channelType),
                               style: AppTypography.bodyLarge.copyWith(
                                 color: Theme.of(context).colorScheme.onSurface,
                                 fontSize: 12.sp,
@@ -1705,40 +1926,6 @@ class _SendViewState extends ConsumerState<SendView>
                             ),
                           ],
                         ),
-
-                        // subtitle: Column(
-                        //   crossAxisAlignment: CrossAxisAlignment.start,
-                        //   children: [
-                        //     Text(
-                        //       channel.vendorId ?? 'Unknown',
-                        //       style: AppTypography.bodySmall.copyWith(
-                        //         fontFamily: 'Karla',
-                        //         fontSize: 12.sp,
-                        //         color: AppColors.primary600,
-                        //         fontWeight: FontWeight.w500,
-                        //       ),
-                        //     ),
-                        //     SizedBox(height: 1.h),
-                        //     Text(
-                        //       '${channel.rampType ?? 'Unknown'} - ${channel.status ?? 'Unknown'}',
-                        //       style: AppTypography.bodySmall.copyWith(
-                        //         fontFamily: 'Karla',
-                        //         fontSize: 11.sp,
-                        //         color: AppColors.neutral600,
-                        //         fontWeight: FontWeight.w400,
-                        //       ),
-                        //     ),
-                        //     SizedBox(height: 2.h),
-                        //     Text(
-                        //       'Min: ${channel.min} ${channel.currency} | Max: ${channel.max} ${channel.currency}',
-                        //       style: AppTypography.bodySmall.copyWith(
-                        //         fontFamily: 'Karla',
-                        //         fontSize: 12.sp,
-                        //         color: AppColors.neutral500,
-                        //       ),
-                        //     ),
-                        //   ],
-                        // ),
                         trailing:
                             state.selectedDeliveryMethod == channel.channelType
                                 ? SvgPicture.asset(

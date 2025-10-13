@@ -2,6 +2,7 @@ import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
@@ -11,11 +12,13 @@ import 'package:dayfi/features/send/vm/send_viewmodel.dart';
 class SendReviewView extends ConsumerStatefulWidget {
   final Map<String, dynamic> selectedData;
   final Map<String, dynamic> recipientData;
+  final Map<String, dynamic> senderData;
 
   const SendReviewView({
     super.key,
     required this.selectedData,
     required this.recipientData,
+    required this.senderData,
   });
 
   @override
@@ -28,36 +31,36 @@ class _SendReviewViewState extends ConsumerState<SendReviewView> {
   String _selectedReason = '';
   bool _isLoading = false;
 
-  final List<String> _reasons = [
-    'Family Support',
-    'Education',
-    'Medical Expenses',
-    'Business Investment',
-    'Emergency',
-    'Travel',
-    'Gift',
-    'Rent/Mortgage',
-    'Utilities',
-    'Food & Groceries',
-    'Transportation',
-    'Entertainment',
-    'Savings',
-    'Debt Payment',
-    'Insurance',
-    'Charity/Donation',
-    'Wedding',
-    'Funeral',
-    'Birthday Celebration',
-    'Holiday Expenses',
-    'Home Improvement',
-    'Technology Purchase',
-    'Clothing',
-    'Healthcare',
-    'Legal Fees',
-    'Tax Payment',
-    'Investment',
-    'Loan Repayment',
-    'Other',
+  final List<Map<String, String>> _reasons = [
+    {'emoji': '👨‍👩‍👧‍👦', 'name': 'Family Support'},
+    {'emoji': '🎓', 'name': 'Education'},
+    {'emoji': '🏥', 'name': 'Medical Expenses'},
+    {'emoji': '💼', 'name': 'Business Investment'},
+    {'emoji': '🚨', 'name': 'Emergency'},
+    {'emoji': '✈️', 'name': 'Travel'},
+    {'emoji': '🎁', 'name': 'Gift'},
+    {'emoji': '🏠', 'name': 'Rent/Mortgage'},
+    {'emoji': '⚡', 'name': 'Utilities'},
+    {'emoji': '🛒', 'name': 'Food & Groceries'},
+    {'emoji': '🚗', 'name': 'Transportation'},
+    {'emoji': '🎬', 'name': 'Entertainment'},
+    {'emoji': '💰', 'name': 'Savings'},
+    {'emoji': '💳', 'name': 'Debt Payment'},
+    {'emoji': '🛡️', 'name': 'Insurance'},
+    {'emoji': '❤️', 'name': 'Charity/Donation'},
+    {'emoji': '💒', 'name': 'Wedding'},
+    {'emoji': '🕊️', 'name': 'Funeral'},
+    {'emoji': '🎂', 'name': 'Birthday Celebration'},
+    {'emoji': '🎄', 'name': 'Holiday Expenses'},
+    {'emoji': '🔨', 'name': 'Home Improvement'},
+    {'emoji': '💻', 'name': 'Technology Purchase'},
+    {'emoji': '👕', 'name': 'Clothing'},
+    {'emoji': '🏥', 'name': 'Healthcare'},
+    {'emoji': '⚖️', 'name': 'Legal Fees'},
+    {'emoji': '📊', 'name': 'Tax Payment'},
+    {'emoji': '📈', 'name': 'Investment'},
+    {'emoji': '🏦', 'name': 'Loan Repayment'},
+    {'emoji': '❓', 'name': 'Other'},
   ];
 
   @override
@@ -66,7 +69,7 @@ class _SendReviewViewState extends ConsumerState<SendReviewView> {
     _descriptionController.addListener(() {
       setState(() {});
     });
-    
+
     // Update viewModel with selected data
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _updateViewModelWithSelectedData();
@@ -75,12 +78,12 @@ class _SendReviewViewState extends ConsumerState<SendReviewView> {
 
   void _updateViewModelWithSelectedData() {
     final sendState = ref.read(sendViewModelProvider.notifier);
-    
+
     // Update send amount if available
     if (widget.selectedData['sendAmount'] != null) {
       sendState.updateSendAmount(widget.selectedData['sendAmount'].toString());
     }
-    
+
     // Update other data if available
     if (widget.selectedData['sendCurrency'] != null) {
       // You might need to add a method to update currency in the viewModel
@@ -100,7 +103,7 @@ class _SendReviewViewState extends ConsumerState<SendReviewView> {
     List<String> parts = formatted.split('.');
     String integerPart = parts[0];
     String decimalPart = parts.length > 1 ? parts[1] : '00';
-    
+
     // Add commas for thousands separators
     String formattedInteger = '';
     for (int i = 0; i < integerPart.length; i++) {
@@ -109,14 +112,48 @@ class _SendReviewViewState extends ConsumerState<SendReviewView> {
       }
       formattedInteger += integerPart[i];
     }
-    
+
     return '$formattedInteger.$decimalPart';
+  }
+
+  // Helper method to get currency symbol from currency code
+  String _getCurrencySymbol(String currencyCode) {
+    switch (currencyCode.toUpperCase()) {
+      case 'NGN':
+        return '₦';
+      case 'USD':
+        return '\$';
+      case 'EUR':
+        return '€';
+      case 'GBP':
+        return '£';
+      case 'RWF':
+        return 'RWF ';
+      case 'GHS':
+        return 'GH₵';
+      case 'KES':
+        return 'KSh ';
+      case 'UGX':
+        return 'USh ';
+      case 'TZS':
+        return 'TSh ';
+      case 'ZAR':
+        return 'R';
+      case 'BWP':
+        return 'BWP ';
+      case 'XOF':
+        return 'CFA';
+      case 'XAF':
+        return 'FCFA';
+      default:
+        return '$currencyCode ';
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final sendState = ref.watch(sendViewModelProvider);
-    
+
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
@@ -245,14 +282,14 @@ class _SendReviewViewState extends ConsumerState<SendReviewView> {
             '₦${_formatNumber(double.tryParse(widget.selectedData['sendAmount']?.toString() ?? '0') ?? 0)}',
           ),
           _buildDetailRow(
-            'Total to Recipient',
-            '₦${_formatNumber(double.tryParse(widget.selectedData['receiveAmount']?.toString() ?? '0') ?? 0)}',
+            'Total to Beneficiary ',
+            '${_getCurrencySymbol(widget.selectedData['receiveCurrency']?.toString() ?? 'NGN')}${_formatNumber(double.tryParse(widget.selectedData['receiveAmount']?.toString() ?? '0') ?? 0)}',
           ),
+          _buildDetailRow('Exchange Rate', sendState.exchangeRate),
           _buildDetailRow(
-            'Exchange Rate',
-            sendState.exchangeRate,
+            'Transfer Fee',
+            '₦${_formatNumber(double.tryParse(sendState.fee.toString()) ?? 0)}',
           ),
-          _buildDetailRow('Transfer Fee', '₦${_formatNumber(double.tryParse(sendState.fee?.toString() ?? '0') ?? 0)}'),
           _buildDetailRow('Transfer Taxes', '₦0.00'),
 
           Divider(
@@ -262,13 +299,13 @@ class _SendReviewViewState extends ConsumerState<SendReviewView> {
 
           _buildDetailRow(
             'Total',
-            '₦${_formatNumber(double.tryParse(sendState.totalToPay?.toString() ?? '0') ?? 0)}',
+            '₦${_formatNumber(double.tryParse(sendState.totalToPay.toString()) ?? 0)}',
             isTotal: true,
           ),
 
           SizedBox(height: 16.h),
 
-          _buildDetailRow('Recipient', widget.recipientData['name']),
+          _buildDetailRow('Beneficiary ', widget.recipientData['name']),
           _buildDetailRow(
             'Delivery Method',
             widget.selectedData['recipientDeliveryMethod'] ?? 'Bank Transfer',
@@ -279,31 +316,59 @@ class _SendReviewViewState extends ConsumerState<SendReviewView> {
     );
   }
 
-  Widget _buildDetailRow(String label, String value, {bool isTotal = false, double bottomPadding = 8}) {
+  Widget _getDetailIcon(String label) {
+    // Map labels to appropriate SVG icons from send_view.dart
+    switch (label.toLowerCase()) {
+      case 'Transfer fee':
+      case 'fee':
+        return SvgPicture.asset('assets/icons/svgs/fee.svg', height: 24);
+      case 'total':
+        return SvgPicture.asset('assets/icons/svgs/total.svg', height: 24);
+      case 'exchange rate':
+      case 'rate':
+        return SvgPicture.asset('assets/icons/svgs/rate.svg', height: 24);
+      default:
+        // Default icon for other items
+        return SvgPicture.asset('assets/icons/svgs/fee.svg', height: 24);
+    }
+  }
+
+  Widget _buildDetailRow(
+    String label,
+    String value, {
+    bool isTotal = false,
+    double bottomPadding = 12,
+  }) {
     return Padding(
       padding: EdgeInsets.only(bottom: bottomPadding.h),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              fontFamily: 'Karla',
-                      letterSpacing: -.3,
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w500,
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withOpacity(0.6),
-            ),
+          Row(
+            children: [
+              _getDetailIcon(label),
+              SizedBox(width: 8.w),
+              Text(
+                label,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  fontFamily: 'Karla',
+                  letterSpacing: -.3,
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w500,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.6),
+                ),
+              ),
+            ],
           ),
           Text(
             value,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               fontFamily: 'CabinetGrotesk',
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.onSurface,
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
         ],
@@ -334,33 +399,6 @@ class _SendReviewViewState extends ConsumerState<SendReviewView> {
         ),
       ],
     );
-  }
-
-  String _getReasonEmoji(String reason) {
-    switch (reason) {
-      case 'Family Support':
-        return '👨‍👩‍👧‍👦';
-      case 'Education':
-        return '🎓';
-      case 'Medical Expenses':
-        return '🏥';
-      case 'Business Investment':
-        return '💼';
-      case 'Emergency':
-        return '🚨';
-      case 'Travel':
-        return '✈️';
-      case 'Gift':
-        return '🎁';
-      case 'Rent/Mortgage':
-        return '🏠';
-      case 'Utilities':
-        return '⚡';
-      case 'Food & Groceries':
-        return '🛒';
-      default:
-        return '💰';
-    }
   }
 
   void _showReasonBottomSheet() {
@@ -414,33 +452,41 @@ class _SendReviewViewState extends ConsumerState<SendReviewView> {
                     itemCount: _reasons.length,
                     itemBuilder: (context, index) {
                       final reason = _reasons[index];
-                      final isSelected = _selectedReason == reason;
+                      final isSelected = _selectedReason == reason['name'];
                       return ListTile(
                         contentPadding: EdgeInsets.symmetric(vertical: 4.h),
-                        leading: Text(
-                          _getReasonEmoji(reason),
-                          style: TextStyle(fontSize: 24.sp),
+                        leading: Container(
+                          padding: EdgeInsets.all(6.r),
+                          decoration: BoxDecoration(
+                            color: AppColors.neutral0,
+                            // borderRadius: BorderRadius.circular(12.r),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            reason['emoji']!,
+                            style: TextStyle(fontSize: 20.sp),
+                          ),
                         ),
                         title: Text(
-                          reason,
+                          reason['name']!,
                           style: AppTypography.bodyLarge.copyWith(
                             fontFamily: 'Karla',
                             fontSize: 16.sp,
+                            letterSpacing: -.4,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                         trailing:
                             isSelected
-                                ? Icon(
-                                  Icons.circle,
-                                  color: AppColors.primary600,
-                                  size: 10,
+                                ? SvgPicture.asset(
+                                  'assets/icons/svgs/circle-check.svg',
+                                  color: AppColors.purple500,
                                 )
                                 : null,
                         onTap: () {
                           setState(() {
-                            _selectedReason = reason;
-                            _reasonController.text = reason;
+                            _selectedReason = reason['name']!;
+                            _reasonController.text = reason['name']!;
                           });
                           Navigator.pop(context);
                         },
@@ -480,6 +526,7 @@ class _SendReviewViewState extends ConsumerState<SendReviewView> {
                 (context) => SendPaymentMethodView(
                   selectedData: widget.selectedData,
                   recipientData: widget.recipientData,
+                  senderData: widget.senderData,
                   paymentData: paymentData,
                 ),
           ),

@@ -222,7 +222,7 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
                   state.isBusy
                       ? null
                       : () => _showSkipDialog(context, notifier, state),
-              borderColor: AppColors.purple500,
+               borderColor: Colors.transparent,    
               height: 60.h,
               textColor: AppColors.purple500,
               fontFamily: 'Karla',
@@ -365,7 +365,7 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
                       Navigator.of(context).pop();
                       notifier.enableBiometrics(context);
                     },
-                    borderColor: AppColors.purple500,
+                    borderColor: Colors.transparent,
                     textColor: AppColors.purple500,
                     width: double.infinity,
                     fullWidth: true,

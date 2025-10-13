@@ -7,8 +7,11 @@ import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/features/recipients/vm/recipients_viewmodel.dart';
 import 'package:dayfi/features/send/views/send_view.dart';
-import 'package:dayfi/models/wallet_transaction.dart';
+import 'package:dayfi/features/send/vm/send_viewmodel.dart';
+import 'package:dayfi/models/beneficiary_with_source.dart';
+import 'package:dayfi/models/payment_response.dart' as payment;
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class RecipientsView extends ConsumerStatefulWidget {
   const RecipientsView({super.key});
@@ -41,7 +44,7 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.resumed) {
-      // Refresh recipients when app comes back to foreground
+      // Refresh Beneficiaries when app comes back to foreground
       _refreshRecipients();
     }
   }
@@ -65,7 +68,7 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
           leading: const SizedBox.shrink(),
           leadingWidth: 0,
           title: Text(
-            "Recipients",
+            "Beneficiaries",
             style: AppTypography.titleLarge.copyWith(
               fontFamily: 'CabinetGrotesk',
               fontSize: 28.sp,
@@ -123,7 +126,7 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
                 ),
               ),
 
-              // Recipients List
+              // Beneficiaries List
               Expanded(
                 child: Padding(
                   padding: EdgeInsetsGeometry.only(bottom: 0.h),
@@ -153,7 +156,7 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
                                 // ),
                                 // SizedBox(height: 16.h),
                                 Text(
-                                  'Failed to load recipients',
+                                  'Failed to load Beneficiaries',
                                   style: Theme.of(
                                     context,
                                   ).textTheme.bodyLarge?.copyWith(
@@ -199,7 +202,7 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
                                 //   ).colorScheme.onSurface.withOpacity(0.6),
                                 // ),
                                 Text(
-                                  'No recipients found',
+                                  'No Beneficiaries found',
                                   style: Theme.of(
                                     context,
                                   ).textTheme.bodyLarge?.copyWith(
@@ -220,7 +223,11 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
                           )
                           : ListView.builder(
                             shrinkWrap: true,
-                            padding: EdgeInsets.symmetric(horizontal: 24.w),
+                            padding: EdgeInsets.only(
+                              left: 24.w,
+                              right: 24.w,
+                              bottom: 112.h,
+                            ),
                             itemCount:
                                 recipientsState.filteredBeneficiaries.length,
                             itemBuilder: (context, index) {
@@ -249,15 +256,14 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
   }
 
   Widget _buildRecipientCard(
-    Beneficiary beneficiary, {
+    BeneficiaryWithSource beneficiaryWithSource, {
     double bottomMargin = 8,
   }) {
+    final beneficiary = beneficiaryWithSource.beneficiary;
+    final source = beneficiaryWithSource.source;
     return Container(
       margin: EdgeInsets.only(bottom: 8.h, top: 8.h),
-      padding: EdgeInsets.symmetric(
-        horizontal: 16.w,
-        vertical: 16.h,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12.r),
@@ -265,25 +271,54 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
       child: Row(
         children: [
           // Avatar
-          Container(
-            width: 40.w,
-            height: 40.w,
-            decoration: BoxDecoration(
-              color: AppColors.purple500,
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                _getInitials(beneficiary.name),
-                style: TextStyle(
-                  color: AppColors.neutral0,
-                  fontFamily: 'Karla',
-                  fontSize: 16.sp,
-                  letterSpacing: -.6,
-                  fontWeight: FontWeight.w400,
+          Stack(
+            alignment: Alignment.bottomRight,
+            children: [
+              Container(
+                width: 40.w,
+                height: 40.w,
+                   margin: EdgeInsets.only(bottom: 4.w, right: 4.w),
+                decoration: BoxDecoration(
+                  color: AppColors.purple500,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    _getInitials(beneficiary.name),
+                    style: TextStyle(
+                      color: AppColors.neutral0,
+                      fontFamily: 'Karla',
+                      fontSize: 16.sp,
+                      letterSpacing: -.6,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
                 ),
               ),
-            ),
+              Align(
+                alignment: Alignment.bottomRight,
+                child: Container(
+                  width: 20.w,
+                  height: 20.w,
+                  decoration: BoxDecoration(
+                    color: AppColors.neutral0,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppColors.neutral200,
+                      width: 1,
+                    ),
+                  ),
+                  child: ClipOval(
+                    child: SvgPicture.asset(
+                      _getFlagPath(beneficiary.country),
+                      fit: BoxFit.cover,
+                      width: 24.w,
+                      height: 24.w,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
           SizedBox(width: 8.w),
 
@@ -317,9 +352,9 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
                 //   ),
                 // ),
                 if (beneficiary.country.isNotEmpty) ...[
-                  SizedBox(height: 6.h),
+                  // SizedBox(height: 6.h),
                   Text(
-                    '${beneficiary.country} • ${beneficiary.phone.isNotEmpty ? beneficiary.phone : 'No phone'}',
+                    '${_getChannelAndNetworkInfo(beneficiaryWithSource)} • ${_getAccountNumber(source)}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       fontFamily: 'Karla',
                       fontSize: 12.sp,
@@ -339,7 +374,7 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
           // Send Button
           PrimaryButton(
             text: 'Send',
-            onPressed: () => _navigateToSend(beneficiary),
+            onPressed: () => _navigateToSend(beneficiaryWithSource),
             height: 32.h,
             width: 68.w,
             backgroundColor: AppColors.purple500,
@@ -361,23 +396,157 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
     return '${words[0][0]}${words[words.length - 1][0]}'.toUpperCase();
   }
 
-  String _getAccountType(Beneficiary beneficiary) {
-    // Use actual account type from beneficiary data
-    return beneficiary.idType.isNotEmpty ? beneficiary.idType : 'Bank Account';
+  // Helper function to get flag SVG path from country code
+  String _getFlagPath(String? countryCode) {
+    switch (countryCode?.toUpperCase()) {
+      case 'NG':
+        return 'assets/icons/svgs/world_flags/nigeria.svg';
+      case 'GH':
+        return 'assets/icons/svgs/world_flags/ghana.svg';
+      case 'RW':
+        return 'assets/icons/svgs/world_flags/rwanda.svg';
+      case 'KE':
+        return 'assets/icons/svgs/world_flags/kenya.svg';
+      case 'UG':
+        return 'assets/icons/svgs/world_flags/uganda.svg';
+      case 'TZ':
+        return 'assets/icons/svgs/world_flags/tanzania.svg';
+      case 'ZA':
+        return 'assets/icons/svgs/world_flags/south africa.svg';
+      case 'BF':
+        return 'assets/icons/svgs/world_flags/burkina faso.svg';
+      case 'BJ':
+        return 'assets/icons/svgs/world_flags/benin.svg';
+      case 'BW':
+        return 'assets/icons/svgs/world_flags/botswana.svg';
+      case 'CD':
+        return 'assets/icons/svgs/world_flags/democratic republic of congo.svg';
+      case 'CG':
+        return 'assets/icons/svgs/world_flags/republic of the congo.svg';
+      case 'CI':
+        return 'assets/icons/svgs/world_flags/ivory coast.svg';
+      case 'CM':
+        return 'assets/icons/svgs/world_flags/cameroon.svg';
+      case 'GA':
+        return 'assets/icons/svgs/world_flags/gabon.svg';
+      case 'MW':
+        return 'assets/icons/svgs/world_flags/malawi.svg';
+      case 'SN':
+        return 'assets/icons/svgs/world_flags/senegal.svg';
+      case 'TG':
+        return 'assets/icons/svgs/world_flags/togo.svg';
+      case 'ZM':
+        return 'assets/icons/svgs/world_flags/zambia.svg';
+      case 'US':
+        return 'assets/icons/svgs/world_flags/united states.svg';
+      case 'GB':
+        return 'assets/icons/svgs/world_flags/united kingdom.svg';
+      case 'CA':
+        return 'assets/icons/svgs/world_flags/canada.svg';
+      default:
+        return 'assets/icons/svgs/world_flags/nigeria.svg'; // fallback
+    }
   }
 
-  String _getAccountNumber(Beneficiary beneficiary) {
-    // Use actual account number from beneficiary data
-    if (beneficiary.idNumber.isNotEmpty) {
-      return beneficiary.idNumber;
-    } else if (beneficiary.phone.isNotEmpty) {
-      return beneficiary.phone;
+  String _getAccountNumber(payment.Source source) {
+    // Use actual account number from source data
+    if (source.accountNumber != null && source.accountNumber!.isNotEmpty) {
+      return source.accountNumber!;
     } else {
       return 'N/A';
     }
   }
 
-  void _navigateToSend(Beneficiary beneficiary) {
+  String _getChannelAndNetworkInfo(BeneficiaryWithSource beneficiaryWithSource) {
+    final beneficiary = beneficiaryWithSource.beneficiary;
+    final source = beneficiaryWithSource.source;
+    
+    try {
+      final sendState = ref.read(sendViewModelProvider);
+      
+      // Find the specific channel using the source's networkId
+      final matchingChannel = sendState.channels.firstWhere(
+        (channel) => channel.id == source.networkId,
+        orElse: () => payment.Channel(id: null),
+      );
+      
+      if (matchingChannel.id != null) {
+        // Get network name
+        final networkName = ref
+            .read(sendViewModelProvider.notifier)
+            .getNetworkNameForChannel(matchingChannel);
+        
+        // Get channel type display name
+        final channelType = _getDeliveryMethodType(matchingChannel.channelType);
+        
+        // Format: "Channel Type - Network Name" or just "Channel Type" if no network
+        if (networkName != null && networkName.isNotEmpty) {
+          return '$channelType - $networkName';
+        } else {
+          return channelType;
+        }
+      }
+    } catch (e) {
+      // If there's an error, return a default
+    }
+    
+    // Fallback: try to find any channel for this country
+    try {
+      final sendState = ref.read(sendViewModelProvider);
+      final fallbackChannel = sendState.channels.firstWhere(
+        (channel) => channel.country == beneficiary.country,
+        orElse: () => payment.Channel(id: null),
+      );
+      
+      if (fallbackChannel.id != null) {
+        return _getDeliveryMethodType(fallbackChannel.channelType);
+      }
+    } catch (e) {
+      // If there's still an error, return a default
+    }
+    
+    return 'Unknown Method';
+  }
+
+  /// Get simplified delivery method type (just the main category)
+  String _getDeliveryMethodType(String? method) {
+    if (method == null || method.isEmpty) {
+      return 'Unknown Method';
+    }
+
+    switch (method.toLowerCase()) {
+      case 'bank_transfer':
+      case 'bank':
+        return 'Bank Transfer';
+      case 'mobile_money':
+      case 'momo':
+      case 'mobilemoney':
+        return 'Mobile Money';
+      case 'spenn':
+        return 'Spenn';
+      case 'cash_pickup':
+      case 'cash':
+        return 'Cash Pickup';
+      case 'wallet':
+      case 'digital_wallet':
+        return 'Digital Wallet';
+      case 'card':
+      case 'card_payment':
+        return 'Card Payment';
+      case 'crypto':
+      case 'cryptocurrency':
+        return 'Crypto';
+      case 'p2p':
+        return 'Peer-to-Peer';
+      default:
+        return method
+            .split('_')
+            .map((word) => word[0].toUpperCase() + word.substring(1))
+            .join(' ');
+    }
+  }
+
+  void _navigateToSend(BeneficiaryWithSource beneficiaryWithSource) {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => SendView()),

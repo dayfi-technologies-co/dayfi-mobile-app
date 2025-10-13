@@ -36,6 +36,7 @@ class SendState {
   final List<Channel> availableDeliveryMethods;
   final String selectedDeliveryMethod;
   final String selectedSenderDeliveryMethod;
+  final String selectedSenderChannelId;
   final List<CountryOption> availableCountries;
   final Map<String, dynamic>? sendCurrencyRates;
   final Map<String, dynamic>? receiveCurrencyRates;
@@ -59,6 +60,7 @@ class SendState {
     this.availableDeliveryMethods = const [],
     this.selectedDeliveryMethod = '',
     this.selectedSenderDeliveryMethod = '',
+    this.selectedSenderChannelId = '',
     this.availableCountries = const [],
     this.sendCurrencyRates,
     this.receiveCurrencyRates,
@@ -83,6 +85,7 @@ class SendState {
     List<Channel>? availableDeliveryMethods,
     String? selectedDeliveryMethod,
     String? selectedSenderDeliveryMethod,
+    String? selectedSenderChannelId,
     List<CountryOption>? availableCountries,
     Map<String, dynamic>? sendCurrencyRates,
     Map<String, dynamic>? receiveCurrencyRates,
@@ -109,6 +112,8 @@ class SendState {
           selectedDeliveryMethod ?? this.selectedDeliveryMethod,
       selectedSenderDeliveryMethod:
           selectedSenderDeliveryMethod ?? this.selectedSenderDeliveryMethod,
+      selectedSenderChannelId:
+          selectedSenderChannelId ?? this.selectedSenderChannelId,
       availableCountries: availableCountries ?? this.availableCountries,
       sendCurrencyRates: sendCurrencyRates ?? this.sendCurrencyRates,
       receiveCurrencyRates: receiveCurrencyRates ?? this.receiveCurrencyRates,
@@ -119,6 +124,13 @@ class SendState {
 
 class SendViewModel extends StateNotifier<SendState> {
   final PaymentService _paymentService = paymentService;
+  
+  // Simple cache for API responses
+  static List<Channel>? _cachedChannels;
+  static List<Network>? _cachedNetworks;
+  static DateTime? _channelsCacheTime;
+  static DateTime? _networksCacheTime;
+  static const Duration _cacheValidityDuration = Duration(minutes: 5);
 
   SendViewModel() : super(const SendState());
 
@@ -151,7 +163,7 @@ class SendViewModel extends StateNotifier<SendState> {
       receiverAmount: '',
       fee: '0.00',
       totalToPay: '0.00',
-      exchangeRate: '₦1 = ₦1',
+      exchangeRate: '', // Will be set by _updateExchangeRate after currencies are set
     );
   }
 
@@ -163,6 +175,12 @@ class SendViewModel extends StateNotifier<SendState> {
     
     // Set default receive currency to RW-RWF
     await _setDefaultReceiveCurrency('RW', 'RWF');
+    
+    // Set default sender channel ID
+    _setDefaultSenderChannelId();
+    
+    // Update exchange rate after all currencies are set
+    _updateExchangeRate();
   }
 
   Future<void> _setDefaultSendCurrency(String country, String currency) async {
@@ -243,9 +261,44 @@ class SendViewModel extends StateNotifier<SendState> {
     await _fetchRates(currency);
   }
 
+  void _setDefaultSenderChannelId() {
+    AppLogger.debug('Setting default sender channel ID');
+    
+    // Find the first available deposit channel for Nigeria NGN
+    final depositChannels = state.channels
+        .where((channel) => 
+            channel.country == 'NG' && 
+            channel.currency == 'NGN' &&
+            channel.status == 'active' &&
+            channel.rampType == 'deposit')
+        .toList();
+    
+    if (depositChannels.isNotEmpty) {
+      final defaultChannelId = depositChannels.first.id;
+      AppLogger.debug('Default sender channel ID: $defaultChannelId');
+      print('🔵 SENDER CHANNEL ID SET: $defaultChannelId');
+      
+      state = state.copyWith(
+        selectedSenderChannelId: defaultChannelId,
+      );
+    } else {
+      AppLogger.warning('No deposit channels found for NG-NGN');
+      print('🔴 NO SENDER CHANNEL FOUND');
+    }
+  }
+
   Future<void> _fetchAvailableCurrencies() async {
     try {
       AppLogger.debug('Fetching currencies from channels API');
+
+      // Check cache first
+      if (_cachedChannels != null && 
+          _channelsCacheTime != null && 
+          DateTime.now().difference(_channelsCacheTime!) < _cacheValidityDuration) {
+        AppLogger.debug('Using cached channels data');
+        _processChannelsData(_cachedChannels!);
+        return;
+      }
 
       final response = await _paymentService.fetchChannels();
 
@@ -266,6 +319,10 @@ class SendViewModel extends StateNotifier<SendState> {
                   .toList()
                 ..sort();
 
+          // Update cache
+          _cachedChannels = channels;
+          _channelsCacheTime = DateTime.now();
+          
           // Fetch networks alongside channels
           await _fetchNetworks();
           
@@ -292,6 +349,15 @@ class SendViewModel extends StateNotifier<SendState> {
     try {
       AppLogger.debug('Fetching networks from API');
 
+      // Check cache first
+      if (_cachedNetworks != null && 
+          _networksCacheTime != null && 
+          DateTime.now().difference(_networksCacheTime!) < _cacheValidityDuration) {
+        AppLogger.debug('Using cached networks data');
+        state = state.copyWith(networks: _cachedNetworks!);
+        return;
+      }
+
       final response = await _paymentService.fetchNetworks();
 
       // Check if we have valid data and networks
@@ -301,8 +367,12 @@ class SendViewModel extends StateNotifier<SendState> {
 
         // Only proceed if the API call was successful
         if (!response.error) {
-          state = state.copyWith(networks: networks);
-          AppLogger.info('Updated state with ${networks.length} networks');
+        // Update cache
+        _cachedNetworks = networks;
+        _networksCacheTime = DateTime.now();
+        
+        state = state.copyWith(networks: networks);
+        AppLogger.info('Updated state with ${networks.length} networks');
         } else {
           AppLogger.warning('Networks API call failed: ${response.message}');
           // Don't throw error - networks are optional, continue with empty list
@@ -317,6 +387,23 @@ class SendViewModel extends StateNotifier<SendState> {
     }
   }
 
+  /// Process channels data (used for both fresh API calls and cached data)
+  void _processChannelsData(List<Channel> channels) {
+    // Extract unique currencies from channels
+    final currencies = channels
+        .where((channel) => channel.currency != null && channel.currency!.isNotEmpty)
+        .map((channel) => channel.currency!)
+        .toSet()
+        .toList()
+      ..sort();
+
+    state = state.copyWith(
+      availableCurrencies: currencies,
+      channels: channels,
+    );
+    AppLogger.info('Processed ${currencies.length} currencies and ${channels.length} channels');
+  }
+
   /// Find the network that contains the given channel ID
   Network? _findNetworkForChannel(String? channelId) {
     if (channelId == null || state.networks.isEmpty) return null;
@@ -329,9 +416,19 @@ class SendViewModel extends StateNotifier<SendState> {
     return null;
   }
 
-  void updateSendCountry(String country, String currency) {
+  /// Get the network name for a given channel
+  String? getNetworkNameForChannel(Channel channel) {
+    final network = _findNetworkForChannel(channel.id);
+    if (network == null) return null;
+    
+    // Return the network name
+    return network.name;
+  }
+
+  Future<void> updateSendCountry(String country, String currency) async {
     // Find the first available sender delivery method for this country-currency combination
     String? firstSenderDeliveryMethod;
+    String? selectedSenderChannelId;
     
     final availableChannels = state.channels
         .where((channel) => 
@@ -354,22 +451,29 @@ class SendViewModel extends StateNotifier<SendState> {
       if (channelTypes.isNotEmpty) {
         firstSenderDeliveryMethod = channelTypes.first;
       }
+      
+      // Set the first available channel as the sender channel ID
+      selectedSenderChannelId = availableChannels.first.id;
     }
     
     state = state.copyWith(
       sendCountry: country,
       sendCurrency: currency,
       selectedSenderDeliveryMethod: firstSenderDeliveryMethod ?? '',
+      selectedSenderChannelId: selectedSenderChannelId ?? '',
     );
     
-    // Fetch rates for the new send currency
-    _fetchRates(currency);
+    // Fetch rates for the new send currency and wait for completion
+    await _fetchRates(currency);
     
-    // Update exchange rate after currency change
+    // Update exchange rate after currency change (rates are now fetched)
     _updateExchangeRate();
   }
 
-  void updateReceiveCountry(String country, String currency) {
+  Future<void> updateReceiveCountry(String country, String currency) async {
+    AppLogger.debug('🔄 updateReceiveCountry called: country=$country, currency=$currency');
+    AppLogger.debug('🔄 Current state: send=${state.sendCurrency}, receive=${state.receiverCurrency}');
+    
     // Find the first available delivery method for this country-currency combination
     String? firstDeliveryMethod;
     
@@ -380,8 +484,12 @@ class SendViewModel extends StateNotifier<SendState> {
             channel.status == 'active' &&
             (channel.rampType == 'withdrawal' || 
              channel.rampType == 'withdraw' || 
-             channel.rampType == 'payout'))
+             channel.rampType == 'payout' ||
+             channel.rampType == 'deposit' ||
+             channel.rampType == 'receive'))
         .toList();
+    
+    AppLogger.debug('🔄 Found ${availableChannels.length} available channels for $country-$currency');
     
     if (availableChannels.isNotEmpty) {
       // Get unique channel types and sort them alphabetically
@@ -402,10 +510,12 @@ class SendViewModel extends StateNotifier<SendState> {
       selectedDeliveryMethod: firstDeliveryMethod ?? '',
     );
     
-    // Fetch rates for the new receive currency
-    _fetchRates(currency);
+    AppLogger.debug('🔄 Updated state: send=${state.sendCurrency}, receive=${state.receiverCurrency}');
     
-    // Update exchange rate after currency change
+    // Fetch rates for the new receive currency and wait for completion
+    await _fetchRates(currency);
+    
+    // Update exchange rate after currency change (rates are now fetched)
     _updateExchangeRate();
   }
 
@@ -425,6 +535,16 @@ class SendViewModel extends StateNotifier<SendState> {
     final sendAmount = double.tryParse(state.sendAmount);
     AppLogger.debug('_updateReceiveAmountFromSend: sendAmount=$sendAmount');
     if (sendAmount != null && sendAmount > 0) {
+      // Special case: if both currencies are the same, use 1:1 rate
+      if (state.sendCurrency == state.receiverCurrency) {
+        AppLogger.debug('Same currency detected in _updateReceiveAmountFromSend: 1:1 rate');
+        state = state.copyWith(
+          receiverAmount: sendAmount.toStringAsFixed(2),
+        );
+        AppLogger.debug('Updated receiverAmount to: ${state.receiverAmount}');
+        return;
+      }
+      
       final exchangeRate = _calculateExchangeRate();
       AppLogger.debug('Exchange rate: $exchangeRate');
       if (exchangeRate != null) {
@@ -446,6 +566,14 @@ class SendViewModel extends StateNotifier<SendState> {
   void _updateSendAmountFromReceive() {
     final receiveAmount = double.tryParse(state.receiverAmount);
     if (receiveAmount != null && receiveAmount > 0) {
+      // Special case: if both currencies are the same, use 1:1 rate
+      if (state.sendCurrency == state.receiverCurrency) {
+        state = state.copyWith(
+          sendAmount: receiveAmount.toStringAsFixed(2),
+        );
+        return;
+      }
+      
       final exchangeRate = _calculateExchangeRate();
       if (exchangeRate != null && exchangeRate > 0) {
         final convertedAmount = receiveAmount / exchangeRate;
@@ -543,23 +671,54 @@ class SendViewModel extends StateNotifier<SendState> {
     final sendSellRate = double.tryParse(state.sendCurrencyRates!['sell']?.toString() ?? '');
     final receiveBuyRate = double.tryParse(state.receiveCurrencyRates!['buy']?.toString() ?? '');
 
-    AppLogger.debug('Exchange Rate Calculation: NGN sell=$sendSellRate, GHS buy=$receiveBuyRate');
+    AppLogger.debug('💱 Exchange Rate Calculation:');
+    AppLogger.debug('   Send Currency: ${state.sendCurrency} (${state.sendCurrencyRates?['code']})');
+    AppLogger.debug('   Receive Currency: ${state.receiverCurrency} (${state.receiveCurrencyRates?['code']})');
+    AppLogger.debug('   Send Sell Rate: $sendSellRate');
+    AppLogger.debug('   Receive Buy Rate: $receiveBuyRate');
 
     if (sendSellRate == null || receiveBuyRate == null || receiveBuyRate == 0) {
       AppLogger.warning('Invalid rates: sendSell=$sendSellRate, receiveBuy=$receiveBuyRate');
       return null;
     }
 
-    // To convert from NGN to GHS:
-    // We need to know how much GHS we get for 1 NGN
-    // The correct calculation should be: (GHS Buy Rate) / (NGN Sell Rate)
-    // This gives us: 1 NGN = X GHS
+    // To convert from send currency to receive currency:
+    // We need to know how much receive currency we get for 1 send currency
+    // The correct calculation should be: (Receive Buy Rate) / (Send Sell Rate)
+    // This gives us: 1 Send Currency = X Receive Currency
     final rate = receiveBuyRate / sendSellRate;
-    AppLogger.debug('Calculated rate: $receiveBuyRate / $sendSellRate = $rate');
+    AppLogger.debug('📈 Calculated rate: $receiveBuyRate / $sendSellRate = $rate');
     return rate;
   }
 
   void _updateExchangeRate() {
+    AppLogger.debug('🔄 _updateExchangeRate called: send=${state.sendCurrency}, receive=${state.receiverCurrency}');
+    
+    // Special case: if both currencies are the same, show 1:1 rate
+    if (state.sendCurrency == state.receiverCurrency && state.sendCurrency.isNotEmpty && state.receiverCurrency.isNotEmpty) {
+      final sendCode = state.sendCurrencyRates?['code'] ?? state.sendCurrency;
+      final receiveCode = state.receiveCurrencyRates?['code'] ?? state.receiverCurrency;
+      
+      // Get currency symbols instead of codes
+      final sendSymbol = _getCurrencySymbol(sendCode);
+      final receiveSymbol = _getCurrencySymbol(receiveCode);
+      
+      AppLogger.debug('🔄 Same currency detected: $sendCode -> $receiveCode');
+      AppLogger.debug('🔄 Currency symbols: $sendSymbol -> $receiveSymbol');
+      
+      // Show 1:1 rate for same currencies
+      final displayText = '$sendSymbol${1.toStringAsFixed(0)} = $receiveSymbol${1.toStringAsFixed(0)}';
+      
+      AppLogger.debug('📊 Exchange rate display (same currency): $displayText');
+      state = state.copyWith(exchangeRate: displayText);
+      
+      // Update amounts when exchange rate changes
+      _updateReceiveAmountFromSend();
+      return;
+    }
+    
+    AppLogger.debug('🔄 Different currencies detected, proceeding with normal rate calculation');
+    
     final rate = _calculateExchangeRate();
     if (rate != null) {
       final sendCode = state.sendCurrencyRates?['code'] ?? state.sendCurrency;
@@ -568,6 +727,8 @@ class SendViewModel extends StateNotifier<SendState> {
       // Get currency symbols instead of codes
       final sendSymbol = _getCurrencySymbol(sendCode);
       final receiveSymbol = _getCurrencySymbol(receiveCode);
+      
+      AppLogger.debug('🔄 Updating exchange rate: $sendCode -> $receiveCode, rate: $rate');
       
       // Show a more meaningful amount for weak currencies
       // If rate is very small (< 0.1), show 100 units instead of 1
@@ -582,10 +743,13 @@ class SendViewModel extends StateNotifier<SendState> {
         displayText = '$sendSymbol${1.toStringAsFixed(0)} = $receiveSymbol${rate.toStringAsFixed(2)}';
       }
       
+      AppLogger.debug('📊 Exchange rate display: $displayText');
       state = state.copyWith(exchangeRate: displayText);
       
       // Update amounts when exchange rate changes
       _updateReceiveAmountFromSend();
+    } else {
+      AppLogger.warning('❌ Exchange rate calculation returned null');
     }
   }
 
@@ -659,9 +823,35 @@ class SendViewModel extends StateNotifier<SendState> {
       }
     } catch (e) {
       AppLogger.error('Error fetching rates for $currency: $e');
+      
+      // If rates fetch fails, set N/A values to indicate unsupported currency
+      final rateData = {
+        'buy': 'N/A',
+        'sell': 'N/A',
+        'locale': '',
+        'rateId': '',
+        'code': currency,
+        'updatedAt': '',
+      };
+      
+      if (currency == state.sendCurrency) {
+        state = state.copyWith(sendCurrencyRates: rateData);
+      } else if (currency == state.receiverCurrency) {
+        state = state.copyWith(receiveCurrencyRates: rateData);
+      }
     } finally {
       state = state.copyWith(isRatesLoading: false);
     }
+  }
+
+  /// Check if a currency is supported (has valid exchange rates)
+  bool isCurrencySupported(String currency) {
+    if (currency == state.sendCurrency) {
+      return state.sendCurrencyRates?['buy'] != 'N/A' && state.sendCurrencyRates?['buy'] != null;
+    } else if (currency == state.receiverCurrency) {
+      return state.receiveCurrencyRates?['buy'] != 'N/A' && state.receiveCurrencyRates?['buy'] != null;
+    }
+    return false;
   }
 }
 

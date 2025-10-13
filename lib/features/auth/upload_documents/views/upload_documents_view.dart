@@ -1,4 +1,6 @@
+import 'package:dayfi/common/widgets/buttons/secondary_button.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
@@ -42,80 +44,59 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
     return WillPopScope(
       onWillPop: () async => false, // Disable device back button
       child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor: AppColors.purple500,
         body: SafeArea(
-          child: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 4.h),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                AppBar(
-                  scrolledUnderElevation: 0,
-                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                  elevation: 0,
-                  automaticallyImplyLeading: widget.showBackButton,
-                  leading:
-                      widget.showBackButton
-                          ? IconButton(
-                            onPressed: () => Navigator.pop(context),
-                            icon: Icon(
-                              Icons.arrow_back_ios,
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
-                          )
-                          : null,
-                  title: Text(
-                    "Verify Your Identity",
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontFamily: 'CabinetGrotesk',
-                      fontSize: 28.00,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
+                SizedBox(height: 54.h),
                 Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 24.w,
-                    vertical: 4.h,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Subtitle
-                      Text(
-                        "Please provide us with the information and documents requested to complete your KYC verification.",
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w400,
-                          fontFamily: 'Karla',
-                          letterSpacing: -.6,
-                          height: 1.4,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      SizedBox(height: 36.h),
-
-                      // // KYC Tier Information Card
-                      // _buildKycTierCard(),
-                      // SizedBox(height: 32.h),
-
-                      // // Current Tier Status
-                      // _buildCurrentTierStatus(),
-                      // SizedBox(height: 32.h),
-
-                      // // Upload Documents Section
-                      // _buildUploadDocumentsSection(uploadDocsNotifier),
-                      // SizedBox(height: 32.h),
-
-                      // // Benefits of Tier 2
-                      // _buildTier2Benefits(),
-                      // SizedBox(height: 40.h),
-
-                      // Action Buttons
-                      _buildActionButtons(uploadDocsState, uploadDocsNotifier),
-                      SizedBox(height: 50.h),
-                    ],
+                  padding: EdgeInsets.only(left: 28.w),
+                  child: Image.asset(
+                    'assets/images/upload_doc.png',
+                    width: MediaQuery.of(context).size.width * 0.5,
                   ),
                 ),
+                Text(
+                  "Your account is ready! You can now transfer up to 1,000 USD per month and 10,000 USD per year. Submit additional documents to increase your limit to 20,000 USD per month and 100,000 USD",
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w400,
+                    fontFamily: 'Karla',
+                    color: AppColors.neutral50,
+                    letterSpacing: -.6,
+                    height: 1.4,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                // SizedBox(height: 36.h),
+
+                // // KYC Tier Information Card
+                // _buildKycTierCard(),
+                // SizedBox(height: 32.h),
+
+                // // Current Tier Status
+                // _buildCurrentTierStatus(),
+                // SizedBox(height: 32.h),
+
+                // // Upload Documents Section
+                // _buildUploadDocumentsSection(uploadDocsNotifier),
+                // SizedBox(height: 32.h),
+
+                // // Benefits of Tier 2
+                // _buildTier2Benefits(),
+                // SizedBox(height: 40.h),
+
+                // Action Buttons
+                _buildActionButtons(
+                  context,
+                  uploadDocsState,
+                  uploadDocsNotifier,
+                ),
+                // SizedBox(height: 50.h),
               ],
             ),
           ),
@@ -461,50 +442,220 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
   }
 
   Widget _buildActionButtons(
+    BuildContext context,
     UploadDocumentsState state,
     UploadDocumentsNotifier notifier,
   ) {
     return Column(
       children: [
-        // Verify Now Button
+        // Enable biometrics button
         PrimaryButton(
-          borderRadius: 38,
-          text: "Submit",
-          onPressed:
-              state.isBusy ? null : () => _showSmileIdVerification(context),
-          backgroundColor: AppColors.purple500,
-          height: 60.h,
-          textColor: AppColors.neutral0,
-          fontFamily: 'Karla',
-          letterSpacing: -.8,
-          fontSize: 18,
-          width: double.infinity,
-          fullWidth: true,
-          isLoading: state.isBusy,
-        ),
-        widget.showBackButton ? SizedBox.shrink() : SizedBox(height: 16.h),
-
-        // Skip for Later Button
-        widget.showBackButton
-            ? SizedBox.shrink()
-            : TextButton(
+              text: "Increase limits",
+              borderRadius: 38,
               onPressed:
-                  state.isBusy ? null : () => notifier.skipForLater(context),
-              style: TextButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
-              ),
-              child: Text(
-                "Skip for Later",
-                style: AppTypography.bodyLarge.copyWith(
-                  fontFamily: 'Karla',
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.neutral500,
-                  letterSpacing: -.6,
-                ),
+                  state.isBusy ? null : () => _showSmileIdVerification(context),
+              backgroundColor: Colors.white,
+              height: 60.h,
+              textColor: AppColors.purple500,
+              fontFamily: 'Karla',
+              letterSpacing: -.8,
+              fontSize: 18,
+              width: double.infinity,
+              fullWidth: true,
+              isLoading: state.isBusy,
+            )
+            .animate()
+            .fadeIn(
+              delay: 1000.ms,
+              duration: 500.ms,
+              curve: Curves.easeOutCubic,
+            )
+            .slideY(
+              begin: 0.3,
+              end: 0,
+              delay: 1000.ms,
+              duration: 500.ms,
+              curve: Curves.easeOutCubic,
+            )
+            .scale(
+              begin: const Offset(0.9, 0.9),
+              end: const Offset(1.0, 1.0),
+              delay: 1000.ms,
+              duration: 500.ms,
+              curve: Curves.easeOutCubic,
+            ),
+
+        SizedBox(height: 12.h),
+
+        // Skip button
+        SecondaryButton(
+              text: state.isBusy ? "Please wait..." : "I'll do it later",
+              borderRadius: 38,
+              onPressed:
+                  state.isBusy
+                      ? null
+                      : () => _showSkipDialog(context, state, notifier),
+              borderColor: Colors.transparent,
+              height: 60.h,
+              textColor: AppColors.neutral0,
+              fontFamily: 'Karla',
+              letterSpacing: -.8,
+              fontSize: 18,
+              width: double.infinity,
+              fullWidth: true,
+            )
+            .animate()
+            .fadeIn(
+              delay: 1000.ms,
+              duration: 500.ms,
+              curve: Curves.easeOutCubic,
+            )
+            .slideY(
+              begin: 0.3,
+              end: 0,
+              delay: 1000.ms,
+              duration: 500.ms,
+              curve: Curves.easeOutCubic,
+            )
+            .scale(
+              begin: const Offset(0.9, 0.9),
+              end: const Offset(1.0, 1.0),
+              delay: 1000.ms,
+              duration: 500.ms,
+              curve: Curves.easeOutCubic,
+            ),
+
+        Padding(
+          padding: EdgeInsets.only(top: 12.h),
+          child: TextButton(
+            onPressed:
+                state.isBusy ? null : () => notifier.skipForLater(context),
+            child: Text(
+              'Retry',
+              style: TextStyle(
+                fontFamily: 'Karla',
+                color: AppColors.purple500,
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w600,
+                letterSpacing: -.3,
+                height: 1.4,
               ),
             ),
+          ),
+        ),
       ],
+    );
+  }
+
+  void _showSkipDialog(
+    BuildContext context,
+    UploadDocumentsState state,
+    UploadDocumentsNotifier notifier,
+  ) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder:
+          (BuildContext context) => Dialog(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24.r),
+            ),
+            child: Container(
+              padding: EdgeInsets.all(28.w),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Success icon with enhanced styling
+                  Container(
+                    width: 80.w,
+                    height: 80.w,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [AppColors.purple400, AppColors.purple600],
+                      ),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.purple500.withOpacity(0.3),
+                          blurRadius: 20,
+                          spreadRadius: 2,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.security,
+                      color: Colors.white,
+                      size: 40.w,
+                    ),
+                  ),
+
+                  SizedBox(height: 24.h),
+
+                  // Title with auth view styling
+                  Text(
+                    'Skipping verification means lower transfer limits. Do you want to proceed?',
+                    style: TextStyle(
+                      fontFamily: 'CabinetGrotesk',
+                      fontSize: 20.sp,
+                      fontWeight: FontWeight.w400,
+                      color: Theme.of(context).colorScheme.onSurface,
+                      letterSpacing: -0.5,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+
+                  SizedBox(height: 16.h),
+
+                  // Continue button with auth view styling
+                  PrimaryButton(
+                    text: 'Yes, I\'ll do it later',
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      state.isBusy
+                          ? null
+                          : () => notifier.skipForLater(context);
+                    },
+                    backgroundColor: AppColors.purple500,
+                    textColor: AppColors.neutral0,
+                    borderRadius: 38,
+                    height: 60.h,
+                    width: double.infinity,
+                    fullWidth: true,
+                    fontFamily: 'Karla',
+                    fontSize: 18,
+                    fontWeight: FontWeight.w400,
+                    letterSpacing: -0.8,
+                  ),
+                  SizedBox(height: 12.h),
+
+                  // Cancel button with auth view styling
+                  SecondaryButton(
+                    text: 'No, enable it now',
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      state.isBusy
+                          ? null
+                          : () => notifier.skipForLater(context);
+                    },
+                    borderColor: Colors.transparent,
+                    textColor: AppColors.purple500,
+                    width: double.infinity,
+                    fullWidth: true,
+                    height: 60.h,
+                    borderRadius: 38,
+                    fontFamily: 'Karla',
+                    fontSize: 18,
+                    fontWeight: FontWeight.w400,
+                    letterSpacing: -0.8,
+                  ),
+                ],
+              ),
+            ),
+          ),
     );
   }
 }

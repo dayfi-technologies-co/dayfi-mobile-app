@@ -2,14 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/models/user_model.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
-import 'package:dayfi/features/auth/signup/vm/signup_viewmodel.dart';
-import 'package:dayfi/features/auth/complete_personal_information/vm/complete_personal_information_viewmodel.dart';
-import 'package:dayfi/features/auth/login/vm/login_viewmodel.dart';
-import 'package:dayfi/features/auth/passcode/vm/passcode_viewmodel.dart';
-import 'package:dayfi/features/auth/verify_email/vm/verify_email_viewmodel.dart';
-import 'package:dayfi/features/auth/reset_password/vm/reset_password_viewmodel.dart';
-import 'package:dayfi/features/auth/upload_documents/vm/upload_documents_viewmodel.dart';
-import 'package:dayfi/features/profile/edit_profile/vm/edit_profile_viewmodel.dart';
+import 'package:dayfi/services/notification_service.dart';
+import 'package:dayfi/services/data_clearing_service.dart';
 
 class ProfileState {
   final User? user;
@@ -213,6 +207,16 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
       // This should call the backend API to upgrade the user's tier
       // and return the updated user data
       
+      // For now, simulate tier upgrade and trigger notification
+      try {
+        await NotificationService().triggerTierUpgrade(
+          newTier: 'Tier 2',
+          newLimits: '20,000 USD/month and 100,000 USD/year',
+        );
+      } catch (e) {
+        // Handle error silently
+      }
+      
       state = state.copyWith(
         isLoading: false,
         errorMessage: 'Tier upgrade feature is not yet implemented.',
@@ -226,31 +230,30 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
     }
   }
 
-  Future<void> logout() async {
+  Future<void> logout(WidgetRef ref) async {
+    if (!mounted) return;
     state = state.copyWith(isLoading: true);
     
     try {
       AppLogger.info('User logging out...');
       
-      // Clear all user data from storage
-      await localCache.clearAllUserData();
+      // Use comprehensive data clearing service
+      final dataClearingService = DataClearingService();
+      await dataClearingService.clearAllUserData(ref);
       
-      // Reset profile state to initial state
-      state = const ProfileState();
-      
-      // Reset all form providers to clean state
-      _resetAllFormProviders();
-      
-      // Navigate to login screen (hide back button)
+      // Don't update state after clearing data as the provider will be invalidated
+      // Just navigate to login screen
       appRouter.pushNamedAndRemoveAllBehind('/loginView', arguments: false);
       
       AppLogger.info('User logged out successfully');
     } catch (e) {
       AppLogger.error('Error during logout: $e');
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: 'Error during logout. Please try again.',
-      );
+      if (mounted) {
+        state = state.copyWith(
+          isLoading: false,
+          errorMessage: 'Error during logout. Please try again.',
+        );
+      }
     }
   }
 
@@ -337,47 +340,6 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
     }
   }
 
-  /// Reset all form providers to their initial state
-  void _resetAllFormProviders() {
-    try {
-      AppLogger.info('Resetting all form providers...');
-      
-      // Get the global provider container
-      final container = getGlobalProviderContainer();
-      if (container == null) {
-        AppLogger.warning('Global provider container not available');
-        return;
-      }
-      
-      // Reset signup form
-      container.read(signupProvider.notifier).resetForm();
-      
-      // Reset complete personal information form
-      container.read(completePersonalInfoProvider.notifier).resetForm();
-      
-      // Reset login form
-      container.read(loginProvider.notifier).resetForm();
-      
-      // Reset passcode form
-      container.read(passcodeProvider.notifier).resetForm();
-      
-      // Reset verify email form
-      container.read(verifyEmailProvider.notifier).resetForm();
-      
-      // Reset reset password form
-      container.read(resetPasswordProvider.notifier).resetForm();
-      
-      // Reset upload documents form
-      container.read(uploadDocumentsProvider.notifier).resetForm();
-      
-      // Reset edit profile form
-      container.read(editProfileProvider.notifier).resetForm();
-      
-      AppLogger.info('All form providers reset successfully');
-    } catch (e) {
-      AppLogger.error('Error resetting form providers: $e');
-    }
-  }
 }
 
 final profileViewModelProvider = StateNotifierProvider<ProfileViewModel, ProfileState>((ref) {

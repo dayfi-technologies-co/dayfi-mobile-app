@@ -4,6 +4,7 @@ import 'package:dayfi/models/user_model.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/services/remote/auth_service.dart';
 import 'package:dayfi/services/remote/network/network_service.dart';
+import 'package:dayfi/common/utils/connectivity_utils.dart';
 
 class EditProfileState {
   final User? user;
@@ -439,7 +440,10 @@ class EditProfileNotifier extends StateNotifier<EditProfileState> {
       }
     } catch (e) {
       AppLogger.error('Error updating profile: $e');
-      final errorMessage = 'Failed to update profile. Please try again.';
+      
+      // Get user-friendly error message
+      final errorMessage = await ConnectivityUtils.getErrorMessage(e);
+      
       state = state.copyWith(
         isLoading: false,
         errorMessage: errorMessage,

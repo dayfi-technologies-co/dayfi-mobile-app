@@ -23,13 +23,13 @@ class TierUtils {
   /// Get tier display name (e.g., "Tier 1", "Tier 2")
   static String getTierDisplayName(User? user) {
     final tierLevel = getCurrentTierLevel(user);
-    return 'Tier $tierLevel';
+    return 'Tier ${tierLevel+1}';
   }
 
   /// Get tier icon asset path
   static String getTierIconPath(User? user) {
     final tierLevel = getCurrentTierLevel(user);
-    return 'assets/icons/pngs/tier$tierLevel.png';
+    return 'assets/icons/pngs/tier${tierLevel+1}.png';
   }
 
   /// Get tier color based on level

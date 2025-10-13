@@ -174,6 +174,8 @@ PODS:
     - nanopb/encode (= 3.30910.0)
   - nanopb/decode (3.30910.0)
   - nanopb/encode (3.30910.0)
+  - package_info_plus (0.4.5):
+    - Flutter
   - path_provider_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
@@ -213,6 +215,7 @@ DEPENDENCIES:
   - intercom_flutter (from `.symlinks/plugins/intercom_flutter/ios`)
   - local_auth_darwin (from `.symlinks/plugins/local_auth_darwin/darwin`)
   - mixpanel_flutter (from `.symlinks/plugins/mixpanel_flutter/ios`)
+  - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
   - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
   - smile_id (from `.symlinks/plugins/smile_id/ios`)
@@ -274,6 +277,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/local_auth_darwin/darwin"
   mixpanel_flutter:
     :path: ".symlinks/plugins/mixpanel_flutter/ios"
+  package_info_plus:
+    :path: ".symlinks/plugins/package_info_plus/ios"
   path_provider_foundation:
     :path: ".symlinks/plugins/path_provider_foundation/darwin"
   shared_preferences_foundation:
@@ -315,6 +320,7 @@ SPEC CHECKSUMS:
   Mixpanel-swift: 7b26468fc0e2e521104e51d65c4bbf7cab8162f8
   mixpanel_flutter: c2bb8345c90bef15512a1b812ec800b52f8614b6
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
+  package_info_plus: c0502532a26c7662a62a356cebe2692ec5fe4ec4
   path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   PromisesSwift: 9d77319bbe72ebf6d872900551f7eeba9bce2851
@@ -325,6 +331,6 @@ SPEC CHECKSUMS:
   SmileIDSecurity: 2849074a33fa738cb7478f90b32b7f7333a14630
   ZIPFoundation: b8c29ea7ae353b309bc810586181fd073cb3312c
 
-PODFILE CHECKSUM: a0e54f25868ce1691626a4b3f2a91d1e1b7b1f18
+PODFILE CHECKSUM: 7d30966d8b490c0a435ba1cee6ebcb99039f0383
 
 COCOAPODS: 1.16.2

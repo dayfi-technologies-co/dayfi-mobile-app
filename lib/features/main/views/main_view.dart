@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -14,16 +15,19 @@ import 'package:dayfi/services/local/secure_storage.dart';
 import 'package:dayfi/common/constants/storage_keys.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
+import 'package:dayfi/services/notification_service.dart';
 
 class MainView extends ConsumerStatefulWidget {
-  const MainView({super.key});
+  final int initialTabIndex;
+  
+  const MainView({super.key, this.initialTabIndex = 0});
 
   @override
   ConsumerState<MainView> createState() => _MainViewState();
 }
 
 class _MainViewState extends ConsumerState<MainView> {
-  int _currentIndex = 0;
+  late int _currentIndex;
   final SecureStorageService _secureStorage = locator<SecureStorageService>();
 
   final List<Widget> _screens = [
@@ -36,6 +40,7 @@ class _MainViewState extends ConsumerState<MainView> {
   @override
   void initState() {
     super.initState();
+    _currentIndex = widget.initialTabIndex;
     // Check if welcome has been shown and show it only once
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAndShowWelcome();
@@ -54,6 +59,9 @@ class _MainViewState extends ConsumerState<MainView> {
         await Future.delayed(const Duration(milliseconds: 500));
         if (mounted) {
           _showWelcomeBottomSheet();
+          
+          // Trigger sign-up success notification for new users
+          _triggerSignUpNotification();
         }
       }
     } catch (e) {
@@ -62,6 +70,9 @@ class _MainViewState extends ConsumerState<MainView> {
       await Future.delayed(const Duration(milliseconds: 500));
       if (mounted) {
         _showWelcomeBottomSheet();
+        
+        // Trigger sign-up success notification for new users
+        _triggerSignUpNotification();
       }
     }
   }
@@ -81,6 +92,45 @@ class _MainViewState extends ConsumerState<MainView> {
     } catch (e) {
       // Handle error silently
       AppLogger.error('Error checking biometric setup: $e');
+    }
+  }
+
+  /// Trigger sign-up success notification for new users
+  Future<void> _triggerSignUpNotification() async {
+    try {
+      // Get user data from storage
+      final userJson = await _secureStorage.read(StorageKeys.user);
+      String firstName = 'User'; // Default fallback
+      
+      if (userJson.isNotEmpty) {
+        try {
+          final userData = json.decode(userJson);
+          firstName = userData['firstName'] ?? 'User';
+        } catch (e) {
+          AppLogger.warning('Error parsing user data: $e');
+        }
+      }
+      
+      // Add a small delay to ensure the app is fully loaded
+      await Future.delayed(const Duration(milliseconds: 1000));
+      
+      // Trigger the notification
+      await NotificationService().triggerSignUpSuccess(firstName);
+      
+      // Also show a direct local notification as backup
+      await NotificationService().showLocalNotification(
+        'Welcome to DayFi! 🎉',
+        'Your account is ready. Send money to those who matter.',
+        data: {
+          'type': 'welcome',
+          'action': 'navigate_to_profile',
+          'userName': firstName,
+        },
+      );
+      
+      AppLogger.info('Sign-up success notification triggered for: $firstName');
+    } catch (e) {
+      AppLogger.error('Error triggering sign-up notification: $e');
     }
   }
 
@@ -312,7 +362,7 @@ class _MainViewState extends ConsumerState<MainView> {
   Widget _buildWelcomeBottomSheet() {
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: Theme.of(context).scaffoldBackgroundColor,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(16.r),
           topRight: Radius.circular(16.r),
@@ -376,7 +426,7 @@ class _MainViewState extends ConsumerState<MainView> {
 
             _buildFeatureItem(
               icon: _buildRecipientsIcon(),
-              title: 'Recipients',
+              title: 'Beneficiaries',
               description:
                   'Add and/or edit the information of people who receive money from you.',
             ),

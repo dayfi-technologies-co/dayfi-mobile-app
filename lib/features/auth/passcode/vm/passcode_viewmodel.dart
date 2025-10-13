@@ -8,6 +8,7 @@ import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/models/user_model.dart';
 import 'package:dayfi/common/constants/storage_keys.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
+import 'package:dayfi/services/data_clearing_service.dart';
 
 class PasscodeState {
   final String passcode;
@@ -60,10 +61,22 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
 
   Future<void> loadUser() async {
     try {
+      // First verify that we have a valid token before loading user data
+      final token = await _secureStorage.read(StorageKeys.token);
+      if (token.isEmpty) {
+        AppLogger.warning('No token found, cannot load user data');
+        return;
+      }
+
       final userJson = await _secureStorage.read(StorageKeys.user);
       if (userJson.isNotEmpty) {
         final user = User.fromJson(json.decode(userJson));
         state = state.copyWith(user: user);
+        AppLogger.info('User data loaded successfully: ${user.firstName}');
+      } else {
+        AppLogger.warning('No user data found in storage');
+        // If we have a token but no user data, this might be an inconsistent state
+        // We could trigger a re-authentication here if needed
       }
       
       // Check if biometric authentication is available and enabled
@@ -219,6 +232,9 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
                 StorageKeys.user,
                 json.encode(response.data!.user!.toJson()),
               );
+              // Update the state with the fresh user data
+              state = state.copyWith(user: response.data!.user!);
+              AppLogger.info('User data updated after re-authentication: ${response.data!.user!.firstName}');
             }
 
             // Navigate to main view
@@ -260,19 +276,24 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
     await _secureStorage.delete(StorageKeys.user);
   }
 
-  Future<void> logout() async {
+  Future<void> logout(WidgetRef ref) async {
+    if (!mounted) return;
     state = state.copyWith(isLoading: true);
     try {
-      // Clear all stored data including credentials
-      await _clearStoredCredentials();
-      await _secureStorage.delete(StorageKeys.passcode);
+      // Use comprehensive data clearing service
+      final dataClearingService = DataClearingService();
+      await dataClearingService.clearAllUserData(ref);
 
       // Navigate to login (hide back button)
       appRouter.pushNamed(AppRoute.loginView, arguments: false);
     } catch (e) {
-      _showErrorSnackBar('Error during logout: ${e.toString()}');
+      if (mounted) {
+        _showErrorSnackBar('Error during logout: ${e.toString()}');
+      }
     } finally {
-      state = state.copyWith(isLoading: false);
+      if (mounted) {
+        state = state.copyWith(isLoading: false);
+      }
     }
   }
 

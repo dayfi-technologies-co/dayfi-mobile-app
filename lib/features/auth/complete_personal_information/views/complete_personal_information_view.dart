@@ -7,6 +7,8 @@ import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
 import 'package:dayfi/features/auth/complete_personal_information/vm/complete_personal_information_viewmodel.dart';
+import 'package:dayfi/common/utils/platform_date_picker.dart';
+import 'package:dayfi/common/utils/platform_location_picker.dart';
 
 class CompletePersonalInformationView extends ConsumerStatefulWidget {
   const CompletePersonalInformationView({super.key});
@@ -381,11 +383,11 @@ class _CompletePersonalInformationViewState
           hintText: "Enter your address",
           controller: _addressController,
           onChanged: notifier.setAddress,
-          suffixIcon: Icon(
-            Icons.search,
-            color: AppColors.neutral400,
-            size: 20.sp,
-          ),
+          // suffixIcon: Icon(
+          //   Icons.search,
+          //   color: AppColors.neutral400,
+          //   size: 20.sp,
+          // ),
         ),
         if (state.addressError.isNotEmpty)
           Padding(
@@ -453,10 +455,16 @@ class _CompletePersonalInformationViewState
       children: [
         CustomTextField(
           label: "State",
-          hintText: "Enter your state",
+          hintText: "Select your state",
           controller: _stateController,
           onChanged: notifier.setState,
-          keyboardType: TextInputType.text,
+          suffixIcon: Icon(
+            Icons.keyboard_arrow_down,
+            color: AppColors.neutral400,
+            size: 20.sp,
+          ),
+          shouldReadOnly: true,
+          onTap: () => _showStatePicker(notifier),
         ),
         if (state.stateError.isNotEmpty)
           Padding(
@@ -488,10 +496,16 @@ class _CompletePersonalInformationViewState
       children: [
         CustomTextField(
           label: "City",
-          hintText: "Enter your city",
+          hintText: state.state.isNotEmpty ? "Select your city" : "Select state first",
           controller: _cityController,
           onChanged: notifier.setCity,
-          keyboardType: TextInputType.text,
+          suffixIcon: Icon(
+            Icons.keyboard_arrow_down,
+            color: AppColors.neutral400,
+            size: 20.sp,
+          ),
+          shouldReadOnly: true,
+          onTap: state.state.isNotEmpty ? () => _showCityPicker(notifier) : null,
         ),
         if (state.cityError.isNotEmpty)
           Padding(
@@ -602,15 +616,12 @@ class _CompletePersonalInformationViewState
   }
 
   void _showDatePicker(CompletePersonalInfoNotifier notifier) async {
-    final DateTime? picked = await showDatePicker(
+    final DateTime? picked = await PlatformDatePicker.showDateOfBirthPicker(
       context: context,
       initialDate: DateTime.now().subtract(
         const Duration(days: 7300), // ~20 years ago as default
       ),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now().subtract(
-        const Duration(days: 6570), // Exactly 18 years ago
-      ),
+      title: 'Select Date of Birth',
     );
 
     if (picked != null) {
@@ -649,6 +660,38 @@ class _CompletePersonalInformationViewState
             },
           ),
     );
+  }
+
+  void _showStatePicker(CompletePersonalInfoNotifier notifier) async {
+    final currentState = ref.read(completePersonalInfoProvider);
+    final String? selectedState = await PlatformLocationPicker.showStatePicker(
+      context: context,
+      selectedState: currentState.state.isNotEmpty ? currentState.state : null,
+      title: 'Select State',
+    );
+
+    if (selectedState != null) {
+      notifier.setState(selectedState);
+      // Clear city when state changes
+      notifier.setCity('');
+      _cityController.clear();
+    }
+  }
+
+  void _showCityPicker(CompletePersonalInfoNotifier notifier) async {
+    final currentState = ref.read(completePersonalInfoProvider);
+    if (currentState.state.isEmpty) return;
+
+    final String? selectedCity = await PlatformLocationPicker.showCityPicker(
+      context: context,
+      state: currentState.state,
+      selectedCity: currentState.city.isNotEmpty ? currentState.city : null,
+      title: 'Select City in ${currentState.state}',
+    );
+
+    if (selectedCity != null) {
+      notifier.setCity(selectedCity);
+    }
   }
 }
 
@@ -764,29 +807,40 @@ class _OccupationBottomSheet extends StatefulWidget {
 }
 
 class _OccupationBottomSheetState extends State<_OccupationBottomSheet> {
-  final List<String> _occupations = [
-    'Marketing',
-    'Manufacturing',
-    'Media',
-    'Healthcare',
-    'Education',
-    'Technology',
-    'Finance',
-    'Real Estate',
-    'Retail',
-    'Transportation',
-    'Government',
-    'Non-profit',
-    'Consulting',
-    'Legal',
-    'Engineering',
-    'Sales',
-    'Customer Service',
-    'Human Resources',
-    'Other',
+  final List<Map<String, String>> _occupations = [
+    {'emoji': '💻', 'name': 'Technology'},
+    {'emoji': '💰', 'name': 'Finance & Banking'},
+    {'emoji': '🏥', 'name': 'Healthcare'},
+    {'emoji': '🎓', 'name': 'Education'},
+    {'emoji': '📈', 'name': 'Marketing & Advertising'},
+    {'emoji': '🏗️', 'name': 'Engineering'},
+    {'emoji': '⚖️', 'name': 'Legal'},
+    {'emoji': '🏢', 'name': 'Business & Management'},
+    {'emoji': '🎨', 'name': 'Creative & Design'},
+    {'emoji': '📺', 'name': 'Media & Entertainment'},
+    {'emoji': '🛒', 'name': 'Retail & Sales'},
+    {'emoji': '🍽️', 'name': 'Food & Hospitality'},
+    {'emoji': '🚗', 'name': 'Transportation & Logistics'},
+    {'emoji': '🏠', 'name': 'Real Estate'},
+    {'emoji': '🏛️', 'name': 'Government & Public Service'},
+    {'emoji': '🤝', 'name': 'Consulting'},
+    {'emoji': '👥', 'name': 'Human Resources'},
+    {'emoji': '🎯', 'name': 'Customer Service'},
+    {'emoji': '🏭', 'name': 'Manufacturing'},
+    {'emoji': '🌱', 'name': 'Agriculture'},
+    {'emoji': '🔬', 'name': 'Science & Research'},
+    {'emoji': '✈️', 'name': 'Travel & Tourism'},
+    {'emoji': '💼', 'name': 'Administrative'},
+    {'emoji': '🔧', 'name': 'Skilled Trades'},
+    {'emoji': '🎪', 'name': 'Entertainment & Sports'},
+    {'emoji': '🌍', 'name': 'Non-profit & NGO'},
+    {'emoji': '🏪', 'name': 'Entrepreneur'},
+    {'emoji': '📚', 'name': 'Student'},
+    {'emoji': '🏠', 'name': 'Homemaker'},
+    {'emoji': '❓', 'name': 'Other'},
   ];
 
-  List<String> _filteredOccupations = [];
+  List<Map<String, String>> _filteredOccupations = [];
 
   @override
   void initState() {
@@ -796,13 +850,12 @@ class _OccupationBottomSheetState extends State<_OccupationBottomSheet> {
 
   void _filterOccupations(String query) {
     setState(() {
-      _filteredOccupations =
-          _occupations
-              .where(
-                (occupation) =>
-                    occupation.toLowerCase().contains(query.toLowerCase()),
-              )
-              .toList();
+      _filteredOccupations = _occupations
+          .where(
+            (occupation) =>
+                occupation['name']!.toLowerCase().contains(query.toLowerCase()),
+          )
+          .toList();
     });
   }
 
@@ -878,14 +931,25 @@ class _OccupationBottomSheetState extends State<_OccupationBottomSheet> {
                       final occupation = _filteredOccupations[index];
                       return ListTile(
                         contentPadding: EdgeInsets.symmetric(vertical: 4.h),
-                        onTap: () => widget.onOccupationSelected(occupation),
-                        title: Text(
-                          occupation,
-                          style: AppTypography.bodyLarge.copyWith(
-                            fontFamily: 'Karla',
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w500,
-                          ),
+                        onTap: () => widget.onOccupationSelected(occupation['name']!),
+                        title: Row(
+                          children: [
+                            Text(
+                              occupation['emoji']!,
+                              style: TextStyle(fontSize: 20.sp),
+                            ),
+                            SizedBox(width: 12.w),
+                            Expanded(
+                              child: Text(
+                                occupation['name']!,
+                                style: AppTypography.bodyLarge.copyWith(
+                                  fontFamily: 'Karla',
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       );
                     },

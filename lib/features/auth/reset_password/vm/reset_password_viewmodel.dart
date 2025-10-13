@@ -5,6 +5,7 @@ import 'package:dayfi/services/remote/auth_service.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/common/constants/analytics_events.dart';
+import 'package:dayfi/common/utils/connectivity_utils.dart';
 
 class ResetPasswordState {
   final String password;
@@ -139,13 +140,16 @@ class ResetPasswordViewModel extends StateNotifier<ResetPasswordState> {
         );
       }
     } catch (e) {
+      // Get user-friendly error message
+      final errorMessage = await ConnectivityUtils.getErrorMessage(e);
+      
       analyticsService.logEvent(
         name: 'password_reset_failed',
-        parameters: { 'email': email, 'reason': e.toString() },
+        parameters: { 'email': email, 'reason': errorMessage },
       );
       TopSnackbar.show(
         context,
-        message: 'Error: ${e.toString()}',
+        message: errorMessage,
         isError: true,
       );
     } finally {

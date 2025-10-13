@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -9,6 +10,8 @@ import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/common/constants/storage_keys.dart';
+import 'package:dayfi/models/user_model.dart';
+import 'package:flutter_svg/svg.dart';
 
 class ReenterPasscodeState {
   final String passcode;
@@ -126,33 +129,10 @@ class ReenterPasscodeNotifier extends StateNotifier<ReenterPasscodeState> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 // Success icon with enhanced styling
-                Container(
+                SizedBox(
                   width: 80.w,
                   height: 80.w,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        const Color(0xFF10B981),
-                        const Color(0xFF059669),
-                      ],
-                    ),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF10B981).withOpacity(0.3),
-                        blurRadius: 20,
-                        spreadRadius: 2,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  // child: Icon(
-                  //   Icons.check_circle_rounded,
-                  //   color: Colors.white,
-                  //   size: 40.w,
-                  // ),
+                  child: SvgPicture.asset('assets/icons/svgs/successs.svg'),
                 ),
 
                 SizedBox(height: 24.h),
@@ -177,14 +157,23 @@ class ReenterPasscodeNotifier extends StateNotifier<ReenterPasscodeState> {
                   text: 'Okay',
                   onPressed: () async {
                     Navigator.of(context).pop();
-                    // Navigate based on flow
-                    if (isFromSignup) {
+                    // Check if user's phone number is empty (regardless of flow)
+                    final user = await _getCurrentUser();
+                    if (isFromSignup || user?.phoneNumber == null || user?.phoneNumber?.isEmpty == true) {
+                      // Either from signup flow OR phone number is empty, navigate to success signup view
+                      AppLogger.info(
+                        'Navigating to success signup view - isFromSignup: $isFromSignup, phoneNumber: ${user?.phoneNumber}',
+                      );
                       appRouter.pushNamed(AppRoute.successSignupView);
                     } else {
                       // Check if biometric setup is needed
-                      final biometricSetupCompleted = await _secureStorage.read(StorageKeys.biometricSetupCompleted);
-                      final biometricEnabled = await _secureStorage.read('biometric_enabled');
-                      
+                      final biometricSetupCompleted = await _secureStorage.read(
+                        StorageKeys.biometricSetupCompleted,
+                      );
+                      final biometricEnabled = await _secureStorage.read(
+                        'biometric_enabled',
+                      );
+
                       if (biometricSetupCompleted == 'true') {
                         // Biometric setup already completed, go to main view
                         appRouter.pushNamed(AppRoute.mainView);
@@ -213,6 +202,21 @@ class ReenterPasscodeNotifier extends StateNotifier<ReenterPasscodeState> {
     );
   }
 
+  /// Get current user from secure storage
+  Future<User?> _getCurrentUser() async {
+    try {
+      final userJson = await _secureStorage.read(StorageKeys.user);
+      if (userJson.isNotEmpty) {
+        final userData = json.decode(userJson);
+        return User.fromJson(userData);
+      }
+      return null;
+    } catch (e) {
+      AppLogger.error('Error getting current user: $e');
+      return null;
+    }
+  }
+
   void resetForm() {
     state = const ReenterPasscodeState();
   }
@@ -225,7 +229,10 @@ class ReenterPasscodeNotifier extends StateNotifier<ReenterPasscodeState> {
 }
 
 // Provider
-final reenterPasscodeProvider =
-    StateNotifierProvider.family<ReenterPasscodeNotifier, ReenterPasscodeState, bool>((ref, isFromSignup) {
-      return ReenterPasscodeNotifier(isFromSignup: isFromSignup);
-    });
+final reenterPasscodeProvider = StateNotifierProvider.family<
+  ReenterPasscodeNotifier,
+  ReenterPasscodeState,
+  bool
+>((ref, isFromSignup) {
+  return ReenterPasscodeNotifier(isFromSignup: isFromSignup);
+});

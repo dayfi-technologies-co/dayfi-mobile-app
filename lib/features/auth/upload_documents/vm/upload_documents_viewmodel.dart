@@ -7,6 +7,7 @@ import 'package:dayfi/services/kyc/kyc_service.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
+import 'package:dayfi/services/notification_service.dart';
 
 class UploadDocumentsState {
   final bool isBusy;
@@ -95,6 +96,13 @@ class UploadDocumentsNotifier extends StateNotifier<UploadDocumentsState> {
       // Update user KYC tier to Tier 2
       await _updateUserKycTier();
       
+      // Trigger KYC success notification
+      try {
+        await NotificationService().triggerKycSuccess();
+      } catch (e) {
+        // Handle error silently
+      }
+      
       // Navigate to main view
       _appRouter.pushNamed(AppRoute.mainView);
 
@@ -148,6 +156,13 @@ class UploadDocumentsNotifier extends StateNotifier<UploadDocumentsState> {
 
       // Update user KYC tier to Tier 2
       await _updateUserKycTier();
+
+      // Trigger KYC success notification
+      try {
+        await NotificationService().triggerKycSuccess();
+      } catch (e) {
+        // Handle error silently
+      }
 
       // Navigate to biometric setup
       _appRouter.pushNamed(AppRoute.biometricSetupView);

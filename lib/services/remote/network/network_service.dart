@@ -6,6 +6,9 @@ import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/services/remote/network/api_error.dart';
 import 'package:dayfi/services/remote/network/app_interceptor.dart';
 import 'package:dayfi/flavors.dart';
+import 'package:dayfi/services/data_clearing_service.dart';
+import 'package:dayfi/common/utils/app_logger.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 
 /// description: A network provider class which manages network connections
@@ -151,9 +154,37 @@ class NetworkService {
     } catch (error, stackTrace) {
       var apiError = ApiError.fromDio(error);
       if (apiError.errorType == 401) {
-        // User is not authorized, redirect to login
+        // User is not authorized, handle token expiry
+        await _handleUnauthorized();
       }
       return Future.error(apiError, stackTrace);
+    }
+  }
+
+  /// Handle unauthorized access (401) by clearing all user data and redirecting to login
+  Future<void> _handleUnauthorized() async {
+    try {
+      AppLogger.info('Unauthorized access detected, clearing all user data...');
+      
+      // Create a temporary container for data clearing
+      final container = ProviderContainer();
+      
+      // Use comprehensive data clearing service
+      final dataClearingService = DataClearingService();
+      await dataClearingService.clearAllUserDataWithContainer(container);
+      
+      // Navigate to login screen (hide back button)
+      appRouter.pushNamedAndRemoveAllBehind('/loginView', arguments: false);
+      
+      AppLogger.info('Unauthorized access handled successfully');
+    } catch (e) {
+      AppLogger.error('Error handling unauthorized access: $e');
+      // Even if there's an error, try to navigate to login
+      try {
+        appRouter.pushNamedAndRemoveAllBehind('/loginView', arguments: false);
+      } catch (navError) {
+        AppLogger.error('Error navigating to login after unauthorized access: $navError');
+      }
     }
   }
 }

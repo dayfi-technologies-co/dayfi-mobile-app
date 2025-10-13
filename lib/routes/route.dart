@@ -19,6 +19,8 @@ import 'package:dayfi/features/main/views/main_view.dart';
 import 'package:dayfi/features/auth/onboarding/views/onboarding_view.dart';
 import 'package:dayfi/features/profile/edit_profile/views/edit_profile_view.dart';
 import 'package:dayfi/features/profile/account_limits/views/account_limits_view.dart';
+import 'package:dayfi/features/transactions/views/transaction_details_view.dart';
+import 'package:dayfi/models/wallet_transaction.dart';
 
 class VerifyEmailViewArguments {
   final bool isSignUp;
@@ -52,6 +54,7 @@ class AppRoute {
   static const String mainView = '/mainView';
   static const String editProfileView = '/editProfileView';
   static const String accountLimitsView = '/accountLimitsView';
+  static const String transactionDetailsView = '/transactionDetailsView';
 
   static Route getRoute(RouteSettings routeSettings) {
     globalrouteSettings = routeSettings;
@@ -102,11 +105,15 @@ class AppRoute {
       case biometricSetupView:
         return _getPageRoute(routeSettings, const BiometricSetupView());
       case mainView:
-        return _getPageRoute(routeSettings, const MainView());
+        int initialTabIndex = routeSettings.arguments as int? ?? 0;
+        return _getPageRoute(routeSettings, MainView(initialTabIndex: initialTabIndex));
       case editProfileView:
         return _getPageRoute(routeSettings, const EditProfileView());
       case accountLimitsView:
         return _getPageRoute(routeSettings, const AccountLimitsView());
+      case transactionDetailsView:
+        WalletTransaction transaction = routeSettings.arguments as WalletTransaction;
+        return _getPageRoute(routeSettings, TransactionDetailsView(transaction: transaction));
 
       default:
         return _getPageRoute(routeSettings, const LoginView());

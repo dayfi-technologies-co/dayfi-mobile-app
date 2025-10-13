@@ -358,7 +358,7 @@ class DeliveryMethodSelectionBottomSheet extends StatelessWidget {
       case 'spenn':
         return 'Spenn';
       case 'yellowcardpin':
-        return 'Yellow Card PIN';
+        return 'Dayfi PIN';
       default:
         return channelType?.toUpperCase() ?? 'Unknown';
     }
