@@ -10,6 +10,7 @@ import 'package:dayfi/core/theme/theme_provider.dart';
 import 'package:dayfi/core/theme/app_theme_extensions.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:dayfi/services/transaction_monitor_service.dart';
 
 import 'services/local/analytics_service.dart';
 
@@ -56,6 +57,12 @@ class MyApp extends ConsumerWidget {
           return Consumer(
             builder: (context, ref, child) {
               final themeData = ref.watch(themeDataProvider);
+              
+              // Initialize transaction monitoring
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                final transactionMonitor = ref.read(transactionMonitorProvider);
+                transactionMonitor.startMonitoring();
+              });
               final themeMode = ref.watch(flutterThemeModeProvider);
 
               return MaterialApp(

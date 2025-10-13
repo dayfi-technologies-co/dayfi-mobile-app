@@ -7,6 +7,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/services/remote/payment_service.dart';
+import 'package:dayfi/services/transaction_monitor_service.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/features/send/vm/send_viewmodel.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
@@ -16,6 +17,8 @@ import 'package:dayfi/features/recipients/vm/recipients_viewmodel.dart';
 import 'package:dayfi/services/notification_service.dart';
 import 'package:dayfi/models/wallet_transaction.dart';
 import 'package:dayfi/routes/route.dart';
+import 'package:dayfi/features/send/views/send_payment_success_view.dart';
+import 'dart:async';
 
 class SendPaymentMethodView extends ConsumerStatefulWidget {
   final Map<String, dynamic> selectedData;
@@ -40,6 +43,8 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
   bool _isLoading = false;
   String _selectedPaymentMethod = 'Bank Transfer'; // Default to Bank Transfer
   payment.PaymentData? _currentPaymentData; // Store the current payment data
+  Timer? _countdownTimer;
+  Duration _remainingTime = const Duration(minutes: 30);
 
   @override
   void initState() {
@@ -51,6 +56,12 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
     });
   }
 
+  @override
+  void dispose() {
+    _countdownTimer?.cancel();
+    super.dispose();
+  }
+
   void _updateViewModelWithSelectedData() {
     final sendState = ref.read(sendViewModelProvider.notifier);
 
@@ -58,6 +69,61 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
     if (widget.selectedData['sendAmount'] != null) {
       sendState.updateSendAmount(widget.selectedData['sendAmount'].toString());
     }
+  }
+
+  /// Start the countdown timer
+  void _startCountdownTimer() {
+    _countdownTimer?.cancel();
+    _remainingTime = const Duration(minutes: 30);
+    
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          if (_remainingTime.inSeconds > 0) {
+            _remainingTime = Duration(seconds: _remainingTime.inSeconds - 1);
+          } else {
+            _countdownTimer?.cancel();
+            // Timer expired - you might want to show an alert or refresh
+            _onTimerExpired();
+          }
+        });
+      }
+    });
+  }
+
+  /// Handle timer expiration
+  void _onTimerExpired() {
+    // Show alert or refresh the payment details
+    if (mounted) {
+      _showTimerExpiredDialog();
+    }
+  }
+
+  /// Show timer expired dialog
+  void _showTimerExpiredDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Payment Expired'),
+        content: const Text('The payment details have expired. Please create a new payment.'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              Navigator.of(context).pop(); // Go back to previous screen
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Format remaining time as MM:SS
+  String _formatRemainingTime() {
+    final minutes = _remainingTime.inMinutes;
+    final seconds = _remainingTime.inSeconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
   @override
@@ -327,20 +393,20 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.neutral400.withOpacity(0.3),
-            blurRadius: 4.0,
-            offset: const Offset(0, 2),
-            spreadRadius: 0.5,
-          ),
-        ],
+        // boxShadow: [
+        //   BoxShadow(
+        //     color: AppColors.neutral400.withOpacity(0.3),
+        //     blurRadius: 4.0,
+        //     offset: const Offset(0, 2),
+        //     spreadRadius: 0.5,
+        //   ),
+        // ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.schedule, color: Colors.white, size: 12.sp),
-          SizedBox(width: 4.w),
+          // Icon(Icons.schedule, color: Colors.white, size: 12.sp),
+          // SizedBox(width: 4.w),
           Text(
             'Coming Soon',
             style: AppTypography.labelSmall.copyWith(
@@ -494,6 +560,9 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
         "reason":
             widget.paymentData['reason'] ??
             "Money Transfer", // Use selected reason
+        "receiveChannel": widget.selectedData['recipientChannelId'] ?? selectedChannel.id ?? "",
+        "receiveNetwork": widget.recipientData['networkId'] ?? "",
+        "receiveAmount": double.tryParse(widget.selectedData['receiveAmount']?.toString() ?? '0') ?? 0,
         "recipient": {
           "name": widget.recipientData['name'] ?? 'Recipient',
           "country":
@@ -531,22 +600,22 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
       print('🔗 COLLECTION CHANNEL ID: ${requestData["channelId"]}');
 
       // Add redirectUrl if required for this channel
-      if (requiresRedirectUrl) {
-        requestData["redirectUrl"] = _getRedirectUrl();
-      }
+      // if (requiresRedirectUrl) {
+      //   requestData["redirectUrl"] = _getRedirectUrl();
+      // }
 
       // Also add redirectUrl for South Africa and other countries that commonly require it
-      final commonRedirectCountries = [
-        'ZA',
-        'ZA-South Africa',
-        'South Africa',
-        'US',
-        'GB',
-        'CA',
-      ];
-      if (commonRedirectCountries.contains(sendState.receiverCountry)) {
-        requestData["redirectUrl"] = _getRedirectUrl();
-      }
+      // final commonRedirectCountries = [
+      //   'ZA',
+      //   'ZA-South Africa',
+      //   'South Africa',
+      //   'US',
+      //   'GB',
+      //   'CA',
+      // ];
+      // if (commonRedirectCountries.contains(sendState.receiverCountry)) {
+      //   requestData["redirectUrl"] = _getRedirectUrl();
+      // }
 
       // Make the API call
       final response = await locator<PaymentService>().createCollection(
@@ -562,6 +631,49 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
           // Store the payment data for later use
           _currentPaymentData = response.data!;
 
+          // Add transaction to monitoring for automatic payment creation
+          final collectionSequenceId = response.data?.id ?? response.data?.sequenceId;
+          if (collectionSequenceId != null) {
+            final transactionMonitor = ref.read(transactionMonitorProvider);
+            
+            // Prepare payment data for when status reaches success-collection
+            final paymentData = {
+              "amount": int.parse(sendState.sendAmount.replaceAll(RegExp(r'[^\d]'), '')),
+              "currency": sendState.sendCurrency,
+              "channelId": widget.selectedData['senderChannelId'] ?? "",
+              "channelName": selectedChannel.channelType ?? widget.selectedData['recipientDeliveryMethod'] ?? "Bank Transfer",
+              "country": sendState.sendCountry,
+              "reason": widget.paymentData['reason'] ?? "Money Transfer",
+              "receiveChannel": widget.selectedData['recipientChannelId'] ?? selectedChannel.id ?? "",
+              "receiveNetwork": widget.recipientData['networkId'] ?? "",
+              "receiveAmount": double.tryParse(widget.selectedData['receiveAmount']?.toString() ?? '0') ?? 0,
+              "recipient": {
+                "name": widget.recipientData['name'] ?? 'Recipient',
+                "country": widget.recipientData['country'] ?? sendState.receiverCountry,
+                "phone": widget.recipientData['phone'] ?? '+2340000000000',
+                "address": widget.recipientData['address'] ?? '',
+                "email": widget.recipientData['email'] ?? '',
+                "idNumber": widget.recipientData['idNumber'] ?? '',
+                "idType": widget.recipientData['idType'] ?? 'passport',
+                "dob": widget.recipientData['dob'] ?? '',
+              },
+              "source": {
+                "accountType": widget.recipientData['accountType'] ?? 'bank',
+                "accountNumber": widget.recipientData['accountNumber'] ?? '',
+                "networkId": widget.recipientData['networkId'] ?? '',
+              },
+            };
+
+            // Add to monitoring
+            transactionMonitor.addTransactionToMonitoring(
+              transactionId: collectionSequenceId,
+              collectionSequenceId: collectionSequenceId,
+              paymentData: paymentData,
+            );
+            
+            print('📝 Added transaction $collectionSequenceId to monitoring for automatic payment creation');
+          }
+
           // Analytics: collection creation completed
           analyticsService.logEvent(
             name: 'collection_creation_completed',
@@ -573,8 +685,19 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
               'collection_id': response.data?.id ?? 'unknown',
             },
           );
-          // Show bank details bottom sheet
-          _showBankDetailsBottomSheet(response.data!);
+          // Navigate to success screen
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => SendPaymentSuccessView(
+                recipientData: widget.recipientData,
+                selectedData: widget.selectedData,
+                paymentData: widget.paymentData,
+                collectionData: response.data,
+                transactionId: response.data?.id ?? response.data?.sequenceId,
+              ),
+            ),
+          );
         } else {
           // Analytics: collection creation failed
           analyticsService.logEvent(
@@ -709,12 +832,32 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
   }
 
   void _showBankDetailsBottomSheet(payment.PaymentData collectionData) {
+    // Start the countdown timer when showing bank details
+    _startCountdownTimer();
+    
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       builder: (BuildContext context) {
-        return Container(
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            // Update the modal state when countdown changes
+            _countdownTimer?.cancel();
+            _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+              if (mounted) {
+                setModalState(() {
+                  if (_remainingTime.inSeconds > 0) {
+                    _remainingTime = Duration(seconds: _remainingTime.inSeconds - 1);
+                  } else {
+                    _countdownTimer?.cancel();
+                    _onTimerExpired();
+                  }
+                });
+              }
+            });
+            
+            return Container(
           height: MediaQuery.of(context).size.height * 0.8,
           decoration: BoxDecoration(
             color: Theme.of(context).scaffoldBackgroundColor,
@@ -892,7 +1035,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                                 // SizedBox(width: 12.w),
                                 Expanded(
                                   child: Text(
-                                    'The account details is valid for only this transaction and it expires in 30:58 minutes.',
+                                    'The account details is valid for only this transaction and it expires in ${_formatRemainingTime()} minutes.',
                                     style: Theme.of(
                                       context,
                                     ).textTheme.bodyMedium?.copyWith(
@@ -946,7 +1089,19 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                       text: 'I have paid',
                       onPressed: () {
                         Navigator.pop(context);
-                        _showPaymentSuccessDialog();
+                        // Navigate to success screen
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => SendPaymentSuccessView(
+                              recipientData: widget.recipientData,
+                              selectedData: widget.selectedData,
+                              paymentData: widget.paymentData,
+                              collectionData: _currentPaymentData,
+                              transactionId: _currentPaymentData?.id ?? _currentPaymentData?.sequenceId,
+                            ),
+                          ),
+                        );
                       },
                       backgroundColor: AppColors.purple500,
                       height: 60.h,
@@ -983,6 +1138,8 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
               SizedBox(height: 24.h),
             ],
           ),
+        );
+          },
         );
       },
     );
@@ -1137,158 +1294,6 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
     });
   }
 
-  void _showPaymentSuccessDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24.r),
-          ),
-          child: Container(
-            padding: EdgeInsets.all(28.w),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Success icon
-                Container(
-                  width: 80.w,
-                  height: 80.w,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        AppColors.success500.withOpacity(0.1),
-                        AppColors.success500.withOpacity(0.05),
-                      ],
-                    ),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.success500.withOpacity(0.1),
-                        blurRadius: 20,
-                        spreadRadius: 2,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: SvgPicture.asset(
-                    'assets/icons/svgs/circle-check.svg',
-                    color: AppColors.success500,
-                    height: 40.sp,
-                    width: 40.sp,
-                  ),
-                ),
-
-                SizedBox(height: 24.h),
-
-                // Title
-                Text(
-                  'Transfer Initiated Successfully!',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontFamily: 'CabinetGrotesk',
-                    fontSize: 20.sp,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-
-                SizedBox(height: 16.h),
-
-                // Subtitle
-                Text(
-                  'Your transfer has been initiated and will be processed shortly. You will receive a confirmation email.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontSize: 15.sp,
-                    letterSpacing: -.4,
-                    fontWeight: FontWeight.w500,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withOpacity(.8),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-
-                SizedBox(height: 24.h),
-
-                // Done button
-                PrimaryButton(
-                  text: 'Done',
-                  onPressed: () async {
-                    Navigator.of(context).pop(); // Close dialog
-
-                    // Trigger send success notification
-                    try {
-                      final sendState = ref.read(sendViewModelProvider);
-                      await NotificationService().triggerSendSuccess(
-                        recipientName:
-                            widget.recipientData['name'] ?? 'Recipient',
-                        amount: sendState.sendAmount,
-                        currency: sendState.sendCurrency,
-                        transactionId:
-                            'TXN-${DateTime.now().millisecondsSinceEpoch}',
-                      );
-                    } catch (e) {
-                      // Handle error silently
-                    }
-
-                    // Refresh transactions and Beneficiaries data
-                    try {
-                      // Refresh transactions
-                      ref
-                          .read(transactionsProvider.notifier)
-                          .loadTransactions();
-                      // Refresh recipients
-                      ref.read(recipientsProvider.notifier).loadBeneficiaries();
-                    } catch (e) {
-                      // Handle error silently or show user-friendly message
-                    }
-
-                    // Navigate to main view with clean stack (Transactions tab)
-                    _navigateToMainViewWithCleanStack(tabIndex: 1);
-                  },
-                  backgroundColor: AppColors.purple500,
-                  textColor: AppColors.neutral0,
-                  borderRadius: 38,
-                  height: 60.h,
-                  width: double.infinity,
-                  fullWidth: true,
-                  fontFamily: 'Karla',
-                  fontSize: 18,
-                  fontWeight: FontWeight.w400,
-                  letterSpacing: -.8,
-                ),
-
-                SizedBox(height: 12.h),
-
-                // View transaction details button
-                SecondaryButton(
-                  text: 'View transaction details',
-                  onPressed: () {
-                    Navigator.of(context).pop(); // Close dialog
-                    _navigateToTransactionDetails();
-                  },
-                  backgroundColor: Colors.transparent,
-                  textColor: AppColors.purple500,
-                  borderColor: Colors.transparent,
-                  height: 60.h,
-                  borderRadius: 38,
-                  fontFamily: 'Karla',
-                  letterSpacing: -.8,
-                  fontSize: 18,
-                  width: double.infinity,
-                  fullWidth: true,
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
 
   /// Show error dialog with retry option
   void _showErrorWithRetry(

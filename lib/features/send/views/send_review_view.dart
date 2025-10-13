@@ -1,4 +1,6 @@
+import 'dart:math';
 import 'package:dayfi/core/theme/app_typography.dart';
+import 'package:dayfi/models/payment_response.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -70,10 +72,20 @@ class _SendReviewViewState extends ConsumerState<SendReviewView> {
       setState(() {});
     });
 
-    // Update viewModel with selected data
+    // Update viewModel with selected data and ensure networks are loaded
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _updateViewModelWithSelectedData();
+      _ensureNetworksLoaded();
     });
+  }
+
+  // Ensure networks are loaded for proper network name resolution
+  void _ensureNetworksLoaded() {
+    final sendState = ref.read(sendViewModelProvider);
+    if (sendState.networks.isEmpty) {
+      print('🔄 Networks not loaded, initializing send view model...');
+      ref.read(sendViewModelProvider.notifier).initialize();
+    }
   }
 
   void _updateViewModelWithSelectedData() {
@@ -148,6 +160,40 @@ class _SendReviewViewState extends ConsumerState<SendReviewView> {
       default:
         return '$currencyCode ';
     }
+  }
+
+  // Helper method to get network name from networkId
+  String _getNetworkName(String? networkId) {
+    if (networkId == null || networkId.isEmpty) return 'Unknown Network';
+    
+    final sendState = ref.watch(sendViewModelProvider);
+    
+    // Debug logging
+    print('🔍 Looking for network ID: $networkId');
+    print('📊 Available networks count: ${sendState.networks.length}');
+    print('📋 Available network IDs: ${sendState.networks.map((n) => n.id).join(", ")}');
+    
+    // If networks are empty, try to trigger a refresh
+    if (sendState.networks.isEmpty) {
+      print('⚠️ No networks loaded, triggering refresh...');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(sendViewModelProvider.notifier).initialize();
+      });
+      return 'Loading...';
+    }
+    
+    final network = sendState.networks.firstWhere(
+      (n) => n.id == networkId,
+      orElse: () => Network(id: null, name: null),
+    );
+    
+    if (network.id == null) {
+      print('❌ Network not found for ID: $networkId');
+      return 'Unknown Network';
+    }
+    
+    print('✅ Found network: ${network.name} for ID: $networkId');
+    return network.name ?? 'Unknown Network';
   }
 
   @override
@@ -307,6 +353,10 @@ class _SendReviewViewState extends ConsumerState<SendReviewView> {
 
           _buildDetailRow('Beneficiary ', widget.recipientData['name']),
           _buildDetailRow(
+            'Bank Network',
+            _getNetworkName(widget.recipientData['networkId']),
+          ),
+          _buildDetailRow(
             'Delivery Method',
             widget.selectedData['recipientDeliveryMethod'] ?? 'Bank Transfer',
           ),
@@ -319,14 +369,28 @@ class _SendReviewViewState extends ConsumerState<SendReviewView> {
   Widget _getDetailIcon(String label) {
     // Map labels to appropriate SVG icons from send_view.dart
     switch (label.toLowerCase()) {
-      case 'Transfer fee':
+      case 'transfer amount':
       case 'fee':
+        return Transform.rotate(angle: -pi/2, child: SvgPicture.asset('assets/icons/svgs/fee.svg', height: 24),);
+      case 'transfer fee':
         return SvgPicture.asset('assets/icons/svgs/fee.svg', height: 24);
       case 'total':
+      case 'total to beneficiary':
         return SvgPicture.asset('assets/icons/svgs/total.svg', height: 24);
       case 'exchange rate':
       case 'rate':
         return SvgPicture.asset('assets/icons/svgs/rate.svg', height: 24);
+      case 'network':
+      case 'bank network':
+        return SvgPicture.asset('assets/icons/svgs/bank.svg', height: 24);
+      case 'beneficiary':
+        return SvgPicture.asset('assets/icons/svgs/user.svg', height: 24);
+      case 'delivery method':
+        return SvgPicture.asset('assets/icons/svgs/delivery.svg', height: 24);
+      case 'transfer time':
+        return SvgPicture.asset('assets/icons/svgs/time.svg', height: 24);
+      case 'transfer taxes':
+        return SvgPicture.asset('assets/icons/svgs/tax.svg', height: 24);
       default:
         // Default icon for other items
         return SvgPicture.asset('assets/icons/svgs/fee.svg', height: 24);
@@ -342,6 +406,7 @@ class _SendReviewViewState extends ConsumerState<SendReviewView> {
     return Padding(
       padding: EdgeInsets.only(bottom: bottomPadding.h),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
@@ -362,7 +427,8 @@ class _SendReviewViewState extends ConsumerState<SendReviewView> {
               ),
             ],
           ),
-          Text(
+          SizedBox(width: 16.w),
+     Expanded(child:     Text(
             value,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               fontFamily: 'CabinetGrotesk',
@@ -370,6 +436,7 @@ class _SendReviewViewState extends ConsumerState<SendReviewView> {
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface,
             ),
+                    textAlign: TextAlign.end,),
           ),
         ],
       ),

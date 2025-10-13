@@ -1792,23 +1792,33 @@ class _SendViewState extends ConsumerState<SendView>
     // Dismiss keyboard when opening bottom sheet
     FocusScope.of(context).unfocus();
     // Filter channels for the specific country-currency combination
-    final countryCurrencyChannels =
-        state.channels
-            .where(
-              (channel) =>
-                  channel.country == country &&
-                  channel.currency == currency &&
-                  channel.status == 'active' &&
-                  (channel.rampType == 'withdrawal' ||
-                      channel.rampType == 'withdraw' ||
-                      channel.rampType == 'payout' ||
-                      channel.rampType == 'deposit' ||
-                      channel.rampType == 'receive'),
-            )
-            .toList()
-          ..sort(
-            (a, b) => (a.channelType ?? '').compareTo(b.channelType ?? ''),
-          );
+    final filteredChannels = state.channels
+        .where(
+          (channel) =>
+              channel.country == country &&
+              channel.currency == currency &&
+              channel.status == 'active' &&
+              (channel.rampType == 'withdrawal' ||
+                  channel.rampType == 'withdraw' ||
+                  channel.rampType == 'payout' ||
+                  channel.rampType == 'deposit' ||
+                  channel.rampType == 'receive'),
+        )
+        .toList();
+
+    // Deduplicate channels by vendorId to avoid showing same vendor multiple times
+    final Map<String, Channel> uniqueChannels = {};
+    for (final channel in filteredChannels) {
+      final key = channel.vendorId ?? channel.id ?? 'unknown';
+      if (!uniqueChannels.containsKey(key)) {
+        uniqueChannels[key] = channel;
+      }
+    }
+
+    final countryCurrencyChannels = uniqueChannels.values.toList()
+      ..sort(
+        (a, b) => (a.channelType ?? '').compareTo(b.channelType ?? ''),
+      );
 
     showModalBottomSheet(
       context: context,
@@ -1924,6 +1934,35 @@ class _SendViewState extends ConsumerState<SendView>
                                 height: 1.2,
                               ),
                             ),
+                            // SizedBox(height: 2.h),
+                            // Text(
+                            //   '${channel.vendorId ?? 'Unknown'} - ${channel.channelType ?? 'Unknown'} - ${channel.settlementType ?? 'Unknown'}',
+                            //   style: AppTypography.bodySmall.copyWith(
+                            //     fontFamily: 'Karla',
+                            //     fontSize: 12.sp,
+                            //     color: AppColors.primary600,
+                            //     fontWeight: FontWeight.w500,
+                            //   ),
+                            // ),
+                            // SizedBox(height: 1.h),
+                            // Text(
+                            //   '${channel.rampType ?? 'Unknown'} - ${channel.status ?? 'Unknown'}',
+                            //   style: AppTypography.bodySmall.copyWith(
+                            //     fontFamily: 'Karla',
+                            //     fontSize: 11.sp,
+                            //     color: AppColors.neutral600,
+                            //     fontWeight: FontWeight.w400,
+                            //   ),
+                            // ),
+                            // SizedBox(height: 2.h),
+                            // Text(
+                            //   'Min: ${channel.min} ${channel.currency} | Max: ${channel.max} ${channel.currency}',
+                            //   style: AppTypography.bodySmall.copyWith(
+                            //     fontFamily: 'Karla',
+                            //     fontSize: 12.sp,
+                            //     color: AppColors.neutral500,
+                            //   ),
+                            // ),
                           ],
                         ),
                         trailing:

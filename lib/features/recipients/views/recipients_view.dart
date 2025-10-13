@@ -372,18 +372,18 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
           ),
 
           // Send Button
-          PrimaryButton(
-            text: 'Send',
-            onPressed: () => _navigateToSend(beneficiaryWithSource),
-            height: 32.h,
-            width: 68.w,
-            backgroundColor: AppColors.purple500,
-            textColor: AppColors.neutral0,
-            fontFamily: 'Karla',
-            fontSize: 14.sp,
-            borderRadius: 20.r,
-            fontWeight: FontWeight.w400,
-          ),
+          // PrimaryButton(
+          //   text: 'Send',
+          //   onPressed: () => _navigateToSend(beneficiaryWithSource),
+          //   height: 32.h,
+          //   width: 68.w,
+          //   backgroundColor: AppColors.purple500,
+          //   textColor: AppColors.neutral0,
+          //   fontFamily: 'Karla',
+          //   fontSize: 14.sp,
+          //   borderRadius: 20.r,
+          //   fontWeight: FontWeight.w400,
+          // ),
         ],
       ),
     );
@@ -462,50 +462,44 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
     final source = beneficiaryWithSource.source;
     
     try {
-      final sendState = ref.read(sendViewModelProvider);
+      final sendState = ref.watch(sendViewModelProvider);
+      final networkId = source.networkId;
       
-      // Find the specific channel using the source's networkId
-      final matchingChannel = sendState.channels.firstWhere(
-        (channel) => channel.id == source.networkId,
-        orElse: () => payment.Channel(id: null),
+      if (networkId == null || networkId.isEmpty) {
+        print('❌ No network ID found for beneficiary: ${beneficiary.name}');
+        return 'Unknown Network';
+      }
+      
+      // Debug logging
+      print('🔍 Looking for network ID: $networkId');
+      print('📊 Available networks count: ${sendState.networks.length}');
+      print('📋 Available network IDs: ${sendState.networks.map((n) => n.id).join(", ")}');
+      
+      // If networks are empty, try to trigger a refresh
+      if (sendState.networks.isEmpty) {
+        print('⚠️ No networks loaded, triggering refresh...');
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ref.read(sendViewModelProvider.notifier).initialize();
+        });
+        return 'Loading...';
+      }
+      
+      final network = sendState.networks.firstWhere(
+        (n) => n.id == networkId,
+        orElse: () => payment.Network(id: null, name: null),
       );
       
-      if (matchingChannel.id != null) {
-        // Get network name
-        final networkName = ref
-            .read(sendViewModelProvider.notifier)
-            .getNetworkNameForChannel(matchingChannel);
-        
-        // Get channel type display name
-        final channelType = _getDeliveryMethodType(matchingChannel.channelType);
-        
-        // Format: "Channel Type - Network Name" or just "Channel Type" if no network
-        if (networkName != null && networkName.isNotEmpty) {
-          return '$channelType - $networkName';
-        } else {
-          return channelType;
-        }
+      if (network.id == null) {
+        print('❌ Network not found for ID: $networkId');
+        return 'Unknown Network';
       }
-    } catch (e) {
-      // If there's an error, return a default
-    }
-    
-    // Fallback: try to find any channel for this country
-    try {
-      final sendState = ref.read(sendViewModelProvider);
-      final fallbackChannel = sendState.channels.firstWhere(
-        (channel) => channel.country == beneficiary.country,
-        orElse: () => payment.Channel(id: null),
-      );
       
-      if (fallbackChannel.id != null) {
-        return _getDeliveryMethodType(fallbackChannel.channelType);
-      }
+      print('✅ Found network: ${network.name} for ID: $networkId');
+      return network.name ?? 'Unknown Network';
     } catch (e) {
-      // If there's still an error, return a default
+      print('❌ Error getting network name: $e');
+      return 'Unknown Network';
     }
-    
-    return 'Unknown Method';
   }
 
   /// Get simplified delivery method type (just the main category)

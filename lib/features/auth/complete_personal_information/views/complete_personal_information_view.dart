@@ -383,6 +383,7 @@ class _CompletePersonalInformationViewState
           hintText: "Enter your address",
           controller: _addressController,
           onChanged: notifier.setAddress,
+          textCapitalization: TextCapitalization.words,
           // suffixIcon: Icon(
           //   Icons.search,
           //   color: AppColors.neutral400,

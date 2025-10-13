@@ -994,7 +994,8 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
       final recipientData = {
         'name': _resolvedAccountName!.trim(),
         'country': _selectedCountry,
-        'phone': _getFormattedPhoneNumber(), // Use formatted phone number with country code
+        'phone':
+            _getFormattedPhoneNumber(), // Use formatted phone number with country code
         'address': _addressController.text.trim(),
         'dob': _dobController.text.trim(),
         'email': _emailController.text.trim(),
@@ -1059,9 +1060,9 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
   String _getFormattedPhoneNumber() {
     final country = _getRecipientCountry();
     final phoneNumber = _phoneController.text.trim();
-    
+
     if (phoneNumber.isEmpty) return '';
-    
+
     return PhoneCountryUtils.formatPhoneNumber(phoneNumber, country);
   }
 
@@ -1069,118 +1070,59 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
   Widget _buildPhoneNumberField() {
     final country = _getRecipientCountry();
     final countryInfo = PhoneCountryUtils.getCountryPhoneInfo(country);
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Phone Number (Optional)',
-          style: AppTypography.bodyMedium.copyWith(
-            fontFamily: 'Karla',
-            fontWeight: FontWeight.w500,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-        ),
-        SizedBox(height: 8.h),
-        Row(
-          children: [
-            // Country code prefix
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 16.h),
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
-                ),
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(12.r),
-                  bottomLeft: Radius.circular(12.r),
-                ),
-                color: Theme.of(context).colorScheme.surface,
-              ),
-              child: Text(
-                countryInfo?.countryCode ?? '+234',
-                style: AppTypography.bodyMedium.copyWith(
-                  fontFamily: 'Karla',
-                  fontWeight: FontWeight.w500,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-              ),
-            ),
-            // Phone number input
-            Expanded(
-              child: TextFormField(
-                controller: _phoneController,
-                keyboardType: TextInputType.phone,
-                maxLength: countryInfo?.maxLength ?? 10,
-                decoration: InputDecoration(
-                  hintText: countryInfo != null 
-                    ? 'X' * countryInfo.maxLength
-                    : 'Enter phone number',
-                  hintStyle: AppTypography.bodyMedium.copyWith(
-                    fontFamily: 'Karla',
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.only(
-                      topRight: Radius.circular(12.r),
-                      bottomRight: Radius.circular(12.r),
-                    ),
-                    borderSide: BorderSide(
-                      color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.only(
-                      topRight: Radius.circular(12.r),
-                      bottomRight: Radius.circular(12.r),
-                    ),
-                    borderSide: BorderSide(
-                      color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.only(
-                      topRight: Radius.circular(12.r),
-                      bottomRight: Radius.circular(12.r),
-                    ),
-                    borderSide: BorderSide(
-                      color: AppColors.purple500,
-                      width: 2,
-                    ),
-                  ),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 16.h),
-                  counterText: '', // Hide character counter
-                ),
-                style: AppTypography.bodyMedium.copyWith(
-                  fontFamily: 'Karla',
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return null; // Optional field
-                  }
-                  
-                  final validationError = PhoneCountryUtils.validatePhoneNumber(value, country);
-                  return validationError;
-                },
-                onChanged: (value) {
-                  // Trigger rebuild to update any dependent UI
-                  setState(() {});
-                },
-              ),
-            ),
-          ],
-        ),
-        if (countryInfo != null) ...[
-          SizedBox(height: 4.h),
-          Text(
-            'Enter ${countryInfo.maxLength} digits for ${countryInfo.name}',
-            style: AppTypography.bodySmall.copyWith(
+        CustomTextField(
+          controller: _phoneController,
+          label: 'Phone Number (Optional)',
+          keyboardType: TextInputType.phone,
+          maxLength: countryInfo?.maxLength ?? 10,
+          hintText:
+              countryInfo != null
+                  ? 'X' * countryInfo.maxLength
+                  : 'Enter phone number',
+          prefixIcon: Padding(
+           padding: EdgeInsets.only(left: 16.w, top: 12.w),
+            child: Text(
+            "${countryInfo?.countryCode ?? '+234'}     ",
+            style: AppTypography.bodyMedium.copyWith(
               fontFamily: 'Karla',
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              fontSize: 16,
+              letterSpacing: -.6,
+              fontWeight: FontWeight.w500,
+              height: 1.450,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
-          ),
-        ],
+          ),),
+          
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return null; // Optional field
+            }
+
+            final validationError = PhoneCountryUtils.validatePhoneNumber(
+              value,
+              country,
+            );
+            return validationError;
+          },
+          onChanged: (value) {
+            // Trigger rebuild to update any dependent UI
+            setState(() {});
+          },
+        ),
+        // if (countryInfo != null) ...[
+        //   SizedBox(height: 4.h),
+        //   Text(
+        //     'Enter ${countryInfo.maxLength} digits for ${countryInfo.name}',
+        //     style: AppTypography.bodySmall.copyWith(
+        //       fontFamily: 'Karla',
+        //       color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+        //     ),
+        //   ),
+        // ],
       ],
     );
   }

@@ -101,7 +101,12 @@ class _TransactionDetailsViewState
             // Account Details
             _buildAccountDetails(),
 
-            SizedBox(height: 20.h),
+            SizedBox(height: 16.h),
+
+            // Recipient Details
+            _buildRecipientDetails(),
+
+            SizedBox(height: 16.h),
 
             // Payment Summary
             _buildPaymentSummary(),
@@ -416,22 +421,78 @@ class _TransactionDetailsViewState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Text(
-          //   "Account Details",
-          //   style: AppTypography.bodyLarge.copyWith(
-          //     fontFamily: 'CabinetGrotesk',
-          //     fontSize: 16.sp,
-          //     fontWeight: FontWeight.w600,
-          //     color: Theme.of(context).colorScheme.onSurface,
-          //   ),
-          // ),
-          // SizedBox(height: 16.h),
+          Text(
+            "Transaction Details",
+            style: AppTypography.bodyLarge.copyWith(
+              fontFamily: 'CabinetGrotesk',
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
+          SizedBox(height: 16.h),
           _buildDetailRow(
             "Account number",
             widget.transaction.source.accountNumber ?? "N/A",
           ),
           _buildDetailRow("Bank", _getBankName()),
+          // _buildDetailRow("Account type", _getAccountTypeDisplay()),
+          _buildDetailRow("Send type", _getChannelDisplayName(widget.transaction.sendChannel)),
+          // _buildDetailRow("Receive channel", _getChannelDisplayName(widget.transaction.receiveChannel)),
           _buildDetailRow("Reason", widget.transaction.reason ?? "N/A"),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecipientDetails() {
+    return Container(
+      padding: EdgeInsets.all(20.w),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Recipient Details",
+            style: AppTypography.bodyLarge.copyWith(
+              fontFamily: 'CabinetGrotesk',
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
+          SizedBox(height: 16.h),
+          _buildDetailRow(
+            "Name",
+            widget.transaction.beneficiary.name,
+          ),
+          // _buildDetailRow(
+          //   "Phone",
+          //   widget.transaction.beneficiary.phone,
+          // ),
+          // _buildDetailRow(
+          //   "Email",
+          //   widget.transaction.beneficiary.email,
+          // ),
+          _buildDetailRow(
+            "Country",
+            _getCountryName(widget.transaction.beneficiary.country),
+          ),
+          // _buildDetailRow(
+          //   "Address",
+          //   widget.transaction.beneficiary.address,
+          // ),
+          // _buildDetailRow(
+          //   "ID Type",
+          //   _getIDTypeDisplay(widget.transaction.beneficiary.idType),
+          // ),
+          // _buildDetailRow(
+          //   "ID Number",
+          //   widget.transaction.beneficiary.idNumber,
+          // ),
         ],
       ),
     );
@@ -470,6 +531,7 @@ class _TransactionDetailsViewState
                   fontWeight: FontWeight.w500,
                   color: Theme.of(context).colorScheme.onSurface,
                 ),
+                textAlign: TextAlign.end,
               ),
             ),
           ),
@@ -558,6 +620,7 @@ class _TransactionDetailsViewState
                               fontWeight: isTotal ? FontWeight.w600 : FontWeight.w500,
                               color: Theme.of(context).colorScheme.onSurface,
                             ),
+                                    textAlign: TextAlign.end,
                           ),
                   ),
                 ),
@@ -837,6 +900,8 @@ class _TransactionDetailsViewState
         return 'CFA';
       case 'XAF':
         return 'FCFA';
+      case 'CDF':
+        return 'CDF ';
       default:
         return '$currencyCode ';
     }
@@ -1145,6 +1210,172 @@ class _TransactionDetailsViewState
           isError: true,
         );
       }
+    }
+  }
+
+  /// Get account type display name
+  String _getAccountTypeDisplay() {
+    final accountType = widget.transaction.source.accountType;
+    switch (accountType?.toLowerCase()) {
+      case 'bank':
+        return 'Bank Account';
+      case 'mobile_money':
+      case 'momo':
+        return 'Mobile Money';
+      case 'wallet':
+        return 'Digital Wallet';
+      case 'card':
+        return 'Card';
+      default:
+        return accountType ?? 'Unknown';
+    }
+  }
+
+  /// Get channel display name
+  String _getChannelDisplayName(String? channel) {
+    if (channel == null || channel.isEmpty) return 'N/A';
+    
+    switch (channel.toLowerCase()) {
+      case 'bank':
+      case 'bank_transfer':
+        return 'Bank Transfer';
+      case 'mobile_money':
+      case 'momo':
+        return 'Mobile Money';
+      case 'spenn':
+        return 'Spenn';
+      case 'cash_pickup':
+        return 'Cash Pickup';
+      case 'wallet':
+        return 'Digital Wallet';
+      case 'card':
+        return 'Card Payment';
+      default:
+        return channel;
+    }
+  }
+
+  /// Get country name from country code
+  String _getCountryName(String countryCode) {
+    switch (countryCode.toUpperCase()) {
+      case 'CD':
+        return 'Democratic Republic of Congo';
+      case 'RW':
+        return 'Rwanda';
+      case 'NG':
+        return 'Nigeria';
+      case 'KE':
+        return 'Kenya';
+      case 'UG':
+        return 'Uganda';
+      case 'TZ':
+        return 'Tanzania';
+      case 'ZA':
+        return 'South Africa';
+      case 'BW':
+        return 'Botswana';
+      case 'GH':
+        return 'Ghana';
+      case 'SN':
+        return 'Senegal';
+      case 'CI':
+        return 'Côte d\'Ivoire';
+      case 'CM':
+        return 'Cameroon';
+      case 'BF':
+        return 'Burkina Faso';
+      case 'ML':
+        return 'Mali';
+      case 'NE':
+        return 'Niger';
+      case 'TD':
+        return 'Chad';
+      case 'CF':
+        return 'Central African Republic';
+      case 'GA':
+        return 'Gabon';
+      case 'CG':
+        return 'Republic of Congo';
+      case 'AO':
+        return 'Angola';
+      case 'ZM':
+        return 'Zambia';
+      case 'ZW':
+        return 'Zimbabwe';
+      case 'MW':
+        return 'Malawi';
+      case 'MZ':
+        return 'Mozambique';
+      case 'MG':
+        return 'Madagascar';
+      case 'MU':
+        return 'Mauritius';
+      case 'SC':
+        return 'Seychelles';
+      case 'KM':
+        return 'Comoros';
+      case 'DJ':
+        return 'Djibouti';
+      case 'ET':
+        return 'Ethiopia';
+      case 'ER':
+        return 'Eritrea';
+      case 'SO':
+        return 'Somalia';
+      case 'SS':
+        return 'South Sudan';
+      case 'SD':
+        return 'Sudan';
+      case 'EG':
+        return 'Egypt';
+      case 'LY':
+        return 'Libya';
+      case 'TN':
+        return 'Tunisia';
+      case 'DZ':
+        return 'Algeria';
+      case 'MA':
+        return 'Morocco';
+      case 'LR':
+        return 'Liberia';
+      case 'SL':
+        return 'Sierra Leone';
+      case 'GN':
+        return 'Guinea';
+      case 'GW':
+        return 'Guinea-Bissau';
+      case 'CV':
+        return 'Cape Verde';
+      case 'ST':
+        return 'São Tomé and Príncipe';
+      case 'GQ':
+        return 'Equatorial Guinea';
+      case 'BI':
+        return 'Burundi';
+      default:
+        return countryCode;
+    }
+  }
+
+  /// Get ID type display name
+  String _getIDTypeDisplay(String idType) {
+    switch (idType.toLowerCase()) {
+      case 'passport':
+        return 'Passport';
+      case 'national_id':
+      case 'nationalid':
+        return 'National ID';
+      case 'drivers_license':
+      case 'driverslicense':
+        return 'Driver\'s License';
+      case 'voters_card':
+      case 'voterscard':
+        return 'Voter\'s Card';
+      case 'birth_certificate':
+      case 'birthcertificate':
+        return 'Birth Certificate';
+      default:
+        return idType;
     }
   }
 }
