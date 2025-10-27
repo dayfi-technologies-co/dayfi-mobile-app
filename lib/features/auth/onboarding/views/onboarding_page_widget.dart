@@ -65,7 +65,7 @@ class OnboardingPageWidget extends StatelessWidget {
                               page.subtitle,
                               textAlign: TextAlign.start,
                               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: AppColors.neutral700,
+                                color: Theme.of(context).colorScheme.onSurface.withOpacity(.8),
                                 fontSize: 16.sp,
                                 fontWeight: FontWeight.w400,
                                 fontFamily: 'Karla',

@@ -105,6 +105,41 @@ class AppRouter {
       (Route route) => false,
     );
   }
+
+  /// Navigate to login and clear the entire route stack
+  /// This prevents back button from going to passcode or other auth screens
+  Future<T?> pushLoginAndClearStack<T extends Object?>({
+    Object? arguments,
+  }) {
+    return navigatorState.pushNamedAndRemoveUntil<T>(
+      AppRoute.loginView,
+      (Route route) => false, // Remove all previous routes
+      arguments: arguments,
+    );
+  }
+
+  /// Navigate to main view and clear the entire route stack
+  /// This prevents back button from going to auth screens
+  Future<T?> pushMainAndClearStack<T extends Object?>({
+    Object? arguments,
+  }) {
+    return navigatorState.pushNamedAndRemoveUntil<T>(
+      AppRoute.mainView,
+      (Route route) => false, // Remove all previous routes
+      arguments: arguments,
+    );
+  }
+
+  /// Handle back button press with fallback to prevent black screens
+  /// If there's no valid route to go back to, navigate to login
+  void handleBackButtonWithFallback() {
+    if (navigatorState.canPop()) {
+      navigatorState.pop();
+    } else {
+      // If we can't pop and there's no valid route, go to login
+      pushLoginAndClearStack(arguments: false);
+    }
+  }
 }
 
 class AppLevelRouter extends AppRouter {

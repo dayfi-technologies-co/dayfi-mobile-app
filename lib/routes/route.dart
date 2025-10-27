@@ -21,6 +21,8 @@ import 'package:dayfi/features/profile/edit_profile/views/edit_profile_view.dart
 import 'package:dayfi/features/profile/account_limits/views/account_limits_view.dart';
 import 'package:dayfi/features/transactions/views/transaction_details_view.dart';
 import 'package:dayfi/models/wallet_transaction.dart';
+import 'package:dayfi/features/send/views/send_fetch_crypto_channels.dart';
+import 'package:dayfi/features/send/views/send_crypto_networks_view.dart';
 
 class VerifyEmailViewArguments {
   final bool isSignUp;
@@ -55,6 +57,8 @@ class AppRoute {
   static const String editProfileView = '/editProfileView';
   static const String accountLimitsView = '/accountLimitsView';
   static const String transactionDetailsView = '/transactionDetailsView';
+  static const String cryptoChannelsView = '/cryptoChannelsView';
+  static const String cryptoNetworksView = '/cryptoNetworksView';
 
   static Route getRoute(RouteSettings routeSettings) {
     globalrouteSettings = routeSettings;
@@ -114,6 +118,11 @@ class AppRoute {
       case transactionDetailsView:
         WalletTransaction transaction = routeSettings.arguments as WalletTransaction;
         return _getPageRoute(routeSettings, TransactionDetailsView(transaction: transaction));
+      case cryptoChannelsView:
+        return _getPageRoute(routeSettings, const SendFetchCryptoChannelsView());
+      case cryptoNetworksView:
+        Map<String, dynamic> channel = routeSettings.arguments as Map<String, dynamic>;
+        return _getPageRoute(routeSettings, SendCryptoNetworksView(selectedChannel: channel));
 
       default:
         return _getPageRoute(routeSettings, const LoginView());

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/services/remote/payment_service.dart';
@@ -41,6 +42,7 @@ class SendState {
   final Map<String, dynamic>? sendCurrencyRates;
   final Map<String, dynamic>? receiveCurrencyRates;
   final bool isRatesLoading;
+  final bool showRatesLoading;
 
   const SendState({
     this.sendAmount = '',
@@ -65,6 +67,7 @@ class SendState {
     this.sendCurrencyRates,
     this.receiveCurrencyRates,
     this.isRatesLoading = false,
+    this.showRatesLoading = false,
   });
 
   SendState copyWith({
@@ -90,6 +93,7 @@ class SendState {
     Map<String, dynamic>? sendCurrencyRates,
     Map<String, dynamic>? receiveCurrencyRates,
     bool? isRatesLoading,
+    bool? showRatesLoading,
   }) {
     return SendState(
       sendAmount: sendAmount ?? this.sendAmount,
@@ -118,6 +122,7 @@ class SendState {
       sendCurrencyRates: sendCurrencyRates ?? this.sendCurrencyRates,
       receiveCurrencyRates: receiveCurrencyRates ?? this.receiveCurrencyRates,
       isRatesLoading: isRatesLoading ?? this.isRatesLoading,
+      showRatesLoading: showRatesLoading ?? this.showRatesLoading,
     );
   }
 }
@@ -131,10 +136,37 @@ class SendViewModel extends StateNotifier<SendState> {
   static DateTime? _channelsCacheTime;
   static DateTime? _networksCacheTime;
   static const Duration _cacheValidityDuration = Duration(minutes: 5);
+  
+  // Debouncing mechanism for loading states
+  Timer? _loadingDebounceTimer;
+  static const Duration _loadingDebounceDelay = Duration(milliseconds: 500);
+  
+  // Initialization guard to prevent multiple initializations
+  bool _isInitialized = false;
+  bool _isInitializing = false;
+  
+  // Retry mechanism
+  static const int _maxRetries = 3;
+  static const Duration _retryDelay = Duration(seconds: 2);
 
   SendViewModel() : super(const SendState());
 
+  @override
+  void dispose() {
+    _loadingDebounceTimer?.cancel();
+    super.dispose();
+  }
+
   Future<void> initialize() async {
+    // Prevent multiple initializations
+    if (_isInitialized || _isInitializing) {
+      AppLogger.debug('SendViewModel already initialized or initializing, skipping...');
+      return;
+    }
+    
+    _isInitializing = true;
+    AppLogger.debug('🚀 Initializing SendViewModel...');
+    
     // Reset state to clear any cached data
     _resetSendState();
     
@@ -142,17 +174,46 @@ class SendViewModel extends StateNotifier<SendState> {
     state = state.copyWith(isLoading: true);
 
     try {
-      // Fetch available currencies from channels API
-      await _fetchAvailableCurrencies();
+      // Fetch available currencies from channels API with retry mechanism
+      await _fetchAvailableCurrenciesWithRetry();
       
       // After fetching channels, set up default delivery methods and fetch rates
       await _setupDefaultSelections();
+      
+      _isInitialized = true;
+      AppLogger.info('✅ SendViewModel initialized successfully');
     } catch (e) {
       // If API fails, keep default currencies
-      AppLogger.error('Failed to fetch currencies: $e');
+      AppLogger.error('❌ Failed to initialize SendViewModel: $e');
+      _isInitialized = false; // Allow retry
     } finally {
+      _isInitializing = false;
       state = state.copyWith(isLoading: false);
       _calculateTotal(); // Calculate initial total
+    }
+  }
+
+  /// Debounced loading state update to prevent rapid flickering
+  void _updateRatesLoadingState(bool isLoading) {
+    // Cancel any existing timer
+    _loadingDebounceTimer?.cancel();
+    
+    if (isLoading) {
+      // Show loading immediately when starting
+      state = state.copyWith(
+        isRatesLoading: true,
+        showRatesLoading: true,
+      );
+    } else {
+      // Debounce hiding the loading state
+      _loadingDebounceTimer = Timer(_loadingDebounceDelay, () {
+        if (mounted) {
+          state = state.copyWith(
+            isRatesLoading: false,
+            showRatesLoading: false,
+          );
+        }
+      });
     }
   }
 
@@ -179,8 +240,8 @@ class SendViewModel extends StateNotifier<SendState> {
     // Set default sender channel ID
     _setDefaultSenderChannelId();
     
-    // Update exchange rate after all currencies are set
-    _updateExchangeRate();
+    // Fetch rates for both currencies in parallel to avoid multiple sequential calls
+    await _fetchRatesForBothCurrencies();
   }
 
   Future<void> _setDefaultSendCurrency(String country, String currency) async {
@@ -218,8 +279,7 @@ class SendViewModel extends StateNotifier<SendState> {
       selectedSenderDeliveryMethod: firstSenderDeliveryMethod ?? '',
     );
     
-    // Fetch rates for the default send currency
-    await _fetchRates(currency);
+    // Don't fetch rates here - will be done in _fetchRatesForBothCurrencies
   }
 
   Future<void> _setDefaultReceiveCurrency(String country, String currency) async {
@@ -257,8 +317,7 @@ class SendViewModel extends StateNotifier<SendState> {
       selectedDeliveryMethod: firstDeliveryMethod ?? '',
     );
     
-    // Fetch rates for the default receive currency
-    await _fetchRates(currency);
+    // Don't fetch rates here - will be done in _fetchRatesForBothCurrencies
   }
 
   void _setDefaultSenderChannelId() {
@@ -284,6 +343,58 @@ class SendViewModel extends StateNotifier<SendState> {
     } else {
       AppLogger.warning('No deposit channels found for NG-NGN');
       print('🔴 NO SENDER CHANNEL FOUND');
+    }
+  }
+
+  /// Fetch rates for both send and receive currencies in parallel
+  Future<void> _fetchRatesForBothCurrencies() async {
+    try {
+      AppLogger.debug('Fetching rates for both currencies: ${state.sendCurrency} and ${state.receiverCurrency}');
+      _updateRatesLoadingState(true);
+      
+      // Fetch rates for both currencies in parallel
+      final futures = <Future>[];
+      
+      if (state.sendCurrency.isNotEmpty) {
+        futures.add(_fetchRates(state.sendCurrency));
+      }
+      
+      if (state.receiverCurrency.isNotEmpty && state.receiverCurrency != state.sendCurrency) {
+        futures.add(_fetchRates(state.receiverCurrency));
+      }
+      
+      // Wait for all rate fetches to complete
+      await Future.wait(futures);
+      
+      // Update exchange rate after all rates are fetched
+      _updateExchangeRate();
+      
+    } catch (e) {
+      AppLogger.error('Error fetching rates for both currencies: $e');
+    } finally {
+      _updateRatesLoadingState(false);
+    }
+  }
+
+  /// Fetch currencies with retry mechanism
+  Future<void> _fetchAvailableCurrenciesWithRetry() async {
+    for (int attempt = 1; attempt <= _maxRetries; attempt++) {
+      try {
+        AppLogger.debug('🔄 Fetching currencies attempt $attempt/$_maxRetries');
+        await _fetchAvailableCurrencies();
+        return; // Success, exit retry loop
+      } catch (e) {
+        AppLogger.warning('⚠️ Attempt $attempt failed: $e');
+        
+        if (attempt < _maxRetries) {
+          AppLogger.debug('⏳ Waiting ${_retryDelay.inSeconds}s before retry...');
+          await Future.delayed(_retryDelay);
+        } else {
+          AppLogger.error('❌ All retry attempts failed, using fallback data');
+          // Use fallback data instead of throwing
+          _useFallbackData();
+        }
+      }
     }
   }
 
@@ -343,6 +454,22 @@ class SendViewModel extends StateNotifier<SendState> {
       AppLogger.error('Error fetching currencies: $e');
       rethrow;
     }
+  }
+
+  /// Use fallback data when API fails
+  void _useFallbackData() {
+    AppLogger.info('🆘 Using fallback data due to API failures');
+    
+    // Use default currencies and empty channels
+    final fallbackCurrencies = ['NGN', 'RWF', 'USD', 'EUR', 'GBP'];
+    
+    state = state.copyWith(
+      availableCurrencies: fallbackCurrencies,
+      channels: [],
+      networks: [],
+    );
+    
+    AppLogger.info('Fallback data set with ${fallbackCurrencies.length} currencies');
   }
 
   Future<void> _fetchNetworks() async {
@@ -463,11 +590,8 @@ class SendViewModel extends StateNotifier<SendState> {
       selectedSenderChannelId: selectedSenderChannelId ?? '',
     );
     
-    // Fetch rates for the new send currency and wait for completion
-    await _fetchRates(currency);
-    
-    // Update exchange rate after currency change (rates are now fetched)
-    _updateExchangeRate();
+    // Fetch rates for both currencies in parallel
+    await _fetchRatesForBothCurrencies();
   }
 
   Future<void> updateReceiveCountry(String country, String currency) async {
@@ -512,11 +636,8 @@ class SendViewModel extends StateNotifier<SendState> {
     
     AppLogger.debug('🔄 Updated state: send=${state.sendCurrency}, receive=${state.receiverCurrency}');
     
-    // Fetch rates for the new receive currency and wait for completion
-    await _fetchRates(currency);
-    
-    // Update exchange rate after currency change (rates are now fetched)
-    _updateExchangeRate();
+    // Fetch rates for both currencies in parallel
+    await _fetchRatesForBothCurrencies();
   }
 
   void updateSendAmount(String amount) {
@@ -710,10 +831,13 @@ class SendViewModel extends StateNotifier<SendState> {
       final displayText = '$sendSymbol${1.toStringAsFixed(0)} = $receiveSymbol${1.toStringAsFixed(0)}';
       
       AppLogger.debug('📊 Exchange rate display (same currency): $displayText');
-      state = state.copyWith(exchangeRate: displayText);
       
-      // Update amounts when exchange rate changes
-      _updateReceiveAmountFromSend();
+      // Only update if the exchange rate has actually changed
+      if (state.exchangeRate != displayText) {
+        state = state.copyWith(exchangeRate: displayText);
+        // Update amounts when exchange rate changes
+        _updateReceiveAmountFromSend();
+      }
       return;
     }
     
@@ -744,10 +868,13 @@ class SendViewModel extends StateNotifier<SendState> {
       }
       
       AppLogger.debug('📊 Exchange rate display: $displayText');
-      state = state.copyWith(exchangeRate: displayText);
       
-      // Update amounts when exchange rate changes
-      _updateReceiveAmountFromSend();
+      // Only update if the exchange rate has actually changed
+      if (state.exchangeRate != displayText) {
+        state = state.copyWith(exchangeRate: displayText);
+        // Update amounts when exchange rate changes
+        _updateReceiveAmountFromSend();
+      }
     } else {
       AppLogger.warning('❌ Exchange rate calculation returned null');
     }
@@ -784,7 +911,6 @@ class SendViewModel extends StateNotifier<SendState> {
   Future<void> _fetchRates(String currency) async {
     try {
       AppLogger.debug('Fetching rates for currency: $currency');
-      state = state.copyWith(isRatesLoading: true);
       
       final response = await _paymentService.fetchRates(currency: currency);
       
@@ -816,9 +942,6 @@ class SendViewModel extends StateNotifier<SendState> {
             AppLogger.debug('Setting receive currency rates');
             state = state.copyWith(receiveCurrencyRates: rateData);
           }
-          
-          // Update exchange rate after setting rates
-          _updateExchangeRate();
         }
       }
     } catch (e) {
@@ -839,8 +962,6 @@ class SendViewModel extends StateNotifier<SendState> {
       } else if (currency == state.receiverCurrency) {
         state = state.copyWith(receiveCurrencyRates: rateData);
       }
-    } finally {
-      state = state.copyWith(isRatesLoading: false);
     }
   }
 
@@ -853,6 +974,26 @@ class SendViewModel extends StateNotifier<SendState> {
     }
     return false;
   }
+
+  /// Reset initialization state to allow re-initialization
+  void resetInitialization() {
+    AppLogger.debug('🔄 Resetting SendViewModel initialization state');
+    _isInitialized = false;
+    _isInitializing = false;
+  }
+
+  /// Force re-initialization (useful for retry scenarios)
+  Future<void> forceReinitialize() async {
+    AppLogger.debug('🔄 Force re-initializing SendViewModel');
+    resetInitialization();
+    await initialize();
+  }
+
+  /// Check if the viewmodel is currently initializing
+  bool get isInitializing => _isInitializing;
+
+  /// Check if the viewmodel has been initialized
+  bool get isInitialized => _isInitialized;
 }
 
 final sendViewModelProvider = StateNotifierProvider<SendViewModel, SendState>((ref) {

@@ -7,14 +7,14 @@ class TierUtils {
     if (user?.level == null || user!.level!.isEmpty) {
       return 1; // Default to Tier 1
     }
-    
+
     // Parse level from format like "level-1", "level-2", etc.
     final levelString = user.level!.toLowerCase();
     if (levelString.startsWith('level-')) {
       final levelNumber = int.tryParse(levelString.substring(6));
       return levelNumber ?? 1;
     }
-    
+
     // Handle numeric strings
     final levelNumber = int.tryParse(user.level!);
     return levelNumber ?? 1;
@@ -23,13 +23,13 @@ class TierUtils {
   /// Get tier display name (e.g., "Tier 1", "Tier 2")
   static String getTierDisplayName(User? user) {
     final tierLevel = getCurrentTierLevel(user);
-    return 'Tier ${tierLevel+1}';
+    return 'Tier $tierLevel';
   }
 
   /// Get tier icon asset path
   static String getTierIconPath(User? user) {
     final tierLevel = getCurrentTierLevel(user);
-    return 'assets/icons/pngs/tier${tierLevel+1}.png';
+    return 'assets/icons/pngs/tier$tierLevel.png';
   }
 
   /// Get tier color based on level
@@ -91,25 +91,29 @@ class TierUtils {
         return {
           'monthly': '1,000 USD',
           'yearly': '10,000 USD',
-          'description': 'No verification required. However, you have a transfer limit of 1,000 USD per month and 10,000 USD per year.',
+          'description':
+              'No verification required. However, you have a transfer limit of 1,000 USD per month and 10,000 USD per year.',
         };
       case 2:
         return {
           'monthly': '20,000 USD',
           'yearly': '100,000 USD',
-          'description': 'You can send up to 20,000 USD per month and 100,000 USD per year.',
+          'description':
+              'You can send up to 20,000 USD per month and 100,000 USD per year.',
         };
       case 3:
         return {
           'monthly': '100,000 USD',
           'yearly': '300,000 USD',
-          'description': 'You can send up to 100,000 USD per month and 300,000 USD per year.',
+          'description':
+              'You can send up to 100,000 USD per month and 300,000 USD per year.',
         };
       default:
         return {
           'monthly': '1,000 USD',
           'yearly': '10,000 USD',
-          'description': 'No verification required. However, you have a transfer limit of 1,000 USD per month and 10,000 USD per year.',
+          'description':
+              'No verification required. However, you have a transfer limit of 1,000 USD per month and 10,000 USD per year.',
         };
     }
   }

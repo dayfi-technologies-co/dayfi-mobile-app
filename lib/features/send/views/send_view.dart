@@ -148,12 +148,52 @@ class _SendViewState extends ConsumerState<SendView>
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       // Ensure no text field has focus when the widget is first built
       FocusScope.of(context).unfocus();
-      await ref.read(sendViewModelProvider.notifier).initialize();
+      
+      // Only initialize if not already initialized or initializing
+      final viewModel = ref.read(sendViewModelProvider.notifier);
+      if (!viewModel.isInitialized && !viewModel.isInitializing) {
+        try {
+          await viewModel.initialize();
+        } catch (e) {
+          // Log error but don't crash the app
+          print('Error initializing SendView: $e');
+        }
+      }
+      
       analyticsService.trackScreenView(screenName: 'SendView');
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _sendAmountController.dispose();
+    _receiveAmountController.dispose();
+    _searchController.dispose();
+    _sendAmountFocus.dispose();
+    _receiveAmountFocus.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      // App came back to foreground, ensure keyboard is dismissed
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          FocusScope.of(context).unfocus();
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sendState = ref.watch(sendViewModelProvider);
 
     // Listen to state changes and update controllers
-    ref.listenManual(sendViewModelProvider, (previous, next) {
+    ref.listen(sendViewModelProvider, (previous, next) {
       if (previous?.sendAmount != next.sendAmount &&
           !_isUpdatingSendController) {
         _isUpdatingSendController = true;
@@ -193,35 +233,6 @@ class _SendViewState extends ConsumerState<SendView>
         _isUpdatingReceiveController = false;
       }
     });
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    _sendAmountController.dispose();
-    _receiveAmountController.dispose();
-    _searchController.dispose();
-    _sendAmountFocus.dispose();
-    _receiveAmountFocus.dispose();
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
-    if (state == AppLifecycleState.resumed) {
-      // App came back to foreground, ensure keyboard is dismissed
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          FocusScope.of(context).unfocus();
-        }
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final sendState = ref.watch(sendViewModelProvider);
 
     // Ensure keyboard is dismissed when building the widget
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -277,43 +288,58 @@ class _SendViewState extends ConsumerState<SendView>
             ),
           ],
         ),
-        body: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 8.0.h),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Transfer Limit Card
-              if (sendState.showUpgradePrompt) _buildUpgradeCard(),
+        body: RefreshIndicator(
+          onRefresh: () async {
+            // Dismiss keyboard when refreshing
+            FocusScope.of(context).unfocus();
+            
+            // Force re-initialize the view model to refresh all data
+            try {
+              await ref.read(sendViewModelProvider.notifier).forceReinitialize();
+            } catch (e) {
+              // Log error but don't crash the app
+              print('Error refreshing SendView: $e');
+            }
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 8.0.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Transfer Limit Card
+                if (sendState.showUpgradePrompt) _buildUpgradeCard(),
 
-              SizedBox(height: 16.h),
+                SizedBox(height: 16.h),
 
-              Column(
-                children: [
-                  // Send Amount Section
-                  _buildSendAmountSection(sendState),
+                Column(
+                  children: [
+                    // Send Amount Section
+                    _buildSendAmountSection(sendState),
 
-                  SizedBox(height: 24.h),
-                  _buildExchangeRateSection(sendState),
+                    SizedBox(height: 24.h),
+                    _buildExchangeRateSection(sendState),
 
-                  // Sender Delivery Method Section
-                  // _buildSenderDeliveryMethodSection(sendState),
-                  SizedBox(height: 12.h),
+                    // Sender Delivery Method Section
+                    // _buildSenderDeliveryMethodSection(sendState),
+                    SizedBox(height: 12.h),
 
-                  // Receive Amount Section
-                  _buildReceiveAmountSection(sendState),
+                    // Receive Amount Section
+                    _buildReceiveAmountSection(sendState),
 
-                  SizedBox(height: 16.h),
+                    SizedBox(height: 16.h),
 
-                  // Recipient Delivery Method Section
-                  _buildRecipientDeliveryMethodSection(sendState),
-                ],
-              ),
-              SizedBox(height: 32.h),
+                    // Recipient Delivery Method Section
+                    _buildRecipientDeliveryMethodSection(sendState),
+                  ],
+                ),
+                SizedBox(height: 32.h),
 
-              // Send Button
-              _buildSendButton(sendState),
-              SizedBox(height: 112.h),
-            ],
+                // Send Button
+                _buildSendButton(sendState),
+                SizedBox(height: 112.h),
+              ],
+            ),
           ),
         ),
       ),
@@ -913,7 +939,7 @@ class _SendViewState extends ConsumerState<SendView>
                   ),
                 ],
               ),
-              if (state.isRatesLoading) ...[
+              if (state.showRatesLoading) ...[
                 SizedBox(
                   width: 20.w,
                   height: 20.w,
@@ -970,7 +996,7 @@ class _SendViewState extends ConsumerState<SendView>
                 ],
               ),
 
-              if (state.isRatesLoading) ...[
+              if (state.showRatesLoading) ...[
                 SizedBox(
                   width: 20.w,
                   height: 20.w,
@@ -1034,7 +1060,7 @@ class _SendViewState extends ConsumerState<SendView>
                 ],
               ),
 
-              if (state.isRatesLoading) ...[
+              if (state.showRatesLoading) ...[
                 SizedBox(
                   width: 20.w,
                   height: 20.w,

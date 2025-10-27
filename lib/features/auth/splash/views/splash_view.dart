@@ -49,20 +49,16 @@ class _SplashViewState extends ConsumerState<SplashView> {
         if (userToken.isNotEmpty && userJson.isEmpty) {
           // Clear inconsistent data and redirect to login
           await _clearInconsistentData();
-          Navigator.of(context).pushReplacementNamed(AppRoute.loginView, arguments: false);
+          appRouter.pushLoginAndClearStack(arguments: false);
           return;
         }
 
         if (isFirstTimeUser && userToken.isEmpty) {
           Navigator.of(context).pushReplacementNamed(AppRoute.onboardingView);
         } else if (userToken.isEmpty) {
-          Navigator.of(
-            context,
-          ).pushReplacementNamed(AppRoute.loginView, arguments: false);
+          appRouter.pushLoginAndClearStack(arguments: false);
         } else if (userPasscode.isEmpty) {
-          Navigator.of(
-            context,
-          ).pushReplacementNamed(AppRoute.loginView, arguments: false);
+          appRouter.pushLoginAndClearStack(arguments: false);
         } else {
           // Skip biometric setup for now - go directly to passcode view
           // TODO: Re-enable biometric setup later

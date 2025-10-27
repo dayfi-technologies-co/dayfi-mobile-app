@@ -175,8 +175,8 @@ class ReenterPasscodeNotifier extends StateNotifier<ReenterPasscodeState> {
                       );
 
                       if (biometricSetupCompleted == 'true') {
-                        // Biometric setup already completed, go to main view
-                        appRouter.pushNamed(AppRoute.mainView);
+                        // Biometric setup already completed, go to main view and clear stack
+                        appRouter.pushMainAndClearStack();
                       } else {
                         // Biometric setup not completed, show biometric setup screen
                         appRouter.pushNamed(AppRoute.biometricSetupView);

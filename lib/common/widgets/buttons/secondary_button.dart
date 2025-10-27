@@ -185,7 +185,7 @@ class SecondaryButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(borderRadius ?? 10.r),
           side: BorderSide(
             color: effectiveBorderColor,
-            width: borderWidth ?? 1,
+            width: borderWidth ?? 1.5,
           ),
         ),
         shadows:

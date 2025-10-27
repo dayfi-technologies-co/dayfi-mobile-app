@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -15,7 +14,6 @@ import 'package:dayfi/services/local/secure_storage.dart';
 import 'package:dayfi/common/constants/storage_keys.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
-import 'package:dayfi/services/notification_service.dart';
 
 class MainView extends ConsumerStatefulWidget {
   final int initialTabIndex;
@@ -59,9 +57,6 @@ class _MainViewState extends ConsumerState<MainView> {
         await Future.delayed(const Duration(milliseconds: 500));
         if (mounted) {
           _showWelcomeBottomSheet();
-          
-          // Trigger sign-up success notification for new users
-          _triggerSignUpNotification();
         }
       }
     } catch (e) {
@@ -70,9 +65,6 @@ class _MainViewState extends ConsumerState<MainView> {
       await Future.delayed(const Duration(milliseconds: 500));
       if (mounted) {
         _showWelcomeBottomSheet();
-        
-        // Trigger sign-up success notification for new users
-        _triggerSignUpNotification();
       }
     }
   }
@@ -95,44 +87,6 @@ class _MainViewState extends ConsumerState<MainView> {
     }
   }
 
-  /// Trigger sign-up success notification for new users
-  Future<void> _triggerSignUpNotification() async {
-    try {
-      // Get user data from storage
-      final userJson = await _secureStorage.read(StorageKeys.user);
-      String firstName = 'User'; // Default fallback
-      
-      if (userJson.isNotEmpty) {
-        try {
-          final userData = json.decode(userJson);
-          firstName = userData['firstName'] ?? 'User';
-        } catch (e) {
-          AppLogger.warning('Error parsing user data: $e');
-        }
-      }
-      
-      // Add a small delay to ensure the app is fully loaded
-      await Future.delayed(const Duration(milliseconds: 1000));
-      
-      // Trigger the notification
-      await NotificationService().triggerSignUpSuccess(firstName);
-      
-      // Also show a direct local notification as backup
-      await NotificationService().showLocalNotification(
-        'Welcome to DayFi! 🎉',
-        'Your account is ready. Send money to those who matter.',
-        data: {
-          'type': 'welcome',
-          'action': 'navigate_to_profile',
-          'userName': firstName,
-        },
-      );
-      
-      AppLogger.info('Sign-up success notification triggered for: $firstName');
-    } catch (e) {
-      AppLogger.error('Error triggering sign-up notification: $e');
-    }
-  }
 
   void _showBiometricReminder() {
     showDialog(

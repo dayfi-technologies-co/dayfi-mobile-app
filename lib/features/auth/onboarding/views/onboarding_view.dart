@@ -97,8 +97,8 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
                                     borderRadius: BorderRadius.circular(8.r),
                                     color:
                                         index == currentPage
-                                            ? AppColors.neutral700
-                                            : AppColors.neutral300,
+                                            ? Theme.of(context).colorScheme.onSurface
+                                            : Theme.of(context).colorScheme.onSurface.withOpacity(.5),
                                   ),
                                 )
                                 .animate()

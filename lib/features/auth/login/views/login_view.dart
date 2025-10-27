@@ -1,6 +1,7 @@
 import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
 import 'package:dayfi/common/widgets/eye_icon.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
+import 'package:dayfi/app_locator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -42,6 +43,8 @@ class _LoginViewState extends ConsumerState<LoginView> {
         if (widget.showBackButton) {
           // Reset form when back button is pressed
           loginNotifier.resetForm();
+          // Use fallback method to prevent black screens
+          appRouter.handleBackButtonWithFallback();
         }
       },
       child: GestureDetector(

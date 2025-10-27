@@ -50,23 +50,23 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
                   width: 80.w,
                   height: 80.w,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        AppColors.purple500.withOpacity(0.1),
-                        AppColors.purple500.withOpacity(0.05),
-                      ],
-                    ),
+                    // gradient: LinearGradient(
+                    //   begin: Alignment.topLeft,
+                    //   end: Alignment.bottomRight,
+                    //   colors: [
+                    //     AppColors.purple500.withOpacity(0.1),
+                    //     AppColors.purple500.withOpacity(0.05),
+                    //   ],
+                    // ),
                     shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.purple500.withOpacity(0.1),
-                        blurRadius: 20,
-                        spreadRadius: 2,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
+                    // boxShadow: [
+                    //   BoxShadow(
+                    //     color: AppColors.purple500.withOpacity(0.1),
+                    //     blurRadius: 20,
+                    //     spreadRadius: 2,
+                    //     offset: const Offset(0, 4),
+                    //   ),
+                    // ],
                   ),
                   // child: Icon(
                   //   Icons.security_rounded,

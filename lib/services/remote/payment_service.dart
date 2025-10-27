@@ -178,7 +178,7 @@ class PaymentService {
   ) async {
     try {
       final response = await _networkService.call(
-        '${F.baseUrl}/api/v1/payments/create-payment-request',
+        '${F.baseUrl}/payments/create-payment-request',
         RequestMethod.post,
         data: requestData,
       );
@@ -206,7 +206,7 @@ class PaymentService {
   Future<String> checkCollectionStatus(String collectionSequenceId) async {
     try {
       final response = await _networkService.call(
-        '${F.baseUrl}/api/v1/payments/collection-status/$collectionSequenceId',
+        '${F.baseUrl}/payments/collection-status/$collectionSequenceId',
         RequestMethod.get,
       );
 
@@ -223,7 +223,7 @@ class PaymentService {
       // Extract status from response
       final status = responseData['status']?.toString() ?? 'unknown';
       print('🔍 Collection status for $collectionSequenceId: $status');
-      
+
       return status;
     } catch (e) {
       print('❌ Error checking collection status: $e');
@@ -238,7 +238,7 @@ class PaymentService {
   ) async {
     try {
       final response = await _networkService.call(
-        '${F.baseUrl}/api/v1/payments/collection-status/$collectionSequenceId',
+        '${F.baseUrl}/payments/collection-status/$collectionSequenceId',
         RequestMethod.get,
       );
 
@@ -250,6 +250,39 @@ class PaymentService {
         responseData = json.decode(response.data);
       } else {
         throw Exception('Invalid response format');
+      }
+
+      final paymentResponse = PaymentResponse.fromJson(responseData);
+
+      return paymentResponse;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // {{BASE_URL}}/api/v1/payments/crypto-channels
+  Future<PaymentResponse> fetchCryptoChannels() async {
+    try {
+      final response = await _networkService.call(
+        '${F.baseUrl}/payments/crypto-channels',
+        RequestMethod.get,
+      );
+
+      // Handle response data - check if it's a Map or String
+      Map<String, dynamic> responseData;
+      if (response.data is Map<String, dynamic>) {
+        responseData = response.data;
+      } else if (response.data is String) {
+        // Try to parse JSON string
+        try {
+          responseData = json.decode(response.data);
+        } catch (jsonError) {
+          throw Exception('Failed to parse JSON response: $jsonError');
+        }
+      } else {
+        throw Exception(
+          'Invalid response format: ${response.data.runtimeType}',
+        );
       }
 
       final paymentResponse = PaymentResponse.fromJson(responseData);

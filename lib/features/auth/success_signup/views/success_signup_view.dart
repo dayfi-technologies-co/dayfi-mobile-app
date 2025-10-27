@@ -7,12 +7,22 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dayfi/app_locator.dart';
+import 'package:dayfi/services/notification_service.dart';
+import 'package:dayfi/common/utils/app_logger.dart';
+import 'package:dayfi/services/local/secure_storage.dart';
+import 'package:dayfi/common/constants/storage_keys.dart';
+import 'dart:convert';
 
 class SuccessSignupView extends ConsumerWidget {
   const SuccessSignupView({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Trigger signup success notification when this view is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _triggerSignUpNotification();
+    });
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
@@ -340,5 +350,34 @@ class SuccessSignupView extends ConsumerWidget {
           duration: 500.ms,
           curve: Curves.easeOutCubic,
         );
+  }
+
+  /// Trigger sign-up success notification for new users
+  Future<void> _triggerSignUpNotification() async {
+    try {
+      // Get user data from storage to get the first name
+      final secureStorage = locator<SecureStorageService>();
+      final userJson = await secureStorage.read(StorageKeys.user);
+      String firstName = 'User'; // Default fallback
+
+      if (userJson.isNotEmpty) {
+        try {
+          final userData = json.decode(userJson);
+          firstName = userData['firstName'] ?? 'User';
+        } catch (e) {
+          AppLogger.warning('Error parsing user data: $e');
+        }
+      }
+
+      // Add a small delay to ensure the view is fully loaded
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      // Trigger the notification
+      await NotificationService().triggerSignUpSuccess(firstName);
+
+      AppLogger.info('Sign-up success notification triggered for: $firstName');
+    } catch (e) {
+      AppLogger.error('Error triggering sign-up notification: $e');
+    }
   }
 }

@@ -82,6 +82,9 @@ class PaymentData {
   // For channels response
   List<Channel>? channels;
   
+  // For raw channels data (e.g., crypto channels)
+  dynamic rawChannels;
+  
   // For networks response
   List<Network>? networks;
   
@@ -122,6 +125,7 @@ class PaymentData {
     this.amount,
     this.depositId,
     this.channels,
+    this.rawChannels,
     this.networks,
     this.rates,
   });
@@ -160,9 +164,17 @@ class PaymentData {
       partnerFeeAmountUSD: data['partnerFeeAmountUSD']?.toDouble(),
       amount: data['amount']?.toDouble(),
       depositId: data['depositId'],
-      channels: data['channels'] != null 
-          ? (data['channels'] as List).map((e) => Channel.fromJson(e)).toList()
+      channels: data['channels'] != null && data['channels'] is List
+          ? (data['channels'] as List).map((e) {
+              // Check if the channel data is a simple channel (has channelType, country, etc.)
+              if (e is Map<String, dynamic> && e.containsKey('channelType')) {
+                return Channel.fromJson(e);
+              } else {
+                return null;
+              }
+            }).where((e) => e != null).toList().cast<Channel>()
           : null,
+      rawChannels: data['channels'] != null ? data['channels'] : null,
       networks: data['networks'] != null 
           ? (data['networks'] as List).map((e) => Network.fromJson(e)).toList()
           : null,
@@ -207,6 +219,7 @@ class PaymentData {
       'amount': amount,
       'depositId': depositId,
       'channels': channels?.map((e) => e.toJson()).toList(),
+      'rawChannels': rawChannels,
       'networks': networks?.map((e) => e.toJson()).toList(),
       'rates': rates?.map((e) => e.toJson()).toList(),
     };

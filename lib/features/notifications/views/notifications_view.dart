@@ -181,7 +181,10 @@ class _NotificationsViewState extends State<NotificationsView> {
     );
   }
 
-  Widget _buildNotificationGroup(String date, List<NotificationItem> notifications) {
+  Widget _buildNotificationGroup(
+    String date,
+    List<NotificationItem> notifications,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -280,7 +283,9 @@ class _NotificationsViewState extends State<NotificationsView> {
               width: 40.w,
               height: 40.w,
               decoration: BoxDecoration(
-                color: _getNotificationColor(notification.type).withOpacity(0.1),
+                color: _getNotificationColor(
+                  notification.type,
+                ).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(16.r),
               ),
               child: Center(
@@ -317,7 +322,9 @@ class _NotificationsViewState extends State<NotificationsView> {
                       fontWeight: FontWeight.w500,
                       letterSpacing: -.6,
                       height: 1.450,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.75),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.75),
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -333,7 +340,7 @@ class _NotificationsViewState extends State<NotificationsView> {
                         fontSize: 12.sp,
                       ),
                     ),
-                  )
+                  ),
                 ],
               ),
             ),
@@ -349,12 +356,7 @@ class _NotificationsViewState extends State<NotificationsView> {
                 ),
               )
             else
-              SvgPicture.asset(
-                'assets/icons/svgs/circle-check.svg',
-                color: AppColors.purple500,
-                height: 16.sp,
-                width: 16.sp,
-              ),
+              SizedBox.shrink(),
           ],
         ),
       ),

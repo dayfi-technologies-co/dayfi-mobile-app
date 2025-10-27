@@ -237,25 +237,25 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
               AppLogger.info('User data updated after re-authentication: ${response.data!.user!.firstName}');
             }
 
-            // Navigate to main view
-            appRouter.pushNamed(AppRoute.mainView);
+            // Navigate to main view and clear stack
+            appRouter.pushMainAndClearStack();
           } else {
             // If re-authentication fails, clear credentials and show error
             await _clearStoredCredentials();
             _showErrorSnackBar('Session expired. Please login again.');
-            appRouter.pushNamed(AppRoute.loginView);
+            appRouter.pushLoginAndClearStack();
           }
         } catch (e) {
           AppLogger.error('Error during re-authentication: $e');
           // If re-authentication fails, clear credentials and show error
           await _clearStoredCredentials();
           _showErrorSnackBar('Session expired. Please login again.');
-          appRouter.pushNamed(AppRoute.loginView);
+          appRouter.pushLoginAndClearStack();
         }
       } else {
         // No saved credentials found, redirect to login
         _showErrorSnackBar('Please login again.');
-        appRouter.pushNamed(AppRoute.loginView);
+        appRouter.pushLoginAndClearStack();
       }
     } catch (e) {
       AppLogger.error('Error in authentication and navigation: $e');
@@ -284,8 +284,8 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
       final dataClearingService = DataClearingService();
       await dataClearingService.clearAllUserData(ref);
 
-      // Navigate to login (hide back button)
-      appRouter.pushNamed(AppRoute.loginView, arguments: false);
+      // Navigate to login and clear stack (hide back button)
+      appRouter.pushLoginAndClearStack(arguments: false);
     } catch (e) {
       if (mounted) {
         _showErrorSnackBar('Error during logout: ${e.toString()}');

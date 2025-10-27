@@ -165,14 +165,16 @@ class _SendReviewViewState extends ConsumerState<SendReviewView> {
   // Helper method to get network name from networkId
   String _getNetworkName(String? networkId) {
     if (networkId == null || networkId.isEmpty) return 'Unknown Network';
-    
+
     final sendState = ref.watch(sendViewModelProvider);
-    
+
     // Debug logging
     print('🔍 Looking for network ID: $networkId');
     print('📊 Available networks count: ${sendState.networks.length}');
-    print('📋 Available network IDs: ${sendState.networks.map((n) => n.id).join(", ")}');
-    
+    print(
+      '📋 Available network IDs: ${sendState.networks.map((n) => n.id).join(", ")}',
+    );
+
     // If networks are empty, try to trigger a refresh
     if (sendState.networks.isEmpty) {
       print('⚠️ No networks loaded, triggering refresh...');
@@ -181,17 +183,17 @@ class _SendReviewViewState extends ConsumerState<SendReviewView> {
       });
       return 'Loading...';
     }
-    
+
     final network = sendState.networks.firstWhere(
       (n) => n.id == networkId,
       orElse: () => Network(id: null, name: null),
     );
-    
+
     if (network.id == null) {
       print('❌ Network not found for ID: $networkId');
       return 'Unknown Network';
     }
-    
+
     print('✅ Found network: ${network.name} for ID: $networkId');
     return network.name ?? 'Unknown Network';
   }
@@ -336,12 +338,13 @@ class _SendReviewViewState extends ConsumerState<SendReviewView> {
             'Transfer Fee',
             '₦${_formatNumber(double.tryParse(sendState.fee.toString()) ?? 0)}',
           ),
-          _buildDetailRow('Transfer Taxes', '₦0.00'),
 
+          // _buildDetailRow('Transfer Taxes', '₦0.00'),
           Divider(
             color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
             height: 24.h,
           ),
+          SizedBox(height: 12.h),
 
           _buildDetailRow(
             'Total',
@@ -349,16 +352,16 @@ class _SendReviewViewState extends ConsumerState<SendReviewView> {
             isTotal: true,
           ),
 
-          SizedBox(height: 16.h),
-
           _buildDetailRow('Beneficiary ', widget.recipientData['name']),
+          SizedBox(height: 6.h),
+
           _buildDetailRow(
             'Bank Network',
             _getNetworkName(widget.recipientData['networkId']),
           ),
           _buildDetailRow(
             'Delivery Method',
-            widget.selectedData['recipientDeliveryMethod'] ?? 'Bank Transfer',
+            widget.selectedData['recipientDeliveryMethod'].toString().toUpperCase() ?? 'Bank Transfer',
           ),
           _buildDetailRow('Transfer Time', 'Within 24 hours', bottomPadding: 0),
         ],
@@ -371,7 +374,10 @@ class _SendReviewViewState extends ConsumerState<SendReviewView> {
     switch (label.toLowerCase()) {
       case 'transfer amount':
       case 'fee':
-        return Transform.rotate(angle: -pi/2, child: SvgPicture.asset('assets/icons/svgs/fee.svg', height: 24),);
+        return Transform.rotate(
+          angle: -pi / 2,
+          child: SvgPicture.asset('assets/icons/svgs/fee.svg', height: 24),
+        );
       case 'transfer fee':
         return SvgPicture.asset('assets/icons/svgs/fee.svg', height: 24);
       case 'total':
@@ -428,15 +434,17 @@ class _SendReviewViewState extends ConsumerState<SendReviewView> {
             ],
           ),
           SizedBox(width: 16.w),
-     Expanded(child:     Text(
-            value,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              fontFamily: 'CabinetGrotesk',
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.onSurface,
+          Expanded(
+            child: Text(
+              value,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                fontFamily: 'CabinetGrotesk',
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+              textAlign: TextAlign.end,
             ),
-                    textAlign: TextAlign.end,),
           ),
         ],
       ),
