@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:dayfi/models/notification_item.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 class NotificationsView extends StatefulWidget {
   const NotificationsView({super.key});
@@ -139,9 +138,9 @@ class _NotificationsViewState extends State<NotificationsView> {
           "Alerts",
           style: Theme.of(context).textTheme.headlineLarge?.copyWith(
             fontFamily: 'CabinetGrotesk',
-            fontSize: 28.sp,
+            fontSize: 20.sp,
             fontWeight: FontWeight.w600,
-            letterSpacing: -0.8,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         centerTitle: true,

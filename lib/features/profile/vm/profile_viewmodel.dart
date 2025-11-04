@@ -150,6 +150,7 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
         transactionPin: state.user!.transactionPin,
         isIdVerified: state.user!.isIdVerified,
         isBiometricsSetup: state.user!.isBiometricsSetup,
+        dayfiId: state.user!.dayfiId,
       );
 
       // Save updated user to storage

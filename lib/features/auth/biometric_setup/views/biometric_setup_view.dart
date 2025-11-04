@@ -8,6 +8,8 @@ import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/common/widgets/buttons/secondary_button.dart';
 import 'package:dayfi/features/auth/biometric_setup/vm/biometric_setup_viewmodel.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:dayfi/app_locator.dart';
+import 'package:dayfi/routes/route.dart';
 
 class BiometricSetupView extends ConsumerStatefulWidget {
   const BiometricSetupView({super.key});
@@ -280,11 +282,14 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
     BiometricSetupNotifier notifier,
     BiometricSetupState state,
   ) {
+    bool dialogLoading = false;
     showDialog(
       context: context,
       barrierDismissible: false,
       builder:
-          (BuildContext context) => Dialog(
+          (BuildContext context) => StatefulBuilder(
+            builder: (context, setStateSB) {
+              return Dialog(
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(24.r),
@@ -338,13 +343,28 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
 
                   SizedBox(height: 16.h),
 
+                  if (dialogLoading) ...[
+                    SizedBox(height: 8.h),
+                    LoadingAnimationWidget.horizontalRotatingDots(
+                      color: AppColors.purple500,
+                      size: 22,
+                    ),
+                    SizedBox(height: 16.h),
+                  ],
+
                   // Continue button with auth view styling
                   PrimaryButton(
-                    text: 'Yes, I\'ll do it later',
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      notifier.skipBiometrics(context);
-                    },
+                    text: dialogLoading ? 'Please wait...' : 'Yes, I\'ll do it later',
+                    onPressed: dialogLoading
+                        ? null
+                        : () async {
+                            setStateSB(() { dialogLoading = true; });
+                            await notifier.skipBiometrics(context);
+                            if (context.mounted) {
+                              Navigator.of(context).pop();
+                              appRouter.pushNamed(AppRoute.mainView);
+                            }
+                          },
                     backgroundColor: AppColors.purple500,
                     textColor: AppColors.neutral0,
                     borderRadius: 38,
@@ -361,10 +381,12 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
                   // Cancel button with auth view styling
                   SecondaryButton(
                     text: 'No, enable it now',
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      notifier.enableBiometrics(context);
-                    },
+                    onPressed: dialogLoading
+                        ? null
+                        : () {
+                            Navigator.of(context).pop();
+                            notifier.enableBiometrics(context);
+                          },
                     borderColor: Colors.transparent,
                     textColor: AppColors.purple500,
                     width: double.infinity,
@@ -379,6 +401,8 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
                 ],
               ),
             ),
+          );
+            },
           ),
     );
   }

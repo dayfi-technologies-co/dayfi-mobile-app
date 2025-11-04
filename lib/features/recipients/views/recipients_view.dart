@@ -1,10 +1,11 @@
+import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
+import 'package:dayfi/routes/route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
-import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/features/recipients/vm/recipients_viewmodel.dart';
 import 'package:dayfi/features/send/views/send_view.dart';
 import 'package:dayfi/features/send/vm/send_viewmodel.dart';
@@ -65,37 +66,55 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
           scrolledUnderElevation: 0,
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
-          leading: const SizedBox.shrink(),
-          leadingWidth: 0,
+          leading: IconButton(
+            onPressed: () => appRouter.pop(),
+            icon: Icon(
+              Icons.arrow_back_ios,
+              color: Theme.of(context).colorScheme.onSurface,
+              // size: 20.sp,
+            ),
+          ),
           title: Text(
             "Beneficiaries",
             style: AppTypography.titleLarge.copyWith(
-              fontFamily: 'CabinetGrotesk',
-              fontSize: 28.sp,
-              fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.onSurface,
+               fontFamily: 'CabinetGrotesk',
+            fontSize: 20.sp,
+            fontWeight: FontWeight.w600,
+            color: Theme.of(context).colorScheme.onSurface,
+          
             ),
           ),
           centerTitle: true,
-          // actions: [
-          //   IconButton(
-          //     icon: Container(
-          //       width: 32.w,
-          //       height: 32.w,
-          //       decoration: BoxDecoration(
-          //         color: AppColors.purple500,
-          //         shape: BoxShape.circle,
-          //       ),
-          //       child: Icon(
-          //         Icons.add,
-          //         color: AppColors.neutral0,
-          //         size: 20.sp,
-          //       ),
-          //     ),
-          //     onPressed: () => _navigateToAddRecipient(),
-          //   ),
-          //   SizedBox(width: 16.w),
-          // ],
+          actions: [
+            Padding(
+              padding: EdgeInsets.only(right: 16.w),
+              child: IconButton(
+                onPressed: () {
+                  appRouter.pushNamed(
+                    AppRoute.addRecipientsView,
+                    arguments: <String, dynamic>{},
+                  );
+                },
+                icon: SvgPicture.asset(
+                  "assets/icons/svgs/user-plus.svg",
+                  width: 24.w,
+                  height: 24.w,
+                  color: Theme.of(context).colorScheme.onSurface,
+                  colorFilter: ColorFilter.mode(
+                    Theme.of(context).colorScheme.onSurface,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                tooltip: 'Add beneficiary',
+                style: IconButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
+            ),
+            SizedBox(width: 16.w),
+          ],
         ),
         body: RefreshIndicator(
           onRefresh: () async {
@@ -277,7 +296,7 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
               Container(
                 width: 40.w,
                 height: 40.w,
-                   margin: EdgeInsets.only(bottom: 4.w, right: 4.w),
+                margin: EdgeInsets.only(bottom: 4.w, right: 4.w),
                 decoration: BoxDecoration(
                   color: AppColors.purple500,
                   shape: BoxShape.circle,
@@ -303,10 +322,7 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
                   decoration: BoxDecoration(
                     color: AppColors.neutral0,
                     shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.neutral200,
-                      width: 1,
-                    ),
+                    border: Border.all(color: AppColors.neutral200, width: 1),
                   ),
                   child: ClipOval(
                     child: SvgPicture.asset(
@@ -457,24 +473,28 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
     }
   }
 
-  String _getChannelAndNetworkInfo(BeneficiaryWithSource beneficiaryWithSource) {
+  String _getChannelAndNetworkInfo(
+    BeneficiaryWithSource beneficiaryWithSource,
+  ) {
     final beneficiary = beneficiaryWithSource.beneficiary;
     final source = beneficiaryWithSource.source;
-    
+
     try {
       final sendState = ref.watch(sendViewModelProvider);
       final networkId = source.networkId;
-      
+
       if (networkId == null || networkId.isEmpty) {
         print('❌ No network ID found for beneficiary: ${beneficiary.name}');
         return 'Unknown Network';
       }
-      
+
       // Debug logging
       print('🔍 Looking for network ID: $networkId');
       print('📊 Available networks count: ${sendState.networks.length}');
-      print('📋 Available network IDs: ${sendState.networks.map((n) => n.id).join(", ")}');
-      
+      print(
+        '📋 Available network IDs: ${sendState.networks.map((n) => n.id).join(", ")}',
+      );
+
       // If networks are empty, try to trigger a refresh
       if (sendState.networks.isEmpty) {
         print('⚠️ No networks loaded, triggering refresh...');
@@ -483,17 +503,17 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
         });
         return 'Loading...';
       }
-      
+
       final network = sendState.networks.firstWhere(
         (n) => n.id == networkId,
         orElse: () => payment.Network(id: null, name: null),
       );
-      
+
       if (network.id == null) {
         print('❌ Network not found for ID: $networkId');
         return 'Unknown Network';
       }
-      
+
       print('✅ Found network: ${network.name} for ID: $networkId');
       return network.name ?? 'Unknown Network';
     } catch (e) {

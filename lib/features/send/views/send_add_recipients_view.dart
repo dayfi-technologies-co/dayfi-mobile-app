@@ -373,10 +373,11 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
               title: Text(
                 'Add Beneficiary',
                 style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                  fontFamily: 'CabinetGrotesk',
-                  fontSize: 28.sp,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: -0.8,
+                 fontFamily: 'CabinetGrotesk',
+            fontSize: 20.sp,
+            fontWeight: FontWeight.w600,
+            color: Theme.of(context).colorScheme.onSurface,
+          
                 ),
               ),
               centerTitle: true,
@@ -395,7 +396,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                       Center(
                         // padding: EdgeInsets.only(left: 16.w),
                         child: Text(
-                          'Please select a network to enable account resolution',
+                          widget.selectedData['recipientDeliveryMethod'] == 'bank' ? 'Please select a bank to enable account resolution' : 'Please select a mobile money provider to enable account resolution',
                           style: AppTypography.bodySmall.copyWith(
                             fontFamily: 'Karla',
                             fontSize: 12.sp,
@@ -413,11 +414,11 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                     // Account Number Field (Required)
                     CustomTextField(
                       controller: _accountNumberController,
-                      label: 'Account Number',
+                      label: widget.selectedData['recipientDeliveryMethod'] == 'bank' ? 'Account Number' : 'Mobile Money Number',
                       hintText:
                           _selectedNetwork == null
-                              ? 'Select a network first'
-                              : 'Enter 10-digit account number',
+                              ? widget.selectedData['recipientDeliveryMethod'] == 'bank' ? 'Select a bank first' : 'Select a mobile money provider first'
+                              : widget.selectedData['recipientDeliveryMethod'] == 'bank' ? 'Enter 10-digit account number' : 'Enter mobile money number',
                       keyboardType: TextInputType.number,
                       maxLength: 10,
                       enabled: _selectedNetwork != null,
@@ -686,7 +687,10 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
   Widget _buildNetworkSelectionField() {
     return CustomTextField(
       controller: _networkController,
-      label: 'Network',
+      label:
+          widget.selectedData['recipientDeliveryMethod'] == 'bank'
+              ? 'Bank Name'
+              : 'Mobile Money Provider',
       hintText: _getNetworkHintText(),
       shouldReadOnly: true,
       onTap: _filteredNetworks.isNotEmpty ? _showNetworkBottomSheet : null,
@@ -704,13 +708,15 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
   /// Get the hint text based on current state
   String _getNetworkHintText() {
     if (_isLoadingNetworks) {
-      return 'Loading networks...';
+      return widget.selectedData['recipientDeliveryMethod'] == 'bank' ? 'Loading banks...' : 'Loading mobile money providers...';
     } else if (_networkError != null) {
-      return 'Error loading networks';
+      return widget.selectedData['recipientDeliveryMethod'] == 'bank' ? 'Error loading banks' : 'Error loading mobile money providers';
     } else if (_filteredNetworks.isEmpty) {
-      return 'No networks available for this channel';
+      return widget.selectedData['recipientDeliveryMethod'] == 'bank' ? 'No banks available for this channel' : 'No mobile money providers available for this channel';
     } else {
-      return 'Select a network';
+      return widget.selectedData['recipientDeliveryMethod'] == 'bank'
+          ? 'Select a bank'
+          : 'Select a mobile money provider';
     }
   }
 
@@ -1084,19 +1090,20 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                   ? 'X' * countryInfo.maxLength
                   : 'Enter phone number',
           prefixIcon: Padding(
-           padding: EdgeInsets.only(left: 16.w, top: 12.w),
+            padding: EdgeInsets.only(left: 16.w, top: 12.w),
             child: Text(
-            "${countryInfo?.countryCode ?? '+234'}     ",
-            style: AppTypography.bodyMedium.copyWith(
-              fontFamily: 'Karla',
-              fontSize: 16,
-              letterSpacing: -.6,
-              fontWeight: FontWeight.w500,
-              height: 1.450,
-              color: Theme.of(context).colorScheme.onSurface,
+              "${countryInfo?.countryCode ?? '+234'}     ",
+              style: AppTypography.bodyMedium.copyWith(
+                fontFamily: 'Karla',
+                fontSize: 16,
+                letterSpacing: -.6,
+                fontWeight: FontWeight.w500,
+                height: 1.450,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
-          ),),
-          
+          ),
+
           validator: (value) {
             if (value == null || value.trim().isEmpty) {
               return null; // Optional field

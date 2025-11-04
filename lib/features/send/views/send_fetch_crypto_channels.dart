@@ -237,6 +237,7 @@ class _SendFetchCryptoChannelsViewState
                                   width: 32.w,
                                   height: 32.w,
                                   fit: BoxFit.contain,
+                                  colorFilter: null,
                                 )
                             : Text(
                               code,
@@ -439,9 +440,10 @@ class _SendFetchCryptoChannelsViewState
           'Select Digital Dollars',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
             fontFamily: 'CabinetGrotesk',
-            fontSize: 28.sp,
+            fontSize: 20.sp,
             fontWeight: FontWeight.w600,
-            letterSpacing: -0.8,
+            color: Theme.of(context).colorScheme.onSurface,
+          
           ),
         ),
         centerTitle: true,

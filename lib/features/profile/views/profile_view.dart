@@ -68,6 +68,13 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
       'onTap': () => _navigateToPaymentMethods(),
     },
     {
+      'icon': "assets/icons/svgs/recipients.svg",
+      'iconColor': AppColors.primary500,
+      'title': 'Beneficiaries',
+      'subtitle': 'View and manage your beneficiaries',
+      'onTap': () => _navigateToBeneficiaries(),
+    },
+    {
       'icon': "assets/icons/svgs/Box.svg",
       'iconColor': AppColors.warning500,
       'title': 'Upload Documents',
@@ -141,6 +148,10 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
     appRouter.pushNamed(AppRoute.accountLimitsView);
   }
 
+  void _navigateToBeneficiaries() {
+    appRouter.pushNamed(AppRoute.recipientsView);
+  }
+
   void _navigateToPaymentMethods() {
     // TODO: Navigate to payment methods
   }
@@ -181,31 +192,32 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
 
   // Test notification method (temporary for testing)
   void _testNotification() async {
-    // print('🔔 Test notification button pressed');
     try {
       final notificationService = NotificationService();
+      await notificationService.init();
 
-      // // Test 1: Simple notification (no Firebase required)
-      // print('🔔 Testing simple notification...');
-      // await notificationService.simpleNotificationTest();
+      // Fire immediately with a clear payload
+      await notificationService.showLocalNotification(
+        'Test Notification',
+        'This is a test from Profile > Test Notification button',
+        data: {'type': 'test', 'action': 'test', 'source': 'profile_view'},
+      );
 
-      // Test 2: Regular notification
-      await Future.delayed(Duration(seconds: 2));
-      // print('🔔 Testing regular notification...');
-      await notificationService.triggerSignUpSuccess("Test User");
-
-      // Test 3: Force notification
-      // await Future.delayed(Duration(seconds: 2));
-      // print('🔔 Testing force notification...');
-      // await notificationService.forceShowNotification();
-
-      // Check if notifications are enabled
-      // final isEnabled = await notificationService.areNotificationsEnabled();
-      // print('🔔 Notifications enabled: $isEnabled');
-
-      // print('🔔 Try minimizing the app now to see notifications!');
+      // if (mounted) {
+      //   TopSnackbar.show(
+      //     context,
+      //     message: 'Notification triggered. Check your notification shade.',
+      //     isError: false,
+      //   );
+      // }
     } catch (e) {
-      // print('❌ Error in test notification: $e');
+      // if (mounted) {
+      //   TopSnackbar.show(
+      //     context,
+      //     message: 'Failed to trigger notification: $e',
+      //     isError: true,
+      //   );
+      // }
     }
   }
 
@@ -238,9 +250,11 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
         title: Text(
           "Account",
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontFamily: 'CabinetGrotesk',
-            fontSize: 28.00,
-            fontWeight: FontWeight.w500,
+              fontFamily: 'CabinetGrotesk',
+            fontSize: 20.sp,
+            fontWeight: FontWeight.w600,
+            color: Theme.of(context).colorScheme.onSurface,
+          
           ),
         ),
       ),
@@ -853,15 +867,15 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
               textAlign: TextAlign.center,
             ),
           ),
-          SizedBox(height: 14.h),
-          // Test notification button (temporary)
+          // SizedBox(height: 14.h),
+          // // Test notification button (temporary)
           // Center(
-          //   child: ElevatedButton(
+          //   child: TextButton(
           //     onPressed: _testNotification,
           //     child: Text('Test Notification'),
           //   ),
           // ),
-          // SizedBox(height: 14.h),
+          SizedBox(height: 14.h),
           Center(
             child: Text(
               'Version 1.0.0',

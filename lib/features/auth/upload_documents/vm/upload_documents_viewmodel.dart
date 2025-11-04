@@ -164,8 +164,8 @@ class UploadDocumentsNotifier extends StateNotifier<UploadDocumentsState> {
         // Handle error silently
       }
 
-      // Navigate to biometric setup
-      _appRouter.pushNamed(AppRoute.biometricSetupView);
+      // Navigate to BVN/NIN verification
+      _appRouter.pushNamed(AppRoute.bvnNinVerificationView);
     } catch (e) {
       AppLogger.error('Error launching Smile ID verification: $e');
       state = state.copyWith(
@@ -204,8 +204,8 @@ class UploadDocumentsNotifier extends StateNotifier<UploadDocumentsState> {
   void skipForLater(BuildContext context) {
     _analyticsService.logEvent(name: 'kyc_tier2_verification_skipped');
 
-    // Navigate to biometric setup
-    _appRouter.pushNamed(AppRoute.biometricSetupView);
+    // Navigate to BVN/NIN verification
+    _appRouter.pushNamed(AppRoute.bvnNinVerificationView);
   }
 
   // Handle verification result from Smile ID

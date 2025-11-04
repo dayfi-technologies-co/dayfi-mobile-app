@@ -149,9 +149,11 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
           title: Text(
             "Edit Profile",
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontFamily: 'CabinetGrotesk',
-              fontSize: 28.00,
-              fontWeight: FontWeight.w500,
+            fontFamily: 'CabinetGrotesk',
+            fontSize: 20.sp,
+            fontWeight: FontWeight.w600,
+            color: Theme.of(context).colorScheme.onSurface,
+          
             ),
           ),
         ),
@@ -441,7 +443,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
           backgroundColor:
               state.isFormValid && state.isDirty
                   ? AppColors.purple500
-                  : AppColors.purple100,
+                  : AppColors.purple500.withOpacity(.25),
           height: 60.h,
           textColor: AppColors.neutral0,
           fontFamily: 'Karla',

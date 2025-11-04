@@ -1,3 +1,4 @@
+// import 'package:dayfi/common/widgets/buttons/help_button.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
 import 'package:flutter/material.dart';
@@ -10,11 +11,13 @@ import 'package:dayfi/features/send/views/send_review_view.dart';
 import 'package:dayfi/features/send/vm/send_viewmodel.dart';
 import 'package:dayfi/features/recipients/vm/recipients_viewmodel.dart';
 import 'package:dayfi/models/beneficiary_with_source.dart';
-import 'package:dayfi/models/wallet_transaction.dart';
+// import 'package:dayfi/models/wallet_transaction.dart';
 import 'package:dayfi/models/payment_response.dart' as payment;
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
+import 'package:dayfi/app_locator.dart';
+import 'package:dayfi/routes/route.dart';
 
 class SendRecipientView extends ConsumerStatefulWidget {
   final Map<String, dynamic> selectedData;
@@ -44,26 +47,28 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
   /// Check if a network supports a specific channel
   bool _doesNetworkSupportChannel(String? networkId, String channelId) {
     if (networkId == null || networkId.isEmpty) return false;
-    
+
     final sendState = ref.read(sendViewModelProvider);
-    
+
     // Find the network by ID
     final network = sendState.networks.firstWhere(
       (n) => n.id == networkId,
       orElse: () => payment.Network(id: null, channelIds: null),
     );
-    
+
     if (network.id == null) {
       print('❌ Network not found for ID: $networkId');
       return false;
     }
-    
+
     // Check if the network's channelIds contains the target channel
     final supportsChannel = network.channelIds?.contains(channelId) == true;
-    
-    print('🔍 Network ${network.name} (${network.id}) supports channel $channelId: $supportsChannel');
+
+    print(
+      '🔍 Network ${network.name} (${network.id}) supports channel $channelId: $supportsChannel',
+    );
     print('📋 Network channel IDs: ${network.channelIds}');
-    
+
     return supportsChannel;
   }
 
@@ -211,18 +216,18 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
         recipientsState.beneficiaries.where((beneficiaryWithSource) {
           final countryMatch =
               beneficiaryWithSource.beneficiary.country == targetCountry;
-          
+
           // If no recipientChannelId is specified, show all beneficiaries for the country
           if (recipientChannelId.isEmpty) {
             return countryMatch;
           }
-          
+
           // Check if the beneficiary's network supports the selected channel
           final channelMatch = _doesNetworkSupportChannel(
-            beneficiaryWithSource.source.networkId, 
-            recipientChannelId
+            beneficiaryWithSource.source.networkId,
+            recipientChannelId,
           );
-          
+
           return countryMatch && channelMatch;
         }).toList();
 
@@ -266,18 +271,53 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
               Icons.arrow_back_ios,
               color: Theme.of(context).colorScheme.onSurface,
             ),
-            onPressed: () => Navigator.pop(context),
+            onPressed:
+                () => {
+                  Navigator.pop(context),
+                  FocusScope.of(context).unfocus(),
+                },
           ),
           title: Text(
             'Beneficiaries',
             style: AppTypography.titleLarge.copyWith(
-              fontFamily: 'CabinetGrotesk',
-              fontSize: 28.sp,
-              fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.onSurface,
+               fontFamily: 'CabinetGrotesk',
+            fontSize: 20.sp,
+            fontWeight: FontWeight.w600,
+            color: Theme.of(context).colorScheme.onSurface,
+          
             ),
           ),
           centerTitle: true,
+          actions: [
+            if (filteredBeneficiaries.isNotEmpty)
+              Padding(
+                padding: EdgeInsets.only(right: 16.w),
+                child: IconButton(
+                  onPressed: () {
+                    appRouter.pushNamed(
+                      AppRoute.addRecipientsView,
+                      arguments: widget.selectedData,
+                    );
+                  },
+                  icon: SvgPicture.asset(
+                    "assets/icons/svgs/user-plus.svg",
+                    width: 24.w,
+                    height: 24.w,
+                    color: Theme.of(context).colorScheme.onSurface,
+                    colorFilter: ColorFilter.mode(
+                      Theme.of(context).colorScheme.onSurface,
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                  tooltip: 'Add beneficiary',
+                  style: IconButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+              ),
+          ],
         ),
         body: RefreshIndicator(
           onRefresh: () async {
@@ -375,7 +415,12 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
                             ),
                           )
                           : filteredBeneficiaries.isEmpty
-                          ? _buildEmptyState(targetCountry, targetCurrency, widget.selectedData['recipientDeliveryMethod'] ?? 'Bank Transfer')
+                          ? _buildEmptyState(
+                            targetCountry,
+                            targetCurrency,
+                            widget.selectedData['recipientDeliveryMethod'] ??
+                                'Bank Transfer',
+                          )
                           : ListView.builder(
                             shrinkWrap: true,
                             padding: EdgeInsets.only(
@@ -409,7 +454,7 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
     // Get full country name
     final countryName = _getCountryName(country);
     final displayChannelType = _getChannelDisplayName(channelType);
-    
+
     return Center(
       child: Padding(
         padding: EdgeInsets.all(24.w),

@@ -33,6 +33,7 @@ class User {
   final String? transactionPin; // Added from JSON
   final bool isIdVerified; // Added from JSON
   final bool isBiometricsSetup; // Added from JSON
+  final String? dayfiId; // DayFi Tag for receiving payments
 
   User({
     required this.userId,
@@ -69,6 +70,7 @@ class User {
     this.transactionPin, // Added to constructor
     required this.isIdVerified, // Added to constructor
     required this.isBiometricsSetup, // Added to constructor
+    this.dayfiId, // Added to constructor
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -109,6 +111,7 @@ class User {
       transactionPin: json['transaction_pin'] as String?,
       isIdVerified: json['is_id_verified'] as bool? ?? false,
       isBiometricsSetup: json['is_biometrics_setup'] as bool? ?? false,
+      dayfiId: json['dayfi_id'] as String? ?? json['dayfiId'] as String?,
     );
   }
 
@@ -148,6 +151,7 @@ class User {
       'transaction_pin': transactionPin,
       'is_id_verified': isIdVerified,
       'is_biometrics_setup': isBiometricsSetup,
+      'dayfi_id': dayfiId,
     };
   }
 }

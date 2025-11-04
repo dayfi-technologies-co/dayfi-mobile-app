@@ -119,7 +119,7 @@ class ReenterPasscodeNotifier extends StateNotifier<ReenterPasscodeState> {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return Dialog(
-          backgroundColor: const Color(0xffFEF9F3),
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24.r),
           ),
@@ -159,27 +159,36 @@ class ReenterPasscodeNotifier extends StateNotifier<ReenterPasscodeState> {
                     Navigator.of(context).pop();
                     // Check if user's phone number is empty (regardless of flow)
                     final user = await _getCurrentUser();
-                    if (isFromSignup || user?.phoneNumber == null || user?.phoneNumber?.isEmpty == true) {
+                    if (isFromSignup ||
+                        user?.phoneNumber == null ||
+                        user?.phoneNumber?.isEmpty == true) {
                       // Either from signup flow OR phone number is empty, navigate to success signup view
                       AppLogger.info(
                         'Navigating to success signup view - isFromSignup: $isFromSignup, phoneNumber: ${user?.phoneNumber}',
                       );
                       appRouter.pushNamed(AppRoute.successSignupView);
                     } else {
-                      // Check if biometric setup is needed
-                      final biometricSetupCompleted = await _secureStorage.read(
-                        StorageKeys.biometricSetupCompleted,
-                      );
-                      final biometricEnabled = await _secureStorage.read(
-                        'biometric_enabled',
-                      );
+                      // Check if ID verification is complete
+                      final hasValidId =
+                          user?.idType != null &&
+                          user?.idType?.isNotEmpty == true &&
+                          user?.idNumber != null &&
+                          user?.idNumber?.isNotEmpty == true;
 
-                      if (biometricSetupCompleted == 'true') {
-                        // Biometric setup already completed, go to main view and clear stack
+                      if (!hasValidId) {
+                        // ID verification not completed, navigate to upload documents
+                        AppLogger.info(
+                          'ID verification not complete - navigating to upload documents. idType: ${user?.idType}, idNumber: ${user?.idNumber}',
+                        );
+                        appRouter.pushNamed(AppRoute.uploadDocumentsView);
+                      } else {
+                      // Check if biometric setup is needed based on user profile flag
+                      final refreshedUser = await _getCurrentUser();
+                      if (refreshedUser?.isBiometricsSetup == true) {
                         appRouter.pushMainAndClearStack();
                       } else {
-                        // Biometric setup not completed, show biometric setup screen
                         appRouter.pushNamed(AppRoute.biometricSetupView);
+                      }
                       }
                     }
                   },

@@ -256,6 +256,46 @@ class AuthService {
     }
   }
 
+  Future<AuthResponse> updateProfileBiometrics({
+    required String userId,
+    required bool isBiometricsSetup,
+  }) async {
+    try {
+      final map = {'isBiometricsSetup': isBiometricsSetup};
+
+      final response = await _networkService.call(
+        '${F.baseUrl}${UrlConfig.updateProfile}/$userId',
+        RequestMethod.patch,
+        data: map,
+      );
+
+      // Normalize response into Map
+      Map<String, dynamic> responseData;
+      if (response.data is Map<String, dynamic>) {
+        responseData = response.data;
+      } else if (response.data is String) {
+        responseData = json.decode(response.data);
+      } else {
+        throw Exception('Invalid response format');
+      }
+
+      final authResponse = AuthResponse.fromJson(responseData);
+
+      if (!authResponse.error) {
+        // Save updated user
+        final secureStorage = SecureStorageService();
+        await secureStorage.write(
+          StorageKeys.user,
+          json.encode(authResponse.data.user?.toJson()),
+        );
+      }
+
+      return authResponse;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<AuthResponse> updateBiometrics({
     required bool isBiometricsSetup,
   }) async {
@@ -270,6 +310,113 @@ class AuthService {
       );
 
       return AuthResponse.fromJson(response.data);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<AuthResponse> verifyBVN({required String bvn}) async {
+    try {
+      Map<String, dynamic> map = {};
+      map['bvn'] = bvn;
+
+      final response = await _networkService.call(
+        F.baseUrl + UrlConfig.verifyBvn,
+        RequestMethod.post,
+        data: map,
+      );
+
+      return AuthResponse.fromJson(response.data);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<AuthResponse> updateProfileWithNIN({
+    required String userId,
+    required String nin,
+  }) async {
+    try {
+      Map<String, dynamic> map = {};
+      map['idType'] = 'NIN_V2';
+      map['idNumber'] = nin;
+
+      final response = await _networkService.call(
+        '${F.baseUrl}${UrlConfig.updateProfile}/$userId',
+        RequestMethod.patch,
+        data: map,
+      );
+
+      // Handle response data - check if it's a Map or String
+      Map<String, dynamic> responseData;
+      if (response.data is Map<String, dynamic>) {
+        responseData = response.data;
+      } else if (response.data is String) {
+        // Try to parse JSON string
+        responseData = json.decode(response.data);
+      } else {
+        throw Exception('Invalid response format');
+      }
+
+      final authResponse = AuthResponse.fromJson(responseData);
+
+      if (!authResponse.error) {
+        // Save user details to secure storage
+        final secureStorage = SecureStorageService();
+        await secureStorage.write(
+          StorageKeys.user,
+          json.encode(authResponse.data.user?.toJson()),
+        );
+      }
+
+      return authResponse;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<APIResponse> createDayfiId({required String dayfiId}) async {
+    try {
+      Map<String, dynamic> map = {};
+      map['dayfiId'] = dayfiId.replaceAll('@', ''); // Remove @ if present
+
+      final response = await _networkService.call(
+        F.baseUrl + UrlConfig.addDayfiId,
+        RequestMethod.post,
+        data: map,
+      );
+
+      final apiResponse = APIResponse.fromJson(response.data);
+
+      // Update user data if successful
+      if (!apiResponse.error && apiResponse.data != null) {
+        final secureStorage = SecureStorageService();
+        final userJson = await secureStorage.read(StorageKeys.user);
+        if (userJson != null) {
+          final userMap = json.decode(userJson) as Map<String, dynamic>;
+          userMap['dayfi_id'] = dayfiId.replaceAll('@', '');
+          await secureStorage.write(StorageKeys.user, json.encode(userMap));
+        }
+      }
+
+      return apiResponse;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<APIResponse> validateDayfiId({required String dayfiId}) async {
+    try {
+      // Map<String, dynamic> map = {};
+      // map['dayfiId'] = dayfiId.replaceAll('@', ''); // Remove @ if present
+
+      final response = await _networkService.call(
+        '${F.baseUrl}${UrlConfig.validateDayfiId}/${dayfiId.replaceAll('@', '')}',
+        RequestMethod.get,
+        // data: map,
+      );
+
+      return APIResponse.fromJson(response.data);
     } catch (e) {
       rethrow;
     }

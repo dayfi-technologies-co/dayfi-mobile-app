@@ -48,9 +48,9 @@ class SendState {
     this.sendAmount = '',
     this.receiverAmount = '',
     this.sendCurrency = 'NGN',
-    this.receiverCurrency = 'RWF',
+    this.receiverCurrency = 'NGN',
     this.sendCountry = 'NG',
-    this.receiverCountry = 'RW',
+    this.receiverCountry = 'NG',
     this.fee = '0.00',
     this.totalToPay = '0.00',
     this.exchangeRate = '₦1 = ₦1',
@@ -234,8 +234,8 @@ class SendViewModel extends StateNotifier<SendState> {
     // Set default send currency to NGN
     await _setDefaultSendCurrency('NG', 'NGN');
     
-    // Set default receive currency to RW-RWF
-    await _setDefaultReceiveCurrency('RW', 'RWF');
+    // Set default receive currency to NG-NGN
+    await _setDefaultReceiveCurrency('NG', 'NGN');
     
     // Set default sender channel ID
     _setDefaultSenderChannelId();
@@ -285,29 +285,35 @@ class SendViewModel extends StateNotifier<SendState> {
   Future<void> _setDefaultReceiveCurrency(String country, String currency) async {
     AppLogger.debug('Setting default receive currency: $country - $currency');
     
-    // Find the first available delivery method for this country-currency combination
+    // For NGN currency, select DayFi Tag as default delivery method
     String? firstDeliveryMethod;
     
-    final availableChannels = state.channels
-        .where((channel) => 
-            channel.country == country && 
-            channel.currency == currency &&
-            channel.status == 'active' &&
-            (channel.rampType == 'withdrawal' || 
-             channel.rampType == 'withdraw' || 
-             channel.rampType == 'payout'))
-        .toList();
-    
-    if (availableChannels.isNotEmpty) {
-      // Get unique channel types and sort them alphabetically
-      final channelTypes = availableChannels
-          .map((channel) => channel.channelType ?? 'Unknown')
-          .toSet()
-          .toList()
-        ..sort();
+    if (currency == 'NGN') {
+      // Default to DayFi Tag for NGN
+      firstDeliveryMethod = 'dayfi_tag';
+    } else {
+      // Find the first available delivery method for other currencies
+      final availableChannels = state.channels
+          .where((channel) => 
+              channel.country == country && 
+              channel.currency == currency &&
+              channel.status == 'active' &&
+              (channel.rampType == 'withdrawal' || 
+               channel.rampType == 'withdraw' || 
+               channel.rampType == 'payout'))
+          .toList();
       
-      if (channelTypes.isNotEmpty) {
-        firstDeliveryMethod = channelTypes.first;
+      if (availableChannels.isNotEmpty) {
+        // Get unique channel types and sort them alphabetically
+        final channelTypes = availableChannels
+            .map((channel) => channel.channelType ?? 'Unknown')
+            .toSet()
+            .toList()
+          ..sort();
+        
+        if (channelTypes.isNotEmpty) {
+          firstDeliveryMethod = channelTypes.first;
+        }
       }
     }
     
@@ -598,33 +604,39 @@ class SendViewModel extends StateNotifier<SendState> {
     AppLogger.debug('🔄 updateReceiveCountry called: country=$country, currency=$currency');
     AppLogger.debug('🔄 Current state: send=${state.sendCurrency}, receive=${state.receiverCurrency}');
     
-    // Find the first available delivery method for this country-currency combination
+    // For NGN currency, select DayFi Tag as default delivery method
     String? firstDeliveryMethod;
     
-    final availableChannels = state.channels
-        .where((channel) => 
-            channel.country == country && 
-            channel.currency == currency &&
-            channel.status == 'active' &&
-            (channel.rampType == 'withdrawal' || 
-             channel.rampType == 'withdraw' || 
-             channel.rampType == 'payout' ||
-             channel.rampType == 'deposit' ||
-             channel.rampType == 'receive'))
-        .toList();
-    
-    AppLogger.debug('🔄 Found ${availableChannels.length} available channels for $country-$currency');
-    
-    if (availableChannels.isNotEmpty) {
-      // Get unique channel types and sort them alphabetically
-      final channelTypes = availableChannels
-          .map((channel) => channel.channelType ?? 'Unknown')
-          .toSet()
-          .toList()
-        ..sort();
+    if (currency == 'NGN') {
+      // Default to DayFi Tag for NGN
+      firstDeliveryMethod = 'dayfi_tag';
+    } else {
+      // Find the first available delivery method for other currencies
+      final availableChannels = state.channels
+          .where((channel) => 
+              channel.country == country && 
+              channel.currency == currency &&
+              channel.status == 'active' &&
+              (channel.rampType == 'withdrawal' || 
+               channel.rampType == 'withdraw' || 
+               channel.rampType == 'payout' ||
+               channel.rampType == 'deposit' ||
+               channel.rampType == 'receive'))
+          .toList();
       
-      if (channelTypes.isNotEmpty) {
-        firstDeliveryMethod = channelTypes.first;
+      AppLogger.debug('🔄 Found ${availableChannels.length} available channels for $country-$currency');
+      
+      if (availableChannels.isNotEmpty) {
+        // Get unique channel types and sort them alphabetically
+        final channelTypes = availableChannels
+            .map((channel) => channel.channelType ?? 'Unknown')
+            .toSet()
+            .toList()
+          ..sort();
+        
+        if (channelTypes.isNotEmpty) {
+          firstDeliveryMethod = channelTypes.first;
+        }
       }
     }
     

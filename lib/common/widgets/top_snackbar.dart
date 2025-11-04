@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:another_flushbar/flushbar.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/svg.dart';
 
 class TopSnackbar {
   static void show(
@@ -9,56 +11,65 @@ class TopSnackbar {
     bool isError = false,
     Duration duration = const Duration(seconds: 3),
   }) {
-    final primaryColor = isError ? const Color(0xFFDC2626) : const Color(0xFF059669);
-    final backgroundColor = isError ? const Color(0xFFFEF2F2) : const Color(0xFFF0FDF4);
-    final borderColor = isError ? const Color(0xFFFECACA) : const Color(0xFFBBF7D0);
-    final textColor = isError ? const Color(0xFF991B1B) : const Color(0xFF065F46);
+    final primaryColor =
+        isError ? const Color(0xFFDC2626) : const Color(0xFF059669);
+    final backgroundColor =
+        isError ? const Color(0xFFFEF2F2) : const Color(0xFFF0FDF4);
+    final borderColor =
+        isError ? const Color(0xFFFECACA) : const Color(0xFFBBF7D0);
+    final textColor =
+        isError ? const Color(0xFF991B1B) : const Color(0xFF065F46);
 
     Flushbar(
       messageText: Row(
         children: [
           // Enhanced icon with animation
           Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: primaryColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(
-              isError ? Icons.error_outline_rounded : Icons.check_circle_outline_rounded,
-              color: primaryColor,
-              size: 20,
-            ),
-          ).animate()
-            .scale(
-              begin: const Offset(0.8, 0.8),
-              end: const Offset(1.0, 1.0),
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.elasticOut,
-            )
-            .fadeIn(duration: const Duration(milliseconds: 150)),
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: SvgPicture.asset(
+                  isError
+                      ? 'assets/icons/svgs/circle-x.svg'
+                      : 'assets/icons/svgs/circle-check.svg',
+                  color: primaryColor,
+                  height: 24.sp,
+                  width: 24.sp,
+                ),
+              )
+              .animate()
+              .scale(
+                begin: const Offset(0.8, 0.8),
+                end: const Offset(1.0, 1.0),
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.elasticOut,
+              )
+              .fadeIn(duration: const Duration(milliseconds: 150)),
           const SizedBox(width: 12),
           // Enhanced text with better typography
           Expanded(
             child: Text(
-              message,
-              style: TextStyle(
-                fontSize: 14,
-                fontFamily: 'Karla',
-                fontWeight: FontWeight.w400,
-                letterSpacing: -0.4,
-                height: 1.4,
-                color: textColor,
-              ),
-            ).animate()
-              .slideX(
-                begin: -0.2,
-                end: 0.0,
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeOutCubic,
-              )
-              .fadeIn(duration: const Duration(milliseconds: 200)),
+                  message,
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontFamily: 'CabinetGrotesk',
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: -0.2,
+                    height: 1.4,
+                    color: textColor,
+                  ),
+                )
+                .animate()
+                .slideX(
+                  begin: -0.2,
+                  end: 0.0,
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOutCubic,
+                )
+                .fadeIn(duration: const Duration(milliseconds: 200)),
           ),
         ],
       ),

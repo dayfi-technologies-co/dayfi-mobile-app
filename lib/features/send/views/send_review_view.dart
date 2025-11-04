@@ -221,10 +221,11 @@ class _SendReviewViewState extends ConsumerState<SendReviewView> {
           title: Text(
             'Review',
             style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-              fontFamily: 'CabinetGrotesk',
-              fontSize: 28.sp,
-              fontWeight: FontWeight.w600,
-              letterSpacing: -0.8,
+               fontFamily: 'CabinetGrotesk',
+            fontSize: 20.sp,
+            fontWeight: FontWeight.w600,
+            color: Theme.of(context).colorScheme.onSurface,
+          
             ),
           ),
           centerTitle: true,
@@ -263,7 +264,9 @@ class _SendReviewViewState extends ConsumerState<SendReviewView> {
                         : Theme.of(
                           context,
                         ).colorScheme.onSurface.withOpacity(0.12),
-                textColor: AppColors.neutral0,
+                textColor: _selectedReason.isNotEmpty
+                    ? AppColors.neutral0
+                    : AppColors.neutral0.withOpacity(.5),
                 fontFamily: 'Karla',
                 letterSpacing: -.8,
                 fontSize: 18,
@@ -361,7 +364,7 @@ class _SendReviewViewState extends ConsumerState<SendReviewView> {
           ),
           _buildDetailRow(
             'Delivery Method',
-            widget.selectedData['recipientDeliveryMethod'].toString().toUpperCase() ?? 'Bank Transfer',
+            (widget.selectedData['recipientDeliveryMethod'] ?? 'Bank Transfer').toString().toUpperCase(),
           ),
           _buildDetailRow('Transfer Time', 'Within 24 hours', bottomPadding: 0),
         ],

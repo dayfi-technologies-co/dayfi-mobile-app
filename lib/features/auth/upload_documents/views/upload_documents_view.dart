@@ -488,42 +488,42 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
         SizedBox(height: 12.h),
 
         // Skip button
-        SecondaryButton(
-              text: state.isBusy ? "Please wait..." : "I'll do it later",
-              borderRadius: 38,
-              onPressed:
-                  state.isBusy
-                      ? null
-                      : () => _showSkipDialog(context, state, notifier),
-              borderColor: Colors.transparent,
-              height: 60.h,
-              textColor: AppColors.neutral0,
-              fontFamily: 'Karla',
-              letterSpacing: -.8,
-              fontSize: 18,
-              width: double.infinity,
-              fullWidth: true,
-            )
-            .animate()
-            .fadeIn(
-              delay: 1000.ms,
-              duration: 500.ms,
-              curve: Curves.easeOutCubic,
-            )
-            .slideY(
-              begin: 0.3,
-              end: 0,
-              delay: 1000.ms,
-              duration: 500.ms,
-              curve: Curves.easeOutCubic,
-            )
-            .scale(
-              begin: const Offset(0.9, 0.9),
-              end: const Offset(1.0, 1.0),
-              delay: 1000.ms,
-              duration: 500.ms,
-              curve: Curves.easeOutCubic,
-            ),
+        // SecondaryButton(
+        //       text: state.isBusy ? "Please wait..." : "I'll do it later",
+        //       borderRadius: 38,
+        //       onPressed:
+        //           state.isBusy
+        //               ? null
+        //               : () => _showSkipDialog(context, state, notifier),
+        //       borderColor: Colors.transparent,
+        //       height: 60.h,
+        //       textColor: AppColors.neutral0,
+        //       fontFamily: 'Karla',
+        //       letterSpacing: -.8,
+        //       fontSize: 18,
+        //       width: double.infinity,
+        //       fullWidth: true,
+        //     )
+        //     .animate()
+        //     .fadeIn(
+        //       delay: 1000.ms,
+        //       duration: 500.ms,
+        //       curve: Curves.easeOutCubic,
+        //     )
+        //     .slideY(
+        //       begin: 0.3,
+        //       end: 0,
+        //       delay: 1000.ms,
+        //       duration: 500.ms,
+        //       curve: Curves.easeOutCubic,
+        //     )
+        //     .scale(
+        //       begin: const Offset(0.9, 0.9),
+        //       end: const Offset(1.0, 1.0),
+        //       delay: 1000.ms,
+        //       duration: 500.ms,
+        //       curve: Curves.easeOutCubic,
+        //     ),
 
         Padding(
           padding: EdgeInsets.only(top: 12.h),

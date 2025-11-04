@@ -8,6 +8,9 @@ class UrlConfig {
   static const String resetPassword = '/auth/reset-password';
   static const String updateProfile = '/auth/update-profile';
   static const String updateBiometrics = '/auth/update-biometrics';
+  static const String verifyBvn = '/auth/verify-bvn';
+  static const String addDayfiId = '/payments/add-dayfi-id';
+  static const String validateDayfiId = '/payments/validate-dayfi-id';
   
   //Payment Endpoints
   static const String resolveBank = '/payments/resolve-bank';

@@ -1,9 +1,9 @@
+import 'package:dayfi/features/home/views/home_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:dayfi/features/send/views/send_view.dart';
 import 'package:dayfi/features/transactions/views/transactions_view.dart';
-import 'package:dayfi/features/recipients/views/recipients_view.dart';
 import 'package:dayfi/features/profile/views/profile_view.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
@@ -14,10 +14,14 @@ import 'package:dayfi/services/local/secure_storage.dart';
 import 'package:dayfi/common/constants/storage_keys.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
+import 'dart:convert';
+
+final mainViewKey = GlobalKey<_MainViewState>();
+
 
 class MainView extends ConsumerStatefulWidget {
   final int initialTabIndex;
-  
+
   const MainView({super.key, this.initialTabIndex = 0});
 
   @override
@@ -28,10 +32,11 @@ class _MainViewState extends ConsumerState<MainView> {
   late int _currentIndex;
   final SecureStorageService _secureStorage = locator<SecureStorageService>();
 
+
   final List<Widget> _screens = [
+    const HomeView(),
     const SendView(),
     const TransactionsView(),
-    const RecipientsView(),
     const ProfileView(),
   ];
 
@@ -45,6 +50,14 @@ class _MainViewState extends ConsumerState<MainView> {
       _checkBiometricSetup();
     });
   }
+
+  void changeTab(int index) {
+  if (index >= 0 && index < _screens.length) {
+    setState(() {
+      _currentIndex = index;
+    });
+  }
+}
 
   Future<void> _checkAndShowWelcome() async {
     try {
@@ -71,12 +84,19 @@ class _MainViewState extends ConsumerState<MainView> {
 
   Future<void> _checkBiometricSetup() async {
     try {
-      // Check if biometric setup has been completed
-      final biometricSetupCompleted = await _secureStorage.read(StorageKeys.biometricSetupCompleted);
-      
-      // If biometric setup is not completed, show a reminder after a delay
-      if (biometricSetupCompleted != 'true') {
-        await Future.delayed(const Duration(seconds: 2)); // Wait a bit after app loads
+      final userJson = await _secureStorage.read(StorageKeys.user);
+      bool isBiometricsSetup = false;
+      if (userJson.isNotEmpty) {
+        try {
+          final data = jsonDecode(userJson);
+          if (data is Map<String, dynamic>) {
+            isBiometricsSetup = (data['is_biometrics_setup'] as bool?) ?? false;
+          }
+        } catch (_) {}
+      }
+
+      if (!isBiometricsSetup) {
+        await Future.delayed(const Duration(seconds: 2));
         if (mounted) {
           _showBiometricReminder();
         }
@@ -86,7 +106,6 @@ class _MainViewState extends ConsumerState<MainView> {
       AppLogger.error('Error checking biometric setup: $e');
     }
   }
-
 
   void _showBiometricReminder() {
     showDialog(
@@ -123,11 +142,7 @@ class _MainViewState extends ConsumerState<MainView> {
                       ),
                     ],
                   ),
-                  child: Icon(
-                    Icons.security,
-                    color: Colors.white,
-                    size: 40.w,
-                  ),
+                  child: Icon(Icons.security, color: Colors.white, size: 40.w),
                 ),
 
                 SizedBox(height: 24.h),
@@ -153,7 +168,9 @@ class _MainViewState extends ConsumerState<MainView> {
                     fontFamily: 'Karla',
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w400,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.7),
                     height: 1.4,
                   ),
                   textAlign: TextAlign.center,
@@ -185,8 +202,6 @@ class _MainViewState extends ConsumerState<MainView> {
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
-                    // Mark as completed so we don't show this again
-                    _secureStorage.write(StorageKeys.biometricSetupCompleted, 'true');
                     _secureStorage.write('biometric_enabled', 'false');
                   },
                   child: Text(
@@ -238,17 +253,17 @@ class _MainViewState extends ConsumerState<MainView> {
               children: [
                 _buildNavItem(
                   index: 0,
-                  icon: "assets/icons/svgs/swap.svg",
+                  icon: "assets/icons/svgs/home.svg",
                   isSelected: _currentIndex == 0,
                 ),
                 _buildNavItem(
                   index: 1,
-                  icon: "assets/icons/svgs/transactions.svg",
+                  icon: "assets/icons/svgs/swap.svg",
                   isSelected: _currentIndex == 1,
                 ),
                 _buildNavItem(
                   index: 2,
-                  icon: "assets/icons/svgs/recipients.svg",
+                  icon: "assets/icons/svgs/transactions.svg",
                   isSelected: _currentIndex == 2,
                 ),
                 _buildNavItem(
@@ -362,6 +377,15 @@ class _MainViewState extends ConsumerState<MainView> {
             // Features list
             _buildFeatureItem(
               icon: _buildSendMoneyIcon(),
+              title: 'Home',
+              description:
+                  'Manage your global wallet, view global balance all from one place.',
+            ),
+
+            SizedBox(height: 24.h),
+
+            _buildFeatureItem(
+              icon: _buildTransactionsIcon(),
               title: 'Send Money',
               description:
                   'Transfer funds across borders using any of the available payment methods on the app.',
@@ -370,19 +394,10 @@ class _MainViewState extends ConsumerState<MainView> {
             SizedBox(height: 24.h),
 
             _buildFeatureItem(
-              icon: _buildTransactionsIcon(),
+              icon: _buildRecipientsIcon(),
               title: 'Transactions',
               description:
                   'Check the details and status of all your payments in one dashboard.',
-            ),
-
-            SizedBox(height: 24.h),
-
-            _buildFeatureItem(
-              icon: _buildRecipientsIcon(),
-              title: 'Beneficiaries',
-              description:
-                  'Add and/or edit the information of people who receive money from you.',
             ),
 
             SizedBox(height: 24.h),
@@ -435,7 +450,7 @@ class _MainViewState extends ConsumerState<MainView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-                Text(
+              Text(
                 title,
                 style: AppTypography.headlineSmall.copyWith(
                   fontFamily: 'CabinetGrotesk',
@@ -469,15 +484,15 @@ class _MainViewState extends ConsumerState<MainView> {
   }
 
   Widget _buildSendMoneyIcon() {
-    return SvgPicture.asset("assets/icons/svgs/swap.svg", height: 40.h);
+    return SvgPicture.asset("assets/icons/svgs/home.svg", height: 40.h);
   }
 
   Widget _buildTransactionsIcon() {
-    return SvgPicture.asset("assets/icons/svgs/transactions.svg", height: 40.h);
+    return SvgPicture.asset("assets/icons/svgs/swap.svg", height: 40.h);
   }
 
   Widget _buildRecipientsIcon() {
-    return SvgPicture.asset("assets/icons/svgs/recipients.svg", height: 40.h);
+    return SvgPicture.asset("assets/icons/svgs/transactions.svg", height: 40.h);
   }
 
   Widget _buildProfileIcon() {

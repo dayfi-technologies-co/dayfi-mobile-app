@@ -6,6 +6,17 @@ import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/common/widgets/buttons/buttons.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
+import 'package:dayfi/services/remote/payment_service.dart';
+import 'package:dayfi/services/transaction_monitor_service.dart';
+import 'package:dayfi/app_locator.dart';
+import 'package:dayfi/features/send/vm/send_viewmodel.dart';
+import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
+import 'package:dayfi/models/payment_response.dart' as payment;
+import 'package:dayfi/common/utils/app_logger.dart';
+import 'package:dayfi/common/utils/error_handler.dart';
+import 'package:dayfi/services/local/crashlytics_service.dart';
+import 'dart:async';
+import 'package:flutter/services.dart';
 
 class SendCryptoNetworksView extends ConsumerStatefulWidget {
   final Map<String, dynamic> selectedChannel;
@@ -20,6 +31,10 @@ class SendCryptoNetworksView extends ConsumerStatefulWidget {
 class _SendCryptoNetworksViewState
     extends ConsumerState<SendCryptoNetworksView> {
   String? _selectedNetwork;
+  bool _isLoading = false;
+  Timer? _countdownTimer;
+  Duration _remainingTime = const Duration(minutes: 30);
+  payment.PaymentData? _currentPaymentData;
 
   Color _getNetworkColor(String networkKey) {
     switch (networkKey.toUpperCase()) {
@@ -57,21 +72,36 @@ class _SendCryptoNetworksViewState
         return null; // No icon found
       case 'POLYGON':
       case 'POL':
-        return 'assets/icons/svgs/polygon-matic-logo.svg';
+        return 'assets/icons/pngs/polygon-matic-logo.png';
       case 'SOL':
       case 'SOLANA':
-        return 'assets/icons/svgs/solana-sol-logo.svg';
+        return 'assets/icons/pngs/solana-sol-logo.png';
       case 'CELO':
-        return 'assets/icons/svgs/celo-celo-logo.svg';
+        return 'assets/icons/pngs/celo-celo-logo.png';
       case 'XLM':
         return 'assets/icons/svgs/stellar-xlm-logo.svg';
       case 'BASE':
         return null; // No icon found
       case 'TRC20':
       case 'TRON':
-        return 'assets/icons/svgs/tron-trx-logo.svg';
+        return 'assets/icons/pngs/tron-trx-logo.png';
       default:
         return null;
+    }
+  }
+
+  bool _isPNGIcon(String networkKey) {
+    switch (networkKey.toUpperCase()) {
+      case 'POLYGON':
+      case 'POL':
+      case 'SOL':
+      case 'SOLANA':
+      case 'CELO':
+      case 'TRC20':
+      case 'TRON':
+        return true;
+      default:
+        return false;
     }
   }
 
@@ -110,7 +140,7 @@ class _SendCryptoNetworksViewState
                 isSelected && enabled
                     ? Theme.of(context).colorScheme.primary
                     : Colors.transparent,
-            width: isSelected ? 1 : 0,
+            width: .75,
           ),
           boxShadow: [
             BoxShadow(
@@ -132,12 +162,20 @@ class _SendCryptoNetworksViewState
               child: Center(
                 child:
                     _getNetworkIconPath(networkKey) != null
-                        ? SvgPicture.asset(
-                          _getNetworkIconPath(networkKey)!,
-                          width: 32.w,
-                          height: 32.w,
-                          fit: BoxFit.contain,
-                        )
+                        ? _isPNGIcon(networkKey)
+                            ? Image.asset(
+                              _getNetworkIconPath(networkKey)!,
+                              width: 32.w,
+                              height: 32.w,
+                              fit: BoxFit.contain,
+                            )
+                            : SvgPicture.asset(
+                              _getNetworkIconPath(networkKey)!,
+                              width: 32.w,
+                              height: 32.w,
+                              fit: BoxFit.contain,
+                              colorFilter: null,
+                            )
                         : Container(
                           padding: EdgeInsets.all(8.w),
                           decoration: BoxDecoration(
@@ -262,21 +300,6 @@ class _SendCryptoNetworksViewState
                   //         }).toList(),
                   //   ),
                   // ],
-                  if (name.isNotEmpty) ...[
-                    SizedBox(height: 2.h),
-                    Text(
-                      "Click here to select the network",
-                      style: AppTypography.bodySmall.copyWith(
-                        fontFamily: 'Karla',
-                        fontSize: 12.sp,
-                        letterSpacing: -0.3,
-                        fontWeight: FontWeight.w400,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withOpacity(0.6),
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ),
@@ -304,7 +327,7 @@ class _SendCryptoNetworksViewState
     );
   }
 
-  void _handleContinue() {
+  void _handleContinue() async {
     if (_selectedNetwork == null) {
       TopSnackbar.show(
         context,
@@ -314,12 +337,162 @@ class _SendCryptoNetworksViewState
       return;
     }
 
-    // TODO: Navigate to next screen with selected network
-    TopSnackbar.show(
-      context,
-      message: 'Network selected: $_selectedNetwork',
-      isError: false,
-    );
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Get send state and user data
+      final sendState = ref.read(sendViewModelProvider);
+      final profileState = ref.read(profileViewModelProvider);
+      final user = profileState.user;
+
+      // Get the selected network data
+      final networks =
+          widget.selectedChannel['networks'] as Map<String, dynamic>? ?? {};
+      final selectedNetworkData =
+          networks[_selectedNetwork] as Map<String, dynamic>? ?? {};
+
+      // Build collection request for crypto funding
+      final requestData = _buildCryptoCollectionRequest(
+        sendState: sendState,
+        user: user,
+        selectedNetworkData: selectedNetworkData,
+      );
+
+      AppLogger.debug('Crypto collection request: $requestData');
+
+      // Call createCollection API
+      final response = await locator<PaymentService>().createCollection(
+        requestData,
+      );
+
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        if (!response.error && response.data != null) {
+          _currentPaymentData = response.data!;
+
+          // Add transaction to monitoring
+          final collectionSequenceId =
+              response.data?.id ?? response.data?.sequenceId;
+          if (collectionSequenceId != null) {
+            final transactionMonitor = ref.read(transactionMonitorProvider);
+            transactionMonitor.addTransactionToMonitoring(
+              transactionId: collectionSequenceId,
+              collectionSequenceId: collectionSequenceId,
+              paymentData: requestData,
+            );
+          }
+
+          // Show crypto wallet details bottom sheet
+          _showCryptoWalletDetailsBottomSheet(response.data!);
+        } else {
+          ErrorHandler.showError(
+            context,
+            response.message.isNotEmpty
+                ? response.message
+                : 'Failed to create crypto funding request. Please try again.',
+          );
+        }
+      }
+    } catch (e, st) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        try {
+          await locator<CrashlyticsService>().reportError(e, st);
+        } catch (_) {}
+
+        ErrorHandler.showError(
+          context,
+          'An error occurred while processing your request. Please try again.',
+        );
+      }
+    }
+  }
+
+  /// Format date to ISO format (YYYY-MM-DD) for API
+  String _formatDateOfBirthToISO(String dateString) {
+    if (dateString.isEmpty) return '1990-01-01';
+
+    try {
+      // If already in ISO format (YYYY-MM-DD), return as is
+      if (dateString.contains('-') && dateString.length == 10) {
+        return dateString;
+      }
+
+      // If in DD/MM/YYYY format, convert to ISO
+      if (dateString.contains('/')) {
+        final parts = dateString.split('/');
+        if (parts.length == 3) {
+          final day = parts[0].padLeft(2, '0');
+          final month = parts[1].padLeft(2, '0');
+          final year = parts[2];
+          return '$year-$month-$day';
+        }
+      }
+
+      // Try to parse as DateTime and format to ISO
+      final date = DateTime.parse(dateString);
+      return "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+    } catch (e) {
+      // If parsing fails, return default
+      return '1990-01-01';
+    }
+  }
+
+  Map<String, dynamic> _buildCryptoCollectionRequest({
+    required SendState sendState,
+    required dynamic user,
+    required Map<String, dynamic> selectedNetworkData,
+  }) {
+    final cryptoNetwork = _selectedNetwork ?? '';
+    final cryptoCurrency = widget.selectedChannel['code'] ?? '';
+
+    // Get crypto channel ID
+    final cryptoChannelId =
+        widget.selectedChannel['id'] ??
+        widget.selectedChannel['channelId'] ??
+        cryptoNetwork;
+
+    return {
+      "channelId": cryptoChannelId,
+      "amount":
+          double.tryParse(
+            sendState.sendAmount.replaceAll(RegExp(r'[^\d.]'), ''),
+          ) ??
+          0,
+      "currency": sendState.sendCurrency,
+      "channelName": widget.selectedChannel['name'] ?? "Digital Dollar",
+      "country": "NG",
+      "receiveChannel": cryptoChannelId,
+      "receiveNetwork": cryptoNetwork,
+      "receiveAmount": double.tryParse(
+        sendState.receiverAmount.replaceAll(RegExp(r'[^\d.]'), ''),
+      ) ?? 0,
+      "recipient": {
+        "name":
+            user != null ? '${user.firstName} ${user.lastName}'.trim() : 'User',
+        "phone": user?.phoneNumber ?? '+2340000000000',
+        "email": user?.email ?? 'user@example.com',
+        "country": user?.country ?? sendState.sendCountry,
+        "address": user?.address ?? 'Not provided',
+        "dob": _formatDateOfBirthToISO(user?.dateOfBirth ?? '1990-01-01'),
+        "idType": user?.idType ?? 'passport',
+        "idNumber": user?.idNumber ?? 'A12345678',
+      },
+      "source": {
+        "accountNumber":
+            cryptoCurrency.isNotEmpty ? cryptoCurrency : cryptoNetwork,
+        "networkId": cryptoNetwork,
+        "accountType": "crypto",
+      },
+    };
   }
 
   @override
@@ -355,9 +528,9 @@ class _SendCryptoNetworksViewState
           'Select Network',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
             fontFamily: 'CabinetGrotesk',
-            fontSize: 28.sp,
+            fontSize: 20.sp,
             fontWeight: FontWeight.w600,
-            letterSpacing: -0.8,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         centerTitle: true,
@@ -521,15 +694,24 @@ class _SendCryptoNetworksViewState
         child: SafeArea(
           child: PrimaryButton(
             text:
-                _selectedNetwork != null
+                _isLoading
+                    ? 'Processing...'
+                    : _selectedNetwork != null
                     ? 'Continue with ${enabledNetworks.firstWhere((e) => e.key == _selectedNetwork).value['name']}'
                     : 'Select a Network',
-            onPressed: _handleContinue,
+            onPressed:
+                (_selectedNetwork != null && !_isLoading)
+                    ? _handleContinue
+                    : null,
+            isLoading: _isLoading,
             backgroundColor:
-                _selectedNetwork != null
+                _selectedNetwork != null && !_isLoading
                     ? AppColors.purple500
-                    : AppColors.neutral400,
-            textColor: AppColors.neutral0,
+                    : AppColors.purple500.withOpacity(.25),
+            textColor:
+                _selectedNetwork != null && !_isLoading
+                    ? AppColors.neutral0
+                    : AppColors.neutral0.withOpacity(.5),
             height: 60.h,
             fontFamily: 'Karla',
             letterSpacing: -.8,
@@ -541,5 +723,353 @@ class _SendCryptoNetworksViewState
         ),
       ),
     );
+  }
+
+  void _startCountdownTimer() {
+    _remainingTime = const Duration(minutes: 30);
+    _countdownTimer?.cancel();
+  }
+
+  void _onTimerExpired() {
+    if (mounted) {
+      Navigator.pop(context);
+      TopSnackbar.show(
+        context,
+        message: 'Payment details have expired. Please create a new request.',
+        isError: true,
+      );
+    }
+  }
+
+  String _formatRemainingTime() {
+    final minutes = _remainingTime.inMinutes;
+    return minutes.toString();
+  }
+
+  String _formatNumber(double amount) {
+    String formatted = amount.toStringAsFixed(2);
+    List<String> parts = formatted.split('.');
+    String integerPart = parts[0];
+    String decimalPart = parts.length > 1 ? parts[1] : '00';
+
+    String formattedInteger = '';
+    for (int i = 0; i < integerPart.length; i++) {
+      if (i > 0 && (integerPart.length - i) % 3 == 0) {
+        formattedInteger += ',';
+      }
+      formattedInteger += integerPart[i];
+    }
+
+    return '$formattedInteger.$decimalPart';
+  }
+
+  Widget _buildDetailRow(String label, String value, {bool showCopy = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Flexible(
+          child: Text(
+            label,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              letterSpacing: -.3,
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w500,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+            ),
+          ),
+        ),
+        Flexible(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  value,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    fontFamily: 'CabinetGrotesk',
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                  textAlign: TextAlign.right,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (showCopy) ...[
+                SizedBox(width: 8.w),
+                GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    Clipboard.setData(ClipboardData(text: value));
+                    TopSnackbar.show(context, message: 'Copied to clipboard');
+                  },
+                  child: SvgPicture.asset(
+                    "assets/icons/svgs/copy.svg",
+                    height: 20.w,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.6),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showCryptoWalletDetailsBottomSheet(payment.PaymentData collectionData) {
+    _startCountdownTimer();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            _countdownTimer?.cancel();
+            _countdownTimer = Timer.periodic(const Duration(seconds: 1), (
+              timer,
+            ) {
+              if (mounted) {
+                setModalState(() {
+                  if (_remainingTime.inSeconds > 0) {
+                    _remainingTime = Duration(
+                      seconds: _remainingTime.inSeconds - 1,
+                    );
+                  } else {
+                    _countdownTimer?.cancel();
+                    _onTimerExpired();
+                  }
+                });
+              }
+            });
+
+            final sendState = ref.read(sendViewModelProvider);
+            final cryptoCurrency = widget.selectedChannel['code'] ?? '';
+            final cryptoNetwork = _selectedNetwork ?? '';
+            final networks =
+                widget.selectedChannel['networks'] as Map<String, dynamic>? ??
+                {};
+            final selectedNetworkData =
+                networks[_selectedNetwork] as Map<String, dynamic>? ?? {};
+            final networkName = selectedNetworkData['name'] ?? cryptoNetwork;
+
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.8,
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+              ),
+              child: Column(
+                children: [
+                  SizedBox(height: 18.h),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24.w),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        SizedBox(height: 22.h, width: 22.w),
+                        Text(
+                          'Crypto Wallet Details',
+                          style: AppTypography.titleLarge.copyWith(
+                            fontFamily: 'CabinetGrotesk',
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.w600,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: Image.asset(
+                            "assets/icons/pngs/cancelicon.png",
+                            height: 22.h,
+                            width: 22.w,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 16.h),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.symmetric(horizontal: 24.w),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: EdgeInsets.all(12.w),
+                            decoration: BoxDecoration(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.primaryContainer.withOpacity(0.25),
+                              borderRadius: BorderRadius.circular(4.r),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                SizedBox(width: 4.w),
+                                Image.asset(
+                                  "assets/images/idea.png",
+                                  height: 18.h,
+                                ),
+                                SizedBox(width: 12.w),
+                                Expanded(
+                                  child: Text(
+                                    'Send the exact amount to the wallet address below. Ensure you use the correct network (${networkName.toUpperCase()}) to avoid loss of funds.',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall?.copyWith(
+                                      fontSize: 12.5.sp,
+                                      fontFamily: 'Karla',
+                                      fontWeight: FontWeight.w400,
+                                      letterSpacing: -0.4,
+                                      height: 1.5,
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: 12.h),
+                          Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16.w,
+                              vertical: 24.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surface,
+                              borderRadius: BorderRadius.circular(12.r),
+                              border: Border.all(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.outline.withOpacity(0.2),
+                                width: 1.0,
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SizedBox(height: 8.h),
+                                Text(
+                                  'Transfer details:',
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.titleLarge?.copyWith(
+                                    fontFamily: 'CabinetGrotesk',
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                SizedBox(height: 16.h),
+                                _buildDetailRow(
+                                  'Amount to send',
+                                  '${sendState.receiverCurrency} ${_formatNumber(collectionData.convertedAmount ?? 0.0)}',
+                                  showCopy: true,
+                                ),
+                                SizedBox(height: 12.h),
+                                _buildDetailRow(
+                                  'Cryptocurrency',
+                                  cryptoCurrency.toUpperCase(),
+                                ),
+                                SizedBox(height: 12.h),
+                                _buildDetailRow(
+                                  'Network',
+                                  networkName.toUpperCase(),
+                                ),
+                                SizedBox(height: 12.h),
+                                _buildDetailRow(
+                                  'Wallet Address',
+                                  collectionData.fiatWallet ??
+                                      collectionData.reference ??
+                                      'Address will be generated',
+                                  showCopy: true,
+                                ),
+                                if (selectedNetworkData['requiresMemo'] ==
+                                    true) ...[
+                                  SizedBox(height: 12.h),
+                                  _buildDetailRow(
+                                    'Memo/Tag',
+                                    collectionData.reference ??
+                                        'Memo will be provided',
+                                    showCopy: true,
+                                  ),
+                                ],
+                                Divider(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.outline.withOpacity(0.2),
+                                  height: 48.h,
+                                ),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        'The wallet address is valid for only this transaction and it expires in ${_formatRemainingTime()} minutes.',
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodyMedium?.copyWith(
+                                          fontFamily: 'Karla',
+                                          fontWeight: FontWeight.w500,
+                                          letterSpacing: -0.4,
+                                          fontSize: 14.sp,
+                                          color:
+                                              Theme.of(
+                                                context,
+                                              ).colorScheme.onSurface,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 8.h),
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: 24.h),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.all(24.w),
+                    child: PrimaryButton(
+                      text: 'I\'ve Sent the Payment',
+                      onPressed: () {
+                        Navigator.pop(context);
+                        // Navigate to success screen or main view
+                        Navigator.pop(context); // Close crypto network view
+                      },
+                      backgroundColor: AppColors.purple500,
+                      height: 60.h,
+                      textColor: AppColors.neutral0,
+                      fontFamily: 'Karla',
+                      letterSpacing: -.8,
+                      fontSize: 18,
+                      width: double.infinity,
+                      fullWidth: true,
+                      borderRadius: 40.r,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _countdownTimer?.cancel();
+    super.dispose();
   }
 }

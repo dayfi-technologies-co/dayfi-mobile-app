@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
@@ -148,11 +149,28 @@ class BiometricSetupNotifier extends StateNotifier<BiometricSetupState> {
 
       if (authenticated) {
         try {
-          // Update biometrics on backend
-          await _authService.updateBiometrics(isBiometricsSetup: true);
-          AppLogger.info('Biometric status updated on backend successfully');
+          // Get current user id
+          final userJson = await _secureStorage.read(StorageKeys.user);
+          String? userId;
+          if (userJson.isNotEmpty) {
+            final parsed = jsonDecode(userJson);
+            if (parsed is Map<String, dynamic> && parsed['user_id'] is String) {
+              userId = parsed['user_id'] as String;
+            }
+          }
+
+          if (userId != null && userId.isNotEmpty) {
+            // Update profile to set biometrics flag via Edit Profile API
+            await _authService.updateProfileBiometrics(
+              userId: userId,
+              isBiometricsSetup: true,
+            );
+            AppLogger.info('Biometric status updated on profile successfully');
+          } else {
+            AppLogger.error('Unable to determine userId for biometrics update');
+          }
         } catch (e) {
-          AppLogger.error('Failed to update biometric status on backend: $e');
+          AppLogger.error('Failed to update biometric status on profile: $e');
           // Continue with local setup even if backend fails
         }
 
@@ -202,33 +220,24 @@ class BiometricSetupNotifier extends StateNotifier<BiometricSetupState> {
   Future<void> skipBiometrics(BuildContext context) async {
     try {
       AppLogger.info('Skipping biometric setup...');
+      state = state.copyWith(isBusy: true);
       
       try {
-        // Update biometrics on backend as false
-        await _authService.updateBiometrics(isBiometricsSetup: false);
-        AppLogger.info('Biometric status updated on backend successfully');
-      } catch (e) {
-        AppLogger.error('Failed to update biometric status on backend: $e');
-        // Continue with local setup even if backend fails
-      }
+        // Save preference to skip biometrics locally only
+        await _secureStorage.write('biometric_enabled', 'false');
+      } catch (_) {}
       
-      // Save preference to skip biometrics
-      await _secureStorage.write('biometric_enabled', 'false');
-      // Mark biometric setup as completed (even though skipped)
-      await _secureStorage.write(StorageKeys.biometricSetupCompleted, 'true');
-      
-      state = state.copyWith(isEnabled: false);
+      state = state.copyWith(isEnabled: false, isBusy: false);
       
       TopSnackbar.show(
         context,
         message: 'You can enable ${state.biometricDescription} later in settings',
         isError: false,
       );
-
-      // Navigate to main view
-      appRouter.pushNamed(AppRoute.mainView);
+      // Intentionally do not navigate here; the caller (dialog) handles navigation after showing loader
     } catch (e) {
       AppLogger.error('Error skipping biometrics: $e');
+      state = state.copyWith(isBusy: false);
       TopSnackbar.show(
         context,
         message: 'An error occurred. Please try again.',
