@@ -119,7 +119,7 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
                     Padding(
                       padding: const EdgeInsets.all(6.0),
                       child: CupertinoActivityIndicator(
-                        color: AppColors.purple500,
+                        color: AppColors.purple500ForTheme(context),
                       ).animate().fadeIn(
                         duration: 300.ms,
                         curve: Curves.easeOutCubic,
@@ -139,10 +139,10 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
                               shape: BoxShape.circle,
                               color:
                                   index < passcodeState.passcode.length
-                                      ? AppColors.purple500
+                                      ? AppColors.purple500ForTheme(context)
                                       : Colors.transparent,
                               border: Border.all(
-                                color: AppColors.purple500,
+                                color: AppColors.purple500ForTheme(context),
                                 width: 1.50,
                               ),
                             ),
@@ -244,7 +244,7 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
                             text: "Sign out",
                             style: TextStyle(
                               fontFamily: 'Karla',
-                              color: AppColors.purple500,
+                              color: AppColors.purple500ForTheme(context),
                               fontSize: 16.sp,
                               fontWeight: FontWeight.w600,
                               letterSpacing: -.3,
@@ -327,8 +327,8 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
               (icon == Icons.fingerprint || icon == Icons.face)
                   ? SvgPicture.asset(
                     iconSvg,
-                    height: 36,
-                    color: AppColors.purple500,
+                    height: 30,
+                    color: AppColors.purple500ForTheme(context),
                   )
                   : Icon(
                     icon,
@@ -336,7 +336,7 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
                         (icon == Icons.fingerprint || icon == Icons.face)
                             ? 36
                             : 24,
-                    color: AppColors.purple500,
+                    color: AppColors.purple500ForTheme(context),
                   ),
         ),
       ),

@@ -6,7 +6,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
-import 'package:dayfi/features/send/views/send_review_view.dart';
 import 'package:dayfi/services/remote/payment_service.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
@@ -17,6 +16,7 @@ import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 // ignore: depend_on_referenced_packages
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:dayfi/routes/route.dart';
 
 class SendAddRecipientsView extends ConsumerStatefulWidget {
   final Map<String, dynamic> selectedData;
@@ -396,7 +396,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                       Center(
                         // padding: EdgeInsets.only(left: 16.w),
                         child: Text(
-                          widget.selectedData['recipientDeliveryMethod'] == 'bank' ? 'Please select a bank to enable account resolution' : 'Please select a mobile money provider to enable account resolution',
+                          widget.selectedData['recipientDeliveryMethod'] == 'bank' || widget.selectedData['recipientDeliveryMethod'] == 'p2p' ? 'Please select a bank to enable account resolution' : 'Please select a mobile money provider to enable account resolution',
                           style: AppTypography.bodySmall.copyWith(
                             fontFamily: 'Karla',
                             fontSize: 12.sp,
@@ -414,11 +414,11 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                     // Account Number Field (Required)
                     CustomTextField(
                       controller: _accountNumberController,
-                      label: widget.selectedData['recipientDeliveryMethod'] == 'bank' ? 'Account Number' : 'Mobile Money Number',
+                      label: widget.selectedData['recipientDeliveryMethod'] == 'bank' || widget.selectedData['recipientDeliveryMethod'] == 'p2p' ? 'Account Number' : 'Mobile Money Number',
                       hintText:
                           _selectedNetwork == null
-                              ? widget.selectedData['recipientDeliveryMethod'] == 'bank' ? 'Select a bank first' : 'Select a mobile money provider first'
-                              : widget.selectedData['recipientDeliveryMethod'] == 'bank' ? 'Enter 10-digit account number' : 'Enter mobile money number',
+                              ? widget.selectedData['recipientDeliveryMethod'] == 'bank' || widget.selectedData['recipientDeliveryMethod'] == 'p2p' ? 'Select a bank first' : 'Select a mobile money provider first'
+                              : widget.selectedData['recipientDeliveryMethod'] == 'bank' || widget.selectedData['recipientDeliveryMethod'] == 'p2p' ? 'Enter 10-digit account number' : 'Enter mobile money number',
                       keyboardType: TextInputType.number,
                       maxLength: 10,
                       enabled: _selectedNetwork != null,
@@ -428,7 +428,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                                 margin: EdgeInsets.all(12),
                                 child:
                                     LoadingAnimationWidget.horizontalRotatingDots(
-                                      color: AppColors.purple500,
+                                      color: AppColors.purple500ForTheme(context),
                                       size: 20,
                                     ),
                               )
@@ -649,7 +649,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
 
                     // Continue Button
                     PrimaryButton(
-                      text: 'Continue',
+                      text: 'Next - Review Transfer',
                       onPressed: _validateAndContinue,
                       height: 60.h,
                       backgroundColor: AppColors.purple500,
@@ -662,7 +662,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                       borderRadius: 40.r,
                     ),
 
-                    SizedBox(height: 100.h),
+                    SizedBox(height: 40.h),
                   ],
                 ),
               ),
@@ -674,7 +674,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
             color: Colors.black.withOpacity(0.3),
             child: Center(
               child: LoadingAnimationWidget.horizontalRotatingDots(
-                color: AppColors.purple500,
+                color: AppColors.purple500ForTheme(context),
                 size: 40,
               ),
             ),
@@ -688,7 +688,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
     return CustomTextField(
       controller: _networkController,
       label:
-          widget.selectedData['recipientDeliveryMethod'] == 'bank'
+          widget.selectedData['recipientDeliveryMethod'] == 'bank' || widget.selectedData['recipientDeliveryMethod'] == 'p2p'
               ? 'Bank Name'
               : 'Mobile Money Provider',
       hintText: _getNetworkHintText(),
@@ -708,13 +708,13 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
   /// Get the hint text based on current state
   String _getNetworkHintText() {
     if (_isLoadingNetworks) {
-      return widget.selectedData['recipientDeliveryMethod'] == 'bank' ? 'Loading banks...' : 'Loading mobile money providers...';
+      return widget.selectedData['recipientDeliveryMethod'] == 'bank' || widget.selectedData['recipientDeliveryMethod'] == 'p2p' ? 'Loading banks...' : 'Loading mobile money providers...';
     } else if (_networkError != null) {
-      return widget.selectedData['recipientDeliveryMethod'] == 'bank' ? 'Error loading banks' : 'Error loading mobile money providers';
+      return widget.selectedData['recipientDeliveryMethod'] == 'bank' || widget.selectedData['recipientDeliveryMethod'] == 'p2p' ? 'Error loading banks' : 'Error loading mobile money providers';
     } else if (_filteredNetworks.isEmpty) {
-      return widget.selectedData['recipientDeliveryMethod'] == 'bank' ? 'No banks available for this channel' : 'No mobile money providers available for this channel';
+      return widget.selectedData['recipientDeliveryMethod'] == 'bank' || widget.selectedData['recipientDeliveryMethod'] == 'p2p' ? 'No banks available for this channel' : 'No mobile money providers available for this channel';
     } else {
-      return widget.selectedData['recipientDeliveryMethod'] == 'bank'
+      return widget.selectedData['recipientDeliveryMethod'] == 'bank' || widget.selectedData['recipientDeliveryMethod'] == 'p2p'
           ? 'Select a bank'
           : 'Select a mobile money provider';
     }
@@ -726,7 +726,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
       return Container(
         margin: EdgeInsets.all(12.w),
         child: LoadingAnimationWidget.horizontalRotatingDots(
-          color: AppColors.purple500,
+          color: AppColors.purple500ForTheme(context),
           size: 20,
         ),
       );
@@ -809,7 +809,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            SizedBox(height: 22.h, width: 22.w),
+                            SizedBox(height: 24.h, width: 22.w),
                             Text(
                               'Select Network',
                               style: AppTypography.titleLarge.copyWith(
@@ -825,8 +825,8 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                               },
                               child: Image.asset(
                                 "assets/icons/pngs/cancelicon.png",
-                                height: 22.h,
-                                width: 22.w,
+                                height: 24.h,
+                                width: 24.w,
                                 color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
@@ -952,7 +952,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                                           isSelected
                                               ? SvgPicture.asset(
                                                 'assets/icons/svgs/circle-check.svg',
-                                                color: AppColors.purple500,
+                                                color: AppColors.purple500ForTheme(context),
                                               )
                                               : null,
                                       onTap: () {
@@ -1027,25 +1027,25 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
         'userId': user?.userId ?? '12345', // Add user ID for metadata
       };
 
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder:
-              (context) => SendReviewView(
-                selectedData: widget.selectedData,
-                recipientData: recipientData,
-                senderData: senderData,
-              ),
-        ),
+      appRouter.pushNamed(
+        AppRoute.sendReviewView,
+        arguments: {
+          'selectedData': widget.selectedData,
+          'recipientData': recipientData,
+          'senderData': senderData,
+        },
       );
     } else {
       String errorMessage = 'Please complete the following:';
       if (_selectedNetwork == null) {
         errorMessage += '\n• Select a network';
       }
-      if (_resolvedAccountName == null || _resolvedAccountName!.isEmpty) {
+      if (_resolvedAccountName == null || _resolvedAccountName!.isEmpty && widget.selectedData['recipientDeliveryMethod'] != 'p2p') {
         errorMessage +=
             '\n• Enter a valid account number to resolve the recipient name';
+      } else if (_resolvedAccountName == null || _resolvedAccountName!.isEmpty && widget.selectedData['recipientDeliveryMethod'] == 'p2p') {
+        errorMessage +=
+            '\n• Enter a valid mobile money number to resolve the recipient name';
       }
 
       ScaffoldMessenger.of(context).showSnackBar(

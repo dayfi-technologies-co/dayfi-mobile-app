@@ -299,4 +299,16 @@ class AppColors {
         .withSaturation((hsl.saturation + saturation).clamp(0.0, 1.0))
         .toColor();
   }
+
+  /// Get purple500 color adapted for theme brightness
+  /// Returns purple500 for light theme and purple400 (lighter) for dark theme
+  static Color purple500ForBrightness(Brightness brightness) {
+    return brightness == Brightness.dark ? purple400 : purple500;
+  }
+
+  /// Get purple500 color adapted for theme context
+  /// Returns purple500 for light theme and purple400 (lighter) for dark theme
+  static Color purple500ForTheme(BuildContext context) {
+    return purple500ForBrightness(Theme.of(context).brightness);
+  }
 }

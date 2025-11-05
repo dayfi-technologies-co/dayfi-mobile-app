@@ -142,7 +142,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
             onPressed: () => Navigator.pop(context),
             icon: Icon(
               Icons.arrow_back_ios,
-              color: AppColors.neutral900,
+               color: Theme.of(context).colorScheme.onSurface,
               // size: 20.sp,
             ),
           ),
@@ -435,7 +435,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
         // Save Button
         PrimaryButton(
           borderRadius: 38,
-          text: "Save Changes",
+          text: "Next - Save Changes",
           onPressed:
               state.isFormValid && !state.isLoading && state.isDirty
                   ? () => _handleSave(notifier)
@@ -459,8 +459,8 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
         SecondaryButton(
           text: "Cancel",
           onPressed: state.isLoading ? null : () => Navigator.pop(context),
-          borderColor: AppColors.purple500,
-          textColor: AppColors.purple500,
+          borderColor: AppColors.purple500ForTheme(context),
+          textColor: AppColors.purple500ForTheme(context),
           width: double.infinity,
           fullWidth: true,
           height: 60.h,
@@ -720,7 +720,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
                 ),
               ),
               child: Text(
-                'Continue',
+                'Next - Edit ${fieldName == 'firstName' ? 'First Name' : fieldName == 'lastName' ? 'Last Name' : 'Name'}',
                 style: AppTypography.bodyMedium.copyWith(
                   color: Colors.white,
                   fontFamily: 'Karla',
@@ -799,7 +799,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
                 ),
               ),
               child: Text(
-                'Continue',
+                'Next - Edit Phone Number',
                 style: AppTypography.bodyMedium.copyWith(
                   color: Colors.white,
                   fontFamily: 'Karla',
@@ -822,7 +822,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
             width: 6.w,
             height: 6.h,
             decoration: BoxDecoration(
-              color: AppColors.purple500,
+              color: AppColors.purple500ForTheme(context),
               shape: BoxShape.circle,
             ),
           ),
@@ -926,7 +926,7 @@ class _CountryBottomSheetState extends State<_CountryBottomSheet> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                SizedBox(height: 22.h, width: 22.w),
+                SizedBox(height: 24.h, width: 22.w),
                 Text(
                   'Select Country',
                   style: AppTypography.titleLarge.copyWith(
@@ -942,8 +942,8 @@ class _CountryBottomSheetState extends State<_CountryBottomSheet> {
                   },
                   child: Image.asset(
                     "assets/icons/pngs/cancelicon.png",
-                    height: 22.h,
-                    width: 22.w,
+                    height: 24.h,
+                    width: 24.w,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
@@ -1021,7 +1021,7 @@ class _GenderBottomSheetState extends State<_GenderBottomSheet> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                SizedBox(height: 22.h, width: 22.w),
+                SizedBox(height: 24.h, width: 22.w),
                 Text(
                   'Select Gender',
                   style: AppTypography.titleLarge.copyWith(
@@ -1037,8 +1037,8 @@ class _GenderBottomSheetState extends State<_GenderBottomSheet> {
                   },
                   child: Image.asset(
                     "assets/icons/pngs/cancelicon.png",
-                    height: 22.h,
-                    width: 22.w,
+                    height: 24.h,
+                    width: 24.w,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),

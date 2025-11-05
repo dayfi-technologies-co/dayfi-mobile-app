@@ -9,19 +9,24 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/services/remote/payment_service.dart';
-import 'package:dayfi/services/transaction_monitor_service.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/features/send/vm/send_viewmodel.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/models/payment_response.dart' as payment;
-import 'package:dayfi/models/wallet_transaction.dart';
+import 'package:dayfi/models/payment_response.dart' show Network, Channel;
+import 'package:dayfi/models/user_model.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/features/send/views/send_payment_success_view.dart';
 import 'dart:async';
 import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/common/utils/error_handler.dart';
 import 'package:dayfi/services/local/crashlytics_service.dart';
-import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
+import 'package:dayfi/services/remote/wallet_service.dart';
+import 'package:dayfi/features/send/views/bank_transfer_amount_view.dart';
+import 'package:dayfi/common/utils/phone_country_utils.dart';
+import 'package:dayfi/features/home/vm/home_viewmodel.dart';
+import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
+import 'package:intercom_flutter/intercom_flutter.dart';
 
 class SendPaymentMethodView extends ConsumerStatefulWidget {
   final Map<String, dynamic> selectedData;
@@ -48,6 +53,30 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
   payment.PaymentData? _currentPaymentData; // Store the current payment data
   Timer? _countdownTimer;
   Duration _remainingTime = const Duration(minutes: 30);
+  bool _isCheckingWallet = false;
+
+  // Constants
+  static const String _defaultPhone = '+2340000000000';
+  static const String _targetCountry = 'NG';
+  static const String _targetCurrency = 'NGN';
+  static const String _targetStatus = 'active';
+  static const String _targetRampType = 'deposit';
+  static const Set<String> _validChannelTypes = {
+    'bank',
+    'p2p',
+    'bank_transfer',
+  };
+  static const List<String> _redirectCountries = [
+    'ZA',
+    'ZA-South Africa',
+    'South Africa',
+  ];
+  static const List<String> _redirectChannels = [
+    'card',
+    'online',
+    'web',
+    'redirect',
+  ];
 
   @override
   void initState() {
@@ -91,15 +120,19 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
   Map<String, dynamic> _buildCollectionRequest({
     required SendState sendState,
     required dynamic selectedChannel,
+    required String encryptedPin,
   }) {
     // Check if this is a crypto funding request
-    final isCrypto = widget.selectedData['cryptoCurrency'] != null ||
+    final isCrypto =
+        widget.selectedData['cryptoCurrency'] != null ||
         widget.selectedData['cryptoNetwork'] != null;
-    
+
     final requestData = {
-      "amount": double.tryParse(
-        sendState.sendAmount.replaceAll(RegExp(r'[^\d.]'), ''),
-      ) ?? 0,
+      "amount":
+          double.tryParse(
+            sendState.sendAmount.replaceAll(RegExp(r'[^\d.]'), ''),
+          ) ??
+          0,
       "currency": sendState.sendCurrency,
       "channelId": widget.selectedData['senderChannelId'] ?? "",
       "channelName":
@@ -116,6 +149,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
             widget.selectedData['receiveAmount']?.toString() ?? '0',
           ) ??
           0,
+      "encryptedPin": encryptedPin,
       "recipient": {
         "name": widget.recipientData['name'] ?? 'Recipient',
         "country": widget.recipientData['country'] ?? sendState.receiverCountry,
@@ -128,11 +162,14 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
       },
       "source": {
         "accountType": isCrypto ? "crypto" : "bank",
-        "accountNumber": widget.recipientData['accountNumber'] ?? 
-            widget.recipientData['walletAddress'] ?? 
+        "accountNumber":
+            widget.recipientData['accountNumber'] ??
+            widget.recipientData['walletAddress'] ??
             (isCrypto ? "" : "1111111111"),
-        "networkId": widget.recipientData['networkId'] ?? 
-            widget.selectedData['cryptoNetwork'] ?? "",
+        "networkId":
+            widget.recipientData['networkId'] ??
+            widget.selectedData['cryptoNetwork'] ??
+            "",
       },
       "metadata": {
         "customerId": widget.senderData['userId'] ?? "12345",
@@ -143,59 +180,20 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
 
     // Add crypto-specific fields if this is a crypto request
     if (isCrypto) {
-      requestData["cryptoCurrency"] = widget.selectedData['cryptoCurrency'] ?? "";
+      requestData["cryptoCurrency"] =
+          widget.selectedData['cryptoCurrency'] ?? "";
       requestData["cryptoNetwork"] = widget.selectedData['cryptoNetwork'] ?? "";
-      requestData["walletAddress"] = widget.recipientData['walletAddress'] ?? 
-          widget.selectedData['walletAddress'] ?? "";
+      requestData["walletAddress"] =
+          widget.recipientData['walletAddress'] ??
+          widget.selectedData['walletAddress'] ??
+          "";
       if (widget.selectedData['requiresMemo'] == true) {
-        requestData["memo"] = widget.recipientData['memo'] ?? 
-            widget.selectedData['memo'] ?? "";
+        requestData["memo"] =
+            widget.recipientData['memo'] ?? widget.selectedData['memo'] ?? "";
       }
     }
 
     return requestData;
-  }
-
-  Map<String, dynamic> _buildPaymentMonitoringData({
-    required SendState sendState,
-    required dynamic selectedChannel,
-  }) {
-    return {
-      "amount": double.tryParse(
-        sendState.sendAmount.replaceAll(RegExp(r'[^\d.]'), ''),
-      ) ?? 0,
-      "currency": sendState.sendCurrency,
-      "channelId": widget.selectedData['senderChannelId'] ?? "",
-      "channelName":
-          selectedChannel.channelType ??
-          widget.selectedData['recipientDeliveryMethod'] ??
-          "Bank Transfer",
-      "country": sendState.sendCountry,
-      "reason": widget.paymentData['reason'] ?? "Money Transfer",
-      "receiveChannel":
-          widget.selectedData['recipientChannelId'] ?? selectedChannel.id ?? "",
-      "receiveNetwork": widget.recipientData['networkId'] ?? "",
-      "receiveAmount":
-          double.tryParse(
-            widget.selectedData['receiveAmount']?.toString() ?? '0',
-          ) ??
-          0,
-      "recipient": {
-        "name": widget.recipientData['name'] ?? 'Recipient',
-        "country": widget.recipientData['country'] ?? sendState.receiverCountry,
-        "phone": widget.recipientData['phone'] ?? '+2340000000000',
-        "address": widget.recipientData['address'] ?? '',
-        "email": widget.recipientData['email'] ?? '',
-        "idNumber": widget.recipientData['idNumber'] ?? '',
-        "idType": widget.recipientData['idType'] ?? 'passport',
-        "dob": widget.recipientData['dob'] ?? '',
-      },
-      "source": {
-        "accountType": widget.recipientData['accountType'] ?? 'bank',
-        "accountNumber": widget.recipientData['accountNumber'] ?? '',
-        "networkId": widget.recipientData['networkId'] ?? '',
-      },
-    };
   }
 
   String _mapCollectionError(String raw, SendState sendState) {
@@ -205,8 +203,9 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
       ).firstMatch(raw);
       final currency =
           currencyMatch?.group(1) ??
-          sendState.receiverCurrency ??
-          'selected currency';
+          (sendState.receiverCurrency.isNotEmpty
+              ? sendState.receiverCurrency
+              : 'selected currency');
       return 'Exchange rates not available for $currency. Please select a different currency or try again later.';
     }
     if (raw.contains('RedirectUrl param is required')) {
@@ -299,40 +298,77 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
 
   void _handleDayfiTagSelection() async {
     log('handleDayfiTagSelection');
-    
-    // DayFi Tag to DayFi Tag transfers are limited to NGN (Nigerian Naira) only
-    final sendState = ref.read(sendViewModelProvider);
-    const dayfiTagAllowedCurrency = 'NGN';
-    
-    // Validate currency restriction: DayFi Tag transfers only support NGN
-    if (sendState.receiverCurrency != dayfiTagAllowedCurrency) {
-      ErrorHandler.showError(
-        context,
-        'DayFi Tag transfers are only available for NGN (Nigerian Naira). Please select NGN as the recipient currency to use DayFi Tag.',
-      );
+
+    // Fast path: Check cached wallet data first (no network call)
+    final homeState = ref.read(homeViewModelProvider);
+    String? dayfiId;
+
+    // Check cached wallets first - super fast!
+    if (homeState.wallets.isNotEmpty) {
+      for (final wallet in homeState.wallets) {
+        if (wallet.dayfiId.isNotEmpty) {
+          dayfiId = wallet.dayfiId;
+          break; // Found it, exit early
+        }
+      }
+    }
+
+    // If not found in cache, check primary wallet
+    if (dayfiId == null &&
+        homeState.primaryWallet?.dayfiId.isNotEmpty == true) {
+      dayfiId = homeState.primaryWallet!.dayfiId;
+    }
+
+    // If found in cache, show bottom sheet immediately (no loading, no network call)
+    if (dayfiId != null && dayfiId.isNotEmpty) {
+      _showDayfiTagBottomSheet(dayfiId);
       return;
     }
-    
-    // Check if user has a DayFi Tag
-    final profileState = ref.read(profileViewModelProvider);
-    final user = profileState.user;
-    final dayfiId = user?.dayfiId;
 
-    if (dayfiId == null || dayfiId.isEmpty) {
-      // User doesn't have a DayFi Tag, show explanation and navigate to creation
-      final result = await Navigator.pushNamed(context, AppRoute.dayfiTagExplanationView);
-      // If user created a DayFi Tag, refresh profile and show bottom sheet
-      if (result != null && result is String) {
-        // Refresh profile to get updated user data
-        await ref.read(profileViewModelProvider.notifier).loadUserProfile();
-        // Show bottom sheet with the newly created DayFi Tag
-        if (mounted) {
+    // Only fetch from network if cache is empty (rare case)
+    try {
+      setState(() {
+        _isCheckingWallet = true;
+      });
+
+      final walletService = locator<WalletService>();
+      final walletResponse = await walletService.fetchWalletDetails();
+
+      // Check if any wallet has a non-empty Dayfi ID
+      for (final wallet in walletResponse.wallets) {
+        if (wallet.dayfiId.isNotEmpty) {
+          dayfiId = wallet.dayfiId;
+          break; // Found it, exit early
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _isCheckingWallet = false;
+        });
+      }
+
+      if (dayfiId != null && dayfiId.isNotEmpty) {
+        _showDayfiTagBottomSheet(dayfiId);
+      } else {
+        // User doesn't have a DayFi Tag, navigate to creation
+        final result = await Navigator.pushNamed(
+          context,
+          AppRoute.dayfiTagExplanationView,
+        );
+        if (result != null && result is String && mounted) {
           _showDayfiTagBottomSheet(result);
         }
       }
-    } else {
-      // User has a DayFi Tag, show bottom sheet
-      _showDayfiTagBottomSheet(dayfiId);
+    } catch (e) {
+      AppLogger.error('Error checking Dayfi ID: $e');
+      if (mounted) {
+        setState(() {
+          _isCheckingWallet = false;
+        });
+        // Navigate to explanation view
+        await Navigator.pushNamed(context, AppRoute.dayfiTagExplanationView);
+      }
     }
   }
 
@@ -343,7 +379,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       builder: (BuildContext context) {
         return Container(
-          height: MediaQuery.of(context).size.height * 0.5,
+          height: MediaQuery.of(context).size.height * 0.8,
           decoration: BoxDecoration(
             color: Theme.of(context).scaffoldBackgroundColor,
             borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
@@ -356,7 +392,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    SizedBox(height: 22.h, width: 22.w),
+                    SizedBox(height: 24.h, width: 22.w),
                     Text(
                       'Your DayFi Tag',
                       style: AppTypography.titleLarge.copyWith(
@@ -370,8 +406,8 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                       onTap: () => Navigator.pop(context),
                       child: Image.asset(
                         "assets/icons/pngs/cancelicon.png",
-                        height: 22.h,
-                        width: 22.w,
+                        height: 24.h,
+                        width: 24.w,
                         color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
@@ -388,28 +424,23 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                       Container(
                         padding: EdgeInsets.all(12.w),
                         decoration: BoxDecoration(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .primaryContainer
-                              .withOpacity(0.25),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.primaryContainer.withOpacity(0.25),
                           borderRadius: BorderRadius.circular(4.r),
                         ),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             SizedBox(width: 4.w),
-                            Image.asset(
-                              "assets/images/idea.png",
-                              height: 18.h,
-                            ),
+                            Image.asset("assets/images/idea.png", height: 18.h),
                             SizedBox(width: 12.w),
                             Expanded(
                               child: Text(
-                                'Share your DayFi Tag with friends and family. They can send you money instantly using this tag.',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.copyWith(
+                                'Share your DayFi Tag with friends and family for instant money transfers.',
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.bodySmall?.copyWith(
                                   fontSize: 12.5.sp,
                                   fontFamily: 'Karla',
                                   fontWeight: FontWeight.w400,
@@ -422,99 +453,115 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                           ],
                         ),
                       ),
-                      SizedBox(height: 24.h),
-                      Container(
-                        width: double.infinity,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 16.w,
-                          vertical: 24.h,
+                      SizedBox(height: 18.h),
+                      CustomTextField(
+                        label: "dayfi ID",
+                        hintText: "",
+                        enableInteractiveSelection: false,
+                        shouldReadOnly: true,
+                        controller: TextEditingController(
+                          text: dayfiId.startsWith('@') ? dayfiId : '@$dayfiId',
                         ),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.surface,
-                          borderRadius: BorderRadius.circular(12.r),
-                          border: Border.all(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .outline
-                                .withOpacity(0.2),
-                            width: 1.0,
+                        onChanged: (value) {},
+                        keyboardType: TextInputType.text,
+                        suffixIcon: Container(
+                          constraints: BoxConstraints.tightForFinite(),
+                          margin: EdgeInsets.symmetric(
+                            vertical: 12.0.h,
+                            horizontal: 10.0.w,
+                          ),
+                          height: 32.h,
+                          child: GestureDetector(
+                            onTap: () {
+                              Clipboard.setData(
+                                ClipboardData(
+                                  text: dayfiId.startsWith('@') ? dayfiId : '@$dayfiId',
+                                ),
+                              );
+                              TopSnackbar.show(
+                                context,
+                                message: 'DayFi Tag copied to clipboard',
+                                isError: false,
+                              );
+                            },
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.copy,
+                                  color: AppColors.purple500ForTheme(context),
+                                  size: 20.sp,
+                                ),
+                                SizedBox(width: 3.w),
+                                Text(
+                                  dayfiId.startsWith('@') ? dayfiId : '@$dayfiId',
+                                  style: TextStyle(
+                                    fontFamily: 'Karla',
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 16.sp,
+                                    letterSpacing: 0.00,
+                                    height: 1.450,
+                                    color: AppColors.purple500ForTheme(context),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SizedBox(height: 8.h),
-                            Text(
-                              'Your DayFi Tag:',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleLarge
-                                  ?.copyWith(
-                                fontFamily: 'CabinetGrotesk',
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            SizedBox(height: 16.h),
-                            _buildDetailRow(
-                              'DayFi Tag',
-                              dayfiId.startsWith('@') ? dayfiId : '@$dayfiId',
-                              showCopy: true,
-                            ),
-                            SizedBox(height: 24.h),
-                            Text(
-                              'Share this tag with anyone who wants to send you money. They can use it to transfer funds directly to your wallet.',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.copyWith(
-                                fontFamily: 'Karla',
-                                fontWeight: FontWeight.w400,
-                                letterSpacing: -0.4,
-                                fontSize: 14.sp,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurface
-                                    .withOpacity(0.7),
-                              ),
-                            ),
-                          ],
-                        ),
                       ),
-                      SizedBox(height: 24.h),
+                      SizedBox(height: 48.h),
                     ],
                   ),
                 ),
               ),
               Padding(
-                padding: EdgeInsets.all(24.w),
-                child: PrimaryButton(
-                  text: 'I\'ve Shared My Tag',
-                  onPressed: () {
-                    Navigator.pop(context);
-                    // Navigate to success screen or main view
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => SendPaymentSuccessView(
-                          recipientData: widget.recipientData,
-                          selectedData: widget.selectedData,
-                          paymentData: widget.paymentData,
-                          collectionData: null,
-                          transactionId: null,
-                        ),
-                      ),
-                    );
-                  },
-                  backgroundColor: AppColors.purple500,
-                  height: 60.h,
-                  textColor: AppColors.neutral0,
-                  fontFamily: 'Karla',
-                  letterSpacing: -.8,
-                  fontSize: 18,
-                  width: double.infinity,
-                  fullWidth: true,
-                  borderRadius: 40.r,
+                padding: EdgeInsets.symmetric(horizontal: 24.w),
+                child: Column(
+                  children: [
+                    PrimaryButton(
+                      text: 'Next - Close',
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      backgroundColor: AppColors.purple500,
+                      height: 60.h,
+                      textColor: AppColors.neutral0,
+                      fontFamily: 'Karla',
+                      letterSpacing: -.8,
+                      fontSize: 18,
+                      width: double.infinity,
+                      fullWidth: true,
+                      borderRadius: 40.r,
+                    ),
+                    SizedBox(height: 20.h),
+                    PrimaryButton(
+                      text: 'Do you need help?',
+                      onPressed: () async {
+                        try {
+                          await Intercom.instance.displayMessenger();
+                        } catch (e) {
+                          // Fallback in case Intercom fails
+                          if (mounted) {
+                            TopSnackbar.show(
+                              context,
+                              message: 'Unable to open support chat. Please try again later.',
+                              isError: true,
+                            );
+                          }
+                        }
+                      },
+                      backgroundColor: Colors.transparent,
+                      textColor: AppColors.purple500ForTheme(context),
+                      height: 60.h,
+                      fontFamily: 'Karla',
+                      letterSpacing: -.8,
+                      fontSize: 18,
+                      width: double.infinity,
+                      fullWidth: true,
+                      borderRadius: 40.r,
+                    ),
+                    SizedBox(height: 20.h),
+                  ],
                 ),
               ),
             ],
@@ -543,7 +590,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Payment Method',
+          'Funding Methods',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
             fontFamily: 'CabinetGrotesk',
             fontSize: 20.sp,
@@ -554,68 +601,86 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+        padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 4.h),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Payment Method Card
-            Container(
-              padding: EdgeInsets.all(12.w),
-              decoration: BoxDecoration(
-                color: Theme.of(
-                  context,
-                ).colorScheme.primaryContainer.withOpacity(0.25),
-                borderRadius: BorderRadius.circular(4.r),
-                // border: Border.all(
-                //   color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-                //   width: 1.0,
-                // ),
+            Text(
+              "Choose a funding method that works for you",
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'Karla',
+                letterSpacing: -.6,
+                height: 1.5,
               ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  SizedBox(width: 4.w),
-                  Image.asset(
-                    "assets/images/idea.png",
-                    height: 18.h,
-                    // color: Theme.of(context).colorScheme.primary,
-                  ),
-                  SizedBox(width: 12.w),
-                  Expanded(
-                    child: Text(
-                      "Please prepare your KYC documents in case we require verification to complete this transaction.",
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontSize: 12.5.sp,
-                        fontFamily: 'Karla',
-                        fontWeight: FontWeight.w400,
-                        letterSpacing: -0.4,
-                        height: 1.5,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              textAlign: TextAlign.center,
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: 36.h),
+
+            // Payment Method Card
+            // Container(
+            //   padding: EdgeInsets.all(12.w),
+            //   decoration: BoxDecoration(
+            //     color: Theme.of(
+            //       context,
+            //     ).colorScheme.primaryContainer.withOpacity(0.25),
+            //     borderRadius: BorderRadius.circular(4.r),
+            //     // border: Border.all(
+            //     //   color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+            //     //   width: 1.0,
+            //     // ),
+            //   ),
+            //   child: Row(
+            //     crossAxisAlignment: CrossAxisAlignment.center,
+            //     children: [
+            //       SizedBox(width: 4.w),
+            //       Image.asset(
+            //         "assets/images/idea.png",
+            //         height: 18.h,
+            //         // color: Theme.of(context).colorScheme.primary,
+            //       ),
+            //       SizedBox(width: 12.w),
+            //       Expanded(
+            //         child: Text(
+            //           "Please prepare your KYC documents in case we require verification to complete this transaction.",
+            //           style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            //             fontSize: 12.5.sp,
+            //             fontFamily: 'Karla',
+            //             fontWeight: FontWeight.w400,
+            //             letterSpacing: -0.4,
+            //             height: 1.5,
+            //             color: Theme.of(context).colorScheme.primary,
+            //           ),
+            //         ),
+            //       ),
+            //     ],
+            //   ),
+            // ),
             _buildPaymentMethodCard(sendState),
 
-            SizedBox(height: 48.h),
+            SizedBox(height: 40.h),
             PrimaryButton(
               text:
-                  _selectedPaymentMethod != null
-                      ? 'Pay with $_selectedPaymentMethod'
-                      : 'Select a Payment Method',
+                  _isCheckingWallet
+                      ? 'Checking...'
+                      : _selectedPaymentMethod != null
+                      ? _selectedPaymentMethod == 'DayFi Tag'
+                          ? 'Continue'
+                          : 'Pay with $_selectedPaymentMethod'
+                      : 'Select a Funding Method',
               onPressed:
-                  _selectedPaymentMethod != null ? _processPayment : null,
-              isLoading: _isLoading,
+                  (_selectedPaymentMethod != null && !_isCheckingWallet)
+                      ? _processPayment
+                      : null,
+              isLoading: _isLoading || _isCheckingWallet,
               height: 60.h,
               backgroundColor:
-                  _selectedPaymentMethod != null
+                  (_selectedPaymentMethod != null && !_isCheckingWallet)
                       ? AppColors.purple500
                       : AppColors.purple500.withOpacity(.25),
               textColor:
-                  _selectedPaymentMethod != null
+                  (_selectedPaymentMethod != null && !_isCheckingWallet)
                       ? AppColors.neutral0
                       : AppColors.neutral0.withOpacity(.5),
               fontFamily: 'Karla',
@@ -626,7 +691,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
               borderRadius: 40.r,
             ),
 
-            SizedBox(height: 100.h),
+            SizedBox(height: 40.h),
           ],
         ),
       ),
@@ -638,20 +703,41 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
       children: [
         // DayFi ID
         _buildPaymentMethodOption(
+          icon: Stack(
+            alignment: AlignmentDirectional.center,
+
+            children: [
+              SvgPicture.asset(
+                'assets/icons/svgs/bankk.svg',
+                height: 32.sp,
+                width: 32.sp,
+                color: AppColors.neutral500,
+              ),
+              Text(
+                '@',
+                style: TextStyle(
+                  fontFamily: 'CabinetGrotesk',
+                  fontSize: 22.sp,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
           title: 'DayFi Tag',
           description:
-              'Share your DayFi ID with friends and family using DayFi. Funds will arrive immediately. (NGN only)',
+              'Share your DayFi Tag with friends and family. Instant transfers. (NGN only)',
           iconColor: AppColors.orange500,
           isSelected: _selectedPaymentMethod == 'DayFi Tag',
-          isEnabled: sendState.receiverCurrency == 'NGN',
+          isEnabled: true,
           onTap: () {
-            if (sendState.receiverCurrency != 'NGN') {
-              ErrorHandler.showError(
-                context,
-                'DayFi Tag transfers are only available for NGN (Nigerian Naira). Please select NGN as the recipient currency.',
-              );
-              return;
-            }
+            // if (sendState.receiverCurrency != 'NGN') {
+            //   ErrorHandler.showError(
+            //     context,
+            //     'DayFi Tag transfers are only available for NGN (Nigerian Naira). Please select NGN as the recipient currency.',
+            //   );
+            //   return;
+            // }
             setState(() {
               _selectedPaymentMethod = 'DayFi Tag';
             });
@@ -668,6 +754,11 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
           iconColor: AppColors.pink400,
           isSelected: _selectedPaymentMethod == 'Bank Transfer',
           isEnabled: true,
+          icon: SvgPicture.asset(
+            'assets/icons/svgs/bankk.svg',
+            height: 32.sp,
+            width: 32.sp,
+          ),
           onTap: () {
             setState(() {
               _selectedPaymentMethod = 'Bank Transfer';
@@ -679,23 +770,35 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
 
         // Digital Dollar Card
         _buildPaymentMethodOption(
+          icon: Opacity(
+            opacity: .4,
+            child: SvgPicture.asset(
+              'assets/icons/svgs/cryptoo.svg',
+              height: 32.sp,
+              width: 32.sp,
+            ),
+          ),
           title: 'Digital Dollar',
           description:
               'Pay with a digital dollar wallet via stable coin and wallet address. Cross-border made easy.',
           iconColor: AppColors.success400,
           isSelected: _selectedPaymentMethod == 'Digital Dollar',
-          isEnabled: true,
-          onTap: () {
-            setState(() {
-              _selectedPaymentMethod = 'Digital Dollar';
-            });
-          },
+          isEnabled: false,
+          onTap: null, // Disabled
         ),
 
         SizedBox(height: 16.h),
 
         // Debit Card Card
         _buildPaymentMethodOption(
+          icon: Opacity(
+            opacity: .4,
+            child: SvgPicture.asset(
+              'assets/icons/svgs/cardd.svg',
+              height: 32.sp,
+              width: 32.sp,
+            ),
+          ),
           title: 'Debit Card',
           description:
               'Tap (NFC) or scan your debit card for instant payment. Secure and fast transactions.',
@@ -715,6 +818,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
     required bool isSelected,
     required bool isEnabled,
     required VoidCallback? onTap,
+    required Widget icon,
   }) {
     return GestureDetector(
       onTap: isEnabled ? onTap : () => _showComingSoonMessage(title),
@@ -735,11 +839,11 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
           border:
               isSelected
                   ? Border.all(
-                    color: Theme.of(context).colorScheme.primary,
+                    color: AppColors.purple500ForTheme(context),
                     width: .75,
                   )
                   : Border.all(
-                    color: Theme.of(context).colorScheme.outline.withOpacity(0),
+                    color: AppColors.purple500ForTheme(context).withOpacity(0),
                     width: .75,
                   ),
           boxShadow: [
@@ -756,64 +860,72 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
         ),
         child: Row(
           children: [
-            Container(
-              width: 30.w,
-              height: 30.w,
-              decoration: BoxDecoration(
-                color: isEnabled ? iconColor : iconColor.withOpacity(0.4),
-                borderRadius: BorderRadius.circular(24.r),
-              ),
-            ),
-            SizedBox(width: 16.w),
             Expanded(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Text(
-                        title,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontFamily: 'CabinetGrotesk',
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w600,
-                          color:
-                              isEnabled
-                                  ? Theme.of(context).colorScheme.onSurface
-                                  : Theme.of(
-                                    context,
-                                  ).colorScheme.onSurface.withOpacity(0.6),
+                      Container(
+                        width: 32.w,
+                        height: 32.w,
+                        // padding: EdgeInsets.all(2.h),
+                        decoration: BoxDecoration(
+                          // color: isEnabled ? iconColor : iconColor.withOpacity(.25),
+                          borderRadius: BorderRadius.circular(24.r),
                         ),
+                        child: icon,
                       ),
-                      SizedBox(width: 8.w),
-                      title == "DayFi Tag"
-                          ? Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 8.w,
-                              vertical: 3.h,
+                      SizedBox(width: 12.w),
+                      Row(
+                        children: [
+                          Text(
+                            title,
+                            style: Theme.of(
+                              context,
+                            ).textTheme.titleLarge?.copyWith(
+                              fontFamily: 'CabinetGrotesk',
+                              fontSize: 18.sp,
+                              fontWeight: FontWeight.w600,
+                              color:
+                                  isEnabled
+                                      ? Theme.of(context).colorScheme.onSurface
+                                      : Theme.of(
+                                        context,
+                                      ).colorScheme.onSurface.withOpacity(0.6),
                             ),
-                            decoration: BoxDecoration(
-                              color: AppColors.warning400.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(8.r),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  'Free',
-                                  style: AppTypography.labelSmall.copyWith(
-                                    fontFamily: 'Karla',
-                                    fontSize: 10.sp,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.warning600,
-                                  ),
+                          ),
+                          SizedBox(width: 8.w),
+                          title == "DayFi Tag"
+                              ? Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 8.w,
+                                  vertical: 3.h,
                                 ),
-                              ],
-                            ),
-                          )
-                          : const SizedBox.shrink(),
+                                decoration: BoxDecoration(
+                                  color: AppColors.warning400.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(8.r),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'Free',
+                                      style: AppTypography.labelSmall.copyWith(
+                                        fontFamily: 'Karla',
+                                        fontSize: 10.sp,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.warning600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                              : const SizedBox.shrink(),
+                        ],
+                      ),
                     ],
                   ),
+
                   SizedBox(height: 6.h),
                   Text(
                     description,
@@ -841,7 +953,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
             if (isSelected)
               SvgPicture.asset(
                 'assets/icons/svgs/circle-check.svg',
-                color: Theme.of(context).colorScheme.primary,
+                color: AppColors.purple500ForTheme(context),
                 height: 24.sp,
                 width: 24.sp,
               )
@@ -876,12 +988,12 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
   }
 
   void _showComingSoonMessage(String paymentMethod) {
-    TopSnackbar.show(
-      context,
-      message:
-          '$paymentMethod payment method is coming soon! Stay tuned for updates.',
-      isError: false,
-    );
+    // TopSnackbar.show(
+    //   context,
+    //   message:
+    //       '$paymentMethod payment method is coming soon! Stay tuned for updates.',
+    //   isError: false,
+    // );
   }
 
   void _processPayment() async {
@@ -899,6 +1011,28 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
     // If DayFi Tag is selected, handle DayFi Tag flow
     if (_selectedPaymentMethod == 'DayFi Tag') {
       _handleDayfiTagSelection();
+      return;
+    }
+
+    // For Bank Transfer, navigate to amount entry screen first
+    if (_selectedPaymentMethod == 'Bank Transfer') {
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (context) => BankTransferAmountView(
+                selectedData: widget.selectedData,
+                recipientData: widget.recipientData,
+                senderData: widget.senderData,
+                paymentData: widget.paymentData,
+              ),
+        ),
+      );
+
+      // If amount was entered successfully, proceed with payment
+      if (result == true) {
+        await _processBankTransferPayment();
+      }
       return;
     }
 
@@ -975,9 +1109,11 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
       );
 
       // Prepare the request data using real data from the flow
+      // Note: For Bank Transfer, encryptedPin should already be included via PIN flow
       final requestData = _buildCollectionRequest(
         sendState: sendState,
         selectedChannel: selectedChannel,
+        encryptedPin: '', // This won't be used for non-Bank Transfer methods
       );
 
       // Debug log for source object and channelId
@@ -1012,30 +1148,6 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
         if (!response.error && response.data != null) {
           // Store the payment data for later use
           _currentPaymentData = response.data!;
-
-          // Add transaction to monitoring for automatic payment creation
-          final collectionSequenceId =
-              response.data?.id ?? response.data?.sequenceId;
-          if (collectionSequenceId != null) {
-            final transactionMonitor = ref.read(transactionMonitorProvider);
-
-            // Prepare payment data for when status reaches success-collection
-            final paymentData = _buildPaymentMonitoringData(
-              sendState: sendState,
-              selectedChannel: selectedChannel,
-            );
-
-            // Add to monitoring
-            transactionMonitor.addTransactionToMonitoring(
-              transactionId: collectionSequenceId,
-              collectionSequenceId: collectionSequenceId,
-              paymentData: paymentData,
-            );
-
-            AppLogger.info(
-              'Added transaction $collectionSequenceId to monitoring for automatic payment creation',
-            );
-          }
 
           // Analytics: collection creation completed
           analyticsService.logEvent(
@@ -1151,7 +1263,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
     // return 'com.dayfi.app://payment/success';
   }
 
-  /// Formats a number with thousands separators (commas)
+  /// Format a number with thousands separators (commas)
   String _formatNumber(double amount) {
     // Format number with thousands separators
     String formatted = amount.toStringAsFixed(2);
@@ -1215,7 +1327,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        SizedBox(height: 22.h, width: 22.w),
+                        SizedBox(height: 24.h, width: 22.w),
                         Text(
                           'Payment Details',
                           style: AppTypography.titleLarge.copyWith(
@@ -1231,8 +1343,8 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                           },
                           child: Image.asset(
                             "assets/icons/pngs/cancelicon.png",
-                            height: 22.h,
-                            width: 22.w,
+                            height: 24.h,
+                            width: 24.w,
                             color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
@@ -1472,8 +1584,8 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                         //   text: 'Change payment method',
                         //   onPressed: () => Navigator.pop(context),
                         //   backgroundColor: Colors.transparent,
-                        //   textColor: AppColors.purple500,
-                        //   borderColor: AppColors.purple500,
+                        //   textColor: AppColors.purple500ForTheme(context),
+                        //   borderColor: AppColors.purple500ForTheme(context),
                         //   height: 60.h,
                         //   borderRadius: 38,
                         //   fontFamily: 'Karla',
@@ -1530,9 +1642,10 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                   Clipboard.setData(ClipboardData(text: value));
                   TopSnackbar.show(
                     context,
-                    message: label == 'DayFi Tag' 
-                        ? 'DayFi Tag copied to clipboard' 
-                        : 'Account number copied to clipboard',
+                    message:
+                        label == 'DayFi Tag'
+                            ? 'DayFi Tag copied to clipboard'
+                            : 'Account number copied to clipboard',
                   );
                 },
                 child: SvgPicture.asset(
@@ -1550,101 +1663,365 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
     );
   }
 
-  /// Creates a WalletTransaction from PaymentData for navigation purposes
-  WalletTransaction _createWalletTransactionFromPaymentData(
-    payment.PaymentData paymentData,
-  ) {
-    final sendState = ref.read(sendViewModelProvider);
-
-    return WalletTransaction(
-      id: paymentData.id ?? 'TXN-${DateTime.now().millisecondsSinceEpoch}',
-      sendChannel: paymentData.channelId,
-      sendNetwork: paymentData.source?.networkId,
-      sendAmount: paymentData.amount,
-      receiveChannel: paymentData.channelId,
-      receiveNetwork: paymentData.source?.networkId,
-      receiveAmount: paymentData.convertedAmount,
-      status: paymentData.status ?? 'pending-collection',
-      reason:
-          paymentData.reason ??
-          widget.paymentData['reason'] ??
-          'Money Transfer',
-      timestamp: paymentData.createdAt ?? DateTime.now().toIso8601String(),
-      beneficiary: Beneficiary(
-        id: paymentData.recipient?.email ?? 'unknown',
-        name:
-            paymentData.recipient?.name ??
-            widget.recipientData['name'] ??
-            'Recipient',
-        country: paymentData.recipient?.country ?? sendState.receiverCountry,
-        phone:
-            paymentData.recipient?.phone ??
-            widget.recipientData['phone'] ??
-            '+2340000000000',
-        address:
-            paymentData.recipient?.address ??
-            widget.recipientData['address'] ??
-            'Not provided',
-        dob:
-            paymentData.recipient?.dob ??
-            widget.recipientData['dob'] ??
-            '1990-01-01',
-        email:
-            paymentData.recipient?.email ??
-            widget.recipientData['email'] ??
-            'recipient@example.com',
-        idNumber:
-            paymentData.recipient?.idNumber ??
-            widget.recipientData['idNumber'] ??
-            'A12345678',
-        idType:
-            paymentData.recipient?.idType ??
-            widget.recipientData['idType'] ??
-            'passport',
-      ),
-      source: Source(
-        id: paymentData.source?.networkId,
-        accountType: paymentData.source?.accountType ?? 'bank',
-        accountNumber:
-            paymentData.source?.accountNumber ??
-            widget.selectedData['accountNumber'] ??
-            '1111111111',
-        networkId:
-            paymentData.source?.networkId ??
-            widget.selectedData['networkId'] ??
-            '31cfcc77-8904-4f86-879c-a0d18b4b9365',
-        beneficiaryId: paymentData.recipient?.email,
-      ),
-    );
+  /// Fetch user data asynchronously (for parallel execution)
+  Future<User?> _fetchUserData() async {
+    try {
+      final userData = await localCache.getUser();
+      if (userData.isNotEmpty && userData.containsKey('user_id')) {
+        final user = User.fromJson(userData);
+        AppLogger.info(
+          'Loaded app user data: ${user.firstName} ${user.lastName}',
+        );
+        return user;
+      } else {
+        AppLogger.warning('User data not found or invalid');
+        return null;
+      }
+    } catch (e) {
+      AppLogger.error('Error loading user data: $e');
+      return null;
+    }
   }
 
-  /// Navigates to main view with clean navigation stack
-  void _navigateToMainViewWithCleanStack({int tabIndex = 1}) {
-    // Clear the navigation stack and navigate to main view with specified tab
-    appRouter.pushNamedAndRemoveUntil(
-      AppRoute.mainView,
-      (Route route) => false, // Remove all previous routes
-      arguments: tabIndex,
+  /// Format phone number to international format (optimized)
+  String _formatPhoneNumber(String? rawPhoneNumber, String countryCode) {
+    if (rawPhoneNumber == null ||
+        rawPhoneNumber.isEmpty ||
+        rawPhoneNumber == '0000000000') {
+      return '+2340000000000'; // Default fallback
+    }
+
+    // Clean the phone number: remove all non-digits first
+    String cleanedNumber = rawPhoneNumber.replaceAll(RegExp(r'[^\d]'), '');
+
+    // Remove leading 0 if present (local prefix that should be replaced with country code)
+    if (cleanedNumber.startsWith('0')) {
+      cleanedNumber = cleanedNumber.substring(1);
+    }
+
+    // Use PhoneCountryUtils to format the phone number
+    final formatted = PhoneCountryUtils.formatPhoneNumber(
+      cleanedNumber,
+      countryCode.isNotEmpty ? countryCode : 'NG',
     );
+
+    // Ensure it starts with + (formatPhoneNumber should handle this, but double-check)
+    return formatted.startsWith('+234') ? formatted : '+234$formatted';
   }
 
-  /// Navigates to transaction details after going to main view
-  void _navigateToTransactionDetails() {
-    if (_currentPaymentData == null) return;
-
-    // First navigate to main view with clean stack
-    _navigateToMainViewWithCleanStack(tabIndex: 1);
-
-    // Then navigate to transaction details after a short delay
-    Future.delayed(const Duration(milliseconds: 100), () {
-      final transaction = _createWalletTransactionFromPaymentData(
-        _currentPaymentData!,
-      );
-      appRouter.pushNamed(
-        AppRoute.transactionDetailsView,
-        arguments: transaction,
-      );
+  /// Process bank transfer payment after amount entry
+  Future<void> _processBankTransferPayment() async {
+    setState(() {
+      _isLoading = true;
     });
+
+    try {
+      final sendState = ref.read(sendViewModelProvider);
+      final paymentService = locator<PaymentService>();
+
+      // Analytics: collection creation started (non-blocking)
+      analyticsService.logEvent(
+        name: 'collection_creation_started',
+        parameters: {
+          'amount': sendState.sendAmount,
+          'currency': sendState.sendCurrency,
+          'recipient_country': sendState.receiverCountry,
+          'delivery_method': sendState.selectedDeliveryMethod,
+        },
+      );
+
+      // Parallel fetch: channels, networks, and user data simultaneously
+      AppLogger.info(
+        'Fetching channels, networks, and user data in parallel...',
+      );
+      final results = await Future.wait([
+        paymentService.fetchChannels(),
+        paymentService.fetchNetworks(),
+        _fetchUserData(),
+      ], eagerError: false);
+
+      // Extract results
+      final channelsResponse = results[0] as payment.PaymentResponse;
+      final networksResponse = results[1] as payment.PaymentResponse;
+      final currentUser = results[2] as User?;
+
+      // Validate channels response
+      if (channelsResponse.error || channelsResponse.data?.channels == null) {
+        if (mounted) {
+          TopSnackbar.show(
+            context,
+            message: 'Failed to fetch payment channels. Please try again.',
+            isError: true,
+          );
+        }
+        return;
+      }
+
+      // Validate networks response
+      if (networksResponse.error || networksResponse.data?.networks == null) {
+        if (mounted) {
+          TopSnackbar.show(
+            context,
+            message: 'Failed to fetch payment networks. Please try again.',
+            isError: true,
+          );
+        }
+        return;
+      }
+
+      final channels = channelsResponse.data!.channels!;
+      final networks = networksResponse.data!.networks!;
+      AppLogger.info(
+        'Fetched ${channels.length} channels and ${networks.length} networks',
+      );
+
+      // Optimized filtering: pre-compute lowercase channel types and filter efficiently
+      Channel? bankChannel;
+      Channel? fallbackChannel;
+
+      for (final channel in channels) {
+        // Early exit conditions for performance
+        if (channel.country != _targetCountry ||
+            channel.currency != _targetCurrency ||
+            channel.status != _targetStatus ||
+            channel.rampType != _targetRampType) {
+          continue;
+        }
+
+        final channelTypeLower = channel.channelType?.toLowerCase();
+        if (channelTypeLower != null &&
+            _validChannelTypes.contains(channelTypeLower)) {
+          // Prefer bank channel
+          if ((channelTypeLower == 'bank' ||
+                  channelTypeLower == 'bank_transfer') &&
+              bankChannel == null) {
+            bankChannel = channel;
+            // ignore: prefer_conditional_assignment
+          } else if (fallbackChannel == null) {
+            fallbackChannel = channel;
+          }
+        }
+      }
+
+      // Select channel (prefer bank over fallback)
+      final selectedChannel = bankChannel ?? fallbackChannel;
+      if (selectedChannel == null) {
+        if (mounted) {
+          TopSnackbar.show(
+            context,
+            message:
+                'No active deposit channel found for Nigeria NGN. Please try again later.',
+            isError: true,
+          );
+        }
+        return;
+      }
+
+      AppLogger.info(
+        'Selected channel: ${selectedChannel.id} - ${selectedChannel.channelType}',
+      );
+
+      // Find network using Map for O(1) lookup instead of O(n) iteration
+      final channelId = selectedChannel.id;
+      Network? selectedNetwork;
+
+      if (channelId != null) {
+        // Create a map of channel IDs to networks for fast lookup
+        for (final network in networks) {
+          if (network.channelIds?.contains(channelId) == true) {
+            selectedNetwork = network;
+            break; // Found, exit early
+          }
+        }
+      }
+
+      if (selectedNetwork == null) {
+        AppLogger.warning('No network found for channel ${selectedChannel.id}');
+      } else {
+        AppLogger.info(
+          'Found network: ${selectedNetwork.id} - ${selectedNetwork.name}',
+        );
+      }
+
+      // Build collection request payload (pre-compute values)
+      final amount =
+          double.tryParse(
+            sendState.sendAmount.replaceAll(RegExp(r'[^\d.]'), ''),
+          ) ??
+          0.0;
+
+      // Get recipient country for phone formatting
+      final recipientCountry =
+          currentUser?.country ??
+          widget.recipientData['country'] ??
+          sendState.receiverCountry;
+
+      // Format phone number efficiently (only if needed)
+      final rawPhoneNumber =
+          currentUser?.phoneNumber ?? widget.recipientData['phone'];
+      final formattedPhoneNumber = _formatPhoneNumber(
+        rawPhoneNumber,
+        recipientCountry.isNotEmpty ? recipientCountry : 'NG',
+      );
+
+      final requestData = {
+        "amount": amount,
+        "currency": sendState.sendCurrency,
+        "channelId": selectedChannel.id ?? "",
+        "channelName":
+            selectedNetwork?.name ??
+            selectedChannel.channelType ??
+            "Bank Transfer",
+        "country": sendState.sendCountry,
+        "reason": widget.paymentData['reason'] ?? "Funding wallet",
+        "receiveChannel": selectedChannel.id ?? "",
+        "receiveNetwork": selectedNetwork?.id ?? "",
+        "receiveAmount": amount,
+        "recipient": {
+          "name":
+              currentUser != null
+                  ? '${currentUser.firstName} ${currentUser.lastName}'.trim()
+                  : widget.recipientData['name'] ?? 'Self Funding',
+          "country": recipientCountry,
+          "phone": formattedPhoneNumber,
+          "address":
+              currentUser?.address ??
+              widget.recipientData['address'] ??
+              'Not provided',
+          "dob":
+              currentUser?.dateOfBirth ??
+              widget.recipientData['dob'] ??
+              '1990-01-01',
+          "email":
+              currentUser?.email ??
+              widget.recipientData['email'] ??
+              'recipient@example.com',
+          "idNumber":
+              currentUser?.idNumber ??
+              widget.recipientData['idNumber'] ??
+              'A12345678',
+          "idType":
+              currentUser?.idType ??
+              widget.recipientData['idType'] ??
+              'passport',
+        },
+        "source": {
+          "accountType": "bank",
+          "accountNumber":
+              widget.recipientData['accountNumber'] ??
+              widget.recipientData['walletAddress'] ??
+              "1111111111",
+          "networkId":
+              selectedNetwork?.id ?? widget.recipientData['networkId'] ?? "",
+        },
+        "metadata": {
+          "customerId":
+              currentUser?.userId ?? widget.senderData['userId'] ?? "12345",
+          "orderId": "COLL-${DateTime.now().millisecondsSinceEpoch}",
+          "description": widget.paymentData['description'] ?? "",
+        },
+      };
+
+      AppLogger.debug('Collection request payload: $requestData');
+
+      // Determine if redirectUrl is required for this channel/country
+      final requiresRedirectUrl = _requiresRedirectUrl(
+        selectedChannel,
+        sendState.receiverCountry,
+      );
+
+      // Add redirectUrl if required for this channel
+      if (requiresRedirectUrl) {
+        requestData["redirectUrl"] = _getRedirectUrl();
+      }
+
+      // Step 6: Make the API call to create collection
+      AppLogger.info('Creating collection...');
+      final response = await paymentService.createCollection(requestData);
+
+      if (mounted) {
+        if (!response.error && response.data != null) {
+          // Store the payment data for later use
+          _currentPaymentData = response.data!;
+
+          // Analytics: collection creation completed
+          analyticsService.logEvent(
+            name: 'collection_creation_completed',
+            parameters: {
+              'amount': sendState.sendAmount,
+              'currency': sendState.sendCurrency,
+              'recipient_country': sendState.receiverCountry,
+              'delivery_method': sendState.selectedDeliveryMethod,
+              'collection_id': response.data?.id ?? 'unknown',
+            },
+          );
+
+          // Show bank details bottom sheet
+          _showBankDetailsBottomSheet(response.data!);
+        } else {
+          // Analytics: collection creation failed
+          analyticsService.logEvent(
+            name: 'collection_creation_failed',
+            parameters: {
+              'amount': sendState.sendAmount,
+              'currency': sendState.sendCurrency,
+              'recipient_country': sendState.receiverCountry,
+              'delivery_method': sendState.selectedDeliveryMethod,
+              'reason':
+                  response.message.isNotEmpty
+                      ? response.message
+                      : 'Payment processing failed',
+            },
+          );
+          // Show error with retry option
+          _showErrorWithRetry(
+            context,
+            message:
+                response.message.isNotEmpty
+                    ? response.message
+                    : 'Payment processing failed',
+            onRetry: () => _processBankTransferPayment(),
+          );
+        }
+      }
+    } catch (e, st) {
+      // Report to Crashlytics
+      try {
+        await locator<CrashlyticsService>().reportError(e, st);
+      } catch (_) {}
+      if (mounted) {
+        // Analytics: collection creation failed (exception)
+        final sendState = ref.read(sendViewModelProvider);
+        analyticsService.logEvent(
+          name: 'collection_creation_failed',
+          parameters: {
+            'amount': sendState.sendAmount,
+            'currency': sendState.sendCurrency,
+            'recipient_country': sendState.receiverCountry,
+            'delivery_method': sendState.selectedDeliveryMethod,
+            'reason': e.toString(),
+            'error_type': 'exception',
+          },
+        );
+
+        // Map to user-friendly error
+        final errorMessage = _mapCollectionError(e.toString(), sendState);
+
+        // Show error with retry option
+        _showErrorWithRetry(
+          context,
+          message: errorMessage,
+          onRetry: () => _processBankTransferPayment(),
+        );
+        AppLogger.error(errorMessage, error: e, stackTrace: st);
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   /// Show error dialog with retry option
@@ -1657,50 +2034,120 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return AlertDialog(
+        return Dialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16.r),
+            borderRadius: BorderRadius.circular(24.r),
           ),
-          title: Text(
-            'Payment Error',
-            style: AppTypography.titleLarge.copyWith(
-              fontFamily: 'CabinetGrotesk',
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          content: Text(
-            message,
-            style: AppTypography.bodyMedium.copyWith(fontFamily: 'Karla'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                // Go back to previous screen
-                Navigator.of(context).pop();
-              },
-              child: Text(
-                'Cancel',
-                style: TextStyle(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withOpacity(0.6),
+
+          child: Container(
+            padding: EdgeInsets.all(28.w),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Biometric icon
+                Container(
+                  width: 64.w,
+                  height: 64.w,
+                  decoration: BoxDecoration(
+                    // gradient: LinearGradient(
+                    //   begin: Alignment.topLeft,
+                    //   end: Alignment.bottomRight,
+                    //   colors: [
+                    //     AppColors.purple500ForTheme(context).withOpacity(0.1),
+                    //     AppColors.purple500ForTheme(context).withOpacity(0.05),
+                    //   ],
+                    // ),
+                    shape: BoxShape.circle,
+                    // boxShadow: [
+                    //   BoxShadow(
+                    //     color: AppColors.purple500ForTheme(context).withOpacity(0.1),
+                    //     blurRadius: 20,
+                    //     spreadRadius: 2,
+                    //     offset: const Offset(0, 4),
+                    //   ),
+                    // ],
+                  ),
+                  // child: Icon(
+                  //   Icons.security_rounded,
+                  //   color: AppColors.purple500ForTheme(context),
+                  //   size: 40.w,
+                  // ),
+                  child: SvgPicture.asset('assets/icons/svgs/cautionn.svg'),
                 ),
-              ),
+
+                SizedBox(height: 24.h),
+
+                // Title
+                Text(
+                  'Payment Error',
+                  style: AppTypography.titleLarge.copyWith(
+                    fontFamily: 'CabinetGrotesk',
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+
+                // SizedBox(height: 16.h),
+
+                // // Description
+                // Text(
+                //   message,
+                //   style: AppTypography.bodyMedium.copyWith(
+                //     fontFamily: 'Karla',
+                //     fontSize: 14.sp,
+                //     fontWeight: FontWeight.w400,
+                //     color: Theme.of(
+                //       context,
+                //     ).colorScheme.onSurface.withOpacity(0.7),
+                //     height: 1.4,
+                //   ),
+                //   textAlign: TextAlign.center,
+                // ),
+                SizedBox(height: 24.h),
+
+                // Enable button
+                PrimaryButton(
+                  text: 'Retry',
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    onRetry();
+                  },
+                  backgroundColor: AppColors.purple500,
+                  textColor: AppColors.neutral0,
+                  borderRadius: 38,
+                  height: 60.h,
+                  width: double.infinity,
+                  fullWidth: true,
+                  fontFamily: 'Karla',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w400,
+                  letterSpacing: -0.8,
+                ),
+                SizedBox(height: 12.h),
+
+                // Skip button
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    // Go back to previous screen
+                    Navigator.of(context).pop();
+                  },
+                  child: Text(
+                    'Cancel',
+                    style: AppTypography.bodyMedium.copyWith(
+                      fontFamily: 'Karla',
+                      fontSize: 16.sp,
+                      letterSpacing: -0.8,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.neutral300,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            PrimaryButton(
-              text: 'Retry',
-              onPressed: () {
-                Navigator.of(context).pop();
-                onRetry();
-              },
-              backgroundColor: AppColors.purple500,
-              textColor: AppColors.neutral0,
-              height: 40.h,
-              width: 80.w,
-              borderRadius: 20.r,
-            ),
-          ],
+          ),
         );
       },
     );

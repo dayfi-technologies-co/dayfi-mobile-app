@@ -280,11 +280,10 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
           title: Text(
             'Beneficiaries',
             style: AppTypography.titleLarge.copyWith(
-               fontFamily: 'CabinetGrotesk',
-            fontSize: 20.sp,
-            fontWeight: FontWeight.w600,
-            color: Theme.of(context).colorScheme.onSurface,
-          
+              fontFamily: 'CabinetGrotesk',
+              fontSize: 20.sp,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           centerTitle: true,
@@ -357,7 +356,7 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 LoadingAnimationWidget.horizontalRotatingDots(
-                                  color: AppColors.purple500,
+                                  color: AppColors.purple500ForTheme(context),
                                   size: 20,
                                 ),
                                 SizedBox(height: 16.h),
@@ -467,7 +466,9 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 48.w),
               child: Text(
-                'You do not have any Beneficiaries yet for $countryName in $currency and $displayChannelType',
+                displayChannelType == "p2p"
+                    ? 'You do not have any Beneficiaries yet for $countryName in $currency and Bank Transfer'
+                    : 'You do not have any Beneficiaries yet for $countryName in $currency and $displayChannelType',
                 style: AppTypography.bodyLarge.copyWith(
                   fontFamily: 'CabinetGrotesk',
                   fontWeight: FontWeight.w600,
@@ -489,14 +490,9 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
               borderRadius: 38,
               text: 'Create Beneficiaries',
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder:
-                        (context) => SendAddRecipientsView(
-                          selectedData: widget.selectedData,
-                        ),
-                  ),
+                appRouter.pushNamed(
+                  AppRoute.addRecipientsView,
+                  arguments: widget.selectedData,
                 );
               },
               backgroundColor: AppColors.purple500,
@@ -549,7 +545,7 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
                 height: 40.w,
                 margin: EdgeInsets.only(bottom: 4.w, right: 4.w),
                 decoration: BoxDecoration(
-                  color: AppColors.purple500,
+                  color: AppColors.purple500ForTheme(context),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
@@ -789,16 +785,13 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
     };
 
     // Navigate to review screen
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder:
-            (context) => SendReviewView(
-              selectedData: widget.selectedData,
-              recipientData: recipientData,
-              senderData: senderData,
-            ),
-      ),
+    appRouter.pushNamed(
+      AppRoute.sendReviewView,
+      arguments: {
+        'selectedData': widget.selectedData,
+        'recipientData': recipientData,
+        'senderData': senderData,
+      },
     );
   }
 }

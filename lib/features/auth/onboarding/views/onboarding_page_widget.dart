@@ -32,7 +32,7 @@ class OnboardingPageWidget extends StatelessWidget {
                               page.title,
                               textAlign: TextAlign.start,
                               style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurface,
+                                color: AppColors.neutral900,
                                 fontSize: 60.sp,
                                 fontWeight: FontWeight.w600,
                                 fontFamily: 'CabinetGrotesk',
@@ -54,7 +54,7 @@ class OnboardingPageWidget extends StatelessWidget {
                             .shimmer(
                               delay: 1000.ms,
                               duration: 2000.ms,
-                              color: AppColors.purple500.withOpacity(0.2),
+                              color: AppColors.purple500ForTheme(context).withOpacity(0.2),
                               angle: 45,
                             ),
 
@@ -65,7 +65,7 @@ class OnboardingPageWidget extends StatelessWidget {
                               page.subtitle,
                               textAlign: TextAlign.start,
                               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurface.withOpacity(.8),
+                                color: AppColors.neutral900.withOpacity(.85),
                                 fontSize: 16.sp,
                                 fontWeight: FontWeight.w400,
                                 fontFamily: 'Karla',

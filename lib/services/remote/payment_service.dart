@@ -292,4 +292,47 @@ class PaymentService {
       rethrow;
     }
   }
+
+  /// Initiate wallet to wallet transfer
+  /// POST /api/v1/payments/initiate-wallet-transfer
+  Future<PaymentResponse> initiateWalletTransfer({
+    required String dayfiId,
+    required int amount,
+    required String encryptedPin,
+  }) async {
+    try {
+      Map<String, dynamic> map = {};
+      map['dayfiId'] = dayfiId.replaceAll('@', '');
+      map['amount'] = amount;
+      map['pin'] = encryptedPin;
+
+      final response = await _networkService.call(
+        '${F.baseUrl}/payments/initiate-wallet-transfer',
+        RequestMethod.post,
+        data: map,
+      );
+
+      // Handle response data - check if it's a Map or String
+      Map<String, dynamic> responseData;
+      if (response.data is Map<String, dynamic>) {
+        responseData = response.data;
+      } else if (response.data is String) {
+        try {
+          responseData = json.decode(response.data);
+        } catch (jsonError) {
+          throw Exception('Failed to parse JSON response: $jsonError');
+        }
+      } else {
+        throw Exception(
+          'Invalid response format: ${response.data.runtimeType}',
+        );
+      }
+
+      final paymentResponse = PaymentResponse.fromJson(responseData);
+
+      return paymentResponse;
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

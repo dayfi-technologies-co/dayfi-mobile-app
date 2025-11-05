@@ -221,7 +221,7 @@ class VerifyEmailView extends ConsumerWidget {
                                         fontFamily: 'Karla',
                                         color: verifyState.isResending
                                             ? Theme.of(context).colorScheme.onSurface
-                                            : AppColors.purple500,
+                                            : AppColors.purple500ForTheme(context),
                                         fontSize: verifyState.isResending
                                             ? 14.sp
                                             : 16.sp,
@@ -243,8 +243,8 @@ class VerifyEmailView extends ConsumerWidget {
                           borderRadius: 38,
                           text:
                               isSignUp
-                                  ? "Verify my account"
-                                  : "Continue to reset password",
+                                  ? "Next - Verify Account"
+                                  : "Next - Reset Password",
                           onPressed:
                               verifyState.isFormValid &&
                                       !verifyState.isVerifying
@@ -266,8 +266,8 @@ class VerifyEmailView extends ConsumerWidget {
                           isLoading: verifyState.isVerifying,
                           backgroundColor:
                               verifyState.isFormValid
-                                  ? AppColors.purple500
-                                  : AppColors.purple500.withOpacity(.25),
+                                  ? AppColors.purple500ForTheme(context)
+                                  : AppColors.purple500ForTheme(context).withOpacity(.25),
                           height: 60.h,
                           textColor: verifyState.isFormValid
                               ? AppColors.neutral0

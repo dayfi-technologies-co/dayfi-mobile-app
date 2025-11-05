@@ -87,9 +87,10 @@ class _BvnNinVerificationViewState
                           .textTheme
                           .headlineMedium
                           ?.copyWith(
-                            fontFamily: 'CabinetGrotesk',
-                            fontSize: 28.00,
-                            fontWeight: FontWeight.w500,
+                           fontFamily: 'CabinetGrotesk',
+              fontSize: 20.sp,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurface,
                           ),
                     ),
                   ),
@@ -123,14 +124,14 @@ class _BvnNinVerificationViewState
                         // Submit Button
                         PrimaryButton(
                           borderRadius: 38,
-                          text: "Verify",
+                          text: "Next - Verify",
                           onPressed: verificationState.isFormValid &&
                                   !verificationState.isBusy
                               ? () => verificationNotifier.submitVerification(context)
                               : null,
                           backgroundColor: verificationState.isFormValid
-                              ? AppColors.purple500
-                              : AppColors.purple500.withOpacity(.25),
+                              ? AppColors.purple500ForTheme(context)
+                              : AppColors.purple500ForTheme(context).withOpacity(.25),
                           height: 60.h,
                           textColor: verificationState.isFormValid
                               ? AppColors.neutral0

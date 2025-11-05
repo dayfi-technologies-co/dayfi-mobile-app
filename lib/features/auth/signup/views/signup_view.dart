@@ -10,6 +10,7 @@ import 'package:dayfi/features/auth/signup/vm/signup_viewmodel.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/features/legal/terms_of_use.dart';
 import 'package:dayfi/features/legal/privacy_notice.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class SignupView extends ConsumerWidget {
   const SignupView({super.key});
@@ -130,7 +131,7 @@ class SignupView extends ConsumerWidget {
                             .shimmer(
                               delay: 400.ms,
                               duration: 800.ms,
-                              color: AppColors.purple500.withOpacity(0.1),
+                              color: AppColors.purple500ForTheme(context).withOpacity(0.1),
                               angle: 15,
                             ),
 
@@ -261,7 +262,7 @@ class SignupView extends ConsumerWidget {
                             .shimmer(
                               delay: 500.ms,
                               duration: 800.ms,
-                              color: AppColors.purple500.withOpacity(0.1),
+                              color: AppColors.purple500ForTheme(context).withOpacity(0.1),
                               angle: 15,
                             ),
 
@@ -299,7 +300,7 @@ class SignupView extends ConsumerWidget {
                             .shimmer(
                               delay: 600.ms,
                               duration: 800.ms,
-                              color: AppColors.purple500.withOpacity(0.1),
+                              color: AppColors.purple500ForTheme(context).withOpacity(0.1),
                               angle: 15,
                             ),
 
@@ -347,7 +348,7 @@ class SignupView extends ConsumerWidget {
                             .shimmer(
                               delay: 700.ms,
                               duration: 800.ms,
-                              color: AppColors.purple500.withOpacity(0.1),
+                              color: AppColors.purple500ForTheme(context).withOpacity(0.1),
                               angle: 15,
                             ),
 
@@ -377,11 +378,11 @@ class SignupView extends ConsumerWidget {
                             style: Theme.of(
                               context,
                             ).textTheme.bodySmall?.copyWith(
-                             fontFamily: 'Karla',
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-                letterSpacing: -.6,
-                height: 1.450,
+                              fontFamily: 'Karla',
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400,
+                              letterSpacing: -.6,
+                              height: 1.450,
                             ),
                           ),
                           SizedBox(height: 8.h),
@@ -452,7 +453,7 @@ class SignupView extends ConsumerWidget {
                             .shimmer(
                               delay: 800.ms,
                               duration: 800.ms,
-                              color: AppColors.purple500.withOpacity(0.1),
+                              color: AppColors.purple500ForTheme(context).withOpacity(0.1),
                               angle: 15,
                             ),
 
@@ -548,7 +549,7 @@ class SignupView extends ConsumerWidget {
                                 ),
                               ),
                               value: signupState.isAgreed,
-                              activeColor: AppColors.purple500,
+                              activeColor: AppColors.purple500ForTheme(context),
                               onChanged:
                                   (value) =>
                                       signupNotifier.setAgreed(value ?? false),
@@ -577,7 +578,7 @@ class SignupView extends ConsumerWidget {
                             .shimmer(
                               delay: 900.ms,
                               duration: 800.ms,
-                              color: AppColors.purple500.withOpacity(0.1),
+                              color: AppColors.purple500ForTheme(context).withOpacity(0.1),
                               angle: 15,
                             ),
 
@@ -586,7 +587,7 @@ class SignupView extends ConsumerWidget {
                         // Submit button
                         PrimaryButton(
                               borderRadius: 38,
-                              text: "Create my account",
+                              text: "Next - Create Account",
                               onPressed:
                                   signupState.isFormValid && !signupState.isBusy
                                       ? () => signupNotifier.signup(context)
@@ -597,12 +598,13 @@ class SignupView extends ConsumerWidget {
                               isLoading: signupState.isBusy,
                               backgroundColor:
                                   signupState.isFormValid
-                                      ? AppColors.purple500
-                                      : AppColors.purple500.withOpacity(.25),
+                                      ? AppColors.purple500ForTheme(context)
+                                      : AppColors.purple500ForTheme(context).withOpacity(.25),
                               height: 60.h,
-                              textColor: signupState.isFormValid
-                                  ? AppColors.neutral0
-                                  : AppColors.neutral0.withOpacity(.5),
+                              textColor:
+                                  signupState.isFormValid
+                                      ? AppColors.neutral0
+                                      : AppColors.neutral0.withOpacity(.5),
                               fontFamily: 'Karla',
                               letterSpacing: -.8,
                               fontSize: 18,
@@ -652,7 +654,7 @@ class SignupView extends ConsumerWidget {
                                       text: "\nSign in",
                                       style: TextStyle(
                                         fontFamily: 'Karla',
-                                        color: AppColors.purple500,
+                                        color: AppColors.purple500ForTheme(context),
                                         fontSize: 16.sp,
                                         fontWeight: FontWeight.w600,
                                         letterSpacing: -.6,
@@ -685,7 +687,7 @@ class SignupView extends ConsumerWidget {
                               curve: Curves.easeOutCubic,
                             ),
 
-                        SizedBox(height: 100.h),
+                        SizedBox(height: 40.h),
                         Text.rich(
                               textAlign: TextAlign.center,
                               TextSpan(
@@ -772,7 +774,7 @@ class SignupView extends ConsumerWidget {
                             .shimmer(
                               delay: 900.ms,
                               duration: 800.ms,
-                              color: AppColors.purple500.withOpacity(0.1),
+                              color: AppColors.purple500ForTheme(context).withOpacity(0.1),
                               angle: 15,
                             ),
 
@@ -796,11 +798,17 @@ class SignupView extends ConsumerWidget {
             padding: EdgeInsets.only(bottom: 4.h),
             child: Row(
               children: [
-                Icon(
-                  isValid ? Icons.check_circle : Icons.circle_outlined,
-                  color: isValid ? Colors.green : AppColors.neutral400,
-                  size: 16.r,
-                ),
+                !isValid
+                    ? Icon(
+                      Icons.circle_outlined,
+                      color: AppColors.neutral400,
+                      size: 16.r,
+                    )
+                    : SvgPicture.asset(
+                      'assets/icons/svgs/circle-check.svg',
+                      color: Colors.green,
+                      height: 16.r,
+                    ),
                 SizedBox(width: 8.w),
                 Text(
                   text,
@@ -809,11 +817,11 @@ class SignupView extends ConsumerWidget {
                         isValid
                             ? null
                             : Theme.of(context).colorScheme.onSurfaceVariant,
-                   fontFamily: 'Karla',
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-                letterSpacing: -.6,
-                height: 1.450,
+                    fontFamily: 'Karla',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    letterSpacing: -.6,
+                    height: 1.450,
                   ),
                 ),
               ],

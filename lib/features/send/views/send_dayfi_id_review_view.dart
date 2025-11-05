@@ -1,41 +1,37 @@
 import 'dart:math';
 import 'package:dayfi/core/theme/app_typography.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
-import 'package:dayfi/features/send/vm/send_viewmodel.dart';
+import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/services/remote/payment_service.dart';
-import 'package:dayfi/services/transaction_monitor_service.dart';
-import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
-import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
 import 'package:dayfi/features/send/vm/transaction_pin_viewmodel.dart';
-import 'package:dayfi/models/payment_response.dart';
-import 'package:loading_animation_widget/loading_animation_widget.dart';
 
-class SendReviewView extends ConsumerStatefulWidget {
+class SendDayfiIdReviewView extends ConsumerStatefulWidget {
   final Map<String, dynamic> selectedData;
-  final Map<String, dynamic> recipientData;
-  final Map<String, dynamic> senderData;
+  final String dayfiId;
 
-  const SendReviewView({
+  const SendDayfiIdReviewView({
     super.key,
     required this.selectedData,
-    required this.recipientData,
-    required this.senderData,
+    required this.dayfiId,
   });
 
   @override
-  ConsumerState<SendReviewView> createState() => _SendReviewViewState();
+  ConsumerState<SendDayfiIdReviewView> createState() =>
+      _SendDayfiIdReviewViewState();
 }
 
-class _SendReviewViewState extends ConsumerState<SendReviewView>
+class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
     with WidgetsBindingObserver {
   final _descriptionController = TextEditingController();
   final _reasonController = TextEditingController();
@@ -88,11 +84,8 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
       setState(() {});
     });
 
-    // Update viewModel with selected data and ensure networks are loaded
+    // Refresh profile to get latest PIN status
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _updateViewModelWithSelectedData();
-      _ensureNetworksLoaded();
-      // Refresh profile to get latest PIN status
       ref.read(profileViewModelProvider.notifier).loadUserProfile();
     });
   }
@@ -130,37 +123,12 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
     }
   }
 
-  // Ensure networks are loaded for proper network name resolution
-  void _ensureNetworksLoaded() {
-    final sendState = ref.read(sendViewModelProvider);
-    if (sendState.networks.isEmpty) {
-      print('🔄 Networks not loaded, initializing send view model...');
-      ref.read(sendViewModelProvider.notifier).initialize();
-    }
-  }
-
-  void _updateViewModelWithSelectedData() {
-    final sendState = ref.read(sendViewModelProvider.notifier);
-
-    // Update send amount if available
-    if (widget.selectedData['sendAmount'] != null) {
-      sendState.updateSendAmount(widget.selectedData['sendAmount'].toString());
-    }
-
-    // Update other data if available
-    if (widget.selectedData['sendCurrency'] != null) {
-      // You might need to add a method to update currency in the viewModel
-    }
-  }
-
   String _formatNumber(double amount) {
-    // Format number with thousands separators
     String formatted = amount.toStringAsFixed(2);
     List<String> parts = formatted.split('.');
     String integerPart = parts[0];
     String decimalPart = parts.length > 1 ? parts[1] : '00';
 
-    // Add commas for thousands separators
     String formattedInteger = '';
     for (int i = 0; i < integerPart.length; i++) {
       if (i > 0 && (integerPart.length - i) % 3 == 0) {
@@ -172,7 +140,6 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
     return '$formattedInteger.$decimalPart';
   }
 
-  // Helper method to get currency symbol from currency code
   String _getCurrencySymbol(String currencyCode) {
     switch (currencyCode.toUpperCase()) {
       case 'NGN':
@@ -183,86 +150,206 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
         return '€';
       case 'GBP':
         return '£';
-      case 'RWF':
-        return 'RWF ';
-      case 'GHS':
-        return 'GH₵';
-      case 'KES':
-        return 'KSh ';
-      case 'UGX':
-        return 'USh ';
-      case 'TZS':
-        return 'TSh ';
-      case 'ZAR':
-        return 'R';
-      case 'BWP':
-        return 'BWP ';
-      case 'XOF':
-        return 'CFA';
-      case 'XAF':
-        return 'FCFA';
       default:
         return '$currencyCode ';
     }
   }
 
-  // Helper method to get network name from networkId
-  String _getNetworkName(String? networkId) {
-    if (networkId == null || networkId.isEmpty) return 'Unknown Network';
-
-    final sendState = ref.watch(sendViewModelProvider);
-
-    // Debug logging
-    print('🔍 Looking for network ID: $networkId');
-    print('📊 Available networks count: ${sendState.networks.length}');
-    print(
-      '📋 Available network IDs: ${sendState.networks.map((n) => n.id).join(", ")}',
-    );
-
-    // If networks are empty, try to trigger a refresh
-    if (sendState.networks.isEmpty) {
-      print('⚠️ No networks loaded, triggering refresh...');
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(sendViewModelProvider.notifier).initialize();
-      });
-      return 'Loading...';
+  void _proceedToPayment() {
+    if (_selectedReason.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Please select a reason for transfer'),
+          backgroundColor: AppColors.error500,
+        ),
+      );
+      return;
     }
 
-    final network = sendState.networks.firstWhere(
-      (n) => n.id == networkId,
-      orElse: () => Network(id: null, name: null),
-    );
+    _paymentData = {
+      ...widget.selectedData,
+      'dayfiId': widget.dayfiId,
+      'reason': _selectedReason,
+      'description': _descriptionController.text.trim(),
+    };
 
-    if (network.id == null) {
-      print('❌ Network not found for ID: $networkId');
-      return 'Unknown Network';
-    }
+    // Set flag to check PIN on resume
+    _hasCheckedPinOnResume = true;
 
-    print('✅ Found network: ${network.name} for ID: $networkId');
-    return network.name ?? 'Unknown Network';
+    // Check and handle transaction PIN
+    _checkAndHandleTransactionPin();
   }
 
-  // Helper method to get display name for delivery method (convert P2P to Bank Transfer)
-  String _getDeliveryMethodDisplay(String? method) {
-    if (method == null || method.isEmpty) {
-      return 'Bank Transfer';
+  /// Check if user has transaction PIN and handle accordingly
+  Future<void> _checkAndHandleTransactionPin() async {
+    // Refresh profile first to get latest PIN status
+    await ref.read(profileViewModelProvider.notifier).loadUserProfile();
+
+    final profileState = ref.read(profileViewModelProvider);
+    final user = profileState.user;
+    final hasTransactionPin =
+        user?.transactionPin != null && user!.transactionPin!.isNotEmpty;
+
+    if (!hasTransactionPin) {
+      // Navigate to create pin with return route info
+      appRouter
+          .pushNamed(
+            AppRoute.transactionPinCreateView,
+            arguments: {
+              'returnRoute': AppRoute.sendDayfiIdReviewView,
+              'returnArguments': {
+                'selectedData': widget.selectedData,
+                'dayfiId': widget.dayfiId,
+              },
+            },
+          )
+          .then((_) async {
+            // When user returns from PIN creation, refresh profile and check again
+            await ref.read(profileViewModelProvider.notifier).loadUserProfile();
+            final updatedProfileState = ref.read(profileViewModelProvider);
+            final updatedUser = updatedProfileState.user;
+            final nowHasPin =
+                updatedUser?.transactionPin != null &&
+                updatedUser!.transactionPin!.isNotEmpty;
+
+            if (nowHasPin &&
+                _paymentData != null &&
+                _selectedReason.isNotEmpty) {
+              // Show PIN entry bottom sheet
+              _hasCheckedPinOnResume = false; // Reset flag
+              _showPinEntryBottomSheet();
+            }
+          });
+    } else {
+      // Show PIN entry bottom sheet
+      _hasCheckedPinOnResume = false; // Reset flag
+      _showPinEntryBottomSheet();
     }
+  }
 
-    final methodLower = method.toLowerCase();
+  /// Show PIN entry bottom sheet
+  void _showPinEntryBottomSheet() {
+    // Reset PIN state before showing bottom sheet
+    ref.read(transactionPinProvider.notifier).resetForm();
+    // Reset processing state
+    _isProcessingPinNotifier.value = false;
 
-    // Convert P2P to Bank Transfer for display
-    if (methodLower == 'p2p' ||
-        methodLower == 'peer_to_peer' ||
-        methodLower == 'peer-to-peer') {
-      return 'Bank Transfer';
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      isDismissible: false,
+      enableDrag: false,
+      builder:
+          (bottomSheetContext) => ValueListenableBuilder<bool>(
+            valueListenable: _isProcessingPinNotifier,
+            builder: (context, isProcessing, child) {
+              return TransactionPinBottomSheet(
+                onPinEntered: _handlePinEntered,
+                isProcessing: isProcessing,
+              );
+            },
+          ),
+    );
+  }
+
+  /// Handle PIN entry and process payment
+  Future<void> _handlePinEntered(String pin) async {
+    // Update processing state (this will trigger modal rebuild via ValueNotifier)
+    _isProcessingPin = true;
+    _isProcessingPinNotifier.value = true;
+
+    try {
+      // For now, sending plain pin - backend should handle encryption
+      final encryptedPin = pin; // TODO: Encrypt with bcrypt if needed
+
+      final paymentService = locator<PaymentService>();
+      final amount =
+          double.tryParse(
+            widget.selectedData['sendAmount']?.toString() ?? '0',
+          ) ??
+          0;
+
+      // Call initiateWalletTransfer API
+      final response = await paymentService.initiateWalletTransfer(
+        dayfiId: widget.dayfiId,
+        amount: amount.toInt(),
+        encryptedPin: encryptedPin,
+      );
+
+      if (response.error == false) {
+        AppLogger.info('Wallet transfer initiated successfully');
+
+        // Close bottom sheet
+        Navigator.pop(context);
+
+        // Navigate to success screen
+        appRouter.pushNamedAndRemoveUntil(
+          AppRoute.sendPaymentSuccessView,
+          (Route route) => false, // Remove all previous routes
+          arguments: {
+            'recipientData': {'name': '@${widget.dayfiId}'},
+            'selectedData': widget.selectedData,
+            'paymentData': _paymentData ?? {},
+            'transactionId':
+                response.data?.id?.toString() ??
+                response.data?.sequenceId?.toString(),
+          },
+        );
+      } else {
+        // Check if error is PIN-related
+        final errorMessage =
+            response.message.isNotEmpty
+                ? response.message
+                : 'Failed to initiate transfer';
+
+        // Clear PIN if error is PIN-related
+        if (errorMessage.toLowerCase().contains('pin') ||
+            errorMessage.toLowerCase().contains('incorrect') ||
+            errorMessage.toLowerCase().contains('invalid')) {
+          ref.read(transactionPinProvider.notifier).resetForm();
+        }
+
+        throw Exception(errorMessage);
+      }
+    } catch (e) {
+      AppLogger.error('Error initiating wallet transfer: $e');
+
+      // Clear PIN on error
+      ref.read(transactionPinProvider.notifier).resetForm();
+
+      // Don't close bottom sheet - let user retry
+      // Show error message in bottom sheet
+      ref
+          .read(transactionPinProvider.notifier)
+          .setError(
+            e.toString().contains('PIN') || e.toString().contains('pin')
+                ? 'Incorrect PIN. Please try again.'
+                : 'Failed to initiate transfer. Please try again.',
+          );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            e.toString().contains('PIN') || e.toString().contains('pin')
+                ? 'Incorrect PIN. Please try again.'
+                : 'Failed to initiate transfer: ${e.toString()}',
+          ),
+          backgroundColor: AppColors.error500,
+        ),
+      );
+    } finally {
+      // Reset processing state (this will trigger modal rebuild via ValueNotifier)
+      _isProcessingPin = false;
+      _isProcessingPinNotifier.value = false;
     }
-
-    return method;
   }
 
   @override
   Widget build(BuildContext context) {
-    final sendState = ref.watch(sendViewModelProvider);
+    final sendAmount =
+        double.tryParse(widget.selectedData['sendAmount']?.toString() ?? '0') ??
+        0;
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
@@ -276,7 +363,6 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
             icon: Icon(
               Icons.arrow_back_ios,
               color: Theme.of(context).colorScheme.onSurface,
-              // size: 20.sp,
             ),
             onPressed: () => Navigator.pop(context),
           ),
@@ -293,7 +379,6 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
         ),
         body: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
-
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -303,7 +388,7 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
               SizedBox(height: 32.h),
 
               // Transfer Details
-              _buildTransferDetails(sendState),
+              _buildTransferDetails(sendAmount),
 
               SizedBox(height: 32.h),
 
@@ -337,7 +422,7 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
                 borderRadius: 40.r,
               ),
 
-              SizedBox(height: 36.h),
+              SizedBox(height: 40.h),
             ],
           ),
         ),
@@ -364,7 +449,7 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
     );
   }
 
-  Widget _buildTransferDetails(SendState sendState) {
+  Widget _buildTransferDetails(double sendAmount) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 24.h),
@@ -390,82 +475,29 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
 
           SizedBox(height: 20.h),
 
-          _buildDetailRow(
-            'Transfer Amount',
-            '₦${_formatNumber(double.tryParse(widget.selectedData['sendAmount']?.toString() ?? '0') ?? 0)}',
-          ),
-          _buildDetailRow(
-            'Total to Beneficiary ',
-            '${_getCurrencySymbol(widget.selectedData['receiveCurrency']?.toString() ?? 'NGN')}${_formatNumber(double.tryParse(widget.selectedData['receiveAmount']?.toString() ?? '0') ?? 0)}',
-          ),
-          _buildDetailRow('Exchange Rate', sendState.exchangeRate),
-          _buildDetailRow(
-            'Transfer Fee',
-            '₦${_formatNumber(double.tryParse(sendState.fee.toString()) ?? 0)}',
-          ),
-
-          // _buildDetailRow('Transfer Taxes', '₦0.00'),
-          Divider(
-            color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-            height: 24.h,
-          ),
-          SizedBox(height: 12.h),
-
-          _buildDetailRow(
-            'Total',
-            '₦${_formatNumber(double.tryParse(sendState.totalToPay.toString()) ?? 0)}',
-            isTotal: true,
-          ),
-
-          _buildDetailRow('Beneficiary ', widget.recipientData['name']),
-          SizedBox(height: 6.h),
-
-          _buildDetailRow(
-            'Bank Network',
-            _getNetworkName(widget.recipientData['networkId']),
-          ),
-          _buildDetailRow(
-            'Delivery Method',
-            _getDeliveryMethodDisplay(
-              widget.selectedData['recipientDeliveryMethod']?.toString(),
-            ).toUpperCase(),
-          ),
-          _buildDetailRow('Transfer Time', 'Within 24 hours', bottomPadding: 0),
+          _buildDetailRow('Transfer Amount', '₦${_formatNumber(sendAmount)}'),
+          _buildDetailRow('Recipient', '@${widget.dayfiId}'),
+          _buildDetailRow('Delivery Method', 'Dayfi ID Transfer'),
+          _buildDetailRow('Transfer Time', 'Instant', bottomPadding: 0),
         ],
       ),
     );
   }
 
   Widget _getDetailIcon(String label) {
-    // Map labels to appropriate SVG icons from send_view.dart
     switch (label.toLowerCase()) {
       case 'transfer amount':
-      case 'fee':
         return Transform.rotate(
           angle: -pi / 2,
           child: SvgPicture.asset('assets/icons/svgs/fee.svg', height: 24),
         );
-      case 'transfer fee':
-        return SvgPicture.asset('assets/icons/svgs/fee.svg', height: 24);
-      case 'total':
-      case 'total to beneficiary':
-        return SvgPicture.asset('assets/icons/svgs/total.svg', height: 24);
-      case 'exchange rate':
-      case 'rate':
-        return SvgPicture.asset('assets/icons/svgs/rate.svg', height: 24);
-      case 'network':
-      case 'bank network':
-        return SvgPicture.asset('assets/icons/svgs/bank.svg', height: 24);
-      case 'beneficiary':
+      case 'recipient':
         return SvgPicture.asset('assets/icons/svgs/user.svg', height: 24);
       case 'delivery method':
         return SvgPicture.asset('assets/icons/svgs/delivery.svg', height: 24);
       case 'transfer time':
         return SvgPicture.asset('assets/icons/svgs/time.svg', height: 24);
-      case 'transfer taxes':
-        return SvgPicture.asset('assets/icons/svgs/tax.svg', height: 24);
       default:
-        // Default icon for other items
         return SvgPicture.asset('assets/icons/svgs/fee.svg', height: 24);
     }
   }
@@ -473,7 +505,6 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
   Widget _buildDetailRow(
     String label,
     String value, {
-    bool isTotal = false,
     double bottomPadding = 12,
   }) {
     return Padding(
@@ -601,7 +632,6 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
                           padding: EdgeInsets.all(6.r),
                           decoration: BoxDecoration(
                             color: AppColors.neutral0,
-                            // borderRadius: BorderRadius.circular(12.r),
                             shape: BoxShape.circle,
                           ),
                           child: Text(
@@ -640,319 +670,6 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
             ),
           ),
     );
-  }
-
-  void _proceedToPayment() {
-    if (_selectedReason.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Please select a reason for transfer'),
-          backgroundColor: AppColors.error500,
-        ),
-      );
-      return;
-    }
-
-    _paymentData = {
-      ...widget.selectedData,
-      ...widget.recipientData,
-      'reason': _selectedReason,
-      'description': _descriptionController.text.trim(),
-    };
-
-    // Set flag to check PIN on resume
-    _hasCheckedPinOnResume = true;
-
-    // Check and handle transaction PIN
-    _checkAndHandleTransactionPin();
-  }
-
-  /// Check if user has transaction PIN and handle accordingly
-  Future<void> _checkAndHandleTransactionPin() async {
-    // Refresh profile first to get latest PIN status
-    await ref.read(profileViewModelProvider.notifier).loadUserProfile();
-
-    final profileState = ref.read(profileViewModelProvider);
-    final user = profileState.user;
-    final hasTransactionPin =
-        user?.transactionPin != null && user!.transactionPin!.isNotEmpty;
-
-    if (!hasTransactionPin) {
-      // Navigate to create pin with return route info
-      appRouter
-          .pushNamed(
-            AppRoute.transactionPinCreateView,
-            arguments: {
-              'returnRoute': AppRoute.sendReviewView,
-              'returnArguments': {
-                'selectedData': widget.selectedData,
-                'recipientData': widget.recipientData,
-                'senderData': widget.senderData,
-              },
-            },
-          )
-          .then((_) async {
-            // When user returns from PIN creation, refresh profile and check again
-            await ref.read(profileViewModelProvider.notifier).loadUserProfile();
-            final updatedProfileState = ref.read(profileViewModelProvider);
-            final updatedUser = updatedProfileState.user;
-            final nowHasPin =
-                updatedUser?.transactionPin != null &&
-                updatedUser!.transactionPin!.isNotEmpty;
-
-            if (nowHasPin &&
-                _paymentData != null &&
-                _selectedReason.isNotEmpty) {
-              // Show PIN entry bottom sheet
-              _hasCheckedPinOnResume = false; // Reset flag
-              _showPinEntryBottomSheet();
-            }
-          });
-    } else {
-      // Show PIN entry bottom sheet
-      _hasCheckedPinOnResume = false; // Reset flag
-      _showPinEntryBottomSheet();
-    }
-  }
-
-  /// Show PIN entry bottom sheet
-  void _showPinEntryBottomSheet() {
-    // Reset PIN state before showing bottom sheet
-    ref.read(transactionPinProvider.notifier).resetForm();
-    // Reset processing state
-    _isProcessingPinNotifier.value = false;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      isDismissible: false,
-      enableDrag: false,
-      builder:
-          (bottomSheetContext) => ValueListenableBuilder<bool>(
-            valueListenable: _isProcessingPinNotifier,
-            builder: (context, isProcessing, child) {
-              return TransactionPinBottomSheet(
-                onPinEntered: _handlePinEntered,
-                isProcessing: isProcessing,
-              );
-            },
-          ),
-    );
-  }
-
-  /// Handle PIN entry and process payment
-  Future<void> _handlePinEntered(String pin) async {
-    // Update processing state (this will trigger modal rebuild via ValueNotifier)
-    _isProcessingPin = true;
-    _isProcessingPinNotifier.value = true;
-
-    try {
-      // For now, sending plain pin - backend should handle encryption
-      final encryptedPin = pin;
-
-      final sendState = ref.read(sendViewModelProvider);
-      final paymentService = locator<PaymentService>();
-
-      // Resolve the best channel for this transaction
-      final selectedChannel = _findSelectedChannel(sendState);
-
-      // If no valid channel is found, show an error
-      if (selectedChannel == null) {
-        TopSnackbar.show(
-          context,
-          message:
-              'No valid payment channel found for ${sendState.receiverCountry}/${sendState.receiverCurrency}',
-          isError: true,
-        );
-        return;
-      }
-      final requestData = _buildPaymentRequest(
-        sendState: sendState,
-        selectedChannel: selectedChannel,
-        collectionSequenceId: "7e490488-92e4-4de6-a55f-ea0fe17a07150",
-        pin: encryptedPin,
-      );
-
-      // Call createPaymentRequest API
-      final response = await paymentService.createPayment(requestData);
-
-      if (response.error == false && response.data != null) {
-        AppLogger.info('Payment request created successfully');
-
-        // Store the payment data
-        final paymentData = response.data!;
-
-        // Get transaction ID from response
-        final transactionId = paymentData.id ?? paymentData.sequenceId;
-
-        // Close bottom sheet
-        Navigator.pop(context);
-
-        // Navigate to success screen
-        appRouter.pushNamedAndRemoveUntil(
-          AppRoute.sendPaymentSuccessView,
-          (Route route) => false, // Remove all previous routes
-          arguments: {
-            'recipientData': widget.recipientData,
-            'selectedData': widget.selectedData,
-            'paymentData': _paymentData ?? {},
-            'collectionData': paymentData,
-            'transactionId': transactionId,
-          },
-        );
-      } else {
-        // Check if error is PIN-related or balance-related
-        final errorMessage =
-            response.message.isNotEmpty
-                ? response.message
-                : 'Failed to create payment request';
-
-        // Clear PIN if error is PIN-related
-        if (errorMessage.toLowerCase().contains('pin') ||
-            errorMessage.toLowerCase().contains('incorrect') ||
-            errorMessage.toLowerCase().contains('invalid')) {
-          ref.read(transactionPinProvider.notifier).resetForm();
-        }
-
-        throw Exception(errorMessage);
-      }
-    } catch (e) {
-      AppLogger.error('Error creating payment request: $e');
-
-      // Clear PIN on error
-      ref.read(transactionPinProvider.notifier).resetForm();
-
-      // Determine error message based on error type
-      String userFriendlyMessage;
-      final errorString = e.toString().toLowerCase();
-
-      if (errorString.contains('pin') || errorString.contains('incorrect')) {
-        userFriendlyMessage = 'Incorrect PIN. Please try again.';
-      } else if (errorString.contains('insufficient') ||
-          errorString.contains('balance')) {
-        userFriendlyMessage =
-            'Insufficient wallet balance. Please fund your wallet and try again.';
-      } else {
-        userFriendlyMessage = 'Failed to initiate transfer. Please try again.';
-      }
-
-      // Don't close bottom sheet - let user retry
-      // Show error message using TopSnackbar
-      TopSnackbar.show(context, message: userFriendlyMessage, isError: true);
-    } finally {
-      // Reset processing state (this will trigger modal rebuild via ValueNotifier)
-      _isProcessingPin = false;
-      _isProcessingPinNotifier.value = false;
-    }
-  }
-
-  /// Find the selected channel based on send state
-  dynamic _findSelectedChannel(SendState sendState) {
-    final recipientChannels =
-        sendState.channels
-            .where(
-              (channel) =>
-                  channel.country == sendState.receiverCountry &&
-                  channel.currency == sendState.receiverCurrency &&
-                  channel.status == 'active' &&
-                  channel.channelType == sendState.selectedDeliveryMethod,
-            )
-            .toList();
-
-    final validChannels =
-        recipientChannels
-            .where(
-              (channel) =>
-                  channel.rampType == 'deposit' ||
-                  channel.rampType == 'collection' ||
-                  channel.rampType == 'withdrawal' ||
-                  channel.rampType == 'withdraw' ||
-                  channel.rampType == 'payout',
-            )
-            .toList();
-
-    return validChannels.isNotEmpty
-        ? validChannels.first
-        : (recipientChannels.isNotEmpty ? recipientChannels.first : null);
-  }
-
-  /// Build payment request
-  Map<String, dynamic> _buildPaymentRequest({
-    required SendState sendState,
-    required dynamic selectedChannel,
-    required String collectionSequenceId,
-    required String pin,
-  }) {
-    // Determine account type based on recipient data
-    final accountType = widget.recipientData['accountType'] ?? 'bank';
-    final isCrypto =
-        widget.selectedData['cryptoCurrency'] != null ||
-        widget.selectedData['cryptoNetwork'] != null;
-    final finalAccountType = isCrypto ? 'crypto' : accountType;
-
-    // Get account number (could be bank account or wallet address)
-    final accountNumber =
-        widget.recipientData['accountNumber'] ??
-        widget.recipientData['walletAddress'] ??
-        '';
-
-    // Get account name
-    final accountName = widget.recipientData['name'] ?? 'Recipient';
-
-    // Get network ID
-    final networkId =
-        widget.recipientData['networkId'] ??
-        widget.selectedData['cryptoNetwork'] ??
-        '';
-
-    // Get network country (use receiver country)
-    final networkCountry = sendState.receiverCountry;
-
-    // Get country
-    final country = sendState.receiverCountry;
-
-    // Get reason
-    final reason = _paymentData?['reason'] ?? 'other';
-
-    // Get amount (convert to integer if needed)
-    final amount =
-        double.tryParse(
-          sendState.sendAmount.replaceAll(RegExp(r'[^\d.]'), ''),
-        )?.toInt() ??
-        0;
-
-    // Get currency
-    final currency = sendState.sendCurrency;
-
-    // Get channel ID
-    final channelId =
-        widget.selectedData['recipientChannelId'] ?? selectedChannel.id ?? '';
-
-    // Build metadata
-    final metadata = {
-      "orderId": "ORD-${DateTime.now().millisecondsSinceEpoch}",
-      "description": _paymentData?['description'] ?? 'Money Transfer',
-    };
-
-    // Build payment request payload
-    final requestData = <String, dynamic>{
-      "amount": amount,
-      "collectionSequenceId": collectionSequenceId,
-      "currency": currency,
-      "channelId": channelId,
-      "accountType": finalAccountType,
-      "networkCountry": networkCountry,
-      "country": country,
-      "reason": reason,
-      "pin": pin,
-      "accountNumber": accountNumber,
-      "networkId": networkId,
-      "accountName": accountName,
-      "metadata": metadata,
-    };
-
-    return requestData;
   }
 }
 
@@ -1031,48 +748,77 @@ class _TransactionPinBottomSheetState
           SizedBox(height: MediaQuery.of(context).size.width * 0.15),
 
           // PIN dots
-          Stack(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                  4,
-                  (index) => Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                    child: Text(
-                      index < pinState.pin.length ? '*' : '*',
-                      style: TextStyle(
-                        fontSize: 88.sp,
-                        letterSpacing: -25,
-                        fontFamily: 'CabinetGrotesk',
-                        fontWeight: FontWeight.w700,
-                        color:
-                            index < pinState.pin.length
-                                ? AppColors.purple500ForTheme(context)
-                                : AppColors.neutral500,
-                      ),
-                    ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              4,
+              (index) => Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                child: Text(
+                  index < pinState.pin.length ? '*' : '*',
+                  style: TextStyle(
+                    fontSize: 88.sp,
+                    letterSpacing: -20,
+                    fontFamily: 'CabinetGrotesk',
+                    fontWeight: FontWeight.w700,
+                    color:
+                        index < pinState.pin.length
+                            ? AppColors.purple500ForTheme(context)
+                            : AppColors.neutral500,
                   ),
                 ),
               ),
+            ),
+          ),
 
-              // SizedBox(height: MediaQuery.of(context).size.width * 0.075),
+          SizedBox(height: MediaQuery.of(context).size.width * 0.075),
 
-              // Loading indicator section
-              if (widget.isProcessing)
-                Positioned(
-                  top: 50,
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: LoadingAnimationWidget.horizontalRotatingDots(
-                      color: AppColors.primary600,
-                      size: 24,
+          // Fixed height container for loading indicator and error message
+          SizedBox(
+            height: 80.h,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Loading indicator
+                if (widget.isProcessing) ...[
+                  CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      AppColors.purple500ForTheme(context),
                     ),
                   ),
-                ),
-            ],
+                  SizedBox(height: 16.h),
+                  Text(
+                    'Verifying PIN...',
+                    style: TextStyle(
+                      fontFamily: 'Karla',
+                      fontSize: 14.sp,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.7),
+                      letterSpacing: -0.4,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+
+                // Error message
+                if (pinState.errorMessage.isNotEmpty && !widget.isProcessing)
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24.w),
+                    child: Text(
+                      pinState.errorMessage,
+                      style: TextStyle(
+                        fontFamily: 'Karla',
+                        fontSize: 13.sp,
+                        color: Colors.red.shade800,
+                        letterSpacing: -0.4,
+                        fontWeight: FontWeight.w400,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+              ],
+            ),
           ),
 
           // Number pad - disabled when processing

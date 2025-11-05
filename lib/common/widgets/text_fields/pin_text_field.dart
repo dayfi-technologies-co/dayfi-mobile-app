@@ -71,9 +71,9 @@ class PinTextField extends StatelessWidget {
         inactiveFillColor: Theme.of(context).colorScheme.surface,
         activeFillColor: Theme.of(context).colorScheme.surface,
         selectedFillColor: Theme.of(context).colorScheme.surface,
-        inactiveColor: AppColors.purple500.withOpacity(.2),
-        activeColor: AppColors.purple500.withOpacity(.2),
-        selectedColor: AppColors.purple500,
+        inactiveColor: AppColors.purple500ForTheme(context).withOpacity(.2),
+        activeColor: AppColors.purple500ForTheme(context).withOpacity(.2),
+        selectedColor: AppColors.purple500ForTheme(context),
       ),
 
       appContext: context,
@@ -82,7 +82,7 @@ class PinTextField extends StatelessWidget {
       onChanged: onTextChanged!,
       animationType: AnimationType.fade,
       animationDuration: const Duration(milliseconds: 150),
-      cursorColor: AppColors.purple500,
+      cursorColor: AppColors.purple500ForTheme(context),
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
     );
   }

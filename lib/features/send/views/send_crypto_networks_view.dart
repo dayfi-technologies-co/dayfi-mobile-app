@@ -284,7 +284,7 @@ class _SendCryptoNetworksViewState
                   //               vertical: 4.h,
                   //             ),
                   //             decoration: BoxDecoration(
-                  //               color: AppColors.purple500.withOpacity(0.15),
+                  //               color: AppColors.purple500ForTheme(context).withOpacity(0.15),
                   //               borderRadius: BorderRadius.circular(8.r),
                   //             ),
                   //             child: Text(
@@ -293,7 +293,7 @@ class _SendCryptoNetworksViewState
                   //                 fontFamily: 'Karla',
                   //                 fontSize: 8.sp,
                   //                 fontWeight: FontWeight.w600,
-                  //                 color: AppColors.purple500,
+                  //                 color: AppColors.purple500ForTheme(context),
                   //               ),
                   //             ),
                   //           );
@@ -376,16 +376,16 @@ class _SendCryptoNetworksViewState
           _currentPaymentData = response.data!;
 
           // Add transaction to monitoring
-          final collectionSequenceId =
-              response.data?.id ?? response.data?.sequenceId;
-          if (collectionSequenceId != null) {
-            final transactionMonitor = ref.read(transactionMonitorProvider);
-            transactionMonitor.addTransactionToMonitoring(
-              transactionId: collectionSequenceId,
-              collectionSequenceId: collectionSequenceId,
-              paymentData: requestData,
-            );
-          }
+          // final collectionSequenceId =
+          //     response.data?.id ?? response.data?.sequenceId;
+          // if (collectionSequenceId != null) {
+          //   final transactionMonitor = ref.read(transactionMonitorProvider);
+          //   transactionMonitor.addTransactionToMonitoring(
+          //     transactionId: collectionSequenceId,
+          //     collectionSequenceId: collectionSequenceId,
+          //     paymentData: requestData,
+          //   );
+          // }
 
           // Show crypto wallet details bottom sheet
           _showCryptoWalletDetailsBottomSheet(response.data!);
@@ -488,10 +488,12 @@ class _SendCryptoNetworksViewState
       },
       "source": {
         "accountNumber":
-            cryptoCurrency.isNotEmpty ? cryptoCurrency : cryptoNetwork,
-        "networkId": cryptoNetwork,
-        "accountType": "crypto",
+            "1111111111",
+        "networkId": "995eb625-e23b-4d0b-bd90-18ce44cc17a3",
+        "accountType": "bank",
       },
+
+      "metadata": {"customerId": 12345, "orderId": "COLL-17622499732600", "description":"" ,}
     };
   }
 
@@ -585,7 +587,7 @@ class _SendCryptoNetworksViewState
             //                     fontFamily: 'CabinetGrotesk',
             //                     fontSize: 20.sp,
             //                     fontWeight: FontWeight.w700,
-            //                     color: AppColors.purple500,
+            //                     color: AppColors.purple500ForTheme(context),
             //                   ),
             //                 ),
             //         ),
@@ -674,7 +676,7 @@ class _SendCryptoNetworksViewState
                 return _buildNetworkCard(networkEntry);
               }).toList(),
 
-            SizedBox(height: 100.h),
+            SizedBox(height: 40.h),
           ],
         ),
       ),
@@ -697,7 +699,7 @@ class _SendCryptoNetworksViewState
                 _isLoading
                     ? 'Processing...'
                     : _selectedNetwork != null
-                    ? 'Continue with ${enabledNetworks.firstWhere((e) => e.key == _selectedNetwork).value['name']}'
+                    ? 'Next - Continue with ${enabledNetworks.firstWhere((e) => e.key == _selectedNetwork).value['name']}'
                     : 'Select a Network',
             onPressed:
                 (_selectedNetwork != null && !_isLoading)
@@ -872,7 +874,7 @@ class _SendCryptoNetworksViewState
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        SizedBox(height: 22.h, width: 22.w),
+                        SizedBox(height: 24.h, width: 22.w),
                         Text(
                           'Crypto Wallet Details',
                           style: AppTypography.titleLarge.copyWith(
@@ -886,8 +888,8 @@ class _SendCryptoNetworksViewState
                           onTap: () => Navigator.pop(context),
                           child: Image.asset(
                             "assets/icons/pngs/cancelicon.png",
-                            height: 22.h,
-                            width: 22.w,
+                            height: 24.h,
+                            width: 24.w,
                             color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),

@@ -1,9 +1,11 @@
+import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/routes/route.dart';
+import 'package:flutter_svg/svg.dart';
 
 class DayfiTagExplanationView extends ConsumerWidget {
   const DayfiTagExplanationView({super.key});
@@ -33,28 +35,56 @@ class DayfiTagExplanationView extends ConsumerWidget {
                         "assets/icons/pngs/cancelicon.png",
                         height: 24.h,
                         width: 24.w,
-                        color: Theme.of(context).colorScheme.onSurface,
+                        color: Colors.white,
                       ),
                     ),
                   ],
                 ),
                 SizedBox(height: 40.h),
-                Padding(
-                  padding: EdgeInsets.only(left: 28.w),
-                  child: Image.asset(
-                    'assets/images/upload_doc.png',
-                    width: MediaQuery.of(context).size.width * 0.5,
+
+                Stack(
+                  alignment: AlignmentDirectional.center,
+
+                  children: [
+                    SvgPicture.asset(
+                      'assets/icons/svgs/bankk.svg',
+                      height: MediaQuery.of(context).size.width * 0.5,
+                      width: MediaQuery.of(context).size.width * 0.5,
+                      color: AppColors.warning500,
+                    ),
+                    Text(
+                      '@',
+                      style: TextStyle(
+                        fontFamily: 'CabinetGrotesk',
+                        fontSize: MediaQuery.of(context).size.width * 0.3,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.error500,
+                      ),
+                    ),
+                  ],
+                ),
+
+                Text(
+                  "Meet your DayFi Tag",
+                  style: AppTypography.headlineLarge.copyWith(
+                    fontFamily: 'CabinetGrotesk',
+                    fontSize: 28.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.neutral0,
+                    height: 1.2,
+                    letterSpacing: -0.4,
                   ),
+                  textAlign: TextAlign.center,
                 ),
                 Text(
-                  "Your DayFi Tag is a unique identifier that makes it easy for friends and family to send you money. Share your tag with anyone, and they can instantly transfer funds to your wallet.\n\nNote: DayFi Tag transfers are only available for NGN (Nigerian Naira).",
+                  "Your unique username for instant money transfers. Share it with friends and family - no bank details needed.",
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w400,
                     fontFamily: 'Karla',
                     color: AppColors.neutral50,
                     letterSpacing: -.6,
-                    height: 1.4,
+                    height: 1.5,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -74,7 +104,7 @@ class DayfiTagExplanationView extends ConsumerWidget {
                 SizedBox(height: 40.h),
                 PrimaryButton(
                   borderRadius: 38,
-                  text: "Create DayFi Tag",
+                  text: "Next - Create DayFi Tag",
                   onPressed: () async {
                     final result = await Navigator.pushNamed(
                       context,
@@ -86,9 +116,10 @@ class DayfiTagExplanationView extends ConsumerWidget {
                   },
                   backgroundColor: AppColors.neutral0,
                   height: 60.h,
-                  textColor: AppColors.purple500,
+                  textColor: AppColors.purple500ForTheme(context),
                   fontFamily: 'Karla',
                   letterSpacing: -.8,
+                  fontWeight: FontWeight.w600,
                   fontSize: 18,
                   width: double.infinity,
                   fullWidth: true,

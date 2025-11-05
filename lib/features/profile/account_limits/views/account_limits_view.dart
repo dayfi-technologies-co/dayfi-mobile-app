@@ -52,11 +52,10 @@ class _AccountLimitsViewState extends ConsumerState<AccountLimitsView> {
         title: Text(
           "Account Limits",
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-          fontFamily: 'CabinetGrotesk',
+            fontFamily: 'CabinetGrotesk',
             fontSize: 20.sp,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,
-          
           ),
         ),
       ),
@@ -85,13 +84,12 @@ class _AccountLimitsViewState extends ConsumerState<AccountLimitsView> {
               SizedBox(height: 20.h),
 
               // Tier 3 Card
-              _buildTierCard(
-                tier: KycTier.tier3,
-                isCurrentTier: currentTierAsync.valueOrNull == KycTier.tier3,
-                isCompleted: (currentTierAsync.valueOrNull?.level ?? 0) >= 3,
-                kycService: kycService,
-              ),
-
+              // _buildTierCard(
+              //   tier: KycTier.tier3,
+              //   isCurrentTier: currentTierAsync.valueOrNull == KycTier.tier3,
+              //   isCompleted: (currentTierAsync.valueOrNull?.level ?? 0) >= 3,
+              //   kycService: kycService,
+              // ),
               SizedBox(height: 50.h),
             ],
           ),
@@ -159,7 +157,7 @@ class _AccountLimitsViewState extends ConsumerState<AccountLimitsView> {
                         if (isCurrentTier)
                           SvgPicture.asset(
                             'assets/icons/svgs/circle-check.svg',
-                            color: AppColors.purple500,
+                            color: AppColors.purple500ForTheme(context),
                           ),
                       ],
                     ),
@@ -181,23 +179,23 @@ class _AccountLimitsViewState extends ConsumerState<AccountLimitsView> {
                     ),
 
                     // Increase limit button for current tier
-                    if (isCurrentTier)
-                      GestureDetector(
-                        onTap: () => _navigateToVerification(tier),
-                        child: Container(
-                          padding: EdgeInsets.only(top: 10.h),
-                          child: Text(
-                            "Increase limit",
-                            style: AppTypography.bodyMedium.copyWith(
-                              fontFamily: 'CabinetGrotesk',
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.purple500,
-                              // decoration: TextDecoration.underline,
-                            ),
-                          ),
-                        ),
-                      ),
+                    // if (isCurrentTier)
+                    //   GestureDetector(
+                    //     onTap: () => _navigateToVerification(tier),
+                    //     child: Container(
+                    //       padding: EdgeInsets.only(top: 10.h),
+                    //       child: Text(
+                    //         "Increase limit",
+                    //         style: AppTypography.bodyMedium.copyWith(
+                    //           fontFamily: 'CabinetGrotesk',
+                    //           fontSize: 16.sp,
+                    //           fontWeight: FontWeight.w600,
+                    //           color: AppColors.purple500ForTheme(context),
+                    //           // decoration: TextDecoration.underline,
+                    //         ),
+                    //       ),
+                    //     ),
+                    //   ),
                   ],
                 ),
               ),

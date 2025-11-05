@@ -55,6 +55,7 @@ class CustomTextField extends StatelessWidget {
   final bool isDayfiId;
   final bool capitalizeFirstLetter;
   final double borderRadius;
+  final EdgeInsets? contentPadding;
 
   const CustomTextField({
     super.key,
@@ -84,6 +85,7 @@ class CustomTextField extends StatelessWidget {
     this.isDayfiId = false,
     this.capitalizeFirstLetter = false,
     this.borderRadius = 12,
+    this.contentPadding,
   });
 
   @override
@@ -145,7 +147,7 @@ class CustomTextField extends StatelessWidget {
             autovalidateMode: AutovalidateMode.onUserInteraction,
             maxLength: obscureText ? null : maxLength,
             controller: controller,
-            cursorColor: AppColors.purple500, // innit
+            cursorColor: AppColors.purple500ForTheme(context), // innit
             
             textInputAction: textInputAction,
             keyboardType: keyboardType,
@@ -183,7 +185,7 @@ class CustomTextField extends StatelessWidget {
                           ? Colors.greenAccent.withOpacity(.08)
                           : const Color.fromARGB(255, 255, 217, 214)
                       : Theme.of(context).colorScheme.surface,
-              contentPadding: EdgeInsets.symmetric(
+              contentPadding: contentPadding ?? EdgeInsets.symmetric(
                 vertical: 14.h,
                 horizontal: 10.w,
               ),
@@ -304,7 +306,7 @@ class ReadOnlyCustomTextField extends StatelessWidget {
           autovalidateMode: AutovalidateMode.onUserInteraction,
           maxLength: obscureText ? null : maxLength,
           controller: controller,
-          cursorColor: AppColors.purple500, // innit
+          cursorColor: AppColors.purple500ForTheme(context), // innit
           textInputAction: textInputAction,
           keyboardType: keyboardType,
           readOnly: true,
@@ -350,7 +352,7 @@ class ReadOnlyCustomTextField extends StatelessWidget {
             focusedBorder: UnderlineInputBorder(
               borderSide: BorderSide(
                 // color: Color( 0xff5645F5), // innit
-                color: AppColors.purple500, // innit
+                color: AppColors.purple500ForTheme(context), // innit
                 width: 1.w,
               ),
               borderRadius: BorderRadius.only(
@@ -360,7 +362,7 @@ class ReadOnlyCustomTextField extends StatelessWidget {
             ),
             enabledBorder: UnderlineInputBorder(
               borderSide: BorderSide(
-                color: AppColors.purple500.withOpacity(.2),
+                color: AppColors.purple500ForTheme(context).withOpacity(.2),
                 width: 1.w,
               ),
               borderRadius: BorderRadius.only(

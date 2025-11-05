@@ -3,6 +3,7 @@ import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/common/widgets/buttons/secondary_button.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
@@ -10,10 +11,13 @@ import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
 import 'package:dayfi/features/legal/terms_of_use.dart';
 import 'package:dayfi/features/legal/privacy_notice.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:intercom_flutter/intercom_flutter.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/common/utils/tier_utils.dart';
 import 'package:dayfi/services/notification_service.dart';
+import 'package:dayfi/services/remote/wallet_service.dart';
+import 'package:dayfi/common/utils/app_logger.dart';
 
 // Constants for consistent styling
 class _ProfileConstants {
@@ -43,54 +47,82 @@ class ProfileView extends ConsumerStatefulWidget {
 }
 
 class _ProfileViewState extends ConsumerState<ProfileView> {
+  String? _dayfiId;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(profileViewModelProvider.notifier).loadUserProfile();
+      _loadDayfiId();
     });
+  }
+
+  Future<void> _loadDayfiId() async {
+    try {
+      final walletService = locator<WalletService>();
+      final walletResponse = await walletService.fetchWalletDetails();
+
+      // Find the first wallet with a non-empty Dayfi ID
+      if (walletResponse.wallets.isNotEmpty) {
+        final walletWithDayfiId = walletResponse.wallets.firstWhere(
+          (wallet) => wallet.dayfiId.isNotEmpty,
+          orElse: () => walletResponse.wallets.first,
+        );
+
+        if (walletWithDayfiId.dayfiId.isNotEmpty) {
+          setState(() {
+            _dayfiId = walletWithDayfiId.dayfiId;
+          });
+          AppLogger.info('Dayfi ID loaded: ${walletWithDayfiId.dayfiId}');
+        }
+      }
+    } catch (e) {
+      AppLogger.error('Error loading Dayfi ID: $e');
+      // Don't show error to user, just don't display Dayfi ID
+    }
   }
 
   // Settings sections data
   List<Map<String, dynamic>> get _accountSettings => [
     {
       'icon': "assets/icons/svgs/Box.svg",
-      'iconColor': AppColors.primary500,
+      'iconColor': AppColors.neutral600,
       'title': 'Account Limits',
       'subtitle': 'View and manage your transfer limits',
       'onTap': () => _navigateToAccountLimits(),
     },
-    {
-      'icon': "assets/icons/svgs/Box.svg",
-      'iconColor': AppColors.pink700,
-      'title': 'Payment Methods',
-      'subtitle': 'Manage your payment options',
-      'onTap': () => _navigateToPaymentMethods(),
-    },
-    {
-      'icon': "assets/icons/svgs/recipients.svg",
-      'iconColor': AppColors.primary500,
-      'title': 'Beneficiaries',
-      'subtitle': 'View and manage your beneficiaries',
-      'onTap': () => _navigateToBeneficiaries(),
-    },
-    {
-      'icon': "assets/icons/svgs/Box.svg",
-      'iconColor': AppColors.warning500,
-      'title': 'Upload Documents',
-      'subtitle': 'Complete your KYC verification',
-      'onTap': () => _navigateToDocumentUpload(),
-    },
+    // {
+    //   'icon': "assets/icons/svgs/Box.svg",
+    //   'iconColor': AppColors.pink700,
+    //   'title': 'Payment Methods',
+    //   'subtitle': 'Manage your payment options',
+    //   'onTap': () => _navigateToPaymentMethods(),
+    // },
+    // {
+    //   'icon': "assets/icons/svgs/recipients.svg",
+    //   'iconColor': AppColors.primary500,
+    //   'title': 'Beneficiaries',
+    //   'subtitle': 'View and manage your beneficiaries',
+    //   'onTap': () => _navigateToBeneficiaries(),
+    // },
+    // {
+    //   'icon': "assets/icons/svgs/Box.svg",
+    //   'iconColor': AppColors.warning500,
+    //   'title': 'Upload Documents',
+    //   'subtitle': 'Complete your KYC verification',
+    //   'onTap': () => _navigateToDocumentUpload(),
+    // },
   ];
 
   List<Map<String, dynamic>> get _promotions => [
     {
       'icon': "assets/icons/svgs/Box.svg",
-      'iconColor': AppColors.success500,
+      'iconColor': AppColors.neutral600,
       'title': 'Referrals',
       'subtitle': 'Invite friends and earn rewards',
       'actionText': "Coming soon", // 'Get ₦5000',
-      'actionColor': AppColors.success500,
+      'actionColor': AppColors.neutral600,
       'onTap': () => _navigateToReferrals(),
     },
   ];
@@ -98,24 +130,31 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
   List<Map<String, dynamic>> get _securitySettings => [
     {
       'icon': "assets/icons/svgs/Box.svg",
-      'iconColor': AppColors.primary500,
-      'title': 'Change my PIN',
+      'iconColor': AppColors.neutral600,
+      'title': 'Change my Transaction PIN',
       'subtitle': '',
-      'onTap': () => _navigateToChangePin(),
+      'onTap': () => _navigateToChangeTransactionPin(),
     },
+    // {
+    //   'icon': "assets/icons/svgs/Box.svg",
+    //   'iconColor': AppColors.warning500,
+    //   'title': 'Reset my Transaction PIN',
+    //   'subtitle': '',
+    //   'onTap': () => _navigateToResetTransactionPin(),
+    // },
   ];
 
   List<Map<String, dynamic>> get _helpAndSupport => [
     {
       'icon': "assets/icons/svgs/Box.svg",
-      'iconColor': AppColors.primary700,
+      'iconColor': AppColors.neutral600,
       'title': 'Contact Us',
       'subtitle': 'Reach out to our support team',
       'onTap': () => _navigateToContactUs(),
     },
     {
       'icon': "assets/icons/svgs/Box.svg",
-      'iconColor': AppColors.teal500,
+      'iconColor': AppColors.neutral600,
       'title': 'FAQs',
       'subtitle': '',
       'onTap': () => _navigateToFAQs(),
@@ -125,14 +164,14 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
   List<Map<String, dynamic>> get _aboutUs => [
     {
       'icon': "assets/icons/svgs/Box.svg",
-      'iconColor': AppColors.primary700,
+      'iconColor': AppColors.neutral600,
       'title': 'Terms & Conditions',
       'subtitle': 'Reach out to our support team',
       'onTap': () => _navigateToTermsAndConditions(),
     },
     {
       'icon': "assets/icons/svgs/Box.svg",
-      'iconColor': AppColors.teal500,
+      'iconColor': AppColors.neutral600,
       'title': 'Privacy Notice',
       'subtitle': '',
       'onTap': () => _navigateToPrivacyNotice(),
@@ -167,7 +206,11 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
     // TODO: Navigate to referrals
   }
 
-  void _navigateToChangePin() {
+  void _navigateToChangeTransactionPin() {
+    appRouter.pushNamed(AppRoute.changeTransactionPinOldView);
+  }
+
+  void _navigateToResetTransactionPin() {
     // appRouter.pushNamed(AppRoute.reenterPasscodeView);
   }
 
@@ -250,11 +293,10 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
         title: Text(
           "Account",
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontFamily: 'CabinetGrotesk',
+            fontFamily: 'CabinetGrotesk',
             fontSize: 20.sp,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,
-          
           ),
         ),
       ),
@@ -369,16 +411,25 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
 
   // User Name Widget
   Widget _buildUserName(ProfileState profileState) {
-    return Text(
-      profileState.userName,
-      style: AppTypography.headlineSmall.copyWith(
-        color: Theme.of(context).colorScheme.onSurface,
-        fontSize: 30.sp,
-        fontWeight: FontWeight.w600,
-        fontFamily: 'CabinetGrotesk',
-        height: .95,
-      ),
-      textAlign: TextAlign.center,
+    // Check if DayFi Tag exists
+    final hasDayfiTag = _dayfiId != null && _dayfiId!.isNotEmpty;
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // User's name
+        Text(
+          profileState.userName,
+          style: AppTypography.headlineSmall.copyWith(
+            color: Theme.of(context).colorScheme.onSurface,
+            fontSize: 30.sp,
+            fontWeight: FontWeight.w600,
+            fontFamily: 'CabinetGrotesk',
+            height: .95,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
     );
   }
 
@@ -405,19 +456,123 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
 
   // Edit Profile Button
   Widget _buildEditProfileButton(ProfileState profileState) {
-    return PrimaryButton(
-      borderRadius: _ProfileConstants.buttonBorderRadius,
-      text: "Edit Profile",
-      onPressed: profileState.isLoading ? null : _navigateToEditProfile,
-      backgroundColor:
-          profileState.isLoading ? AppColors.neutral300 : AppColors.purple500,
-      height: _ProfileConstants.buttonHeight.h,
-      textColor: AppColors.neutral0,
-      fontFamily: 'Karla',
-      letterSpacing: -.8,
-      fontSize: 18,
-      width: 375.w,
-      fullWidth: true,
+    return Column(
+      children: [
+        PrimaryButton(
+          borderRadius: _ProfileConstants.buttonBorderRadius,
+          text: "Edit Profile",
+          onPressed: profileState.isLoading ? null : _navigateToEditProfile,
+          backgroundColor:
+              profileState.isLoading
+                  ? AppColors.neutral300
+                  : AppColors.purple500,
+          height: _ProfileConstants.buttonHeight.h,
+          textColor: AppColors.neutral0,
+          fontFamily: 'Karla',
+          letterSpacing: -.8,
+          fontSize: 18,
+          width: 375.w,
+          fullWidth: true,
+        ), // DayFi Tag section
+        if (_dayfiId != null && _dayfiId!.isNotEmpty) ...[
+          SizedBox(height: 24.h),
+
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(
+                _ProfileConstants.containerBorderRadius.r,
+              ),
+              boxShadow: [_buildShadow()],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  '@$_dayfiId',
+                  style: TextStyle(
+                    // fontFamily: 'Boldonse',
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16.sp,
+                    letterSpacing: 0.00,
+                    height: 1.450,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+                SizedBox(width: 12.w),
+                GestureDetector(
+                  onTap: () {
+                    Clipboard.setData(ClipboardData(text: _dayfiId!));
+                    TopSnackbar.show(
+                      context,
+                      message: 'DayFi Tag copied to clipboard',
+                      isError: false,
+                    );
+                  },
+                  child: Row(
+                    children: [
+                      Text(
+                        "copy",
+                        style: TextStyle(
+                          fontFamily: 'Karla',
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12.sp,
+                          letterSpacing: 0.00,
+                          height: 1.450,
+                          color: AppColors.purple500ForTheme(context),
+                        ),
+                      ),
+                      SizedBox(width: 6.w),
+                      SvgPicture.asset(
+                        "assets/icons/svgs/copy.svg",
+                        color: AppColors.purple500ForTheme(context),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ] else ...[
+          SizedBox(height: 8.h),
+          TextButton(
+            onPressed: () async {
+              final result = await Navigator.pushNamed(
+                context,
+                AppRoute.dayfiTagExplanationView,
+              );
+              // Reload DayFi Tag if created
+              if (result != null && result is String) {
+                // Strip @ prefix if present, as we store it without @
+                final dayfiIdValue =
+                    result.startsWith('@') ? result.substring(1) : result;
+                // Update state immediately with the result
+                setState(() {
+                  _dayfiId = dayfiIdValue;
+                });
+                // Also reload from API to ensure consistency
+                _loadDayfiId();
+              }
+            },
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+            ),
+            child: Text(
+              "Create your DayFi Tag",
+              style: TextStyle(
+                fontFamily: 'Karla',
+                fontWeight: FontWeight.w600,
+                fontSize: 14.sp,
+                letterSpacing: 0.00,
+                height: 1.450,
+                color: AppColors.purple500ForTheme(context),
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 
@@ -767,11 +922,11 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
   // Dialog Title
   Widget _buildDialogTitle() {
     return Text(
-      'Are you sure you want to logout?',
+      'Are you sure you want to logout? You will be asked to create a new passcode.',
       style: TextStyle(
         fontFamily: 'CabinetGrotesk',
         fontSize: 20.sp,
-        fontWeight: FontWeight.w400,
+        fontWeight: FontWeight.w500,
         color: Theme.of(context).colorScheme.onSurface,
         letterSpacing: -0.5,
       ),
@@ -817,7 +972,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
       text: 'Cancel',
       onPressed: () => Navigator.pop(context),
       borderColor: Colors.transparent,
-      textColor: AppColors.purple500,
+      textColor: AppColors.purple500ForTheme(context),
       width: double.infinity,
       fullWidth: true,
       height: _ProfileConstants.buttonHeight.h,

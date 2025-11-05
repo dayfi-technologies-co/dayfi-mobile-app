@@ -54,12 +54,39 @@ class TransactionsNotifier extends StateNotifier<TransactionsState> {
     state = state.copyWith(isLoading: true, errorMessage: null);
     
     try {
-      final response = await _walletService.getWalletTransactions();
+      // Fetch first page to get total pages count
+      final firstResponse = await _walletService.getWalletTransactions(
+        limit: 100, // Use a larger limit per page
+      );
       
-      final groupedTransactions = _groupTransactionsByDate(response.data.transactions);
+      List<WalletTransaction> allTransactions = List.from(firstResponse.data.transactions);
+      
+      // Fetch remaining pages if there are more
+      final totalPages = firstResponse.data.totalPages;
+      if (totalPages > 1) {
+        final remainingPages = List.generate(
+          totalPages - 1,
+          (index) => index + 2, // Pages 2, 3, 4, etc.
+        );
+        
+        // Fetch all remaining pages
+        final remainingResponses = await Future.wait(
+          remainingPages.map((page) => _walletService.getWalletTransactions(
+            page: page,
+            limit: 100,
+          )),
+        );
+        
+        // Combine all transactions
+        for (final response in remainingResponses) {
+          allTransactions.addAll(response.data.transactions);
+        }
+      }
+      
+      final groupedTransactions = _groupTransactionsByDate(allTransactions);
       
       state = state.copyWith(
-        transactions: response.data.transactions,
+        transactions: allTransactions,
         groupedTransactions: groupedTransactions,
         isLoading: false,
       );

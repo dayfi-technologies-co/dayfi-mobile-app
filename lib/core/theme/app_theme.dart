@@ -779,9 +779,13 @@ class AppTheme {
       const BottomNavigationBarThemeData();
   static FloatingActionButtonThemeData get _lightFloatingActionButtonTheme =>
       const FloatingActionButtonThemeData();
-  static DialogThemeData get _lightDialogTheme => const DialogThemeData();
+  static DialogThemeData get _lightDialogTheme => DialogThemeData(
+        backgroundColor: AppColors.neutral0,
+      );
   static BottomSheetThemeData get _lightBottomSheetTheme =>
-      const BottomSheetThemeData();
+      BottomSheetThemeData(
+        backgroundColor: AppColors.neutral0,
+      );
   static SnackBarThemeData get _lightSnackBarTheme => const SnackBarThemeData();
   static DividerThemeData get _lightDividerTheme => const DividerThemeData();
   static IconThemeData get _lightIconTheme => const IconThemeData();
@@ -842,9 +846,13 @@ class AppTheme {
       const BottomNavigationBarThemeData();
   static FloatingActionButtonThemeData get _darkFloatingActionButtonTheme =>
       const FloatingActionButtonThemeData();
-  static DialogThemeData get _darkDialogTheme => const DialogThemeData();
+  static DialogThemeData get _darkDialogTheme => DialogThemeData(
+        backgroundColor: AppColors.surfaceDark,
+      );
   static BottomSheetThemeData get _darkBottomSheetTheme =>
-      const BottomSheetThemeData();
+      BottomSheetThemeData(
+        backgroundColor: AppColors.surfaceDark,
+      );
   static SnackBarThemeData get _darkSnackBarTheme => const SnackBarThemeData();
   static DividerThemeData get _darkDividerTheme => const DividerThemeData();
   static IconThemeData get _darkIconTheme => const IconThemeData();

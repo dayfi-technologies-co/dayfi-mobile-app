@@ -119,7 +119,7 @@ class ForgotPasswordView extends ConsumerWidget {
                             .shimmer(
                               delay: 800.ms,
                               duration: 1000.ms,
-                              color: AppColors.purple500.withOpacity(0.1),
+                              color: AppColors.purple500ForTheme(context).withOpacity(0.1),
                               angle: 15,
                             ),
 
@@ -145,7 +145,7 @@ class ForgotPasswordView extends ConsumerWidget {
                         // Submit button
                         PrimaryButton(
                               borderRadius: 38,
-                              text: "Send me reset instructions",
+                              text: "Next - Receive Reset Code",
                               onPressed:
                                   forgotPasswordState.isFormValid &&
                                           !forgotPasswordState.isBusy
@@ -158,8 +158,8 @@ class ForgotPasswordView extends ConsumerWidget {
                               isLoading: forgotPasswordState.isBusy,
                               backgroundColor:
                                   forgotPasswordState.isFormValid
-                                      ? AppColors.purple500
-                                      : AppColors.purple500.withOpacity(.25),
+                                      ? AppColors.purple500ForTheme(context)
+                                      : AppColors.purple500ForTheme(context).withOpacity(.25),
                               height: 60.h,
                               textColor: forgotPasswordState.isFormValid
                                   ? AppColors.neutral0
@@ -211,7 +211,7 @@ class ForgotPasswordView extends ConsumerWidget {
                                       text: "\nGo back to sign in",
                                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                         fontFamily: 'Karla',
-                                        color: AppColors.purple500,
+                                        color: AppColors.purple500ForTheme(context),
                                         fontSize: 16.sp,
                                         fontWeight: FontWeight.w600,
                                         letterSpacing: -.6,

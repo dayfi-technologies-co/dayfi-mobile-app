@@ -111,7 +111,7 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.purple500.withOpacity(0.1),
+            AppColors.purple500ForTheme(context).withOpacity(0.1),
             AppColors.purple600.withOpacity(0.05),
           ],
           begin: Alignment.topLeft,
@@ -128,7 +128,7 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
               Container(
                 padding: EdgeInsets.all(8.w),
                 decoration: BoxDecoration(
-                  color: AppColors.purple500,
+                  color: AppColors.purple500ForTheme(context),
                   borderRadius: BorderRadius.circular(8.r),
                 ),
                 child: Icon(
@@ -281,7 +281,7 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
           "Government ID + BVN Verification",
           "Verify your identity using Smile ID",
           Icons.credit_card,
-          AppColors.purple500,
+          AppColors.purple500ForTheme(context),
           () => notifier.startSmileIdVerification(context),
         ),
       ],
@@ -456,7 +456,7 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
                   state.isBusy ? null : () => _showSmileIdVerification(context),
               backgroundColor: Colors.white,
               height: 60.h,
-              textColor: AppColors.purple500,
+              textColor: AppColors.purple500ForTheme(context),
               fontFamily: 'Karla',
               letterSpacing: -.8,
               fontSize: 18,
@@ -534,7 +534,7 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
               'Retry',
               style: TextStyle(
                 fontFamily: 'Karla',
-                color: AppColors.purple500,
+                color: AppColors.purple500ForTheme(context),
                 fontSize: 16.sp,
                 fontWeight: FontWeight.w600,
                 letterSpacing: -.3,
@@ -579,7 +579,7 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.purple500.withOpacity(0.3),
+                          color: AppColors.purple500ForTheme(context).withOpacity(0.3),
                           blurRadius: 20,
                           spreadRadius: 2,
                           offset: const Offset(0, 4),
@@ -642,7 +642,7 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
                           : () => notifier.skipForLater(context);
                     },
                     borderColor: Colors.transparent,
-                    textColor: AppColors.purple500,
+                    textColor: AppColors.purple500ForTheme(context),
                     width: double.infinity,
                     fullWidth: true,
                     height: 60.h,

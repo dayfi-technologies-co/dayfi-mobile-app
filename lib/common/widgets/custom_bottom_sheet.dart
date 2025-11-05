@@ -315,7 +315,7 @@ class CustomBottomSheet extends StatelessWidget {
       useRootNavigator: useRootNavigator,
       isDismissible: isDismissible,
       enableDrag: enableDrag,
-      barrierColor: barrierColor,
+      barrierColor: barrierColor ?? AppColors.neutral900.withOpacity(0.85),
       barrierLabel: barrierLabel,
       useSafeArea: useSafeArea,
       routeSettings: routeSettings,

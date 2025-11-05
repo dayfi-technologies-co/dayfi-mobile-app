@@ -217,7 +217,7 @@ class _CompletePersonalInformationViewState
                           // Submit Button
                           PrimaryButton(
                             borderRadius: 38,
-                            text: "Complete Profile",
+                            text: "Next - Complete Profile",
                             onPressed:
                                 personalInfoState.isFormValid &&
                                         !personalInfoState.isBusy
@@ -226,8 +226,8 @@ class _CompletePersonalInformationViewState
                                     : null,
                             backgroundColor:
                                 personalInfoState.isFormValid
-                                    ? AppColors.purple500
-                                    : AppColors.purple500.withOpacity(.25),
+                                    ? AppColors.purple500ForTheme(context)
+                                    : AppColors.purple500ForTheme(context).withOpacity(.25),
                             height: 60.h,
                             textColor: personalInfoState.isFormValid
                                 ? AppColors.neutral0
@@ -733,7 +733,7 @@ class _CountryBottomSheetState extends State<_CountryBottomSheet> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                SizedBox(height: 22.h, width: 22.w),
+                SizedBox(height: 24.h, width: 22.w),
                 Text(
                   'Select Country',
                   style: AppTypography.titleLarge.copyWith(
@@ -749,8 +749,8 @@ class _CountryBottomSheetState extends State<_CountryBottomSheet> {
                   },
                   child: Image.asset(
                     "assets/icons/pngs/cancelicon.png",
-                    height: 22.h,
-                    width: 22.w,
+                    height: 24.h,
+                    width: 24.w,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
@@ -878,7 +878,7 @@ class _OccupationBottomSheetState extends State<_OccupationBottomSheet> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                SizedBox(height: 22.h, width: 22.w),
+                SizedBox(height: 24.h, width: 22.w),
                 Text(
                   'Select Occupation',
                   style: AppTypography.titleLarge.copyWith(
@@ -894,8 +894,8 @@ class _OccupationBottomSheetState extends State<_OccupationBottomSheet> {
                   },
                   child: Image.asset(
                     "assets/icons/pngs/cancelicon.png",
-                    height: 22.h,
-                    width: 22.w,
+                    height: 24.h,
+                    width: 24.w,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),

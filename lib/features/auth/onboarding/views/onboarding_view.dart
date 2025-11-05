@@ -97,8 +97,8 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
                                     borderRadius: BorderRadius.circular(8.r),
                                     color:
                                         index == currentPage
-                                            ? Theme.of(context).colorScheme.onSurface
-                                            : Theme.of(context).colorScheme.onSurface.withOpacity(.5),
+                                            ? AppColors.neutral900
+                                            : AppColors.neutral900.withOpacity(.65),
                                   ),
                                 )
                                 .animate()
@@ -156,7 +156,7 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
                         children: [
                           // Sign Up button
                           PrimaryButton(
-                                text: 'Create account',
+                                text: 'Next - Create Account',
                                 onPressed: _navigateToSignUp,
                                 backgroundColor: AppColors.purple500,
                                 textColor: AppColors.neutral0,
@@ -187,7 +187,7 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
 
                           // Sign In button
                           SecondaryButton(
-                                text: 'Sign in',
+                                text: 'Next - Sign In',
                                 onPressed: _navigateToSignIn,
                                 backgroundColor: Colors.transparent,
                                 textColor: AppColors.purple500,
@@ -210,7 +210,7 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
                               .shimmer(
                                 delay: 1200.ms,
                                 duration: 1500.ms,
-                                color: AppColors.purple500.withOpacity(0.2),
+                                color: AppColors.purple500ForTheme(context).withOpacity(0.2),
                                 angle: 45,
                               ),
                         ],

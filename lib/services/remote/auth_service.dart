@@ -392,7 +392,7 @@ class AuthService {
       if (!apiResponse.error && apiResponse.data != null) {
         final secureStorage = SecureStorageService();
         final userJson = await secureStorage.read(StorageKeys.user);
-        if (userJson != null) {
+        if (userJson.isNotEmpty) {
           final userMap = json.decode(userJson) as Map<String, dynamic>;
           userMap['dayfi_id'] = dayfiId.replaceAll('@', '');
           await secureStorage.write(StorageKeys.user, json.encode(userMap));
@@ -417,6 +417,92 @@ class AuthService {
       );
 
       return APIResponse.fromJson(response.data);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Update transaction pin
+  /// PATCH /api/v1/auth/update-transaction-pin
+  Future<AuthResponse> updateTransactionPin({
+    required String transactionPin,
+  }) async {
+    try {
+      Map<String, dynamic> map = {};
+      map['transactionPin'] = transactionPin;
+
+      final response = await _networkService.call(
+        '${F.baseUrl}/auth/update-transaction-pin',
+        RequestMethod.patch,
+        data: map,
+      );
+
+      // Handle response data - check if it's a Map or String
+      Map<String, dynamic> responseData;
+      if (response.data is Map<String, dynamic>) {
+        responseData = response.data;
+      } else if (response.data is String) {
+        responseData = json.decode(response.data);
+      } else {
+        throw Exception('Invalid response format');
+      }
+
+      final authResponse = AuthResponse.fromJson(responseData);
+
+      if (!authResponse.error) {
+        // Save user details to secure storage
+        final secureStorage = SecureStorageService();
+        await secureStorage.write(
+          StorageKeys.user,
+          json.encode(authResponse.data.user?.toJson()),
+        );
+      }
+
+      return authResponse;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Change transaction pin
+  /// PATCH /api/v1/auth/change-transaction-pin
+  Future<AuthResponse> changeTransactionPin({
+    required String transactionPin,
+    required String oldTransactionPin,
+  }) async {
+    try {
+      Map<String, dynamic> map = {};
+      map['transactionPin'] = transactionPin;
+      map['oldTransactionPin'] = oldTransactionPin;
+
+      final response = await _networkService.call(
+        F.baseUrl + UrlConfig.changeTransactionPin,
+        RequestMethod.patch,
+        data: map,
+      );
+
+      // Handle response data - check if it's a Map or String
+      Map<String, dynamic> responseData;
+      if (response.data is Map<String, dynamic>) {
+        responseData = response.data;
+      } else if (response.data is String) {
+        responseData = json.decode(response.data);
+      } else {
+        throw Exception('Invalid response format');
+      }
+
+      final authResponse = AuthResponse.fromJson(responseData);
+
+      if (!authResponse.error) {
+        // Save user details to secure storage
+        final secureStorage = SecureStorageService();
+        await secureStorage.write(
+          StorageKeys.user,
+          json.encode(authResponse.data.user?.toJson()),
+        );
+      }
+
+      return authResponse;
     } catch (e) {
       rethrow;
     }

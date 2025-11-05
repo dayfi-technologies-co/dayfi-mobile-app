@@ -24,10 +24,23 @@ import 'package:dayfi/features/auth/onboarding/views/onboarding_view.dart';
 import 'package:dayfi/features/profile/edit_profile/views/edit_profile_view.dart';
 import 'package:dayfi/features/profile/account_limits/views/account_limits_view.dart';
 import 'package:dayfi/features/transactions/views/transaction_details_view.dart';
+import 'package:dayfi/features/transactions/views/transactions_view.dart';
 import 'package:dayfi/models/wallet_transaction.dart';
 import 'package:dayfi/features/send/views/send_fetch_crypto_channels.dart';
 import 'package:dayfi/features/send/views/send_crypto_networks_view.dart';
 import 'package:dayfi/features/send/views/send_add_recipients_view.dart';
+import 'package:dayfi/features/send/views/send_dayfi_id_view.dart';
+import 'package:dayfi/features/send/views/send_dayfi_id_review_view.dart';
+import 'package:dayfi/features/send/views/send_recipient_view.dart';
+import 'package:dayfi/features/send/views/send_review_view.dart';
+import 'package:dayfi/features/send/views/regular_transfer_transaction_pin_view.dart';
+import 'package:dayfi/features/send/views/send_payment_success_view.dart';
+import 'package:dayfi/features/send/views/transaction_pin_create_view.dart';
+import 'package:dayfi/features/send/views/transaction_pin_reenter_view.dart';
+import 'package:dayfi/features/send/views/send_payment_method_view.dart';
+import 'package:dayfi/features/profile/views/change_transaction_pin_old_view.dart';
+import 'package:dayfi/features/profile/views/change_transaction_pin_new_view.dart';
+import 'package:dayfi/features/profile/views/change_transaction_pin_confirm_view.dart';
 
 class VerifyEmailViewArguments {
   final bool isSignUp;
@@ -64,11 +77,24 @@ class AppRoute {
   static const String editProfileView = '/editProfileView';
   static const String accountLimitsView = '/accountLimitsView';
   static const String transactionDetailsView = '/transactionDetailsView';
+  static const String transactionsView = '/transactionsView';
   static const String cryptoChannelsView = '/cryptoChannelsView';
   static const String cryptoNetworksView = '/cryptoNetworksView';
   static const String addRecipientsView = '/addRecipientsView';
   static const String dayfiTagExplanationView = '/dayfiTagExplanationView';
   static const String createDayfiTagView = '/createDayfiTagView';
+  static const String sendDayfiIdView = '/sendDayfiIdView';
+  static const String sendDayfiIdReviewView = '/sendDayfiIdReviewView';
+  static const String sendRecipientView = '/sendRecipientView';
+  static const String sendReviewView = '/sendReviewView';
+  static const String regularTransferTransactionPinView = '/regularTransferTransactionPinView';
+  static const String sendPaymentSuccessView = '/sendPaymentSuccessView';
+  static const String transactionPinCreateView = '/transactionPinCreateView';
+  static const String transactionPinReenterView = '/transactionPinReenterView';
+  static const String sendPaymentMethodView = '/sendPaymentMethodView';
+  static const String changeTransactionPinOldView = '/changeTransactionPinOldView';
+  static const String changeTransactionPinNewView = '/changeTransactionPinNewView';
+  static const String changeTransactionPinConfirmView = '/changeTransactionPinConfirmView';
 
   static Route getRoute(RouteSettings routeSettings) {
     globalrouteSettings = routeSettings;
@@ -163,6 +189,8 @@ class AppRoute {
           routeSettings,
           TransactionDetailsView(transaction: transaction),
         );
+      case transactionsView:
+        return _getPageRoute(routeSettings, const TransactionsView());
       case cryptoChannelsView:
         return _getPageRoute(
           routeSettings,
@@ -191,6 +219,104 @@ class AppRoute {
         return _getPageRoute(
           routeSettings,
           const CreateDayfiTagView(),
+        );
+      case sendDayfiIdView:
+        final selectedData =
+            routeSettings.arguments as Map<String, dynamic>? ?? {};
+        return _getPageRoute(
+          routeSettings,
+          SendDayfiIdView(selectedData: selectedData),
+        );
+      case transactionPinCreateView:
+        final args = routeSettings.arguments as Map<String, dynamic>? ?? {};
+        return _getPageRoute(
+          routeSettings,
+          TransactionPinCreateView(
+            returnRoute: args['returnRoute'] as String?,
+            returnArguments: args['returnArguments'] as Map<String, dynamic>?,
+          ),
+        );
+      case transactionPinReenterView:
+        return _getPageRoute(
+          routeSettings,
+          const TransactionPinReenterView(),
+        );
+      case sendPaymentMethodView:
+        final args = routeSettings.arguments as Map<String, dynamic>? ?? {};
+        return _getPageRoute(
+          routeSettings,
+          SendPaymentMethodView(
+            selectedData: args['selectedData'] as Map<String, dynamic>? ?? {},
+            recipientData: args['recipientData'] as Map<String, dynamic>? ?? {},
+            senderData: args['senderData'] as Map<String, dynamic>? ?? {},
+            paymentData: args['paymentData'] as Map<String, dynamic>? ?? {},
+          ),
+        );
+      case sendDayfiIdReviewView:
+        final args = routeSettings.arguments as Map<String, dynamic>? ?? {};
+        return _getPageRoute(
+          routeSettings,
+          SendDayfiIdReviewView(
+            selectedData: args['selectedData'] as Map<String, dynamic>? ?? {},
+            dayfiId: args['dayfiId'] as String? ?? '',
+          ),
+        );
+      case sendRecipientView:
+        final selectedData =
+            routeSettings.arguments as Map<String, dynamic>? ?? {};
+        return _getPageRoute(
+          routeSettings,
+          SendRecipientView(selectedData: selectedData),
+        );
+      case sendReviewView:
+        final args = routeSettings.arguments as Map<String, dynamic>? ?? {};
+        return _getPageRoute(
+          routeSettings,
+          SendReviewView(
+            selectedData: args['selectedData'] as Map<String, dynamic>? ?? {},
+            recipientData: args['recipientData'] as Map<String, dynamic>? ?? {},
+            senderData: args['senderData'] as Map<String, dynamic>? ?? {},
+          ),
+        );
+      case regularTransferTransactionPinView:
+        final args = routeSettings.arguments as Map<String, dynamic>? ?? {};
+        return _getPageRoute(
+          routeSettings,
+          RegularTransferTransactionPinView(
+            selectedData: args['selectedData'] as Map<String, dynamic>? ?? {},
+            recipientData: args['recipientData'] as Map<String, dynamic>? ?? {},
+            senderData: args['senderData'] as Map<String, dynamic>? ?? {},
+            paymentData: args['paymentData'] as Map<String, dynamic>? ?? {},
+            reason: args['reason'] as String? ?? '',
+            description: args['description'] as String? ?? '',
+          ),
+        );
+      case sendPaymentSuccessView:
+        final args = routeSettings.arguments as Map<String, dynamic>? ?? {};
+        return _getPageRoute(
+          routeSettings,
+          SendPaymentSuccessView(
+            recipientData: args['recipientData'] as Map<String, dynamic>? ?? {},
+            selectedData: args['selectedData'] as Map<String, dynamic>? ?? {},
+            paymentData: args['paymentData'] as Map<String, dynamic>? ?? {},
+            collectionData: args['collectionData'],
+            transactionId: args['transactionId'] as String?,
+          ),
+        );
+      case changeTransactionPinOldView:
+        return _getPageRoute(
+          routeSettings,
+          const ChangeTransactionPinOldView(),
+        );
+      case changeTransactionPinNewView:
+        return _getPageRoute(
+          routeSettings,
+          const ChangeTransactionPinNewView(),
+        );
+      case changeTransactionPinConfirmView:
+        return _getPageRoute(
+          routeSettings,
+          const ChangeTransactionPinConfirmView(),
         );
 
       default:

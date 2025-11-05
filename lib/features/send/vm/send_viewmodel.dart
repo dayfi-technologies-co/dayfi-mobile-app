@@ -285,35 +285,43 @@ class SendViewModel extends StateNotifier<SendState> {
   Future<void> _setDefaultReceiveCurrency(String country, String currency) async {
     AppLogger.debug('Setting default receive currency: $country - $currency');
     
-    // For NGN currency, select DayFi Tag as default delivery method
+    // Find the first available delivery method from backend channels
     String? firstDeliveryMethod;
     
-    if (currency == 'NGN') {
-      // Default to DayFi Tag for NGN
-      firstDeliveryMethod = 'dayfi_tag';
-    } else {
-      // Find the first available delivery method for other currencies
-      final availableChannels = state.channels
-          .where((channel) => 
-              channel.country == country && 
-              channel.currency == currency &&
-              channel.status == 'active' &&
-              (channel.rampType == 'withdrawal' || 
-               channel.rampType == 'withdraw' || 
-               channel.rampType == 'payout'))
+    final availableChannels = state.channels
+        .where((channel) => 
+            channel.country == country && 
+            channel.currency == currency &&
+            channel.status == 'active' &&
+            (channel.rampType == 'withdrawal' || 
+             channel.rampType == 'withdraw' || 
+             channel.rampType == 'payout'))
+        .toList();
+    
+    if (availableChannels.isNotEmpty) {
+      // Get unique channel types
+      final channelTypes = availableChannels
+          .map((channel) => channel.channelType ?? 'Unknown')
+          .toSet()
           .toList();
       
-      if (availableChannels.isNotEmpty) {
-        // Get unique channel types and sort them alphabetically
-        final channelTypes = availableChannels
-            .map((channel) => channel.channelType ?? 'Unknown')
-            .toSet()
-            .toList()
-          ..sort();
-        
-        if (channelTypes.isNotEmpty) {
+      if (channelTypes.isNotEmpty) {
+        // For NGN to NGN transfers, always prioritize DayFi Tag
+        final isNgnToNgn = state.sendCurrency == 'NGN' && currency == 'NGN';
+        if (isNgnToNgn) {
+          // Always select DayFi Tag for NGN to NGN, even if not in API channels
+          firstDeliveryMethod = 'dayfi_tag';
+        } else {
+          // Otherwise, sort alphabetically and use first
+          channelTypes.sort();
           firstDeliveryMethod = channelTypes.first;
         }
+      }
+    } else {
+      // Even if no channels available, for NGN to NGN, default to DayFi Tag
+      final isNgnToNgn = state.sendCurrency == 'NGN' && currency == 'NGN';
+      if (isNgnToNgn) {
+        firstDeliveryMethod = 'dayfi_tag';
       }
     }
     
@@ -589,11 +597,22 @@ class SendViewModel extends StateNotifier<SendState> {
       selectedSenderChannelId = availableChannels.first.id;
     }
     
+    // Check if we need to update recipient delivery method for NGN to NGN
+    String? updatedRecipientDeliveryMethod;
+    final isNgnToNgn = currency == 'NGN' && state.receiverCurrency == 'NGN';
+    
+    if (isNgnToNgn && state.receiverCountry.isNotEmpty) {
+      // Always set DayFi Tag for NGN to NGN transfers
+      updatedRecipientDeliveryMethod = 'dayfi_tag';
+      AppLogger.debug('🔄 NGN to NGN detected in updateSendCountry, setting DayFi Tag');
+    }
+    
     state = state.copyWith(
       sendCountry: country,
       sendCurrency: currency,
       selectedSenderDeliveryMethod: firstSenderDeliveryMethod ?? '',
       selectedSenderChannelId: selectedSenderChannelId ?? '',
+      selectedDeliveryMethod: updatedRecipientDeliveryMethod ?? state.selectedDeliveryMethod,
     );
     
     // Fetch rates for both currencies in parallel
@@ -604,39 +623,49 @@ class SendViewModel extends StateNotifier<SendState> {
     AppLogger.debug('🔄 updateReceiveCountry called: country=$country, currency=$currency');
     AppLogger.debug('🔄 Current state: send=${state.sendCurrency}, receive=${state.receiverCurrency}');
     
-    // For NGN currency, select DayFi Tag as default delivery method
+    // Find the first available delivery method from backend channels
     String? firstDeliveryMethod;
     
-    if (currency == 'NGN') {
-      // Default to DayFi Tag for NGN
-      firstDeliveryMethod = 'dayfi_tag';
-    } else {
-      // Find the first available delivery method for other currencies
-      final availableChannels = state.channels
-          .where((channel) => 
-              channel.country == country && 
-              channel.currency == currency &&
-              channel.status == 'active' &&
-              (channel.rampType == 'withdrawal' || 
-               channel.rampType == 'withdraw' || 
-               channel.rampType == 'payout' ||
-               channel.rampType == 'deposit' ||
-               channel.rampType == 'receive'))
+    final availableChannels = state.channels
+        .where((channel) => 
+            channel.country == country && 
+            channel.currency == currency &&
+            channel.status == 'active' &&
+            (channel.rampType == 'withdrawal' || 
+             channel.rampType == 'withdraw' || 
+             channel.rampType == 'payout' ||
+             channel.rampType == 'deposit' ||
+             channel.rampType == 'receive'))
+        .toList();
+    
+    AppLogger.debug('🔄 Found ${availableChannels.length} available channels for $country-$currency');
+    
+    if (availableChannels.isNotEmpty) {
+      // Get unique channel types
+      final channelTypes = availableChannels
+          .map((channel) => channel.channelType ?? 'Unknown')
+          .toSet()
           .toList();
       
-      AppLogger.debug('🔄 Found ${availableChannels.length} available channels for $country-$currency');
-      
-      if (availableChannels.isNotEmpty) {
-        // Get unique channel types and sort them alphabetically
-        final channelTypes = availableChannels
-            .map((channel) => channel.channelType ?? 'Unknown')
-            .toSet()
-            .toList()
-          ..sort();
-        
-        if (channelTypes.isNotEmpty) {
+      if (channelTypes.isNotEmpty) {
+        // For NGN to NGN transfers, always prioritize DayFi Tag
+        final isNgnToNgn = state.sendCurrency == 'NGN' && currency == 'NGN';
+        if (isNgnToNgn) {
+          // Always select DayFi Tag for NGN to NGN, even if not in API channels
+          firstDeliveryMethod = 'dayfi_tag';
+          AppLogger.debug('🔄 NGN to NGN detected, selecting DayFi Tag');
+        } else {
+          // Otherwise, sort alphabetically and use first
+          channelTypes.sort();
           firstDeliveryMethod = channelTypes.first;
         }
+      }
+    } else {
+      // Even if no channels available, for NGN to NGN, default to DayFi Tag
+      final isNgnToNgn = state.sendCurrency == 'NGN' && currency == 'NGN';
+      if (isNgnToNgn) {
+        firstDeliveryMethod = 'dayfi_tag';
+        AppLogger.debug('🔄 NGN to NGN detected, no channels but selecting DayFi Tag');
       }
     }
     
@@ -654,18 +683,48 @@ class SendViewModel extends StateNotifier<SendState> {
 
   void updateSendAmount(String amount) {
     AppLogger.debug('updateSendAmount: $amount');
-    state = state.copyWith(sendAmount: amount);
+    // Clean the amount - remove commas and whitespace
+    final cleanAmount = amount.replaceAll(RegExp(r'[,\s]'), '').trim();
+    
+    // If empty, set to empty string
+    if (cleanAmount.isEmpty) {
+      state = state.copyWith(sendAmount: '');
+      state = state.copyWith(receiverAmount: ''); // Clear receive amount when send is empty
+      _calculateTotal();
+      return;
+    }
+    
+    state = state.copyWith(sendAmount: cleanAmount);
     _updateReceiveAmountFromSend();
     _calculateTotal();
   }
 
   void updateReceiveAmount(String amount) {
-    state = state.copyWith(receiverAmount: amount);
+    // Clean the amount - remove commas and whitespace
+    final cleanAmount = amount.replaceAll(RegExp(r'[,\s]'), '').trim();
+    
+    // If empty, set to empty string
+    if (cleanAmount.isEmpty) {
+      state = state.copyWith(receiverAmount: '');
+      state = state.copyWith(sendAmount: ''); // Clear send amount when receive is empty
+      _calculateTotal();
+      return;
+    }
+    
+    state = state.copyWith(receiverAmount: cleanAmount);
     _updateSendAmountFromReceive();
   }
 
   void _updateReceiveAmountFromSend() {
-    final sendAmount = double.tryParse(state.sendAmount);
+    // Clean the amount - remove commas and whitespace
+    final cleanAmount = state.sendAmount.replaceAll(RegExp(r'[,\s]'), '').trim();
+    
+    if (cleanAmount.isEmpty) {
+      state = state.copyWith(receiverAmount: '');
+      return;
+    }
+    
+    final sendAmount = double.tryParse(cleanAmount);
     AppLogger.debug('_updateReceiveAmountFromSend: sendAmount=$sendAmount');
     if (sendAmount != null && sendAmount > 0) {
       // Special case: if both currencies are the same, use 1:1 rate
@@ -689,6 +748,7 @@ class SendViewModel extends StateNotifier<SendState> {
         AppLogger.debug('Updated receiverAmount to: ${state.receiverAmount}');
       } else {
         AppLogger.warning('Exchange rate is null');
+        state = state.copyWith(receiverAmount: '');
       }
     } else {
       AppLogger.warning('Send amount is null or <= 0');
@@ -697,7 +757,15 @@ class SendViewModel extends StateNotifier<SendState> {
   }
 
   void _updateSendAmountFromReceive() {
-    final receiveAmount = double.tryParse(state.receiverAmount);
+    // Clean the amount - remove commas and whitespace
+    final cleanAmount = state.receiverAmount.replaceAll(RegExp(r'[,\s]'), '').trim();
+    
+    if (cleanAmount.isEmpty) {
+      state = state.copyWith(sendAmount: '');
+      return;
+    }
+    
+    final receiveAmount = double.tryParse(cleanAmount);
     if (receiveAmount != null && receiveAmount > 0) {
       // Special case: if both currencies are the same, use 1:1 rate
       if (state.sendCurrency == state.receiverCurrency) {
@@ -713,6 +781,8 @@ class SendViewModel extends StateNotifier<SendState> {
         state = state.copyWith(
           sendAmount: convertedAmount.toStringAsFixed(2),
         );
+      } else {
+        state = state.copyWith(sendAmount: '');
       }
     } else {
       state = state.copyWith(sendAmount: '');
@@ -787,10 +857,20 @@ class SendViewModel extends StateNotifier<SendState> {
 
   // Check if send amount meets minimum requirement
   bool get isSendAmountValid {
-    final sendAmount = double.tryParse(state.sendAmount);
+    // Remove commas and whitespace for parsing
+    final cleanAmount = state.sendAmount.replaceAll(RegExp(r'[,\s]'), '');
+    
+    // Check if amount is empty
+    if (cleanAmount.isEmpty || cleanAmount.trim().isEmpty) {
+      return false;
+    }
+    
+    final sendAmount = double.tryParse(cleanAmount);
     final minLimit = sendMinimumLimit;
     
-    if (sendAmount == null || minLimit == null) return false;
+    if (sendAmount == null || sendAmount <= 0 || minLimit == null) {
+      return false;
+    }
     
     return sendAmount >= minLimit;
   }
@@ -798,6 +878,15 @@ class SendViewModel extends StateNotifier<SendState> {
   double? _calculateExchangeRate() {
     if (state.sendCurrencyRates == null || state.receiveCurrencyRates == null) {
       AppLogger.debug('Missing rates: send=${state.sendCurrencyRates != null}, receive=${state.receiveCurrencyRates != null}');
+      return null;
+    }
+
+    // Check if rates have valid buy/sell values
+    final sendHasValidRates = state.sendCurrencyRates!['hasValidRates'] == true;
+    final receiveHasValidRates = state.receiveCurrencyRates!['hasValidRates'] == true;
+    
+    if (!sendHasValidRates || !receiveHasValidRates) {
+      AppLogger.warning('Currency rates not available - send: $sendHasValidRates, receive: $receiveHasValidRates');
       return null;
     }
 
@@ -855,6 +944,34 @@ class SendViewModel extends StateNotifier<SendState> {
     
     AppLogger.debug('🔄 Different currencies detected, proceeding with normal rate calculation');
     
+    // Check if rates are available before calculating
+    final sendHasValidRates = state.sendCurrencyRates?['hasValidRates'] == true;
+    final receiveHasValidRates = state.receiveCurrencyRates?['hasValidRates'] == true;
+    
+    if (!sendHasValidRates || !receiveHasValidRates) {
+      // Rates not available for one or both currencies
+      final sendCode = state.sendCurrencyRates?['code'] ?? state.sendCurrency;
+      final receiveCode = state.receiveCurrencyRates?['code'] ?? state.receiverCurrency;
+      
+      String displayText;
+      if (!sendHasValidRates && !receiveHasValidRates) {
+        displayText = 'Not available for $sendCode to $receiveCode';
+      } else if (!sendHasValidRates) {
+        displayText = 'Not available for $sendCode';
+      } else {
+        displayText = 'Not available for $receiveCode';
+      }
+      
+      AppLogger.warning('❌ Rates not available: $displayText');
+      
+      if (state.exchangeRate != displayText) {
+        state = state.copyWith(exchangeRate: displayText);
+        // Don't update amounts when rates aren't available
+        state = state.copyWith(receiverAmount: '');
+      }
+      return;
+    }
+    
     final rate = _calculateExchangeRate();
     if (rate != null) {
       final sendCode = state.sendCurrencyRates?['code'] ?? state.sendCurrency;
@@ -889,6 +1006,17 @@ class SendViewModel extends StateNotifier<SendState> {
       }
     } else {
       AppLogger.warning('❌ Exchange rate calculation returned null');
+      
+      // Set appropriate message when rate calculation fails
+      final sendCode = state.sendCurrencyRates?['code'] ?? state.sendCurrency;
+      final receiveCode = state.receiveCurrencyRates?['code'] ?? state.receiverCurrency;
+      final displayText = 'Not available for $sendCode to $receiveCode';
+      
+      if (state.exchangeRate != displayText) {
+        state = state.copyWith(exchangeRate: displayText);
+        // Don't update amounts when rates aren't available
+        state = state.copyWith(receiverAmount: '');
+      }
     }
   }
 
@@ -935,17 +1063,21 @@ class SendViewModel extends StateNotifier<SendState> {
         if (rates != null && rates.isNotEmpty) {
           final rate = rates.first;
           
+          // Check if buy and sell rates are actually available
+          final hasValidRates = rate.buy != null && rate.sell != null;
+          
           // Convert Rate object to Map for storage
           final rateData = {
-            'buy': rate.buy?.toString() ?? 'N/A',
-            'sell': rate.sell?.toString() ?? 'N/A',
+            'buy': hasValidRates ? rate.buy!.toString() : null,
+            'sell': hasValidRates ? rate.sell!.toString() : null,
             'locale': rate.locale ?? '',
             'rateId': rate.rateId ?? '',
             'code': rate.code ?? '',
             'updatedAt': rate.updatedAt ?? '',
+            'hasValidRates': hasValidRates, // Flag to indicate if rates are valid
           };
           
-          AppLogger.debug('Updated rate data for $currency');
+          AppLogger.debug('Updated rate data for $currency - hasValidRates: $hasValidRates');
           
           if (currency == state.sendCurrency) {
             AppLogger.debug('Setting send currency rates');
@@ -954,19 +1086,38 @@ class SendViewModel extends StateNotifier<SendState> {
             AppLogger.debug('Setting receive currency rates');
             state = state.copyWith(receiveCurrencyRates: rateData);
           }
+        } else {
+          AppLogger.warning('No rates returned for currency: $currency');
+          // Set rate data with no valid rates
+          final rateData = {
+            'buy': null,
+            'sell': null,
+            'locale': '',
+            'rateId': '',
+            'code': currency,
+            'updatedAt': '',
+            'hasValidRates': false,
+          };
+          
+          if (currency == state.sendCurrency) {
+            state = state.copyWith(sendCurrencyRates: rateData);
+          } else if (currency == state.receiverCurrency) {
+            state = state.copyWith(receiveCurrencyRates: rateData);
+          }
         }
       }
     } catch (e) {
       AppLogger.error('Error fetching rates for $currency: $e');
       
-      // If rates fetch fails, set N/A values to indicate unsupported currency
+      // If rates fetch fails, set null values to indicate unsupported currency
       final rateData = {
-        'buy': 'N/A',
-        'sell': 'N/A',
+        'buy': null,
+        'sell': null,
         'locale': '',
         'rateId': '',
         'code': currency,
         'updatedAt': '',
+        'hasValidRates': false,
       };
       
       if (currency == state.sendCurrency) {
@@ -980,11 +1131,25 @@ class SendViewModel extends StateNotifier<SendState> {
   /// Check if a currency is supported (has valid exchange rates)
   bool isCurrencySupported(String currency) {
     if (currency == state.sendCurrency) {
-      return state.sendCurrencyRates?['buy'] != 'N/A' && state.sendCurrencyRates?['buy'] != null;
+      return state.sendCurrencyRates?['hasValidRates'] == true;
     } else if (currency == state.receiverCurrency) {
-      return state.receiveCurrencyRates?['buy'] != 'N/A' && state.receiveCurrencyRates?['buy'] != null;
+      return state.receiveCurrencyRates?['hasValidRates'] == true;
     }
     return false;
+  }
+  
+  /// Check if exchange rates are available for current currency pair
+  bool get hasValidExchangeRates {
+    // Same currency always has valid rates (1:1)
+    if (state.sendCurrency == state.receiverCurrency) {
+      return true;
+    }
+    
+    // Check if both currencies have valid rates
+    final sendHasValidRates = state.sendCurrencyRates?['hasValidRates'] == true;
+    final receiveHasValidRates = state.receiveCurrencyRates?['hasValidRates'] == true;
+    
+    return sendHasValidRates && receiveHasValidRates;
   }
 
   /// Reset initialization state to allow re-initialization

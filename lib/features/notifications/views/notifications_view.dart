@@ -350,7 +350,7 @@ class _NotificationsViewState extends State<NotificationsView> {
                 width: 8.w,
                 height: 8.w,
                 decoration: BoxDecoration(
-                  color: AppColors.purple500,
+                  color: AppColors.purple500ForTheme(context),
                   shape: BoxShape.circle,
                 ),
               )

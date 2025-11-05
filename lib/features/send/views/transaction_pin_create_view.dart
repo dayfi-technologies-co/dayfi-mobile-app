@@ -3,137 +3,169 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
-import 'package:dayfi/features/auth/create_passcode/vm/create_passcode_viewmodel.dart';
+import 'package:dayfi/features/send/vm/transaction_pin_viewmodel.dart';
+import 'package:dayfi/services/local/secure_storage.dart';
+import 'package:dayfi/app_locator.dart';
+import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'dart:convert';
 
-class CreatePasscodeView extends ConsumerStatefulWidget {
-  final bool isFromSignup;
+class TransactionPinCreateView extends ConsumerStatefulWidget {
+  final String? returnRoute;
+  final Map<String, dynamic>? returnArguments;
 
-  const CreatePasscodeView({super.key, this.isFromSignup = false});
+  const TransactionPinCreateView({
+    super.key,
+    this.returnRoute,
+    this.returnArguments,
+  });
 
   @override
-  ConsumerState<CreatePasscodeView> createState() => _CreatePasscodeViewState();
+  ConsumerState<TransactionPinCreateView> createState() =>
+      _TransactionPinCreateViewState();
 }
 
-class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
+class _TransactionPinCreateViewState
+    extends ConsumerState<TransactionPinCreateView> {
+  String _localPin = '';
+  String _errorMessage = '';
+
   @override
   void initState() {
     super.initState();
-    // Reset form when view is initialized
+    // Reset the shared provider state when entering this view
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref
-          .read(createPasscodeProvider(widget.isFromSignup).notifier)
-          .resetForm();
-      _showSecurityDialog();
+      ref.read(transactionPinProvider.notifier).resetForm();
     });
   }
 
-  void _showSecurityDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24.r),
-          ),
-          child: Container(
-            padding: EdgeInsets.all(28.w),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Security icon with enhanced styling
-                Container(
-                  width: 80.w,
-                  height: 80.w,
-                  decoration: BoxDecoration(
-                    // gradient: LinearGradient(
-                    //   begin: Alignment.topLeft,
-                    //   end: Alignment.bottomRight,
-                    //   colors: [
-                    //     AppColors.purple500ForTheme(context).withOpacity(0.1),
-                    //     AppColors.purple500ForTheme(context).withOpacity(0.05),
-                    //   ],
-                    // ),
-                    shape: BoxShape.circle,
-                    // boxShadow: [
-                    //   BoxShadow(
-                    //     color: AppColors.purple500ForTheme(context).withOpacity(0.1),
-                    //     blurRadius: 20,
-                    //     spreadRadius: 2,
-                    //     offset: const Offset(0, 4),
-                    //   ),
-                    // ],
-                  ),
-                  // child: Icon(
-                  //   Icons.security_rounded,
-                  //   color: AppColors.purple500ForTheme(context),
-                  //   size: 40.w,
-                  // ),
-                  child: SvgPicture.asset('assets/icons/svgs/cautionn.svg'),
-                ),
+  void _updateLocalPin(String value) {
+    setState(() {
+      _localPin = value;
+      _errorMessage = '';
+    });
+    // Also update the shared provider for consistency
+    ref.read(transactionPinProvider.notifier).updatePin(value);
+  }
 
-                SizedBox(height: 24.h),
+  bool _validatePin(String pin) {
+    if (pin.length != 4) {
+      return false;
+    }
+    // Validate that PIN contains only digits
+    if (!RegExp(r'^\d{4}$').hasMatch(pin)) {
+      setState(() {
+        _errorMessage = 'PIN must contain only numbers';
+      });
+      return false;
+    }
+    // Check for repeated digits (e.g., 1111, 2222)
+    if (RegExp(r'(\d)\1{3}').hasMatch(pin)) {
+      setState(() {
+        _errorMessage = 'PIN cannot be all the same number';
+      });
+      return false;
+    }
+    // Check for sequential digits (e.g., 1234, 4321)
+    if (_isSequential(pin)) {
+      setState(() {
+        _errorMessage = 'PIN cannot be sequential';
+      });
+      return false;
+    }
+    return true;
+  }
 
-                // Title with auth view styling
-                Text(
-                  'For your security, please avoid easy-to-guess passcodes. e.g. 1234, 2222',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontFamily: 'CabinetGrotesk',
-                    fontSize: 20.sp,
-                    fontWeight: FontWeight.w400,
-                    letterSpacing: -0.5,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
+  bool _isSequential(String pin) {
+    final digits = pin.split('').map((e) => int.parse(e)).toList();
+    bool ascending = true;
+    bool descending = true;
 
-                SizedBox(height: 16.h),
+    for (int i = 1; i < digits.length; i++) {
+      if (digits[i] != digits[i - 1] + 1) {
+        ascending = false;
+      }
+      if (digits[i] != digits[i - 1] - 1) {
+        descending = false;
+      }
+    }
 
-                // Continue button with auth view styling
-                PrimaryButton(
-                  text: 'Next - Close',
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  backgroundColor: AppColors.purple500,
-                  textColor: AppColors.neutral0,
-                  borderRadius: 38,
-                  height: 60.h,
-                  width: double.infinity,
-                  fullWidth: true,
-                  fontFamily: 'Karla',
-                  fontSize: 18,
-                  fontWeight: FontWeight.w400,
-                  letterSpacing: -.8,
-                ),
-              ],
-            ),
-          ),
+    return ascending || descending;
+  }
+
+  Future<void> _handleContinue() async {
+    if (_localPin.length != 4) {
+      return;
+    }
+
+    // Validate PIN
+    if (!_validatePin(_localPin)) {
+      // Error message already set in _validatePin
+      return;
+    }
+
+    // Store temp pin and return route info before navigating
+    final secureStorage = locator<SecureStorageService>();
+    await secureStorage.write('temp_transaction_pin', _localPin);
+    // Store return route info
+    if (widget.returnRoute != null) {
+      await secureStorage.write(
+        'transaction_pin_return_route',
+        widget.returnRoute!,
+      );
+      if (widget.returnArguments != null) {
+        final argumentsJson = json.encode(widget.returnArguments);
+        await secureStorage.write(
+          'transaction_pin_return_arguments',
+          argumentsJson,
         );
-      },
-    );
+      }
+    }
+
+    appRouter.pushNamed(AppRoute.transactionPinReenterView);
   }
 
   @override
   Widget build(BuildContext context) {
-    final createPasscodeState = ref.watch(
-      createPasscodeProvider(widget.isFromSignup),
-    );
-    final createPasscodeNotifier = ref.read(
-      createPasscodeProvider(widget.isFromSignup).notifier,
-    );
+    final pinNotifier = ref.read(transactionPinProvider.notifier);
 
     return GestureDetector(
       onTap: () {
-        // Dismiss keyboard and remove focus from all text fields
         FocusManager.instance.primaryFocus?.unfocus();
       },
       behavior: HitTestBehavior.opaque,
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         resizeToAvoidBottomInset: false,
+        appBar: AppBar(
+          scrolledUnderElevation: 0,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          elevation: 0,
+          leading: IconButton(
+            onPressed: () {
+              pinNotifier.resetForm();
+              setState(() {
+                _localPin = '';
+                _errorMessage = '';
+              });
+              Navigator.pop(context);
+            },
+            icon: Icon(
+              Icons.arrow_back_ios,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
+          title: Text(
+            "Create Transaction PIN",
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              fontFamily: 'CabinetGrotesk',
+              fontSize: 20.sp,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
+          centerTitle: true,
+        ),
         body: GestureDetector(
           onTap: () {
             FocusManager.instance.primaryFocus?.unfocus();
@@ -143,41 +175,16 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  AppBar(
-                    scrolledUnderElevation: 0,
-                    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                    elevation: 0,
-                    leading: IconButton(
-                      onPressed: () {
-                        createPasscodeNotifier.resetForm();
-                        Navigator.pop(context);
-                      },
-                      icon: const Icon(Icons.arrow_back_ios_new),
-                    ),
-                    title: Text(
-                      "Create passcode",
-                      style: Theme.of(
-                        context,
-                      ).textTheme.headlineMedium?.copyWith(
-                        fontFamily: 'CabinetGrotesk',
-                        fontSize: 28.00,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        SizedBox(height: 12.h),
-
-                        // Subtitle
+                        SizedBox(height: 4.h),
                         Padding(
                               padding: EdgeInsets.symmetric(horizontal: 24.w),
                               child: Text(
-                                "Please create a 4-digit passcode for your account. This will be used to quickly access your account.",
+                                "Please create a 4-digit PIN for your transactions. This PIN will be required for all wallet transfers.",
                                 style: Theme.of(
                                   context,
                                 ).textTheme.bodyMedium?.copyWith(
@@ -203,20 +210,19 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
                               duration: 300.ms,
                               curve: Curves.easeOutCubic,
                             ),
-
-                        SizedBox(height: 40.h),
+                        // SizedBox(height: 40.h),
                       ],
                     ),
                   ),
-
-                  // Passcode widget
                   Padding(
                         padding: EdgeInsets.symmetric(horizontal: 24.w),
                         child: PasscodeWidget(
                           passcodeLength: 4,
-                          currentPasscode: createPasscodeState.passcode,
-                          onPasscodeChanged:
-                              createPasscodeNotifier.updatePasscode,
+                          currentPasscode: _localPin,
+                          onPasscodeChanged: (value) async {
+                            _updateLocalPin(value);
+                            // Don't auto-submit - wait for button click
+                          },
                         ),
                       )
                       .animate()
@@ -239,11 +245,44 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
                         duration: 300.ms,
                         curve: Curves.easeOutCubic,
                       ),
+                  SizedBox(height: MediaQuery.of(context).size.width * 0.15),
+                  // Continue button - only show when PIN is complete
+                  if (_localPin.length == 4)
+                    Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 24.w),
+                          child: PrimaryButton(
+                            text: 'Next - Re-enter PIN',
+                            onPressed:
+                                _localPin.length == 4 && _errorMessage.isEmpty
+                                    ? _handleContinue
+                                    : null,
+                            height: 60.h,
+                            backgroundColor:
+                                _localPin.length == 4 && _errorMessage.isEmpty
+                                    ? AppColors.purple500
+                                    : AppColors.neutral0.withOpacity(0.12),
+                            textColor:
+                                _localPin.length == 4 && _errorMessage.isEmpty
+                                    ? AppColors.neutral0
+                                    : AppColors.neutral0.withOpacity(0.5),
+                            fontFamily: 'Karla',
+                            letterSpacing: -.8,
+                            fontSize: 18,
+                            width: double.infinity,
+                            fullWidth: true,
+                            borderRadius: 40.r,
+                          ),
+                        )
+                        .animate()
+                        .fadeIn(duration: 200.ms)
+                        .slideY(begin: 0.2, end: 0, duration: 200.ms),
                   SizedBox(height: 16.h),
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 24.w),
                     child: Text(
-                      " ",
+                      _errorMessage.isNotEmpty
+                          ? _errorMessage
+                          : ref.watch(transactionPinProvider).errorMessage,
                       style: TextStyle(
                         fontFamily: 'Karla',
                         fontSize: 13.sp,
@@ -266,6 +305,7 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
   }
 }
 
+// Reuse PasscodeWidget from create_passcode_view.dart
 class PasscodeWidget extends StatelessWidget {
   final int passcodeLength;
   final String currentPasscode;
@@ -282,38 +322,43 @@ class PasscodeWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        SizedBox(height: MediaQuery.of(context).size.width * 0.2),
-
-        // Passcode dots
+        SizedBox(height: MediaQuery.of(context).size.width * 0.075),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(
             passcodeLength,
             (index) => Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6.0),
-              child: Container(
-                width: 30,
-                height: 30,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
+              child: Text(
+                index < currentPasscode.length ? '*' : '*',
+                style: TextStyle(
+                  fontSize: 88.sp,
+                  letterSpacing: -10,
+                  fontFamily: 'CabinetGrotesk',
+                  fontWeight: FontWeight.w700,
                   color:
                       index < currentPasscode.length
                           ? AppColors.purple500ForTheme(context)
-                          : Colors.transparent,
-                  border: Border.all(
-                    color: AppColors.purple500ForTheme(context),
-                    width: 2,
-                  ),
+                          : AppColors.neutral500,
                 ),
               ),
+
+              // Container(
+              //   width: 30,
+              //   height: 30,
+              //   decoration: BoxDecoration(
+              //     shape: BoxShape.circle,
+              //     color:
+              //         index < currentPasscode.length
+              //             ? AppColors.purple500ForTheme(context)
+              //             : Colors.transparent,
+              //     border: Border.all(color: AppColors.purple500ForTheme(context), width: 2),
+              //   ),
+              // ),
             ),
           ),
         ),
-
-        SizedBox(height: 32.h),
-        SizedBox(height: 32.h),
-
-        // Number pad
+        // SizedBox(height: 32.h),
         GridView.count(
           crossAxisCount: 3,
           shrinkWrap: true,
@@ -326,7 +371,7 @@ class PasscodeWidget extends StatelessWidget {
               final number = (index + 1).toString();
               return _buildNumberButton(number);
             }),
-            const SizedBox.shrink(), // Empty space
+            const SizedBox.shrink(),
             _buildNumberButton('0'),
             _buildIconButton(
               icon: Icons.arrow_back_ios,
@@ -389,9 +434,7 @@ class PasscodeWidget extends StatelessWidget {
             shape: BoxShape.circle,
             color: Colors.transparent,
           ),
-          child: Center(
-            child: Icon(icon, color: AppColors.purple500ForTheme(context)),
-          ),
+          child: Center(child: Icon(icon, color: AppColors.purple500ForTheme(context))),
         ),
       ),
     );

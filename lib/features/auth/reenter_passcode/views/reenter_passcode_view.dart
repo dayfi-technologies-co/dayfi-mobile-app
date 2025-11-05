@@ -216,9 +216,9 @@ class PasscodeWidget extends StatelessWidget {
                   shape: BoxShape.circle,
                   color:
                       index < currentPasscode.length
-                          ? AppColors.purple500
+                          ? AppColors.purple500ForTheme(context)
                           : Colors.transparent,
-                  border: Border.all(color: AppColors.purple500, width: 2),
+                  border: Border.all(color: AppColors.purple500ForTheme(context), width: 2),
                 ),
               ),
             ),
@@ -296,14 +296,16 @@ class PasscodeWidget extends StatelessWidget {
     required IconData icon,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: const BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.transparent,
+    return Builder(
+      builder: (context) => GestureDetector(
+        onTap: onTap,
+        child: Container(
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.transparent,
+          ),
+          child: Center(child: Icon(icon, color: AppColors.purple500ForTheme(context))),
         ),
-        child: Center(child: Icon(icon, color: AppColors.purple500)),
       ),
     );
   }

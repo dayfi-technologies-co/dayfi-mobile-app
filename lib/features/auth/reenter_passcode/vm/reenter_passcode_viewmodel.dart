@@ -154,7 +154,7 @@ class ReenterPasscodeNotifier extends StateNotifier<ReenterPasscodeState> {
 
                 // Continue button with auth view styling
                 PrimaryButton(
-                  text: 'Okay',
+                  text: 'Next - Continue',
                   onPressed: () async {
                     Navigator.of(context).pop();
                     // Check if user's phone number is empty (regardless of flow)

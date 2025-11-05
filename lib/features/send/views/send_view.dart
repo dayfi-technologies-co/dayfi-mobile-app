@@ -1,4 +1,5 @@
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
+import 'package:dayfi/common/widgets/buttons/secondary_button.dart';
 import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,11 +11,13 @@ import 'package:dayfi/models/payment_response.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/common/utils/string_utils.dart';
 import 'package:dayfi/common/utils/number_formatter.dart';
-import 'send_recipient_view.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:dayfi/app_locator.dart';
-import 'package:dayfi/common/utils/tier_utils.dart';
-import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
+import 'package:dayfi/routes/route.dart';
+import 'package:dayfi/services/remote/wallet_service.dart';
+import 'package:dayfi/common/utils/app_logger.dart';
+import 'package:dayfi/features/home/vm/home_viewmodel.dart';
+import 'package:dayfi/features/send/views/send_payment_method_view.dart';
 
 class SendView extends ConsumerStatefulWidget {
   const SendView({super.key});
@@ -31,6 +34,7 @@ class _SendViewState extends ConsumerState<SendView>
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _sendAmountFocus = FocusNode();
   final FocusNode _receiveAmountFocus = FocusNode();
+  bool _isCheckingWallet = false;
 
   // Helper function to get full country name from country code
   String _getCountryName(String? countryCode) {
@@ -144,6 +148,12 @@ class _SendViewState extends ConsumerState<SendView>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
+    // Listen to focus changes on send amount field
+    _sendAmountFocus.addListener(_handleSendAmountFocusChange);
+    // Listen to focus changes on receive amount field
+    _receiveAmountFocus.addListener(_handleReceiveAmountFocusChange);
+
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       // Ensure no text field has focus when the widget is first built
       FocusScope.of(context).unfocus();
@@ -163,9 +173,297 @@ class _SendViewState extends ConsumerState<SendView>
     });
   }
 
+  Future<bool> _checkWalletBalanceAndNavigate(SendState state) async {
+    try {
+      // Set loading state
+      if (mounted) {
+        setState(() {
+          _isCheckingWallet = true;
+        });
+      }
+
+      // Fetch wallet details
+      final homeViewModel = ref.read(homeViewModelProvider.notifier);
+      await homeViewModel.fetchWalletDetails();
+
+      // Check balance after a short delay to ensure state is updated
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      if (mounted) {
+        final homeState = ref.read(homeViewModelProvider);
+
+        // Check if wallets list is empty
+        if (homeState.wallets.isEmpty) {
+          // Reset loading state before showing dialog
+          setState(() {
+            _isCheckingWallet = false;
+          });
+
+          // Show dialog before navigating
+          _showInsufficientBalanceDialog();
+          return true;
+        }
+
+        final balance = homeState.balance;
+
+        // Check if balance is empty or zero
+        final balanceValue =
+            double.tryParse(balance.replaceAll(',', '')) ?? 0.0;
+
+        // Get send amount
+        final sendAmount =
+            double.tryParse(state.sendAmount.replaceAll(',', '')) ?? 0.0;
+        final fee = double.tryParse(state.fee.replaceAll(',', '')) ?? 0.0;
+        final totalAmount = sendAmount + fee;
+
+        // Check if balance is insufficient
+        if (balance.isEmpty ||
+            balance == '0.00' ||
+            balanceValue <= 0 ||
+            balanceValue < totalAmount) {
+          // Reset loading state before showing dialog
+          setState(() {
+            _isCheckingWallet = false;
+          });
+
+          // Show dialog before navigating
+          _showInsufficientBalanceDialog();
+          return true;
+        }
+      }
+
+      // Reset loading state if balance is sufficient
+      if (mounted) {
+        setState(() {
+          _isCheckingWallet = false;
+        });
+      }
+
+      return false;
+    } catch (e) {
+      // Reset loading state on error
+      if (mounted) {
+        setState(() {
+          _isCheckingWallet = false;
+        });
+      }
+      // Log error but don't crash the app
+      AppLogger.error('Error checking wallet balance: $e');
+      return false;
+    }
+  }
+
+  // Show insufficient balance dialog
+  void _showInsufficientBalanceDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) => _buildInsufficientBalanceDialog(),
+    );
+  }
+
+  // Insufficient Balance Dialog Widget
+  Widget _buildInsufficientBalanceDialog() {
+    return Dialog(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
+      child: Container(
+        padding: EdgeInsets.all(28.w),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildBalanceDialogIcon(),
+            SizedBox(height: 24.h),
+            _buildBalanceDialogTitle(),
+            SizedBox(height: 16.h),
+            _buildBalanceDialogButtons(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Dialog Icon
+  Widget _buildBalanceDialogIcon() {
+    return Container(
+      width: 80.w,
+      height: 80.w,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.warning400, AppColors.warning600],
+        ),
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.warning500.withOpacity(0.3),
+            blurRadius: 20,
+            spreadRadius: 2,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      // child: Icon(
+      //   Icons.account_balance_wallet_outlined,
+      //   color: Colors.white,
+      //   size: 40.sp,
+      // ),
+    );
+  }
+
+  // Dialog Title
+  Widget _buildBalanceDialogTitle() {
+    return Text(
+      "Your wallet balance is too low to send this amount. Please add funds and try again.",
+      style: TextStyle(
+        fontFamily: 'CabinetGrotesk',
+        fontSize: 20.sp,
+        fontWeight: FontWeight.w500,
+        color: Theme.of(context).colorScheme.onSurface,
+        letterSpacing: -0.5,
+      ),
+      textAlign: TextAlign.center,
+    );
+  }
+
+  // Dialog Buttons
+  Widget _buildBalanceDialogButtons() {
+    return Column(
+      children: [
+        _buildBalanceDialogConfirmButton(),
+        SizedBox(height: 12.h),
+        _buildBalanceDialogCancelButton(),
+      ],
+    );
+  }
+
+  // Confirm Button
+  Widget _buildBalanceDialogConfirmButton() {
+    return PrimaryButton(
+      text: 'Add Funds',
+      onPressed: () {
+        Navigator.pop(context);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SendPaymentMethodView(
+              selectedData: {},
+              recipientData: {},
+              senderData: {},
+              paymentData: {},
+            ),
+          ),
+        );
+      },
+      backgroundColor: AppColors.purple500,
+      textColor: AppColors.neutral0,
+      borderRadius: 38.r,
+      height: 60.h,
+      width: double.infinity,
+      fullWidth: true,
+      fontFamily: 'Karla',
+      fontSize: 18,
+      fontWeight: FontWeight.w400,
+      letterSpacing: -0.8,
+    );
+  }
+
+  // Cancel Button
+  Widget _buildBalanceDialogCancelButton() {
+    return SecondaryButton(
+      text: 'Cancel',
+      onPressed: () => Navigator.pop(context),
+      borderColor: Colors.transparent,
+      textColor: AppColors.purple500ForTheme(context),
+      width: double.infinity,
+      fullWidth: true,
+      height: 60.h,
+      borderRadius: 38.r,
+      fontFamily: 'Karla',
+      fontSize: 18,
+      fontWeight: FontWeight.w400,
+      letterSpacing: -0.8,
+    );
+  }
+
+  void _handleSendAmountFocusChange() {
+    // When focus is lost, check if we need to add ".00"
+    if (!_sendAmountFocus.hasFocus) {
+      final currentText = _sendAmountController.text.trim();
+      if (currentText.isNotEmpty) {
+        // Remove commas for checking
+        final cleanValue = NumberFormatterUtils.removeCommas(currentText);
+
+        // Check if it's a valid number and doesn't have a decimal point
+        final number = double.tryParse(cleanValue);
+        if (number != null && !cleanValue.contains('.')) {
+          // Add ".00" to the value
+          final formattedValue = '${cleanValue}.00';
+          final formattedWithCommas = StringUtils.formatNumberWithCommas(
+            formattedValue,
+          );
+
+          // Update controller
+          _isUpdatingSendController = true;
+          _sendAmountController.value = TextEditingValue(
+            text: formattedWithCommas,
+            selection: TextSelection.collapsed(
+              offset: formattedWithCommas.length,
+            ),
+          );
+          _isUpdatingSendController = false;
+
+          // Update viewmodel
+          ref
+              .read(sendViewModelProvider.notifier)
+              .updateSendAmount(formattedValue);
+        }
+      }
+    }
+  }
+
+  void _handleReceiveAmountFocusChange() {
+    // When focus is lost, check if we need to add ".00"
+    if (!_receiveAmountFocus.hasFocus) {
+      final currentText = _receiveAmountController.text.trim();
+      if (currentText.isNotEmpty) {
+        // Remove commas for checking
+        final cleanValue = NumberFormatterUtils.removeCommas(currentText);
+
+        // Check if it's a valid number and doesn't have a decimal point
+        final number = double.tryParse(cleanValue);
+        if (number != null && !cleanValue.contains('.')) {
+          // Add ".00" to the value
+          final formattedValue = '${cleanValue}.00';
+          final formattedWithCommas = StringUtils.formatNumberWithCommas(
+            formattedValue,
+          );
+
+          // Update controller
+          _isUpdatingReceiveController = true;
+          _receiveAmountController.value = TextEditingValue(
+            text: formattedWithCommas,
+            selection: TextSelection.collapsed(
+              offset: formattedWithCommas.length,
+            ),
+          );
+          _isUpdatingReceiveController = false;
+
+          // Update viewmodel
+          ref
+              .read(sendViewModelProvider.notifier)
+              .updateReceiveAmount(formattedValue);
+        }
+      }
+    }
+  }
+
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _sendAmountFocus.removeListener(_handleSendAmountFocusChange);
+    _receiveAmountFocus.removeListener(_handleReceiveAmountFocusChange);
     _sendAmountController.dispose();
     _receiveAmountController.dispose();
     _searchController.dispose();
@@ -346,7 +644,7 @@ class _SendViewState extends ConsumerState<SendView>
                       SizedBox(width: 12.w),
                       Expanded(
                         child: Text(
-                          "Please prepare your KYC documents in case we require verification to complete this transaction.",
+                          "Send funds via bank transfer, mobile money, or crypto wallet address.",
                           style: Theme.of(
                             context,
                           ).textTheme.bodySmall?.copyWith(
@@ -386,7 +684,7 @@ class _SendViewState extends ConsumerState<SendView>
                     _buildRecipientDeliveryMethodSection(sendState),
                   ],
                 ),
-                SizedBox(height: 32.h),
+                SizedBox(height: 36.h),
 
                 // Send Button
                 _buildSendButton(sendState),
@@ -395,86 +693,6 @@ class _SendViewState extends ConsumerState<SendView>
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildUpgradeCard() {
-    final profileState = ref.watch(profileViewModelProvider);
-    final user = profileState.user;
-
-    // Only show upgrade card if user can upgrade
-    if (!TierUtils.canUpgrade(user)) {
-      return const SizedBox.shrink();
-    }
-
-    final tierDescription = TierUtils.getTierDescription(user);
-    final nextTierInfo = TierUtils.getNextTierInfo(user);
-
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12.r),
-        // border: Border.all(color: AppColors.warning400.withOpacity(0.5)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.neutral500.withOpacity(0.05),
-            blurRadius: 4.0,
-            offset: const Offset(0, 4),
-            spreadRadius: 0.5,
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Image.asset("assets/icons/pngs/account_4.png", height: 40.sp),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Increase transfer limit',
-                  style: AppTypography.titleMedium.copyWith(
-                    fontFamily: 'CabinetGrotesk',
-                    fontSize: 19.00,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                SizedBox(height: 4.h),
-                RichText(
-                  text: TextSpan(
-                    text: tierDescription,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurface,
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w400,
-                      fontFamily: 'Karla',
-                      letterSpacing: -.3,
-                      height: 1.2,
-                    ),
-                    children: [
-                      TextSpan(
-                        text: ' $nextTierInfo.',
-                        style: TextStyle(
-                          color: Color(0xFF2787A1),
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w400,
-                          fontFamily: 'Karla',
-                          letterSpacing: -.4,
-                          height: 1.2,
-                          // decoration: TextDecoration.underline,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -591,6 +809,68 @@ class _SendViewState extends ConsumerState<SendView>
             ),
           ),
         ),
+        // SizedBox(height: 8.h),
+        // Consumer(
+        //   builder: (context, ref, child) {
+        //     final homeState = ref.watch(homeViewModelProvider);
+        //     final balance =
+        //         homeState.balance.isNotEmpty ? homeState.balance : '0.00';
+        //     final currency =
+        //         homeState.currency.isNotEmpty
+        //             ? homeState.currency
+        //             : state.sendCurrency;
+
+        //     return Row(
+        //       // mainAxisSize: MainAxisSize.min,
+        //       mainAxisAlignment: MainAxisAlignment.center,
+        //       crossAxisAlignment: CrossAxisAlignment.center,
+        //       children: [
+        //         Text(
+        //           'Wallet balance: ',
+        //           style: AppTypography.bodySmall.copyWith(
+        //             fontFamily: 'Karla',
+        //             fontSize: 12.5.sp,
+        //             fontWeight: FontWeight.w400,
+        //             color: Theme.of(
+        //               context,
+        //             ).colorScheme.onSurface.withOpacity(0.7),
+        //             letterSpacing: -0.2,
+        //           ),
+        //         ),
+        //         Text(
+        //           () {
+        //             // Format balance with commas and ensure 2 decimal places
+        //             String formattedBalance = StringUtils.formatNumberWithCommas(balance);
+        //             if (!formattedBalance.contains('.')) {
+        //               formattedBalance += '.00';
+        //             } else {
+        //               List<String> parts = formattedBalance.split('.');
+        //               if (parts.length == 2) {
+        //                 String decimalPart = parts[1];
+        //                 if (decimalPart.length == 1) {
+        //                   formattedBalance += '0';
+        //                 } else if (decimalPart.length > 2) {
+        //                   formattedBalance = parts[0] + '.' + decimalPart.substring(0, 2);
+        //                 }
+        //               }
+        //             }
+        //             return '$formattedBalance $currency';
+        //           }(),
+        //           style: AppTypography.bodySmall.copyWith(
+        //             fontFamily: 'Karla',
+        //             fontSize: 13.sp,
+        //             fontWeight: FontWeight.w600,
+        //             color: Theme.of(
+        //               context,
+        //             ).colorScheme.onSurface,
+        //             letterSpacing: -0.2,
+        //           ),
+        //         ),
+        //       ],
+        //     );
+        //   },
+        // ),
+     
       ],
     );
   }
@@ -722,6 +1002,9 @@ class _SendViewState extends ConsumerState<SendView>
         return 'DayFi Tag';
       case 'bank_transfer':
       case 'bank':
+      case 'p2p':
+      case 'peer_to_peer':
+      case 'peer-to-peer':
         return 'Bank Transfer';
       case 'mobile_money':
       case 'momo':
@@ -753,16 +1036,38 @@ class _SendViewState extends ConsumerState<SendView>
   }
 
   /// Get delivery duration based on method type
-  String _getDeliveryDuration(String? method) {
+  String _getDeliveryDuration(
+    String? method, {
+    String? sendCurrency,
+    String? receiverCurrency,
+  }) {
     if (method == null || method.isEmpty) {
       return 'Select method';
     }
 
-    switch (method.toLowerCase()) {
+    final methodLower = method.toLowerCase();
+
+    // For NGN to NGN bank transfers (peer-to-peer), show "Arrives immediately"
+    final isNgnToNgn = sendCurrency == 'NGN' && receiverCurrency == 'NGN';
+    final isBankTransfer =
+        methodLower == 'bank_transfer' ||
+        methodLower == 'bank' ||
+        methodLower == 'p2p' ||
+        methodLower == 'peer_to_peer' ||
+        methodLower == 'peer-to-peer';
+
+    if (isNgnToNgn && isBankTransfer) {
+      return 'Arrives immediately';
+    }
+
+    switch (methodLower) {
       case 'dayfi_tag':
-        return 'Completely free';
+        return 'Completely free — Arrives immediately';
       case 'bank_transfer':
       case 'bank':
+      case 'p2p':
+      case 'peer_to_peer':
+      case 'peer-to-peer':
         return 'Arrives in 1-2 hours';
       case 'mobile_money':
       case 'momo':
@@ -878,7 +1183,7 @@ class _SendViewState extends ConsumerState<SendView>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Delivery Method',
+          'Delivery Method - How receiver will get the money',
           style: AppTypography.titleMedium.copyWith(
             fontFamily: 'Karla',
             fontSize: 14,
@@ -928,12 +1233,7 @@ class _SendViewState extends ConsumerState<SendView>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _getDeliveryMethodType(state.selectedDeliveryMethod) ==
-                              "P2p"
-                          ? "Peer-to-Peer"
-                          : _getDeliveryMethodType(
-                            state.selectedDeliveryMethod,
-                          ),
+                      _getDeliveryMethodType(state.selectedDeliveryMethod),
                       style: AppTypography.bodyLarge.copyWith(
                         fontFamily: 'CabinetGrotesk',
                         fontSize: 14.sp,
@@ -948,7 +1248,11 @@ class _SendViewState extends ConsumerState<SendView>
                     ),
                     SizedBox(height: 2.h),
                     Text(
-                      _getDeliveryDuration(state.selectedDeliveryMethod),
+                      _getDeliveryDuration(
+                        state.selectedDeliveryMethod,
+                        sendCurrency: state.sendCurrency,
+                        receiverCurrency: state.receiverCurrency,
+                      ),
                       style: AppTypography.bodyLarge.copyWith(
                         color: Theme.of(
                           context,
@@ -1159,15 +1463,20 @@ class _SendViewState extends ConsumerState<SendView>
                 //   ),
                 // ),
               ] else if (state.exchangeRate.isNotEmpty) ...[
-                Text(
-                  state.receiverCurrency == 'NGN'
-                      ? '₦1 = ₦1'
-                      : state.exchangeRate,
-                  style: AppTypography.bodyLarge.copyWith(
-                    fontFamily: 'Karla',
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.onSurface,
+                Flexible(
+                  child: Text(
+                    state.receiverCurrency == 'NGN'
+                        ? '₦1 = ₦1'
+                        : state.exchangeRate,
+                    style: AppTypography.bodyLarge.copyWith(
+                      fontFamily: 'Karla',
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                    textAlign: TextAlign.end,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
                   ),
                 ),
               ] else ...[
@@ -1219,9 +1528,102 @@ class _SendViewState extends ConsumerState<SendView>
     return null;
   }
 
-  void _navigateToRecipientScreen(SendState state) {
+  Future<void> _navigateToRecipientScreen(SendState state) async {
     // Dismiss keyboard when continue button is pressed
     FocusScope.of(context).unfocus();
+
+    // Check wallet balance first
+    final shouldNavigateToPayment = await _checkWalletBalanceAndNavigate(state);
+    if (shouldNavigateToPayment) {
+      return; // Balance is insufficient, already navigated to payment method view
+    }
+
+    // Check if delivery method is Dayfi Tag - route to Dayfi ID view
+    if (state.selectedDeliveryMethod.toLowerCase() == 'dayfi_tag') {
+      final selectedData = {
+        'sendAmount': state.sendAmount,
+        'receiveAmount': state.receiverAmount,
+        'sendCurrency': state.sendCurrency,
+        'receiveCurrency': state.receiverCurrency,
+        'sendCountry': state.sendCountry,
+        'receiveCountry': state.receiverCountry,
+        'senderDeliveryMethod': state.selectedSenderDeliveryMethod,
+        'recipientDeliveryMethod': state.selectedDeliveryMethod,
+        'senderChannelId': state.selectedSenderChannelId,
+      };
+
+      try {
+        // Set loading state
+        setState(() {
+          _isCheckingWallet = true;
+        });
+
+        // Fetch wallet details to check if user has a Dayfi ID
+        AppLogger.info('Checking for Dayfi ID...');
+        final walletService = locator<WalletService>();
+        final walletResponse = await walletService.fetchWalletDetails();
+
+        // Check if any wallet has a non-empty Dayfi ID
+        final hasDayfiId = walletResponse.wallets.any(
+          (wallet) => wallet.dayfiId.isNotEmpty,
+        );
+
+        // Reset loading state before navigation
+        if (mounted) {
+          setState(() {
+            _isCheckingWallet = false;
+          });
+        }
+
+        if (hasDayfiId) {
+          // User has a Dayfi ID, proceed to enter recipient's Dayfi ID
+          AppLogger.info('User has Dayfi ID, navigating to send Dayfi ID view');
+          appRouter.pushNamed(
+            AppRoute.sendDayfiIdView,
+            arguments: selectedData,
+          );
+        } else {
+          // User doesn't have a Dayfi ID, navigate to explanation/creation view
+          AppLogger.info(
+            'User does not have Dayfi ID, navigating to explanation view',
+          );
+          final result = await appRouter.pushNamed(
+            AppRoute.dayfiTagExplanationView,
+          );
+
+          // If user created a Dayfi Tag, refresh and proceed to send Dayfi ID view
+          if (result == true || result == 'created') {
+            AppLogger.info(
+              'Dayfi Tag created, proceeding to send Dayfi ID view',
+            );
+            appRouter.pushNamed(
+              AppRoute.sendDayfiIdView,
+              arguments: selectedData,
+            );
+          }
+        }
+      } catch (e) {
+        AppLogger.error('Error checking Dayfi ID: $e');
+
+        // Reset loading state on error
+        if (mounted) {
+          setState(() {
+            _isCheckingWallet = false;
+          });
+        }
+
+        // Show error and navigate to explanation view as fallback
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to verify Dayfi ID. Please try again.'),
+            backgroundColor: AppColors.error500,
+          ),
+        );
+        // Navigate to explanation view as fallback
+        await appRouter.pushNamed(AppRoute.dayfiTagExplanationView);
+      }
+      return;
+    }
 
     // Get the selected recipient channel to find the network
     final recipientChannels =
@@ -1270,32 +1672,33 @@ class _SendViewState extends ConsumerState<SendView>
       'accountNumberType': selectedNetwork?.accountNumberType ?? 'phone',
     };
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SendRecipientView(selectedData: selectedData),
-      ),
-    );
+    appRouter.pushNamed(AppRoute.sendRecipientView, arguments: selectedData);
   }
 
   Widget _buildSendButton(SendState state) {
     final viewModel = ref.watch(sendViewModelProvider.notifier);
     final isAmountValid = viewModel.isSendAmountValid;
+    final isLoading = state.isLoading || _isCheckingWallet;
 
     return PrimaryButton(
-      text: _getSendButtonText(state, viewModel, isAmountValid),
+      text: _getSendButtonText(
+        state,
+        viewModel,
+        isAmountValid,
+        _isCheckingWallet,
+      ),
       onPressed:
-          state.isLoading || !isAmountValid
+          isLoading || !isAmountValid
               ? null
               : () {
                 _navigateToRecipientScreen(state);
               },
-      isLoading: state.isLoading,
-      height: 60.h,
+      isLoading: isLoading,
       backgroundColor:
           !isAmountValid
               ? AppColors.purple500.withOpacity(.25)
               : AppColors.purple500,
+      height: 60.h,
       textColor:
           !isAmountValid
               ? AppColors.neutral0.withOpacity(.25)
@@ -1313,7 +1716,12 @@ class _SendViewState extends ConsumerState<SendView>
     SendState state,
     SendViewModel viewModel,
     bool isAmountValid,
+    bool isCheckingWallet,
   ) {
+    if (isCheckingWallet) {
+      return 'Checking balance...';
+    }
+
     if (state.isLoading) {
       return 'Loading...';
     }
@@ -1341,7 +1749,7 @@ class _SendViewState extends ConsumerState<SendView>
       return 'Enter valid amount';
     }
 
-    return 'Continue';
+    return 'Next - Add Recipient';
   }
 
   void _showSendCountryBottomSheet(SendState state) {
@@ -1405,7 +1813,7 @@ class _SendViewState extends ConsumerState<SendView>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      SizedBox(height: 22.h, width: 22.w),
+                      SizedBox(height: 24.h, width: 22.w),
                       Text(
                         'Sending currency',
                         style: AppTypography.titleLarge.copyWith(
@@ -1422,8 +1830,8 @@ class _SendViewState extends ConsumerState<SendView>
                         },
                         child: Image.asset(
                           "assets/icons/pngs/cancelicon.png",
-                          height: 22.h,
-                          width: 22.w,
+                          height: 24.h,
+                          width: 24.w,
                           color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
@@ -1663,7 +2071,7 @@ class _SendViewState extends ConsumerState<SendView>
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          SizedBox(height: 22.h, width: 22.w),
+                          SizedBox(height: 24.h, width: 22.w),
                           Text(
                             'Receiving currency',
                             style: AppTypography.titleLarge.copyWith(
@@ -1680,8 +2088,8 @@ class _SendViewState extends ConsumerState<SendView>
                             },
                             child: Image.asset(
                               "assets/icons/pngs/cancelicon.png",
-                              height: 22.h,
-                              width: 22.w,
+                              height: 24.h,
+                              width: 24.w,
                               color: Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
@@ -1896,33 +2304,17 @@ class _SendViewState extends ConsumerState<SendView>
     );
   }
 
-  // Helper function to check if a channel type is allowed
-  bool _isAllowedDeliveryMethod(String? channelType) {
-    if (channelType == null) return false;
-    final lower = channelType.toLowerCase();
-    
-    // Only allow these methods for now
-    return lower == 'dayfi_tag' ||
-        lower == 'bank_transfer' ||
-        lower == 'bank' ||
-        lower == 'mobile_money' ||
-        lower == 'momo' ||
-        lower == 'mobilemoney' ||
-        lower == 'digital_dollar' ||
-        lower == 'stablecoins';
-  }
-
   // Helper function to get the canonical name for sorting
   String _getCanonicalChannelName(String? channelType) {
     if (channelType == null) return 'zzz';
     final lower = channelType.toLowerCase();
-    
+
     // DayFi Tag should always be first
     if (lower == 'dayfi_tag') return '000_dayfi_tag';
     if (lower == 'bank_transfer' || lower == 'bank') return '001_bank_transfer';
-    if (lower == 'mobile_money' || lower == 'momo' || lower == 'mobilemoney') return '002_mobile_money';
-    if (lower == 'digital_dollar' || lower == 'stablecoins') return '003_digital_dollar';
-    
+    if (lower == 'mobile_money' || lower == 'momo' || lower == 'mobilemoney')
+      return '002_mobile_money';
+
     // Other allowed methods fall here
     return '999_$channelType';
   }
@@ -1936,25 +2328,51 @@ class _SendViewState extends ConsumerState<SendView>
     // Dismiss keyboard when opening bottom sheet
     FocusScope.of(context).unfocus();
     // Filter channels by status, rampType, and country/currency
-    final filteredChannels = state.channels
-        .where(
-          (channel) =>
-              channel.status == 'active' &&
-              (channel.rampType == 'withdrawal' ||
-                  channel.rampType == 'withdraw' ||
-                  channel.rampType == 'payout' ||
-                  channel.rampType == 'deposit' ||
-                  channel.rampType == 'receive') &&
-              (channel.country == country || channel.currency == currency),
-        )
-        .toList();
+    final filteredChannels =
+        state.channels
+            .where(
+              (channel) =>
+                  channel.status == 'active' &&
+                  (channel.rampType == 'withdrawal' ||
+                      channel.rampType == 'withdraw' ||
+                      channel.rampType == 'payout' ||
+                      channel.rampType == 'deposit' ||
+                      channel.rampType == 'receive') &&
+                  (channel.country == country || channel.currency == currency),
+            )
+            .toList();
+
+    // Check if this is NGN to NGN transfer
+    final isNgnToNgn = state.sendCurrency == 'NGN' && currency == 'NGN';
+    
+    // For NGN to NGN transfers, add DayFi Tag as an option if not already present
+    if (isNgnToNgn) {
+      final hasDayfiTag = filteredChannels.any(
+        (channel) => channel.channelType?.toLowerCase() == 'dayfi_tag',
+      );
+      
+      if (!hasDayfiTag) {
+        // Create a synthetic DayFi Tag channel
+        final dayfiTagChannel = Channel(
+          channelType: 'dayfi_tag',
+          country: country,
+          currency: currency,
+          status: 'active',
+          rampType: 'withdrawal',
+          min: 0,
+          max: 999999999,
+          id: 'dayfi_tag_synthetic',
+        );
+        filteredChannels.add(dayfiTagChannel);
+      }
+    }
 
     // Deduplicate channels by channelType to merge similar options
     final Map<String, Channel> uniqueChannels = {};
     for (final channel in filteredChannels) {
       // Use a canonical key based on the channel type for merging
       final canonicalType = _getCanonicalChannelName(channel.channelType);
-      
+
       // Keep the channel with the highest max limit if duplicates exist
       if (!uniqueChannels.containsKey(canonicalType)) {
         uniqueChannels[canonicalType] = channel;
@@ -1967,103 +2385,114 @@ class _SendViewState extends ConsumerState<SendView>
     }
 
     // Sort channels by canonical channel name
-    final allChannels = uniqueChannels.values.toList()
-      ..sort(
-        (a, b) => _getCanonicalChannelName(a.channelType).compareTo(
-          _getCanonicalChannelName(b.channelType),
-        ),
-      );
+    final allChannels =
+        uniqueChannels.values.toList()..sort(
+          (a, b) => _getCanonicalChannelName(
+            a.channelType,
+          ).compareTo(_getCanonicalChannelName(b.channelType)),
+        );
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder:
-          (context) => Container(
-            height: MediaQuery.of(context).size.height * 0.92,
-            decoration: BoxDecoration(
-              color: Theme.of(context).scaffoldBackgroundColor,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-            ),
-            child: Column(
-              children: [
-                // Container(
-                //   width: 40.w,
-                //   height: 4.h,
-                //   margin: EdgeInsets.symmetric(vertical: 12.h),
-                //   decoration: BoxDecoration(
-                //     color: AppColors.neutral300,
-                //     borderRadius: BorderRadius.circular(2.r),
-                //   ),
-                // ),
-                SizedBox(height: 18.h),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 24.w),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      SizedBox(height: 22.h, width: 22.w),
-                      Text(
-                        'Delivery methods for $currency',
-                        style: AppTypography.titleLarge.copyWith(
-                          fontFamily: 'CabinetGrotesk',
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.w600,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
+      builder: (context) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.92,
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+          ),
+          child: Column(
+            children: [
+              SizedBox(height: 18.h),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 24.w),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    SizedBox(height: 24.h, width: 22.w),
+                    Text(
+                      'Delivery methods for $currency',
+                      style: AppTypography.titleLarge.copyWith(
+                        fontFamily: 'CabinetGrotesk',
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.pop(context);
-                          FocusScope.of(context).unfocus();
-                        },
-                        child: Image.asset(
-                          "assets/icons/pngs/cancelicon.png",
-                          height: 22.h,
-                          width: 22.w,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pop(context);
+                        FocusScope.of(context).unfocus();
+                      },
+                      child: Image.asset(
+                        "assets/icons/pngs/cancelicon.png",
+                        height: 24.h,
+                        width: 24.w,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                SizedBox(height: 16.h),
-                Expanded(
-                  child: ListView.builder(
-                    padding: EdgeInsets.symmetric(horizontal: 24.w),
-                    itemCount: currency == 'NGN' ? allChannels.length + 1 : allChannels.length,
-                    itemBuilder: (context, index) {
-                      // If currency is NGN, show DayFi Tag as first option
-                      if (currency == 'NGN' && index == 0) {
-                        // Auto-select DayFi Tag if no delivery method is selected
-                        final isSelected = state.selectedDeliveryMethod.isEmpty || 
-                                          state.selectedDeliveryMethod == 'dayfi_tag';
-                        
-                        // Auto-select on first render if nothing is selected
-                        if (state.selectedDeliveryMethod.isEmpty) {
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            ref
-                                .read(sendViewModelProvider.notifier)
-                                .updateDeliveryMethod('dayfi_tag');
-                          });
-                        }
-                        
+              ),
+              SizedBox(height: 16.h),
+              Expanded(
+                child: Builder(
+                  builder: (context) {
+                    // Auto-select DayFi Tag for NGN to NGN if no delivery method is selected
+                    if (isNgnToNgn && 
+                        state.selectedDeliveryMethod.isEmpty &&
+                        allChannels.isNotEmpty) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        // Find DayFi Tag channel
+                        final dayfiTagChannel = allChannels.firstWhere(
+                          (ch) => ch.channelType?.toLowerCase() == 'dayfi_tag',
+                          orElse: () => allChannels[0],
+                        );
+                        ref
+                            .read(sendViewModelProvider.notifier)
+                            .updateDeliveryMethod(
+                              dayfiTagChannel.channelType ?? 'Unknown',
+                            );
+                      });
+                    } else if (!isNgnToNgn &&
+                        state.selectedDeliveryMethod.isEmpty &&
+                        allChannels.isNotEmpty) {
+                      // For non-NGN to NGN, auto-select first channel
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        ref
+                            .read(sendViewModelProvider.notifier)
+                            .updateDeliveryMethod(
+                              allChannels[0].channelType ?? 'Unknown',
+                            );
+                      });
+                    }
+                    
+                    return ListView.builder(
+                      padding: EdgeInsets.symmetric(horizontal: 24.w),
+                      itemCount: allChannels.length,
+                      itemBuilder: (context, index) {
+                        final channel = allChannels[index];
+
                         return ListTile(
                           contentPadding: EdgeInsets.symmetric(vertical: 8.h),
                           onTap: () {
                             ref
                                 .read(sendViewModelProvider.notifier)
-                                .updateDeliveryMethod('dayfi_tag');
+                                .updateDeliveryMethod(
+                                  channel.channelType ?? 'Unknown',
+                                );
 
                             Navigator.pop(context);
                             FocusScope.of(context).unfocus();
                           },
-                          leading: _getDeliveryMethodIcon('dayfi_tag'),
+                          leading: _getDeliveryMethodIcon(channel.channelType),
                           title: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'DayFi Tag',
+                                _getDeliveryMethodType(channel.channelType),
                                 style: AppTypography.bodyLarge.copyWith(
                                   fontFamily: 'CabinetGrotesk',
                                   fontSize: 16.sp,
@@ -2072,7 +2501,11 @@ class _SendViewState extends ConsumerState<SendView>
                               ),
                               SizedBox(height: 2.h),
                               Text(
-                                'Instant • [Free]',
+                                _getDeliveryDuration(
+                                  channel.channelType,
+                                  sendCurrency: state.sendCurrency,
+                                  receiverCurrency: state.receiverCurrency,
+                                ),
                                 style: AppTypography.bodyLarge.copyWith(
                                   color: Theme.of(context).colorScheme.onSurface,
                                   fontSize: 12.sp,
@@ -2084,103 +2517,23 @@ class _SendViewState extends ConsumerState<SendView>
                               ),
                             ],
                           ),
-                          trailing: isSelected
-                              ? SvgPicture.asset(
-                                  'assets/icons/svgs/circle-check.svg',
-                                  color: AppColors.purple500,
-                                )
-                              : null,
+                          trailing:
+                              state.selectedDeliveryMethod == channel.channelType
+                                  ? SvgPicture.asset(
+                                    'assets/icons/svgs/circle-check.svg',
+                                    color: AppColors.purple500ForTheme(context),
+                                  )
+                                  : null,
                         );
-                      }
-
-                      // Adjust index for API channels if DayFi Tag was added
-                      final channelIndex = currency == 'NGN' ? index - 1 : index;
-                      final channel = allChannels[channelIndex];
-
-                      return ListTile(
-                        contentPadding: EdgeInsets.symmetric(vertical: 8.h),
-                        onTap: () {
-                          ref
-                              .read(sendViewModelProvider.notifier)
-                              .updateDeliveryMethod(
-                                channel.channelType ?? 'Unknown',
-                              );
-
-                          // print('channel.id: ${channel.id}');
-                          Navigator.pop(context);
-                          FocusScope.of(context).unfocus();
-                        },
-                        leading: _getDeliveryMethodIcon(channel.channelType),
-                        // SizedBox(width: 12.w),,
-                        title: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _getDeliveryMethodType(channel.channelType) == "P2p" ? "Peer-to-Peer" : _getDeliveryMethodType(channel.channelType),
-                              // [${channel.channelType.toString().toUpperCase()}]
-                              style: AppTypography.bodyLarge.copyWith(
-                                fontFamily: 'CabinetGrotesk',
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            SizedBox(height: 2.h),
-                            Text(
-                              _getDeliveryDuration(channel.channelType),
-                              style: AppTypography.bodyLarge.copyWith(
-                                color: Theme.of(context).colorScheme.onSurface,
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.w400,
-                                fontFamily: 'Karla',
-                                letterSpacing: -.3,
-                                height: 1.2,
-                              ),
-                            ),
-                            // SizedBox(height: 2.h),
-                            // Text(
-                            //   '${channel.vendorId ?? 'Unknown'} - ${channel.channelType ?? 'Unknown'} - ${channel.settlementType ?? 'Unknown'}',
-                            //   style: AppTypography.bodySmall.copyWith(
-                            //     fontFamily: 'Karla',
-                            //     fontSize: 12.sp,
-                            //     color: AppColors.primary600,
-                            //     fontWeight: FontWeight.w500,
-                            //   ),
-                            // ),
-                            // SizedBox(height: 1.h),
-                            // Text(
-                            //   '${channel.rampType ?? 'Unknown'} - ${channel.status ?? 'Unknown'}',
-                            //   style: AppTypography.bodySmall.copyWith(
-                            //     fontFamily: 'Karla',
-                            //     fontSize: 11.sp,
-                            //     color: AppColors.neutral600,
-                            //     fontWeight: FontWeight.w400,
-                            //   ),
-                            // ),
-                            // SizedBox(height: 2.h),
-                            // Text(
-                            //   'Min: ${channel.min} ${channel.currency} | Max: ${channel.max} ${channel.currency}',
-                            //   style: AppTypography.bodySmall.copyWith(
-                            //     fontFamily: 'Karla',
-                            //     fontSize: 12.sp,
-                            //     color: AppColors.neutral500,
-                            //   ),
-                            // ),
-                          ],
-                        ),
-                        trailing:
-                            state.selectedDeliveryMethod == channel.channelType
-                                ? SvgPicture.asset(
-                                  'assets/icons/svgs/circle-check.svg',
-                                  color: AppColors.purple500,
-                                )
-                                : null,
-                      );
-                    },
-                  ),
+                      },
+                    );
+                  },
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
+        );
+      },
     );
   }
 }

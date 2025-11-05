@@ -159,7 +159,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                               .shimmer(
                                 delay: 400.ms,
                                 duration: 800.ms,
-                                color: AppColors.purple500.withOpacity(0.1),
+                                color: AppColors.purple500ForTheme(context).withOpacity(0.1),
                                 angle: 15,
                               ),
 
@@ -228,7 +228,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                               .shimmer(
                                 delay: 500.ms,
                                 duration: 800.ms,
-                                color: AppColors.purple500.withOpacity(0.1),
+                                color: AppColors.purple500ForTheme(context).withOpacity(0.1),
                                 angle: 15,
                               ),
 
@@ -264,7 +264,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                                     text: "I forgot my password!",
                                     style: TextStyle(
                                       fontFamily: 'Karla',
-                                      color: AppColors.purple500,
+                                      color: AppColors.purple500ForTheme(context),
                                       fontSize: 16.sp,
                                       fontWeight: FontWeight.w600,
                                       letterSpacing: -.3,
@@ -298,7 +298,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                           // Login button
                           PrimaryButton(
                                 borderRadius: 38,
-                                text: "Sign in",
+                                text: "Next - Sign In",
                                 onPressed:
                                     loginState.isFormValid && !loginState.isBusy
                                         ? () => loginNotifier.login(context)
@@ -309,8 +309,8 @@ class _LoginViewState extends ConsumerState<LoginView> {
                                 isLoading: loginState.isBusy,
                                 backgroundColor:
                                     loginState.isFormValid
-                                        ? AppColors.purple500
-                                        : AppColors.purple500.withOpacity(.25),
+                                        ? AppColors.purple500ForTheme(context)
+                                        : AppColors.purple500ForTheme(context).withOpacity(.25),
                                 height: 60.h,
                                 textColor: loginState.isFormValid
                                     ? AppColors.neutral0
@@ -364,7 +364,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                                         text: "\nCreate account",
                                         style: TextStyle(
                                           fontFamily: 'Karla',
-                                          color: AppColors.purple500,
+                                          color: AppColors.purple500ForTheme(context),
                                           fontSize: 16.sp,
                                           fontWeight: FontWeight.w600,
                                           letterSpacing: -.3,

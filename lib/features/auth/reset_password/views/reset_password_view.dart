@@ -134,7 +134,7 @@ class ResetPasswordView extends ConsumerWidget {
                         .shimmer(
                           delay: 400.ms,
                           duration: 800.ms,
-                          color: AppColors.purple500.withOpacity(0.1),
+                          color: AppColors.purple500ForTheme(context).withOpacity(0.1),
                           angle: 15,
                         ),
 
@@ -200,7 +200,7 @@ class ResetPasswordView extends ConsumerWidget {
                         .shimmer(
                           delay: 500.ms,
                           duration: 800.ms,
-                          color: AppColors.purple500.withOpacity(0.1),
+                          color: AppColors.purple500ForTheme(context).withOpacity(0.1),
                           angle: 15,
                         ),
 
@@ -228,15 +228,15 @@ class ResetPasswordView extends ConsumerWidget {
                         // Submit button
                         PrimaryButton(
                           borderRadius: 38,
-                          text: "Save my new password",
+                          text: "Next - Save Password",
                           onPressed: resetPasswordState.isFormValid && !resetPasswordState.isBusy
                               ? () => resetPasswordNotifier.resetPassword(email, context)
                               : null,
                           enabled: resetPasswordState.isFormValid && !resetPasswordState.isBusy,
                           isLoading: resetPasswordState.isBusy,
                           backgroundColor: resetPasswordState.isFormValid
-                              ? AppColors.purple500
-                              : AppColors.purple500.withOpacity(.25),
+                              ? AppColors.purple500ForTheme(context)
+                              : AppColors.purple500ForTheme(context).withOpacity(.25),
                           height: 60.h,
                           textColor: resetPasswordState.isFormValid
                               ? AppColors.neutral0

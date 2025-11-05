@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:dayfi/features/send/views/send_view.dart';
-import 'package:dayfi/features/transactions/views/transactions_view.dart';
+import 'package:dayfi/features/recipients/views/recipients_view.dart';
 import 'package:dayfi/features/profile/views/profile_view.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
@@ -36,7 +36,7 @@ class _MainViewState extends ConsumerState<MainView> {
   final List<Widget> _screens = [
     const HomeView(),
     const SendView(),
-    const TransactionsView(),
+    const RecipientsView(),
     const ProfileView(),
   ];
 
@@ -135,7 +135,7 @@ class _MainViewState extends ConsumerState<MainView> {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.purple500.withOpacity(0.3),
+                        color: AppColors.purple500ForTheme(context).withOpacity(0.3),
                         blurRadius: 20,
                         spreadRadius: 2,
                         offset: const Offset(0, 4),
@@ -180,7 +180,7 @@ class _MainViewState extends ConsumerState<MainView> {
 
                 // Enable button
                 PrimaryButton(
-                  text: 'Enable Biometrics',
+                  text: 'Next - Enable Biometrics',
                   onPressed: () {
                     Navigator.of(context).pop();
                     appRouter.pushNamed(AppRoute.biometricSetupView);
@@ -209,8 +209,9 @@ class _MainViewState extends ConsumerState<MainView> {
                     style: AppTypography.bodyMedium.copyWith(
                       fontFamily: 'Karla',
                       fontSize: 16.sp,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.neutral500,
+                        letterSpacing: -0.8,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.neutral300,
                     ),
                   ),
                 ),
@@ -263,7 +264,7 @@ class _MainViewState extends ConsumerState<MainView> {
                 ),
                 _buildNavItem(
                   index: 2,
-                  icon: "assets/icons/svgs/transactions.svg",
+                  icon: "assets/icons/svgs/recipients.svg",
                   isSelected: _currentIndex == 2,
                 ),
                 _buildNavItem(
@@ -297,7 +298,7 @@ class _MainViewState extends ConsumerState<MainView> {
         duration: const Duration(milliseconds: 200),
         padding: EdgeInsets.all(8.w),
         decoration: BoxDecoration(
-          // color: isSelected ? AppColors.purple500 : Colors.transparent,
+          // color: isSelected ? AppColors.purple500ForTheme(context) : Colors.transparent,
           borderRadius: BorderRadius.circular(50.r),
         ),
         child: Opacity(
@@ -385,7 +386,7 @@ class _MainViewState extends ConsumerState<MainView> {
             SizedBox(height: 24.h),
 
             _buildFeatureItem(
-              icon: _buildTransactionsIcon(),
+              icon: _buildSendMoneyIcon(),
               title: 'Send Money',
               description:
                   'Transfer funds across borders using any of the available payment methods on the app.',
@@ -395,9 +396,9 @@ class _MainViewState extends ConsumerState<MainView> {
 
             _buildFeatureItem(
               icon: _buildRecipientsIcon(),
-              title: 'Transactions',
+              title: 'Beneficiaries',
               description:
-                  'Check the details and status of all your payments in one dashboard.',
+                  'View and manage your saved beneficiaries for quick and easy transfers.',
             ),
 
             SizedBox(height: 24.h),
@@ -484,15 +485,11 @@ class _MainViewState extends ConsumerState<MainView> {
   }
 
   Widget _buildSendMoneyIcon() {
-    return SvgPicture.asset("assets/icons/svgs/home.svg", height: 40.h);
-  }
-
-  Widget _buildTransactionsIcon() {
     return SvgPicture.asset("assets/icons/svgs/swap.svg", height: 40.h);
   }
 
   Widget _buildRecipientsIcon() {
-    return SvgPicture.asset("assets/icons/svgs/transactions.svg", height: 40.h);
+    return SvgPicture.asset("assets/icons/svgs/recipients.svg", height: 40.h);
   }
 
   Widget _buildProfileIcon() {

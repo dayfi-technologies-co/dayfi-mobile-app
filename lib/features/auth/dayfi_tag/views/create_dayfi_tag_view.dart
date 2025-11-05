@@ -5,6 +5,7 @@ import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
 import 'package:dayfi/features/auth/dayfi_tag/vm/dayfi_tag_viewmodel.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class CreateDayfiTagView extends ConsumerStatefulWidget {
   const CreateDayfiTagView({super.key});
@@ -58,46 +59,45 @@ class _CreateDayfiTagViewState extends ConsumerState<CreateDayfiTagView> {
           FocusManager.instance.primaryFocus?.unfocus();
         },
         child: Scaffold(
+          appBar: AppBar(
+            scrolledUnderElevation: 0,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            elevation: 0,
+            leading: IconButton(
+              icon: Icon(
+                Icons.arrow_back_ios,
+                color: Theme.of(context).colorScheme.onSurface,
+                // size: 20.sp,
+              ),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            title: Text(
+              "Create Your DayFi Tag",
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                fontFamily: 'CabinetGrotesk',
+                fontSize: 20.sp,
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+          ),
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           body: SafeArea(
             child: SingleChildScrollView(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  AppBar(
-                    scrolledUnderElevation: 0,
-                    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                    elevation: 0,
-                    leading: IconButton(
-                      icon: Icon(
-                        Icons.arrow_back_ios,
-                        color: Theme.of(context).colorScheme.onSurface,
-                        // size: 20.sp,
-                      ),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                    title: Text(
-                      "Create DayFi Tag",
-                      style: Theme.of(
-                        context,
-                      ).textTheme.headlineMedium?.copyWith(
-                        fontFamily: 'CabinetGrotesk',
-                        fontSize: 28.00,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
                   Padding(
                     padding: EdgeInsets.symmetric(
                       horizontal: 24.w,
                       vertical: 4.h,
                     ),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         // Subtitle
                         Text(
-                          "Choose a unique DayFi Tag that others can use to send you money. Your tag must start with @ and be at least 3 characters long.\n\nNote: DayFi Tag transfers are only available for NGN (Nigerian Naira).",
+                          "Pick a username that's easy to remember. Must start with @ and be at least 3 characters.",
                           style: Theme.of(
                             context,
                           ).textTheme.bodyMedium?.copyWith(
@@ -105,7 +105,7 @@ class _CreateDayfiTagViewState extends ConsumerState<CreateDayfiTagView> {
                             fontWeight: FontWeight.w400,
                             fontFamily: 'Karla',
                             letterSpacing: -.6,
-                            height: 1.4,
+                            height: 1.5,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -122,7 +122,7 @@ class _CreateDayfiTagViewState extends ConsumerState<CreateDayfiTagView> {
                               tagState.dayfiIdResponse!.contains(
                                     'User not found',
                                   )
-                                  ? 'This DayFi Tag is available!'
+                                  ? 'Perfect! This tag is available'
                                   : tagState.dayfiIdResponse!,
                               style: TextStyle(
                                 color:
@@ -149,15 +149,18 @@ class _CreateDayfiTagViewState extends ConsumerState<CreateDayfiTagView> {
                         // Submit Button
                         PrimaryButton(
                           borderRadius: 38,
-                          text: "Create Tag",
+                          text: "Next - Create Tag",
                           onPressed:
                               tagState.isFormValid && !tagState.isBusy
                                   ? () => tagNotifier.createDayfiId(context)
                                   : null,
+
                           backgroundColor:
                               tagState.isFormValid
-                                  ? AppColors.purple500
-                                  : AppColors.purple500.withOpacity(.25),
+                                  ? AppColors.purple500ForTheme(context)
+                                  : AppColors.purple500ForTheme(
+                                    context,
+                                  ).withOpacity(.25),
                           height: 60.h,
                           textColor:
                               tagState.isFormValid
@@ -193,7 +196,18 @@ class _CreateDayfiTagViewState extends ConsumerState<CreateDayfiTagView> {
           controller: _dayfiIdController,
           isDayfiId: true,
           keyboardType: TextInputType.text,
+          textCapitalization: TextCapitalization.none,
           onChanged: notifier.setDayfiId,
+          suffixIcon:
+              state.isValidating
+                  ? Padding(
+                    padding: EdgeInsets.all(12.w),
+                    child: LoadingAnimationWidget.horizontalRotatingDots(
+                      color: AppColors.purple500ForTheme(context),
+                      size: 20,
+                    ),
+                  )
+                  : null,
         ),
         if (state.dayfiIdError.isNotEmpty)
           Padding(

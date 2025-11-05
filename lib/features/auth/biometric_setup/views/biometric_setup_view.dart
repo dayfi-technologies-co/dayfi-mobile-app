@@ -60,7 +60,7 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.purple500.withOpacity(0.3),
+                    color: AppColors.purple500ForTheme(context).withOpacity(0.3),
                     blurRadius: 20,
                     spreadRadius: 2,
                     offset: const Offset(0, 4),
@@ -150,7 +150,7 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
             if (state.isBusy) ...[
               SizedBox(height: 24.h),
               LoadingAnimationWidget.horizontalRotatingDots(
-                color: AppColors.purple500,
+                color: AppColors.purple500ForTheme(context),
                 size: 20,
               ),
             ],
@@ -226,7 +226,7 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
                       : () => _showSkipDialog(context, notifier, state),
                borderColor: Colors.transparent,    
               height: 60.h,
-              textColor: AppColors.purple500,
+              textColor: AppColors.purple500ForTheme(context),
               fontFamily: 'Karla',
               letterSpacing: -.8,
               fontSize: 18,
@@ -264,7 +264,7 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
                 'Retry',
                 style: TextStyle(
                   fontFamily: 'Karla',
-                  color: AppColors.purple500,
+                  color: AppColors.purple500ForTheme(context),
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w600,
                   letterSpacing: -.3,
@@ -282,12 +282,14 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
     BiometricSetupNotifier notifier,
     BiometricSetupState state,
   ) {
+    // Capture parent context for use after dialog closes
+    final parentContext = context;
     bool dialogLoading = false;
     showDialog(
       context: context,
       barrierDismissible: false,
       builder:
-          (BuildContext context) => StatefulBuilder(
+          (BuildContext dialogContext) => StatefulBuilder(
             builder: (context, setStateSB) {
               return Dialog(
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -312,7 +314,7 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.purple500.withOpacity(0.3),
+                          color: AppColors.purple500ForTheme(context).withOpacity(0.3),
                           blurRadius: 20,
                           spreadRadius: 2,
                           offset: const Offset(0, 4),
@@ -346,7 +348,7 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
                   if (dialogLoading) ...[
                     SizedBox(height: 8.h),
                     LoadingAnimationWidget.horizontalRotatingDots(
-                      color: AppColors.purple500,
+                      color: AppColors.purple500ForTheme(context),
                       size: 22,
                     ),
                     SizedBox(height: 16.h),
@@ -359,10 +361,17 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
                         ? null
                         : () async {
                             setStateSB(() { dialogLoading = true; });
-                            await notifier.skipBiometrics(context);
-                            if (context.mounted) {
-                              Navigator.of(context).pop();
-                              appRouter.pushNamed(AppRoute.mainView);
+                            // Close dialog first to avoid navigation conflicts
+                            Navigator.of(dialogContext).pop();
+                            // Wait a frame to ensure dialog is fully closed before showing snackbar
+                            await Future.delayed(const Duration(milliseconds: 100));
+                            if (parentContext.mounted) {
+                              await notifier.skipBiometrics(parentContext);
+                              // Navigate after snackbar is shown
+                              await Future.delayed(const Duration(milliseconds: 500));
+                              if (parentContext.mounted) {
+                                appRouter.pushNamed(AppRoute.mainView);
+                              }
                             }
                           },
                     backgroundColor: AppColors.purple500,
@@ -384,11 +393,11 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
                     onPressed: dialogLoading
                         ? null
                         : () {
-                            Navigator.of(context).pop();
-                            notifier.enableBiometrics(context);
+                            Navigator.of(dialogContext).pop();
+                            notifier.enableBiometrics(parentContext);
                           },
                     borderColor: Colors.transparent,
-                    textColor: AppColors.purple500,
+                    textColor: AppColors.purple500ForTheme(context),
                     width: double.infinity,
                     fullWidth: true,
                     height: 60.h,

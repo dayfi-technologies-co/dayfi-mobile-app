@@ -10,6 +10,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/routes/route.dart';
+import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
 
 class TransactionsView extends ConsumerStatefulWidget {
   const TransactionsView({super.key});
@@ -64,8 +65,14 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
           scrolledUnderElevation: 0,
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
-          leading: const SizedBox.shrink(),
-          leadingWidth: 0,
+          leading: IconButton(
+            onPressed: () => appRouter.pop(),
+            icon: Icon(
+              Icons.arrow_back_ios,
+              color: Theme.of(context).colorScheme.onSurface,
+              // size: 20.sp,
+            ),
+          ),
           title: Text(
             "Transactions",
             style: AppTypography.titleLarge.copyWith(
@@ -117,10 +124,10 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 LoadingAnimationWidget.horizontalRotatingDots(
-                                  color: AppColors.purple500,
+                                  color: AppColors.purple500ForTheme(context),
                                   size: 20,
                                 ),
-                                SizedBox(height: 100.h),
+                                SizedBox(height: 40.h),
                               ],
                             ),
                           )
@@ -167,7 +174,7 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
-                                SizedBox(height: 100.h),
+                                SizedBox(height: 40.h),
                               ],
                             ),
                           )
@@ -200,7 +207,7 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
-                                SizedBox(height: 100.h),
+                                SizedBox(height: 40.h),
                               ],
                             ),
                           )
@@ -310,7 +317,7 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   Text(
-                    transaction.beneficiary.name.toUpperCase(),
+                    _getBeneficiaryDisplayName(transaction),
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontFamily: 'Karla',
                       fontSize: 18.sp,
@@ -419,6 +426,26 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
     } else {
       return 'N/A';
     }
+  }
+
+  String _getBeneficiaryDisplayName(WalletTransaction transaction) {
+    final profileState = ref.read(profileViewModelProvider);
+    final user = profileState.user;
+
+    if (user != null) {
+      // Build user's full name from first name and last name
+      final userFullName =
+          '${user.firstName} ${user.lastName}'.trim().toUpperCase();
+      final beneficiaryName = transaction.beneficiary.name.trim().toUpperCase();
+
+      // Check if beneficiary name matches user's full name
+      if (beneficiaryName == userFullName) {
+        return 'Top-Up';
+      }
+    }
+
+    // Default: return uppercase beneficiary name
+    return transaction.beneficiary.name.toUpperCase();
   }
 
   String _formatNumber(double amount) {

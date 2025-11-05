@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:dayfi/flavors.dart';
 import 'package:dayfi/models/wallet_transaction.dart';
+import 'package:dayfi/models/wallet.dart';
 import 'package:dayfi/models/beneficiary_with_source.dart';
 import 'package:dayfi/models/payment_response.dart' as payment;
 import 'package:dayfi/services/remote/network/network_service.dart';
@@ -9,6 +10,40 @@ class WalletService {
   final NetworkService _networkService;
 
   WalletService({required NetworkService networkService}) : _networkService = networkService;
+
+  /// Fetch wallet details
+  /// GET /api/v1/payments/wallet-details
+  Future<WalletDetailsResponse> fetchWalletDetails() async {
+    try {
+      final response = await _networkService.call(
+        '${F.baseUrl}/payments/wallet-details',
+        RequestMethod.get,
+      );
+
+      // Convert response.data to Map<String, dynamic>
+      Map<String, dynamic> responseData;
+      
+      if (response.data is Map<String, dynamic>) {
+        responseData = response.data as Map<String, dynamic>;
+      } else if (response.data is String) {
+        try {
+          responseData = json.decode(response.data as String) as Map<String, dynamic>;
+        } catch (jsonError) {
+          throw Exception('Failed to parse JSON response: $jsonError');
+        }
+      } else {
+        throw Exception('Unexpected response type: ${response.data.runtimeType}');
+      }
+      
+      try {
+        return WalletDetailsResponse.fromJson(responseData);
+      } catch (parseError) {
+        throw Exception('Failed to parse wallet details response: $parseError');
+      }
+    } catch (e) {
+      throw Exception('Failed to fetch wallet details: $e');
+    }
+  }
 
   Future<WalletTransactionResponse> getWalletTransactions({
     String? status,

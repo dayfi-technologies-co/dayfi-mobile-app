@@ -1,6 +1,4 @@
-import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
-import 'package:dayfi/routes/route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -9,10 +7,13 @@ import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
 import 'package:dayfi/features/recipients/vm/recipients_viewmodel.dart';
 import 'package:dayfi/features/send/views/send_view.dart';
 import 'package:dayfi/features/send/vm/send_viewmodel.dart';
+import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
 import 'package:dayfi/models/beneficiary_with_source.dart';
 import 'package:dayfi/models/payment_response.dart' as payment;
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:dayfi/routes/route.dart';
+import 'package:dayfi/common/utils/app_logger.dart';
 
 class RecipientsView extends ConsumerStatefulWidget {
   const RecipientsView({super.key});
@@ -57,6 +58,79 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
   @override
   Widget build(BuildContext context) {
     final recipientsState = ref.watch(recipientsProvider);
+    final profileState = ref.watch(profileViewModelProvider);
+    final user = profileState.user;
+
+    // Build multiple name variations for comparison
+    Set<String> userNames = {};
+    if (user != null) {
+      final firstName = user.firstName.trim().toLowerCase();
+      final middleName = user.middleName?.trim().toLowerCase();
+      final lastName = user.lastName.trim().toLowerCase();
+      
+      // Add different name combinations
+      if (firstName.isNotEmpty && lastName.isNotEmpty) {
+        userNames.add('$firstName $lastName');
+        userNames.add('${firstName}${lastName}');
+        userNames.add('$firstName $lastName'.trim());
+      }
+      
+      if (middleName != null && middleName.isNotEmpty) {
+        if (firstName.isNotEmpty && lastName.isNotEmpty) {
+          userNames.add('$firstName $middleName $lastName');
+          userNames.add('$firstName $middleName$lastName');
+          userNames.add('${firstName}${middleName}${lastName}');
+        }
+      }
+      
+      // Also add the userName from profileState (which includes middle name)
+      final userName = profileState.userName.toLowerCase().trim();
+      if (userName.isNotEmpty && userName != 'loading...') {
+        userNames.add(userName);
+        // Add without spaces
+        userNames.add(userName.replaceAll(' ', ''));
+      }
+    }
+
+    // Filter out beneficiaries whose name matches any variation of the user's name
+    final visibleBeneficiaries = recipientsState.filteredBeneficiaries
+        .where((beneficiary) {
+          if (userNames.isEmpty) return true; // Show all if no user data
+          
+          final beneficiaryName = beneficiary.beneficiary.name.toLowerCase().trim();
+          final beneficiaryNameNoSpaces = beneficiaryName.replaceAll(' ', '').replaceAll('-', '');
+          
+          // Check against all name variations
+          for (final userName in userNames) {
+            final userNameNoSpaces = userName.replaceAll(' ', '').replaceAll('-', '');
+            
+            // Exact match (with or without spaces)
+            if (beneficiaryName == userName || 
+                beneficiaryNameNoSpaces == userNameNoSpaces) {
+              AppLogger.debug('Filtering out beneficiary: ${beneficiaryName} matches user: $userName');
+              return false; // Hide this beneficiary
+            }
+            
+            // Check if names are similar (handles minor variations)
+            // Normalize both names for comparison
+            final normalizedBeneficiary = beneficiaryNameNoSpaces;
+            final normalizedUser = userNameNoSpaces;
+            
+            if (normalizedBeneficiary == normalizedUser ||
+                normalizedBeneficiary.contains(normalizedUser) ||
+                normalizedUser.contains(normalizedBeneficiary)) {
+              // Additional check: if lengths are similar, it's likely a match
+              final lengthDiff = (normalizedBeneficiary.length - normalizedUser.length).abs();
+              if (lengthDiff <= 2) { // Allow 2 character difference
+                AppLogger.debug('Filtering out beneficiary: ${beneficiaryName} matches user: $userName (similar)');
+                return false; // Hide this beneficiary
+              }
+            }
+          }
+          
+          return true; // Show this beneficiary
+        })
+        .toList();
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
@@ -66,55 +140,49 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
           scrolledUnderElevation: 0,
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
-          leading: IconButton(
-            onPressed: () => appRouter.pop(),
-            icon: Icon(
-              Icons.arrow_back_ios,
-              color: Theme.of(context).colorScheme.onSurface,
-              // size: 20.sp,
-            ),
-          ),
+          leading: const SizedBox.shrink(),
+
+          automaticallyImplyLeading: false,
           title: Text(
             "Beneficiaries",
             style: AppTypography.titleLarge.copyWith(
-               fontFamily: 'CabinetGrotesk',
-            fontSize: 20.sp,
-            fontWeight: FontWeight.w600,
-            color: Theme.of(context).colorScheme.onSurface,
-          
+              fontFamily: 'CabinetGrotesk',
+              fontSize: 20.sp,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           centerTitle: true,
-          actions: [
-            Padding(
-              padding: EdgeInsets.only(right: 16.w),
-              child: IconButton(
-                onPressed: () {
-                  appRouter.pushNamed(
-                    AppRoute.addRecipientsView,
-                    arguments: <String, dynamic>{},
-                  );
-                },
-                icon: SvgPicture.asset(
-                  "assets/icons/svgs/user-plus.svg",
-                  width: 24.w,
-                  height: 24.w,
-                  color: Theme.of(context).colorScheme.onSurface,
-                  colorFilter: ColorFilter.mode(
-                    Theme.of(context).colorScheme.onSurface,
-                    BlendMode.srcIn,
-                  ),
-                ),
-                tooltip: 'Add beneficiary',
-                style: IconButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-              ),
-            ),
-            SizedBox(width: 16.w),
-          ],
+          // actions: [
+          //   Padding(
+          //     padding: EdgeInsets.only(right: 16.w),
+          //     child: IconButton(
+          //       onPressed: () {
+          //         appRouter.pushNamed(
+          //           AppRoute.addRecipientsView,
+          //           arguments: <String, dynamic>{},
+          //         );
+          //       },
+          //       icon: SvgPicture.asset(
+          //         "assets/icons/svgs/user-plus.svg",
+          //         width: 24.w,
+          //         height: 24.w,
+          //         color: Theme.of(context).colorScheme.onSurface,
+          //         colorFilter: ColorFilter.mode(
+          //           Theme.of(context).colorScheme.onSurface,
+          //           BlendMode.srcIn,
+          //         ),
+          //       ),
+          //       tooltip: 'Add beneficiary',
+          //       style: IconButton.styleFrom(
+          //         padding: EdgeInsets.zero,
+          //         minimumSize: Size.zero,
+          //         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          //       ),
+          //     ),
+          //   ),
+          //   SizedBox(width: 16.w),
+          // ],
         ),
         body: RefreshIndicator(
           onRefresh: () async {
@@ -156,10 +224,10 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 LoadingAnimationWidget.horizontalRotatingDots(
-                                  color: AppColors.purple500,
+                                  color: AppColors.purple500ForTheme(context),
                                   size: 20,
                                 ),
-                                SizedBox(height: 100.h),
+                                SizedBox(height: 40.h),
                               ],
                             ),
                           )
@@ -204,11 +272,11 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
-                                SizedBox(height: 100.h),
+                                SizedBox(height: 40.h),
                               ],
                             ),
                           )
-                          : recipientsState.filteredBeneficiaries.isEmpty
+                          : visibleBeneficiaries.isEmpty
                           ? Center(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -236,7 +304,7 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
-                                SizedBox(height: 100.h),
+                                SizedBox(height: 40.h),
                               ],
                             ),
                           )
@@ -247,19 +315,13 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
                               right: 24.w,
                               bottom: 112.h,
                             ),
-                            itemCount:
-                                recipientsState.filteredBeneficiaries.length,
+                            itemCount: visibleBeneficiaries.length,
                             itemBuilder: (context, index) {
-                              final beneficiary =
-                                  recipientsState.filteredBeneficiaries[index];
+                              final beneficiary = visibleBeneficiaries[index];
                               return _buildRecipientCard(
                                 beneficiary,
                                 bottomMargin:
-                                    index ==
-                                            recipientsState
-                                                    .filteredBeneficiaries
-                                                    .length -
-                                                1
+                                    index == visibleBeneficiaries.length - 1
                                         ? 8
                                         : 24,
                               );
@@ -298,7 +360,7 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
                 height: 40.w,
                 margin: EdgeInsets.only(bottom: 4.w, right: 4.w),
                 decoration: BoxDecoration(
-                  color: AppColors.purple500,
+                  color: AppColors.purple500ForTheme(context),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
@@ -393,7 +455,7 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
           //   onPressed: () => _navigateToSend(beneficiaryWithSource),
           //   height: 32.h,
           //   width: 68.w,
-          //   backgroundColor: AppColors.purple500,
+          //   backgroundColor: AppColors.purple500ForTheme(context),
           //   textColor: AppColors.neutral0,
           //   fontFamily: 'Karla',
           //   fontSize: 14.sp,
@@ -531,6 +593,9 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
     switch (method.toLowerCase()) {
       case 'bank_transfer':
       case 'bank':
+      case 'p2p':
+      case 'peer_to_peer':
+      case 'peer-to-peer':
         return 'Bank Transfer';
       case 'mobile_money':
       case 'momo':
@@ -550,8 +615,6 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
       case 'crypto':
       case 'cryptocurrency':
         return 'Crypto';
-      case 'p2p':
-        return 'Peer-to-Peer';
       default:
         return method
             .split('_')

@@ -16,6 +16,7 @@ import 'package:dayfi/features/send/vm/send_viewmodel.dart';
 import 'package:dayfi/services/remote/payment_service.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:dayfi/models/payment_response.dart' as payment;
+import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
 
 class TransactionDetailsView extends ConsumerStatefulWidget {
   final WalletTransaction transaction;
@@ -35,7 +36,7 @@ class _TransactionDetailsViewState
   Map<String, dynamic>? _receiveCurrencyRates;
   String _calculatedReceiveAmount = '';
   String _exchangeRate = '';
-  
+
   // Services
   final PaymentService _paymentService = locator<PaymentService>();
 
@@ -98,15 +99,22 @@ class _TransactionDetailsViewState
 
             SizedBox(height: 20.h),
 
-            // Account Details
-            _buildAccountDetails(),
+            // Only show account details if it's a wallet top-up and fee is 0.00
+            if (_isWalletTopUp() && _isFeeZero()) ...[
+              _buildBankAccountDetails(),
+              SizedBox(height: 16.h),
+            ],
 
-            SizedBox(height: 16.h),
+            // Hide transaction details and recipient details for wallet top-ups
+            if (!_isWalletTopUp()) ...[
+              // Account Details
+              _buildAccountDetails(),
+              SizedBox(height: 16.h),
 
-            // Recipient Details
-            _buildRecipientDetails(),
-
-            SizedBox(height: 16.h),
+              // Recipient Details
+              _buildRecipientDetails(),
+              SizedBox(height: 16.h),
+            ],
 
             // Payment Summary
             _buildPaymentSummary(),
@@ -126,7 +134,7 @@ class _TransactionDetailsViewState
 
   Widget _buildTransactionHeader() {
     final amount = _getTransactionAmount();
-    final recipientName = widget.transaction.beneficiary.name.toUpperCase();
+    final recipientName = _getRecipientDisplayName();
     final dateTime = _formatDateTime(widget.transaction.timestamp);
 
     return Column(
@@ -139,7 +147,7 @@ class _TransactionDetailsViewState
             fontFamily: 'CabinetGrotesk',
             fontSize: 32.sp,
             letterSpacing: -.6,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
@@ -154,7 +162,7 @@ class _TransactionDetailsViewState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "To $recipientName",
+                    recipientName,
                     style: AppTypography.bodyLarge.copyWith(
                       fontFamily: 'Karla',
                       fontSize: 16.sp,
@@ -267,8 +275,16 @@ class _TransactionDetailsViewState
     final status = widget.transaction.status.toLowerCase();
     final sendAmount = _getTransactionAmount();
     final receiveAmount = _getReceiveAmount();
-    final recipientName = widget.transaction.beneficiary.name.toUpperCase();
+    final recipientDisplayName = _getRecipientDisplayName();
     final dateTime = _formatDateTime(widget.transaction.timestamp);
+    // Get recipient name for timeline (without "To " prefix)
+    final recipientName =
+        recipientDisplayName.startsWith('To ')
+            ? recipientDisplayName.substring(3)
+            : recipientDisplayName;
+
+    final isTopUp = _isWalletTopUp();
+    final transferPhrase = isTopUp ? "top up" : "transfer";
 
     return Container(
       padding: EdgeInsets.all(20.w),
@@ -282,7 +298,8 @@ class _TransactionDetailsViewState
             isCompleted: true,
             isActive: true,
             date: dateTime.split(',')[0],
-            title: "You've set up a transfer of $sendAmount to $recipientName",
+            title:
+                "You've set up a $transferPhrase of $sendAmount to $recipientName",
             isFirst: true,
           ),
           SizedBox(height: 20.h),
@@ -294,19 +311,23 @@ class _TransactionDetailsViewState
             date: dateTime.split(',')[0],
             title: "We're waiting to receive your funds",
             isFirst: false,
+            isLast: isTopUp, // Hide third item for wallet top-ups
           ),
-          SizedBox(height: 20.h),
 
-          _buildTimelineItem(
-            isCompleted:
-                status == 'success-collection' || status == 'completed',
-            isActive: false,
-            date: dateTime.split(',')[0],
-            title:
-                "$recipientName should receive your transfer of $receiveAmount by ${_getExpectedDeliveryDate()}",
-            isFirst: false,
-            isLast: true,
-          ),
+          // Only show third timeline item if NOT a wallet top-up
+          if (!isTopUp) ...[
+            SizedBox(height: 20.h),
+            _buildTimelineItem(
+              isCompleted:
+                  status == 'success-collection' || status == 'completed',
+              isActive: false,
+              date: dateTime.split(',')[0],
+              title:
+                  "$recipientName should receive your $transferPhrase of $receiveAmount by ${_getExpectedDeliveryDate()}",
+              isFirst: false,
+              isLast: true,
+            ),
+          ],
         ],
       ),
     );
@@ -321,16 +342,22 @@ class _TransactionDetailsViewState
     bool isLast = false,
   }) {
     Color statusColor;
+    Color backgroundColor;
     if (isCompleted) {
       statusColor = AppColors.success500;
+      backgroundColor = AppColors.success500.withOpacity(0.1);
     } else if (isActive) {
       statusColor = AppColors.warning500;
+      backgroundColor = AppColors.warning500.withOpacity(0.1);
     } else {
       statusColor = Theme.of(context).colorScheme.onSurface.withOpacity(0.3);
+      backgroundColor = Theme.of(
+        context,
+      ).colorScheme.onSurface.withOpacity(0.05);
     }
 
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         // Timeline indicator
         Column(
@@ -338,73 +365,141 @@ class _TransactionDetailsViewState
             if (!isFirst)
               Container(
                 width: 2.w,
-                height: 20.h,
-                color:
-                    isCompleted
-                        ? AppColors.success500
-                        : isActive
-                        ? AppColors.warning500
-                        : Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withOpacity(0.3),
+                height: 24.h,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12.r),
+                  border: Border.all(
+                    color: statusColor.withOpacity(0.2),
+                    width: 1,
+                  ),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      isCompleted
+                          ? AppColors.success500
+                          : isActive
+                          ? AppColors.warning500
+                          : Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.2),
+                      isCompleted
+                          ? AppColors.success500.withOpacity(0.3)
+                          : isActive
+                          ? AppColors.warning500.withOpacity(0.3)
+                          : Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.1),
+                    ],
+                  ),
+                ),
               ),
             Container(
-              width: 12.w,
-              height: 12.w,
+              width: 16.w,
+              height: 16.w,
               decoration: BoxDecoration(
                 color: statusColor,
                 shape: BoxShape.circle,
+              ),
+              child: Center(
+                child:
+                    isCompleted
+                        ? SvgPicture.asset(
+                          'assets/icons/svgs/circle-check.svg',
+
+                          colorFilter: ColorFilter.mode(
+                            Colors.white,
+                            BlendMode.srcIn,
+                          ),
+                        )
+                        : isActive
+                        ? Container(
+                          width: 6.w,
+                          height: 6.w,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                        )
+                        : null,
               ),
             ),
             if (!isLast)
               Container(
                 width: 2.w,
-                height: 20.h,
-                color:
-                    isCompleted
-                        ? AppColors.success500
-                        : isActive
-                        ? AppColors.warning500
-                        : Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withOpacity(0.3),
+                height: 24.h,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12.r),
+                  border: Border.all(
+                    color: statusColor.withOpacity(0.2),
+                    width: 1,
+                  ),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      isCompleted
+                          ? AppColors.success500.withOpacity(0.3)
+                          : isActive
+                          ? AppColors.warning500.withOpacity(0.3)
+                          : Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.1),
+                      isCompleted
+                          ? AppColors.success500
+                          : isActive
+                          ? AppColors.warning500
+                          : Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.2),
+                    ],
+                  ),
+                ),
               ),
           ],
         ),
 
-        SizedBox(width: 24.w),
+        SizedBox(width: 20.w),
 
         // Content
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                date,
-                style: AppTypography.bodySmall.copyWith(
-                  fontFamily: 'Karla',
-                  fontSize: 12,
-                  letterSpacing: -.4,
-                  height: 1.450,
-                  fontWeight: FontWeight.w500,
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withOpacity(0.6),
+          child: Container(
+            padding: EdgeInsets.symmetric(vertical: 12.h),
+            // decoration: BoxDecoration(
+            //   color: backgroundColor,
+            //   borderRadius: BorderRadius.circular(12.r),
+            //   border: Border.all(color: statusColor.withOpacity(0.2), width: 1),
+            // ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  date,
+                  style: AppTypography.bodySmall.copyWith(
+                    fontFamily: 'Karla',
+                    fontSize: 11.sp,
+                    letterSpacing: 0.5,
+                    height: 1.4,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.5),
+                  ),
                 ),
-              ),
-              SizedBox(height: 8.h),
-              Text(
-                title,
-                style: AppTypography.bodyMedium.copyWith(
-                  fontFamily: 'Karla',
-                  fontSize: 15.sp,
-                  letterSpacing: -.4,
-                  fontWeight: FontWeight.w400,
-                  color: Theme.of(context).colorScheme.onSurface,
-                  height: 1.25,
+                SizedBox(height: 6.h),
+                Text(
+                  title,
+                  style: AppTypography.bodyMedium.copyWith(
+                    fontFamily: 'Karla',
+                    fontSize: 14.sp,
+                    letterSpacing: -0.2,
+                    fontWeight: FontWeight.w500,
+                    color: Theme.of(context).colorScheme.onSurface,
+                    height: 1.4,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ],
@@ -437,7 +532,10 @@ class _TransactionDetailsViewState
           ),
           _buildDetailRow("Bank", _getBankName()),
           // _buildDetailRow("Account type", _getAccountTypeDisplay()),
-          _buildDetailRow("Send type", _getChannelDisplayName(widget.transaction.sendChannel)),
+          _buildDetailRow(
+            "Send type",
+            _getChannelDisplayName(widget.transaction.sendChannel),
+          ),
           // _buildDetailRow("Receive channel", _getChannelDisplayName(widget.transaction.receiveChannel)),
           _buildDetailRow("Reason", widget.transaction.reason ?? "N/A"),
         ],
@@ -465,10 +563,7 @@ class _TransactionDetailsViewState
             ),
           ),
           SizedBox(height: 16.h),
-          _buildDetailRow(
-            "Name",
-            widget.transaction.beneficiary.name,
-          ),
+          _buildDetailRow("Name", widget.transaction.beneficiary.name),
           // _buildDetailRow(
           //   "Phone",
           //   widget.transaction.beneficiary.phone,
@@ -545,6 +640,8 @@ class _TransactionDetailsViewState
     final fee = _getTransactionFee();
     final total = _calculateTotal();
     final exchangeRate = _getExchangeRate();
+    final isTopUp = _isWalletTopUp();
+    final isFeeZero = _isFeeZero();
 
     return Container(
       padding: EdgeInsets.all(20.w),
@@ -560,10 +657,36 @@ class _TransactionDetailsViewState
             widget.transaction.id,
             showCopy: true,
           ),
-          _buildSummaryRow("Exchange rate", exchangeRate, isLoading: _isRatesLoading),
-          _buildSummaryRow("Recipient got", receiveAmount, isLoading: _isRatesLoading),
-          _buildSummaryRow("Fee", fee),
+          if (!isTopUp) ...[
+            _buildSummaryRow(
+              "Exchange rate",
+              exchangeRate,
+              isLoading: _isRatesLoading,
+            ),
+            _buildSummaryRow(
+              "Recipient got",
+              receiveAmount,
+              isLoading: _isRatesLoading,
+            ),
+          ],
+          // Only show fee if it's not zero
+          if (!isFeeZero) _buildSummaryRow("Fee", fee),
           _buildSummaryRow("Total paid", total, isTotal: true),
+          // Show description/reason if available
+          if (widget.transaction.reason != null &&
+              widget.transaction.reason!.isNotEmpty) ...[
+            SizedBox(height: 4.h),
+            Divider(
+              height: 24.h,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
+            ),
+            SizedBox(height: 4.h),
+            _buildSummaryRow(
+              "Description",
+              widget.transaction.reason!,
+              isDescription: true,
+            ),
+          ],
         ],
       ),
     );
@@ -575,80 +698,111 @@ class _TransactionDetailsViewState
     bool showCopy = false,
     bool isTotal = false,
     bool isLoading = false,
+    bool isDescription = false,
   }) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 12.h),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: Text(
-              label,
-              style: AppTypography.bodyMedium.copyWith(
-                fontFamily: 'Karla',
-                fontSize: 14.sp,
-                letterSpacing: -.4,
-                fontWeight: FontWeight.w400,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-              ),
-            ),
-          ),
-          SizedBox(width: 24.w),
-          Expanded(
-            flex: 3,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+      padding: EdgeInsets.only(bottom: isDescription ? 0 : 12.h),
+      child: isDescription
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: isLoading
-                        ? SizedBox(
-                            width: 20.w,
-                            height: 20.w,
-                            child: LoadingAnimationWidget.horizontalRotatingDots(
-                              color: AppColors.primary600,
-                              size: 20,
-                            ),
-                          )
-                        : Text(
-                            value,
-                            style: AppTypography.bodyMedium.copyWith(
-                              fontFamily: 'Karla',
-                              fontSize: 15.sp,
-                              letterSpacing: -.4,
-                              fontWeight: isTotal ? FontWeight.w600 : FontWeight.w500,
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
-                                    textAlign: TextAlign.end,
-                          ),
+                Text(
+                  label,
+                  style: AppTypography.bodyMedium.copyWith(
+                    fontFamily: 'Karla',
+                    fontSize: 14.sp,
+                    letterSpacing: -.4,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                   ),
                 ),
-
-                if (showCopy) ...[
-                  SizedBox(width: 8.w),
-                  GestureDetector(
-                    onTap: () {
-                      HapticFeedback.lightImpact();
-                      TopSnackbar.show(
-                        context,
-                        message: 'Reference number copied',
-                      );
-                    },
-                    child: SvgPicture.asset(
-                      "assets/icons/svgs/copy.svg",
-                      height: 20.w,
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withOpacity(0.6),
+                SizedBox(height: 6.h),
+                Text(
+                  value,
+                  style: AppTypography.bodyMedium.copyWith(
+                    fontFamily: 'Karla',
+                    fontSize: 14.sp,
+                    letterSpacing: -.2,
+                    fontWeight: FontWeight.w400,
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            )
+          : Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    label,
+                    style: AppTypography.bodyMedium.copyWith(
+                      fontFamily: 'Karla',
+                      fontSize: 14.sp,
+                      letterSpacing: -.4,
+                      fontWeight: FontWeight.w400,
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                     ),
                   ),
-                ],
+                ),
+                SizedBox(width: 24.w),
+                Expanded(
+                  flex: 3,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: isLoading
+                              ? SizedBox(
+                                  width: 20.w,
+                                  height: 20.w,
+                                  child: LoadingAnimationWidget.horizontalRotatingDots(
+                                    color: AppColors.primary600,
+                                    size: 20,
+                                  ),
+                                )
+                              : Text(
+                                  value,
+                                  style: AppTypography.bodyMedium.copyWith(
+                                    fontFamily: 'Karla',
+                                    fontSize: 15.sp,
+                                    letterSpacing: -.4,
+                                    fontWeight:
+                                        isTotal ? FontWeight.w600 : FontWeight.w500,
+                                    color: Theme.of(context).colorScheme.onSurface,
+                                  ),
+                                  textAlign: TextAlign.end,
+                                ),
+                        ),
+                      ),
+
+                      if (showCopy) ...[
+                        SizedBox(width: 8.w),
+                        GestureDetector(
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            Clipboard.setData(ClipboardData(text: value));
+                            TopSnackbar.show(
+                              context,
+                              message: 'Reference number copied',
+                            );
+                          },
+                          child: SvgPicture.asset(
+                            "assets/icons/svgs/copy.svg",
+                            height: 20.w,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withOpacity(0.6),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
               ],
             ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -658,7 +812,6 @@ class _TransactionDetailsViewState
         PrimaryButton(
           text: "I've paid",
           onPressed: () {
-            // TODO: Implement payment confirmation
             _showPaymentConfirmationDialog();
           },
           width: double.infinity,
@@ -722,10 +875,12 @@ class _TransactionDetailsViewState
         widget.transaction.beneficiary.country,
       );
       final currencySymbol = _getCurrencySymbolFromCode(currencyCode);
-      final formattedAmount = StringUtils.formatNumberWithCommas(_calculatedReceiveAmount);
+      final formattedAmount = StringUtils.formatNumberWithCommas(
+        _calculatedReceiveAmount,
+      );
       return '$currencySymbol$formattedAmount';
     }
-    
+
     // Fallback to transaction data
     if (widget.transaction.receiveAmount != null &&
         widget.transaction.receiveAmount! > 0) {
@@ -808,7 +963,7 @@ class _TransactionDetailsViewState
     if (_exchangeRate.isNotEmpty) {
       return _exchangeRate;
     }
-    
+
     // Fallback to calculation from transaction data
     if (widget.transaction.sendAmount != null &&
         widget.transaction.receiveAmount != null &&
@@ -849,7 +1004,7 @@ class _TransactionDetailsViewState
       );
       final sendSymbol = '₦';
       final receiveSymbol = _getCurrencySymbolFromCode(receiveCurrency);
-      
+
       // Provide a fallback rate based on common currency pairs
       // This is a simplified approach - in production, you might want to fetch real rates
       switch (receiveCurrency) {
@@ -925,7 +1080,8 @@ class _TransactionDetailsViewState
 
   /// Fetch exchange rates for both send and receive currencies
   Future<void> _fetchExchangeRates() async {
-    if (widget.transaction.sendAmount == null || widget.transaction.sendAmount! <= 0) {
+    if (widget.transaction.sendAmount == null ||
+        widget.transaction.sendAmount! <= 0) {
       return;
     }
 
@@ -936,8 +1092,10 @@ class _TransactionDetailsViewState
     try {
       // Fetch rates for both currencies in parallel
       final sendCurrency = 'NGN';
-      final receiveCurrency = _getCurrencyCodeFromCountry(widget.transaction.beneficiary.country);
-      
+      final receiveCurrency = _getCurrencyCodeFromCountry(
+        widget.transaction.beneficiary.country,
+      );
+
       await Future.wait([
         _fetchRates(sendCurrency),
         _fetchRates(receiveCurrency),
@@ -959,14 +1117,14 @@ class _TransactionDetailsViewState
   Future<void> _fetchRates(String currency) async {
     try {
       final response = await _paymentService.fetchRates(currency: currency);
-      
+
       if (response.statusCode == 200 && response.data != null) {
         final paymentData = response.data as payment.PaymentData;
         final rates = paymentData.rates;
-        
+
         if (rates != null && rates.isNotEmpty) {
           final rate = rates.first;
-          
+
           // Convert Rate object to Map for storage
           final rateData = {
             'buy': rate.buy?.toString() ?? 'N/A',
@@ -976,7 +1134,7 @@ class _TransactionDetailsViewState
             'code': rate.code ?? '',
             'updatedAt': rate.updatedAt ?? '',
           };
-          
+
           if (currency == 'NGN') {
             _sendCurrencyRates = rateData;
           } else {
@@ -995,8 +1153,12 @@ class _TransactionDetailsViewState
       return;
     }
 
-    final sendSellRate = double.tryParse(_sendCurrencyRates!['sell']?.toString() ?? '');
-    final receiveBuyRate = double.tryParse(_receiveCurrencyRates!['buy']?.toString() ?? '');
+    final sendSellRate = double.tryParse(
+      _sendCurrencyRates!['sell']?.toString() ?? '',
+    );
+    final receiveBuyRate = double.tryParse(
+      _receiveCurrencyRates!['buy']?.toString() ?? '',
+    );
 
     if (sendSellRate == null || receiveBuyRate == null || receiveBuyRate == 0) {
       return;
@@ -1004,11 +1166,11 @@ class _TransactionDetailsViewState
 
     // Calculate exchange rate: receiveBuyRate / sendSellRate
     final rate = receiveBuyRate / sendSellRate;
-    
+
     // Calculate converted amount
     final sendAmount = widget.transaction.sendAmount!;
     final convertedAmount = sendAmount * rate;
-    
+
     // Update state
     setState(() {
       _calculatedReceiveAmount = convertedAmount.toStringAsFixed(2);
@@ -1019,20 +1181,25 @@ class _TransactionDetailsViewState
   /// Format exchange rate for display
   String _formatExchangeRate(double rate) {
     final sendSymbol = '₦';
-    final receiveCurrency = _getCurrencyCodeFromCountry(widget.transaction.beneficiary.country);
+    final receiveCurrency = _getCurrencyCodeFromCountry(
+      widget.transaction.beneficiary.country,
+    );
     final receiveSymbol = _getCurrencySymbolFromCode(receiveCurrency);
-    
+
     String displayText;
     if (rate < 0.1) {
       final hundredRate = rate * 100;
-      displayText = '$sendSymbol${100.toStringAsFixed(0)} = $receiveSymbol${hundredRate.toStringAsFixed(2)}';
+      displayText =
+          '$sendSymbol${100.toStringAsFixed(0)} = $receiveSymbol${hundredRate.toStringAsFixed(2)}';
     } else if (rate < 1.0) {
       final thousandRate = rate * 1000;
-      displayText = '$sendSymbol${1000.toStringAsFixed(0)} = $receiveSymbol${thousandRate.toStringAsFixed(2)}';
+      displayText =
+          '$sendSymbol${1000.toStringAsFixed(0)} = $receiveSymbol${thousandRate.toStringAsFixed(2)}';
     } else {
-      displayText = '$sendSymbol${1.toStringAsFixed(0)} = $receiveSymbol${rate.toStringAsFixed(2)}';
+      displayText =
+          '$sendSymbol${1.toStringAsFixed(0)} = $receiveSymbol${rate.toStringAsFixed(2)}';
     }
-    
+
     return displayText;
   }
 
@@ -1234,7 +1401,7 @@ class _TransactionDetailsViewState
   /// Get channel display name
   String _getChannelDisplayName(String? channel) {
     if (channel == null || channel.isEmpty) return 'N/A';
-    
+
     switch (channel.toLowerCase()) {
       case 'bank':
       case 'bank_transfer':
@@ -1357,7 +1524,85 @@ class _TransactionDetailsViewState
     }
   }
 
-  /// Get ID type display name
+  /// Check if this is a wallet top-up transaction
+  bool _isWalletTopUp() {
+    final profileState = ref.read(profileViewModelProvider);
+    final user = profileState.user;
+
+    if (user != null) {
+      final userFullName =
+          '${user.firstName} ${user.lastName}'.trim().toUpperCase();
+      final beneficiaryName =
+          widget.transaction.beneficiary.name.trim().toUpperCase();
+      return beneficiaryName == userFullName;
+    }
+
+    return false;
+  }
+
+  /// Check if fee is zero
+  bool _isFeeZero() {
+    final fee = _getTransactionFee();
+    // Remove currency symbol and check if it's 0.00
+    final feeValue = fee.replaceAll(RegExp(r'[^\d.]'), '');
+    final feeAmount = double.tryParse(feeValue) ?? 0.0;
+    return feeAmount == 0.0;
+  }
+
+  /// Build bank account details for wallet top-up
+  Widget _buildBankAccountDetails() {
+    return Container(
+      padding: EdgeInsets.all(20.w),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Bank Account Details",
+            style: AppTypography.bodyLarge.copyWith(
+              fontFamily: 'CabinetGrotesk',
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
+          SizedBox(height: 16.h),
+          if (widget.transaction.source.accountNumber != null &&
+              widget.transaction.source.accountNumber!.isNotEmpty)
+            _buildDetailRow(
+              "Account number",
+              widget.transaction.source.accountNumber!,
+            ),
+          _buildDetailRow("Bank", _getBankName()),
+        ],
+      ),
+    );
+  }
+
+  String _getRecipientDisplayName() {
+    final profileState = ref.read(profileViewModelProvider);
+    final user = profileState.user;
+
+    if (user != null) {
+      // Build user's full name from first name and last name
+      final userFullName =
+          '${user.firstName} ${user.lastName}'.trim().toUpperCase();
+      final beneficiaryName =
+          widget.transaction.beneficiary.name.trim().toUpperCase();
+
+      // Check if beneficiary name matches user's full name
+      if (beneficiaryName == userFullName) {
+        return 'Top-Up';
+      }
+    }
+
+    // Default: return "To [beneficiary name]" in uppercase
+    return 'To ${widget.transaction.beneficiary.name.toUpperCase()}';
+  }
+
   String _getIDTypeDisplay(String idType) {
     switch (idType.toLowerCase()) {
       case 'passport':

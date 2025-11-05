@@ -131,7 +131,7 @@ class SuccessSignupView extends ConsumerWidget {
         );
   }
 
-  Widget _buildSuccessIcon() {
+  Widget _buildSuccessIcon(BuildContext context) {
     return Container(
           width: 120.w,
           height: 120.w,
@@ -139,12 +139,12 @@ class SuccessSignupView extends ConsumerWidget {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [AppColors.purple500, AppColors.purple600],
+              colors: [AppColors.purple500ForTheme(context), AppColors.purple600],
             ),
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: AppColors.purple500.withOpacity(0.3),
+                color: AppColors.purple500ForTheme(context).withOpacity(0.3),
                 blurRadius: 20,
                 spreadRadius: 5,
                 offset: const Offset(0, 8),
@@ -320,7 +320,7 @@ class SuccessSignupView extends ConsumerWidget {
 
   Widget _buildNextStepButton(BuildContext context) {
     return PrimaryButton(
-          text: "Let's go!",
+          text: "Next - Complete Profile",
           borderRadius: 38,
 
           onPressed:
