@@ -89,8 +89,9 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
       // Check if biometric authentication is available and enabled
       await _checkBiometricAvailability();
       
-      // Auto-trigger biometric authentication if enabled
-      await _autoTriggerBiometricIfEnabled();
+      // NOTE: Do not auto-trigger biometric authentication here.
+      // Biometrics should only be triggered when the user explicitly
+      // taps the biometric button on the passcode screen.
     } catch (e) {
       AppLogger.error('Error loading user: $e');
       // Error loading user - handled by UI state

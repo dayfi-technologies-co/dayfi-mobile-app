@@ -443,7 +443,7 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                             ).textTheme.bodyLarge?.copyWith(
                               fontFamily: 'Karla',
                               fontSize: 18.sp,
-                              letterSpacing: -.3,
+                              letterSpacing: -.6,
                               fontWeight: FontWeight.w400,
                               color: Theme.of(context).colorScheme.onSurface,
                             ),

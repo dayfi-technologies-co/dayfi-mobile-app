@@ -11,7 +11,6 @@ class SoftposView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -70,7 +69,7 @@ class SoftposView extends StatelessWidget {
               //     ],
               //   ),
               // ),
-              SizedBox(height: MediaQuery.of(context).size.height * .4),
+              SizedBox(height: MediaQuery.of(context).size.height * .38),
               Text(
                 'Accept Payments\nwith NFC',
                 textAlign: TextAlign.center,

@@ -22,8 +22,7 @@ class PasscodeView extends ConsumerStatefulWidget {
 
 class _PasscodeViewState extends ConsumerState<PasscodeView> {
   bool _visible = false;
-  bool _hasTriggeredBiometric = false;
-  
+
   @override
   void initState() {
     super.initState();
@@ -34,25 +33,8 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
         setState(() {
           _visible = true;
         });
-        // Trigger biometric after UI animation completes
-        _triggerBiometricAuth();
       }
     });
-  }
-
-  Future<void> _triggerBiometricAuth() async {
-    if (_hasTriggeredBiometric) return;
-    
-    // Wait for fade-in animation to complete (300ms) + buffer
-    await Future.delayed(const Duration(milliseconds: 600));
-    
-    if (!mounted) return;
-    
-    final state = ref.read(passcodeProvider);
-    if (state.isBiometricAvailable && state.isBiometricEnabled) {
-      _hasTriggeredBiometric = true;
-      await ref.read(passcodeProvider.notifier).authenticateWithBiometrics();
-    }
   }
 
   @override

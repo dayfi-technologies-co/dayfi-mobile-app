@@ -877,7 +877,7 @@ class _HomeViewState extends ConsumerState<HomeView>
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontFamily: 'Karla',
                       fontSize: 18.sp,
-                      letterSpacing: -.4,
+                      letterSpacing: -.6,
                       fontWeight: FontWeight.w400,
                       color: Theme.of(context).colorScheme.onSurface,
                     ),

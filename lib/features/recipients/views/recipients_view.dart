@@ -508,7 +508,7 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
                                       context,
                                     ).textTheme.bodyMedium?.copyWith(
                                       fontFamily: 'Karla',
-                                      fontSize: 12.sp,
+                                      fontSize: 14.sp,
                                       fontWeight: FontWeight.w400,
                                       letterSpacing: -.3,
                                       height: 1.450,
