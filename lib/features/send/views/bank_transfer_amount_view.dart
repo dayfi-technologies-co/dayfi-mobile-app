@@ -178,8 +178,9 @@ class _BankTransferAmountViewState
           title: Text(
             "Enter Amount",
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-           fontFamily: 'CabinetGrotesk',
-               fontSize: 19.sp, height: 1.6,
+              fontFamily: 'CabinetGrotesk',
+              fontSize: 19.sp,
+              // height: 1.6,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface,
             ),
@@ -346,7 +347,7 @@ class _BankTransferAmountViewState
                   Text(
                     sendState.sendCurrency,
                     style: AppTypography.bodyMedium.copyWith(
-                   fontFamily: 'CabinetGrotesk',
+                      fontFamily: 'CabinetGrotesk',
                       fontSize: 11.sp,
                       fontWeight: FontWeight.w600,
                     ),
@@ -883,8 +884,9 @@ class _BankTransferAmountViewState
                 Text(
                   'Payment Error',
                   style: AppTypography.titleLarge.copyWith(
-                 fontFamily: 'CabinetGrotesk',
-                     fontSize: 19.sp, height: 1.6,
+                    fontFamily: 'CabinetGrotesk',
+                    fontSize: 19.sp,
+                    // height: 1.6,
                     fontWeight: FontWeight.w500,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
@@ -910,7 +912,6 @@ class _BankTransferAmountViewState
                   letterSpacing: -0.8,
                 ),
 
-                
                 SizedBox(height: 12.h),
 
                 // Skip button
@@ -1063,7 +1064,7 @@ class _BankTransferAmountViewState
                         Text(
                           'Payment Details',
                           style: AppTypography.titleLarge.copyWith(
-                         fontFamily: 'CabinetGrotesk',
+                            fontFamily: 'CabinetGrotesk',
                             fontSize: 14.sp,
                             fontWeight: FontWeight.w600,
                             color: Theme.of(context).colorScheme.onSurface,
@@ -1158,7 +1159,7 @@ class _BankTransferAmountViewState
                                   style: Theme.of(
                                     context,
                                   ).textTheme.titleLarge?.copyWith(
-                                 fontFamily: 'CabinetGrotesk',
+                                    fontFamily: 'CabinetGrotesk',
                                     fontSize: 12.sp,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -1355,7 +1356,7 @@ class _BankTransferAmountViewState
             Text(
               value,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-             fontFamily: 'karla',
+                fontFamily: 'karla',
                 fontSize: 15.sp,
                 fontWeight: FontWeight.w600,
                 letterSpacing: -.3,

@@ -88,7 +88,7 @@ class ShimmerWidgets {
                   // Reason placeholder (optional)
                   Container(
                     width: 150.w,
-                    height: 12.h,
+                    height: 4.h,
                     decoration: BoxDecoration(
                       color: shimmerColor,
                       borderRadius: BorderRadius.circular(4.r),
@@ -115,7 +115,7 @@ class ShimmerWidgets {
                 // Amount placeholder
                 Container(
                   width: 80.w,
-                  height: 16.h,
+                  height: 4.h,
                   decoration: BoxDecoration(
                     color: shimmerColor,
                     borderRadius: BorderRadius.circular(4.r),
@@ -125,7 +125,7 @@ class ShimmerWidgets {
                 // Status placeholder
                 Container(
                   width: 60.w,
-                  height: 12.h,
+                  height: 4.h,
                   decoration: BoxDecoration(
                     color: shimmerColor,
                     borderRadius: BorderRadius.circular(4.r),
@@ -270,11 +270,7 @@ class ShimmerWidgets {
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      padding: EdgeInsets.only(
-        left: 18.w,
-        right: 18.w,
-        bottom: 112.h,
-      ),
+      padding: EdgeInsets.only(left: 18.w, right: 18.w, bottom: 112.h),
       itemCount: itemCount,
       itemBuilder: (context, index) => recipientItemShimmer(context),
     );
@@ -399,6 +395,61 @@ class ShimmerWidgets {
           );
         },
       ),
+    );
+  }
+
+  // Country/Currency selection item shimmer
+  static Widget countryItemShimmer(BuildContext context) {
+    final shimmerColor = Theme.of(context).colorScheme.surfaceContainerHighest;
+    return shimmerEffect(
+      context: context,
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 12.h),
+        child: Row(
+          children: [
+            // Flag placeholder
+            Container(
+              width: 38.h,
+              height: 38.h,
+              decoration: BoxDecoration(
+                color: shimmerColor,
+                // borderRadius: BorderRadius.circular(4.r),
+                shape: BoxShape.circle,
+              ),
+            ),
+            SizedBox(width: 12.w),
+            // Country name placeholder
+            Expanded(
+              child: Container(
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: shimmerColor,
+                  borderRadius: BorderRadius.circular(4.r),
+                ),
+              ),
+            ),
+            SizedBox(width: 24.w),
+            // Currency placeholder
+            Container(
+              width: 48.w,
+              height: 4.h,
+              decoration: BoxDecoration(
+                color: shimmerColor,
+                borderRadius: BorderRadius.circular(4.r),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Country list shimmer
+  static Widget countryListShimmer(BuildContext context, {int itemCount = 10}) {
+    return ListView.builder(
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      itemCount: itemCount,
+      itemBuilder: (context, index) => countryItemShimmer(context),
     );
   }
 }

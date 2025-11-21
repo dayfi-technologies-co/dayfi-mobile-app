@@ -60,7 +60,7 @@ class ResetTransactionPinIntroView extends ConsumerWidget {
                   "Reset Your\nTransaction PIN",
                   style: AppTypography.headlineLarge.copyWith(
                  fontFamily: 'CabinetGrotesk',
-                    fontSize: 22.sp, height: 1.7,
+                    fontSize: 28.sp, height: 1.2,
                     fontWeight: FontWeight.w600,
                     color: AppColors.neutral0,
                     // height: 1.2,

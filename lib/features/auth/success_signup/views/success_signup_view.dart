@@ -198,7 +198,7 @@ class SuccessSignupView extends ConsumerWidget {
                   "Welcome onboard!",
                   style: AppTypography.headlineMedium.copyWith(
                  fontFamily: 'CabinetGrotesk',
-                    fontSize: 22.sp, height: 1.7,
+                    fontSize: 28.sp, height: 1.2,
                     fontWeight: FontWeight.w600,
                     color: Theme.of(context).colorScheme.onSurface,
                     // height: 1.2,

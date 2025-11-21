@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/features/send/vm/send_viewmodel.dart';
 import 'package:dayfi/models/payment_response.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
-import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:dayfi/common/widgets/shimmer_widgets.dart';
 
 class SelectDestinationCountryView extends ConsumerStatefulWidget {
   const SelectDestinationCountryView({super.key});
@@ -154,17 +153,20 @@ class _SelectDestinationCountryViewState
     final sendState = ref.watch(sendViewModelProvider);
 
     // Filter withdrawal channels (where user can send TO)
-    final withdrawalChannels = sendState.channels
-        .where((channel) =>
-            (channel.rampType == 'withdrawal' ||
-                channel.rampType == 'withdraw' ||
-                channel.rampType == 'payout' ||
-                channel.rampType == 'deposit' ||
-                channel.rampType == 'receive') &&
-            channel.status == 'active' &&
-            channel.currency != null &&
-            channel.country != null)
-        .toList();
+    final withdrawalChannels =
+        sendState.channels
+            .where(
+              (channel) =>
+                  (channel.rampType == 'withdrawal' ||
+                      channel.rampType == 'withdraw' ||
+                      channel.rampType == 'payout' ||
+                      channel.rampType == 'deposit' ||
+                      channel.rampType == 'receive') &&
+                  channel.status == 'active' &&
+                  channel.currency != null &&
+                  channel.country != null,
+            )
+            .toList();
 
     // Deduplicate by country-currency combination
     final uniqueWithdrawalChannels = <String, Channel>{};
@@ -198,19 +200,20 @@ class _SelectDestinationCountryViewState
 
     // If no withdrawal channels, add fallback
     if (finalWithdrawalChannels.isEmpty) {
-      final alternativeChannels = sendState.channels
-          .where(
-            (channel) =>
-                channel.status == 'active' &&
-                channel.currency != null &&
-                channel.country != null &&
-                (channel.rampType == 'withdrawal' ||
-                    channel.rampType == 'withdraw' ||
-                    channel.rampType == 'payout' ||
-                    channel.rampType == 'deposit' ||
-                    channel.rampType == 'receive'),
-          )
-          .toList();
+      final alternativeChannels =
+          sendState.channels
+              .where(
+                (channel) =>
+                    channel.status == 'active' &&
+                    channel.currency != null &&
+                    channel.country != null &&
+                    (channel.rampType == 'withdrawal' ||
+                        channel.rampType == 'withdraw' ||
+                        channel.rampType == 'payout' ||
+                        channel.rampType == 'deposit' ||
+                        channel.rampType == 'receive'),
+              )
+              .toList();
 
       if (alternativeChannels.isNotEmpty) {
         finalWithdrawalChannels = alternativeChannels;
@@ -247,7 +250,7 @@ class _SelectDestinationCountryViewState
           style: AppTypography.titleLarge.copyWith(
             fontFamily: 'CabinetGrotesk',
             fontSize: 19.sp,
-            height: 1.6,
+            // height: 1.6,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,
           ),
@@ -273,7 +276,9 @@ class _SelectDestinationCountryViewState
                   child: SvgPicture.asset(
                     'assets/icons/svgs/search-normal.svg',
                     height: 22.sp,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.6),
                   ),
                 ),
               ),
@@ -288,47 +293,48 @@ class _SelectDestinationCountryViewState
           Expanded(
             child: Builder(
               builder: (context) {
-                // Show loading while channels are being fetched
+                // Show shimmer while channels are being fetched
                 if (sendState.isLoading || sendState.channels.isEmpty) {
-                  return Center(
-                    child: LoadingAnimationWidget.horizontalRotatingDots(
-                      color: AppColors.primary600,
-                      size: 20,
-                    ),
+                  return ShimmerWidgets.countryListShimmer(
+                    context,
+                    itemCount: 10,
                   );
                 }
 
                 // Get all channels
-                final allChannels = finalWithdrawalChannels.isEmpty
-                    ? (() {
-                        final fallbackChannels = sendState.channels
-                            .where(
-                              (c) =>
-                                  c.status == 'active' &&
-                                  c.currency != null &&
-                                  c.country != null &&
-                                  (c.rampType == 'withdrawal' ||
-                                      c.rampType == 'withdraw' ||
-                                      c.rampType == 'payout' ||
-                                      c.rampType == 'deposit' ||
-                                      c.rampType == 'receive'),
-                            )
-                            .toList();
+                final allChannels =
+                    finalWithdrawalChannels.isEmpty
+                        ? (() {
+                          final fallbackChannels =
+                              sendState.channels
+                                  .where(
+                                    (c) =>
+                                        c.status == 'active' &&
+                                        c.currency != null &&
+                                        c.country != null &&
+                                        (c.rampType == 'withdrawal' ||
+                                            c.rampType == 'withdraw' ||
+                                            c.rampType == 'payout' ||
+                                            c.rampType == 'deposit' ||
+                                            c.rampType == 'receive'),
+                                  )
+                                  .toList();
 
-                        // Deduplicate fallback channels
-                        final uniqueFallbackChannels = <String, Channel>{};
-                        for (final channel in fallbackChannels) {
-                          final key = '${channel.country} - ${channel.currency}';
-                          if (!uniqueFallbackChannels.containsKey(key) ||
-                              (channel.max ?? 0) >
-                                  (uniqueFallbackChannels[key]?.max ?? 0)) {
-                            uniqueFallbackChannels[key] = channel;
+                          // Deduplicate fallback channels
+                          final uniqueFallbackChannels = <String, Channel>{};
+                          for (final channel in fallbackChannels) {
+                            final key =
+                                '${channel.country} - ${channel.currency}';
+                            if (!uniqueFallbackChannels.containsKey(key) ||
+                                (channel.max ?? 0) >
+                                    (uniqueFallbackChannels[key]?.max ?? 0)) {
+                              uniqueFallbackChannels[key] = channel;
+                            }
                           }
-                        }
 
-                        return uniqueFallbackChannels.values.toList();
-                      })()
-                    : finalWithdrawalChannels;
+                          return uniqueFallbackChannels.values.toList();
+                        })()
+                        : finalWithdrawalChannels;
 
                 // Additional deduplication to ensure no duplicates
                 final uniqueChannels = <String, Channel>{};
@@ -349,41 +355,42 @@ class _SelectDestinationCountryViewState
 
                 // Filter based on search
                 final searchQuery = _searchController.text.toLowerCase();
-                final filteredChannels = deduplicatedChannels.where((channel) {
-                  if (searchQuery.isEmpty) return true;
+                final filteredChannels =
+                    deduplicatedChannels.where((channel) {
+                      if (searchQuery.isEmpty) return true;
 
-                  final countryName = _getCountryName(channel.country).toLowerCase();
-                  final currency = channel.currency?.toLowerCase() ?? '';
-                  final countryCode = channel.country?.toLowerCase() ?? '';
+                      final countryName =
+                          _getCountryName(channel.country).toLowerCase();
+                      final currency = channel.currency?.toLowerCase() ?? '';
+                      final countryCode = channel.country?.toLowerCase() ?? '';
 
-                  return countryName.contains(searchQuery) ||
-                      currency.contains(searchQuery) ||
-                      countryCode.contains(searchQuery);
-                }).toList();
+                      return countryName.contains(searchQuery) ||
+                          currency.contains(searchQuery) ||
+                          countryCode.contains(searchQuery);
+                    }).toList();
 
                 if (filteredChannels.isEmpty) {
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.search_off,
-                          size: 64.sp,
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurface
-                              .withOpacity(0.3),
+                        SvgPicture.asset(
+                          'assets/icons/svgs/search-normal.svg',
+                          height: 64.sp,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.6),
                         ),
+
                         SizedBox(height: 16.h),
                         Text(
                           'No countries found',
                           style: TextStyle(
-                            fontFamily: 'Karla',
+                            fontFamily: 'CabinetGrotesk',
                             fontSize: 16.sp,
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurface
-                                .withOpacity(0.6),
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withOpacity(0.6),
                           ),
                         ),
                       ],
@@ -399,7 +406,9 @@ class _SelectDestinationCountryViewState
                     return ListTile(
                       contentPadding: EdgeInsets.symmetric(vertical: 4.h),
                       onTap: () {
-                        ref.read(sendViewModelProvider.notifier).updateReceiveCountry(
+                        ref
+                            .read(sendViewModelProvider.notifier)
+                            .updateReceiveCountry(
                               channel.country ?? 'NG',
                               channel.currency ?? 'NGN',
                             );
@@ -449,6 +458,4 @@ class _SelectDestinationCountryViewState
       ),
     );
   }
-
-
 }

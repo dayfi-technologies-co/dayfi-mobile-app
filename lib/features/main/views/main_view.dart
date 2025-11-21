@@ -203,8 +203,7 @@ class _MainViewState extends ConsumerState<MainView> {
                   style: AppTypography.titleLarge.copyWith(
                     fontFamily: 'CabinetGrotesk',
                     fontSize: 28.00,
-                    height: 1.6,
-
+                    // // height: 1.6,
                     fontWeight: FontWeight.w600,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
@@ -460,8 +459,8 @@ class _MainViewState extends ConsumerState<MainView> {
               'Welcome to Dayfi App',
               style: AppTypography.headlineLarge.copyWith(
                 fontFamily: 'CabinetGrotesk',
-                fontSize: 22.sp,
-                height: 1.7,
+                fontSize: 28.sp,
+                height: 1.2,
                 fontWeight: FontWeight.w700,
                 color: Theme.of(context).colorScheme.onSurface,
                 // height: 1.2,

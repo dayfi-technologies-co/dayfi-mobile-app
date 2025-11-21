@@ -345,7 +345,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
           "Account",
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
             fontFamily: 'CabinetGrotesk',
-            fontSize: 28.00,
+            fontSize: 19.sp, // height: 1.6,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,
           ),
@@ -473,11 +473,11 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
           profileState.userName,
           style: AppTypography.headlineSmall.copyWith(
             color: Theme.of(context).colorScheme.onSurface,
-            fontSize: 32.sp,
+            fontSize: 28.sp,
             fontWeight: FontWeight.w600,
             fontFamily: 'CabinetGrotesk',
             height: .95,
-            letterSpacing: -.6,
+            letterSpacing: -.3,
           ),
           textAlign: TextAlign.center,
         ),
@@ -625,19 +625,19 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                 // Strip @ prefix if present, as we store it without @
                 final dayfiIdValue =
                     result.startsWith('@') ? result.substring(1) : result;
-                
+
                 // Cache the new DayFi ID immediately
                 await localCache.saveToLocalCache(
                   key: 'dayfi_id',
                   value: dayfiIdValue,
                 );
-                
+
                 // Update state immediately with the result
                 setState(() {
                   _dayfiId = dayfiIdValue;
                   _isLoadingDayfiId = false;
                 });
-                
+
                 // Also reload from API in the background to ensure consistency
                 _loadDayfiId();
               }
@@ -1038,8 +1038,8 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
       style: TextStyle(
         fontFamily: 'CabinetGrotesk',
         fontSize: 19.sp,
-        height: 1.6,
 
+        // height: 1.6,
         fontWeight: FontWeight.w500,
         color: Theme.of(context).colorScheme.onSurface,
         letterSpacing: -0.5,

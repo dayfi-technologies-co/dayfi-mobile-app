@@ -19,10 +19,10 @@ class PrivacyNoticeView extends StatelessWidget {
         title: Text(
           "Privacy Notice",
           style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-            fontFamily: 'CabinetGrotesk',
-            fontSize: 20.sp,
-            fontWeight: FontWeight.w600,
-            letterSpacing: -0.8,
+         fontFamily: 'CabinetGrotesk',
+              fontSize: 19.sp, // height: 1.6,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         centerTitle: true,

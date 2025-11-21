@@ -109,7 +109,7 @@ class _ChangeTransactionPinOldViewState
             "Enter Old Transaction PIN",
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                fontFamily: 'CabinetGrotesk',
-                   fontSize: 19.sp, height: 1.6,
+                   fontSize: 19.sp, // height: 1.6,
                   fontWeight: FontWeight.w600,
                   color: Theme.of(context).colorScheme.onSurface,
                 ),

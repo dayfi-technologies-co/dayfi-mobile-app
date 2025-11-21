@@ -325,7 +325,7 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
       'Are you sure you want to logout? You will be asked to create a new passcode.',
       style: TextStyle(
      fontFamily: 'CabinetGrotesk',
-         fontSize: 19.sp, height: 1.6,
+         fontSize: 19.sp, // height: 1.6,
         fontWeight: FontWeight.w500,
         color: Theme.of(context).colorScheme.onSurface,
         letterSpacing: -0.5,

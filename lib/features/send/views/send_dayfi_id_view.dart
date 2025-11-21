@@ -287,9 +287,8 @@ class _SendDayfiIdViewState extends ConsumerState<SendDayfiIdView> {
             'Enter Dayfi ID',
             style: Theme.of(context).textTheme.headlineLarge?.copyWith(
               fontFamily: 'CabinetGrotesk',
-              fontSize: 28.00,
-              height: 1.6,
-
+              fontSize: 19.sp,
+              // height: 1.6,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface,
             ),

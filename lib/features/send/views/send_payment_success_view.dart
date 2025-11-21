@@ -105,7 +105,7 @@ class _SendPaymentSuccessViewState
                       'We\'re processing your transfer. You\'ll receive a confirmation once your payment is verified.',
                       style: AppTypography.headlineLarge.copyWith(
                      fontFamily: 'CabinetGrotesk',
-                        fontSize: 22.sp, height: 1.7,
+                        fontSize: 28.sp, height: 1.2,
                         fontWeight: FontWeight.w500,
                         color: AppColors.neutral0,
                         

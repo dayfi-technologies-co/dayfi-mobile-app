@@ -1548,7 +1548,7 @@ class _TransactionDetailsViewState
               style: TextStyle(
                 fontFamily: 'CabinetGrotesk',
                 fontSize: 19.sp,
-                height: 1.6,
+                // height: 1.6,
                 fontWeight: FontWeight.w500,
                 color: Theme.of(context).colorScheme.onSurface,
                 letterSpacing: -0.5,
@@ -1637,7 +1637,7 @@ class _TransactionDetailsViewState
               style: TextStyle(
                 fontFamily: 'CabinetGrotesk',
                 fontSize: 19.sp,
-                height: 1.6,
+                // height: 1.6,
                 fontWeight: FontWeight.w500,
                 color: Theme.of(context).colorScheme.onSurface,
                 letterSpacing: -0.5,
@@ -1708,7 +1708,7 @@ class _TransactionDetailsViewState
               style: TextStyle(
                 fontFamily: 'CabinetGrotesk',
                 fontSize: 19.sp,
-                height: 1.6,
+                // height: 1.6,
                 fontWeight: FontWeight.w500,
                 color: Theme.of(context).colorScheme.onSurface,
                 letterSpacing: -0.5,

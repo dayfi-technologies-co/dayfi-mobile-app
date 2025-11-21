@@ -707,8 +707,8 @@ class _SendViewState extends ConsumerState<SendView>
             "Send Money",
             style: AppTypography.titleLarge.copyWith(
               fontFamily: 'CabinetGrotesk',
-              fontSize: 28.00,
-              height: 1.6,
+              fontSize: 19.sp,
+              // height: 1.6,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface,
             ),
@@ -1219,41 +1219,41 @@ class _SendViewState extends ConsumerState<SendView>
         methodLower == 'peer-to-peer';
 
     if (isNgnToNgn && isBankTransfer) {
-      return 'Arrives immediately';
+      return 'Instant delivery';
     }
 
     switch (methodLower) {
       case 'dayfi_tag':
-        return 'Completely free — Arrives immediately';
+        return 'Completely free — Instant delivery';
       case 'bank_transfer':
       case 'bank':
       case 'p2p':
       case 'peer_to_peer':
       case 'peer-to-peer':
-        return 'Arrives in 1-2 hours';
+        return 'Fast delivery';
       case 'mobile_money':
       case 'momo':
       case 'mobilemoney':
-        return 'Arrives in minutes';
+        return 'Instant delivery';
       case 'spenn':
-        return 'Arrives in minutes';
+        return 'Instant delivery';
       case 'cash_pickup':
       case 'cash':
-        return 'Arrives in 24 hours';
+        return 'Same day delivery';
       case 'wallet':
       case 'digital_wallet':
-        return 'Arrives in minutes';
+        return 'Instant delivery';
       case 'card':
       case 'card_payment':
-        return 'Arrives in 1-3 hours';
+        return 'Fast delivery';
       case 'crypto':
       case 'cryptocurrency':
-        return 'Arrives in 10-30 minutes';
+        return 'Quick delivery';
       case 'digital_dollar':
       case 'stablecoins':
-        return 'Arrives in minutes';
+        return 'Instant delivery';
       default:
-        return 'Arrives in 1-2 hours';
+        return 'Fast delivery';
     }
   }
 
@@ -1475,7 +1475,7 @@ class _SendViewState extends ConsumerState<SendView>
                         ),
                     ],
                   ),
-                  SizedBox(height: 6.h),
+                  SizedBox(height: 4.h),
                   Text(
                     _getDeliveryDuration(
                       state.selectedDeliveryMethod,
@@ -3027,7 +3027,7 @@ class _SendViewState extends ConsumerState<SendView>
                                               ),
                                           ],
                                         ),
-                                        SizedBox(height: 6.h),
+                                        SizedBox(height: 4.h),
                                         Text(
                                           _getDeliveryDuration(
                                             channel.channelType,

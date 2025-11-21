@@ -404,8 +404,8 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                     Text(
                       'Your DayFi Tag',
                       style: AppTypography.titleLarge.copyWith(
-                        fontFamily: 'CabinetGrotesk',
-                        fontSize: 14.sp,
+                        fontFamily: 'Karla',
+                        fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
                         color: Theme.of(context).colorScheme.onSurface,
                       ),
@@ -620,8 +620,8 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
           'Topup Wallet',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
             fontFamily: 'CabinetGrotesk',
-            fontSize: 28.00,
-            height: 1.6,
+            fontSize: 19.sp,
+            // height: 1.6,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,
           ),
@@ -2162,7 +2162,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                   style: AppTypography.titleLarge.copyWith(
                     fontFamily: 'CabinetGrotesk',
                     fontSize: 28.00,
-                    height: 1.6,
+                    // height: 1.6,
                     fontWeight: FontWeight.w600,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),

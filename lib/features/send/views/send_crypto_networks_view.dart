@@ -530,7 +530,8 @@ class _SendCryptoNetworksViewState
           'Select Network',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
             fontFamily: 'CabinetGrotesk',
-            fontSize: 28.00,
+            fontSize: 19.sp,
+            // height: 1.6,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,
           ),
@@ -585,7 +586,7 @@ class _SendCryptoNetworksViewState
             //                   channelCode,
             //                   style: AppTypography.titleLarge.copyWith(
             //                  fontFamily: 'CabinetGrotesk',
-            //                      fontSize: 19.sp, height: 1.6,
+            //                      fontSize: 19.sp, // height: 1.6,
             //                     fontWeight: FontWeight.w700,
             //                     color: AppColors.purple500ForTheme(context),
             //                   ),

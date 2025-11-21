@@ -149,8 +149,8 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
           title: Text(
             "Edit Profile",
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-           fontFamily: 'CabinetGrotesk',
-               fontSize: 19.sp, height: 1.6,
+              fontFamily: 'CabinetGrotesk',
+              fontSize: 19.sp, // height: 1.6,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface,
             ),
@@ -431,7 +431,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
   ) {
     // Dynamically set maxLength: 11 if starts with 0, otherwise 10
     final maxLength = state.phoneNumber.startsWith('0') ? 11 : 10;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -747,7 +747,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
           title: Text(
             'Request $fieldName Change',
             style: AppTypography.titleMedium.copyWith(
-           fontFamily: 'CabinetGrotesk',
+              fontFamily: 'CabinetGrotesk',
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -830,7 +830,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
           title: Text(
             'Verify Phone Number Change',
             style: AppTypography.titleMedium.copyWith(
-           fontFamily: 'CabinetGrotesk',
+              fontFamily: 'CabinetGrotesk',
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -1018,7 +1018,7 @@ class _CountryBottomSheetState extends State<_CountryBottomSheet> {
                 Text(
                   'Select Country',
                   style: AppTypography.titleLarge.copyWith(
-                 fontFamily: 'CabinetGrotesk',
+                    fontFamily: 'CabinetGrotesk',
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
                     color: Theme.of(context).colorScheme.onSurface,
@@ -1113,7 +1113,7 @@ class _GenderBottomSheetState extends State<_GenderBottomSheet> {
                 Text(
                   'Select Gender',
                   style: AppTypography.titleLarge.copyWith(
-                 fontFamily: 'CabinetGrotesk',
+                    fontFamily: 'CabinetGrotesk',
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
                     color: Theme.of(context).colorScheme.onSurface,

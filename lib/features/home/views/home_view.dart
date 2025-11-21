@@ -163,7 +163,7 @@ class _HomeViewState extends ConsumerState<HomeView>
                         'Hi, $firstName',
                         style: AppTypography.titleMedium.copyWith(
                           fontFamily: 'CabinetGrotesk',
-                          fontSize: 16,
+                          fontSize: 16.sp,
                           fontWeight: FontWeight.w500,
                         ),
                         overflow: TextOverflow.ellipsis,
@@ -315,48 +315,6 @@ class _HomeViewState extends ConsumerState<HomeView>
               // ), //
               SizedBox(height: 32.h),
 
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Recent transactions',
-                    style: AppTypography.titleMedium.copyWith(
-                      fontFamily: 'Karla',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      letterSpacing: -.2,
-                      height: 1.450,
-                      color: Theme.of(
-                        context,
-                      ).textTheme.bodyLarge!.color!.withOpacity(.75),
-                    ),
-                    textAlign: TextAlign.start,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  SizedBox(width: 12.h),
-                  // Check if recent transactions length is greater than 5
-                  Center(
-                    child: InkWell(
-                      onTap: () {
-                        appRouter.pushNamed(AppRoute.transactionsView);
-                      },
-                      child: Text(
-                        'See all',
-                        style: AppTypography.bodyMedium.copyWith(
-                          fontFamily: 'Karla',
-                          color: AppColors.purple500ForTheme(context),
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: -.3,
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              SizedBox(height: 4.h),
               _buildRecentTransactions(),
               SizedBox(height: 112.h),
             ],
@@ -689,12 +647,11 @@ class _HomeViewState extends ConsumerState<HomeView>
                   //     : const SizedBox.shrink(),
                   // // Foreground icon
                   Center(
-                    child:
-                        SvgPicture.asset(
-                              iconAsset,
-                              // height: 18.sp,
-                              // color: AppColors.purple500ForTheme(context),
-                            ),
+                    child: SvgPicture.asset(
+                      iconAsset,
+                      // height: 18.sp,
+                      // color: AppColors.purple500ForTheme(context),
+                    ),
                   ),
                 ],
               ),
@@ -787,7 +744,8 @@ class _HomeViewState extends ConsumerState<HomeView>
         child: EmptyStateWidget(
           icon: Icons.receipt_long_outlined,
           title: 'No transactions yet',
-          message: 'Your transactions will appear here once you start sending or receiving money',
+          message:
+              'Your transactions will appear here once you start sending or receiving money',
           actionText: 'Send Money',
           onAction: () {
             Navigator.pushNamed(context, '/send');
@@ -806,6 +764,48 @@ class _HomeViewState extends ConsumerState<HomeView>
           ),
           child: Column(
             children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Recent transactions',
+                    style: AppTypography.titleMedium.copyWith(
+                      fontFamily: 'Karla',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      letterSpacing: -.2,
+                      height: 1.450,
+                      color: Theme.of(
+                        context,
+                      ).textTheme.bodyLarge!.color!.withOpacity(.75),
+                    ),
+                    textAlign: TextAlign.start,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(width: 12.h),
+                  // Check if recent transactions length is greater than 5
+                  Center(
+                    child: InkWell(
+                      onTap: () {
+                        appRouter.pushNamed(AppRoute.transactionsView);
+                      },
+                      child: Text(
+                        'See all',
+                        style: AppTypography.bodyMedium.copyWith(
+                          fontFamily: 'Karla',
+                          color: AppColors.purple500ForTheme(context),
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: -.3,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              SizedBox(height: 4.h),
               for (int i = 0; i < recentTransactions.length; i++)
                 _buildTransactionCard(
                   recentTransactions[i],

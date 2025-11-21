@@ -225,7 +225,7 @@ class PrimaryButton extends StatelessWidget {
       fontSize: 24.sp,
       fontWeight: AppTypography.bold,
       letterSpacing: 0.2,
-      lineHeight: 1.6,
+      // lineHeight: 1.6,
       fontFamily: AppTypography.secondaryFontFamily,
       fullWidth: fullWidth,
       child: child,

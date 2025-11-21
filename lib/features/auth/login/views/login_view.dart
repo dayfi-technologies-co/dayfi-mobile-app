@@ -94,7 +94,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                               )
                               : const SizedBox.shrink(),
                       title: Text(
-                        "Sign in",
+                        "Sign In",
                         style: Theme.of(
                           context,
                         ).textTheme.headlineMedium?.copyWith(

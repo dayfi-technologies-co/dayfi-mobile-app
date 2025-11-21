@@ -101,7 +101,7 @@ class _SplashViewState extends ConsumerState<SplashView> {
             child: Text(
               "Purple",
               style: TextStyle(
-                fontFamily: 'CabinetGrotesk',
+                fontFamily: 'Boldonse',
                 fontSize: 28.sp,
                 fontWeight: FontWeight.w500,
                 color: AppColors.purple700,
@@ -133,7 +133,7 @@ class _SplashViewState extends ConsumerState<SplashView> {
                   child: Text(
                     'dayfi',
                     style: TextStyle(
-                      fontFamily: 'CabinetGrotesk',
+                      fontFamily: 'Boldonse',
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w500,
                       color: AppColors.neutral900,

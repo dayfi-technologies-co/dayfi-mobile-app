@@ -373,8 +373,9 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
               title: Text(
                 'Add Beneficiary',
                 style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-               fontFamily: 'CabinetGrotesk',
-                   fontSize: 19.sp, height: 1.6,
+                  fontFamily: 'CabinetGrotesk',
+                  fontSize: 19.sp,
+                  // height: 1.6,
                   fontWeight: FontWeight.w600,
                   color: Theme.of(context).colorScheme.onSurface,
                 ),
@@ -532,7 +533,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                             style: Theme.of(
                               context,
                             ).textTheme.titleMedium?.copyWith(
-                           fontFamily: 'CabinetGrotesk',
+                              fontFamily: 'CabinetGrotesk',
                               fontSize: 12.sp,
                               fontWeight: FontWeight.w600,
                               color: AppColors.neutral0,
@@ -846,7 +847,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                             Text(
                               'Select Network',
                               style: AppTypography.titleLarge.copyWith(
-                             fontFamily: 'CabinetGrotesk',
+                                fontFamily: 'CabinetGrotesk',
                                 fontSize: 14.sp,
                                 fontWeight: FontWeight.w600,
                                 color: Theme.of(context).colorScheme.onSurface,
@@ -913,19 +914,20 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Icon(
-                                        Icons.search_off,
-                                        size: 56.sp,
+                                      SvgPicture.asset(
+                                        'assets/icons/svgs/search-normal.svg',
+                                        height: 64.sp,
                                         color: Theme.of(context)
                                             .colorScheme
                                             .onSurface
-                                            .withOpacity(0.3),
+                                            .withOpacity(0.6),
                                       ),
+
                                       SizedBox(height: 16.h),
                                       Text(
                                         'No networks found',
-                                        style: AppTypography.bodyLarge.copyWith(
-                                          fontFamily: 'Karla',
+                                        style: TextStyle(
+                                          fontFamily: 'CabinetGrotesk',
                                           fontSize: 16.sp,
                                           color: Theme.of(context)
                                               .colorScheme
@@ -933,6 +935,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                                               .withOpacity(0.6),
                                         ),
                                       ),
+
                                       SizedBox(height: 8.h),
                                       Text(
                                         'Try searching with different keywords',
