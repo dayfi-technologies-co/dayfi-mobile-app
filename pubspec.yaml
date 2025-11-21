@@ -50,6 +50,7 @@ dependencies:
   loading_animation_widget: ^1.3.0
   mixpanel_flutter: ^2.1.0
   smile_id: ^11.2.2
+  shimmer: ^3.0.0
 
 dev_dependencies:
   flutter_test:

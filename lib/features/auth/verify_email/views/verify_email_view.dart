@@ -63,7 +63,7 @@ class VerifyEmailView extends ConsumerWidget {
                       icon: const Icon(Icons.arrow_back_ios_new),
                     ),
                     title: Text(
-                      isSignUp ? "Verify your email" : "Verify reset code",
+                      isSignUp ? "Verify Your Email" : "Verify Reset Code",
                       style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         fontFamily: 'CabinetGrotesk',
                         fontSize: 28.00,
@@ -73,7 +73,7 @@ class VerifyEmailView extends ConsumerWidget {
                   ),
 
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    padding: const EdgeInsets.symmetric(horizontal: 18),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -88,7 +88,7 @@ class VerifyEmailView extends ConsumerWidget {
                                 fontSize: 16.sp,
                                 fontWeight: FontWeight.w400,
                                 fontFamily: 'Karla',
-                                letterSpacing: -.6,
+                                letterSpacing: -.3,
                                 height: 1.4,
                               ),
                               textAlign: TextAlign.center,
@@ -177,7 +177,7 @@ class VerifyEmailView extends ConsumerWidget {
                             if (!verifyState.canResend) ...[
                               Icon(
                                 Icons.timer_outlined,
-                                color: AppColors.neutral500,
+                                color: AppColors.neutral400,
                                 size: 16.r,
                               ),
                               SizedBox(width: 8.w),
@@ -187,7 +187,7 @@ class VerifyEmailView extends ConsumerWidget {
                                   fontSize: 16.sp,
                                   fontWeight: FontWeight.w400,
                                   fontFamily: 'Karla',
-                                  color: AppColors.neutral500,
+                                  color: AppColors.neutral400,
                                 ),
                               ),
                             ] else ...[
@@ -243,8 +243,8 @@ class VerifyEmailView extends ConsumerWidget {
                           borderRadius: 38,
                           text:
                               isSignUp
-                                  ? "Next - Verify Account"
-                                  : "Next - Reset Password",
+                                  ? "Verify Account"
+                                  : "Reset Password",
                           onPressed:
                               verifyState.isFormValid &&
                                       !verifyState.isVerifying
@@ -268,10 +268,10 @@ class VerifyEmailView extends ConsumerWidget {
                               verifyState.isFormValid
                                   ? AppColors.purple500ForTheme(context)
                                   : AppColors.purple500ForTheme(context).withOpacity(.25),
-                          height: 60.h,
+                          height: 48.000.h,
                           textColor: verifyState.isFormValid
                               ? AppColors.neutral0
-                              : AppColors.neutral0.withOpacity(.5),
+                              : AppColors.neutral0.withOpacity(.65),
                           fontFamily: 'Karla',
                           letterSpacing: -.8,
                           fontSize: 18,

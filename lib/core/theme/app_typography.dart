@@ -63,7 +63,7 @@ class AppTypography {
 
   /// Display Large - 48px, 56px line height, -0.8em letter spacing
   static const TextStyle displayLarge = TextStyle(
-    fontSize: 48,
+    fontSize: 56,
     height: 1.167, // 56px line height
     letterSpacing: -0.8,
     fontWeight: FontWeight.w600, // Bold for maximum impact
@@ -112,7 +112,7 @@ class AppTypography {
 
   /// Headings H3 - 20px, 26px line height, 0em letter spacing
   static const TextStyle headlineSmall = TextStyle(
-    fontSize: 20,
+    fontSize: 24,
     height: 1.3, // 26px line height
     letterSpacing: 0,
     fontWeight: FontWeight.w500, // Medium for H3
@@ -143,7 +143,7 @@ class AppTypography {
 
   /// Title Medium - 20px, 24px line height, 0em letter spacing
   static const TextStyle titleMedium = TextStyle(
-    fontSize: 20,
+    fontSize: 24,
     height: 1.2, // 24px line height
     letterSpacing: 0,
     fontWeight: FontWeight.w500, // Medium for medium titles
@@ -294,7 +294,7 @@ class AppTypography {
 
   /// Card Title - Medium weight for card headers
   static const TextStyle cardTitle = TextStyle(
-    fontSize: 20,
+    fontSize: 24,
     height: 1.2, // 24px line height
     letterSpacing: 0,
     fontWeight: FontWeight.w400, // Semibold for card titles

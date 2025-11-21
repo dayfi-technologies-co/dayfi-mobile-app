@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/features/send/vm/send_viewmodel.dart';
+import 'package:flutter_svg/svg.dart';
 
 class CountrySelectionBottomSheet extends StatelessWidget {
   final List<CountryOption> countries;
@@ -37,11 +38,11 @@ class CountrySelectionBottomSheet extends StatelessWidget {
             width: 40.w,
             height: 4.h,
             decoration: BoxDecoration(
-              color: AppColors.neutral300,
+              color: AppColors.neutral400,
               borderRadius: BorderRadius.circular(2.r),
             ),
           ),
-          
+
           // Header
           Padding(
             padding: EdgeInsets.fromLTRB(24.w, 24.h, 16.w, 20.h),
@@ -52,8 +53,8 @@ class CountrySelectionBottomSheet extends StatelessWidget {
                     title,
                     textAlign: TextAlign.center,
                     style: AppTypography.titleLarge.copyWith(
-                      fontFamily: 'CabinetGrotesk',
-                      fontSize: 18.sp,
+                   fontFamily: 'CabinetGrotesk',
+                      fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
                       color: AppColors.neutral800,
                     ),
@@ -70,121 +71,139 @@ class CountrySelectionBottomSheet extends StatelessWidget {
               ],
             ),
           ),
-          
-          // Search bar
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24.w),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12.r),
-                border: Border.all(color: AppColors.neutral200),
-              ),
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: 'Search currency here...',
-                  hintStyle: AppTypography.bodyMedium.copyWith(
-                    color: AppColors.neutral500,
-                    fontSize: 14.sp,
-                    fontFamily: 'Karla',
-                  ),
-                  prefixIcon: Icon(
-                    Icons.search,
-                    color: AppColors.neutral500,
-                    size: 20.sp,
-                  ),
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 16.w,
-                    vertical: 16.h,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          
+
           SizedBox(height: 20.h),
-          
-          // Countries list
+
+          // Countries list with search bar
           Expanded(
-            child: ListView.builder(
-              padding: EdgeInsets.symmetric(horizontal: 24.w),
-              itemCount: countries.length,
-              itemBuilder: (context, index) {
-                final country = countries[index];
-                
-                return Container(
-                  margin: EdgeInsets.only(bottom: 4.h),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () {
-                        onCountrySelected(country.code);
-                        Navigator.pop(context);
-                      },
-                      borderRadius: BorderRadius.circular(8.r),
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
+            child: ListView(
+              children: [
+                // Search bar
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 18.w),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(color: AppColors.neutral200),
+                    ),
+                    child: TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Search currency here...',
+                        hintStyle: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.neutral400,
+                          fontSize: 14.sp,
+                          fontFamily: 'Karla',
+                        ),
+                        prefixIcon: Container(
+                          width: 40.w,
+                          alignment: Alignment.centerRight,
+                          constraints: BoxConstraints.tightForFinite(),
+                          child: Center(
+                            child: SvgPicture.asset(
+                              'assets/icons/svgs/search-normal.svg',
+                              height: 22.sp,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withOpacity(0.6),
+                            ),
+                          ),
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(
                           horizontal: 16.w,
                           vertical: 16.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.transparent,
-                          borderRadius: BorderRadius.circular(8.r),
-                        ),
-                        child: Row(
-                          children: [
-                            // Flag - circular container
-                            Container(
-                              width: 32.w,
-                              height: 32.w,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: AppColors.neutral200,
-                                  width: 1,
-                                ),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  country.flag,
-                                  style: TextStyle(fontSize: 18.sp),
-                                ),
-                              ),
-                            ),
-                            
-                            SizedBox(width: 16.w),
-                            
-                            // Country name
-                            Expanded(
-                              child: Text(
-                                country.name,
-                                style: AppTypography.bodyMedium.copyWith(
-                                  fontFamily: 'Karla',
-                                  fontSize: 16.sp,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.neutral800,
-                                ),
-                              ),
-                            ),
-                            
-                            // Currency code
-                            Text(
-                              country.currency,
-                              style: AppTypography.bodyMedium.copyWith(
-                                fontFamily: 'Karla',
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.neutral800,
-                              ),
-                            ),
-                          ],
                         ),
                       ),
                     ),
                   ),
-                );
-              },
+                ),
+
+                SizedBox(height: 20.h),
+
+                // Countries list
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  padding: EdgeInsets.symmetric(horizontal: 18.w),
+                  itemCount: countries.length,
+                  itemBuilder: (context, index) {
+                    final country = countries[index];
+
+                    return Container(
+                      margin: EdgeInsets.only(bottom: 4.h),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            onCountrySelected(country.code);
+                            Navigator.pop(context);
+                          },
+                          borderRadius: BorderRadius.circular(8.r),
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16.w,
+                              vertical: 16.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.transparent,
+                              borderRadius: BorderRadius.circular(8.r),
+                            ),
+                            child: Row(
+                              children: [
+                                // Flag - circular container
+                                Container(
+                                  width: 32.w,
+                                  height: 32.w,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: AppColors.neutral200,
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      country.flag,
+                                      style: TextStyle(fontSize: 18.sp),
+                                    ),
+                                  ),
+                                ),
+
+                                SizedBox(width: 16.w),
+
+                                // Country name
+                                Expanded(
+                                  child: Text(
+                                    country.name,
+                                    style: AppTypography.bodyMedium.copyWith(
+                                      fontFamily: 'Karla',
+                                      fontSize: 16.sp,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.neutral800,
+                                    ),
+                                  ),
+                                ),
+
+                                // Currency code
+                                Text(
+                                  country.currency,
+                                  style: AppTypography.bodyMedium.copyWith(
+                                    fontFamily: 'Karla',
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.neutral800,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
             ),
           ),
         ],

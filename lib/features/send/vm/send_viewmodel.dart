@@ -167,8 +167,12 @@ class SendViewModel extends StateNotifier<SendState> {
     _isInitializing = true;
     AppLogger.debug('🚀 Initializing SendViewModel...');
     
-    // Reset state to clear any cached data
-    _resetSendState();
+    // Preserve existing amounts during initialization
+    final existingSendAmount = state.sendAmount;
+    final existingReceiveAmount = state.receiverAmount;
+    final hasExistingAmounts = existingSendAmount.isNotEmpty || existingReceiveAmount.isNotEmpty;
+    
+    AppLogger.debug('💰 Preserving amounts: send=$existingSendAmount, receive=$existingReceiveAmount');
     
     // Initialize any required data
     state = state.copyWith(isLoading: true);
@@ -179,6 +183,15 @@ class SendViewModel extends StateNotifier<SendState> {
       
       // After fetching channels, set up default delivery methods and fetch rates
       await _setupDefaultSelections();
+      
+      // Restore amounts after initialization if they existed
+      if (hasExistingAmounts) {
+        AppLogger.debug('♻️ Restoring preserved amounts: send=$existingSendAmount, receive=$existingReceiveAmount');
+        state = state.copyWith(
+          sendAmount: existingSendAmount,
+          receiverAmount: existingReceiveAmount,
+        );
+      }
       
       _isInitialized = true;
       AppLogger.info('✅ SendViewModel initialized successfully');
@@ -219,6 +232,7 @@ class SendViewModel extends StateNotifier<SendState> {
 
   void _resetSendState() {
     // Reset all form fields to default values
+    // This should only be called explicitly (e.g., after successful transaction)
     state = state.copyWith(
       sendAmount: '',
       receiverAmount: '',
@@ -226,6 +240,13 @@ class SendViewModel extends StateNotifier<SendState> {
       totalToPay: '0.00',
       exchangeRate: '', // Will be set by _updateExchangeRate after currencies are set
     );
+  }
+
+  /// Public method to reset the send form (call this after successful transaction)
+  void resetSendForm() {
+    AppLogger.debug('🔄 Resetting send form');
+    _resetSendState();
+    _calculateTotal();
   }
 
   Future<void> _setupDefaultSelections() async {
@@ -866,13 +887,29 @@ class SendViewModel extends StateNotifier<SendState> {
     }
     
     final sendAmount = double.tryParse(cleanAmount);
-    final minLimit = sendMinimumLimit;
     
-    if (sendAmount == null || sendAmount <= 0 || minLimit == null) {
+    if (sendAmount == null || sendAmount <= 0) {
       return false;
     }
     
-    return sendAmount >= minLimit;
+    // Enforce minimum limits based on delivery method
+    const hardMaximumLimit = 5000000.0;
+    
+    if (state.selectedDeliveryMethod.toLowerCase() == 'dayfi_tag') {
+      // Dayfi tag has a hard minimum of 1000 NGN
+      const dayfiTagMinimum = 1000.0;
+      if (sendAmount < dayfiTagMinimum || sendAmount > hardMaximumLimit) {
+        return false;
+      }
+    } else {
+      // All other delivery methods (bank transfer, mobile money, etc.) have 2000 minimum
+      const otherMethodsMinimum = 2000.0;
+      if (sendAmount < otherMethodsMinimum || sendAmount > hardMaximumLimit) {
+        return false;
+      }
+    }
+    
+    return true;
   }
 
   double? _calculateExchangeRate() {

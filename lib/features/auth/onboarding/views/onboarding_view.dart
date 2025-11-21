@@ -156,7 +156,7 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
                         children: [
                           // Sign Up button
                           PrimaryButton(
-                                text: 'Next - Create Account',
+                                text: 'Create account',
                                 onPressed: _navigateToSignUp,
                                 backgroundColor: AppColors.purple500,
                                 textColor: AppColors.neutral0,
@@ -164,7 +164,7 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
                                 letterSpacing: -.8,
                                 fontSize: 18,
                                 width: 375.w,
-                                height: 60.h,
+                                height: 48.000.h,
                                 borderRadius: 38,
                                 fullWidth: true,
                               )
@@ -187,7 +187,7 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
 
                           // Sign In button
                           SecondaryButton(
-                                text: 'Next - Sign In',
+                                text: 'Sign in',
                                 onPressed: _navigateToSignIn,
                                 backgroundColor: Colors.transparent,
                                 textColor: AppColors.purple500,
@@ -196,7 +196,7 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
                                 borderRadius: 38,
                                 letterSpacing: -.8,
                                 fontFamily: 'Karla',
-                                height: 60.h,
+                                height: 48.000.h,
                                 fullWidth: true,
                               )
                               .animate()

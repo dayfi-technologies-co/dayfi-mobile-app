@@ -73,7 +73,7 @@ class Wallet {
   /// Get formatted balance with currency symbol
   String get formattedBalance {
     final symbol = _getCurrencySymbol(currency);
-    return '$symbol${balance}';
+    return '$symbol$balance';
   }
 
   String _getCurrencySymbol(String currency) {

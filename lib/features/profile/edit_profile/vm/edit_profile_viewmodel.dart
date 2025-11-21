@@ -324,9 +324,15 @@ class EditProfileNotifier extends StateNotifier<EditProfileState> {
 
   String _validatePhoneNumber(String value) {
     if (value.isEmpty) return 'Please enter your phone number';
-    if (value.trim().length < 10) {
-      return 'Please enter a valid phone number';
+    
+    final trimmed = value.trim();
+    // If starts with 0, require 11 digits, otherwise require 10 digits
+    if (trimmed.startsWith('0')) {
+      if (trimmed.length != 11) return 'Please enter a valid 11-digit phone number';
+    } else {
+      if (trimmed.length != 10) return 'Please enter a valid 10-digit phone number';
     }
+    
     return '';
   }
 
@@ -359,6 +365,11 @@ class EditProfileNotifier extends StateNotifier<EditProfileState> {
     try {
       AppLogger.info('Updating user profile via API...');
       
+      // Remove leading 0 from phone number if present
+      final phoneNumber = state.phoneNumber.startsWith('0') 
+          ? state.phoneNumber.substring(1) 
+          : state.phoneNumber;
+      
       // Call the API to update profile
       final response = await _authService.updateProfile(
         country: state.country.isNotEmpty ? state.country : (state.user!.country?.isNotEmpty == true ? state.user!.country! : 'Nigeria'),
@@ -369,7 +380,7 @@ class EditProfileNotifier extends StateNotifier<EditProfileState> {
         address: state.address.isNotEmpty ? state.address : (state.user!.address?.isNotEmpty == true ? state.user!.address! : 'Not provided'),
         gender: _normalizeGender(state.gender.isNotEmpty ? state.gender : (state.user!.gender?.isNotEmpty == true ? state.user!.gender! : 'male')),
         dob: state.dateOfBirth.isNotEmpty ? state.dateOfBirth : (state.user!.dateOfBirth?.isNotEmpty == true ? state.user!.dateOfBirth! : '1990-01-01'),
-        // phoneNumber: not sent since users can't change it
+        phoneNumber: phoneNumber,
         userId: state.user!.userId,
         bvn: state.user!.idNumber?.isNotEmpty == true ? state.user!.idNumber! : '00000000000', // Provide default BVN if empty
       );

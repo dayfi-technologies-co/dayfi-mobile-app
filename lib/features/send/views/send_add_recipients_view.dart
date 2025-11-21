@@ -373,17 +373,16 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
               title: Text(
                 'Add Beneficiary',
                 style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                 fontFamily: 'CabinetGrotesk',
-            fontSize: 20.sp,
-            fontWeight: FontWeight.w600,
-            color: Theme.of(context).colorScheme.onSurface,
-          
+               fontFamily: 'CabinetGrotesk',
+                   fontSize: 19.sp, height: 1.6,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               centerTitle: true,
             ),
             body: SingleChildScrollView(
-              padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+              padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 12.h),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -396,7 +395,12 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                       Center(
                         // padding: EdgeInsets.only(left: 16.w),
                         child: Text(
-                          widget.selectedData['recipientDeliveryMethod'] == 'bank' || widget.selectedData['recipientDeliveryMethod'] == 'p2p' ? 'Please select a bank to enable account resolution' : 'Please select a mobile money provider to enable account resolution',
+                          widget.selectedData['recipientDeliveryMethod'] ==
+                                      'bank' ||
+                                  widget.selectedData['recipientDeliveryMethod'] ==
+                                      'p2p'
+                              ? 'Please select a bank to enable account resolution'
+                              : 'Please select a mobile money provider to enable account resolution',
                           style: AppTypography.bodySmall.copyWith(
                             fontFamily: 'Karla',
                             fontSize: 12.sp,
@@ -414,11 +418,27 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                     // Account Number Field (Required)
                     CustomTextField(
                       controller: _accountNumberController,
-                      label: widget.selectedData['recipientDeliveryMethod'] == 'bank' || widget.selectedData['recipientDeliveryMethod'] == 'p2p' ? 'Account Number' : 'Mobile Money Number',
+                      label:
+                          widget.selectedData['recipientDeliveryMethod'] ==
+                                      'bank' ||
+                                  widget.selectedData['recipientDeliveryMethod'] ==
+                                      'p2p'
+                              ? 'Account Number'
+                              : 'Mobile Money Number',
                       hintText:
                           _selectedNetwork == null
-                              ? widget.selectedData['recipientDeliveryMethod'] == 'bank' || widget.selectedData['recipientDeliveryMethod'] == 'p2p' ? 'Select a bank first' : 'Select a mobile money provider first'
-                              : widget.selectedData['recipientDeliveryMethod'] == 'bank' || widget.selectedData['recipientDeliveryMethod'] == 'p2p' ? 'Enter 10-digit account number' : 'Enter mobile money number',
+                              ? widget.selectedData['recipientDeliveryMethod'] ==
+                                          'bank' ||
+                                      widget.selectedData['recipientDeliveryMethod'] ==
+                                          'p2p'
+                                  ? 'Select a bank first'
+                                  : 'Select a mobile money provider first'
+                              : widget.selectedData['recipientDeliveryMethod'] ==
+                                      'bank' ||
+                                  widget.selectedData['recipientDeliveryMethod'] ==
+                                      'p2p'
+                              ? 'Enter 10-digit account number'
+                              : 'Enter mobile money number',
                       keyboardType: TextInputType.number,
                       maxLength: 10,
                       enabled: _selectedNetwork != null,
@@ -428,7 +448,9 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                                 margin: EdgeInsets.all(12),
                                 child:
                                     LoadingAnimationWidget.horizontalRotatingDots(
-                                      color: AppColors.purple500ForTheme(context),
+                                      color: AppColors.purple500ForTheme(
+                                        context,
+                                      ),
                                       size: 20,
                                     ),
                               )
@@ -510,8 +532,8 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                             style: Theme.of(
                               context,
                             ).textTheme.titleMedium?.copyWith(
-                              fontFamily: 'CabinetGrotesk',
-                              fontSize: 16.sp,
+                           fontFamily: 'CabinetGrotesk',
+                              fontSize: 12.sp,
                               fontWeight: FontWeight.w600,
                               color: AppColors.neutral0,
                               letterSpacing: 0.5,
@@ -525,83 +547,83 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                     SizedBox(height: 32.h),
 
                     // // Optional Fields Section
-                    Center(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(
-                          vertical: 4.h,
-                          horizontal: 2.w,
-                        ),
-                        child: Text(
-                          'Additional Information',
-                          style: Theme.of(
-                            context,
-                          ).textTheme.titleMedium?.copyWith(
-                            fontFamily: 'CabinetGrotesk',
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w600,
-                            // color: AppColors.neutral900,
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 18.h),
+                    // Center(
+                    //   child: Padding(
+                    //     padding: EdgeInsets.symmetric(
+                    //       vertical: 4.h,
+                    //       horizontal: 2.w,
+                    //     ),
+                    //     child: Text(
+                    //       'Additional Information',
+                    //       style: Theme.of(
+                    //         context,
+                    //       ).textTheme.titleMedium?.copyWith(
+                    //      fontFamily: 'CabinetGrotesk',
+                    //         fontSize: 12.sp,
+                    //         fontWeight: FontWeight.w600,
+                    //         // color: AppColors.neutral900,
+                    //       ),
+                    //     ),
+                    //   ),
+                    // ),
+                    // SizedBox(height: 18.h),
 
-                    // Phone Number (Optional)
-                    _buildPhoneNumberField(),
+                    // // Phone Number (Optional)
+                    // _buildPhoneNumberField(),
 
-                    SizedBox(height: 18.h),
+                    // SizedBox(height: 18.h),
 
-                    // Address (Optional)
-                    CustomTextField(
-                      controller: _addressController,
-                      label: 'Address (Optional)',
-                      keyboardType: TextInputType.streetAddress,
-                      hintText: 'Enter address',
-                      textCapitalization: TextCapitalization.words,
-                      validator: (value) {
-                        // No validation required for optional field
-                        return null;
-                      },
-                    ),
+                    // // Address (Optional)
+                    // CustomTextField(
+                    //   controller: _addressController,
+                    //   label: 'Residential Address (Optional)',
+                    //   keyboardType: TextInputType.streetAddress,
+                    //   hintText: 'Enter address',
+                    //   textCapitalization: TextCapitalization.words,
+                    //   validator: (value) {
+                    //     // No validation required for optional field
+                    //     return null;
+                    //   },
+                    // ),
 
-                    SizedBox(height: 18.h),
+                    // SizedBox(height: 18.h),
 
-                    // Date of Birth (Optional)
-                    CustomTextField(
-                      controller: _dobController,
-                      label: 'Date of Birth (Optional)',
-                      hintText: 'DD/MM/YYYY',
-                      shouldReadOnly: true,
-                      onTap: () => _selectDate(),
-                      validator: (value) {
-                        // No validation required for optional field
-                        return null;
-                      },
-                    ),
+                    // // Date of Birth (Optional)
+                    // CustomTextField(
+                    //   controller: _dobController,
+                    //   label: 'Date of Birth (Optional)',
+                    //   hintText: 'DD/MM/YYYY',
+                    //   shouldReadOnly: true,
+                    //   onTap: () => _selectDate(),
+                    //   validator: (value) {
+                    //     // No validation required for optional field
+                    //     return null;
+                    //   },
+                    // ),
 
-                    SizedBox(height: 18.h),
+                    // SizedBox(height: 18.h),
 
-                    // Email Address (Optional)
-                    CustomTextField(
-                      controller: _emailController,
-                      label: 'Email Address (Optional)',
-                      hintText: 'Enter email address',
-                      keyboardType: TextInputType.emailAddress,
-                      capitalizeFirstLetter: false,
-                      textCapitalization: TextCapitalization.none,
+                    // // Email Address (Optional)
+                    // CustomTextField(
+                    //   controller: _emailController,
+                    //   label: 'Email Address (Optional)',
+                    //   hintText: 'Enter email address',
+                    //   keyboardType: TextInputType.emailAddress,
+                    //   capitalizeFirstLetter: false,
+                    //   textCapitalization: TextCapitalization.none,
 
-                      validator: (value) {
-                        if (value != null && value.trim().isNotEmpty) {
-                          if (!RegExp(
-                            r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                          ).hasMatch(value)) {
-                            return 'Please enter a valid email address';
-                          }
-                        }
-                        return null;
-                      },
-                    ),
-                    SizedBox(height: 18.h),
+                    //   validator: (value) {
+                    //     if (value != null && value.trim().isNotEmpty) {
+                    //       if (!RegExp(
+                    //         r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                    //       ).hasMatch(value)) {
+                    //         return 'Please enter a valid email address';
+                    //       }
+                    //     }
+                    //     return null;
+                    //   },
+                    // ),
+                    // SizedBox(height: 18.h),
                     Container(
                       padding: EdgeInsets.all(12.w),
                       decoration: BoxDecoration(
@@ -622,7 +644,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                           SizedBox(width: 4.w),
                           Image.asset(
                             "assets/images/idea.png",
-                            height: 18.h,
+                            height: 20.h,
                             // color: Theme.of(context).colorScheme.primary,
                           ),
                           SizedBox(width: 12.w),
@@ -632,7 +654,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                               style: Theme.of(
                                 context,
                               ).textTheme.bodySmall?.copyWith(
-                                fontSize: 12.5.sp,
+                                fontSize: 14.sp,
                                 fontFamily: 'Karla',
                                 fontWeight: FontWeight.w400,
                                 letterSpacing: -0.4,
@@ -645,13 +667,13 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                       ),
                     ),
 
-                    SizedBox(height: 48.h),
+                    SizedBox(height: 56.h),
 
                     // Continue Button
                     PrimaryButton(
-                      text: 'Next - Review Transfer',
+                      text: 'Review Transfer',
                       onPressed: _validateAndContinue,
-                      height: 60.h,
+                      height: 48.000.h,
                       backgroundColor: AppColors.purple500,
                       textColor: AppColors.neutral0,
                       fontFamily: 'Karla',
@@ -688,7 +710,8 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
     return CustomTextField(
       controller: _networkController,
       label:
-          widget.selectedData['recipientDeliveryMethod'] == 'bank' || widget.selectedData['recipientDeliveryMethod'] == 'p2p'
+          widget.selectedData['recipientDeliveryMethod'] == 'bank' ||
+                  widget.selectedData['recipientDeliveryMethod'] == 'p2p'
               ? 'Bank Name'
               : 'Mobile Money Provider',
       hintText: _getNetworkHintText(),
@@ -708,13 +731,23 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
   /// Get the hint text based on current state
   String _getNetworkHintText() {
     if (_isLoadingNetworks) {
-      return widget.selectedData['recipientDeliveryMethod'] == 'bank' || widget.selectedData['recipientDeliveryMethod'] == 'p2p' ? 'Loading banks...' : 'Loading mobile money providers...';
+      return widget.selectedData['recipientDeliveryMethod'] == 'bank' ||
+              widget.selectedData['recipientDeliveryMethod'] == 'p2p'
+          ? 'Loading banks...'
+          : 'Loading mobile money providers...';
     } else if (_networkError != null) {
-      return widget.selectedData['recipientDeliveryMethod'] == 'bank' || widget.selectedData['recipientDeliveryMethod'] == 'p2p' ? 'Error loading banks' : 'Error loading mobile money providers';
+      return widget.selectedData['recipientDeliveryMethod'] == 'bank' ||
+              widget.selectedData['recipientDeliveryMethod'] == 'p2p'
+          ? 'Error loading banks'
+          : 'Error loading mobile money providers';
     } else if (_filteredNetworks.isEmpty) {
-      return widget.selectedData['recipientDeliveryMethod'] == 'bank' || widget.selectedData['recipientDeliveryMethod'] == 'p2p' ? 'No banks available for this channel' : 'No mobile money providers available for this channel';
+      return widget.selectedData['recipientDeliveryMethod'] == 'bank' ||
+              widget.selectedData['recipientDeliveryMethod'] == 'p2p'
+          ? 'No banks available for this channel'
+          : 'No mobile money providers available for this channel';
     } else {
-      return widget.selectedData['recipientDeliveryMethod'] == 'bank' || widget.selectedData['recipientDeliveryMethod'] == 'p2p'
+      return widget.selectedData['recipientDeliveryMethod'] == 'bank' ||
+              widget.selectedData['recipientDeliveryMethod'] == 'p2p'
           ? 'Select a bank'
           : 'Select a mobile money provider';
     }
@@ -747,13 +780,13 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
     switch (network.accountNumberType) {
       case 'bank':
         return SvgPicture.asset(
-          'assets/icons/svgs/bankk.svg',
+          'assets/icons/svgs/building-bank.svg',
           height: 32.sp,
           width: 32.sp,
         );
       case 'phone':
         return SvgPicture.asset(
-          'assets/icons/svgs/mobilee.svg',
+          'assets/icons/svgs/device-mobile.svg',
           height: 32.sp,
           width: 32.sp,
         );
@@ -805,7 +838,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                     children: [
                       SizedBox(height: 18.h),
                       Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 24.w),
+                        padding: EdgeInsets.symmetric(horizontal: 18.w),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -813,8 +846,8 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                             Text(
                               'Select Network',
                               style: AppTypography.titleLarge.copyWith(
-                                fontFamily: 'CabinetGrotesk',
-                                fontSize: 18.sp,
+                             fontFamily: 'CabinetGrotesk',
+                                fontSize: 14.sp,
                                 fontWeight: FontWeight.w600,
                                 color: Theme.of(context).colorScheme.onSurface,
                               ),
@@ -836,18 +869,35 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                       SizedBox(height: 16.h),
                       // Search field
                       Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 24.w),
+                        padding: EdgeInsets.symmetric(horizontal: 18.w),
                         child: CustomTextField(
                           controller: _networkSearchController,
                           label: '',
                           hintText: 'Search networks',
                           borderRadius: 40,
-                          prefixIcon: Icon(
-                            Icons.search,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurface.withOpacity(0.6),
-                            size: 20.sp,
+                          prefixIcon: Container(
+                            width: 40.w,
+                            alignment: Alignment.centerRight,
+                            constraints: BoxConstraints.tightForFinite(),
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                SvgPicture.asset(
+                                  'assets/icons/svgs/swap.svg',
+                                  height: 34,
+                                  color: AppColors.neutral700.withOpacity(.35),
+                                ),
+                                Center(
+                                  child: SvgPicture.asset(
+                                    'assets/icons/svgs/search-normal.svg',
+                                    height: 26,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface.withOpacity(0.6),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                           onChanged: (value) {
                             _filterNetworksBySearch(value);
@@ -865,7 +915,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                                     children: [
                                       Icon(
                                         Icons.search_off,
-                                        size: 48.sp,
+                                        size: 56.sp,
                                         color: Theme.of(context)
                                             .colorScheme
                                             .onSurface
@@ -901,7 +951,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                                 )
                                 : ListView.builder(
                                   padding: EdgeInsets.symmetric(
-                                    horizontal: 24.w,
+                                    horizontal: 18.w,
                                   ),
                                   itemCount: _searchedNetworks.length,
                                   itemBuilder: (context, index) {
@@ -952,7 +1002,10 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                                           isSelected
                                               ? SvgPicture.asset(
                                                 'assets/icons/svgs/circle-check.svg',
-                                                color: AppColors.purple500ForTheme(context),
+                                                color:
+                                                    AppColors.purple500ForTheme(
+                                                      context,
+                                                    ),
                                               )
                                               : null,
                                       onTap: () {
@@ -1040,10 +1093,14 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
       if (_selectedNetwork == null) {
         errorMessage += '\n• Select a network';
       }
-      if (_resolvedAccountName == null || _resolvedAccountName!.isEmpty && widget.selectedData['recipientDeliveryMethod'] != 'p2p') {
+      if (_resolvedAccountName == null ||
+          _resolvedAccountName!.isEmpty &&
+              widget.selectedData['recipientDeliveryMethod'] != 'p2p') {
         errorMessage +=
             '\n• Enter a valid account number to resolve the recipient name';
-      } else if (_resolvedAccountName == null || _resolvedAccountName!.isEmpty && widget.selectedData['recipientDeliveryMethod'] == 'p2p') {
+      } else if (_resolvedAccountName == null ||
+          _resolvedAccountName!.isEmpty &&
+              widget.selectedData['recipientDeliveryMethod'] == 'p2p') {
         errorMessage +=
             '\n• Enter a valid mobile money number to resolve the recipient name';
       }
@@ -1096,7 +1153,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
               style: AppTypography.bodyMedium.copyWith(
                 fontFamily: 'Karla',
                 fontSize: 16,
-                letterSpacing: -.6,
+                letterSpacing: -.3,
                 fontWeight: FontWeight.w500,
                 height: 1.450,
                 color: Theme.of(context).colorScheme.onSurface,

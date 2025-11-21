@@ -19,8 +19,8 @@ class TermsOfUseView extends StatelessWidget {
         title: Text(
           "Terms of Use",
           style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-            fontFamily: 'CabinetGrotesk',
-            fontSize: 28.sp,
+         fontFamily: 'CabinetGrotesk',
+            fontSize: 22.sp, height: 1.7,
             fontWeight: FontWeight.w600,
             letterSpacing: -0.8,
           ),
@@ -162,8 +162,8 @@ class TermsOfUseView extends StatelessWidget {
         Text(
           title,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontFamily: 'CabinetGrotesk',
-            fontSize: 20.sp,
+         fontFamily: 'CabinetGrotesk',
+             fontSize: 19.sp, height: 1.6,
             fontWeight: FontWeight.w600,
             letterSpacing: -0.8,
           ),

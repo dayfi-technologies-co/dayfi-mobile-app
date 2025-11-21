@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/features/auth/create_passcode/vm/create_passcode_viewmodel.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
+import 'package:dayfi/common/utils/haptic_helper.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 class CreatePasscodeView extends ConsumerStatefulWidget {
@@ -81,8 +82,8 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
                 Text(
                   'For your security, please avoid easy-to-guess passcodes. e.g. 1234, 2222',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontFamily: 'CabinetGrotesk',
-                    fontSize: 20.sp,
+                 fontFamily: 'CabinetGrotesk',
+                     fontSize: 19.sp, height: 1.6,
                     fontWeight: FontWeight.w400,
                     letterSpacing: -0.5,
                   ),
@@ -93,14 +94,14 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
 
                 // Continue button with auth view styling
                 PrimaryButton(
-                  text: 'Next - Close',
+                  text: 'Close',
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
                   backgroundColor: AppColors.purple500,
                   textColor: AppColors.neutral0,
                   borderRadius: 38,
-                  height: 60.h,
+                  height: 48.000.h,
                   width: double.infinity,
                   fullWidth: true,
                   fontFamily: 'Karla',
@@ -155,11 +156,11 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
                       icon: const Icon(Icons.arrow_back_ios_new),
                     ),
                     title: Text(
-                      "Create passcode",
+                      "Create Passcode",
                       style: Theme.of(
                         context,
                       ).textTheme.headlineMedium?.copyWith(
-                        fontFamily: 'CabinetGrotesk',
+                     fontFamily: 'CabinetGrotesk',
                         fontSize: 28.00,
                         fontWeight: FontWeight.w500,
                       ),
@@ -167,7 +168,7 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
                   ),
 
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    padding: const EdgeInsets.symmetric(horizontal: 18),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
@@ -175,7 +176,7 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
 
                         // Subtitle
                         Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 24.w),
+                              padding: EdgeInsets.symmetric(horizontal: 18.w),
                               child: Text(
                                 "Please create a 4-digit passcode for your account. This will be used to quickly access your account.",
                                 style: Theme.of(
@@ -184,7 +185,7 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
                                   fontSize: 16.sp,
                                   fontWeight: FontWeight.w400,
                                   fontFamily: 'Karla',
-                                  letterSpacing: -.6,
+                                  letterSpacing: -.3,
                                   height: 1.4,
                                 ),
                                 textAlign: TextAlign.center,
@@ -211,7 +212,7 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
 
                   // Passcode widget
                   Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 24.w),
+                        padding: EdgeInsets.symmetric(horizontal: 18.w),
                         child: PasscodeWidget(
                           passcodeLength: 4,
                           currentPasscode: createPasscodeState.passcode,
@@ -241,7 +242,7 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
                       ),
                   SizedBox(height: 16.h),
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24.w),
+                    padding: EdgeInsets.symmetric(horizontal: 18.w),
                     child: Text(
                       " ",
                       style: TextStyle(
@@ -352,6 +353,7 @@ class PasscodeWidget extends StatelessWidget {
             highlightColor: Colors.transparent,
             borderRadius: BorderRadius.circular(100),
             onTap: () {
+              HapticHelper.lightImpact();
               if (currentPasscode.length < passcodeLength) {
                 onPasscodeChanged(currentPasscode + number);
               }
@@ -365,8 +367,8 @@ class PasscodeWidget extends StatelessWidget {
                 child: Text(
                   number,
                   style: TextStyle(
-                    fontSize: 32.00,
-                    fontFamily: 'CabinetGrotesk',
+                    fontSize: 25.60,
+                 fontFamily: 'CabinetGrotesk',
                     fontWeight: FontWeight.w400,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
@@ -383,7 +385,10 @@ class PasscodeWidget extends StatelessWidget {
   }) {
     return Builder(
       builder: (context) => GestureDetector(
-        onTap: onTap,
+        onTap: () {
+          HapticHelper.lightImpact();
+          onTap();
+        },
         child: Container(
           decoration: const BoxDecoration(
             shape: BoxShape.circle,

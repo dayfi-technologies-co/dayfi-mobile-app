@@ -13,17 +13,66 @@ class CapitalizeFirstLetterFormatter extends TextInputFormatter {
     if (newValue.text.isEmpty) {
       return newValue;
     }
-    
+
     // Capitalize the first letter
     String capitalizedText = newValue.text;
     if (capitalizedText.isNotEmpty) {
-      capitalizedText = capitalizedText[0].toUpperCase() + 
+      capitalizedText =
+          capitalizedText[0].toUpperCase() +
           (capitalizedText.length > 1 ? capitalizedText.substring(1) : '');
     }
-    
+
     return TextEditingValue(
       text: capitalizedText,
       selection: newValue.selection,
+    );
+  }
+}
+
+/// Capitalizes the first letter of each word while preserving the rest of the text.
+class WordCapitalizationFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.text.isEmpty) return newValue;
+
+    // Process each character while maintaining spaces
+    final StringBuffer buffer = StringBuffer();
+    bool capitalizeNext = true;
+    
+    for (int i = 0; i < newValue.text.length; i++) {
+      final char = newValue.text[i];
+      
+      if (char == ' ') {
+        // Preserve spaces as-is
+        buffer.write(char);
+        capitalizeNext = true;
+      } else if (capitalizeNext) {
+        // Capitalize first letter of word
+        buffer.write(char.toUpperCase());
+        capitalizeNext = false;
+      } else {
+        // Lowercase rest of word
+        buffer.write(char.toLowerCase());
+      }
+    }
+    
+    final transformed = buffer.toString();
+
+    // Ensure cursor position is valid
+    final textLength = transformed.length;
+    final selectionStart = newValue.selection.start.clamp(0, textLength);
+    final selectionEnd = newValue.selection.end.clamp(0, textLength);
+
+    return TextEditingValue(
+      text: transformed,
+      selection: TextSelection(
+        baseOffset: selectionStart,
+        extentOffset: selectionEnd,
+      ),
+      composing: TextRange.empty,
     );
   }
 }
@@ -56,6 +105,8 @@ class CustomTextField extends StatelessWidget {
   final bool capitalizeFirstLetter;
   final double borderRadius;
   final EdgeInsets? contentPadding;
+  final TextStyle? textStyle;
+  final bool shouldFaintFillColor;
 
   const CustomTextField({
     super.key,
@@ -86,6 +137,8 @@ class CustomTextField extends StatelessWidget {
     this.capitalizeFirstLetter = false,
     this.borderRadius = 12,
     this.contentPadding,
+    this.textStyle,
+    this.shouldFaintFillColor = false,
   });
 
   @override
@@ -100,14 +153,15 @@ class CustomTextField extends StatelessWidget {
                 fontFamily: 'Karla',
                 fontSize: 15,
                 fontWeight: FontWeight.w400,
-                letterSpacing: -.6,
+                letterSpacing: -.3,
                 height: 1.450,
                 color:
                     label == "hidden"
                         ? Colors.transparent
                         : Theme.of(
-                          context,
-                        ).textTheme.bodyLarge?.color?.withOpacity(.75) ?? Colors.black,
+                              context,
+                            ).textTheme.bodyLarge?.color?.withOpacity(.75) ??
+                            Colors.black,
               ),
               textAlign: TextAlign.start,
               overflow: TextOverflow.ellipsis,
@@ -136,7 +190,12 @@ class CustomTextField extends StatelessWidget {
               ),
             ],
           ),
-          child: TextFormField(
+          child: Semantics(
+            textField: true,
+            label: label ?? hintText,
+            hint: hintText,
+            enabled: !shouldReadOnly,
+            child: TextFormField(
             // autofocus: autofocus,
             maxLines: obscureText ? 1 : minLines,
             maxLengthEnforcement: MaxLengthEnforcement.enforced,
@@ -147,24 +206,46 @@ class CustomTextField extends StatelessWidget {
             autovalidateMode: AutovalidateMode.onUserInteraction,
             maxLength: obscureText ? null : maxLength,
             controller: controller,
-            cursorColor: AppColors.purple500ForTheme(context), // innit
-            
+            cursorColor: AppColors.purple500ForTheme(context),
             textInputAction: textInputAction,
             keyboardType: keyboardType,
             readOnly: shouldReadOnly,
             obscureText: obscureText,
             onChanged: onChanged,
             validator: validator,
-            inputFormatters: [
-              formatter ?? FilteringTextInputFormatter.singleLineFormatter,
+            // Custom context menu to prevent iOS paste permission duplicate dialogs
+            contextMenuBuilder: (context, editableTextState) {
+              return AdaptiveTextSelectionToolbar.editableText(
+                editableTextState: editableTextState,
+              );
+            },
+            inputFormatters: <TextInputFormatter>[
+              // If a specific formatter is provided, use it. Otherwise, automatically
+              // apply a word-capitalization formatter for fields that request
+              // `TextCapitalization.words` (e.g., names), otherwise use a default
+              // single-line filtering formatter.
+              formatter ??
+                  ((textCapitalization == TextCapitalization.words ||
+                          capitalizeFirstLetter)
+                      ? WordCapitalizationFormatter()
+                      : FilteringTextInputFormatter.singleLineFormatter),
             ],
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              fontFamily: 'Karla',
-              fontSize: 16,
-              letterSpacing: -.6,
-              fontWeight: FontWeight.w500,
-              height: 1.450,
-            ),
+            style:
+                textStyle ??
+                Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  fontFamily: 'Karla',
+                  fontSize: 16,
+                  letterSpacing: -.3,
+
+                  color:
+                      shouldFaintFillColor && shouldReadOnly
+                          ? Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(.85)
+                          : Theme.of(context).colorScheme.onSurface,
+                  fontWeight: FontWeight.w500,
+                  height: 1.450,
+                ),
             decoration: InputDecoration(
               counterText: "",
               errorText: errorText,
@@ -172,28 +253,31 @@ class CustomTextField extends StatelessWidget {
               hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 fontFamily: 'Karla',
                 fontSize: 16,
-                letterSpacing: -.6,
+                letterSpacing: -.3,
                 fontWeight: FontWeight.w500,
                 height: 1.450,
                 overflow: TextOverflow.ellipsis,
-                color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(.25),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurfaceVariant.withOpacity(.25),
               ),
               filled: true,
               fillColor:
-                  errorText.toString() != "null"
+                  shouldFaintFillColor && shouldReadOnly
+                      ? Theme.of(context).colorScheme.surface.withOpacity(.1)
+                      : errorText.toString() != "null"
                       ? isDayfiId
                           ? Colors.greenAccent.withOpacity(.08)
                           : const Color.fromARGB(255, 255, 217, 214)
                       : Theme.of(context).colorScheme.surface,
-              contentPadding: contentPadding ?? EdgeInsets.symmetric(
-                vertical: 14.h,
-                horizontal: 10.w,
-              ),
+              contentPadding:
+                  contentPadding ??
+                  EdgeInsets.symmetric(vertical: 14.h, horizontal: 10.w),
               errorStyle: TextStyle(
                 fontFamily: 'Karla',
                 fontSize: errorFontSize ?? 13.sp,
                 color: Colors.red.shade800,
-                letterSpacing: -.6,
+                letterSpacing: -.3,
                 fontWeight: FontWeight.w400,
                 height: 1.4,
               ),
@@ -219,6 +303,7 @@ class CustomTextField extends StatelessWidget {
             ),
           ),
         ),
+      ),
       ],
     );
   }
@@ -295,7 +380,12 @@ class ReadOnlyCustomTextField extends StatelessWidget {
             )
             : const SizedBox(),
         verticalSpace((label == null || label == "") ? 0 : 4),
-        TextFormField(
+        Semantics(
+          textField: true,
+          label: label ?? hintText,
+          hint: hintText,
+          enabled: false,
+          child: TextFormField(
           // autofocus: autofocus,
           maxLines: obscureText ? 1 : minLines,
           maxLengthEnforcement: MaxLengthEnforcement.enforced,
@@ -313,7 +403,14 @@ class ReadOnlyCustomTextField extends StatelessWidget {
           obscureText: obscureText,
           onChanged: onChanged,
           validator: validator,
+          // Custom context menu to prevent iOS paste permission duplicate dialogs
+          contextMenuBuilder: (context, editableTextState) {
+            return AdaptiveTextSelectionToolbar.editableText(
+              editableTextState: editableTextState,
+            );
+          },
           inputFormatters: [
+            // For read-only, still allow a formatter if provided; otherwise keep single-line.
             formatter ?? FilteringTextInputFormatter.singleLineFormatter,
           ],
           style: TextStyle(
@@ -332,10 +429,16 @@ class ReadOnlyCustomTextField extends StatelessWidget {
               fontSize: 14,
               fontWeight: FontWeight.w500,
               height: 1.450,
-              color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(.5) ?? Colors.black.withOpacity(.5),
+              color:
+                  Theme.of(
+                    context,
+                  ).textTheme.bodyLarge?.color?.withOpacity(.5) ??
+                  Colors.black.withOpacity(.5),
             ),
             filled: true,
-            fillColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(.3),
+            fillColor: Theme.of(
+              context,
+            ).colorScheme.surfaceContainerHighest.withOpacity(.3),
             contentPadding: EdgeInsets.symmetric(
               vertical: 14.h,
               horizontal: 14.w,
@@ -392,6 +495,7 @@ class ReadOnlyCustomTextField extends StatelessWidget {
             ),
           ),
         ),
+      ),
       ],
     );
   }

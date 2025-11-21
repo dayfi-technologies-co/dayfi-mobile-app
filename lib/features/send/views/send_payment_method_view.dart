@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:dayfi/common/widgets/buttons/buttons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:dayfi/common/utils/haptic_helper.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -197,6 +198,13 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
   }
 
   String _mapCollectionError(String raw, SendState sendState) {
+    // Name mismatch error (Nigeria only)
+    if (raw.contains('name') && raw.contains('match') ||
+        raw.toLowerCase().contains('name mismatch') ||
+        raw.toLowerCase().contains('name does not match') ||
+        raw.toLowerCase().contains('payer name')) {
+      return 'The name on your bank account doesn\'t match your verified name on Dayfi App. Please ensure you\'re paying from an account that matches your registered name.';
+    }
     if (raw.contains('No buy rate for currency')) {
       final currencyMatch = RegExp(
         r'No buy rate for currency (\\w+)',
@@ -388,7 +396,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
             children: [
               SizedBox(height: 18.h),
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24.w),
+                padding: EdgeInsets.symmetric(horizontal: 18.w),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -397,7 +405,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                       'Your DayFi Tag',
                       style: AppTypography.titleLarge.copyWith(
                         fontFamily: 'CabinetGrotesk',
-                        fontSize: 18.sp,
+                        fontSize: 14.sp,
                         fontWeight: FontWeight.w600,
                         color: Theme.of(context).colorScheme.onSurface,
                       ),
@@ -417,7 +425,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
               SizedBox(height: 16.h),
               Expanded(
                 child: SingleChildScrollView(
-                  padding: EdgeInsets.symmetric(horizontal: 24.w),
+                  padding: EdgeInsets.symmetric(horizontal: 18.w),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -441,7 +449,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                                 style: Theme.of(
                                   context,
                                 ).textTheme.bodySmall?.copyWith(
-                                  fontSize: 12.5.sp,
+                                  fontSize: 14.sp,
                                   fontFamily: 'Karla',
                                   fontWeight: FontWeight.w400,
                                   letterSpacing: -0.4,
@@ -462,9 +470,20 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                         controller: TextEditingController(
                           text: dayfiId.startsWith('@') ? dayfiId : '@$dayfiId',
                         ),
+                        // textStyle: TextStyle(
+                        //   fontFamily: 'Karla',
+                        //   fontWeight: FontWeight.w600,
+                        //   fontSize: 16.sp,
+                        //   letterSpacing: 0.00,
+                        //   height: 1.450,
+                        //   color: AppColors.purple500ForTheme(context),
+                        // ),
                         onChanged: (value) {},
                         keyboardType: TextInputType.text,
                         suffixIcon: Container(
+                          width: 100.w,
+                          alignment:
+                              Alignment.centerRight, // Align to the right
                           constraints: BoxConstraints.tightForFinite(),
                           margin: EdgeInsets.symmetric(
                             vertical: 12.0.h,
@@ -473,9 +492,13 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                           height: 32.h,
                           child: GestureDetector(
                             onTap: () {
+                              HapticHelper.lightImpact();
                               Clipboard.setData(
                                 ClipboardData(
-                                  text: dayfiId.startsWith('@') ? dayfiId : '@$dayfiId',
+                                  text:
+                                      dayfiId.startsWith('@')
+                                          ? dayfiId
+                                          : '@$dayfiId',
                                 ),
                               );
                               TopSnackbar.show(
@@ -485,46 +508,49 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                               );
                             },
                             child: Row(
+                              mainAxisAlignment:
+                                  MainAxisAlignment
+                                      .center, // Align content to the right
+                              crossAxisAlignment: CrossAxisAlignment.end,
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(
-                                  Icons.copy,
-                                  color: AppColors.purple500ForTheme(context),
-                                  size: 20.sp,
-                                ),
-                                SizedBox(width: 3.w),
                                 Text(
-                                  dayfiId.startsWith('@') ? dayfiId : '@$dayfiId',
+                                  "copy",
                                   style: TextStyle(
                                     fontFamily: 'Karla',
                                     fontWeight: FontWeight.w600,
-                                    fontSize: 16.sp,
+                                    fontSize: 12.sp,
                                     letterSpacing: 0.00,
                                     height: 1.450,
                                     color: AppColors.purple500ForTheme(context),
                                   ),
+                                ),
+                                SizedBox(width: 6.w),
+                                SvgPicture.asset(
+                                  "assets/icons/svgs/copy.svg",
+                                  color: AppColors.purple500ForTheme(context),
                                 ),
                               ],
                             ),
                           ),
                         ),
                       ),
-                      SizedBox(height: 48.h),
+                      SizedBox(height: 56.h),
                     ],
                   ),
                 ),
               ),
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24.w),
+                padding: EdgeInsets.symmetric(horizontal: 18.w),
                 child: Column(
                   children: [
                     PrimaryButton(
-                      text: 'Next - Close',
+                      text: 'Close',
                       onPressed: () {
                         Navigator.pop(context);
                       },
                       backgroundColor: AppColors.purple500,
-                      height: 60.h,
+                      height: 48.000.h,
                       textColor: AppColors.neutral0,
                       fontFamily: 'Karla',
                       letterSpacing: -.8,
@@ -544,7 +570,8 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                           if (mounted) {
                             TopSnackbar.show(
                               context,
-                              message: 'Unable to open support chat. Please try again later.',
+                              message:
+                                  'Unable to open support chat. Please try again later.',
                               isError: true,
                             );
                           }
@@ -552,7 +579,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                       },
                       backgroundColor: Colors.transparent,
                       textColor: AppColors.purple500ForTheme(context),
-                      height: 60.h,
+                      height: 48.000.h,
                       fontFamily: 'Karla',
                       letterSpacing: -.8,
                       fontSize: 18,
@@ -590,10 +617,11 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Funding Methods',
+          'Topup Wallet',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
             fontFamily: 'CabinetGrotesk',
-            fontSize: 20.sp,
+            fontSize: 28.00,
+            height: 1.6,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,
           ),
@@ -601,7 +629,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 4.h),
+        padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 4.h),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -611,7 +639,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                 fontSize: 16.sp,
                 fontWeight: FontWeight.w400,
                 fontFamily: 'Karla',
-                letterSpacing: -.6,
+                letterSpacing: -.3,
                 height: 1.5,
               ),
               textAlign: TextAlign.center,
@@ -637,7 +665,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
             //       SizedBox(width: 4.w),
             //       Image.asset(
             //         "assets/images/idea.png",
-            //         height: 18.h,
+            //         height: 20.h,
             //         // color: Theme.of(context).colorScheme.primary,
             //       ),
             //       SizedBox(width: 12.w),
@@ -645,7 +673,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
             //         child: Text(
             //           "Please prepare your KYC documents in case we require verification to complete this transaction.",
             //           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            //             fontSize: 12.5.sp,
+            //             fontSize: 14.sp,
             //             fontFamily: 'Karla',
             //             fontWeight: FontWeight.w400,
             //             letterSpacing: -0.4,
@@ -674,7 +702,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                       ? _processPayment
                       : null,
               isLoading: _isLoading || _isCheckingWallet,
-              height: 60.h,
+              height: 48.000.h,
               backgroundColor:
                   (_selectedPaymentMethod != null && !_isCheckingWallet)
                       ? AppColors.purple500
@@ -682,7 +710,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
               textColor:
                   (_selectedPaymentMethod != null && !_isCheckingWallet)
                       ? AppColors.neutral0
-                      : AppColors.neutral0.withOpacity(.5),
+                      : AppColors.neutral0.withOpacity(.65),
               fontFamily: 'Karla',
               letterSpacing: -.8,
               fontSize: 18,
@@ -705,22 +733,16 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
         _buildPaymentMethodOption(
           icon: Stack(
             alignment: AlignmentDirectional.center,
-
             children: [
               SvgPicture.asset(
-                'assets/icons/svgs/bankk.svg',
-                height: 32.sp,
-                width: 32.sp,
-                color: AppColors.neutral500,
+                'assets/icons/svgs/swap.svg',
+                height: 34,
+                color: AppColors.neutral700.withOpacity(.35),
               ),
-              Text(
-                '@',
-                style: TextStyle(
-                  fontFamily: 'CabinetGrotesk',
-                  fontSize: 22.sp,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
+              SvgPicture.asset(
+                "assets/icons/svgs/at.svg",
+                height: 26,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(.65),
               ),
             ],
           ),
@@ -750,14 +772,24 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
         _buildPaymentMethodOption(
           title: 'Bank Transfer',
           description:
-              'Send up to ${sendState.sendCurrency} 15,000,000.00 via virtual account. Funds will arrive within 10 minutes.',
+              'Send up to ${sendState.sendCurrency} 15,000,000.00 via virtual account. Payer name must match your registered name.',
           iconColor: AppColors.pink400,
           isSelected: _selectedPaymentMethod == 'Bank Transfer',
           isEnabled: true,
-          icon: SvgPicture.asset(
-            'assets/icons/svgs/bankk.svg',
-            height: 32.sp,
-            width: 32.sp,
+          icon: Stack(
+            alignment: AlignmentDirectional.center,
+            children: [
+              SvgPicture.asset(
+                'assets/icons/svgs/swap.svg',
+                height: 34,
+                color: AppColors.neutral700.withOpacity(.35),
+              ),
+              SvgPicture.asset(
+                "assets/icons/svgs/building-bank.svg",
+                height: 26,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(.65),
+              ),
+            ],
           ),
           onTap: () {
             setState(() {
@@ -772,10 +804,22 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
         _buildPaymentMethodOption(
           icon: Opacity(
             opacity: .4,
-            child: SvgPicture.asset(
-              'assets/icons/svgs/cryptoo.svg',
-              height: 32.sp,
-              width: 32.sp,
+            child: Stack(
+              alignment: AlignmentDirectional.center,
+              children: [
+                SvgPicture.asset(
+                  'assets/icons/svgs/swap.svg',
+                  height: 34,
+                  color: AppColors.neutral700.withOpacity(.35),
+                ),
+                SvgPicture.asset(
+                  "assets/icons/svgs/currency-dollar.svg",
+                  height: 26,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(.65),
+                ),
+              ],
             ),
           ),
           title: 'Digital Dollar',
@@ -787,26 +831,38 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
           onTap: null, // Disabled
         ),
 
-        SizedBox(height: 16.h),
+        // SizedBox(height: 16.h),
 
-        // Debit Card Card
-        _buildPaymentMethodOption(
-          icon: Opacity(
-            opacity: .4,
-            child: SvgPicture.asset(
-              'assets/icons/svgs/cardd.svg',
-              height: 32.sp,
-              width: 32.sp,
-            ),
-          ),
-          title: 'Debit Card',
-          description:
-              'Tap (NFC) or scan your debit card for instant payment. Secure and fast transactions.',
-          iconColor: AppColors.info400,
-          isSelected: _selectedPaymentMethod == 'Debit Card',
-          isEnabled: false,
-          onTap: null, // Disabled
-        ),
+        // // Debit Card Card (Commented out)
+        // _buildPaymentMethodOption(
+        //   icon: Opacity(
+        //     opacity: .4,
+        //     child: Stack(
+        //       alignment: AlignmentDirectional.center,
+        //       children: [
+        //         SvgPicture.asset(
+        //           'assets/icons/svgs/swap.svg',
+        //           height: 34,
+        //           color: AppColors.neutral700.withOpacity(.35),
+        //         ),
+        //         SvgPicture.asset(
+        //           "assets/icons/svgs/carddd.svg",
+        //           height: 26,
+        //           color: Theme.of(
+        //             context,
+        //           ).colorScheme.onSurface.withOpacity(.65),
+        //         ),
+        //       ],
+        //     ),
+        //   ),
+        //   title: 'Debit Card',
+        //   description:
+        //       'Tap (NFC) or scan your debit card for instant payment. Secure and fast transactions.',
+        //   iconColor: AppColors.info400,
+        //   isSelected: _selectedPaymentMethod == 'Debit Card',
+        //   isEnabled: false,
+        //   onTap: null, // Disabled
+        // ),
       ],
     );
   }
@@ -876,74 +932,97 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                         child: icon,
                       ),
                       SizedBox(width: 12.w),
-                      Row(
-                        children: [
-                          Text(
-                            title,
-                            style: Theme.of(
-                              context,
-                            ).textTheme.titleLarge?.copyWith(
-                              fontFamily: 'CabinetGrotesk',
-                              fontSize: 18.sp,
-                              fontWeight: FontWeight.w600,
-                              color:
-                                  isEnabled
-                                      ? Theme.of(context).colorScheme.onSurface
-                                      : Theme.of(
-                                        context,
-                                      ).colorScheme.onSurface.withOpacity(0.6),
-                            ),
-                          ),
-                          SizedBox(width: 8.w),
-                          title == "DayFi Tag"
-                              ? Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 8.w,
-                                  vertical: 3.h,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.warning400.withOpacity(0.15),
-                                  borderRadius: BorderRadius.circular(8.r),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      'Free',
-                                      style: AppTypography.labelSmall.copyWith(
-                                        fontFamily: 'Karla',
-                                        fontSize: 10.sp,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppColors.warning600,
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        title,
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.titleLarge?.copyWith(
+                                          fontFamily: 'Karla',
+                                          fontSize: 18.sp,
+                                          letterSpacing: -.5,
+                                          fontWeight: FontWeight.w400,
+                                          color:
+                                              Theme.of(
+                                                context,
+                                              ).colorScheme.onSurface,
+                                        ),
                                       ),
+                                      SizedBox(width: 8.w),
+
+                                      title == "DayFi Tag"
+                                          ? Container(
+                                            padding: EdgeInsets.symmetric(
+                                              horizontal: 8.w,
+                                              vertical: 3.h,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.warning400
+                                                  .withOpacity(0.15),
+                                              borderRadius:
+                                                  BorderRadius.circular(8.r),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Text(
+                                                  'Free',
+                                                  style: AppTypography
+                                                      .labelSmall
+                                                      .copyWith(
+                                                        fontFamily: 'Karla',
+                                                        fontSize: 10.sp,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        color:
+                                                            AppColors
+                                                                .warning600,
+                                                      ),
+                                                ),
+                                              ],
+                                            ),
+                                          )
+                                          : const SizedBox.shrink(),
+                                    ],
+                                  ),
+                                  SizedBox(height: 6.h),
+                                  Text(
+                                    description,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodyMedium?.copyWith(
+                                      fontSize: 12.5.sp,
+                                      fontFamily: 'Karla',
+                                      fontWeight: FontWeight.w400,
+                                      letterSpacing: -0.4,
+                                      height: 1.3,
+                                      color:
+                                          isEnabled
+                                              ? Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurface
+                                                  .withOpacity(0.6)
+                                              : Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurface
+                                                  .withOpacity(0.4),
                                     ),
-                                  ],
-                                ),
-                              )
-                              : const SizedBox.shrink(),
-                        ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
-                  ),
-
-                  SizedBox(height: 6.h),
-                  Text(
-                    description,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontSize: 12.5.sp,
-                      fontFamily: 'Karla',
-                      fontWeight: FontWeight.w400,
-                      letterSpacing: -0.4,
-                      height: 1.3,
-                      color:
-                          isEnabled
-                              ? Theme.of(
-                                context,
-                              ).colorScheme.onSurface.withOpacity(0.6)
-                              : Theme.of(
-                                context,
-                              ).colorScheme.onSurface.withOpacity(0.4),
-                    ),
                   ),
                 ],
               ),
@@ -1323,7 +1402,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                 children: [
                   SizedBox(height: 18.h),
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24.w),
+                    padding: EdgeInsets.symmetric(horizontal: 18.w),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -1332,7 +1411,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                           'Payment Details',
                           style: AppTypography.titleLarge.copyWith(
                             fontFamily: 'CabinetGrotesk',
-                            fontSize: 18.sp,
+                            fontSize: 14.sp,
                             fontWeight: FontWeight.w600,
                             color: Theme.of(context).colorScheme.onSurface,
                           ),
@@ -1356,7 +1435,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                   // Content
                   Expanded(
                     child: SingleChildScrollView(
-                      padding: EdgeInsets.symmetric(horizontal: 24.w),
+                      padding: EdgeInsets.symmetric(horizontal: 18.w),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -1381,17 +1460,17 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                                 SizedBox(width: 4.w),
                                 Image.asset(
                                   "assets/images/idea.png",
-                                  height: 18.h,
+                                  height: 20.h,
                                   // color: Theme.of(context).colorScheme.primary,
                                 ),
                                 SizedBox(width: 12.w),
                                 Expanded(
                                   child: Text(
-                                    'When paying into this account, ensure the name on the bank account matches your verified name on Skrrt.',
+                                    'When paying into this account, ensure the name on the bank account matches your verified name on Dayfi App.',
                                     style: Theme.of(
                                       context,
                                     ).textTheme.bodySmall?.copyWith(
-                                      fontSize: 12.5.sp,
+                                      fontSize: 14.sp,
                                       fontFamily: 'Karla',
                                       fontWeight: FontWeight.w400,
                                       letterSpacing: -0.4,
@@ -1434,7 +1513,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                                     context,
                                   ).textTheme.titleLarge?.copyWith(
                                     fontFamily: 'CabinetGrotesk',
-                                    fontSize: 16.sp,
+                                    fontSize: 12.sp,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -1477,7 +1556,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                                   color: Theme.of(
                                     context,
                                   ).colorScheme.outline.withOpacity(0.2),
-                                  height: 48.h,
+                                  height: 56.h,
                                 ),
 
                                 // Expiration warning
@@ -1567,7 +1646,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                             );
                           },
                           backgroundColor: AppColors.purple500,
-                          height: 60.h,
+                          height: 48.000.h,
                           textColor: AppColors.neutral0,
                           fontFamily: 'Karla',
                           letterSpacing: -.8,
@@ -1586,7 +1665,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                         //   backgroundColor: Colors.transparent,
                         //   textColor: AppColors.purple500ForTheme(context),
                         //   borderColor: AppColors.purple500ForTheme(context),
-                        //   height: 60.h,
+                        //   height: 48.000.h,
                         //   borderRadius: 38,
                         //   fontFamily: 'Karla',
                         //   letterSpacing: -.8,
@@ -1627,7 +1706,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
               value,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 fontFamily: 'CabinetGrotesk',
-                fontSize: 14.sp,
+                fontSize: 11.sp,
                 fontWeight: FontWeight.w600,
                 color: Theme.of(context).colorScheme.onSurface,
               ),
@@ -2082,7 +2161,8 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                   'Payment Error',
                   style: AppTypography.titleLarge.copyWith(
                     fontFamily: 'CabinetGrotesk',
-                    fontSize: 20.sp,
+                    fontSize: 28.00,
+                    height: 1.6,
                     fontWeight: FontWeight.w600,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
@@ -2117,7 +2197,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                   backgroundColor: AppColors.purple500,
                   textColor: AppColors.neutral0,
                   borderRadius: 38,
-                  height: 60.h,
+                  height: 48.000.h,
                   width: double.infinity,
                   fullWidth: true,
                   fontFamily: 'Karla',
@@ -2141,7 +2221,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                       fontSize: 16.sp,
                       letterSpacing: -0.8,
                       fontWeight: FontWeight.w400,
-                      color: AppColors.neutral300,
+                      color: AppColors.neutral400,
                     ),
                   ),
                 ),

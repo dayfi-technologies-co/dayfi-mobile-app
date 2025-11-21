@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:dayfi/core/theme/app_typography.dart';
+import 'package:dayfi/common/utils/haptic_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -11,7 +12,6 @@ import 'package:dayfi/features/send/vm/send_viewmodel.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/services/remote/payment_service.dart';
-import 'package:dayfi/services/transaction_monitor_service.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
@@ -40,7 +40,7 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
   final _descriptionController = TextEditingController();
   final _reasonController = TextEditingController();
   String _selectedReason = '';
-  bool _isLoading = false;
+  final bool _isLoading = false;
   bool _isProcessingPin = false;
   final ValueNotifier<bool> _isProcessingPinNotifier = ValueNotifier<bool>(
     false,
@@ -49,34 +49,14 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
   bool _hasCheckedPinOnResume = false;
 
   final List<Map<String, String>> _reasons = [
-    {'emoji': '👨‍👩‍👧‍👦', 'name': 'Family Support'},
-    {'emoji': '🎓', 'name': 'Education'},
-    {'emoji': '🏥', 'name': 'Medical Expenses'},
-    {'emoji': '💼', 'name': 'Business Investment'},
-    {'emoji': '🚨', 'name': 'Emergency'},
-    {'emoji': '✈️', 'name': 'Travel'},
     {'emoji': '🎁', 'name': 'Gift'},
-    {'emoji': '🏠', 'name': 'Rent/Mortgage'},
-    {'emoji': '⚡', 'name': 'Utilities'},
-    {'emoji': '🛒', 'name': 'Food & Groceries'},
-    {'emoji': '🚗', 'name': 'Transportation'},
+    {'emoji': '🏠', 'name': 'Housing'},
+    {'emoji': '🛒', 'name': 'Groceries'},
+    {'emoji': '✈️', 'name': 'Travel'},
+    {'emoji': '🏥', 'name': 'Health'},
     {'emoji': '🎬', 'name': 'Entertainment'},
-    {'emoji': '💰', 'name': 'Savings'},
-    {'emoji': '💳', 'name': 'Debt Payment'},
-    {'emoji': '🛡️', 'name': 'Insurance'},
-    {'emoji': '❤️', 'name': 'Charity/Donation'},
-    {'emoji': '💒', 'name': 'Wedding'},
-    {'emoji': '🕊️', 'name': 'Funeral'},
-    {'emoji': '🎂', 'name': 'Birthday Celebration'},
-    {'emoji': '🎄', 'name': 'Holiday Expenses'},
-    {'emoji': '🔨', 'name': 'Home Improvement'},
-    {'emoji': '💻', 'name': 'Technology Purchase'},
-    {'emoji': '👕', 'name': 'Clothing'},
-    {'emoji': '🏥', 'name': 'Healthcare'},
-    {'emoji': '⚖️', 'name': 'Legal Fees'},
-    {'emoji': '📊', 'name': 'Tax Payment'},
-    {'emoji': '📈', 'name': 'Investment'},
-    {'emoji': '🏦', 'name': 'Loan Repayment'},
+    {'emoji': '🏫', 'name': 'School Fees'},
+    {'emoji': '💡', 'name': 'Bills'},
     {'emoji': '❓', 'name': 'Other'},
   ];
 
@@ -260,6 +240,49 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
     return method;
   }
 
+  // Convert country name to ISO alpha-2 code (best-effort)
+  String _countryToCode(String? country) {
+    if (country == null) return '';
+    final c = country.trim();
+    if (c.length == 2) return c.toUpperCase();
+    final map = {
+      'nigeria': 'NG',
+      'south africa': 'ZA',
+      'ghana': 'GH',
+      'kenya': 'KE',
+      'rwanda': 'RW',
+      'uganda': 'UG',
+      'tanzania': 'TZ',
+      'zambia': 'ZM',
+    };
+    return map[c.toLowerCase()] ?? c;
+  }
+
+  // Format phone numbers; for Nigeria add +234 and strip leading zero
+  String _formatPhone(String? phone, String countryCode) {
+    if (phone == null) return '';
+    var p = phone.trim();
+    if (p.isEmpty) return '';
+    if (p.startsWith('+')) return p;
+    if (countryCode.toUpperCase() == 'NG' ||
+        countryCode.toLowerCase() == 'nigeria') {
+      if (p.startsWith('0')) p = p.substring(1);
+      return '+234$p';
+    }
+    return p;
+  }
+
+  // Ensure date is in YYYY-MM-DD format if possible
+  String _formatDob(String? dob) {
+    if (dob == null) return '';
+    try {
+      final dt = DateTime.parse(dob);
+      return '${dt.year.toString().padLeft(4, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+    } catch (_) {
+      return dob;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final sendState = ref.watch(sendViewModelProvider);
@@ -283,8 +306,8 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
           title: Text(
             'Review',
             style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-              fontFamily: 'CabinetGrotesk',
-              fontSize: 20.sp,
+           fontFamily: 'CabinetGrotesk',
+               fontSize: 19.sp, height: 1.6,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface,
             ),
@@ -292,7 +315,7 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
           centerTitle: true,
         ),
         body: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+          padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 12.h),
 
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -310,15 +333,15 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
               // Description
               _buildDescriptionSection(),
 
-              SizedBox(height: 48.h),
+              SizedBox(height: 56.h),
 
               // Continue Button
               PrimaryButton(
-                text: 'Next - Confirm Payment',
+                text: 'Confirm Payment',
                 onPressed:
                     _selectedReason.isNotEmpty ? _proceedToPayment : null,
                 isLoading: _isLoading,
-                height: 60.h,
+                height: 48.000.h,
                 backgroundColor:
                     _selectedReason.isNotEmpty
                         ? AppColors.purple500
@@ -328,7 +351,7 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
                 textColor:
                     _selectedReason.isNotEmpty
                         ? AppColors.neutral0
-                        : AppColors.neutral0.withOpacity(.5),
+                        : AppColors.neutral0.withOpacity(.65),
                 fontFamily: 'Karla',
                 letterSpacing: -.8,
                 fontSize: 18,
@@ -382,8 +405,8 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
           Text(
             'Transfer Details',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontFamily: 'CabinetGrotesk',
-              fontSize: 18.sp,
+              fontFamily: 'Karla',
+              fontSize: 16.sp,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -430,10 +453,38 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
               widget.selectedData['recipientDeliveryMethod']?.toString(),
             ).toUpperCase(),
           ),
-          _buildDetailRow('Transfer Time', 'Within 24 hours', bottomPadding: 0),
+          _buildDetailRow(
+            'Transfer Time', 
+            _getTransferTime(
+              widget.selectedData['recipientDeliveryMethod']?.toString(),
+            ), 
+            bottomPadding: 0,
+          ),
         ],
       ),
     );
+  }
+
+  String _getTransferTime(String? deliveryMethod) {
+    if (deliveryMethod == null || deliveryMethod.isEmpty) {
+      return 'Immediate';
+    }
+
+    final methodLower = deliveryMethod.toLowerCase();
+
+    // Immediate transfer methods
+    if (methodLower == 'bank_transfer' ||
+        methodLower == 'bank' ||
+        methodLower == 'p2p' ||
+        methodLower == 'peer_to_peer' ||
+        methodLower == 'peer-to-peer' ||
+        methodLower == 'eft' ||
+        methodLower == 'electronic_funds_transfer') {
+      return 'Immediate';
+    }
+
+    // Default for other methods
+    return 'Within 24 hours';
   }
 
   Widget _getDetailIcon(String label) {
@@ -457,7 +508,7 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
       case 'bank network':
         return SvgPicture.asset('assets/icons/svgs/bank.svg', height: 24);
       case 'beneficiary':
-        return SvgPicture.asset('assets/icons/svgs/user.svg', height: 24);
+        return SvgPicture.asset('assets/icons/svgs/user1.svg', height: 24);
       case 'delivery method':
         return SvgPicture.asset('assets/icons/svgs/delivery.svg', height: 24);
       case 'transfer time':
@@ -505,8 +556,8 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
             child: Text(
               value,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                fontFamily: 'CabinetGrotesk',
-                fontSize: 14.sp,
+                fontFamily: 'Karla',
+                fontSize: 13.sp,
                 fontWeight: FontWeight.w600,
                 color: Theme.of(context).colorScheme.onSurface,
               ),
@@ -525,8 +576,8 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
         Text(
           'Additional Information (Optional)',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontFamily: 'CabinetGrotesk',
-            fontSize: 18.sp,
+            fontFamily: 'Karla',
+            fontSize: 16.sp,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -559,7 +610,7 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
               children: [
                 SizedBox(height: 18.h),
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 24.w),
+                  padding: EdgeInsets.symmetric(horizontal: 18.w),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -567,8 +618,8 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
                       Text(
                         'Transfer reason',
                         style: AppTypography.titleLarge.copyWith(
-                          fontFamily: 'CabinetGrotesk',
-                          fontSize: 18.sp,
+                          fontFamily: 'Karla',
+                          fontSize: 16.sp,
                           fontWeight: FontWeight.w600,
                           color: Theme.of(context).colorScheme.onSurface,
                         ),
@@ -590,7 +641,7 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
                 SizedBox(height: 16.h),
                 Expanded(
                   child: ListView.builder(
-                    padding: EdgeInsets.symmetric(horizontal: 24.w),
+                    padding: EdgeInsets.symmetric(horizontal: 18.w),
                     itemCount: _reasons.length,
                     itemBuilder: (context, index) {
                       final reason = _reasons[index];
@@ -606,7 +657,7 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
                           ),
                           child: Text(
                             reason['emoji']!,
-                            style: TextStyle(fontSize: 20.sp),
+                            style: TextStyle(fontSize: 24.sp),
                           ),
                         ),
                         title: Text(
@@ -767,7 +818,7 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
         );
         return;
       }
-      final requestData = _buildPaymentRequest(
+      final requestData = await _buildPaymentRequest(
         sendState: sendState,
         selectedChannel: selectedChannel,
         collectionSequenceId: "7e490488-92e4-4de6-a55f-ea0fe17a07150",
@@ -878,12 +929,12 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
   }
 
   /// Build payment request
-  Map<String, dynamic> _buildPaymentRequest({
+  Future<Map<String, dynamic>> _buildPaymentRequest({
     required SendState sendState,
     required dynamic selectedChannel,
     required String collectionSequenceId,
     required String pin,
-  }) {
+  }) async {
     // Determine account type based on recipient data
     final accountType = widget.recipientData['accountType'] ?? 'bank';
     final isCrypto =
@@ -934,22 +985,68 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
       "orderId": "ORD-${DateTime.now().millisecondsSinceEpoch}",
       "description": _paymentData?['description'] ?? 'Money Transfer',
     };
+    // Retrieve stored user data for recipient details
+    // final localCache = locator<LocalCache>();
+    // final storedUser = await localCache.getUser();
 
-    // Build payment request payload
+    // final firstName = (storedUser['first_name'] ?? '').toString();
+    // final lastName = (storedUser['last_name'] ?? '').toString();
+    // final fullName = (('$firstName $lastName').trim());
+    // final rawCountry = storedUser['country']?.toString() ?? '';
+    // final countryCode = _countryToCode(rawCountry);
+    // final phone = _formatPhone(
+    //   storedUser['phone_number']?.toString(),
+    //   countryCode,
+    // );
+    // final dob = _formatDob(storedUser['date_of_birth']?.toString());
+    // final email =
+    //     (storedUser['email'] ?? storedUser['verification_email'] ?? '')
+    //         .toString();
+    // final idNumber = storedUser['id_number']?.toString() ?? '';
+    // final rawIdType = storedUser['id_type']?.toString() ?? '';
+    // final idTypeUpper =
+    //     rawIdType.isNotEmpty
+    //         ? rawIdType.toUpperCase()
+    //         : (idNumber.isNotEmpty ? 'NIN' : '');
+    // final idTypeForApi = idTypeUpper == 'NIN' ? 'NIN_V2' : idTypeUpper;
+
+    // final recipient = {
+    //   'name': fullName,
+    //   'country': countryCode,
+    //   'phone': phone,
+    //   'address': storedUser['address'] ?? '',
+    //   'dob': dob,
+    //   'email': email,
+    //   // include both styles for compatibility
+    //   'idNumber': idNumber,
+    //   'idType': idTypeUpper,
+    //   'id_type': idTypeForApi,
+    //   'id_number': idNumber,
+    // };
+
+    // final source = {
+    //   'accountType': widget.recipientData['accountType'] ?? finalAccountType,
+    //   'accountNumber': accountNumber,
+    //   'networkId': networkId,
+    // };
+
+    // Build payment request payload (including recipient and source)
     final requestData = <String, dynamic>{
       "amount": amount,
-      "collectionSequenceId": collectionSequenceId,
+      // "collectionSequenceId": collectionSequenceId,
       "currency": currency,
       "channelId": channelId,
       "accountType": finalAccountType,
       "networkCountry": networkCountry,
       "country": country,
-      "reason": reason,
+      "reason": reason.toString().toLowerCase(),
       "pin": pin,
       "accountNumber": accountNumber,
       "networkId": networkId,
-      "accountName": accountName,
+      "accountName": accountName.toString().replaceAll(',', ""),
       "metadata": metadata,
+      // "recipient": recipient,
+      // "source": source,
     };
 
     return requestData;
@@ -999,7 +1096,7 @@ class _TransactionPinBottomSheetState
         children: [
           SizedBox(height: 18.h),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            padding: EdgeInsets.symmetric(horizontal: 18.w),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -1007,8 +1104,8 @@ class _TransactionPinBottomSheetState
                 Text(
                   'Enter Transaction PIN',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontFamily: 'CabinetGrotesk',
-                    fontSize: 18.sp,
+                    fontFamily: 'Karla',
+                    fontSize: 16.sp,
                     fontWeight: FontWeight.w600,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
@@ -1042,14 +1139,14 @@ class _TransactionPinBottomSheetState
                     child: Text(
                       index < pinState.pin.length ? '*' : '*',
                       style: TextStyle(
-                        fontSize: 88.sp,
+                        fontSize: 70.sp,
                         letterSpacing: -25,
-                        fontFamily: 'CabinetGrotesk',
+                     fontFamily: 'CabinetGrotesk',
                         fontWeight: FontWeight.w700,
                         color:
                             index < pinState.pin.length
                                 ? AppColors.purple500ForTheme(context)
-                                : AppColors.neutral500,
+                                : AppColors.neutral300,
                       ),
                     ),
                   ),
@@ -1067,8 +1164,8 @@ class _TransactionPinBottomSheetState
                   right: 0,
                   child: Center(
                     child: LoadingAnimationWidget.horizontalRotatingDots(
-                      color: AppColors.primary600,
-                      size: 24,
+                      color: AppColors.purple100,
+                      size: 32.0.w,
                     ),
                   ),
                 ),
@@ -1085,7 +1182,7 @@ class _TransactionPinBottomSheetState
                   childAspectRatio: 1.5,
                   mainAxisSpacing: 16,
                   crossAxisSpacing: 16,
-                  padding: EdgeInsets.symmetric(horizontal: 24.w),
+                  padding: EdgeInsets.symmetric(horizontal: 18.w),
                   physics: const NeverScrollableScrollPhysics(),
                   children: [
                     ...List.generate(9, (index) {
@@ -1105,7 +1202,7 @@ class _TransactionPinBottomSheetState
                     const SizedBox.shrink(),
                     _buildNumberButton('0', () {
                       if (pinState.pin.length < 4 && !widget.isProcessing) {
-                        final newPin = pinState.pin + '0';
+                        final newPin = '${pinState.pin}0';
                         pinNotifier.updatePin(newPin);
                         if (newPin.length == 4) {
                           Future.delayed(Duration(milliseconds: 300), () {
@@ -1150,7 +1247,13 @@ class _TransactionPinBottomSheetState
             splashColor: Colors.transparent,
             highlightColor: Colors.transparent,
             borderRadius: BorderRadius.circular(100),
-            onTap: widget.isProcessing ? null : onTap,
+            onTap:
+                widget.isProcessing
+                    ? null
+                    : () {
+                      HapticHelper.lightImpact();
+                      onTap();
+                    },
             child: Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
@@ -1160,8 +1263,8 @@ class _TransactionPinBottomSheetState
                 child: Text(
                   number,
                   style: TextStyle(
-                    fontSize: 32.00,
-                    fontFamily: 'CabinetGrotesk',
+                    fontSize: 25.60,
+                 fontFamily: 'CabinetGrotesk',
                     fontWeight: FontWeight.w400,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
@@ -1177,13 +1280,21 @@ class _TransactionPinBottomSheetState
     required VoidCallback onTap,
   }) {
     return GestureDetector(
-      onTap: widget.isProcessing ? null : onTap,
+      onTap:
+          widget.isProcessing
+              ? null
+              : () {
+                HapticHelper.lightImpact();
+                onTap();
+              },
       child: Container(
         decoration: const BoxDecoration(
           shape: BoxShape.circle,
           color: Colors.transparent,
         ),
-        child: Center(child: Icon(icon, color: AppColors.purple500ForTheme(context))),
+        child: Center(
+          child: Icon(icon, color: AppColors.purple500ForTheme(context)),
+        ),
       ),
     );
   }

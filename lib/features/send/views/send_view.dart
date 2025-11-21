@@ -18,6 +18,7 @@ import 'package:dayfi/services/remote/wallet_service.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/features/home/vm/home_viewmodel.dart';
 import 'package:dayfi/features/send/views/send_payment_method_view.dart';
+import 'package:dayfi/models/beneficiary_with_source.dart';
 
 class SendView extends ConsumerStatefulWidget {
   const SendView({super.key});
@@ -35,6 +36,11 @@ class _SendViewState extends ConsumerState<SendView>
   final FocusNode _sendAmountFocus = FocusNode();
   final FocusNode _receiveAmountFocus = FocusNode();
   bool _isCheckingWallet = false;
+
+  // Route argument helpers (populated when opened via named route)
+  BeneficiaryWithSource? _initialBeneficiaryWithSource;
+  bool _openedFromRecipients = false;
+  bool _didLoadRouteArgs = false;
 
   // Helper function to get full country name from country code
   String _getCountryName(String? countryCode) {
@@ -71,6 +77,8 @@ class _SendViewState extends ConsumerState<SendView>
         return 'Gabon';
       case 'MW':
         return 'Malawi';
+      case 'ML':
+        return 'Mali';
       case 'SN':
         return 'Senegal';
       case 'TG':
@@ -123,6 +131,8 @@ class _SendViewState extends ConsumerState<SendView>
         return 'assets/icons/svgs/world_flags/gabon.svg';
       case 'MW':
         return 'assets/icons/svgs/world_flags/malawi.svg';
+      case 'ML':
+        return 'assets/icons/svgs/world_flags/mali.svg';
       case 'SN':
         return 'assets/icons/svgs/world_flags/senegal.svg';
       case 'TG':
@@ -166,6 +176,31 @@ class _SendViewState extends ConsumerState<SendView>
         } catch (e) {
           // Log error but don't crash the app
           print('Error initializing SendView: $e');
+        }
+      } else {
+        // If already initialized, restore controller values from state
+        final state = ref.read(sendViewModelProvider);
+        if (state.sendAmount.isNotEmpty) {
+          _isUpdatingSendController = true;
+          final formattedSend = StringUtils.formatNumberWithCommas(
+            state.sendAmount,
+          );
+          _sendAmountController.value = TextEditingValue(
+            text: formattedSend,
+            selection: TextSelection.collapsed(offset: formattedSend.length),
+          );
+          _isUpdatingSendController = false;
+        }
+        if (state.receiverAmount.isNotEmpty) {
+          _isUpdatingReceiveController = true;
+          final formattedReceive = StringUtils.formatNumberWithCommas(
+            state.receiverAmount,
+          );
+          _receiveAmountController.value = TextEditingValue(
+            text: formattedReceive,
+            selection: TextSelection.collapsed(offset: formattedReceive.length),
+          );
+          _isUpdatingReceiveController = false;
         }
       }
 
@@ -347,19 +382,20 @@ class _SendViewState extends ConsumerState<SendView>
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => SendPaymentMethodView(
-              selectedData: {},
-              recipientData: {},
-              senderData: {},
-              paymentData: {},
-            ),
+            builder:
+                (context) => SendPaymentMethodView(
+                  selectedData: {},
+                  recipientData: {},
+                  senderData: {},
+                  paymentData: {},
+                ),
           ),
         );
       },
       backgroundColor: AppColors.purple500,
       textColor: AppColors.neutral0,
       borderRadius: 38.r,
-      height: 60.h,
+      height: 48.000.h,
       width: double.infinity,
       fullWidth: true,
       fontFamily: 'Karla',
@@ -378,7 +414,7 @@ class _SendViewState extends ConsumerState<SendView>
       textColor: AppColors.purple500ForTheme(context),
       width: double.infinity,
       fullWidth: true,
-      height: 60.h,
+      height: 48.000.h,
       borderRadius: 38.r,
       fontFamily: 'Karla',
       fontSize: 18,
@@ -399,7 +435,7 @@ class _SendViewState extends ConsumerState<SendView>
         final number = double.tryParse(cleanValue);
         if (number != null && !cleanValue.contains('.')) {
           // Add ".00" to the value
-          final formattedValue = '${cleanValue}.00';
+          final formattedValue = '$cleanValue.00';
           final formattedWithCommas = StringUtils.formatNumberWithCommas(
             formattedValue,
           );
@@ -435,7 +471,7 @@ class _SendViewState extends ConsumerState<SendView>
         final number = double.tryParse(cleanValue);
         if (number != null && !cleanValue.contains('.')) {
           // Add ".00" to the value
-          final formattedValue = '${cleanValue}.00';
+          final formattedValue = '$cleanValue.00';
           final formattedWithCommas = StringUtils.formatNumberWithCommas(
             formattedValue,
           );
@@ -482,6 +518,61 @@ class _SendViewState extends ConsumerState<SendView>
           FocusScope.of(context).unfocus();
         }
       });
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_didLoadRouteArgs) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is Map<String, dynamic>) {
+        if (args['beneficiaryWithSource'] is BeneficiaryWithSource) {
+          _initialBeneficiaryWithSource =
+              args['beneficiaryWithSource'] as BeneficiaryWithSource;
+          _openedFromRecipients = args['fromRecipients'] == true;
+
+          // Pre-configure the send state based on beneficiary data
+          if (_openedFromRecipients && _initialBeneficiaryWithSource != null) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _configureSendStateForBeneficiary();
+            });
+          }
+        }
+      }
+      _didLoadRouteArgs = true;
+    }
+  }
+
+  /// Configure send state based on beneficiary data
+  void _configureSendStateForBeneficiary() {
+    if (_initialBeneficiaryWithSource == null) return;
+
+    final beneficiary = _initialBeneficiaryWithSource!.beneficiary;
+    final source = _initialBeneficiaryWithSource!.source;
+    final viewModel = ref.read(sendViewModelProvider.notifier);
+
+    // Determine delivery method based on account type
+    String deliveryMethod = '';
+    String receiveCurrency = 'NGN';
+    String receiveCountry =
+        beneficiary.country.isNotEmpty ? beneficiary.country : 'NG';
+
+    if (source.accountType?.toLowerCase() == 'dayfi') {
+      deliveryMethod = 'dayfi_tag';
+    } else if (source.accountType?.toLowerCase() == 'bank') {
+      deliveryMethod = 'bank_transfer';
+    } else if (source.accountType?.toLowerCase() == 'mobile' ||
+        source.accountType?.toLowerCase() == 'mobile_money' ||
+        source.accountType?.toLowerCase() == 'momo') {
+      deliveryMethod = 'mobile_money';
+    }
+
+    // Update the send state with beneficiary's currency and country
+    viewModel.updateReceiveCountry(receiveCountry, receiveCurrency);
+
+    if (deliveryMethod.isNotEmpty) {
+      viewModel.updateDeliveryMethod(deliveryMethod);
     }
   }
 
@@ -551,26 +642,73 @@ class _SendViewState extends ConsumerState<SendView>
           !_receiveAmountFocus.hasFocus) {
         FocusScope.of(context).unfocus();
       }
+
+      // Restore controller text when state has values but controller is empty
+      if (mounted && !_sendAmountFocus.hasFocus) {
+        if (sendState.sendAmount.isNotEmpty &&
+            _sendAmountController.text.isEmpty) {
+          _isUpdatingSendController = true;
+          final formattedSend = StringUtils.formatNumberWithCommas(
+            sendState.sendAmount,
+          );
+          _sendAmountController.value = TextEditingValue(
+            text: formattedSend,
+            selection: TextSelection.collapsed(offset: formattedSend.length),
+          );
+          _isUpdatingSendController = false;
+        } else if (sendState.sendAmount.isEmpty &&
+            _sendAmountController.text.isNotEmpty) {
+          // Clear stale controller text when state values are empty
+          _isUpdatingSendController = true;
+          _sendAmountController.clear();
+          _isUpdatingSendController = false;
+        }
+      }
+
+      if (mounted && !_receiveAmountFocus.hasFocus) {
+        if (sendState.receiverAmount.isNotEmpty &&
+            _receiveAmountController.text.isEmpty) {
+          _isUpdatingReceiveController = true;
+          final formattedReceive = StringUtils.formatNumberWithCommas(
+            sendState.receiverAmount,
+          );
+          _receiveAmountController.value = TextEditingValue(
+            text: formattedReceive,
+            selection: TextSelection.collapsed(offset: formattedReceive.length),
+          );
+          _isUpdatingReceiveController = false;
+        } else if (sendState.receiverAmount.isEmpty &&
+            _receiveAmountController.text.isNotEmpty) {
+          // Clear stale controller text when state values are empty
+          _isUpdatingReceiveController = true;
+          _receiveAmountController.clear();
+          _isUpdatingReceiveController = false;
+        }
+      }
     });
 
     return GestureDetector(
-      onTap: () {
-        // Dismiss keyboard when tapping anywhere on the screen
-        FocusScope.of(context).unfocus();
-      },
+      onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
           scrolledUnderElevation: 0,
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
-          leading: const SizedBox.shrink(),
-          leadingWidth: 0,
+          leading: IconButton(
+            icon: Icon(
+              Icons.arrow_back_ios,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+            onPressed: () => Navigator.pop(context),
+          ),
+          automaticallyImplyLeading: false,
           title: Text(
             "Send Money",
             style: AppTypography.titleLarge.copyWith(
               fontFamily: 'CabinetGrotesk',
-              fontSize: 20.sp,
+              fontSize: 28.00,
+              height: 1.6,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface,
             ),
@@ -615,7 +753,7 @@ class _SendViewState extends ConsumerState<SendView>
           },
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 8.0.h),
+            padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.0.h),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -623,37 +761,44 @@ class _SendViewState extends ConsumerState<SendView>
                 Container(
                   padding: EdgeInsets.all(12.w),
                   decoration: BoxDecoration(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.primaryContainer.withOpacity(0.25),
-                    borderRadius: BorderRadius.circular(4.r),
-                    // border: Border.all(
-                    //   color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-                    //   width: 1.0,
-                    // ),
+                    color:
+                        sendState.channels.isEmpty
+                            ? AppColors.warning500.withOpacity(0.1)
+                            : Theme.of(
+                              context,
+                            ).colorScheme.primaryContainer.withOpacity(0.25),
+                    borderRadius: BorderRadius.circular(8.r),
+                    border:
+                        sendState.channels.isEmpty
+                            ? Border.all(
+                              color: AppColors.warning500.withOpacity(0.3),
+                              width: 1.0,
+                            )
+                            : null,
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       SizedBox(width: 4.w),
-                      Image.asset(
-                        "assets/images/idea.png",
-                        height: 18.h,
-                        // color: Theme.of(context).colorScheme.primary,
-                      ),
+                      Image.asset("assets/images/idea.png", height: 20.h),
                       SizedBox(width: 12.w),
                       Expanded(
                         child: Text(
-                          "Send funds via bank transfer, mobile money, or crypto wallet address.",
+                          sendState.channels.isEmpty
+                              ? "Channels not available. Only Dayfi tag transfer available (NGN only)."
+                              : "Send funds via dayfi tag (NGN only), bank transfer, mobile money or wallet address.",
                           style: Theme.of(
                             context,
                           ).textTheme.bodySmall?.copyWith(
-                            fontSize: 12.5.sp,
+                            fontSize: 14.sp,
                             fontFamily: 'Karla',
                             fontWeight: FontWeight.w400,
                             letterSpacing: -0.4,
                             height: 1.5,
-                            color: Theme.of(context).colorScheme.primary,
+                            color:
+                                sendState.channels.isEmpty
+                                    ? AppColors.warning500
+                                    : Theme.of(context).colorScheme.primary,
                           ),
                         ),
                       ),
@@ -661,7 +806,7 @@ class _SendViewState extends ConsumerState<SendView>
                   ),
                 ),
 
-                SizedBox(height: 16.h),
+                SizedBox(height: 20.h),
 
                 Column(
                   children: [
@@ -678,7 +823,7 @@ class _SendViewState extends ConsumerState<SendView>
                     // Receive Amount Section
                     _buildReceiveAmountSection(sendState),
 
-                    SizedBox(height: 16.h),
+                    SizedBox(height: 18.h),
 
                     // Recipient Delivery Method Section
                     _buildRecipientDeliveryMethodSection(sendState),
@@ -707,7 +852,7 @@ class _SendViewState extends ConsumerState<SendView>
             fontFamily: 'Karla',
             fontSize: 14,
             fontWeight: FontWeight.w400,
-            letterSpacing: -.6,
+            letterSpacing: -.3,
             height: 1.450,
             color: Theme.of(
               context,
@@ -718,7 +863,6 @@ class _SendViewState extends ConsumerState<SendView>
         ),
         SizedBox(height: 4),
         Container(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(12.r),
@@ -726,89 +870,106 @@ class _SendViewState extends ConsumerState<SendView>
               BoxShadow(color: AppColors.neutral500.withOpacity(0.1)),
             ],
           ),
-          child: TextField(
-            cursorColor: AppColors.primary600,
-            controller: _sendAmountController,
-            focusNode: _sendAmountFocus,
-            keyboardType: TextInputType.numberWithOptions(decimal: true),
-            inputFormatters: [NumberWithCommasFormatter()],
-            enableInteractiveSelection: true,
-            onChanged: (value) {
-              if (!_isUpdatingSendController) {
-                // Remove commas before sending to view model for calculations
-                String cleanValue = NumberFormatterUtils.removeCommas(value);
-                ref
-                    .read(sendViewModelProvider.notifier)
-                    .updateSendAmount(cleanValue);
-              }
-            },
-            style: AppTypography.bodyLarge.copyWith(
-              fontFamily: 'Karla',
-              fontSize: 27.sp,
-              letterSpacing: -.6,
-              fontWeight: FontWeight.w500,
-            ),
-            decoration: InputDecoration(
-              hintText: '0.00',
-              hintStyle: AppTypography.bodyLarge.copyWith(
-                fontFamily: 'Karla',
-                fontSize: 27.sp,
-                letterSpacing: -.6,
-                fontWeight: FontWeight.w400,
-                color: Theme.of(
-                  context,
-                ).colorScheme.onSurfaceVariant.withOpacity(.25),
-              ),
-              fillColor: Theme.of(context).colorScheme.surface,
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
-              contentPadding: EdgeInsets.only(
-                right: 16.w,
-                top: 16.h,
-                bottom: 16.h,
-                left: -4.w,
-              ),
-              suffixIcon: GestureDetector(
-                onTap: () => _showSendCountryBottomSheet(state),
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
-                  margin: EdgeInsets.only(right: 0.w),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(40.r),
+          child: Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
+                child: TextField(
+                  cursorColor: AppColors.primary600,
+                  controller: _sendAmountController,
+                  focusNode: _sendAmountFocus,
+                  keyboardType: TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [NumberWithCommasFormatter()],
+                  enableInteractiveSelection: true,
+                  onChanged: (value) {
+                    if (!_isUpdatingSendController) {
+                      // Remove commas before sending to view model for calculations
+                      String cleanValue = NumberFormatterUtils.removeCommas(
+                        value,
+                      );
+                      ref
+                          .read(sendViewModelProvider.notifier)
+                          .updateSendAmount(cleanValue);
+                    }
+                  },
+                  style: AppTypography.bodyLarge.copyWith(
+                    fontFamily: 'Karla',
+                    fontSize: 27.sp,
+                    letterSpacing: -.3,
+                    fontWeight: FontWeight.w500,
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // add country flag
-                      SvgPicture.asset(
-                        _getFlagPath(state.sendCountry),
-                        height: 24.000.h,
-                      ),
-                      SizedBox(width: 8.w),
-                      Text(
-                        state.sendCurrency,
-                        style: AppTypography.bodyMedium.copyWith(
-                          fontFamily: 'CabinetGrotesk',
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w600,
-                          // color: AppColors.primary600,
+                  decoration: InputDecoration(
+                    hintText: '0.00',
+                    hintStyle: AppTypography.bodyLarge.copyWith(
+                      fontFamily: 'Karla',
+                      fontSize: 27.sp,
+                      letterSpacing: -.3,
+                      fontWeight: FontWeight.w400,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurfaceVariant.withOpacity(.25),
+                    ),
+                    fillColor: Theme.of(context).colorScheme.surface,
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    contentPadding: EdgeInsets.only(
+                      right: 16.w,
+                      top: 16.h,
+                      bottom: 16.h,
+                      left: -4.w,
+                    ),
+                    suffixIcon: GestureDetector(
+                      onTap: () => _showSendCountryBottomSheet(state),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8.w,
+                          vertical: 8.h,
+                        ),
+                        margin: EdgeInsets.only(right: 0.w),
+                        decoration: BoxDecoration(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.primaryContainer.withOpacity(.5),
+                          borderRadius: BorderRadius.circular(40.r),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // add country flag
+                            SvgPicture.asset(
+                              _getFlagPath(state.sendCountry),
+                              height: 24.00000.h,
+                            ),
+                            SizedBox(width: 8.w),
+                            Text(
+                              state.sendCurrency,
+                              style: AppTypography.bodyMedium.copyWith(
+                                fontFamily: 'Karla',
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.w600,
+                                // color: AppColors.primary600,
+                              ),
+                            ),
+                            SizedBox(width: 4.w),
+                            Icon(
+                              Icons.keyboard_arrow_down,
+                              color: Theme.of(context).colorScheme.primary,
+                              size: 20.sp,
+                            ),
+                          ],
                         ),
                       ),
-                      SizedBox(width: 4.w),
-                      Icon(
-                        Icons.keyboard_arrow_down,
-                        color: AppColors.primary600,
-                        size: 16.sp,
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),
-            ),
+              // SizedBox(height: 4.h),
+              // _buildQuickAmountOptions(state),
+            ],
           ),
         ),
+
         // SizedBox(height: 8.h),
         // Consumer(
         //   builder: (context, ref, child) {
@@ -870,7 +1031,6 @@ class _SendViewState extends ConsumerState<SendView>
         //     );
         //   },
         // ),
-     
       ],
     );
   }
@@ -885,7 +1045,7 @@ class _SendViewState extends ConsumerState<SendView>
             fontFamily: 'Karla',
             fontSize: 14,
             fontWeight: FontWeight.w400,
-            letterSpacing: -.6,
+            letterSpacing: -.3,
             height: 1.450,
             color: Theme.of(
               context,
@@ -923,7 +1083,7 @@ class _SendViewState extends ConsumerState<SendView>
             style: AppTypography.bodyLarge.copyWith(
               fontFamily: 'Karla',
               fontSize: 27.sp,
-              letterSpacing: -.6,
+              letterSpacing: -.3,
               fontWeight: FontWeight.w500,
             ),
             decoration: InputDecoration(
@@ -931,7 +1091,7 @@ class _SendViewState extends ConsumerState<SendView>
               hintStyle: AppTypography.bodyLarge.copyWith(
                 fontFamily: 'Karla',
                 fontSize: 27.sp,
-                letterSpacing: -.6,
+                letterSpacing: -.3,
                 fontWeight: FontWeight.w400,
                 color: Theme.of(
                   context,
@@ -953,7 +1113,9 @@ class _SendViewState extends ConsumerState<SendView>
                   padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
                   margin: EdgeInsets.only(right: 0.w),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primaryContainer,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primaryContainer.withOpacity(.5),
                     borderRadius: BorderRadius.circular(40.r),
                   ),
                   child: Row(
@@ -962,14 +1124,14 @@ class _SendViewState extends ConsumerState<SendView>
                       // add country flag
                       SvgPicture.asset(
                         _getFlagPath(state.receiverCountry),
-                        height: 24.000.h,
+                        height: 24.00000.h,
                       ),
                       SizedBox(width: 8.w),
                       Text(
                         state.receiverCurrency,
                         style: AppTypography.bodyMedium.copyWith(
-                          fontFamily: 'CabinetGrotesk',
-                          fontSize: 14.sp,
+                          fontFamily: 'Karla',
+                          fontSize: 13.sp,
                           fontWeight: FontWeight.w600,
                           // color: AppColors.primary600,
                         ),
@@ -977,8 +1139,8 @@ class _SendViewState extends ConsumerState<SendView>
                       SizedBox(width: 4.w),
                       Icon(
                         Icons.keyboard_arrow_down,
-                        color: AppColors.primary600,
-                        size: 16.sp,
+                        color: Theme.of(context).colorScheme.primary,
+                        size: 20.sp,
                       ),
                     ],
                   ),
@@ -1097,35 +1259,75 @@ class _SendViewState extends ConsumerState<SendView>
 
   Widget _getDeliveryMethodIcon(String? method) {
     if (method == null || method.isEmpty) {
-      return SvgPicture.asset(
-        'assets/icons/svgs/paymentt.svg',
-        height: 32.sp,
-        width: 32.sp,
+      return Stack(
+        alignment: AlignmentDirectional.center,
+        children: [
+          SvgPicture.asset(
+            'assets/icons/svgs/swap.svg',
+            height: 34,
+            color: AppColors.primary500,
+          ),
+          SvgPicture.asset(
+            "assets/icons/svgs/payymentt.svg",
+            height: 18,
+            color: Colors.white,
+          ),
+        ],
       );
     }
 
     // Return specific icons for different delivery methods
     switch (method.toLowerCase()) {
       case 'dayfi_tag':
-        return SvgPicture.asset(
-          'assets/icons/svgs/wallett.svg',
-          height: 32.sp,
-          width: 32.sp,
+        return Stack(
+          alignment: AlignmentDirectional.center,
+          children: [
+            SvgPicture.asset(
+              'assets/icons/svgs/swap.svg',
+              height: 34,
+                        color: AppColors.neutral700.withOpacity(.35),
+            ),
+            SvgPicture.asset(
+              "assets/icons/svgs/at.svg",
+              height: 26,
+               color: Theme.of(context).colorScheme.onSurface.withOpacity(.65),
+            ),
+          ],
         );
       case 'bank_transfer':
       case 'bank':
-        return SvgPicture.asset(
-          'assets/icons/svgs/bankk.svg',
-          height: 32.sp,
-          width: 32.sp,
+        return Stack(
+          alignment: AlignmentDirectional.center,
+          children: [
+            SvgPicture.asset(
+              'assets/icons/svgs/swap.svg',
+              height: 34,
+                      color: AppColors.neutral700.withOpacity(.35),
+            ),
+            SvgPicture.asset(
+              "assets/icons/svgs/building-bank.svg",
+              height: 26,
+               color: Theme.of(context).colorScheme.onSurface.withOpacity(.65),
+            ),
+          ],
         );
       case 'mobile_money':
       case 'momo':
       case 'mobilemoney':
-        return SvgPicture.asset(
-          'assets/icons/svgs/mobilee.svg',
-          height: 32.sp,
-          width: 32.sp,
+        return Stack(
+          alignment: AlignmentDirectional.center,
+          children: [
+            SvgPicture.asset(
+              'assets/icons/svgs/swap.svg',
+              height: 34,
+                       color: AppColors.neutral700.withOpacity(.35),
+            ),
+            SvgPicture.asset(
+              "assets/icons/svgs/device-mobile.svg",
+              height: 26,
+             color: Theme.of(context).colorScheme.onSurface.withOpacity(.65),
+            ),
+          ],
         );
       case 'spenn':
         return SvgPicture.asset(
@@ -1170,115 +1372,154 @@ class _SendViewState extends ConsumerState<SendView>
         );
       default:
         // Default icon for unknown delivery methods
-        return SvgPicture.asset(
-          'assets/icons/svgs/paymentt.svg',
-          height: 32.sp,
-          width: 32.sp,
+        return Stack(
+          alignment: AlignmentDirectional.center,
+          children: [
+            SvgPicture.asset(
+              'assets/icons/svgs/swap.svg',
+              height: 34,
+                 color: AppColors.neutral700.withOpacity(.35),
+            ),
+            SvgPicture.asset(
+              "assets/icons/svgs/building-bank.svg",
+              height: 26,
+        color: Theme.of(context).colorScheme.onSurface.withOpacity(.65),
+            ),
+          ],
         );
     }
   }
 
   Widget _buildRecipientDeliveryMethodSection(SendState state) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Delivery Method - How receiver will get the money',
-          style: AppTypography.titleMedium.copyWith(
-            fontFamily: 'Karla',
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
-            letterSpacing: -.6,
-            height: 1.450,
-            color: Theme.of(
-              context,
-            ).textTheme.bodyLarge!.color!.withOpacity(.75),
+    final isDayfiTag = state.selectedDeliveryMethod.toLowerCase() == 'dayfi_tag';
+
+    return GestureDetector(
+      onTap:
+          () => _showChannelTypesBottomSheet(
+            context,
+            state.receiverCountry,
+            state.receiverCurrency,
+            state,
           ),
-          textAlign: TextAlign.start,
-          overflow: TextOverflow.ellipsis,
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.only(
+          left: 16.w,
+          top: 16.h,
+          bottom: 16.h,
+          right: 12.w,
         ),
-        SizedBox(height: 4),
-        Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(12.r),
-            // boxShadow: [
-            //   BoxShadow(
-            //     color: AppColors.neutral500.withOpacity(0.1),
-            //     blurRadius: 2.0,
-            //     offset: const Offset(0, 2),
-            //     spreadRadius: 0.5,
-            //   ),
-            // ],
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(
+            color: AppColors.purple500ForTheme(context).withOpacity(0),
+            width: .75,
           ),
-          child: ListTile(
-            contentPadding: EdgeInsets.only(
-              top: 8.h,
-              bottom: 8.h,
-              left: 18.w,
-              right: 0.w,
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.neutral500.withOpacity(0.0375),
+              blurRadius: 8.0,
+              offset: const Offset(0, 8),
+              spreadRadius: .8,
             ),
-            onTap:
-                () => _showChannelTypesBottomSheet(
-                  context,
-                  state.receiverCountry,
-                  state.receiverCurrency,
-                  state,
-                ),
-            title: Row(
-              children: [
-                _getDeliveryMethodIcon(state.selectedDeliveryMethod),
-                SizedBox(width: 12.w),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _getDeliveryMethodType(state.selectedDeliveryMethod),
-                      style: AppTypography.bodyLarge.copyWith(
-                        fontFamily: 'CabinetGrotesk',
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
-                        color:
-                            state.selectedDeliveryMethod.isEmpty
-                                ? Theme.of(
-                                  context,
-                                ).colorScheme.onSurface.withOpacity(0.4)
-                                : Theme.of(context).colorScheme.onSurface,
-                      ),
-                    ),
-                    SizedBox(height: 2.h),
-                    Text(
-                      _getDeliveryDuration(
-                        state.selectedDeliveryMethod,
-                        sendCurrency: state.sendCurrency,
-                        receiverCurrency: state.receiverCurrency,
-                      ),
-                      style: AppTypography.bodyLarge.copyWith(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withOpacity(0.7),
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w400,
-                        fontFamily: 'Karla',
-                        letterSpacing: -.3,
-                        height: 1.2,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 32.w,
+              height: 32.w,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(24.r),
+              ),
+              child: _getDeliveryMethodIcon(state.selectedDeliveryMethod),
             ),
-            trailing: Padding(
-              padding: EdgeInsets.only(right: 12.w),
-              child: Icon(
-                Icons.chevron_right,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                size: 20.sp,
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        _getDeliveryMethodType(state.selectedDeliveryMethod),
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontFamily: 'Karla',
+                          fontSize: 18.sp,
+                          letterSpacing: -.5,
+                          fontWeight: FontWeight.w400,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                      SizedBox(width: 8.w),
+                      if (isDayfiTag)
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8.w,
+                            vertical: 3.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.warning400.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                          child: Text(
+                            'Free',
+                            style: AppTypography.labelSmall.copyWith(
+                              fontFamily: 'Karla',
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.warning600,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  SizedBox(height: 6.h),
+                  Text(
+                    _getDeliveryDuration(
+                      state.selectedDeliveryMethod,
+                      sendCurrency: state.sendCurrency,
+                      receiverCurrency: state.receiverCurrency,
+                    ),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontSize: 12.5.sp,
+                      fontFamily: 'Karla',
+                      fontWeight: FontWeight.w400,
+                      letterSpacing: -0.4,
+                      height: 1.3,
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    ),
+                  ),
+
+                  // SizedBox(height: 2.h),
+                  //     Text(
+                  //       _getDeliveryDuration(
+                  //         state.selectedDeliveryMethod,
+                  //         sendCurrency: state.sendCurrency,
+                  //         receiverCurrency: state.receiverCurrency,
+                  //       ),
+                  //       style: AppTypography.bodyLarge.copyWith(
+                  //  color: AppColors.outlineDark,
+                  //         fontSize: 12.sp,
+                  //         fontWeight: FontWeight.w400,
+                  //         fontFamily: 'Karla',
+                  //         letterSpacing: -.3,
+                  //         height: 1.2,
+                  //       ),
+                  //     ),
+                ],
               ),
             ),
-          ),
+            SizedBox(width: 24.w),
+            Icon(
+              Icons.keyboard_arrow_down,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              size: 24.sp,
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
@@ -1341,13 +1582,14 @@ class _SendViewState extends ConsumerState<SendView>
                 //     color: AppColors.neutral800,
                 //   ),
                 // ),
-              ] else if (state.exchangeRate.isNotEmpty) ...[
+              ] else if (state.exchangeRate.isNotEmpty &&
+                  state.fee.isNotEmpty) ...[
                 Text(
                   StringUtils.formatCurrency(state.fee, state.sendCurrency),
                   style: AppTypography.bodyMedium.copyWith(
-                    fontFamily: 'CabinetGrotesk',
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Karla',
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w500,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
@@ -1398,24 +1640,29 @@ class _SendViewState extends ConsumerState<SendView>
                 //     color: AppColors.neutral800,
                 //   ),
                 // ),
-              ] else if (state.exchangeRate.isNotEmpty) ...[
-                Text(
-                  () {
-                    final fee = double.tryParse(state.fee) ?? 0.0;
-                    final sendAmount = double.tryParse(state.sendAmount) ?? 0.0;
-                    final total = fee + sendAmount;
-                    return StringUtils.formatCurrency(
-                      total.toStringAsFixed(2),
-                      state.sendCurrency,
-                    );
-                  }(),
-                  style: AppTypography.bodyMedium.copyWith(
-                    fontFamily: 'CabinetGrotesk',
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
+              ] else if (state.exchangeRate.isNotEmpty &&
+                  state.sendAmount.isNotEmpty) ...[
+                () {
+                  final fee = double.tryParse(state.fee) ?? 0.0;
+                  final sendAmount = double.tryParse(state.sendAmount) ?? 0.0;
+                  if (sendAmount <= 0 && fee <= 0) {
+                    return const SizedBox.shrink();
+                  }
+                  final total = fee + sendAmount;
+                  final formatted = StringUtils.formatCurrency(
+                    total.toStringAsFixed(2),
+                    state.sendCurrency,
+                  );
+                  return Text(
+                    formatted,
+                    style: AppTypography.bodyMedium.copyWith(
+                      fontFamily: 'Karla',
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w500,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  );
+                }(),
               ],
             ],
           ),
@@ -1470,8 +1717,8 @@ class _SendViewState extends ConsumerState<SendView>
                         : state.exchangeRate,
                     style: AppTypography.bodyLarge.copyWith(
                       fontFamily: 'Karla',
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w500,
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
                     textAlign: TextAlign.end,
@@ -1532,11 +1779,32 @@ class _SendViewState extends ConsumerState<SendView>
     // Dismiss keyboard when continue button is pressed
     FocusScope.of(context).unfocus();
 
+    AppLogger.info('🚀 _navigateToRecipientScreen called');
+
     // Check wallet balance first
     final shouldNavigateToPayment = await _checkWalletBalanceAndNavigate(state);
     if (shouldNavigateToPayment) {
+      AppLogger.info(
+        '⚠️ Navigating to payment method due to insufficient balance',
+      );
       return; // Balance is insufficient, already navigated to payment method view
     }
+
+    AppLogger.info('✅ Wallet balance check passed');
+
+    // If we have beneficiary data from recipients view, navigate directly to review
+    if (_initialBeneficiaryWithSource != null && _openedFromRecipients) {
+      AppLogger.info('📍 Navigating with beneficiary from recipients view');
+      AppLogger.info(
+        'Account Type: ${_initialBeneficiaryWithSource!.source.accountType}',
+      );
+      await _navigateToSendReviewWithBeneficiary(state);
+      return;
+    }
+
+    AppLogger.info(
+      'ℹ️ No beneficiary from recipients, proceeding with normal flow',
+    );
 
     // Check if delivery method is Dayfi Tag - route to Dayfi ID view
     if (state.selectedDeliveryMethod.toLowerCase() == 'dayfi_tag') {
@@ -1675,33 +1943,155 @@ class _SendViewState extends ConsumerState<SendView>
     appRouter.pushNamed(AppRoute.sendRecipientView, arguments: selectedData);
   }
 
+  /// Navigate to SendReviewView with beneficiary data from recipients screen
+  Future<void> _navigateToSendReviewWithBeneficiary(SendState state) async {
+    if (_initialBeneficiaryWithSource == null) return;
+
+    final beneficiary = _initialBeneficiaryWithSource!;
+    final source = beneficiary.source;
+    final accountType = source.accountType?.toLowerCase() ?? '';
+
+    AppLogger.info('🔍 Routing beneficiary with account type: $accountType');
+    AppLogger.info('Network ID: ${source.networkId}');
+    AppLogger.info('Beneficiary country: ${beneficiary.beneficiary.country}');
+
+    // Route to DayFi ID review for DayFi tags
+    if (accountType == 'dayfi') {
+      AppLogger.info('✅ Routing to DayFi ID Review');
+      final selectedData = {
+        'sendAmount': state.sendAmount,
+        'receiveAmount': state.receiverAmount,
+        'sendCurrency': state.sendCurrency,
+        'receiveCurrency': state.receiverCurrency,
+        'sendCountry': state.sendCountry,
+        'receiveCountry': state.receiverCountry,
+        'senderDeliveryMethod': state.selectedSenderDeliveryMethod,
+        'recipientDeliveryMethod': state.selectedDeliveryMethod,
+        'senderChannelId': state.selectedSenderChannelId,
+      };
+
+      // Extract DayFi ID from beneficiary account number (without @ prefix)
+      final dayfiId =
+          beneficiary.beneficiary.accountNumber?.replaceFirst('@', '') ?? '';
+
+      AppLogger.info(
+        '📤 Pushing to sendDayfiIdReviewView with dayfiId: $dayfiId',
+      );
+      try {
+        await appRouter.pushNamed(
+          AppRoute.sendDayfiIdReviewView,
+          arguments: {'selectedData': selectedData, 'dayfiId': dayfiId},
+        );
+        AppLogger.info('✅ Successfully navigated to sendDayfiIdReviewView');
+      } catch (e) {
+        AppLogger.error('❌ Failed to navigate to sendDayfiIdReviewView: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to navigate. Please try again.'),
+              backgroundColor: AppColors.error500,
+            ),
+          );
+        }
+      }
+      return;
+    }
+
+    // Route to SendReviewView for bank/mobile money transfers
+    AppLogger.info('✅ Routing to Send Review View for bank/mobile transfer');
+
+    final selectedNetwork =
+        source.networkId != null
+            ? state.networks.firstWhere(
+              (n) => n.id == source.networkId,
+              orElse: () => Network(id: null, name: null),
+            )
+            : null;
+
+    AppLogger.info('Network found: ${selectedNetwork?.name}');
+
+    final payload = <String, dynamic>{
+      'selectedData': {
+        'sendAmount': state.sendAmount,
+        'receiveAmount': state.receiverAmount,
+        'sendCurrency': state.sendCurrency,
+        'receiveCurrency': state.receiverCurrency,
+        'sendCountry': state.sendCountry,
+        'receiveCountry': state.receiverCountry,
+        'senderDeliveryMethod': state.selectedSenderDeliveryMethod,
+        'recipientDeliveryMethod': state.selectedDeliveryMethod,
+        'senderChannelId': state.selectedSenderChannelId,
+        'recipientChannelId': source.networkId ?? '',
+        'networkId': source.networkId ?? '',
+        'networkName': selectedNetwork?.name ?? 'Bank Transfer',
+        'accountNumberType': selectedNetwork?.accountNumberType ?? 'bank',
+      },
+      'recipientData': {
+        'name': beneficiary.beneficiary.name,
+        'country': beneficiary.beneficiary.country,
+        'phone': beneficiary.beneficiary.phone,
+        'address': beneficiary.beneficiary.address,
+        'dob': beneficiary.beneficiary.dob,
+        'email': beneficiary.beneficiary.email,
+        'idNumber': beneficiary.beneficiary.idNumber,
+        'idType': beneficiary.beneficiary.idType,
+        'accountNumber': source.accountNumber ?? '',
+        'networkId': source.networkId ?? '',
+        'accountType': source.accountType ?? '',
+      },
+      'senderData': null,
+    };
+
+    AppLogger.info('📤 Pushing to sendReviewView with payload');
+    try {
+      await appRouter.pushNamed(AppRoute.sendReviewView, arguments: payload);
+      AppLogger.info('✅ Successfully navigated to sendReviewView');
+    } catch (e) {
+      AppLogger.error('❌ Failed to navigate to sendReviewView: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to navigate. Please try again.'),
+            backgroundColor: AppColors.error500,
+          ),
+        );
+      }
+    }
+  }
+
   Widget _buildSendButton(SendState state) {
     final viewModel = ref.watch(sendViewModelProvider.notifier);
     final isAmountValid = viewModel.isSendAmountValid;
+    final parsedSend = double.tryParse(state.sendAmount) ?? 0.0;
+    final hasValidAmount =
+        isAmountValid && state.sendAmount.isNotEmpty && parsedSend > 0;
     final isLoading = state.isLoading || _isCheckingWallet;
+
+    // Enable button if amount is valid (exchange rate will be calculated on next screen)
+    final isButtonEnabled = hasValidAmount;
 
     return PrimaryButton(
       text: _getSendButtonText(
         state,
         viewModel,
-        isAmountValid,
+        isButtonEnabled,
         _isCheckingWallet,
       ),
       onPressed:
-          isLoading || !isAmountValid
+          isLoading || !isButtonEnabled
               ? null
               : () {
                 _navigateToRecipientScreen(state);
               },
       isLoading: isLoading,
       backgroundColor:
-          !isAmountValid
+          !isButtonEnabled
               ? AppColors.purple500.withOpacity(.25)
               : AppColors.purple500,
-      height: 60.h,
+      height: 48.000.h,
       textColor:
-          !isAmountValid
-              ? AppColors.neutral0.withOpacity(.25)
+          !isButtonEnabled
+              ? AppColors.neutral0.withOpacity(.65)
               : AppColors.neutral0,
       fontFamily: 'Karla',
       letterSpacing: -.8,
@@ -1731,25 +2121,51 @@ class _SendViewState extends ConsumerState<SendView>
         return 'Enter amount to continue';
       }
 
-      final sendAmount = double.tryParse(state.sendAmount);
+      final cleanAmount = state.sendAmount.replaceAll(RegExp(r'[,\s]'), '');
+      final sendAmount = double.tryParse(cleanAmount);
+
       if (sendAmount == null || sendAmount <= 0) {
         return 'Enter valid amount';
       }
 
-      if (viewModel.sendMinimumLimit != null &&
-          sendAmount < viewModel.sendMinimumLimit!) {
-        final minAmount =
+      // Hard limits - 1000 minimum for dayfi_tag, 2000 for others
+      const hardMaximumLimit = 5000000.0;
+
+      if (state.selectedDeliveryMethod.toLowerCase() == 'dayfi_tag') {
+        const dayfiTagMinimum = 1000.0;
+        if (sendAmount < dayfiTagMinimum) {
+          final minAmount =
+              StringUtils.formatCurrency(
+                dayfiTagMinimum.toStringAsFixed(2),
+                state.sendCurrency,
+              ).split('.')[0];
+          return 'Minimum amount is $minAmount';
+        }
+      } else {
+        const otherMethodsMinimum = 2000.0;
+        if (sendAmount < otherMethodsMinimum) {
+          final minAmount =
+              StringUtils.formatCurrency(
+                otherMethodsMinimum.toStringAsFixed(2),
+                state.sendCurrency,
+              ).split('.')[0];
+          return 'Minimum amount is $minAmount';
+        }
+      }
+
+      if (sendAmount > hardMaximumLimit) {
+        final maxAmount =
             StringUtils.formatCurrency(
-              viewModel.sendMinimumLimit!.toStringAsFixed(2),
+              hardMaximumLimit.toStringAsFixed(2),
               state.sendCurrency,
             ).split('.')[0];
-        return 'Minimum amount is $minAmount';
+        return 'Maximum amount is $maxAmount';
       }
 
       return 'Enter valid amount';
     }
 
-    return 'Next - Add Recipient';
+    return 'Continue';
   }
 
   void _showSendCountryBottomSheet(SendState state) {
@@ -1778,6 +2194,19 @@ class _SendViewState extends ConsumerState<SendView>
       }
     }
 
+    // Always ensure NG-NGN is available for Dayfi tag transfers
+    final ngnKey = 'NG - NGN';
+    if (!uniqueDepositChannels.containsKey(ngnKey)) {
+      uniqueDepositChannels[ngnKey] = Channel(
+        country: 'NG',
+        currency: 'NGN',
+        rampType: 'deposit',
+        status: 'active',
+        min: 1000.0,
+        max: 5000000.0,
+      );
+    }
+
     final finalDepositChannels =
         uniqueDepositChannels.values.toList()..sort(
           (a, b) => '${a.country ?? ''} - ${a.currency ?? ''}'.compareTo(
@@ -1803,13 +2232,13 @@ class _SendViewState extends ConsumerState<SendView>
                 //   height: 4.h,
                 //   margin: EdgeInsets.symmetric(vertical: 12.h),
                 //   decoration: BoxDecoration(
-                //     color: AppColors.neutral300,
+                //     color: AppColors.neutral400,
                 //     borderRadius: BorderRadius.circular(2.r),
                 //   ),
                 // ),
                 SizedBox(height: 18.h),
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 24.w),
+                  padding: EdgeInsets.symmetric(horizontal: 18.w),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -1817,8 +2246,8 @@ class _SendViewState extends ConsumerState<SendView>
                       Text(
                         'Sending currency',
                         style: AppTypography.titleLarge.copyWith(
-                          fontFamily: 'CabinetGrotesk',
-                          fontSize: 18.sp,
+                          fontFamily: 'Karla',
+                          fontSize: 16.sp,
                           fontWeight: FontWeight.w600,
                           color: Theme.of(context).colorScheme.onSurface,
                         ),
@@ -1889,7 +2318,7 @@ class _SendViewState extends ConsumerState<SendView>
                               : finalDepositChannels;
 
                       return ListView.builder(
-                        padding: EdgeInsets.symmetric(horizontal: 24.w),
+                        padding: EdgeInsets.symmetric(horizontal: 18.w),
                         itemCount: channelsToShow.length,
                         itemBuilder: (context, index) {
                           final channel = channelsToShow[index];
@@ -1913,7 +2342,7 @@ class _SendViewState extends ConsumerState<SendView>
                                   children: [
                                     SvgPicture.asset(
                                       _getFlagPath(channel.country),
-                                      height: 24.000.h,
+                                      height: 32.00000.h,
                                     ),
                                     SizedBox(width: 12.w),
                                     Text(
@@ -1954,7 +2383,7 @@ class _SendViewState extends ConsumerState<SendView>
                                 //       style: AppTypography.bodySmall.copyWith(
                                 //         fontFamily: 'Karla',
                                 //         fontSize: 12.sp,
-                                //         color: AppColors.neutral500,
+                                //         color: AppColors.neutral400,
                                 //       ),
                                 //     ),
                                 //   ],
@@ -2017,6 +2446,19 @@ class _SendViewState extends ConsumerState<SendView>
       }
     }
 
+    // Always ensure NG-NGN is available for Dayfi tag transfers
+    final ngnKey = 'NG - NGN';
+    if (!uniqueWithdrawalChannels.containsKey(ngnKey)) {
+      uniqueWithdrawalChannels[ngnKey] = Channel(
+        country: 'NG',
+        currency: 'NGN',
+        rampType: 'withdrawal',
+        status: 'active',
+        min: 1000.0,
+        max: 5000000.0,
+      );
+    }
+
     List<Channel> finalWithdrawalChannels =
         uniqueWithdrawalChannels.values.toList()..sort(
           (a, b) => '${a.country ?? ''} - ${a.currency ?? ''}'.compareTo(
@@ -2042,9 +2484,21 @@ class _SendViewState extends ConsumerState<SendView>
               )
               .toList();
 
-      // Use alternative channels if available
+      // Use alternative channels if available, otherwise ensure NGN is there
       if (alternativeChannels.isNotEmpty) {
         finalWithdrawalChannels = alternativeChannels;
+      } else {
+        // Fallback: add NGN for Dayfi transfers
+        finalWithdrawalChannels = [
+          Channel(
+            country: 'NG',
+            currency: 'NGN',
+            rampType: 'withdrawal',
+            status: 'active',
+            min: 1000.0,
+            max: 5000000.0,
+          ),
+        ];
       }
     }
 
@@ -2067,7 +2521,7 @@ class _SendViewState extends ConsumerState<SendView>
                   children: [
                     SizedBox(height: 18.h),
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 24.w),
+                      padding: EdgeInsets.symmetric(horizontal: 18.w),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -2075,8 +2529,8 @@ class _SendViewState extends ConsumerState<SendView>
                           Text(
                             'Receiving currency',
                             style: AppTypography.titleLarge.copyWith(
-                              fontFamily: 'CabinetGrotesk',
-                              fontSize: 18.sp,
+                              fontFamily: 'Karla',
+                              fontSize: 16.sp,
                               fontWeight: FontWeight.w600,
                               color: Theme.of(context).colorScheme.onSurface,
                             ),
@@ -2099,18 +2553,25 @@ class _SendViewState extends ConsumerState<SendView>
                     SizedBox(height: 16.h),
                     // Search field
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 24.w),
+                      padding: EdgeInsets.symmetric(horizontal: 18.w),
                       child: CustomTextField(
                         controller: _searchController,
                         label: '',
                         hintText: 'Search countries',
                         borderRadius: 40,
-                        prefixIcon: Icon(
-                          Icons.search,
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withOpacity(0.6),
-                          size: 20.sp,
+                        prefixIcon: Container(
+                          width: 40.w,
+                          alignment: Alignment.centerRight,
+                          constraints: BoxConstraints.tightForFinite(),
+                          child: Center(
+                            child: SvgPicture.asset(
+                              'assets/icons/svgs/search-normal.svg',
+                              height: 22.sp,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withOpacity(0.6),
+                            ),
+                          ),
                         ),
                         onChanged: (value) {
                           setModalState(() {});
@@ -2204,7 +2665,7 @@ class _SendViewState extends ConsumerState<SendView>
                               }).toList();
 
                           return ListView.builder(
-                            padding: EdgeInsets.symmetric(horizontal: 24.w),
+                            padding: EdgeInsets.symmetric(horizontal: 18.w),
                             itemCount: filteredChannels.length,
                             itemBuilder: (context, index) {
                               final channel = filteredChannels[index];
@@ -2250,7 +2711,7 @@ class _SendViewState extends ConsumerState<SendView>
                                 //       style: AppTypography.bodySmall.copyWith(
                                 //         fontFamily: 'Karla',
                                 //         fontSize: 12.sp,
-                                //         color: AppColors.neutral500,
+                                //         color: AppColors.neutral400,
                                 //       ),
                                 //     ),
                                 //   ],
@@ -2267,7 +2728,7 @@ class _SendViewState extends ConsumerState<SendView>
                                   children: [
                                     SvgPicture.asset(
                                       _getFlagPath(channel.country),
-                                      height: 24.000.h,
+                                      height: 32.00000.h,
                                     ),
                                     SizedBox(width: 12.w),
                                     Text(
@@ -2312,8 +2773,9 @@ class _SendViewState extends ConsumerState<SendView>
     // DayFi Tag should always be first
     if (lower == 'dayfi_tag') return '000_dayfi_tag';
     if (lower == 'bank_transfer' || lower == 'bank') return '001_bank_transfer';
-    if (lower == 'mobile_money' || lower == 'momo' || lower == 'mobilemoney')
+    if (lower == 'mobile_money' || lower == 'momo' || lower == 'mobilemoney') {
       return '002_mobile_money';
+    }
 
     // Other allowed methods fall here
     return '999_$channelType';
@@ -2344,13 +2806,13 @@ class _SendViewState extends ConsumerState<SendView>
 
     // Check if this is NGN to NGN transfer
     final isNgnToNgn = state.sendCurrency == 'NGN' && currency == 'NGN';
-    
+
     // For NGN to NGN transfers, add DayFi Tag as an option if not already present
     if (isNgnToNgn) {
       final hasDayfiTag = filteredChannels.any(
         (channel) => channel.channelType?.toLowerCase() == 'dayfi_tag',
       );
-      
+
       if (!hasDayfiTag) {
         // Create a synthetic DayFi Tag channel
         final dayfiTagChannel = Channel(
@@ -2370,7 +2832,7 @@ class _SendViewState extends ConsumerState<SendView>
     // Deduplicate channels by channelType to merge similar options
     final Map<String, Channel> uniqueChannels = {};
     for (final channel in filteredChannels) {
-      // Use a canonical key based on the channel type for merging
+      // ...existing code...l type for merging
       final canonicalType = _getCanonicalChannelName(channel.channelType);
 
       // Keep the channel with the highest max limit if duplicates exist
@@ -2407,7 +2869,7 @@ class _SendViewState extends ConsumerState<SendView>
             children: [
               SizedBox(height: 18.h),
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24.w),
+                padding: EdgeInsets.symmetric(horizontal: 18.w),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -2416,7 +2878,7 @@ class _SendViewState extends ConsumerState<SendView>
                       'Delivery methods for $currency',
                       style: AppTypography.titleLarge.copyWith(
                         fontFamily: 'CabinetGrotesk',
-                        fontSize: 18.sp,
+                        fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
                         color: Theme.of(context).colorScheme.onSurface,
                       ),
@@ -2441,7 +2903,7 @@ class _SendViewState extends ConsumerState<SendView>
                 child: Builder(
                   builder: (context) {
                     // Auto-select DayFi Tag for NGN to NGN if no delivery method is selected
-                    if (isNgnToNgn && 
+                    if (isNgnToNgn &&
                         state.selectedDeliveryMethod.isEmpty &&
                         allChannels.isNotEmpty) {
                       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -2468,62 +2930,134 @@ class _SendViewState extends ConsumerState<SendView>
                             );
                       });
                     }
-                    
+
                     return ListView.builder(
-                      padding: EdgeInsets.symmetric(horizontal: 24.w),
+                      padding: EdgeInsets.symmetric(horizontal: 18.w),
                       itemCount: allChannels.length,
                       itemBuilder: (context, index) {
                         final channel = allChannels[index];
+                        final isDayfiTag = channel.channelType?.toLowerCase() == 'dayfi_tag';
 
-                        return ListTile(
-                          contentPadding: EdgeInsets.symmetric(vertical: 8.h),
-                          onTap: () {
-                            ref
-                                .read(sendViewModelProvider.notifier)
-                                .updateDeliveryMethod(
-                                  channel.channelType ?? 'Unknown',
-                                );
+                        return Padding(
+                          padding: EdgeInsets.only(bottom: 12.h),
+                          child: GestureDetector(
+                            onTap: () {
+                              ref
+                                  .read(sendViewModelProvider.notifier)
+                                  .updateDeliveryMethod(
+                                    channel.channelType ?? 'Unknown',
+                                  );
 
-                            Navigator.pop(context);
-                            FocusScope.of(context).unfocus();
-                          },
-                          leading: _getDeliveryMethodIcon(channel.channelType),
-                          title: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _getDeliveryMethodType(channel.channelType),
-                                style: AppTypography.bodyLarge.copyWith(
-                                  fontFamily: 'CabinetGrotesk',
-                                  fontSize: 16.sp,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                              Navigator.pop(context);
+                              FocusScope.of(context).unfocus();
+                            },
+                            child: Container(
+                              width: double.infinity,
+                              padding: EdgeInsets.only(
+                                left: 16.w,
+                                top: 16.h,
+                                bottom: 16.h,
+                                right: 12.w,
                               ),
-                              SizedBox(height: 2.h),
-                              Text(
-                                _getDeliveryDuration(
-                                  channel.channelType,
-                                  sendCurrency: state.sendCurrency,
-                                  receiverCurrency: state.receiverCurrency,
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.surface,
+                                borderRadius: BorderRadius.circular(12.r),
+                                border: Border.all(
+                                  color: state.selectedDeliveryMethod == channel.channelType
+                                      ? AppColors.purple500ForTheme(context).withOpacity(0.5)
+                                      : AppColors.purple500ForTheme(context).withOpacity(0),
+                                  width: .75,
                                 ),
-                                style: AppTypography.bodyLarge.copyWith(
-                                  color: Theme.of(context).colorScheme.onSurface,
-                                  fontSize: 12.sp,
-                                  fontWeight: FontWeight.w400,
-                                  fontFamily: 'Karla',
-                                  letterSpacing: -.3,
-                                  height: 1.2,
-                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.neutral500.withOpacity(0.0375),
+                                    blurRadius: 8.0,
+                                    offset: const Offset(0, 8),
+                                    spreadRadius: .8,
+                                  ),
+                                ],
                               ),
-                            ],
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 32.w,
+                                    height: 32.w,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(24.r),
+                                    ),
+                                    child: _getDeliveryMethodIcon(channel.channelType),
+                                  ),
+                                  SizedBox(width: 12.w),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Text(
+                                              _getDeliveryMethodType(channel.channelType),
+                                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                                fontFamily: 'Karla',
+                                                fontSize: 18.sp,
+                                                letterSpacing: -.5,
+                                                fontWeight: FontWeight.w400,
+                                                color: Theme.of(context).colorScheme.onSurface,
+                                              ),
+                                            ),
+                                            SizedBox(width: 8.w),
+                                            if (isDayfiTag)
+                                              Container(
+                                                padding: EdgeInsets.symmetric(
+                                                  horizontal: 8.w,
+                                                  vertical: 3.h,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: AppColors.warning400.withOpacity(0.15),
+                                                  borderRadius: BorderRadius.circular(8.r),
+                                                ),
+                                                child: Text(
+                                                  'Free',
+                                                  style: AppTypography.labelSmall.copyWith(
+                                                    fontFamily: 'Karla',
+                                                    fontSize: 10.sp,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: AppColors.warning600,
+                                                  ),
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                        SizedBox(height: 6.h),
+                                        Text(
+                                          _getDeliveryDuration(
+                                            channel.channelType,
+                                            sendCurrency: state.sendCurrency,
+                                            receiverCurrency: state.receiverCurrency,
+                                          ),
+                                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                            fontSize: 12.5.sp,
+                                            fontFamily: 'Karla',
+                                            fontWeight: FontWeight.w400,
+                                            letterSpacing: -0.4,
+                                            height: 1.3,
+                                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  SizedBox(width: 12.w),
+                                  if (state.selectedDeliveryMethod == channel.channelType)
+                                    SvgPicture.asset(
+                                      'assets/icons/svgs/circle-check.svg',
+                                      color: AppColors.purple500ForTheme(context),
+                                      width: 24.sp,
+                                      height: 24.sp,
+                                    ),
+                                ],
+                              ),
+                            ),
                           ),
-                          trailing:
-                              state.selectedDeliveryMethod == channel.channelType
-                                  ? SvgPicture.asset(
-                                    'assets/icons/svgs/circle-check.svg',
-                                    color: AppColors.purple500ForTheme(context),
-                                  )
-                                  : null,
                         );
                       },
                     );

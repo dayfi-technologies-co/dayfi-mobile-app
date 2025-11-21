@@ -1,19 +1,19 @@
 // import 'package:dayfi/common/widgets/buttons/help_button.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
+import 'package:dayfi/common/widgets/shimmer_widgets.dart';
+import 'package:dayfi/common/widgets/error_state_widget.dart';
 import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
+import 'package:dayfi/common/utils/debouncer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
-import 'package:dayfi/features/send/views/send_add_recipients_view.dart';
-import 'package:dayfi/features/send/views/send_review_view.dart';
 import 'package:dayfi/features/send/vm/send_viewmodel.dart';
 import 'package:dayfi/features/recipients/vm/recipients_viewmodel.dart';
 import 'package:dayfi/models/beneficiary_with_source.dart';
 // import 'package:dayfi/models/wallet_transaction.dart';
 import 'package:dayfi/models/payment_response.dart' as payment;
-import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
 import 'package:dayfi/app_locator.dart';
@@ -30,11 +30,22 @@ class SendRecipientView extends ConsumerStatefulWidget {
 
 class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
   final TextEditingController _searchController = TextEditingController();
+  final _searchDebouncer = SearchDebouncer(milliseconds: 300);
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Debug: Print received data
+      print('📦 SendRecipientView - Received selectedData:');
+      print('   receiveCountry: ${widget.selectedData['receiveCountry']}');
+      print('   receiveCurrency: ${widget.selectedData['receiveCurrency']}');
+      print('   sendCountry: ${widget.selectedData['sendCountry']}');
+      print('   sendCurrency: ${widget.selectedData['sendCurrency']}');
+      print('   recipientDeliveryMethod: ${widget.selectedData['recipientDeliveryMethod']}');
+      print('   recipientChannelId: ${widget.selectedData['recipientChannelId']}');
+      print('   All keys: ${widget.selectedData.keys.toList()}');
+      
       _loadBeneficiaries();
     });
   }
@@ -42,34 +53,6 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
   void _loadBeneficiaries() {
     // Load all beneficiaries first
     ref.read(recipientsProvider.notifier).loadBeneficiaries();
-  }
-
-  /// Check if a network supports a specific channel
-  bool _doesNetworkSupportChannel(String? networkId, String channelId) {
-    if (networkId == null || networkId.isEmpty) return false;
-
-    final sendState = ref.read(sendViewModelProvider);
-
-    // Find the network by ID
-    final network = sendState.networks.firstWhere(
-      (n) => n.id == networkId,
-      orElse: () => payment.Network(id: null, channelIds: null),
-    );
-
-    if (network.id == null) {
-      print('❌ Network not found for ID: $networkId');
-      return false;
-    }
-
-    // Check if the network's channelIds contains the target channel
-    final supportsChannel = network.channelIds?.contains(channelId) == true;
-
-    print(
-      '🔍 Network ${network.name} (${network.id}) supports channel $channelId: $supportsChannel',
-    );
-    print('📋 Network channel IDs: ${network.channelIds}');
-
-    return supportsChannel;
   }
 
   /// Get full country name from country code
@@ -179,6 +162,7 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
     switch (channelType.toLowerCase()) {
       case 'bank':
       case 'bank_transfer':
+      case 'p2p':
         return 'Bank Transfer';
       case 'mobile_money':
       case 'momo':
@@ -206,29 +190,15 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
   List<BeneficiaryWithSource> _getFilteredBeneficiaries() {
     final recipientsState = ref.watch(recipientsProvider);
     final targetCountry = widget.selectedData['receiveCountry'] ?? '';
-    final recipientChannelId = widget.selectedData['recipientChannelId'] ?? '';
 
-    if (targetCountry.isEmpty) return [];
+    if (targetCountry.isEmpty) return recipientsState.beneficiaries;
 
-    // Filter beneficiaries by country AND recipient channel ID
-    // Only show beneficiaries whose networks support the selected channel
+    // Filter beneficiaries ONLY by country - show all channels
     final filtered =
         recipientsState.beneficiaries.where((beneficiaryWithSource) {
           final countryMatch =
               beneficiaryWithSource.beneficiary.country == targetCountry;
-
-          // If no recipientChannelId is specified, show all beneficiaries for the country
-          if (recipientChannelId.isEmpty) {
-            return countryMatch;
-          }
-
-          // Check if the beneficiary's network supports the selected channel
-          final channelMatch = _doesNetworkSupportChannel(
-            beneficiaryWithSource.source.networkId,
-            recipientChannelId,
-          );
-
-          return countryMatch && channelMatch;
+          return countryMatch;
         }).toList();
 
     // Apply search filter if there's a search query
@@ -242,19 +212,38 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
       }).toList();
     }
 
+    // Return all filtered beneficiaries (no user/self-funding filtering)
     return filtered;
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _searchDebouncer.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final recipientsState = ref.watch(recipientsProvider);
-    final filteredBeneficiaries = _getFilteredBeneficiaries();
+    final allFilteredBeneficiaries = _getFilteredBeneficiaries();
+    
+    // Remove duplicate beneficiaries based on account number and filter out empty names
+    final seenAccountNumbers = <String>{};
+    final filteredBeneficiaries = allFilteredBeneficiaries.where((beneficiary) {
+      // Skip if beneficiary name is empty or whitespace only
+      if (beneficiary.beneficiary.name.trim().isEmpty) {
+        return false;
+      }
+      
+      final accountNumber = beneficiary.source.accountNumber ?? '';
+      if (seenAccountNumbers.contains(accountNumber)) {
+        return false; // Skip duplicate
+      }
+      seenAccountNumbers.add(accountNumber);
+      return true;
+    }).toList();
+    
     final targetCountry = widget.selectedData['receiveCountry'] ?? 'Unknown';
     final targetCurrency = widget.selectedData['receiveCurrency'] ?? 'Unknown';
 
@@ -280,8 +269,8 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
           title: Text(
             'Beneficiaries',
             style: AppTypography.titleLarge.copyWith(
-              fontFamily: 'CabinetGrotesk',
-              fontSize: 20.sp,
+           fontFamily: 'CabinetGrotesk',
+               fontSize: 19.sp, height: 1.6,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface,
             ),
@@ -322,127 +311,86 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
           onRefresh: () async {
             _loadBeneficiaries();
           },
-          child: Column(
-            children: [
-              // Search Bar
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 8.h),
-                child: CustomTextField(
-                  controller: _searchController,
-                  label: '',
-                  hintText: 'Search beneficiaries...',
-                  borderRadius: 40,
-                  prefixIcon: Icon(
-                    Icons.search,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withOpacity(0.6),
-                    size: 20.sp,
-                  ),
-                  onChanged: (value) {
-                    setState(() {}); // Trigger rebuild to update filtered list
-                  },
-                ),
-              ),
-
-              // Beneficiaries List
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsetsGeometry.only(bottom: 0.h),
-                  child:
-                      recipientsState.isLoading
-                          ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                LoadingAnimationWidget.horizontalRotatingDots(
-                                  color: AppColors.purple500ForTheme(context),
-                                  size: 20,
+          child: Padding(
+            padding: EdgeInsetsGeometry.only(bottom: 0.h),
+            child:
+                recipientsState.isLoading && filteredBeneficiaries.isEmpty
+                    ? Padding(
+                      padding: EdgeInsets.all(16.w),
+                      child: ShimmerWidgets.recipientListShimmer(
+                        context,
+                        itemCount: 8,
+                      ),
+                    )
+                    : recipientsState.errorMessage != null &&
+                        filteredBeneficiaries.isEmpty
+                    ? ErrorStateWidget(
+                      message: 'Failed to load Beneficiaries',
+                      details: recipientsState.errorMessage,
+                      onRetry: _loadBeneficiaries,
+                    )
+                    : filteredBeneficiaries.isEmpty
+                    ? _buildEmptyState(
+                      targetCountry,
+                      targetCurrency,
+                      widget.selectedData['recipientDeliveryMethod'] ??
+                          'Bank Transfer',
+                    )
+                    : ListView(
+                      children: [
+                        // Search Bar
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
+                          child: CustomTextField(
+                            controller: _searchController,
+                            label: '',
+                            hintText: 'Search...',
+                            borderRadius: 40,
+                            prefixIcon: Container(
+                              width: 40.w,
+                              alignment: Alignment.centerRight,
+                              constraints: BoxConstraints.tightForFinite(),
+                              child: Center(
+                                child: SvgPicture.asset(
+                                  'assets/icons/svgs/search-normal.svg',
+                                  height: 22.sp,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface.withOpacity(0.6),
                                 ),
-                                SizedBox(height: 16.h),
-                                Text(
-                                  'Loading beneficiaries...',
-                                  style: AppTypography.bodyMedium.copyWith(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurface.withOpacity(0.6),
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
-                          )
-                          : recipientsState.errorMessage != null
-                          ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'Failed to load beneficiaries',
-                                  style: AppTypography.bodyLarge.copyWith(
-                                    fontFamily: 'CabinetGrotesk',
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 18.sp,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurface.withOpacity(0.8),
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                SizedBox(height: 8.h),
-                                Text(
-                                  recipientsState.errorMessage!,
-                                  style: AppTypography.bodyMedium.copyWith(
-                                    fontSize: 16.sp,
-                                    fontWeight: FontWeight.w400,
-                                    fontFamily: 'Karla',
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurface.withOpacity(0.6),
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                SizedBox(height: 24.h),
-                                PrimaryButton(
-                                  text: 'Retry',
-                                  onPressed: _loadBeneficiaries,
-                                  backgroundColor: AppColors.purple500,
-                                  textColor: AppColors.neutral0,
-                                  height: 48.h,
-                                  width: 120.w,
-                                ),
-                              ],
-                            ),
-                          )
-                          : filteredBeneficiaries.isEmpty
-                          ? _buildEmptyState(
-                            targetCountry,
-                            targetCurrency,
-                            widget.selectedData['recipientDeliveryMethod'] ??
-                                'Bank Transfer',
-                          )
-                          : ListView.builder(
-                            shrinkWrap: true,
-                            padding: EdgeInsets.only(
-                              left: 24.w,
-                              right: 24.w,
-                              bottom: 112.h,
-                              top: 12.h,
-                            ),
-                            itemCount: filteredBeneficiaries.length,
-                            itemBuilder: (context, index) {
-                              final beneficiary = filteredBeneficiaries[index];
-                              return _buildRecipientCard(
-                                beneficiary,
-                                bottomMargin:
-                                    index == filteredBeneficiaries.length - 1
-                                        ? 8
-                                        : 24,
-                              );
+                            onChanged: (value) {
+                              _searchDebouncer.run(() {
+                                setState(() {}); // Trigger rebuild to update filtered list
+                              });
                             },
                           ),
-                ),
-              ),
-            ],
+                        ),
+
+                        // Beneficiaries List
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: NeverScrollableScrollPhysics(),
+                          padding: EdgeInsets.only(
+                            left: 24.w,
+                            right: 24.w,
+                            bottom: 112.h,
+                          ),
+                          itemCount: filteredBeneficiaries.length,
+                          itemBuilder: (context, index) {
+                            final beneficiary = filteredBeneficiaries[index];
+                            return _buildRecipientCard(
+                              beneficiary,
+                              bottomMargin:
+                                  index == filteredBeneficiaries.length - 1
+                                      ? 8
+                                      : 24,
+                            );
+                          },
+                        ),
+                      ],
+                    ),
           ),
         ),
       ),
@@ -464,15 +412,13 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
 
             // Subtitle
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 48.w),
+              padding: EdgeInsets.symmetric(horizontal: 56.w),
               child: Text(
-                displayChannelType == "p2p"
-                    ? 'You do not have any Beneficiaries yet for $countryName in $currency and Bank Transfer'
-                    : 'You do not have any Beneficiaries yet for $countryName in $currency and $displayChannelType',
+                'You do not have any Beneficiaries yet for $countryName in $currency and $displayChannelType',
                 style: AppTypography.bodyLarge.copyWith(
-                  fontFamily: 'CabinetGrotesk',
+               fontFamily: 'CabinetGrotesk',
                   fontWeight: FontWeight.w600,
-                  fontSize: 18.sp,
+                  fontSize: 14.sp,
                   height: 1.4,
                   letterSpacing: -.4,
                   color: Theme.of(
@@ -483,7 +429,7 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
               ),
             ),
 
-            SizedBox(height: 48.h),
+            SizedBox(height: 56.h),
 
             // Create Beneficiaries Button
             PrimaryButton(
@@ -496,7 +442,7 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
                 );
               },
               backgroundColor: AppColors.purple500,
-              height: 60.h,
+              height: 48.000.h,
               textColor: AppColors.neutral0,
               fontFamily: 'Karla',
               letterSpacing: -.8,
@@ -505,7 +451,7 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
               fullWidth: true,
             ),
 
-            SizedBox(height: 48.h),
+            SizedBox(height: 56.h),
           ],
         ),
       ),
@@ -555,7 +501,7 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
                       color: AppColors.neutral0,
                       fontFamily: 'Karla',
                       fontSize: 16.sp,
-                      letterSpacing: -.6,
+                      letterSpacing: -.3,
                       fontWeight: FontWeight.w400,
                     ),
                   ),
@@ -592,34 +538,42 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
               children: [
                 Text(
                   beneficiary.name.toUpperCase(),
-                  style: AppTypography.bodyLarge.copyWith(
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     fontFamily: 'Karla',
-                    fontSize: 16.sp,
-                    letterSpacing: -.6,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 18.sp,
+                    letterSpacing: -.3,
+                    fontWeight: FontWeight.w400,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 2,
                 ),
-                if (beneficiary.country.isNotEmpty) ...[
-                  // SizedBox(height: 4.h),
-                  Text(
-                    '${_getNetworkName(beneficiaryWithSource)} • ${_getAccountNumber(source)}',
-                    style: AppTypography.bodySmall.copyWith(
-                      fontFamily: 'Karla',
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w400,
-                      letterSpacing: -.6,
-                      height: 1.450,
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withOpacity(0.5),
+                Row(
+                  children: [
+                    _getAccountIcon(source),
+                    SizedBox(width: 2.w),
+                    Expanded(
+                      child: Text(
+                        '${_getChannelAndNetworkInfo(beneficiaryWithSource)} • ${_getAccountNumber(source)}',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontFamily: 'Karla',
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w400,
+                          letterSpacing: -.3,
+                          height: 1.450,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.6),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ],
             ),
           ),
-          SizedBox(width: 16.w),
+          SizedBox(width: 12.w),
           // Select Button
           PrimaryButton(
             text: 'Select',
@@ -631,7 +585,7 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
             fontFamily: 'Karla',
             fontSize: 14.sp,
             borderRadius: 20.r,
-            fontWeight: FontWeight.w400,
+            fontWeight: FontWeight.w500,
           ),
         ],
       ),
@@ -639,10 +593,27 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
   }
 
   String _getInitials(String name) {
-    final words = name.trim().split(' ');
+    // Normalize and split on one-or-more whitespace, then remove empties
+    final words =
+        name.trim().split(RegExp(r"\s+")).where((w) => w.isNotEmpty).toList();
+
     if (words.isEmpty) return '?';
-    if (words.length == 1) return words[0][0].toUpperCase();
-    return '${words[0][0]}${words[words.length - 1][0]}'.toUpperCase();
+
+    // Single word: return its first letter
+    if (words.length == 1) {
+      final w = words[0];
+      if (w.isEmpty) return '?';
+      return w[0].toUpperCase();
+    }
+
+    // Multiple words: use first letter of first and last word
+    final first = words.first;
+    final last = words.last;
+    final firstChar = first.isNotEmpty ? first[0] : '';
+    final lastChar = last.isNotEmpty ? last[0] : '';
+
+    final initials = (firstChar + lastChar).toUpperCase();
+    return initials.isEmpty ? '?' : initials;
   }
 
   // Helper function to get flag SVG path from country code
@@ -705,32 +676,70 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
     }
   }
 
-  String _getNetworkName(BeneficiaryWithSource beneficiaryWithSource) {
+  Widget _getAccountIcon(payment.Source source) {
+    final accountType = source.accountType?.toLowerCase() ?? '';
+    String overlayIcon;
+    switch (accountType) {
+      case 'bank':
+        overlayIcon = 'assets/icons/svgs/building-bank.svg';
+        break;
+      case 'phone':
+      case 'mobile':
+      case 'mobile_money':
+      case 'momo':
+        overlayIcon = 'assets/icons/svgs/device-mobile.svg';
+        break;
+      case 'crypto':
+        overlayIcon = 'assets/icons/svgs/currency-dollar.svg';
+        break;
+      case 'card':
+        overlayIcon = 'assets/icons/svgs/carddd.svg';
+        break;
+      default:
+        overlayIcon = 'assets/icons/svgs/paymentt.svg';
+    }
+
+    return Container(
+      width: 32.w,
+      height: 32.w,
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(24.r)),
+      child: Stack(
+        alignment: AlignmentDirectional.center,
+        children: [
+          SvgPicture.asset(
+            'assets/icons/svgs/swap.svg',
+            height: 22,
+            color: AppColors.neutral700.withOpacity(.35),
+          ),
+          SvgPicture.asset(
+            overlayIcon,
+            height: 16,
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(.65),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getChannelAndNetworkInfo(
+    BeneficiaryWithSource beneficiaryWithSource,
+  ) {
+    final source = beneficiaryWithSource.source;
+
     try {
       final sendState = ref.watch(sendViewModelProvider);
-      final networkId = beneficiaryWithSource.source.networkId;
+      final networkId = source.networkId;
 
       if (networkId == null || networkId.isEmpty) {
-        print(
-          '❌ No network ID found for beneficiary: ${beneficiaryWithSource.beneficiary.name}',
-        );
-        return 'Unknown Network';
+        return 'Bank Transfer';
       }
-
-      // Debug logging
-      print('🔍 Looking for network ID: $networkId');
-      print('📊 Available networks count: ${sendState.networks.length}');
-      print(
-        '📋 Available network IDs: ${sendState.networks.map((n) => n.id).join(", ")}',
-      );
 
       // If networks are empty, try to trigger a refresh
       if (sendState.networks.isEmpty) {
-        print('⚠️ No networks loaded, triggering refresh...');
         WidgetsBinding.instance.addPostFrameCallback((_) {
           ref.read(sendViewModelProvider.notifier).initialize();
         });
-        return 'Loading...';
+        return 'Bank Transfer';
       }
 
       final network = sendState.networks.firstWhere(
@@ -739,15 +748,12 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
       );
 
       if (network.id == null) {
-        print('❌ Network not found for ID: $networkId');
-        return 'Unknown Network';
+        return 'Bank Transfer';
       }
 
-      print('✅ Found network: ${network.name} for ID: $networkId');
-      return network.name ?? 'Unknown Network';
+      return network.name ?? 'Bank Transfer';
     } catch (e) {
-      print('❌ Error getting network name: $e');
-      return 'Unknown Network';
+      return 'Bank Transfer';
     }
   }
 

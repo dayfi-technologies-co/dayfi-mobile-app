@@ -302,7 +302,7 @@ class ThemeUtils {
 
   /// Get the background color from context
   static Color getBackgroundColor(BuildContext context) {
-    return Theme.of(context).colorScheme.background;
+    return Theme.of(context).colorScheme.surface;
   }
 
   /// Get the error color from context

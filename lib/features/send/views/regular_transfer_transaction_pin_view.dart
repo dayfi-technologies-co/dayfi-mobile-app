@@ -370,7 +370,7 @@ class _TransactionPinBottomSheetState
         children: [
           SizedBox(height: 18.h),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            padding: EdgeInsets.symmetric(horizontal: 18.w),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -378,11 +378,11 @@ class _TransactionPinBottomSheetState
                 Text(
                   'Enter Transaction PIN',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontFamily: 'CabinetGrotesk',
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
+                      fontFamily: 'CabinetGrotesk',
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
                 ),
                 GestureDetector(
                   onTap: () {
@@ -422,7 +422,7 @@ class _TransactionPinBottomSheetState
             ),
           ),
 
-          SizedBox(height: 48.h),
+          SizedBox(height: 56.h),
 
           // Number pad
           Expanded(
@@ -432,7 +432,7 @@ class _TransactionPinBottomSheetState
               childAspectRatio: 1.5,
               mainAxisSpacing: 16,
               crossAxisSpacing: 16,
-              padding: EdgeInsets.symmetric(horizontal: 24.w),
+              padding: EdgeInsets.symmetric(horizontal: 18.w),
               physics: const NeverScrollableScrollPhysics(),
               children: [
                 ...List.generate(9, (index) {
@@ -452,7 +452,7 @@ class _TransactionPinBottomSheetState
                 const SizedBox.shrink(),
                 _buildNumberButton('0', () {
                   if (pinState.pin.length < 4 && !widget.isProcessing) {
-                    final newPin = pinState.pin + '0';
+                    final newPin = '${pinState.pin}0';
                     pinNotifier.updatePin(newPin);
                     if (newPin.length == 4) {
                       Future.delayed(Duration(milliseconds: 300), () {
@@ -503,7 +503,7 @@ class _TransactionPinBottomSheetState
             child: Text(
               number,
               style: TextStyle(
-                fontSize: 32.00,
+                fontSize: 25.60,
                 fontFamily: 'CabinetGrotesk',
                 fontWeight: FontWeight.w400,
                 color: Theme.of(context).colorScheme.onSurface,

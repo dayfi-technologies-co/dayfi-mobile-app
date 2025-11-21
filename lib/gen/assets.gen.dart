@@ -212,7 +212,7 @@ class $AssetsIconsSvgsGen {
 
   /// File path: assets/icons/svgs/eye_closed.svg
   SvgGenImage get eyeClosed =>
-      const SvgGenImage('assets/icons/svgs/eye-off.svg');
+      const SvgGenImage('assets/icons/svgs/eye-closed.svg');
 
   /// File path: assets/icons/svgs/eye_open.svg
   SvgGenImage get eyeOpen => const SvgGenImage('assets/icons/svgs/eye.svg');

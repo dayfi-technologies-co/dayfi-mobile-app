@@ -150,6 +150,8 @@ class Beneficiary {
   final String email;
   final String idNumber;
   final String idType;
+  final String? accountNumber;
+  final String? accountType;
 
   Beneficiary({
     required this.id,
@@ -161,6 +163,8 @@ class Beneficiary {
     required this.email,
     required this.idNumber,
     required this.idType,
+    this.accountNumber,
+    this.accountType,
   });
 
   factory Beneficiary.fromJson(Map<String, dynamic> json) {
@@ -168,13 +172,15 @@ class Beneficiary {
       return Beneficiary(
         id: json['id']?.toString() ?? '',
         name: json['name']?.toString() ?? '',
-        country: json['country']?.toString() ?? '',
+        country: json['network_country']?.toString() ?? json['country']?.toString() ?? '',
         phone: json['phone']?.toString() ?? '',
         address: json['address']?.toString() ?? '',
         dob: json['dob']?.toString() ?? '',
         email: json['email']?.toString() ?? '',
         idNumber: json['idNumber']?.toString() ?? '',
         idType: json['idType']?.toString() ?? '',
+        accountNumber: json['account_number']?.toString(),
+        accountType: json['account_type']?.toString(),
       );
     } catch (e) {
       print('Error parsing Beneficiary: $e');
@@ -190,6 +196,7 @@ class Source {
   final String? accountNumber;
   final String? networkId;
   final String? beneficiaryId;
+  final String? dayfiId;
 
   Source({
     this.id,
@@ -197,16 +204,18 @@ class Source {
     this.accountNumber,
     this.networkId,
     this.beneficiaryId,
+    this.dayfiId,
   });
 
   factory Source.fromJson(Map<String, dynamic> json) {
     try {
       return Source(
         id: json['id']?.toString(),
-        accountType: json['accountType']?.toString(),
-        accountNumber: json['accountNumber']?.toString(),
-        networkId: json['networkId']?.toString(),
-        beneficiaryId: json['beneficiaryId']?.toString(),
+        accountType: json['accountType']?.toString() ?? json['account_type']?.toString(),
+        accountNumber: json['accountNumber']?.toString() ?? json['account_number']?.toString(),
+        networkId: json['networkId']?.toString() ?? json['network_id']?.toString(),
+        beneficiaryId: json['beneficiaryId']?.toString() ?? json['beneficiary_id']?.toString(),
+        dayfiId: json['dayfi_id']?.toString() ?? json['dayfiId']?.toString(),
       );
     } catch (e) {
       print('Error parsing Source: $e');

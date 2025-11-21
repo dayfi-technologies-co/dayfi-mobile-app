@@ -7,6 +7,7 @@ import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
+import 'package:dayfi/common/utils/haptic_helper.dart';
 import 'package:dayfi/core/navigation/navigator_key.dart';
 
 class DayfiTagSuccessDialog extends StatelessWidget {
@@ -22,9 +23,12 @@ class DayfiTagSuccessDialog extends StatelessWidget {
   });
 
   void _copyDayfiId(BuildContext context) {
+    HapticHelper.lightImpact();
     Clipboard.setData(ClipboardData(text: dayfiId));
 
     // Pop the dialog first
+    Navigator.of(context).pop();
+    Navigator.of(context).pop();
     Navigator.of(context).pop();
 
     // Then handle parent navigation and show snackbar after navigation completes
@@ -62,7 +66,7 @@ class DayfiTagSuccessDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 8.h),
+      padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
         borderRadius: BorderRadius.only(
@@ -122,8 +126,8 @@ class DayfiTagSuccessDialog extends StatelessWidget {
                 Text(
                   "Your Dayfi ID is all set",
                   style: AppTypography.titleLarge.copyWith(
-                    fontFamily: 'CabinetGrotesk',
-                    fontSize: 20.sp,
+                 fontFamily: 'CabinetGrotesk',
+                     fontSize: 19.sp, height: 1.6,
                     fontWeight: FontWeight.w500,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
@@ -155,7 +159,7 @@ class DayfiTagSuccessDialog extends StatelessWidget {
                   backgroundColor: AppColors.purple500,
                   textColor: AppColors.neutral0,
                   borderRadius: 38.r,
-                  height: 60.h,
+                  height: 48.000.h,
                   width: double.infinity,
                   fullWidth: true,
                   fontFamily: 'Karla',

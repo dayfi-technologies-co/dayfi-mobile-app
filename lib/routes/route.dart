@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:dayfi/features/recipients/views/recipients_view.dart';
+import 'package:dayfi/features/softpos/views/softpos_info_view.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:dayfi/features/auth/login/views/login_view.dart';
@@ -41,6 +42,13 @@ import 'package:dayfi/features/send/views/send_payment_method_view.dart';
 import 'package:dayfi/features/profile/views/change_transaction_pin_old_view.dart';
 import 'package:dayfi/features/profile/views/change_transaction_pin_new_view.dart';
 import 'package:dayfi/features/profile/views/change_transaction_pin_confirm_view.dart';
+import 'package:dayfi/features/profile/views/reset_transaction_pin_intro_view.dart';
+import 'package:dayfi/features/profile/views/reset_transaction_pin_otp_view.dart';
+import 'package:dayfi/features/profile/views/reset_transaction_pin_new_view.dart';
+import 'package:dayfi/features/profile/views/reset_transaction_pin_confirm_view.dart';
+import 'package:dayfi/features/send/views/send_view.dart';
+import 'package:dayfi/features/send/views/select_destination_country_view.dart';
+import 'package:dayfi/features/send/views/select_delivery_method_view.dart';
 
 class VerifyEmailViewArguments {
   final bool isSignUp;
@@ -95,6 +103,14 @@ class AppRoute {
   static const String changeTransactionPinOldView = '/changeTransactionPinOldView';
   static const String changeTransactionPinNewView = '/changeTransactionPinNewView';
   static const String changeTransactionPinConfirmView = '/changeTransactionPinConfirmView';
+  static const String resetTransactionPinIntroView = '/resetTransactionPinIntroView';
+  static const String resetTransactionPinOtpView = '/resetTransactionPinOtpView';
+  static const String resetTransactionPinNewView = '/resetTransactionPinNewView';
+  static const String resetTransactionPinConfirmView = '/resetTransactionPinConfirmView';
+  static const String sendView = '/send';
+  static const String selectDestinationCountryView = '/selectDestinationCountryView';
+  static const String selectDeliveryMethodView = '/selectDeliveryMethodView';
+  static const String softposInfoView = '/softposInfoView';
 
   static Route getRoute(RouteSettings routeSettings) {
     globalrouteSettings = routeSettings;
@@ -176,7 +192,26 @@ class AppRoute {
         );
 
       case recipientsView:
-        return _getPageRoute(routeSettings, const RecipientsView());
+        bool fromProfile = false;
+        bool fromSendView = false;
+        
+        if (routeSettings.arguments is bool) {
+          // Legacy: simple bool argument
+          fromProfile = routeSettings.arguments as bool;
+        } else if (routeSettings.arguments is Map<String, dynamic>) {
+          // New: map with both flags
+          final args = routeSettings.arguments as Map<String, dynamic>;
+          fromProfile = args['fromProfile'] as bool? ?? false;
+          fromSendView = args['fromSendView'] as bool? ?? false;
+        }
+        
+        return _getPageRoute(
+          routeSettings,
+          RecipientsView(
+            fromProfile: fromProfile,
+            fromSendView: fromSendView,
+          ),
+        );
       case editProfileView:
         return _getPageRoute(routeSettings, const EditProfileView());
 
@@ -317,6 +352,51 @@ class AppRoute {
         return _getPageRoute(
           routeSettings,
           const ChangeTransactionPinConfirmView(),
+        );
+      case resetTransactionPinIntroView:
+        return _getPageRoute(
+          routeSettings,
+          const ResetTransactionPinIntroView(),
+        );
+      case resetTransactionPinOtpView:
+        String email = routeSettings.arguments as String;
+        return _getPageRoute(
+          routeSettings,
+          ResetTransactionPinOtpView(email: email),
+        );
+      case resetTransactionPinNewView:
+        return _getPageRoute(
+          routeSettings,
+          const ResetTransactionPinNewView(),
+        );
+      case resetTransactionPinConfirmView:
+        return _getPageRoute(
+          routeSettings,
+          const ResetTransactionPinConfirmView(),
+        );
+      case sendView:
+        return MaterialPageRoute(
+          settings: routeSettings,
+          builder: (context) {
+            // SendView reads ModalRoute.of(context)?.settings.arguments in didChangeDependencies,
+            // so we don't need to pass constructor args here.
+            return const SendView();
+          },
+        );
+      case selectDestinationCountryView:
+        return _getPageRoute(
+          routeSettings,
+          const SelectDestinationCountryView(),
+        );
+      case selectDeliveryMethodView:
+        return _getPageRoute(
+          routeSettings,
+          const SelectDeliveryMethodView(),
+        );
+      case softposInfoView:
+        return _getPageRoute(
+          routeSettings,
+          const SoftposInfoView(),
         );
 
       default:

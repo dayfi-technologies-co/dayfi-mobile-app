@@ -386,15 +386,10 @@ class AppTheme {
       onSurface: AppColors.neutral900,
       surfaceContainerHighest: AppColors.surfaceContainerHighestLight,
       onSurfaceVariant: AppColors.neutral700,
-      surfaceVariant: AppColors.surfaceVariantLight,
 
       // Outline colors
       outline: AppColors.outlineLight,
       outlineVariant: AppColors.outlineVariantLight,
-
-      // Background colors
-      background: AppColors.neutral0,
-      onBackground: AppColors.neutral900,
 
       // Shadow
       shadow: AppColors.neutral950,
@@ -432,16 +427,11 @@ class AppTheme {
       surface: AppColors.surfaceDark,
       onSurface: AppColors.neutral100,
       surfaceContainerHighest: AppColors.surfaceContainerHighestDark,
-      onSurfaceVariant: AppColors.neutral300,
-      surfaceVariant: AppColors.surfaceVariantDark,
+      onSurfaceVariant: AppColors.neutral400,
 
       // Outline colors
       outline: AppColors.outlineDark,
       outlineVariant: AppColors.outlineVariantDark,
-
-      // Background colors
-      background: AppColors.neutral950,
-      onBackground: AppColors.neutral100,
 
       // Shadow
       shadow: AppColors.neutral0,
@@ -562,7 +552,7 @@ class AppTheme {
         color: AppColors.neutral200,
       ),
       labelMedium: AppTypography.labelMedium.copyWith(
-        color: AppColors.neutral300,
+        color: AppColors.neutral400,
       ),
       labelSmall: AppTypography.labelSmall.copyWith(
         color: AppColors.neutral400,
@@ -608,7 +598,7 @@ class AppTheme {
         elevation: 2,
         shadowColor: AppColors.primary500.withOpacity(0.3),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
         textStyle: AppTypography.buttonText,
       ),
     );
@@ -620,7 +610,7 @@ class AppTheme {
         foregroundColor: AppColors.primary500,
         side: const BorderSide(color: AppColors.primary500, width: 1),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
         textStyle: AppTypography.buttonText,
       ),
     );
@@ -708,7 +698,7 @@ class AppTheme {
         elevation: 2,
         shadowColor: AppColors.primary400.withOpacity(0.3),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
         textStyle: AppTypography.buttonText,
       ),
     );
@@ -720,7 +710,7 @@ class AppTheme {
         foregroundColor: AppColors.primary400,
         side: const BorderSide(color: AppColors.primary400, width: 1),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
         textStyle: AppTypography.buttonText,
       ),
     );

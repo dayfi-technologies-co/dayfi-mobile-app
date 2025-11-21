@@ -20,6 +20,8 @@ class LoginView extends ConsumerStatefulWidget {
 }
 
 class _LoginViewState extends ConsumerState<LoginView> {
+  bool _isNavigating = false;
+
   @override
   void initState() {
     super.initState();
@@ -35,14 +37,11 @@ class _LoginViewState extends ConsumerState<LoginView> {
     final loginNotifier = ref.read(loginProvider.notifier);
 
     return PopScope(
-      canPop:
-          widget.showBackButton, // Only allow back if showBackButton is true
-      onPopInvoked: (didPop) {
-        if (widget.showBackButton) {
-          // Reset form when back button is pressed
+      canPop: widget.showBackButton, // Only allow back if showBackButton is true
+      onPopInvokedWithResult: (didPop, result) async {
+        if (!didPop && widget.showBackButton) {
+          // Reset form when system back button is pressed
           loginNotifier.resetForm();
-          // Use fallback method to prevent black screens
-          appRouter.handleBackButtonWithFallback();
         }
       },
       child: GestureDetector(
@@ -72,8 +71,24 @@ class _LoginViewState extends ConsumerState<LoginView> {
                           widget.showBackButton
                               ? IconButton(
                                 onPressed: () {
+                                  if (_isNavigating) return; // Prevent double navigation
+                                  _isNavigating = true;
+                                  
                                   loginNotifier.resetForm();
-                                  Navigator.pop(context);
+                                  // Just pop normally
+                                  if (Navigator.canPop(context)) {
+                                    Navigator.pop(context);
+                                  } else {
+                                    // Fallback if can't pop
+                                    appRouter.handleBackButtonWithFallback();
+                                  }
+                                  
+                                  // Reset flag after a delay
+                                  Future.delayed(const Duration(milliseconds: 500), () {
+                                    if (mounted) {
+                                      _isNavigating = false;
+                                    }
+                                  });
                                 },
                                 icon: const Icon(Icons.arrow_back_ios_new),
                               )
@@ -90,7 +105,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      padding: const EdgeInsets.symmetric(horizontal: 18),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -106,7 +121,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                                     fontSize: 16.sp,
                                     fontWeight: FontWeight.w400,
                                     fontFamily: 'Karla',
-                                    letterSpacing: -.6,
+                                    letterSpacing: -.3,
                                     height: 1.4,
                                   ),
                                   textAlign: TextAlign.center,
@@ -175,7 +190,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                                   color: Colors.red,
                                   fontSize: 13,
                                   fontFamily: 'Karla',
-                                  letterSpacing: -.6,
+                                  letterSpacing: -.3,
                                   fontWeight: FontWeight.w400,
                                   height: 1.4,
                                 ),
@@ -196,7 +211,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                                 suffixIcon: IconButton(
                                   icon: EyeIcon(
                                     isVisible: loginState.isPasswordVisible,
-                                    color: AppColors.neutral500,
+                                    color: AppColors.neutral400,
                                     size: 20.0,
                                   ),
                                   onPressed:
@@ -244,7 +259,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                                   color: Colors.red,
                                   fontSize: 13,
                                   fontFamily: 'Karla',
-                                  letterSpacing: -.6,
+                                  letterSpacing: -.3,
                                   fontWeight: FontWeight.w400,
                                   height: 1.4,
                                 ),
@@ -298,7 +313,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                           // Login button
                           PrimaryButton(
                                 borderRadius: 38,
-                                text: "Next - Sign In",
+                                text: "Create your passcode",
                                 onPressed:
                                     loginState.isFormValid && !loginState.isBusy
                                         ? () => loginNotifier.login(context)
@@ -311,10 +326,10 @@ class _LoginViewState extends ConsumerState<LoginView> {
                                     loginState.isFormValid
                                         ? AppColors.purple500ForTheme(context)
                                         : AppColors.purple500ForTheme(context).withOpacity(.25),
-                                height: 60.h,
+                                height: 48.000.h,
                                 textColor: loginState.isFormValid
                                     ? AppColors.neutral0
-                                    : AppColors.neutral0.withOpacity(.5),
+                                    : AppColors.neutral0.withOpacity(.65),
                                 fontFamily: 'Karla',
                                 letterSpacing: -.8,
                                 fontSize: 18,
@@ -356,7 +371,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                                       fontFamily: 'Karla',
                                       fontSize: 16.sp,
                                       fontWeight: FontWeight.w400,
-                                      letterSpacing: -.6,
+                                      letterSpacing: -.3,
                                       height: 1.4,
                                     ),
                                     children: [

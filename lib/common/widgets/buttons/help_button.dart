@@ -1,8 +1,7 @@
-import 'package:dayfi/gen/assets.gen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
-import 'package:dayfi/core/theme/app_typography.dart';
+import 'package:flutter_svg/svg.dart';
 
 /// A static Help button that always routes to the Help/FAQ page.
 class HelpButton extends StatelessWidget {
@@ -23,41 +22,30 @@ class HelpButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IntrinsicWidth(
-      child: Container(
-        height: 32.h,
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-        decoration: ShapeDecoration(
-          color: AppColors.primary100,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.r),
-          ),
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(12.r),
-            onTap: onTap,
-            child: Center(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  svgIcon ?? Assets.icons.svgs.spark.svg(),
-                  SizedBox(width: text?.toUpperCase() == "READ ALL" ? 0 : 4.w),
-                  Text(
-                    text?.toUpperCase() ?? "HELP",
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: AppTypography.semibold,
-                      fontFamily: AppTypography.secondaryFontFamily,
-                      letterSpacing: -0.3,
-                      height: 1.5,
-                      color: AppColors.neutral950,
-                    ),
-                  ),
-                ],
+      child: Padding(
+        padding: EdgeInsets.only(right: 0.w),
+        child: InkWell(
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
+          onTap: onTap,
+          child: Stack(
+            alignment: AlignmentGeometry.center,
+            children: [
+              SvgPicture.asset(
+                "assets/icons/svgs/notificationn.svg",
+                height: 40.sp,
+                color: AppColors.neutral700.withOpacity(.35),
               ),
-            ),
+              Center(
+                child: SvgPicture.asset(
+                  "assets/icons/svgs/support.svg",
+                  height: 28,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(.65),
+                ),
+              ),
+            ],
           ),
         ),
       ),

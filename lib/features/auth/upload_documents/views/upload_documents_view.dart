@@ -47,7 +47,7 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
         backgroundColor: AppColors.purple500,
         body: SafeArea(
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 4.h),
+            padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 4.h),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -67,7 +67,7 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
                     fontWeight: FontWeight.w400,
                     fontFamily: 'Karla',
                     color: AppColors.neutral50,
-                    letterSpacing: -.6,
+                    letterSpacing: -.3,
                     height: 1.4,
                   ),
                   textAlign: TextAlign.center,
@@ -142,7 +142,7 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
                 "KYC Verification Tiers",
                 style: AppTypography.titleLarge.copyWith(
                   fontFamily: 'CabinetGrotesk',
-                  fontSize: 18.sp,
+                  fontSize: 14.sp,
                   fontWeight: FontWeight.w600,
                   color: AppColors.purple700,
                 ),
@@ -252,7 +252,7 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
                     fontFamily: 'Karla',
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w400,
-                    color: AppColors.neutral500,
+                    color: AppColors.neutral400,
                   ),
                 ),
               ],
@@ -271,7 +271,7 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
           "Upload Documents",
           style: AppTypography.titleMedium.copyWith(
             fontFamily: 'CabinetGrotesk',
-            fontSize: 18.sp,
+            fontSize: 14.sp,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,
           ),
@@ -367,7 +367,7 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
           "Benefits of Tier 2 Verification",
           style: AppTypography.titleMedium.copyWith(
             fontFamily: 'CabinetGrotesk',
-            fontSize: 18.sp,
+            fontSize: 14.sp,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,
           ),
@@ -455,7 +455,7 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
               onPressed:
                   state.isBusy ? null : () => _showSmileIdVerification(context),
               backgroundColor: Colors.white,
-              height: 60.h,
+              height: 48.000.h,
               textColor: AppColors.purple500ForTheme(context),
               fontFamily: 'Karla',
               letterSpacing: -.8,
@@ -485,7 +485,7 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
               curve: Curves.easeOutCubic,
             ),
 
-        SizedBox(height: 12.h),
+        // SizedBox(height: 12.h),
 
         // Skip button
         // SecondaryButton(
@@ -496,7 +496,7 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
         //               ? null
         //               : () => _showSkipDialog(context, state, notifier),
         //       borderColor: Colors.transparent,
-        //       height: 60.h,
+        //       height: 48.000.h,
         //       textColor: AppColors.neutral0,
         //       fontFamily: 'Karla',
         //       letterSpacing: -.8,
@@ -525,24 +525,24 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
         //       curve: Curves.easeOutCubic,
         //     ),
 
-        Padding(
-          padding: EdgeInsets.only(top: 12.h),
-          child: TextButton(
-            onPressed:
-                state.isBusy ? null : () => notifier.skipForLater(context),
-            child: Text(
-              'Retry',
-              style: TextStyle(
-                fontFamily: 'Karla',
-                color: AppColors.purple500ForTheme(context),
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -.3,
-                height: 1.4,
-              ),
-            ),
-          ),
-        ),
+        // Padding(
+        //   padding: EdgeInsets.only(top: 12.h),
+        //   child: TextButton(
+        //     onPressed:
+        //         state.isBusy ? null : () => notifier.skipForLater(context),
+        //     child: Text(
+        //       'Retry',
+        //       style: TextStyle(
+        //         fontFamily: 'Karla',
+        //         color: AppColors.purple500ForTheme(context),
+        //         fontSize: 16.sp,
+        //         fontWeight: FontWeight.w600,
+        //         letterSpacing: -.3,
+        //         height: 1.4,
+        //       ),
+        //     ),
+        //   ),
+        // ),
       ],
     );
   }
@@ -579,7 +579,9 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.purple500ForTheme(context).withOpacity(0.3),
+                          color: AppColors.purple500ForTheme(
+                            context,
+                          ).withOpacity(0.3),
                           blurRadius: 20,
                           spreadRadius: 2,
                           offset: const Offset(0, 4),
@@ -622,7 +624,7 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
                     backgroundColor: AppColors.purple500,
                     textColor: AppColors.neutral0,
                     borderRadius: 38,
-                    height: 60.h,
+                    height: 48.000.h,
                     width: double.infinity,
                     fullWidth: true,
                     fontFamily: 'Karla',
@@ -645,7 +647,7 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
                     textColor: AppColors.purple500ForTheme(context),
                     width: double.infinity,
                     fullWidth: true,
-                    height: 60.h,
+                    height: 48.000.h,
                     borderRadius: 38,
                     fontFamily: 'Karla',
                     fontSize: 18,

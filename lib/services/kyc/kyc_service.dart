@@ -77,9 +77,6 @@ class KycService {
   // Get current KYC tier
   Future<KycTier> getCurrentTier() async {
     final tierString = await _secureStorage.read(_kycTierKey);
-    if (tierString == null) {
-      return KycTier.tier1; // Default to Tier 1
-    }
     
     return KycTier.values.firstWhere(
       (tier) => tier.level.toString() == tierString,

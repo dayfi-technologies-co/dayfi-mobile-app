@@ -11,6 +11,7 @@ import 'package:dayfi/core/theme/app_theme_extensions.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dayfi/services/transaction_monitor_service.dart';
+import 'package:dayfi/common/widgets/connectivity_wrapper.dart';
 
 import 'services/local/analytics_service.dart';
 
@@ -65,26 +66,28 @@ class MyApp extends ConsumerWidget {
               });
               final themeMode = ref.watch(flutterThemeModeProvider);
 
-              return MaterialApp(
-                navigatorObservers: [analyticsObserver],
-                debugShowCheckedModeBanner: false,
-                title: AppConstants.appName,
-                theme: themeData.copyWith(
-                  scaffoldBackgroundColor: const Color(0xffFEF9F3),
-                  extensions:
-                      AppThemeExtensionsFactory.createLightExtensions().values
-                          .toList(),
+              return ConnectivityWrapper(
+                child: MaterialApp(
+                  navigatorObservers: [analyticsObserver],
+                  debugShowCheckedModeBanner: false,
+                  title: AppConstants.appName,
+                  theme: themeData.copyWith(
+                    scaffoldBackgroundColor: const Color(0xffFEF9F3),
+                    extensions:
+                        AppThemeExtensionsFactory.createLightExtensions().values
+                            .toList(),
+                  ),
+                  darkTheme: AppTheme.darkTheme.copyWith(
+                    scaffoldBackgroundColor: AppColors.neutral950,
+                    extensions:
+                        AppThemeExtensionsFactory.createDarkExtensions().values
+                            .toList(),
+                  ),
+                  themeMode: themeMode,
+                  initialRoute: AppRoute.splashView,
+                  navigatorKey: NavigatorKey.appNavigatorKey,
+                  onGenerateRoute: AppRoute.getRoute,
                 ),
-                darkTheme: AppTheme.darkTheme.copyWith(
-                  scaffoldBackgroundColor: AppColors.neutral950,
-                  extensions:
-                      AppThemeExtensionsFactory.createDarkExtensions().values
-                          .toList(),
-                ),
-                themeMode: themeMode,
-                initialRoute: AppRoute.splashView,
-                navigatorKey: NavigatorKey.appNavigatorKey,
-                onGenerateRoute: AppRoute.getRoute,
               );
             },
           );

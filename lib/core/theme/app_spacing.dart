@@ -139,7 +139,7 @@ class AppSpacings {
 
   static const OutlineInputBorder disabledOutLineBorder = OutlineInputBorder(
     borderRadius: defaultBorderRadiusTextField,
-    borderSide: BorderSide(color: AppColors.neutral500, width: 0.8),
+    borderSide: BorderSide(color: AppColors.neutral400, width: 0.8),
   );
   static const OutlineInputBorder errorBorder = OutlineInputBorder(
     borderRadius: defaultBorderRadiusTextField,

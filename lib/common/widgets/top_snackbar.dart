@@ -3,6 +3,7 @@ import 'package:another_flushbar/flushbar.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:dayfi/common/utils/haptic_helper.dart';
 
 class TopSnackbar {
   static void show(
@@ -11,6 +12,13 @@ class TopSnackbar {
     bool isError = false,
     Duration duration = const Duration(seconds: 3),
   }) {
+    // Haptic feedback based on message type
+    if (isError) {
+      HapticHelper.error();
+    } else {
+      HapticHelper.success();
+    }
+    
     final primaryColor =
         isError ? const Color(0xFFDC2626) : const Color(0xFF059669);
     final backgroundColor =
@@ -55,7 +63,7 @@ class TopSnackbar {
                   message,
                   style: TextStyle(
                     fontSize: 16.sp,
-                    fontFamily: 'CabinetGrotesk',
+                 fontFamily: 'CabinetGrotesk',
                     fontWeight: FontWeight.w500,
                     letterSpacing: -0.2,
                     height: 1.4,

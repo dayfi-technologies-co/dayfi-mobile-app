@@ -224,7 +224,7 @@ class _LoadingModalState extends State<_LoadingModalWidget>
 
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              padding: const EdgeInsets.symmetric(horizontal: 18.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -253,7 +253,7 @@ class _LoadingModalState extends State<_LoadingModalWidget>
       width: 40,
       height: 4,
       decoration: BoxDecoration(
-        color: AppColors.neutral300,
+        color: AppColors.neutral400,
         borderRadius: BorderRadius.circular(2),
       ),
     );
@@ -364,7 +364,7 @@ class _LoadingModalState extends State<_LoadingModalWidget>
               fontSize: 14.0.sp,
               height: 20.0.sp / 14.0.sp,
               letterSpacing: 0.14,
-              color: AppColors.neutral500,
+              color: AppColors.neutral400,
             ),
             textAlign: TextAlign.center,
           );
@@ -381,7 +381,7 @@ class _LoadingModalState extends State<_LoadingModalWidget>
             fontSize: 14.0.sp,
             height: 20.0.sp / 14.0.sp,
             letterSpacing: 0.14,
-            color: AppColors.neutral500,
+            color: AppColors.neutral400,
           ),
           textAlign: TextAlign.center,
         );
@@ -396,7 +396,7 @@ class _LoadingModalState extends State<_LoadingModalWidget>
             fontSize: 14.0.sp,
             height: 20.0.sp / 14.0.sp,
             letterSpacing: 0.14,
-            color: AppColors.neutral500,
+            color: AppColors.neutral400,
           ),
           textAlign: TextAlign.center,
         );

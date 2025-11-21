@@ -138,6 +138,15 @@ class WalletService {
         final beneficiary = transaction.beneficiary;
         final source = transaction.source;
         
+        // Skip transactions where beneficiary data is null/empty (collection/wallet funding transactions)
+        // These transactions have null beneficiary data in the API response which gets converted to empty strings
+        if (beneficiary.id.trim().isEmpty || 
+            beneficiary.name.trim().isEmpty ||
+            source.accountNumber == null || 
+            source.accountNumber!.trim().isEmpty) {
+          continue;
+        }
+        
         // Create a unique key combining beneficiary name, account number, and network ID
         // This ensures no duplicates based on the display string and name
         final uniqueKey = '${beneficiary.name}_${source.accountNumber}_${source.networkId}';
@@ -150,6 +159,12 @@ class WalletService {
             networkId: source.networkId,
           );
           
+          // Debug log to verify accountType is being passed
+          print('🔍 Creating beneficiary with source:');
+          print('   Account Type: ${source.accountType}');
+          print('   Account Number: ${source.accountNumber}');
+          print('   Network ID: ${source.networkId}');
+          
           uniqueBeneficiaries[uniqueKey] = BeneficiaryWithSource(
             beneficiary: beneficiary,
             source: paymentSource,
@@ -160,6 +175,38 @@ class WalletService {
       return uniqueBeneficiaries.values.toList();
     } catch (e) {
       throw Exception('Failed to fetch beneficiaries with source: $e');
+    }
+  }
+
+  /// Get unique DayFi IDs from transaction history
+  Future<List<String>> getUniqueDayfiIds() async {
+    try {
+      final response = await getWalletTransactions(
+        limit: 100,
+      );
+
+      final Set<String> uniqueDayfiIds = {};
+      
+      for (final transaction in response.data.transactions) {
+        final beneficiary = transaction.beneficiary;
+        final source = transaction.source;
+        
+        // For dayfi-transfer transactions, use beneficiary.accountNumber
+        if (transaction.id.startsWith('dayfi-transfer') &&
+            beneficiary.accountType?.toLowerCase() == 'dayfi' &&
+            beneficiary.accountNumber != null &&
+            beneficiary.accountNumber!.trim().isNotEmpty) {
+          uniqueDayfiIds.add(beneficiary.accountNumber!.trim());
+        }
+        // Fallback to source.dayfiId for other cases
+        else if (source.dayfiId != null && source.dayfiId!.trim().isNotEmpty) {
+          uniqueDayfiIds.add(source.dayfiId!.trim());
+        }
+      }
+
+      return uniqueDayfiIds.toList();
+    } catch (e) {
+      throw Exception('Failed to fetch DayFi IDs: $e');
     }
   }
 }

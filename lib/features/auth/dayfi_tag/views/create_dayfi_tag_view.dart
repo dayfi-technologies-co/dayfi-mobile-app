@@ -74,8 +74,8 @@ class _CreateDayfiTagViewState extends ConsumerState<CreateDayfiTagView> {
             title: Text(
               "Create Your DayFi Tag",
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontFamily: 'CabinetGrotesk',
-                fontSize: 20.sp,
+             fontFamily: 'CabinetGrotesk',
+                 fontSize: 19.sp, height: 1.6,
                 fontWeight: FontWeight.w600,
                 color: Theme.of(context).colorScheme.onSurface,
               ),
@@ -89,7 +89,7 @@ class _CreateDayfiTagViewState extends ConsumerState<CreateDayfiTagView> {
                 children: [
                   Padding(
                     padding: EdgeInsets.symmetric(
-                      horizontal: 24.w,
+                      horizontal: 18.w,
                       vertical: 4.h,
                     ),
                     child: Column(
@@ -104,7 +104,7 @@ class _CreateDayfiTagViewState extends ConsumerState<CreateDayfiTagView> {
                             fontSize: 16.sp,
                             fontWeight: FontWeight.w400,
                             fontFamily: 'Karla',
-                            letterSpacing: -.6,
+                            letterSpacing: -.3,
                             height: 1.5,
                           ),
                           textAlign: TextAlign.center,
@@ -137,7 +137,7 @@ class _CreateDayfiTagViewState extends ConsumerState<CreateDayfiTagView> {
                                         : AppColors.error400,
                                 fontSize: 13.sp,
                                 fontFamily: 'Karla',
-                                letterSpacing: -.6,
+                                letterSpacing: -.3,
                                 fontWeight: FontWeight.w400,
                                 height: 1.4,
                               ),
@@ -149,7 +149,7 @@ class _CreateDayfiTagViewState extends ConsumerState<CreateDayfiTagView> {
                         // Submit Button
                         PrimaryButton(
                           borderRadius: 38,
-                          text: "Next - Create Tag",
+                          text: "Create Tag",
                           onPressed:
                               tagState.isFormValid && !tagState.isBusy
                                   ? () => tagNotifier.createDayfiId(context)
@@ -161,11 +161,11 @@ class _CreateDayfiTagViewState extends ConsumerState<CreateDayfiTagView> {
                                   : AppColors.purple500ForTheme(
                                     context,
                                   ).withOpacity(.25),
-                          height: 60.h,
+                          height: 48.000.h,
                           textColor:
                               tagState.isFormValid
                                   ? AppColors.neutral0
-                                  : AppColors.neutral0.withOpacity(.5),
+                                  : AppColors.neutral0.withOpacity(.65),
                           fontFamily: 'Karla',
                           letterSpacing: -.8,
                           fontSize: 18,
@@ -197,17 +197,34 @@ class _CreateDayfiTagViewState extends ConsumerState<CreateDayfiTagView> {
           isDayfiId: true,
           keyboardType: TextInputType.text,
           textCapitalization: TextCapitalization.none,
-          onChanged: notifier.setDayfiId,
-          suffixIcon:
-              state.isValidating
-                  ? Padding(
-                    padding: EdgeInsets.all(12.w),
-                    child: LoadingAnimationWidget.horizontalRotatingDots(
-                      color: AppColors.purple500ForTheme(context),
-                      size: 20,
-                    ),
-                  )
-                  : null,
+          onChanged: (value) {
+            // Ensure the tag starts with '@'
+            if (!value.startsWith('@')) {
+              _dayfiIdController.text = '@' + value.replaceAll('@', '');
+              _dayfiIdController.selection = TextSelection.fromPosition(
+                TextPosition(offset: _dayfiIdController.text.length),
+              );
+            }
+
+            // Limit the length to 15 characters (including '@')
+            if (_dayfiIdController.text.length > 15) {
+              _dayfiIdController.text = _dayfiIdController.text.substring(0, 15);
+              _dayfiIdController.selection = TextSelection.fromPosition(
+                TextPosition(offset: _dayfiIdController.text.length),
+              );
+            }
+
+            notifier.setDayfiId(_dayfiIdController.text);
+          },
+          suffixIcon: state.isValidating
+              ? Padding(
+                  padding: EdgeInsets.all(12.w),
+                  child: LoadingAnimationWidget.horizontalRotatingDots(
+                    color: AppColors.purple500ForTheme(context),
+                    size: 20,
+                  ),
+                )
+              : null,
         ),
         if (state.dayfiIdError.isNotEmpty)
           Padding(
@@ -218,7 +235,7 @@ class _CreateDayfiTagViewState extends ConsumerState<CreateDayfiTagView> {
                 color: AppColors.error400,
                 fontSize: 13.sp,
                 fontFamily: 'Karla',
-                letterSpacing: -.6,
+                letterSpacing: -.3,
                 fontWeight: FontWeight.w400,
                 height: 1.4,
               ),

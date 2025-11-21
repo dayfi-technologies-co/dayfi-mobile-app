@@ -302,12 +302,12 @@ class PaymentService {
   }) async {
     try {
       Map<String, dynamic> map = {};
-      map['dayfiId'] = dayfiId.replaceAll('@', '');
+      map['receiverDayfiId'] = dayfiId.replaceAll('@', '');
       map['amount'] = amount;
       map['pin'] = encryptedPin;
 
       final response = await _networkService.call(
-        '${F.baseUrl}/payments/initiate-wallet-transfer',
+        '${F.baseUrl}/payments/dayfi-to-dayfi-transfer',
         RequestMethod.post,
         data: map,
       );

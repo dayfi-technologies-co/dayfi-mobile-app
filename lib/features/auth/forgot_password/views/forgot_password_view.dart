@@ -52,7 +52,7 @@ class ForgotPasswordView extends ConsumerWidget {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    padding: const EdgeInsets.symmetric(horizontal: 18),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -66,7 +66,7 @@ class ForgotPasswordView extends ConsumerWidget {
                                   fontSize: 16.sp,
                                   fontWeight: FontWeight.w400,
                                   fontFamily: 'Karla',
-                                  letterSpacing: -.6,
+                                  letterSpacing: -.3,
                                   height: 1.4,
                                 ),
                                 textAlign: TextAlign.center,
@@ -132,7 +132,7 @@ class ForgotPasswordView extends ConsumerWidget {
                                 color: Colors.red,
                                 fontSize: 13,
                                 fontFamily: 'Karla',
-                                letterSpacing: -.6,
+                                letterSpacing: -.3,
                                 fontWeight: FontWeight.w400,
                                 height: 1.4,
                               ),
@@ -145,7 +145,7 @@ class ForgotPasswordView extends ConsumerWidget {
                         // Submit button
                         PrimaryButton(
                               borderRadius: 38,
-                              text: "Next - Receive Reset Code",
+                              text: "Receive Reset Code",
                               onPressed:
                                   forgotPasswordState.isFormValid &&
                                           !forgotPasswordState.isBusy
@@ -160,10 +160,10 @@ class ForgotPasswordView extends ConsumerWidget {
                                   forgotPasswordState.isFormValid
                                       ? AppColors.purple500ForTheme(context)
                                       : AppColors.purple500ForTheme(context).withOpacity(.25),
-                              height: 60.h,
+                              height: 48.000.h,
                               textColor: forgotPasswordState.isFormValid
                                   ? AppColors.neutral0
-                                  : AppColors.neutral0.withOpacity(.5),
+                                  : AppColors.neutral0.withOpacity(.65),
                               fontFamily: 'Karla',
                               letterSpacing: -.8,
                               fontSize: 18,
@@ -203,7 +203,7 @@ class ForgotPasswordView extends ConsumerWidget {
                                     fontFamily: 'Karla',
                                     fontSize: 16.sp,
                                     fontWeight: FontWeight.w400,
-                                    letterSpacing: -.6,
+                                    letterSpacing: -.3,
                                     height: 1.4,
                                   ),
                                   children: [
@@ -214,7 +214,7 @@ class ForgotPasswordView extends ConsumerWidget {
                                         color: AppColors.purple500ForTheme(context),
                                         fontSize: 16.sp,
                                         fontWeight: FontWeight.w600,
-                                        letterSpacing: -.6,
+                                        letterSpacing: -.3,
                                         height: 1.4,
                                       ),
                                       recognizer:

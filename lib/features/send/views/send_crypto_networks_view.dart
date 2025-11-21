@@ -215,7 +215,7 @@ class _SendCryptoNetworksViewState
                         networkKey,
                         style: AppTypography.titleMedium.copyWith(
                           fontFamily: 'CabinetGrotesk',
-                          fontSize: 16.sp,
+                          fontSize: 12.sp,
                           fontWeight: FontWeight.w600,
                           color:
                               enabled
@@ -229,7 +229,7 @@ class _SendCryptoNetworksViewState
                         " ($name)",
                         style: AppTypography.bodySmall.copyWith(
                           fontFamily: 'CabinetGrotesk',
-                          fontSize: 16.sp,
+                          fontSize: 12.sp,
                           fontWeight: FontWeight.w500,
                           letterSpacing: -0.3,
                           height: 1.5,
@@ -318,7 +318,7 @@ class _SendCryptoNetworksViewState
                   fontFamily: 'Karla',
                   fontSize: 10.sp,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.neutral500,
+                  color: AppColors.neutral400,
                 ),
               ),
           ],
@@ -530,7 +530,7 @@ class _SendCryptoNetworksViewState
           'Select Network',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
             fontFamily: 'CabinetGrotesk',
-            fontSize: 20.sp,
+            fontSize: 28.00,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,
           ),
@@ -538,7 +538,7 @@ class _SendCryptoNetworksViewState
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+        padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 12.h),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -560,8 +560,8 @@ class _SendCryptoNetworksViewState
             //   child: Row(
             //     children: [
             //       Container(
-            //         width: 48.w,
-            //         height: 48.w,
+            //         width: 56.w,
+            //         height: 56.w,
             //         decoration: BoxDecoration(
             //           color: Theme.of(context).colorScheme.surface,
             //           borderRadius: BorderRadius.circular(8.r),
@@ -571,21 +571,21 @@ class _SendCryptoNetworksViewState
             //               ? channelCode.toUpperCase() == 'CUSD'
             //                   ? Image.asset(
             //                       _getCryptoIconPath(channelCode)!,
-            //                       width: 48.w,
-            //                       height: 48.w,
+            //                       width: 56.w,
+            //                       height: 56.w,
             //                       fit: BoxFit.contain,
             //                     )
             //                   : SvgPicture.asset(
             //                       _getCryptoIconPath(channelCode)!,
-            //                       width: 48.w,
-            //                       height: 48.w,
+            //                       width: 56.w,
+            //                       height: 56.w,
             //                       fit: BoxFit.contain,
             //                     )
             //               : Text(
             //                   channelCode,
             //                   style: AppTypography.titleLarge.copyWith(
-            //                     fontFamily: 'CabinetGrotesk',
-            //                     fontSize: 20.sp,
+            //                  fontFamily: 'CabinetGrotesk',
+            //                      fontSize: 19.sp, height: 1.6,
             //                     fontWeight: FontWeight.w700,
             //                     color: AppColors.purple500ForTheme(context),
             //                   ),
@@ -600,8 +600,8 @@ class _SendCryptoNetworksViewState
             //             Text(
             //               channelCode,
             //               style: AppTypography.titleLarge.copyWith(
-            //                 fontFamily: 'CabinetGrotesk',
-            //                 fontSize: 18.sp,
+            //              fontFamily: 'CabinetGrotesk',
+            //                 fontSize: 14.sp,
             //                 fontWeight: FontWeight.w600,
             //                 color: Theme.of(context).colorScheme.onSurface,
             //               ),
@@ -610,7 +610,7 @@ class _SendCryptoNetworksViewState
             //               channelName,
             //               style: AppTypography.bodySmall.copyWith(
             //                 fontFamily: 'Karla',
-            //                 fontSize: 12.sp,
+            //                 fontSize: 9.sp,
             //                 fontWeight: FontWeight.w400,
             //                 color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
             //               ),
@@ -625,7 +625,7 @@ class _SendCryptoNetworksViewState
               'What network do you want to use for $channelCode?',
               style: AppTypography.titleLarge.copyWith(
                 fontFamily: 'CabinetGrotesk',
-                fontSize: 16.sp,
+                fontSize: 12.sp,
                 fontWeight: FontWeight.w600,
                 color: Theme.of(context).colorScheme.onSurface,
               ),
@@ -637,7 +637,7 @@ class _SendCryptoNetworksViewState
             if (enabledNetworks.isEmpty)
               Center(
                 child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 48.h),
+                  padding: EdgeInsets.symmetric(vertical: 56.h),
                   child: Column(
                     children: [
                       Icon(
@@ -650,7 +650,7 @@ class _SendCryptoNetworksViewState
                         'No Networks Available',
                         style: AppTypography.titleLarge.copyWith(
                           fontFamily: 'CabinetGrotesk',
-                          fontSize: 18.sp,
+                          fontSize: 14.sp,
                           fontWeight: FontWeight.w600,
                           color: Theme.of(context).colorScheme.onSurface,
                         ),
@@ -674,14 +674,14 @@ class _SendCryptoNetworksViewState
             else
               ...enabledNetworks.map((networkEntry) {
                 return _buildNetworkCard(networkEntry);
-              }).toList(),
+              }),
 
             SizedBox(height: 40.h),
           ],
         ),
       ),
       bottomNavigationBar: Container(
-        padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+        padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 12.h),
         decoration: BoxDecoration(
           color: Theme.of(context).scaffoldBackgroundColor,
           boxShadow: [
@@ -699,7 +699,7 @@ class _SendCryptoNetworksViewState
                 _isLoading
                     ? 'Processing...'
                     : _selectedNetwork != null
-                    ? 'Next - Continue with ${enabledNetworks.firstWhere((e) => e.key == _selectedNetwork).value['name']}'
+                    ? 'Continue with ${enabledNetworks.firstWhere((e) => e.key == _selectedNetwork).value['name']}'
                     : 'Select a Network',
             onPressed:
                 (_selectedNetwork != null && !_isLoading)
@@ -713,8 +713,8 @@ class _SendCryptoNetworksViewState
             textColor:
                 _selectedNetwork != null && !_isLoading
                     ? AppColors.neutral0
-                    : AppColors.neutral0.withOpacity(.5),
-            height: 60.h,
+                    : AppColors.neutral0.withOpacity(.65),
+            height: 48.000.h,
             fontFamily: 'Karla',
             letterSpacing: -.8,
             fontSize: 18,
@@ -789,7 +789,7 @@ class _SendCryptoNetworksViewState
                   value,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     fontFamily: 'CabinetGrotesk',
-                    fontSize: 14.sp,
+                    fontSize: 11.sp,
                     fontWeight: FontWeight.w600,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
@@ -870,7 +870,7 @@ class _SendCryptoNetworksViewState
                 children: [
                   SizedBox(height: 18.h),
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24.w),
+                    padding: EdgeInsets.symmetric(horizontal: 18.w),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -879,7 +879,7 @@ class _SendCryptoNetworksViewState
                           'Crypto Wallet Details',
                           style: AppTypography.titleLarge.copyWith(
                             fontFamily: 'CabinetGrotesk',
-                            fontSize: 18.sp,
+                            fontSize: 14.sp,
                             fontWeight: FontWeight.w600,
                             color: Theme.of(context).colorScheme.onSurface,
                           ),
@@ -899,7 +899,7 @@ class _SendCryptoNetworksViewState
                   SizedBox(height: 16.h),
                   Expanded(
                     child: SingleChildScrollView(
-                      padding: EdgeInsets.symmetric(horizontal: 24.w),
+                      padding: EdgeInsets.symmetric(horizontal: 18.w),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -917,7 +917,7 @@ class _SendCryptoNetworksViewState
                                 SizedBox(width: 4.w),
                                 Image.asset(
                                   "assets/images/idea.png",
-                                  height: 18.h,
+                                  height: 20.h,
                                 ),
                                 SizedBox(width: 12.w),
                                 Expanded(
@@ -926,7 +926,7 @@ class _SendCryptoNetworksViewState
                                     style: Theme.of(
                                       context,
                                     ).textTheme.bodySmall?.copyWith(
-                                      fontSize: 12.5.sp,
+                                      fontSize: 14.sp,
                                       fontFamily: 'Karla',
                                       fontWeight: FontWeight.w400,
                                       letterSpacing: -0.4,
@@ -966,7 +966,7 @@ class _SendCryptoNetworksViewState
                                     context,
                                   ).textTheme.titleLarge?.copyWith(
                                     fontFamily: 'CabinetGrotesk',
-                                    fontSize: 16.sp,
+                                    fontSize: 12.sp,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -1008,7 +1008,7 @@ class _SendCryptoNetworksViewState
                                   color: Theme.of(
                                     context,
                                   ).colorScheme.outline.withOpacity(0.2),
-                                  height: 48.h,
+                                  height: 56.h,
                                 ),
                                 Row(
                                   children: [
@@ -1050,7 +1050,7 @@ class _SendCryptoNetworksViewState
                         Navigator.pop(context); // Close crypto network view
                       },
                       backgroundColor: AppColors.purple500,
-                      height: 60.h,
+                      height: 48.000.h,
                       textColor: AppColors.neutral0,
                       fontFamily: 'Karla',
                       letterSpacing: -.8,

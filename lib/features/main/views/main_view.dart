@@ -2,7 +2,8 @@ import 'package:dayfi/features/home/views/home_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:dayfi/features/send/views/send_view.dart';
+// import 'package:dayfi/features/send/views/send_view.dart';
+import 'package:dayfi/features/softpos/views/softpos_view.dart';
 import 'package:dayfi/features/recipients/views/recipients_view.dart';
 import 'package:dayfi/features/profile/views/profile_view.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -14,10 +15,10 @@ import 'package:dayfi/services/local/secure_storage.dart';
 import 'package:dayfi/common/constants/storage_keys.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
+import 'package:dayfi/services/notification_service.dart';
 import 'dart:convert';
 
 final mainViewKey = GlobalKey<_MainViewState>();
-
 
 class MainView extends ConsumerStatefulWidget {
   final int initialTabIndex;
@@ -32,11 +33,10 @@ class _MainViewState extends ConsumerState<MainView> {
   late int _currentIndex;
   final SecureStorageService _secureStorage = locator<SecureStorageService>();
 
-
   final List<Widget> _screens = [
     const HomeView(),
-    const SendView(),
-    const RecipientsView(),
+    // const SoftposView(),
+    RecipientsView(fromSendView: false, fromProfile: false),
     const ProfileView(),
   ];
 
@@ -52,33 +52,81 @@ class _MainViewState extends ConsumerState<MainView> {
   }
 
   void changeTab(int index) {
-  if (index >= 0 && index < _screens.length) {
-    setState(() {
-      _currentIndex = index;
-    });
+    if (mounted && index >= 0 && index < _screens.length) {
+      setState(() {
+        _currentIndex = index;
+      });
+    }
   }
-}
 
   Future<void> _checkAndShowWelcome() async {
     try {
       final hasSeenWelcome = await _secureStorage.read(
         StorageKeys.hasSeenWelcome,
       );
+      final hasReceivedWelcomeNotification = await _secureStorage.read(
+        StorageKeys.hasReceivedWelcomeNotification,
+      );
 
       // Only show welcome if user hasn't seen it before
       if (hasSeenWelcome.isEmpty || hasSeenWelcome != 'true') {
         await Future.delayed(const Duration(milliseconds: 500));
+
+        // Trigger welcome notification if not already received
+        if (hasReceivedWelcomeNotification.isEmpty ||
+            hasReceivedWelcomeNotification != 'true') {
+          await _triggerWelcomeNotification();
+        }
+
         if (mounted) {
           _showWelcomeBottomSheet();
         }
       }
     } catch (e) {
+      AppLogger.error('Error in _checkAndShowWelcome: $e');
       // Handle error silently
       // If there's an error, show welcome as fallback
       await Future.delayed(const Duration(milliseconds: 500));
       if (mounted) {
         _showWelcomeBottomSheet();
       }
+    }
+  }
+
+  Future<void> _triggerWelcomeNotification() async {
+    try {
+      // Get user name from storage
+      final userJson = await _secureStorage.read(StorageKeys.user);
+      String userName = 'User';
+
+      if (userJson.isNotEmpty) {
+        try {
+          final data = jsonDecode(userJson);
+          if (data is Map<String, dynamic>) {
+            final firstName = data['first_name'] ?? data['firstName'] ?? '';
+            if (firstName.isNotEmpty) {
+              userName = firstName;
+            }
+          }
+        } catch (e) {
+          AppLogger.error('Error parsing user data for notification: $e');
+        }
+      }
+
+      // Initialize notification service and trigger welcome notification
+      final notificationService = NotificationService();
+      await notificationService.init();
+      await notificationService.triggerSignUpSuccess(userName);
+
+      // Mark notification as sent
+      await _secureStorage.write(
+        StorageKeys.hasReceivedWelcomeNotification,
+        'true',
+      );
+
+      AppLogger.info('Welcome notification triggered for: $userName');
+    } catch (e) {
+      AppLogger.error('Error triggering welcome notification: $e');
     }
   }
 
@@ -135,7 +183,9 @@ class _MainViewState extends ConsumerState<MainView> {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.purple500ForTheme(context).withOpacity(0.3),
+                        color: AppColors.purple500ForTheme(
+                          context,
+                        ).withOpacity(0.3),
                         blurRadius: 20,
                         spreadRadius: 2,
                         offset: const Offset(0, 4),
@@ -152,7 +202,9 @@ class _MainViewState extends ConsumerState<MainView> {
                   'Enable Biometric Security',
                   style: AppTypography.titleLarge.copyWith(
                     fontFamily: 'CabinetGrotesk',
-                    fontSize: 20.sp,
+                    fontSize: 28.00,
+                    height: 1.6,
+
                     fontWeight: FontWeight.w600,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
@@ -180,7 +232,7 @@ class _MainViewState extends ConsumerState<MainView> {
 
                 // Enable button
                 PrimaryButton(
-                  text: 'Next - Enable Biometrics',
+                  text: 'Enable Biometrics',
                   onPressed: () {
                     Navigator.of(context).pop();
                     appRouter.pushNamed(AppRoute.biometricSetupView);
@@ -188,12 +240,12 @@ class _MainViewState extends ConsumerState<MainView> {
                   backgroundColor: AppColors.purple500,
                   textColor: AppColors.neutral0,
                   borderRadius: 38,
-                  height: 60.h,
+                  height: 48.000.h,
                   width: double.infinity,
                   fullWidth: true,
                   fontFamily: 'Karla',
                   fontSize: 18,
-                  fontWeight: FontWeight.w400,
+                  fontWeight: FontWeight.w500,
                   letterSpacing: -0.8,
                 ),
                 SizedBox(height: 12.h),
@@ -209,9 +261,9 @@ class _MainViewState extends ConsumerState<MainView> {
                     style: AppTypography.bodyMedium.copyWith(
                       fontFamily: 'Karla',
                       fontSize: 16.sp,
-                        letterSpacing: -0.8,
+                      letterSpacing: -0.8,
                       fontWeight: FontWeight.w400,
-                      color: AppColors.neutral300,
+                      color: AppColors.neutral400,
                     ),
                   ),
                 ),
@@ -233,12 +285,21 @@ class _MainViewState extends ConsumerState<MainView> {
       },
       child: Scaffold(
         extendBody: true, // 👈 makes nav bar float over body
-        body: IndexedStack(index: _currentIndex, children: _screens),
+        body: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          transitionBuilder: (Widget child, Animation<double> animation) {
+            return _buildPageTransition(child, animation);
+          },
+          child: Container(
+            key: ValueKey<int>(_currentIndex),
+            child: _screens[_currentIndex],
+          ),
+        ),
         bottomNavigationBar: Container(
-          margin: EdgeInsets.fromLTRB(48.w, 0, 48.w, 36.h), // float up a bit
+          padding: EdgeInsets.fromLTRB(32.w, 4.h, 32.w, 4.h), // float up a bit
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(100.r),
+            // borderRadius: BorderRadius.circular(100.r),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.1),
@@ -250,27 +311,27 @@ class _MainViewState extends ConsumerState<MainView> {
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 0.w, vertical: 0.h),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _buildNavItem(
                   index: 0,
-                  icon: "assets/icons/svgs/home.svg",
+                  icon: "assets/icons/svgs/transactions.svg",
                   isSelected: _currentIndex == 0,
                 ),
+                // _buildNavItem(
+                //   index: 1,
+                //   icon: "assets/icons/svgs/swap.svg",
+                //   isSelected: _currentIndex == 1,
+                // ),
                 _buildNavItem(
                   index: 1,
-                  icon: "assets/icons/svgs/swap.svg",
+                  icon: "assets/icons/svgs/recipients.svg",
                   isSelected: _currentIndex == 1,
                 ),
                 _buildNavItem(
                   index: 2,
-                  icon: "assets/icons/svgs/recipients.svg",
-                  isSelected: _currentIndex == 2,
-                ),
-                _buildNavItem(
-                  index: 3,
                   icon: "assets/icons/pngs/account.png",
-                  isSelected: _currentIndex == 3,
+                  isSelected: _currentIndex == 2,
                   isPNG: true,
                 ),
               ],
@@ -281,6 +342,16 @@ class _MainViewState extends ConsumerState<MainView> {
     );
   }
 
+  Widget _buildPageTransition(Widget child, Animation<double> animation) {
+    // Gentle fade animation
+    final fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOut));
+
+    return FadeTransition(opacity: fadeAnimation, child: child);
+  }
+
   Widget _buildNavItem({
     required int index,
     required String icon,
@@ -289,13 +360,16 @@ class _MainViewState extends ConsumerState<MainView> {
   }) {
     return GestureDetector(
       onTap: () {
-        setState(() {
-          _currentIndex = index;
-          // _showWelcomeBottomSheet();
-        });
+        if (index != _currentIndex) {
+          setState(() {
+            _currentIndex = index;
+            // _showWelcomeBottomSheet();
+          });
+        }
       },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: const Duration(milliseconds: 50),
+        height: 80.h,
         padding: EdgeInsets.all(8.w),
         decoration: BoxDecoration(
           // color: isSelected ? AppColors.purple500ForTheme(context) : Colors.transparent,
@@ -303,10 +377,31 @@ class _MainViewState extends ConsumerState<MainView> {
         ),
         child: Opacity(
           opacity: isSelected ? 1 : 0.25,
-          child:
+          child: Column(
+            children: [
               isPNG
                   ? Image.asset(icon, height: 40.sp)
                   : SvgPicture.asset(icon, height: 40.sp),
+
+              SizedBox(height: 4.h),
+
+              Text(
+                index == 0
+                    ? '    Home    '
+                    : index == 1
+                    // ? '   SoftPOS   '
+                    // : index == 2
+                    ? ' Recipients '
+                    : '   Profile   ',
+                style: AppTypography.bodySmall.copyWith(
+                  fontFamily: 'Karla',
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w500,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -365,10 +460,11 @@ class _MainViewState extends ConsumerState<MainView> {
               'Welcome to Dayfi App',
               style: AppTypography.headlineLarge.copyWith(
                 fontFamily: 'CabinetGrotesk',
-                fontSize: 28.sp,
+                fontSize: 22.sp,
+                height: 1.7,
                 fontWeight: FontWeight.w700,
                 color: Theme.of(context).colorScheme.onSurface,
-                height: 1.2,
+                // height: 1.2,
               ),
               textAlign: TextAlign.center,
             ),
@@ -377,21 +473,20 @@ class _MainViewState extends ConsumerState<MainView> {
 
             // Features list
             _buildFeatureItem(
-              icon: _buildSendMoneyIcon(),
+              icon: _buildTransactionsIcon(),
               title: 'Home',
               description:
-                  'Manage your global wallet, view global balance all from one place.',
+                  'Manage your global wallet, check the details and status of all your payments in one dashboard.',
             ),
 
-            SizedBox(height: 24.h),
+            // SizedBox(height: 24.h),
 
-            _buildFeatureItem(
-              icon: _buildSendMoneyIcon(),
-              title: 'Send Money',
-              description:
-                  'Transfer funds across borders using any of the available payment methods on the app.',
-            ),
-
+            // _buildFeatureItem(
+            //   icon: _buildSendMoneyIcon(),
+            //   title: 'Send Money',
+            //   description:
+            //       'Transfer funds across borders using any of the available payment methods on the app.',
+            // ),
             SizedBox(height: 24.h),
 
             _buildFeatureItem(
@@ -400,7 +495,6 @@ class _MainViewState extends ConsumerState<MainView> {
               description:
                   'View and manage your saved beneficiaries for quick and easy transfers.',
             ),
-
             SizedBox(height: 24.h),
 
             _buildFeatureItem(
@@ -419,7 +513,7 @@ class _MainViewState extends ConsumerState<MainView> {
               backgroundColor: AppColors.purple500,
               textColor: AppColors.neutral0,
               borderRadius: 40.r,
-              height: 60.h,
+              height: 48.000.h,
               width: double.infinity,
               fullWidth: true,
               fontFamily: 'Karla',
@@ -453,12 +547,12 @@ class _MainViewState extends ConsumerState<MainView> {
             children: [
               Text(
                 title,
-                style: AppTypography.headlineSmall.copyWith(
-                  fontFamily: 'CabinetGrotesk',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  fontFamily: 'Karla',
                   fontSize: 18.sp,
-                  fontWeight: FontWeight.w600,
+                  letterSpacing: -.3,
+                  fontWeight: FontWeight.w400,
                   color: Theme.of(context).colorScheme.onSurface,
-                  height: 1.3,
                 ),
               ),
 
@@ -470,7 +564,7 @@ class _MainViewState extends ConsumerState<MainView> {
                   fontFamily: 'Karla',
                   fontSize: 14.5,
                   fontWeight: FontWeight.w400,
-                  letterSpacing: -.6,
+                  letterSpacing: -.3,
                   height: 1.450,
                   color: Theme.of(
                     context,
@@ -484,15 +578,19 @@ class _MainViewState extends ConsumerState<MainView> {
     );
   }
 
-  Widget _buildSendMoneyIcon() {
-    return SvgPicture.asset("assets/icons/svgs/swap.svg", height: 40.h);
+  Widget _buildTransactionsIcon() {
+    return SvgPicture.asset("assets/icons/svgs/transactions.svg", height: 40.h);
+  }
+
+  // Widget _buildSendMoneyIcon() {
+  //   return SvgPicture.asset("assets/icons/svgs/swap.svg", height: 40.h);
+  // }
+
+  Widget _buildProfileIcon() {
+    return Image.asset("assets/icons/pngs/account.png", height: 40.h);
   }
 
   Widget _buildRecipientsIcon() {
     return SvgPicture.asset("assets/icons/svgs/recipients.svg", height: 40.h);
-  }
-
-  Widget _buildProfileIcon() {
-    return Image.asset("assets/icons/pngs/account.png", height: 40.h);
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
+import 'package:dayfi/common/utils/haptic_helper.dart';
 import 'package:dayfi/features/auth/reenter_passcode/vm/reenter_passcode_viewmodel.dart';
 
 class ReenterPasscodeView extends ConsumerStatefulWidget {
@@ -66,11 +67,11 @@ class _ReenterPasscodeViewState extends ConsumerState<ReenterPasscodeView> {
                       icon: const Icon(Icons.arrow_back_ios_new),
                     ),
                     title: Text(
-                      "Confirm passcode",
+                      "Confirm Passcode",
                       style: Theme.of(
                         context,
                       ).textTheme.headlineMedium?.copyWith(
-                        fontFamily: 'CabinetGrotesk',
+                     fontFamily: 'CabinetGrotesk',
                         fontSize: 28.00,
                         fontWeight: FontWeight.w500,
                       ),
@@ -78,7 +79,7 @@ class _ReenterPasscodeViewState extends ConsumerState<ReenterPasscodeView> {
                   ),
 
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    padding: const EdgeInsets.symmetric(horizontal: 18),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
@@ -86,7 +87,7 @@ class _ReenterPasscodeViewState extends ConsumerState<ReenterPasscodeView> {
 
                         // Subtitle
                         Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 24.w),
+                              padding: EdgeInsets.symmetric(horizontal: 18.w),
                               child: Text(
                                 "Please enter your 4-digit passcode again to confirm. This ensures you remember it correctly.",
                                 style: Theme.of(
@@ -95,7 +96,7 @@ class _ReenterPasscodeViewState extends ConsumerState<ReenterPasscodeView> {
                                   fontSize: 16.sp,
                                   fontWeight: FontWeight.w400,
                                   fontFamily: 'Karla',
-                                  letterSpacing: -.6,
+                                  letterSpacing: -.3,
                                   height: 1.4,
                                 ),
                                 textAlign: TextAlign.center,
@@ -122,7 +123,7 @@ class _ReenterPasscodeViewState extends ConsumerState<ReenterPasscodeView> {
 
                   // Passcode widget
                   Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 24.w),
+                        padding: EdgeInsets.symmetric(horizontal: 18.w),
                         child: PasscodeWidget(
                           passcodeLength: 4,
                           currentPasscode: reenterPasscodeState.passcode,
@@ -158,7 +159,7 @@ class _ReenterPasscodeViewState extends ConsumerState<ReenterPasscodeView> {
                   if (reenterPasscodeState.errorMessage.isNotEmpty) ...[
                     SizedBox(height: 16.h),
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 24.w),
+                      padding: EdgeInsets.symmetric(horizontal: 18.w),
                       child: Text(
                         reenterPasscodeState.errorMessage,
                         style: TextStyle(
@@ -267,6 +268,7 @@ class PasscodeWidget extends StatelessWidget {
             highlightColor: Colors.transparent,
             borderRadius: BorderRadius.circular(100),
             onTap: () {
+              HapticHelper.lightImpact();
               if (currentPasscode.length < passcodeLength) {
                 onPasscodeChanged(currentPasscode + number);
               }
@@ -280,8 +282,8 @@ class PasscodeWidget extends StatelessWidget {
                 child: Text(
                   number,
                   style: TextStyle(
-                    fontSize: 32.00,
-                    fontFamily: 'CabinetGrotesk',
+                    fontSize: 25.60,
+                 fontFamily: 'CabinetGrotesk',
                     fontWeight: FontWeight.w400,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
@@ -298,7 +300,10 @@ class PasscodeWidget extends StatelessWidget {
   }) {
     return Builder(
       builder: (context) => GestureDetector(
-        onTap: onTap,
+        onTap: () {
+          HapticHelper.lightImpact();
+          onTap();
+        },
         child: Container(
           decoration: const BoxDecoration(
             shape: BoxShape.circle,

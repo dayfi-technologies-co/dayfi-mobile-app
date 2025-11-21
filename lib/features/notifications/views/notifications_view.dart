@@ -167,7 +167,7 @@ class _NotificationsViewState extends State<NotificationsView> {
                   setState(() {});
                 },
                 child: ListView.builder(
-                  padding: EdgeInsets.symmetric(horizontal: 24.w),
+                  padding: EdgeInsets.symmetric(horizontal: 18.w),
                   itemCount: sortedDates.length,
                   itemBuilder: (context, index) {
                     final date = sortedDates[index];
@@ -196,7 +196,7 @@ class _NotificationsViewState extends State<NotificationsView> {
               fontFamily: 'Karla',
               fontSize: 14,
               fontWeight: FontWeight.w400,
-              letterSpacing: -.6,
+              letterSpacing: -.3,
               height: 1.450,
               color: Theme.of(
                 context,
@@ -241,7 +241,7 @@ class _NotificationsViewState extends State<NotificationsView> {
             'No notifications yet',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontFamily: 'CabinetGrotesk',
-              fontSize: 24.sp,
+              fontSize: 20.sp,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
             ),
@@ -290,7 +290,7 @@ class _NotificationsViewState extends State<NotificationsView> {
               child: Center(
                 child: Text(
                   notification.type.emoji,
-                  style: TextStyle(fontSize: 20.sp),
+                  style: TextStyle(fontSize: 24.sp),
                 ),
               ),
             ),
@@ -307,7 +307,7 @@ class _NotificationsViewState extends State<NotificationsView> {
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontFamily: 'Karla',
                       fontSize: 18.sp,
-                      letterSpacing: -.6,
+                      letterSpacing: -.3,
                       fontWeight: FontWeight.w500,
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
@@ -319,7 +319,7 @@ class _NotificationsViewState extends State<NotificationsView> {
                       fontFamily: 'Karla',
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      letterSpacing: -.6,
+                      letterSpacing: -.3,
                       height: 1.450,
                       color: Theme.of(
                         context,

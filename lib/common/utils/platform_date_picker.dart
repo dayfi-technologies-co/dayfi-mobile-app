@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' as material;
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:dayfi/core/theme/app_colors.dart';
 
 /// Platform-specific date picker utility
 /// 
@@ -91,8 +92,8 @@ class PlatformDatePicker {
                   child: Text(
                     title,
                     style: material.Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontFamily: 'CabinetGrotesk',
-                      fontSize: 20.sp,
+                   fontFamily: 'CabinetGrotesk',
+                      fontSize: 24.sp,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -140,7 +141,7 @@ class PlatformDatePicker {
                         child: Text(
                           'Done',
                           style: TextStyle(
-                            color: material.Theme.of(context).primaryColor,
+                            color: AppColors.purple500,
                             fontSize: 16.sp,
                             fontWeight: FontWeight.w600,
                           ),

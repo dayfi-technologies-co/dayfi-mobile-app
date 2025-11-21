@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/models/payment_response.dart';
+import 'package:flutter_svg/svg.dart';
 
 class DeliveryMethodSelectionBottomSheet extends StatelessWidget {
   final List<Channel> deliveryMethods;
@@ -35,7 +36,7 @@ class DeliveryMethodSelectionBottomSheet extends StatelessWidget {
             width: 40.w,
             height: 4.h,
             decoration: BoxDecoration(
-              color: AppColors.neutral300,
+              color: AppColors.neutral400,
               borderRadius: BorderRadius.circular(2.r),
             ),
           ),
@@ -51,7 +52,7 @@ class DeliveryMethodSelectionBottomSheet extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: AppTypography.titleLarge.copyWith(
                       fontFamily: 'CabinetGrotesk',
-                      fontSize: 18.sp,
+                      fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
@@ -78,7 +79,7 @@ class DeliveryMethodSelectionBottomSheet extends StatelessWidget {
                       children: [
                         Icon(
                           Icons.inbox_outlined,
-                          size: 48.sp,
+                          size: 56.sp,
                           color: AppColors.neutral400,
                         ),
                         SizedBox(height: 16.h),
@@ -93,7 +94,7 @@ class DeliveryMethodSelectionBottomSheet extends StatelessWidget {
                         Text(
                           'Please select a different country',
                           style: AppTypography.bodySmall.copyWith(
-                            color: AppColors.neutral500,
+                            color: AppColors.neutral400,
                             fontSize: 12.sp,
                           ),
                         ),
@@ -101,7 +102,7 @@ class DeliveryMethodSelectionBottomSheet extends StatelessWidget {
                     ),
                   )
                 : ListView.builder(
-                    padding: EdgeInsets.symmetric(horizontal: 24.w),
+                    padding: EdgeInsets.symmetric(horizontal: 18.w),
                     itemCount: deliveryMethods.length,
                     itemBuilder: (context, index) {
                       final method = deliveryMethods[index];
@@ -233,11 +234,14 @@ class DeliveryMethodSelectionBottomSheet extends StatelessWidget {
                                       
                                       // Selection indicator
                                       if (isSelected)
-                                        Icon(
-                                          Icons.check_circle,
-                                          color: AppColors.primary500,
-                                          size: 20.sp,
-                                        ),
+
+                                      SvgPicture.asset(
+                'assets/icons/svgs/circle-check.svg',
+                color: AppColors.purple500ForTheme(context),
+                height: 24.sp,
+                width: 24.sp,
+              ),
+                                        
                                     ],
                                   ),
                                   
@@ -306,7 +310,7 @@ class DeliveryMethodSelectionBottomSheet extends StatelessWidget {
             fontSize: 10.sp,
             color: isSelected 
                 ? AppColors.primary600 
-                : AppColors.neutral500,
+                : AppColors.neutral400,
             fontWeight: FontWeight.w500,
           ),
         ),

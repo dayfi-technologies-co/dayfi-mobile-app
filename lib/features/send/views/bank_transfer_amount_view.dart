@@ -46,7 +46,6 @@ class _BankTransferAmountViewState
     extends ConsumerState<BankTransferAmountView> {
   late TextEditingController _amountController;
   final FocusNode _amountFocus = FocusNode();
-  bool _isUpdatingController = false;
   String _amountError = '';
   bool _isLoading = false;
 
@@ -70,25 +69,6 @@ class _BankTransferAmountViewState
   void initState() {
     super.initState();
     _amountController = TextEditingController();
-
-    // Listen to state changes and update controller
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.listen(sendViewModelProvider, (previous, next) {
-        if (previous?.sendAmount != next.sendAmount && !_isUpdatingController) {
-          _isUpdatingController = true;
-          final newAmountText = StringUtils.formatNumberWithCommas(
-            next.sendAmount,
-          );
-          if (_amountController.text != newAmountText) {
-            _amountController.value = TextEditingValue(
-              text: newAmountText,
-              selection: TextSelection.collapsed(offset: newAmountText.length),
-            );
-          }
-          _isUpdatingController = false;
-        }
-      });
-    });
   }
 
   @override
@@ -117,18 +97,32 @@ class _BankTransferAmountViewState
         return;
       }
 
-      // Check minimum limit
+      // Check minimum limit (1000 NGN)
+      const double minAmount = 1000;
+      if (amount < minAmount) {
+        _amountError = 'Amount must be at least 1000 NGN';
+        return;
+      }
+
+      // Check maximum limit (5000000 NGN)
+      const double maxAmount = 5000000;
+      if (amount > maxAmount) {
+        _amountError = 'Amount must be less than 5000000 NGN';
+        return;
+      }
+
+      // Check minimum limit from viewmodel if available
       final sendState = ref.read(sendViewModelProvider);
       final viewModel = ref.read(sendViewModelProvider.notifier);
       final minLimit = viewModel.sendMinimumLimit;
 
       if (minLimit != null && amount < minLimit) {
-        final minAmount =
+        final minAmountFormatted =
             StringUtils.formatCurrency(
               minLimit.toStringAsFixed(2),
               sendState.sendCurrency,
             ).split('.')[0];
-        _amountError = 'Minimum amount is $minAmount';
+        _amountError = 'Minimum amount is $minAmountFormatted';
         return;
       }
     });
@@ -143,6 +137,14 @@ class _BankTransferAmountViewState
     final amount = double.tryParse(cleanValue);
 
     if (amount == null || amount <= 0) return false;
+
+    // Check minimum limit (1000 NGN)
+    const double minAmount = 1000;
+    if (amount < minAmount) return false;
+
+    // Check maximum limit (5000000 NGN)
+    const double maxAmount = 5000000;
+    if (amount > maxAmount) return false;
 
     final viewModel = ref.read(sendViewModelProvider.notifier);
     final minLimit = viewModel.sendMinimumLimit;
@@ -176,8 +178,8 @@ class _BankTransferAmountViewState
           title: Text(
             "Enter Amount",
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontFamily: 'CabinetGrotesk',
-              fontSize: 20.sp,
+           fontFamily: 'CabinetGrotesk',
+               fontSize: 19.sp, height: 1.6,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface,
             ),
@@ -192,7 +194,7 @@ class _BankTransferAmountViewState
               children: [
                 Padding(
                   padding: EdgeInsets.symmetric(
-                    horizontal: 24.w,
+                    horizontal: 18.w,
                     vertical: 4.h,
                   ),
                   child: Column(
@@ -205,7 +207,7 @@ class _BankTransferAmountViewState
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w400,
                           fontFamily: 'Karla',
-                          letterSpacing: -.6,
+                          letterSpacing: -.3,
                           height: 1.5,
                         ),
                         textAlign: TextAlign.center,
@@ -225,7 +227,7 @@ class _BankTransferAmountViewState
                               color: AppColors.error400,
                               fontSize: 13.sp,
                               fontFamily: 'Karla',
-                              letterSpacing: -.6,
+                              letterSpacing: -.3,
                               fontWeight: FontWeight.w400,
                               height: 1.4,
                             ),
@@ -239,7 +241,7 @@ class _BankTransferAmountViewState
                       // Submit Button
                       PrimaryButton(
                         borderRadius: 38,
-                        text: "Next - Process Payment",
+                        text: "Process Payment",
                         onPressed:
                             isAmountValid && !_isLoading
                                 ? () => _handleContinue()
@@ -248,12 +250,12 @@ class _BankTransferAmountViewState
                             isAmountValid && !_isLoading
                                 ? AppColors.purple500
                                 : AppColors.purple500.withOpacity(.25),
-                        height: 60.h,
+                        height: 48.000.h,
                         isLoading: _isLoading,
                         textColor:
                             isAmountValid && !_isLoading
                                 ? AppColors.neutral0
-                                : AppColors.neutral0.withOpacity(.5),
+                                : AppColors.neutral0.withOpacity(.65),
                         fontFamily: 'Karla',
                         letterSpacing: -.8,
                         fontSize: 18,
@@ -282,7 +284,7 @@ class _BankTransferAmountViewState
             fontFamily: 'Karla',
             fontSize: 14,
             fontWeight: FontWeight.w400,
-            letterSpacing: -.6,
+            letterSpacing: -.3,
             height: 1.450,
             color: Theme.of(
               context,
@@ -308,19 +310,12 @@ class _BankTransferAmountViewState
             inputFormatters: [NumberWithCommasFormatter()],
             enableInteractiveSelection: true,
             onChanged: (value) {
-              if (!_isUpdatingController) {
-                // Remove commas before sending to view model for calculations
-                String cleanValue = NumberFormatterUtils.removeCommas(value);
-                ref
-                    .read(sendViewModelProvider.notifier)
-                    .updateSendAmount(cleanValue);
-                _validateAmount(value);
-              }
+              _validateAmount(value);
             },
             style: AppTypography.bodyLarge.copyWith(
               fontFamily: 'Karla',
               fontSize: 27.sp,
-              letterSpacing: -.6,
+              letterSpacing: -.3,
               fontWeight: FontWeight.w500,
             ),
             decoration: InputDecoration(
@@ -328,7 +323,7 @@ class _BankTransferAmountViewState
               hintStyle: AppTypography.bodyLarge.copyWith(
                 fontFamily: 'Karla',
                 fontSize: 27.sp,
-                letterSpacing: -.6,
+                letterSpacing: -.3,
                 fontWeight: FontWeight.w400,
                 color: Theme.of(
                   context,
@@ -351,8 +346,8 @@ class _BankTransferAmountViewState
                   Text(
                     sendState.sendCurrency,
                     style: AppTypography.bodyMedium.copyWith(
-                      fontFamily: 'CabinetGrotesk',
-                      fontSize: 14.sp,
+                   fontFamily: 'CabinetGrotesk',
+                      fontSize: 11.sp,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -469,9 +464,8 @@ class _BankTransferAmountViewState
                   channelTypeLower == 'bank_transfer') &&
               bankChannel == null) {
             bankChannel = channel;
-          } else if (fallbackChannel == null) {
-            fallbackChannel = channel;
-          }
+          } else
+            fallbackChannel ??= channel;
         }
       }
 
@@ -826,6 +820,13 @@ class _BankTransferAmountViewState
   }
 
   String _mapCollectionError(String raw, SendState sendState) {
+    // Name mismatch error (Nigeria only)
+    if (raw.contains('name') && raw.contains('match') ||
+        raw.toLowerCase().contains('name mismatch') ||
+        raw.toLowerCase().contains('name does not match') ||
+        raw.toLowerCase().contains('payer name')) {
+      return 'The name on your bank account doesn\'t match your verified name on Dayfi App. Please ensure you\'re paying from an account that matches your registered name.';
+    }
     if (raw.contains('No buy rate for currency')) {
       final currencyMatch = RegExp(
         r'No buy rate for currency (\w+)',
@@ -882,8 +883,8 @@ class _BankTransferAmountViewState
                 Text(
                   'Payment Error',
                   style: AppTypography.titleLarge.copyWith(
-                    fontFamily: 'CabinetGrotesk',
-                    fontSize: 20.sp,
+                 fontFamily: 'CabinetGrotesk',
+                     fontSize: 19.sp, height: 1.6,
                     fontWeight: FontWeight.w500,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
@@ -900,13 +901,35 @@ class _BankTransferAmountViewState
                   backgroundColor: AppColors.purple500,
                   textColor: AppColors.neutral0,
                   borderRadius: 38,
-                  height: 60.h,
+                  height: 48.000.h,
                   width: double.infinity,
                   fullWidth: true,
                   fontFamily: 'Karla',
                   fontSize: 18,
                   fontWeight: FontWeight.w400,
                   letterSpacing: -0.8,
+                ),
+
+                
+                SizedBox(height: 12.h),
+
+                // Skip button
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    // Go back to previous screen
+                    Navigator.of(context).pop();
+                  },
+                  child: Text(
+                    "Cancel",
+                    style: AppTypography.bodyMedium.copyWith(
+                      fontFamily: 'Karla',
+                      fontSize: 16.sp,
+                      letterSpacing: -0.8,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.neutral400,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -1023,7 +1046,7 @@ class _BankTransferAmountViewState
             });
 
             return Container(
-              height: MediaQuery.of(context).size.height * 0.92,
+              height: MediaQuery.of(context).size.height * 0.87,
               decoration: BoxDecoration(
                 color: Theme.of(context).scaffoldBackgroundColor,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
@@ -1032,7 +1055,7 @@ class _BankTransferAmountViewState
                 children: [
                   SizedBox(height: 18.h),
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24.w),
+                    padding: EdgeInsets.symmetric(horizontal: 18.w),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -1040,8 +1063,8 @@ class _BankTransferAmountViewState
                         Text(
                           'Payment Details',
                           style: AppTypography.titleLarge.copyWith(
-                            fontFamily: 'CabinetGrotesk',
-                            fontSize: 18.sp,
+                         fontFamily: 'CabinetGrotesk',
+                            fontSize: 14.sp,
                             fontWeight: FontWeight.w600,
                             color: Theme.of(context).colorScheme.onSurface,
                           ),
@@ -1065,7 +1088,7 @@ class _BankTransferAmountViewState
                   // Content
                   Expanded(
                     child: SingleChildScrollView(
-                      padding: EdgeInsets.symmetric(horizontal: 24.w),
+                      padding: EdgeInsets.symmetric(horizontal: 18.w),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -1084,16 +1107,16 @@ class _BankTransferAmountViewState
                                 SizedBox(width: 4.w),
                                 Image.asset(
                                   "assets/images/idea.png",
-                                  height: 18.h,
+                                  height: 20.h,
                                 ),
                                 SizedBox(width: 12.w),
                                 Expanded(
                                   child: Text(
-                                    'When paying into this account, ensure the name on the bank account matches your verified name on Skrrt.',
+                                    'When paying into this account, ensure the name on the bank account matches your verified name on Dayfi App.',
                                     style: Theme.of(
                                       context,
                                     ).textTheme.bodySmall?.copyWith(
-                                      fontSize: 12.5.sp,
+                                      fontSize: 14.sp,
                                       fontFamily: 'Karla',
                                       fontWeight: FontWeight.w400,
                                       letterSpacing: -0.4,
@@ -1135,8 +1158,8 @@ class _BankTransferAmountViewState
                                   style: Theme.of(
                                     context,
                                   ).textTheme.titleLarge?.copyWith(
-                                    fontFamily: 'CabinetGrotesk',
-                                    fontSize: 16.sp,
+                                 fontFamily: 'CabinetGrotesk',
+                                    fontSize: 12.sp,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -1179,7 +1202,7 @@ class _BankTransferAmountViewState
                                   color: Theme.of(
                                     context,
                                   ).colorScheme.outline.withOpacity(0.2),
-                                  height: 48.h,
+                                  height: 56.h,
                                 ),
 
                                 // Expiration warning
@@ -1263,7 +1286,7 @@ class _BankTransferAmountViewState
                             );
                           },
                           backgroundColor: AppColors.purple500,
-                          height: 60.h,
+                          height: 48.000.h,
                           textColor: AppColors.neutral0,
                           fontFamily: 'Karla',
                           letterSpacing: -.8,
@@ -1295,7 +1318,7 @@ class _BankTransferAmountViewState
                     },
                     backgroundColor: Colors.transparent,
                     textColor: AppColors.purple500ForTheme(context),
-                    height: 60.h,
+                    height: 48.000.h,
                     fontFamily: 'Karla',
                     letterSpacing: -.8,
                     fontSize: 18,
@@ -1332,34 +1355,40 @@ class _BankTransferAmountViewState
             Text(
               value,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                fontFamily: 'CabinetGrotesk',
-                fontSize: 14.sp,
+             fontFamily: 'karla',
+                fontSize: 15.sp,
                 fontWeight: FontWeight.w600,
+                letterSpacing: -.3,
                 color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             if (showCopy) ...[
               SizedBox(width: 8.w),
-              GestureDetector(
-                onTap: () {
-                  // Add haptic feedback for better UX
-                  HapticFeedback.lightImpact();
+              Semantics(
+                button: true,
+                label: 'Copy $label',
+                hint: 'Double tap to copy to clipboard',
+                child: GestureDetector(
+                  onTap: () {
+                    // Add haptic feedback for better UX
+                    HapticFeedback.lightImpact();
 
-                  Clipboard.setData(ClipboardData(text: value));
-                  TopSnackbar.show(
-                    context,
-                    message:
-                        label == 'DayFi Tag'
-                            ? 'DayFi Tag copied to clipboard'
-                            : 'Account number copied to clipboard',
-                  );
-                },
-                child: SvgPicture.asset(
-                  "assets/icons/svgs/copy.svg",
-                  height: 20.w,
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withOpacity(0.6),
+                    Clipboard.setData(ClipboardData(text: value));
+                    TopSnackbar.show(
+                      context,
+                      message:
+                          label == 'DayFi Tag'
+                              ? 'DayFi Tag copied to clipboard'
+                              : 'Account number copied to clipboard',
+                    );
+                  },
+                  child: SvgPicture.asset(
+                    "assets/icons/svgs/copy.svg",
+                    height: 20.w,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.6),
+                  ),
                 ),
               ),
             ],

@@ -170,7 +170,7 @@ class _SendFetchCryptoChannelsViewState
                             code,
                             style: AppTypography.titleMedium.copyWith(
                               fontFamily: 'CabinetGrotesk',
-                              fontSize: 18.sp,
+                              fontSize: 14.sp,
                               fontWeight: FontWeight.w700,
                               color: enabled
                                   ? AppColors.purple500ForTheme(context)
@@ -190,7 +190,7 @@ class _SendFetchCryptoChannelsViewState
                             code,
                             style: AppTypography.titleLarge.copyWith(
                               fontFamily: 'CabinetGrotesk',
-                              fontSize: 16.sp,
+                              fontSize: 12.sp,
                               fontWeight: FontWeight.w600,
                               color: enabled
                                   ? Theme.of(context).colorScheme.onSurface
@@ -203,7 +203,7 @@ class _SendFetchCryptoChannelsViewState
                             " ($name)",
                             style: AppTypography.bodySmall.copyWith(
                               fontFamily: 'CabinetGrotesk',
-                              fontSize: 16.sp,
+                              fontSize: 12.sp,
                               fontWeight: FontWeight.w500,
                               letterSpacing: -0.3,
                               height: 1.5,
@@ -239,7 +239,7 @@ class _SendFetchCryptoChannelsViewState
                             fontFamily: 'Karla',
                             fontSize: 10.sp,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.neutral500,
+                            color: AppColors.neutral400,
                           ),
                         ),
                       ],
@@ -273,7 +273,7 @@ class _SendFetchCryptoChannelsViewState
           'Select Digital Dollars',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 fontFamily: 'CabinetGrotesk',
-                fontSize: 20.sp,
+                fontSize: 28.00,
                 fontWeight: FontWeight.w600,
                 color: Theme.of(context).colorScheme.onSurface,
               ),
@@ -293,7 +293,7 @@ class _SendFetchCryptoChannelsViewState
           : _errorMessage != null
               ? Center(
                   child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 48.w),
+                    padding: EdgeInsets.symmetric(horizontal: 56.w),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -307,7 +307,7 @@ class _SendFetchCryptoChannelsViewState
                           'Error Loading Channels',
                           style: AppTypography.titleLarge.copyWith(
                             fontFamily: 'CabinetGrotesk',
-                            fontSize: 20.sp,
+                            fontSize: 18.sp,
                             fontWeight: FontWeight.w600,
                             color: Theme.of(context).colorScheme.onSurface,
                           ),
@@ -330,7 +330,7 @@ class _SendFetchCryptoChannelsViewState
                           onPressed: _fetchCryptoChannels,
                           backgroundColor: AppColors.purple500,
                           textColor: AppColors.neutral0,
-                          height: 48.h,
+                          height: 56.h,
                           width: 120.w,
                           fontFamily: 'Karla',
                           fontSize: 14.sp,
@@ -355,7 +355,7 @@ class _SendFetchCryptoChannelsViewState
                             'No Crypto Channels',
                             style: AppTypography.titleLarge.copyWith(
                               fontFamily: 'CabinetGrotesk',
-                              fontSize: 20.sp,
+                              fontSize: 18.sp,
                               fontWeight: FontWeight.w600,
                               color: Theme.of(context).colorScheme.onSurface,
                             ),
@@ -380,7 +380,7 @@ class _SendFetchCryptoChannelsViewState
                       child: SingleChildScrollView(
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: EdgeInsets.symmetric(
-                          horizontal: 24.w,
+                          horizontal: 18.w,
                           vertical: 12.h,
                         ),
                         child: Column(
@@ -390,7 +390,7 @@ class _SendFetchCryptoChannelsViewState
                               'What currency do you want to use as your payment method?',
                               style: AppTypography.titleLarge.copyWith(
                                 fontFamily: 'CabinetGrotesk',
-                                fontSize: 16.sp,
+                                fontSize: 12.sp,
                                 fontWeight: FontWeight.w600,
                                 color: Theme.of(context).colorScheme.onSurface,
                               ),
@@ -399,7 +399,7 @@ class _SendFetchCryptoChannelsViewState
                             SizedBox(height: 32.h),
                             ..._cryptoChannels.map((channel) {
                               return _buildCryptoChannelCard(channel);
-                            }).toList(),
+                            }),
                             SizedBox(height: 40.h),
                           ],
                         ),

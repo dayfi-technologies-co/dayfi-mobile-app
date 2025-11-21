@@ -8,6 +8,7 @@ import 'package:dayfi/services/local/secure_storage.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
+import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'dart:convert';
 
 class TransactionPinCreateView extends ConsumerStatefulWidget {
@@ -36,6 +37,12 @@ class _TransactionPinCreateViewState
     // Reset the shared provider state when entering this view
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(transactionPinProvider.notifier).resetForm();
+      // Listen for provider errors and show TopSnackbar when backend/VM sets an error
+      ref.listen<TransactionPinState>(transactionPinProvider, (previous, next) {
+        if (next.errorMessage.isNotEmpty) {
+          TopSnackbar.show(context, message: next.errorMessage, isError: true);
+        }
+      });
     });
   }
 
@@ -158,8 +165,8 @@ class _TransactionPinCreateViewState
           title: Text(
             "Create Transaction PIN",
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontFamily: 'CabinetGrotesk',
-              fontSize: 20.sp,
+           fontFamily: 'CabinetGrotesk',
+               fontSize: 19.sp, height: 1.6,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface,
             ),
@@ -176,13 +183,13 @@ class _TransactionPinCreateViewState
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    padding: const EdgeInsets.symmetric(horizontal: 18),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         SizedBox(height: 4.h),
                         Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 24.w),
+                              padding: EdgeInsets.symmetric(horizontal: 18.w),
                               child: Text(
                                 "Please create a 4-digit PIN for your transactions. This PIN will be required for all wallet transfers.",
                                 style: Theme.of(
@@ -191,7 +198,7 @@ class _TransactionPinCreateViewState
                                   fontSize: 16.sp,
                                   fontWeight: FontWeight.w400,
                                   fontFamily: 'Karla',
-                                  letterSpacing: -.6,
+                                  letterSpacing: -.3,
                                   height: 1.4,
                                 ),
                                 textAlign: TextAlign.center,
@@ -215,7 +222,7 @@ class _TransactionPinCreateViewState
                     ),
                   ),
                   Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 24.w),
+                        padding: EdgeInsets.symmetric(horizontal: 18.w),
                         child: PasscodeWidget(
                           passcodeLength: 4,
                           currentPasscode: _localPin,
@@ -249,18 +256,20 @@ class _TransactionPinCreateViewState
                   // Continue button - only show when PIN is complete
                   if (_localPin.length == 4)
                     Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 24.w),
+                          padding: EdgeInsets.symmetric(horizontal: 18.w),
                           child: PrimaryButton(
-                            text: 'Next - Re-enter PIN',
+                            text: 'Re-enter PIN',
                             onPressed:
                                 _localPin.length == 4 && _errorMessage.isEmpty
                                     ? _handleContinue
                                     : null,
-                            height: 60.h,
+                            height: 48.000.h,
                             backgroundColor:
                                 _localPin.length == 4 && _errorMessage.isEmpty
                                     ? AppColors.purple500
-                                    : AppColors.neutral0.withOpacity(0.12),
+                                    : AppColors.purple500ForTheme(
+                            context,
+                          ).withOpacity(.25),
                             textColor:
                                 _localPin.length == 4 && _errorMessage.isEmpty
                                     ? AppColors.neutral0
@@ -278,7 +287,7 @@ class _TransactionPinCreateViewState
                         .slideY(begin: 0.2, end: 0, duration: 200.ms),
                   SizedBox(height: 16.h),
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24.w),
+                    padding: EdgeInsets.symmetric(horizontal: 18.w),
                     child: Text(
                       _errorMessage.isNotEmpty
                           ? _errorMessage
@@ -332,14 +341,14 @@ class PasscodeWidget extends StatelessWidget {
               child: Text(
                 index < currentPasscode.length ? '*' : '*',
                 style: TextStyle(
-                  fontSize: 88.sp,
+                  fontSize: 70.sp,
                   letterSpacing: -10,
-                  fontFamily: 'CabinetGrotesk',
+               fontFamily: 'CabinetGrotesk',
                   fontWeight: FontWeight.w700,
                   color:
                       index < currentPasscode.length
                           ? AppColors.purple500ForTheme(context)
-                          : AppColors.neutral500,
+                          : AppColors.neutral400,
                 ),
               ),
 
@@ -410,8 +419,8 @@ class PasscodeWidget extends StatelessWidget {
                 child: Text(
                   number,
                   style: TextStyle(
-                    fontSize: 32.00,
-                    fontFamily: 'CabinetGrotesk',
+                    fontSize: 25.60,
+                 fontFamily: 'CabinetGrotesk',
                     fontWeight: FontWeight.w400,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),

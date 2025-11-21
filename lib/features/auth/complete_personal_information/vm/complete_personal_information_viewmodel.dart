@@ -199,7 +199,14 @@ class CompletePersonalInfoNotifier extends StateNotifier<CompletePersonalInfoSta
 
   String _validatePhoneNumber(String value) {
     if (value.isEmpty) return 'Please enter your phone number';
-    if (value.length < 10) return 'Please enter a valid phone number';
+    
+    // If starts with 0, require 11 digits, otherwise require 10 digits
+    if (value.startsWith('0')) {
+      if (value.length != 11) return 'Please enter a valid 11-digit phone number';
+    } else {
+      if (value.length != 10) return 'Please enter a valid 10-digit phone number';
+    }
+    
     return '';
   }
 
@@ -244,6 +251,11 @@ class CompletePersonalInfoNotifier extends StateNotifier<CompletePersonalInfoSta
       analyticsService.logEvent(name: 'complete_profile_started');
       AppLogger.info('Submitting personal information...');
 
+      // Remove leading 0 from phone number if present
+      final phoneNumber = state.phoneNumber.startsWith('0') 
+          ? state.phoneNumber.substring(1) 
+          : state.phoneNumber;
+      
       // Call API to update user profile
       final success = await _updateUserProfile(
         context,
@@ -255,7 +267,7 @@ class CompletePersonalInfoNotifier extends StateNotifier<CompletePersonalInfoSta
         address: state.address,
         gender: 'male', // Default gender, can be made configurable
         dob: state.dateOfBirth,
-        phoneNumber: state.phoneNumber,
+        phoneNumber: phoneNumber,
       );
 
       if (success) {

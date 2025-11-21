@@ -28,7 +28,7 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 24.w),
+          padding: EdgeInsets.symmetric(horizontal: 18.w),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -60,7 +60,9 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.purple500ForTheme(context).withOpacity(0.3),
+                    color: AppColors.purple500ForTheme(
+                      context,
+                    ).withOpacity(0.3),
                     blurRadius: 20,
                     spreadRadius: 2,
                     offset: const Offset(0, 4),
@@ -86,10 +88,10 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
                   style: AppTypography.headlineMedium.copyWith(
                     fontFamily: 'CabinetGrotesk',
                     fontSize: 28.sp,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w500,
                     color: Theme.of(context).colorScheme.onSurface,
-                    height: 1.2,
-                    letterSpacing: -.6,
+                    // height: 1.2,
+                    letterSpacing: -.3,
                   ),
                   textAlign: TextAlign.center,
                 )
@@ -184,7 +186,7 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
                         ? null
                         : () => notifier.enableBiometrics(context),
                 backgroundColor: AppColors.purple500,
-                height: 60.h,
+                height: 48.000.h,
                 textColor: AppColors.neutral0,
                 fontFamily: 'Karla',
                 letterSpacing: -.8,
@@ -224,8 +226,8 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
                   state.isBusy
                       ? null
                       : () => _showSkipDialog(context, notifier, state),
-               borderColor: Colors.transparent,    
-              height: 60.h,
+              borderColor: Colors.transparent,
+              height: 48.000.h,
               textColor: AppColors.purple500ForTheme(context),
               fontFamily: 'Karla',
               letterSpacing: -.8,
@@ -292,125 +294,140 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
           (BuildContext dialogContext) => StatefulBuilder(
             builder: (context, setStateSB) {
               return Dialog(
-            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24.r),
-            ),
-            child: Container(
-              padding: EdgeInsets.all(28.w),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Success icon with enhanced styling
-                  Container(
-                    width: 80.w,
-                    height: 80.w,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [AppColors.purple400, AppColors.purple600],
-                      ),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.purple500ForTheme(context).withOpacity(0.3),
-                          blurRadius: 20,
-                          spreadRadius: 2,
-                          offset: const Offset(0, 4),
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24.r),
+                ),
+                child: Container(
+                  padding: EdgeInsets.all(28.w),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Success icon with enhanced styling
+                      Container(
+                        width: 80.w,
+                        height: 80.w,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [AppColors.purple400, AppColors.purple600],
+                          ),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.purple500ForTheme(
+                                context,
+                              ).withOpacity(0.3),
+                              blurRadius: 20,
+                              spreadRadius: 2,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
+                        child: Icon(
+                          Icons.security,
+                          color: Colors.white,
+                          size: 40.w,
+                        ),
+                      ),
+
+                      SizedBox(height: 24.h),
+
+                      // Title with auth view styling
+                      Text(
+                        'Do you want to enable ${state.biometricDescription} later?',
+                        style: TextStyle(
+                          fontFamily: 'CabinetGrotesk',
+                           fontSize: 19.sp, height: 1.6,
+                          fontWeight: FontWeight.w400,
+                          color: Theme.of(context).colorScheme.onSurface,
+                          letterSpacing: -0.5,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+
+                      SizedBox(height: 16.h),
+
+                      if (dialogLoading) ...[
+                        SizedBox(height: 8.h),
+                        LoadingAnimationWidget.horizontalRotatingDots(
+                          color: AppColors.purple500ForTheme(context),
+                          size: 22,
+                        ),
+                        SizedBox(height: 16.h),
                       ],
-                    ),
-                    child: Icon(
-                      Icons.security,
-                      color: Colors.white,
-                      size: 40.w,
-                    ),
+
+                      // Continue button with auth view styling
+                      PrimaryButton(
+                        text:
+                            dialogLoading
+                                ? 'Please wait...'
+                                : 'Yes, I\'ll do it later',
+                        onPressed:
+                            dialogLoading
+                                ? null
+                                : () async {
+                                  setStateSB(() {
+                                    dialogLoading = true;
+                                  });
+                                  // Close dialog first to avoid navigation conflicts
+                                  Navigator.of(dialogContext).pop();
+                                  // Wait a frame to ensure dialog is fully closed before showing snackbar
+                                  await Future.delayed(
+                                    const Duration(milliseconds: 100),
+                                  );
+                                  if (parentContext.mounted) {
+                                    await notifier.skipBiometrics(
+                                      parentContext,
+                                    );
+                                    // Navigate after snackbar is shown
+                                    await Future.delayed(
+                                      const Duration(milliseconds: 500),
+                                    );
+                                    if (parentContext.mounted) {
+                                      appRouter.pushNamed(AppRoute.mainView);
+                                    }
+                                  }
+                                },
+                        backgroundColor: AppColors.purple500,
+                        textColor: AppColors.neutral0,
+                        borderRadius: 38,
+                        height: 48.000.h,
+                        width: double.infinity,
+                        fullWidth: true,
+                        fontFamily: 'Karla',
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: -0.8,
+                      ),
+                      SizedBox(height: 12.h),
+
+                      // Cancel button with auth view styling
+                      SecondaryButton(
+                        text: 'No, enable it now',
+                        onPressed:
+                            dialogLoading
+                                ? null
+                                : () {
+                                  Navigator.of(dialogContext).pop();
+                                  notifier.enableBiometrics(parentContext);
+                                },
+                        borderColor: Colors.transparent,
+                        textColor: AppColors.purple500ForTheme(context),
+                        width: double.infinity,
+                        fullWidth: true,
+                        height: 48.000.h,
+                        borderRadius: 38,
+                        fontFamily: 'Karla',
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: -0.8,
+                      ),
+                    ],
                   ),
-
-                  SizedBox(height: 24.h),
-
-                  // Title with auth view styling
-                  Text(
-                    'Do you want to enable ${state.biometricDescription} later?',
-                    style: TextStyle(
-                      fontFamily: 'CabinetGrotesk',
-                      fontSize: 20.sp,
-                      fontWeight: FontWeight.w400,
-                      color: Theme.of(context).colorScheme.onSurface,
-                      letterSpacing: -0.5,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-
-                  SizedBox(height: 16.h),
-
-                  if (dialogLoading) ...[
-                    SizedBox(height: 8.h),
-                    LoadingAnimationWidget.horizontalRotatingDots(
-                      color: AppColors.purple500ForTheme(context),
-                      size: 22,
-                    ),
-                    SizedBox(height: 16.h),
-                  ],
-
-                  // Continue button with auth view styling
-                  PrimaryButton(
-                    text: dialogLoading ? 'Please wait...' : 'Yes, I\'ll do it later',
-                    onPressed: dialogLoading
-                        ? null
-                        : () async {
-                            setStateSB(() { dialogLoading = true; });
-                            // Close dialog first to avoid navigation conflicts
-                            Navigator.of(dialogContext).pop();
-                            // Wait a frame to ensure dialog is fully closed before showing snackbar
-                            await Future.delayed(const Duration(milliseconds: 100));
-                            if (parentContext.mounted) {
-                              await notifier.skipBiometrics(parentContext);
-                              // Navigate after snackbar is shown
-                              await Future.delayed(const Duration(milliseconds: 500));
-                              if (parentContext.mounted) {
-                                appRouter.pushNamed(AppRoute.mainView);
-                              }
-                            }
-                          },
-                    backgroundColor: AppColors.purple500,
-                    textColor: AppColors.neutral0,
-                    borderRadius: 38,
-                    height: 60.h,
-                    width: double.infinity,
-                    fullWidth: true,
-                    fontFamily: 'Karla',
-                    fontSize: 18,
-                    fontWeight: FontWeight.w400,
-                    letterSpacing: -0.8,
-                  ),
-                  SizedBox(height: 12.h),
-
-                  // Cancel button with auth view styling
-                  SecondaryButton(
-                    text: 'No, enable it now',
-                    onPressed: dialogLoading
-                        ? null
-                        : () {
-                            Navigator.of(dialogContext).pop();
-                            notifier.enableBiometrics(parentContext);
-                          },
-                    borderColor: Colors.transparent,
-                    textColor: AppColors.purple500ForTheme(context),
-                    width: double.infinity,
-                    fullWidth: true,
-                    height: 60.h,
-                    borderRadius: 38,
-                    fontFamily: 'Karla',
-                    fontSize: 18,
-                    fontWeight: FontWeight.w400,
-                    letterSpacing: -0.8,
-                  ),
-                ],
-              ),
-            ),
-          );
+                ),
+              );
             },
           ),
     );

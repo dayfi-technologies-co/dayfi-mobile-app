@@ -134,16 +134,30 @@ class SignupNotifier extends StateNotifier<SignupState> {
   // Setters
   void setFirstName(String value) {
     final firstNameError = _validateName(value, 'First name');
-    state = state.copyWith(firstName: value, firstNameError: firstNameError);
+    state = state.copyWith(firstName: _toTitleCase(value), firstNameError: firstNameError);
   }
 
   void setLastName(String value) {
     final lastNameError = _validateName(value, 'Last name');
-    state = state.copyWith(lastName: value, lastNameError: lastNameError);
+    state = state.copyWith(lastName: _toTitleCase(value), lastNameError: lastNameError);
   }
 
   void setMiddleName(String value) {
-    state = state.copyWith(middleName: value);
+    state = state.copyWith(middleName: _toTitleCase(value));
+  }
+
+  // Helper to convert names to Title Case (capitalize first letter of each word)
+  String _toTitleCase(String input) {
+    if (input.trim().isEmpty) return input;
+    return input
+        .split(RegExp(r"\s+"))
+        .map((word) {
+          if (word.isEmpty) return word;
+          final first = word.substring(0, 1).toUpperCase();
+          final rest = word.length > 1 ? word.substring(1).toLowerCase() : '';
+          return '$first$rest';
+        })
+        .join(' ');
   }
 
   void setEmail(String value) {

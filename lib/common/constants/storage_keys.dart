@@ -19,6 +19,7 @@ class StorageKeys {
   static const String isLoggedIn = "isLoggedIn";
   static const String isFirstTime = "isFirstTime";
   static const String hasSeenWelcome = "hasSeenWelcome";
+  static const String hasReceivedWelcomeNotification = "hasReceivedWelcomeNotification";
   static const String themeMode = "themeMode";
   static const String languageCode = "languageCode";
   static const String biometricEnabled = "biometricEnabled";

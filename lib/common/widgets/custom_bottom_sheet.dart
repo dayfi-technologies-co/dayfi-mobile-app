@@ -190,7 +190,7 @@ class CustomBottomSheet extends StatelessWidget {
 
   Widget _buildHeader(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 24.h),
+      padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 24.h),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -220,7 +220,7 @@ class CustomBottomSheet extends StatelessWidget {
       width: 40.w,
       height: 4.h,
       decoration: BoxDecoration(
-        color: AppColors.neutral300,
+        color: AppColors.neutral400,
         borderRadius: BorderRadius.circular(2.r),
       ),
     );
@@ -245,7 +245,7 @@ class CustomBottomSheet extends StatelessWidget {
 
   Widget _buildTitleSection(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 8.h),
+      padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -362,7 +362,6 @@ extension CustomBottomSheetExtensions on CustomBottomSheet {
   }) {
     return CustomBottomSheet(
       key: key,
-      child: child ?? this.child,
       showHandle: showHandle ?? this.showHandle,
       showCloseIcon: showCloseIcon ?? this.showCloseIcon,
       closeIconPosition: closeIconPosition ?? this.closeIconPosition,
@@ -394,6 +393,7 @@ extension CustomBottomSheetExtensions on CustomBottomSheet {
       useSafeArea: useSafeArea ?? this.useSafeArea,
       elevation: elevation ?? this.elevation,
       shadowColor: shadowColor ?? this.shadowColor,
+      child: child ?? this.child,
     );
   }
 }

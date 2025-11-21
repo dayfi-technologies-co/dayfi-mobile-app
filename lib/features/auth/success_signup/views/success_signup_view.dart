@@ -18,11 +18,10 @@ class SuccessSignupView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Trigger signup success notification when this view is built
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _triggerSignUpNotification();
-    });
-
+    // Note: Signup success notification is now triggered in main_view.dart
+    // when user first lands on the home screen after signup
+    // This ensures the notification is shown at the right time
+    
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
@@ -36,7 +35,7 @@ class SuccessSignupView extends ConsumerWidget {
           // Main content
           SafeArea(
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24.w),
+              padding: EdgeInsets.symmetric(horizontal: 18.w),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -176,7 +175,7 @@ class SuccessSignupView extends ConsumerWidget {
             // Celebration emoji
             // Text(
             //   "🎉",
-            //   style: TextStyle(fontSize: 48.sp),
+            //   style: TextStyle(fontSize: 56.sp),
             // )
             //     .animate()
             //     .fadeIn(
@@ -198,12 +197,12 @@ class SuccessSignupView extends ConsumerWidget {
             Text(
                   "Welcome onboard!",
                   style: AppTypography.headlineMedium.copyWith(
-                    fontFamily: 'CabinetGrotesk',
-                    fontSize: 28.sp,
+                 fontFamily: 'CabinetGrotesk',
+                    fontSize: 22.sp, height: 1.7,
                     fontWeight: FontWeight.w600,
                     color: Theme.of(context).colorScheme.onSurface,
-                    height: 1.2,
-                    letterSpacing: -.6,
+                    // height: 1.2,
+                    letterSpacing: -.3,
                   ),
                   textAlign: TextAlign.center,
                 )
@@ -285,7 +284,7 @@ class SuccessSignupView extends ConsumerWidget {
                   padding: EdgeInsets.only(bottom: 12.h),
                   child: Row(
                     children: [
-                      Text(feature["icon"]!, style: TextStyle(fontSize: 20.sp)),
+                      Text(feature["icon"]!, style: TextStyle(fontSize: 24.sp)),
                       SizedBox(width: 12.w),
                       Expanded(
                         child: Text(
@@ -320,13 +319,13 @@ class SuccessSignupView extends ConsumerWidget {
 
   Widget _buildNextStepButton(BuildContext context) {
     return PrimaryButton(
-          text: "Next - Complete Profile",
+          text: "Complete Profile",
           borderRadius: 38,
 
           onPressed:
               () => appRouter.pushNamed(AppRoute.completePersonalInfoView),
           backgroundColor: AppColors.purple500,
-          height: 60.h,
+          height: 48.000.h,
           textColor: AppColors.neutral0,
           fontFamily: 'Karla',
           letterSpacing: -.8,
@@ -350,34 +349,5 @@ class SuccessSignupView extends ConsumerWidget {
           duration: 500.ms,
           curve: Curves.easeOutCubic,
         );
-  }
-
-  /// Trigger sign-up success notification for new users
-  Future<void> _triggerSignUpNotification() async {
-    try {
-      // Get user data from storage to get the first name
-      final secureStorage = locator<SecureStorageService>();
-      final userJson = await secureStorage.read(StorageKeys.user);
-      String firstName = 'User'; // Default fallback
-
-      if (userJson.isNotEmpty) {
-        try {
-          final userData = json.decode(userJson);
-          firstName = userData['firstName'] ?? 'User';
-        } catch (e) {
-          AppLogger.warning('Error parsing user data: $e');
-        }
-      }
-
-      // Add a small delay to ensure the view is fully loaded
-      await Future.delayed(const Duration(milliseconds: 500));
-
-      // Trigger the notification
-      await NotificationService().triggerSignUpSuccess(firstName);
-
-      AppLogger.info('Sign-up success notification triggered for: $firstName');
-    } catch (e) {
-      AppLogger.error('Error triggering sign-up notification: $e');
-    }
   }
 }

@@ -8,6 +8,9 @@ import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/services/local/secure_storage.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
+import 'package:dayfi/common/widgets/top_snackbar.dart';
+import 'package:dayfi/services/remote/network/api_error.dart';
+import 'package:dio/dio.dart';
 
 class TransactionPinReenterView extends ConsumerStatefulWidget {
   const TransactionPinReenterView({super.key});
@@ -134,11 +137,10 @@ class _TransactionPinReenterViewState
         // The review view will refresh its profile in initState
 
         // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Transaction PIN created successfully'),
-            backgroundColor: AppColors.success700,
-          ),
+        TopSnackbar.show(
+          context,
+          message: 'Transaction PIN created successfully',
+          isError: false,
         );
       } else {
         final updatedState = ref.read(transactionPinProvider);
@@ -148,8 +150,10 @@ class _TransactionPinReenterViewState
           _localPin = '';
           _isLoading = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error), backgroundColor: AppColors.error500),
+        TopSnackbar.show(
+          context,
+          message: error.isNotEmpty ? error : 'Failed to create PIN',
+          isError: true,
         );
       }
     } catch (e) {
@@ -157,11 +161,23 @@ class _TransactionPinReenterViewState
         _errorMessage = 'Failed to create PIN. Please try again.';
         _isLoading = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to create PIN. Please try again.'),
-          backgroundColor: AppColors.error500,
-        ),
+      // Try to extract backend message when available
+      try {
+        if (e is DioException) {
+          final apiErr = ApiError.fromDio(e);
+          final backendMessage = apiErr.errorDescription ?? apiErr.apiErrorModel?.message;
+          if (backendMessage != null && backendMessage.isNotEmpty) {
+            TopSnackbar.show(context, message: backendMessage, isError: true);
+            pinNotifier.setError(backendMessage);
+            return;
+          }
+        }
+      } catch (_) {}
+
+      TopSnackbar.show(
+        context,
+        message: 'Failed to create PIN. Please try again.',
+        isError: true,
       );
     }
   }
@@ -199,8 +215,8 @@ class _TransactionPinReenterViewState
           title: Text(
             "Re-enter Transaction PIN",
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontFamily: 'CabinetGrotesk',
-              fontSize: 20.sp,
+           fontFamily: 'CabinetGrotesk',
+               fontSize: 19.sp, height: 1.6,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface,
             ),
@@ -217,13 +233,13 @@ class _TransactionPinReenterViewState
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    padding: const EdgeInsets.symmetric(horizontal: 18),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         SizedBox(height: 4.h),
                         Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 24.w),
+                          padding: EdgeInsets.symmetric(horizontal: 18.w),
                           child: Text(
                             "Please re-enter your 4-digit transaction PIN to confirm. This PIN will be required for all wallet transfers.",
                             style: Theme.of(
@@ -232,7 +248,7 @@ class _TransactionPinReenterViewState
                               fontSize: 16.sp,
                               fontWeight: FontWeight.w400,
                               fontFamily: 'Karla',
-                              letterSpacing: -.6,
+                              letterSpacing: -.3,
                               height: 1.4,
                             ),
                             textAlign: TextAlign.center,
@@ -243,7 +259,7 @@ class _TransactionPinReenterViewState
                     ),
                   ),
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24.w),
+                    padding: EdgeInsets.symmetric(horizontal: 18.w),
                     child: PasscodeWidget(
                       passcodeLength: 4,
                       currentPasscode: _localPin,
@@ -257,7 +273,7 @@ class _TransactionPinReenterViewState
                   // Continue button - only show when PIN is complete
                   if (_localPin.length == 4)
                     Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 24.w),
+                          padding: EdgeInsets.symmetric(horizontal: 18.w),
                            child: PrimaryButton(
                              text: 'Create PIN',
                              onPressed:
@@ -266,11 +282,13 @@ class _TransactionPinReenterViewState
                                      : null,
                              isLoading: _isLoading,
                              showLoadingIndicator: true,
-                             height: 60.h,
+                             height: 48.000.h,
                              backgroundColor:
                                  _localPin.length == 4 && _errorMessage.isEmpty && !_isLoading
                                      ? AppColors.purple500
-                                     : AppColors.neutral0.withOpacity(0.12),
+                                     : AppColors.purple500ForTheme(
+                            context,
+                          ).withOpacity(.25),
                              textColor:
                                  _localPin.length == 4 && _errorMessage.isEmpty && !_isLoading
                                      ? AppColors.neutral0
@@ -288,7 +306,7 @@ class _TransactionPinReenterViewState
                         .slideY(begin: 0.2, end: 0, duration: 200.ms),
                   SizedBox(height: 16.h),
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24.w),
+                    padding: EdgeInsets.symmetric(horizontal: 18.w),
                     child: Text(
                       _errorMessage.isNotEmpty
                           ? _errorMessage
@@ -342,14 +360,14 @@ class PasscodeWidget extends StatelessWidget {
               child: Text(
                 index < currentPasscode.length ? '*' : '*',
                 style: TextStyle(
-                  fontSize: 88.sp,
+                  fontSize: 70.sp,
                   letterSpacing: -10,
-                  fontFamily: 'CabinetGrotesk',
+               fontFamily: 'CabinetGrotesk',
                   fontWeight: FontWeight.w700,
                   color:
                       index < currentPasscode.length
                           ? AppColors.purple500ForTheme(context)
-                          : AppColors.neutral500,
+                          : AppColors.neutral400,
                 ),
               ),
             ),
@@ -407,8 +425,8 @@ class PasscodeWidget extends StatelessWidget {
                 child: Text(
                   number,
                   style: TextStyle(
-                    fontSize: 32.00,
-                    fontFamily: 'CabinetGrotesk',
+                    fontSize: 25.60,
+                 fontFamily: 'CabinetGrotesk',
                     fontWeight: FontWeight.w400,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),

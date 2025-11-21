@@ -53,7 +53,7 @@ class _AccountLimitsViewState extends ConsumerState<AccountLimitsView> {
           "Account Limits",
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
             fontFamily: 'CabinetGrotesk',
-            fontSize: 20.sp,
+            fontSize: 28.00,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,
           ),
@@ -61,7 +61,7 @@ class _AccountLimitsViewState extends ConsumerState<AccountLimitsView> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
+          padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 16.h),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -147,7 +147,7 @@ class _AccountLimitsViewState extends ConsumerState<AccountLimitsView> {
                           tierInfo.title,
                           style: AppTypography.titleMedium.copyWith(
                             fontFamily: 'CabinetGrotesk',
-                            fontSize: 18.sp,
+                            fontSize: 14.sp,
                             fontWeight: FontWeight.w600,
                             // color: AppColors.neutral800,
                           ),
@@ -168,7 +168,7 @@ class _AccountLimitsViewState extends ConsumerState<AccountLimitsView> {
                       tierInfo.description,
                       style: AppTypography.bodyMedium.copyWith(
                         fontFamily: 'Karla',
-                        letterSpacing: -.6,
+                        letterSpacing: -.3,
                         fontSize: 14.sp,
                         height: 1.4,
                         fontWeight: FontWeight.w500,
@@ -187,8 +187,8 @@ class _AccountLimitsViewState extends ConsumerState<AccountLimitsView> {
                     //       child: Text(
                     //         "Increase limit",
                     //         style: AppTypography.bodyMedium.copyWith(
-                    //           fontFamily: 'CabinetGrotesk',
-                    //           fontSize: 16.sp,
+                    //        fontFamily: 'CabinetGrotesk',
+                    //           fontSize: 12.sp,
                     //           fontWeight: FontWeight.w600,
                     //           color: AppColors.purple500ForTheme(context),
                     //           // decoration: TextDecoration.underline,

@@ -132,6 +132,8 @@ class ApiError {
             errorDescription = extractDescriptionFromResponse(error.response);
           } else if (dioError.response?.statusCode == 502) {
             errorDescription = appStrings.localize.apiInternalServerError;
+          } else if (dioError.response?.statusCode == 503) {
+            errorDescription = 'Service temporarily unavailable. Please try again later.';
           } else {
             errorDescription = appStrings.localize.apiInternalServerError;
           }
@@ -148,8 +150,19 @@ class ApiError {
   String extractDescriptionFromResponse(Response<dynamic>? response) {
     String message = "";
     try {
-      if (response?.data != null && response?.data["message"] != null) {
-        message = response?.data["message"];
+      if (response?.data != null) {
+        // Check if data is a Map (JSON response)
+        if (response!.data is Map<String, dynamic>) {
+          final dataMap = response.data as Map<String, dynamic>;
+          if (dataMap["message"] != null) {
+            message = dataMap["message"];
+          } else {
+            message = response.statusMessage ?? '';
+          }
+        } else {
+          // Data is not a Map (probably HTML or string), use statusMessage
+          message = response.statusMessage ?? 'Server error';
+        }
       } else {
         message = response?.statusMessage ?? '';
       }

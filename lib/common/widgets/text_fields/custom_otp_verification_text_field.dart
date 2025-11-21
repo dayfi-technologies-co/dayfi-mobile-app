@@ -36,7 +36,7 @@ class OtpVerificationTextField extends StatelessWidget {
 
     final submittedDecoration = defaultDecoration.copyWith(
       color: Colors.transparent,
-      border: Border.all(color: AppColors.neutral500, width: 1.5),
+      border: Border.all(color: AppColors.neutral400, width: 1.5),
     );
 
     return Pinput(
@@ -50,7 +50,7 @@ class OtpVerificationTextField extends StatelessWidget {
         color: Colors.red,
         fontSize: 13,
         fontFamily: 'Karla',
-        letterSpacing: -.6,
+        letterSpacing: -.3,
         fontWeight: FontWeight.w400,
         height: 1.4,
       ),

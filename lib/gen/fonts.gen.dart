@@ -14,8 +14,8 @@ class FontFamily {
   /// Font family: Boldonse
   static const String boldonse = 'Boldonse';
 
-  /// Font family: CabinetGrotesk
-  static const String cabinetGrotesk = 'CabinetGrotesk';
+  /// Font family: Boldonse
+  static const String Boldonse = 'Boldonse';
 
   /// Font family: Karla
   static const String karla = 'Karla';

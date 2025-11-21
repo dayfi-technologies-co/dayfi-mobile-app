@@ -132,6 +132,10 @@ class NotificationService {
   /// Handle foreground messages
   void _handleForegroundMessage(RemoteMessage message) {
     AppLogger.info('Foreground message received: ${message.messageId}');
+    AppLogger.info('Message title: ${message.notification?.title}');
+    AppLogger.info('Message body: ${message.notification?.body}');
+    AppLogger.info('Message data: ${message.data}');
+    
     // For foreground messages, we'll show them as local notifications
     _showLocalNotification(
       message.notification?.title ?? 'DayFi',
@@ -263,18 +267,49 @@ class NotificationService {
   /// Trigger sign up success notification
   Future<void> triggerSignUpSuccess(String userName) async {
     try {
+      AppLogger.info('=== TRIGGERING WELCOME NOTIFICATION ===');
+      AppLogger.info('User name: $userName');
+      AppLogger.info('Is initialized: $_isInitialized');
+      
+      // Ensure service is initialized
+      if (!_isInitialized) {
+        AppLogger.info('NotificationService not initialized, initializing now...');
+        await init();
+      }
+      
+      // Add a small delay to ensure everything is ready
+      await Future.delayed(const Duration(milliseconds: 300));
+      
       await _showLocalNotification(
-        'Welcome to DayFi',
-        'Your account is ready. Send money to those who matter.',
+        'Welcome to DayFi! 🎉',
+        'Hi $userName! Your account is ready. Send money to those who matter.',
         {
           'type': 'signup_success',
           'action': 'navigate_to_profile',
           'userName': userName,
         },
       );
-      AppLogger.info('Sign up success notification triggered for: $userName');
+      
+      AppLogger.info('Sign up success notification triggered successfully for: $userName');
     } catch (e) {
       AppLogger.error('Error triggering sign up notification: $e');
+      // Retry once if failed
+      try {
+        AppLogger.info('Retrying notification...');
+        await Future.delayed(const Duration(milliseconds: 500));
+        await _showLocalNotification(
+          'Welcome to DayFi! 🎉',
+          'Hi $userName! Your account is ready. Send money to those who matter.',
+          {
+            'type': 'signup_success',
+            'action': 'navigate_to_profile',
+            'userName': userName,
+          },
+        );
+        AppLogger.info('Retry successful');
+      } catch (retryError) {
+        AppLogger.error('Retry also failed: $retryError');
+      }
     }
   }
 

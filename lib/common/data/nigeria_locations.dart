@@ -2,6 +2,7 @@
 /// 
 /// This file contains the complete list of Nigerian states and their cities/LGAs
 /// for use in location selection throughout the app.
+library;
 
 class NigeriaLocations {
   static const Map<String, List<String>> statesAndCities = {

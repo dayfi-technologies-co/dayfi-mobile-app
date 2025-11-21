@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' as material;
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:dayfi/common/data/nigeria_locations.dart';
+import 'package:dayfi/core/theme/app_colors.dart';
 
 /// Platform-specific location picker utility
 /// 
@@ -101,8 +102,8 @@ class PlatformLocationPicker {
                   child: Text(
                     title,
                     style: material.Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontFamily: 'CabinetGrotesk',
-                      fontSize: 20.sp,
+                   fontFamily: 'CabinetGrotesk',
+                      fontSize: 24.sp,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -121,8 +122,9 @@ class PlatformLocationPicker {
                       child: Text(
                         state,
                         style: TextStyle(
-                          fontSize: 16.sp,
+                          fontSize: 18.sp,
                           fontWeight: FontWeight.w500,
+                          fontFamily: 'Karla',
                         ),
                       ),
                     ),
@@ -157,7 +159,7 @@ class PlatformLocationPicker {
                         child: Text(
                           'Done',
                           style: TextStyle(
-                            color: material.Theme.of(context).primaryColor,
+                            color: AppColors.purple500,
                             fontSize: 16.sp,
                             fontWeight: FontWeight.w600,
                           ),
@@ -220,8 +222,8 @@ class PlatformLocationPicker {
                   child: Text(
                     title,
                     style: material.Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontFamily: 'CabinetGrotesk',
-                      fontSize: 20.sp,
+                   fontFamily: 'CabinetGrotesk',
+                      fontSize: 24.sp,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -240,8 +242,9 @@ class PlatformLocationPicker {
                       child: Text(
                         city,
                         style: TextStyle(
-                          fontSize: 16.sp,
+                          fontSize: 18.sp,
                           fontWeight: FontWeight.w500,
+                          fontFamily: 'Karla',
                         ),
                       ),
                     ),
@@ -276,7 +279,7 @@ class PlatformLocationPicker {
                         child: Text(
                           'Done',
                           style: TextStyle(
-                            color: material.Theme.of(context).primaryColor,
+                            color: AppColors.purple500,
                             fontSize: 16.sp,
                             fontWeight: FontWeight.w600,
                           ),
@@ -332,8 +335,8 @@ class PlatformLocationPicker {
                 child: Text(
                   title ?? 'Select State',
                   style: material.Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontFamily: 'CabinetGrotesk',
-                    fontSize: 20.sp,
+                 fontFamily: 'CabinetGrotesk',
+                    fontSize: 24.sp,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -437,8 +440,8 @@ class PlatformLocationPicker {
                 child: Text(
                   title ?? 'Select City in $state',
                   style: material.Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontFamily: 'CabinetGrotesk',
-                    fontSize: 20.sp,
+                 fontFamily: 'CabinetGrotesk',
+                    fontSize: 24.sp,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

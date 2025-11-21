@@ -118,7 +118,7 @@ class _CompletePersonalInformationViewState
                       style: Theme.of(
                         context,
                       ).textTheme.headlineMedium?.copyWith(
-                        fontFamily: 'CabinetGrotesk',
+                     fontFamily: 'CabinetGrotesk',
                         fontSize: 28.00,
                         fontWeight: FontWeight.w500,
                       ),
@@ -129,7 +129,7 @@ class _CompletePersonalInformationViewState
                     child: SingleChildScrollView(
                       controller: _scrollController,
                       padding: EdgeInsets.symmetric(
-                        horizontal: 24.w,
+                        horizontal: 18.w,
                         vertical: 4.h,
                       ),
                       child: Column(
@@ -144,7 +144,7 @@ class _CompletePersonalInformationViewState
                               fontSize: 16.sp,
                               fontWeight: FontWeight.w400,
                               fontFamily: 'Karla',
-                              letterSpacing: -.6,
+                              letterSpacing: -.3,
                               height: 1.4,
                             ),
                             textAlign: TextAlign.center,
@@ -217,7 +217,7 @@ class _CompletePersonalInformationViewState
                           // Submit Button
                           PrimaryButton(
                             borderRadius: 38,
-                            text: "Next - Complete Profile",
+                            text: "Complete Profile",
                             onPressed:
                                 personalInfoState.isFormValid &&
                                         !personalInfoState.isBusy
@@ -228,10 +228,10 @@ class _CompletePersonalInformationViewState
                                 personalInfoState.isFormValid
                                     ? AppColors.purple500ForTheme(context)
                                     : AppColors.purple500ForTheme(context).withOpacity(.25),
-                            height: 60.h,
+                            height: 48.000.h,
                             textColor: personalInfoState.isFormValid
                                 ? AppColors.neutral0
-                                : AppColors.neutral0.withOpacity(.5),
+                                : AppColors.neutral0.withOpacity(.65),
                             fontFamily: 'Karla',
                             letterSpacing: -.8,
                             fontSize: 18,
@@ -267,10 +267,27 @@ class _CompletePersonalInformationViewState
             text: _formatDateForDisplay(state.dateOfBirth),
           ),
           onChanged: notifier.setDateOfBirth,
-          suffixIcon: Icon(
-            Icons.calendar_today,
-            color: AppColors.neutral400,
-            size: 20.sp,
+          suffixIcon: Container(
+            width: 40.w,
+            alignment: Alignment.centerRight,
+            constraints: BoxConstraints.tightForFinite(),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                SvgPicture.asset(
+                  'assets/icons/svgs/swap.svg',
+                  height: 34.sp,
+                  color: AppColors.neutral700.withOpacity(.35),
+                ),
+                Center(
+                  child: SvgPicture.asset(
+                    'assets/icons/svgs/calendar.svg',
+                    height: 26,
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(.65),
+                  ),
+                ),
+              ],
+            ),
           ),
           shouldReadOnly: true,
           onTap: () => _showDatePicker(notifier),
@@ -284,7 +301,7 @@ class _CompletePersonalInformationViewState
                 color: Colors.red,
                 fontSize: 13,
                 fontFamily: 'Karla',
-                letterSpacing: -.6,
+                letterSpacing: -.3,
                 fontWeight: FontWeight.w400,
                 height: 1.4,
               ),
@@ -325,7 +342,7 @@ class _CompletePersonalInformationViewState
                 color: Colors.red,
                 fontSize: 13,
                 fontFamily: 'Karla',
-                letterSpacing: -.6,
+                letterSpacing: -.3,
                 fontWeight: FontWeight.w400,
                 height: 1.4,
               ),
@@ -341,6 +358,9 @@ class _CompletePersonalInformationViewState
     CompletePersonalInfoState state,
     CompletePersonalInfoNotifier notifier,
   ) {
+    // Dynamically set maxLength: 11 if starts with 0, otherwise 10
+    final maxLength = state.phoneNumber.startsWith('0') ? 11 : 10;
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -348,7 +368,7 @@ class _CompletePersonalInformationViewState
           label: "Phone Number",
           hintText: "Enter your phone number",
           controller: _phoneNumberController,
-          maxLength: 11,
+          maxLength: maxLength,
           onChanged: notifier.setPhoneNumber,
           keyboardType: TextInputType.phone,
         ),
@@ -361,7 +381,7 @@ class _CompletePersonalInformationViewState
                 color: Colors.red,
                 fontSize: 13,
                 fontFamily: 'Karla',
-                letterSpacing: -.6,
+                letterSpacing: -.3,
                 fontWeight: FontWeight.w400,
                 height: 1.4,
               ),
@@ -384,13 +404,31 @@ class _CompletePersonalInformationViewState
           label: "Address",
           hintText: "Enter your address",
           controller: _addressController,
+          maxLength: 100,
           onChanged: notifier.setAddress,
           textCapitalization: TextCapitalization.words,
-          // suffixIcon: Icon(
-          //   Icons.search,
-          //   color: AppColors.neutral400,
-          //   size: 20.sp,
-          // ),
+          suffixIcon: Container(
+            width: 40.w,
+            alignment: Alignment.centerRight,
+            constraints: BoxConstraints.tightForFinite(),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                SvgPicture.asset(
+                  'assets/icons/svgs/swap.svg',
+                  height: 34.sp,
+                  color: AppColors.neutral700.withOpacity(.35),
+                ),
+                Center(
+                  child: SvgPicture.asset(
+                    'assets/icons/svgs/search-normal.svg',
+                    height: 26,
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(.65),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
         if (state.addressError.isNotEmpty)
           Padding(
@@ -401,7 +439,7 @@ class _CompletePersonalInformationViewState
                 color: Colors.red,
                 fontSize: 13,
                 fontFamily: 'Karla',
-                letterSpacing: -.6,
+                letterSpacing: -.3,
                 fontWeight: FontWeight.w400,
                 height: 1.4,
               ),
@@ -437,7 +475,7 @@ class _CompletePersonalInformationViewState
                 color: Colors.red,
                 fontSize: 13,
                 fontFamily: 'Karla',
-                letterSpacing: -.6,
+                letterSpacing: -.3,
                 fontWeight: FontWeight.w400,
                 height: 1.4,
               ),
@@ -478,7 +516,7 @@ class _CompletePersonalInformationViewState
                 color: Colors.red,
                 fontSize: 13,
                 fontFamily: 'Karla',
-                letterSpacing: -.6,
+                letterSpacing: -.3,
                 fontWeight: FontWeight.w400,
                 height: 1.4,
               ),
@@ -519,7 +557,7 @@ class _CompletePersonalInformationViewState
                 color: Colors.red,
                 fontSize: 13,
                 fontFamily: 'Karla',
-                letterSpacing: -.6,
+                letterSpacing: -.3,
                 fontWeight: FontWeight.w400,
                 height: 1.4,
               ),
@@ -560,7 +598,7 @@ class _CompletePersonalInformationViewState
                 color: Colors.red,
                 fontSize: 13,
                 fontFamily: 'Karla',
-                letterSpacing: -.6,
+                letterSpacing: -.3,
                 fontWeight: FontWeight.w400,
                 height: 1.4,
               ),
@@ -583,6 +621,7 @@ class _CompletePersonalInformationViewState
           label: "Referral Code (Optional)",
           hintText: "Enter referral code if you have one",
           controller: _referralCodeController,
+          maxLength: 50,
           onChanged: notifier.setReferralCode,
           keyboardType: TextInputType.text,
         ),
@@ -595,7 +634,7 @@ class _CompletePersonalInformationViewState
                 color: Colors.red,
                 fontSize: 13,
                 fontFamily: 'Karla',
-                letterSpacing: -.6,
+                letterSpacing: -.3,
                 fontWeight: FontWeight.w400,
                 height: 1.4,
               ),
@@ -729,7 +768,7 @@ class _CountryBottomSheetState extends State<_CountryBottomSheet> {
         children: [
           SizedBox(height: 18.h),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            padding: EdgeInsets.symmetric(horizontal: 18.w),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -737,8 +776,8 @@ class _CountryBottomSheetState extends State<_CountryBottomSheet> {
                 Text(
                   'Select Country',
                   style: AppTypography.titleLarge.copyWith(
-                    fontFamily: 'CabinetGrotesk',
-                    fontSize: 18.sp,
+                 fontFamily: 'CabinetGrotesk',
+                    fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
@@ -760,7 +799,7 @@ class _CountryBottomSheetState extends State<_CountryBottomSheet> {
           SizedBox(height: 16.h),
           Expanded(
             child: ListView.builder(
-              padding: EdgeInsets.symmetric(horizontal: 24.w),
+              padding: EdgeInsets.symmetric(horizontal: 18.w),
               itemCount: _countries.length,
               itemBuilder: (context, index) {
                 final country = _countries[index];
@@ -874,7 +913,7 @@ class _OccupationBottomSheetState extends State<_OccupationBottomSheet> {
         children: [
           SizedBox(height: 18.h),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            padding: EdgeInsets.symmetric(horizontal: 18.w),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -882,8 +921,8 @@ class _OccupationBottomSheetState extends State<_OccupationBottomSheet> {
                 Text(
                   'Select Occupation',
                   style: AppTypography.titleLarge.copyWith(
-                    fontFamily: 'CabinetGrotesk',
-                    fontSize: 18.sp,
+                 fontFamily: 'CabinetGrotesk',
+                    fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
@@ -905,11 +944,32 @@ class _OccupationBottomSheetState extends State<_OccupationBottomSheet> {
           SizedBox(height: 16.h),
           // Search field
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
+            padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 16.h),
             child: CustomTextField(
               onChanged: (value) => _filterOccupations(value),
               hintText: 'Search occupations...',
-              prefixIcon: const Icon(Icons.search),
+              prefixIcon: Container(
+                width: 40.w,
+                alignment: Alignment.centerRight,
+                constraints: BoxConstraints.tightForFinite(),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SvgPicture.asset(
+                      'assets/icons/svgs/swap.svg',
+                      height: 34,
+                      color: AppColors.neutral700.withOpacity(.35),
+                    ),
+                    Center(
+                      child: SvgPicture.asset(
+                        'assets/icons/svgs/search-normal.svg',
+                        height: 26,
+                        color: AppColors.neutral700.withOpacity(.65),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               borderRadius: 40,
             ),
           ),
@@ -928,7 +988,7 @@ class _OccupationBottomSheetState extends State<_OccupationBottomSheet> {
                     ),
                   )
                 : ListView.builder(
-                    padding: EdgeInsets.symmetric(horizontal: 24.w),
+                    padding: EdgeInsets.symmetric(horizontal: 18.w),
                     itemCount: _filteredOccupations.length,
                     itemBuilder: (context, index) {
                       final occupation = _filteredOccupations[index];
@@ -939,7 +999,7 @@ class _OccupationBottomSheetState extends State<_OccupationBottomSheet> {
                           children: [
                             Text(
                               occupation['emoji']!,
-                              style: TextStyle(fontSize: 20.sp),
+                              style: TextStyle(fontSize: 24.sp),
                             ),
                             SizedBox(width: 12.w),
                             Expanded(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:dayfi/common/utils/haptic_helper.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/features/send/vm/transaction_pin_viewmodel.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
@@ -204,7 +205,7 @@ class _ChangeTransactionPinConfirmViewState
             "Confirm New Transaction PIN",
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   fontFamily: 'CabinetGrotesk',
-                  fontSize: 20.sp,
+                   fontSize: 19.sp, height: 1.6,
                   fontWeight: FontWeight.w600,
                   color: Theme.of(context).colorScheme.onSurface,
                 ),
@@ -221,13 +222,13 @@ class _ChangeTransactionPinConfirmViewState
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    padding: const EdgeInsets.symmetric(horizontal: 18),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         SizedBox(height: 4.h),
                         Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 24.w),
+                          padding: EdgeInsets.symmetric(horizontal: 18.w),
                           child: Text(
                             "Please re-enter your new 4-digit transaction PIN to confirm. This PIN will be required for all wallet transfers.",
                             style: Theme.of(
@@ -236,7 +237,7 @@ class _ChangeTransactionPinConfirmViewState
                                   fontSize: 16.sp,
                                   fontWeight: FontWeight.w400,
                                   fontFamily: 'Karla',
-                                  letterSpacing: -.6,
+                                  letterSpacing: -.3,
                                   height: 1.4,
                                 ),
                             textAlign: TextAlign.center,
@@ -246,7 +247,7 @@ class _ChangeTransactionPinConfirmViewState
                     ),
                   ),
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24.w),
+                    padding: EdgeInsets.symmetric(horizontal: 18.w),
                     child: PasscodeWidget(
                       passcodeLength: 4,
                       currentPasscode: _localPin,
@@ -259,7 +260,7 @@ class _ChangeTransactionPinConfirmViewState
                   // Continue button - only show when PIN is complete
                   if (_localPin.length == 4)
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 24.w),
+                      padding: EdgeInsets.symmetric(horizontal: 18.w),
                       child: PrimaryButton(
                         text: 'Change PIN',
                         onPressed: _localPin.length == 4 &&
@@ -269,12 +270,14 @@ class _ChangeTransactionPinConfirmViewState
                             : null,
                         isLoading: _isLoading,
                         showLoadingIndicator: true,
-                        height: 60.h,
+                        height: 48.000.h,
                         backgroundColor: _localPin.length == 4 &&
                                 _errorMessage.isEmpty &&
                                 !_isLoading
                             ? AppColors.purple500
-                            : AppColors.neutral0.withOpacity(0.12),
+                            : AppColors.purple500ForTheme(
+                            context,
+                          ).withOpacity(.25),
                         textColor: _localPin.length == 4 &&
                                 _errorMessage.isEmpty &&
                                 !_isLoading
@@ -293,7 +296,7 @@ class _ChangeTransactionPinConfirmViewState
                         .slideY(begin: 0.2, end: 0, duration: 200.ms),
                   SizedBox(height: 16.h),
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24.w),
+                    padding: EdgeInsets.symmetric(horizontal: 18.w),
                     child: Text(
                       _errorMessage.isNotEmpty
                           ? _errorMessage
@@ -347,13 +350,13 @@ class PasscodeWidget extends StatelessWidget {
               child: Text(
                 index < currentPasscode.length ? '*' : '*',
                 style: TextStyle(
-                  fontSize: 88.sp,
+                  fontSize: 70.sp,
                   letterSpacing: -10,
                   fontFamily: 'CabinetGrotesk',
                   fontWeight: FontWeight.w700,
                   color: index < currentPasscode.length
                       ? AppColors.purple500ForTheme(context)
-                      : AppColors.neutral500,
+                      : AppColors.neutral400,
                 ),
               ),
             ),
@@ -396,6 +399,7 @@ class PasscodeWidget extends StatelessWidget {
         highlightColor: Colors.transparent,
         borderRadius: BorderRadius.circular(100),
         onTap: () {
+          HapticHelper.lightImpact();
           if (currentPasscode.length < passcodeLength) {
             onPasscodeChanged(currentPasscode + number);
           }
@@ -409,7 +413,7 @@ class PasscodeWidget extends StatelessWidget {
             child: Text(
               number,
               style: TextStyle(
-                fontSize: 32.00,
+                fontSize: 25.60,
                 fontFamily: 'CabinetGrotesk',
                 fontWeight: FontWeight.w400,
                 color: Theme.of(context).colorScheme.onSurface,
@@ -427,7 +431,10 @@ class PasscodeWidget extends StatelessWidget {
   }) {
     return Builder(
       builder: (context) => GestureDetector(
-        onTap: onTap,
+        onTap: () {
+          HapticHelper.lightImpact();
+          onTap();
+        },
         child: Container(
           decoration: const BoxDecoration(
             shape: BoxShape.circle,

@@ -8,15 +8,15 @@ class OnboardingData {
           'Make international transfers to local bank accounts and mobile money wallets.',
       description:
           'Empower your relationships with seamless financial connections worldwide.',
-      illustrationPath: 'assets/icons/svgs/Box.svg',
+      illustrationPath: 'assets/icons/svgs/recipients.svg',
       decorativeElements: ['purple_starburst', 'green_starburst'],
     ),
     OnboardingPage(
-      title: '20+\ncountries, 15 currencies',
+      title: '20+\ncountries & currencies',
       subtitle: 'Send money to your Beneficiaries in their local currency.',
       description:
           'Experience global connectivity with local banking convenience.',
-      illustrationPath: 'assets/icons/svgs/Card.svg',
+      illustrationPath: 'assets/icons/svgs/transactions.svg',
       decorativeElements: ['purple_starburst', 'green_starburst'],
     ),
     OnboardingPage(
@@ -25,7 +25,7 @@ class OnboardingData {
           'Your transactions and personal data are securely protected.',
       description:
           'Your financial data stays private with enterprise-level security measures.',
-      illustrationPath: 'assets/icons/svgs/Others.svg',
+      illustrationPath: 'assets/icons/pngs/account.png',
       decorativeElements: [
         'padlock',
         'green_star',
@@ -37,7 +37,7 @@ class OnboardingData {
       title: 'Send\nmoney in minutes',
       subtitle: 'Beneficiaries typically receive funds almost instantly.',
       description: 'Experience the speed of modern financial technology.',
-      illustrationPath: 'assets/icons/svgs/Transfer.svg',
+      illustrationPath: 'assets/icons/svgs/swap.svg',
       decorativeElements: ['hand_stopwatch'],
     ),
   ];

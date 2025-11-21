@@ -51,7 +51,7 @@ class SignupView extends ConsumerWidget {
                       icon: const Icon(Icons.arrow_back_ios_new),
                     ),
                     title: Text(
-                      "Create account",
+                      "Create Account",
                       style: Theme.of(
                         context,
                       ).textTheme.headlineMedium?.copyWith(
@@ -62,7 +62,7 @@ class SignupView extends ConsumerWidget {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    padding: const EdgeInsets.symmetric(horizontal: 18),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -78,7 +78,7 @@ class SignupView extends ConsumerWidget {
                                   fontSize: 16.sp,
                                   fontWeight: FontWeight.w400,
                                   fontFamily: 'Karla',
-                                  letterSpacing: -.6,
+                                  letterSpacing: -.3,
                                   height: 1.4,
                                 ),
                                 textAlign: TextAlign.center,
@@ -149,7 +149,7 @@ class SignupView extends ConsumerWidget {
                                     color: Colors.red,
                                     fontSize: 13,
                                     fontFamily: 'Karla',
-                                    letterSpacing: -.6,
+                                    letterSpacing: -.3,
                                     fontWeight: FontWeight.w400,
                                     height: 1.4,
                                   ),
@@ -174,6 +174,7 @@ class SignupView extends ConsumerWidget {
                                         keyboardType: TextInputType.name,
                                         textCapitalization:
                                             TextCapitalization.words,
+                                        maxLength: 50,
                                         onChanged: signupNotifier.setFirstName,
                                       ),
                                       if (signupState.firstNameError.isNotEmpty)
@@ -188,7 +189,7 @@ class SignupView extends ConsumerWidget {
                                               color: Colors.red,
                                               fontSize: 13,
                                               fontFamily: 'Karla',
-                                              letterSpacing: -.6,
+                                              letterSpacing: -.3,
                                               fontWeight: FontWeight.w400,
                                               height: 1.4,
                                             ),
@@ -211,6 +212,7 @@ class SignupView extends ConsumerWidget {
                                         keyboardType: TextInputType.name,
                                         textCapitalization:
                                             TextCapitalization.words,
+                                        maxLength: 50,
                                         onChanged: signupNotifier.setLastName,
                                       ),
 
@@ -226,7 +228,7 @@ class SignupView extends ConsumerWidget {
                                               color: Colors.red,
                                               fontSize: 13,
                                               fontFamily: 'Karla',
-                                              letterSpacing: -.6,
+                                              letterSpacing: -.3,
                                               fontWeight: FontWeight.w400,
                                               height: 1.4,
                                             ),
@@ -275,6 +277,7 @@ class SignupView extends ConsumerWidget {
                                   "Enter your middle name (if you have one)",
                               keyboardType: TextInputType.name,
                               textCapitalization: TextCapitalization.words,
+                              maxLength: 50,
                               onChanged: signupNotifier.setMiddleName,
                             )
                             .animate()
@@ -316,7 +319,7 @@ class SignupView extends ConsumerWidget {
                               suffixIcon: IconButton(
                                 icon: EyeIcon(
                                   isVisible: signupState.isPasswordVisible,
-                                  color: AppColors.neutral500,
+                                  color: AppColors.neutral400,
                                   size: 20.0,
                                 ),
                                 onPressed:
@@ -381,7 +384,7 @@ class SignupView extends ConsumerWidget {
                               fontFamily: 'Karla',
                               fontSize: 14,
                               fontWeight: FontWeight.w400,
-                              letterSpacing: -.6,
+                              letterSpacing: -.3,
                               height: 1.450,
                             ),
                           ),
@@ -421,7 +424,7 @@ class SignupView extends ConsumerWidget {
                                 icon: EyeIcon(
                                   isVisible:
                                       signupState.isConfirmPasswordVisible,
-                                  color: AppColors.neutral500,
+                                  color: AppColors.neutral400,
                                   size: 20.0,
                                 ),
                                 onPressed:
@@ -510,9 +513,9 @@ class SignupView extends ConsumerWidget {
                                               context,
                                             ).colorScheme.primary,
                                         fontSize: 13.00.sp,
-                                        fontWeight: FontWeight.w400,
+                                        fontWeight: FontWeight.w500,
                                         fontFamily: 'Karla',
-                                        //  letterSpacing: -.6,
+                                        //  letterSpacing: -.3,
                                         height: 1.4,
                                         // decoration: TextDecoration.underline,
                                       ),
@@ -587,7 +590,7 @@ class SignupView extends ConsumerWidget {
                         // Submit button
                         PrimaryButton(
                               borderRadius: 38,
-                              text: "Next - Create Account",
+                              text: "Verify email address",
                               onPressed:
                                   signupState.isFormValid && !signupState.isBusy
                                       ? () => signupNotifier.signup(context)
@@ -600,11 +603,11 @@ class SignupView extends ConsumerWidget {
                                   signupState.isFormValid
                                       ? AppColors.purple500ForTheme(context)
                                       : AppColors.purple500ForTheme(context).withOpacity(.25),
-                              height: 60.h,
+                              height: 48.000.h,
                               textColor:
                                   signupState.isFormValid
                                       ? AppColors.neutral0
-                                      : AppColors.neutral0.withOpacity(.5),
+                                      : AppColors.neutral0.withOpacity(.65),
                               fontFamily: 'Karla',
                               letterSpacing: -.8,
                               fontSize: 18,
@@ -646,7 +649,7 @@ class SignupView extends ConsumerWidget {
                                     fontFamily: 'Karla',
                                     fontSize: 16.sp,
                                     fontWeight: FontWeight.w400,
-                                    letterSpacing: -.6,
+                                    letterSpacing: -.3,
                                     height: 1.4,
                                   ),
                                   children: [
@@ -657,7 +660,7 @@ class SignupView extends ConsumerWidget {
                                         color: AppColors.purple500ForTheme(context),
                                         fontSize: 16.sp,
                                         fontWeight: FontWeight.w600,
-                                        letterSpacing: -.6,
+                                        letterSpacing: -.3,
                                         height: 1.4,
                                         // decoration: TextDecoration.underline,
                                       ),
@@ -712,9 +715,9 @@ class SignupView extends ConsumerWidget {
                                       color:
                                           Theme.of(context).colorScheme.primary,
                                       fontSize: 13.00.sp,
-                                      fontWeight: FontWeight.w400,
+                                      fontWeight: FontWeight.w500,
                                       fontFamily: 'Karla',
-                                      letterSpacing: -.6,
+                                      letterSpacing: -.3,
                                       height: 1.4,
                                       // decoration: TextDecoration.underline,
                                     ),
@@ -820,7 +823,7 @@ class SignupView extends ConsumerWidget {
                     fontFamily: 'Karla',
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
-                    letterSpacing: -.6,
+                    letterSpacing: -.3,
                     height: 1.450,
                   ),
                 ),

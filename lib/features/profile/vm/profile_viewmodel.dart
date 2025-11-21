@@ -20,7 +20,7 @@ class ProfileState {
 
   // Computed properties for easy access
   String get userName {
-    if (user == null) return 'Loading...';
+    if (user == null) return '...';
     
     final firstName = user!.firstName.trim();
     final middleName = user!.middleName?.trim();
@@ -28,15 +28,20 @@ class ProfileState {
     
     // Build name parts, only including non-empty parts
     final nameParts = <String>[];
-    if (firstName.isNotEmpty) nameParts.add(firstName);
-    if (middleName != null && middleName.isNotEmpty) nameParts.add(middleName);
-    if (lastName.isNotEmpty) nameParts.add(lastName);
+    if (firstName.isNotEmpty) nameParts.add(_capitalize(firstName));
+    // if (middleName != null && middleName.isNotEmpty) nameParts.add(_capitalize(middleName));
+    if (lastName.isNotEmpty) nameParts.add(_capitalize(lastName));
     
     final fullName = nameParts.join(' ');
     return fullName.isEmpty ? 'User' : fullName;
   }
 
-  String get userEmail => user?.email ?? 'Loading...';
+  String _capitalize(String text) {
+    if (text.isEmpty) return text;
+    return text[0].toUpperCase() + text.substring(1).toLowerCase();
+  }
+
+  String get userEmail => user?.email ?? '...';
   String get userPhone => user?.phoneNumber ?? 'Not provided';
   String get tier {
     if (user?.level == null || user!.level!.isEmpty) return 'Tier 1';
@@ -62,8 +67,13 @@ class ProfileState {
 class ProfileViewModel extends StateNotifier<ProfileState> {
   ProfileViewModel() : super(const ProfileState());
 
-  Future<void> loadUserProfile() async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
+  Future<void> loadUserProfile({bool isInitialLoad = false}) async {
+    // Only show loading state if there's no existing data (initial load)
+    final shouldShowLoading = isInitialLoad || state.user == null;
+    state = state.copyWith(
+      isLoading: shouldShowLoading,
+      errorMessage: null,
+    );
     
     try {
       AppLogger.info('Loading user profile from storage...');
@@ -75,9 +85,96 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
         // Parse user data to User model
         final user = User.fromJson(userData);
         AppLogger.info('User profile loaded successfully: ${user.firstName} ${user.lastName}');
-        
+
+        // Detect presence of BVN and NIN in stored user data.
+        // Check explicit keys in the raw stored map (case-insensitive),
+        // and also fall back to idType/idNumber fields on the parsed model.
+        bool hasBVN = false;
+        bool hasNIN = false;
+
+        // Inspect raw map for keys that include 'bvn' or 'nin'
+        for (final key in userData.keys) {
+          final lowerKey = key.toString().toLowerCase();
+          final value = userData[key];
+          if (value == null) continue;
+          final stringValue = value.toString().trim();
+          if (stringValue.isEmpty) continue;
+
+          if (lowerKey.contains('bvn')) {
+            hasBVN = true;
+          }
+          if (lowerKey.contains('nin')) {
+            hasNIN = true;
+          }
+        }
+
+        // Fallback: check parsed user.idType / idNumber
+        if (!hasBVN && user.idType != null && user.idNumber != null) {
+          if (user.idType!.toLowerCase() == 'bvn' && user.idNumber!.trim().isNotEmpty) {
+            hasBVN = true;
+          }
+        }
+        if (!hasNIN && user.idType != null && user.idNumber != null) {
+          if (user.idType!.toLowerCase() == 'nin' && user.idNumber!.trim().isNotEmpty) {
+            hasNIN = true;
+          }
+        }
+
+        // If both BVN and NIN exist, force Tier to level-2
+        User effectiveUser = user;
+        if (hasBVN && hasNIN) {
+          // Only modify if not already level-2 or higher
+          final currentLevel = (user.level ?? '').toLowerCase();
+          if (!currentLevel.contains('level-2') && !currentLevel.contains('level-3')) {
+            effectiveUser = User(
+              userId: user.userId,
+              email: user.email,
+              password: user.password,
+              userType: user.userType,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              middleName: user.middleName,
+              gender: user.gender,
+              dateOfBirth: user.dateOfBirth,
+              country: user.country,
+              state: user.state,
+              city: user.city,
+              street: user.street,
+              postalCode: user.postalCode,
+              address: user.address,
+              phoneNumber: user.phoneNumber,
+              idType: user.idType,
+              idNumber: user.idNumber,
+              status: user.status,
+              refreshToken: user.refreshToken,
+              isDeleted: user.isDeleted,
+              verificationToken: user.verificationToken,
+              verificationTokenExpiryTime: user.verificationTokenExpiryTime,
+              passwordResetToken: user.passwordResetToken,
+              passwordResetTokenExpiryTime: user.passwordResetTokenExpiryTime,
+              verificationEmail: user.verificationEmail,
+              createdAt: user.createdAt,
+              updatedAt: user.updatedAt,
+              token: user.token,
+              expires: user.expires,
+              level: 'level-2',
+              transactionPin: user.transactionPin,
+              isIdVerified: user.isIdVerified,
+              isBiometricsSetup: user.isBiometricsSetup,
+              dayfiId: user.dayfiId,
+            );
+
+            // Persist the adjusted level back to local storage so UI and future loads are consistent
+            try {
+              localCache.setUser = effectiveUser.toJson();
+            } catch (e) {
+              AppLogger.error('Failed to persist adjusted user level: $e');
+            }
+          }
+        }
+
         state = state.copyWith(
-          user: user,
+          user: effectiveUser,
           isLoading: false,
           errorMessage: null,
         );

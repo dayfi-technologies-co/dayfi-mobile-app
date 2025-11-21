@@ -88,14 +88,14 @@ class _BvnNinVerificationViewState
                           .headlineMedium
                           ?.copyWith(
                            fontFamily: 'CabinetGrotesk',
-              fontSize: 20.sp,
+               fontSize: 19.sp, height: 1.6,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface,
                           ),
                     ),
                   ),
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 4.h),
+                    padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 4.h),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -106,7 +106,7 @@ class _BvnNinVerificationViewState
                                 fontSize: 16.sp,
                                 fontWeight: FontWeight.w400,
                                 fontFamily: 'Karla',
-                                letterSpacing: -.6,
+                                letterSpacing: -.3,
                                 height: 1.4,
                               ),
                           textAlign: TextAlign.center,
@@ -124,7 +124,7 @@ class _BvnNinVerificationViewState
                         // Submit Button
                         PrimaryButton(
                           borderRadius: 38,
-                          text: "Next - Verify",
+                          text: "Verify",
                           onPressed: verificationState.isFormValid &&
                                   !verificationState.isBusy
                               ? () => verificationNotifier.submitVerification(context)
@@ -132,10 +132,10 @@ class _BvnNinVerificationViewState
                           backgroundColor: verificationState.isFormValid
                               ? AppColors.purple500ForTheme(context)
                               : AppColors.purple500ForTheme(context).withOpacity(.25),
-                          height: 60.h,
+                          height: 48.000.h,
                           textColor: verificationState.isFormValid
                               ? AppColors.neutral0
-                              : AppColors.neutral0.withOpacity(.5),
+                              : AppColors.neutral0.withOpacity(.65),
                           fontFamily: 'Karla',
                           letterSpacing: -.8,
                           fontSize: 18,
@@ -181,7 +181,7 @@ class _BvnNinVerificationViewState
                 color: Colors.red,
                 fontSize: 13,
                 fontFamily: 'Karla',
-                letterSpacing: -.6,
+                letterSpacing: -.3,
                 fontWeight: FontWeight.w400,
                 height: 1.4,
               ),
@@ -218,7 +218,7 @@ class _BvnNinVerificationViewState
                 color: Colors.red,
                 fontSize: 13,
                 fontFamily: 'Karla',
-                letterSpacing: -.6,
+                letterSpacing: -.3,
                 fontWeight: FontWeight.w400,
                 height: 1.4,
               ),

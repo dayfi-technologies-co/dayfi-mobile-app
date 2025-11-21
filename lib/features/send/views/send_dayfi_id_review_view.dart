@@ -1,8 +1,7 @@
 import 'dart:math';
+import 'package:dayfi/common/utils/haptic_helper.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -15,6 +14,8 @@ import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/services/remote/payment_service.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/features/send/vm/transaction_pin_viewmodel.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:dayfi/common/widgets/top_snackbar.dart';
 
 class SendDayfiIdReviewView extends ConsumerStatefulWidget {
   final Map<String, dynamic> selectedData;
@@ -36,7 +37,8 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
   final _descriptionController = TextEditingController();
   final _reasonController = TextEditingController();
   String _selectedReason = '';
-  bool _isLoading = false;
+  final bool _isLoading = false;
+  // ignore: unused_field
   bool _isProcessingPin = false;
   final ValueNotifier<bool> _isProcessingPinNotifier = ValueNotifier<bool>(
     false,
@@ -45,34 +47,14 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
   bool _hasCheckedPinOnResume = false;
 
   final List<Map<String, String>> _reasons = [
-    {'emoji': '👨‍👩‍👧‍👦', 'name': 'Family Support'},
-    {'emoji': '🎓', 'name': 'Education'},
-    {'emoji': '🏥', 'name': 'Medical Expenses'},
-    {'emoji': '💼', 'name': 'Business Investment'},
-    {'emoji': '🚨', 'name': 'Emergency'},
-    {'emoji': '✈️', 'name': 'Travel'},
     {'emoji': '🎁', 'name': 'Gift'},
-    {'emoji': '🏠', 'name': 'Rent/Mortgage'},
-    {'emoji': '⚡', 'name': 'Utilities'},
-    {'emoji': '🛒', 'name': 'Food & Groceries'},
-    {'emoji': '🚗', 'name': 'Transportation'},
+    {'emoji': '🏠', 'name': 'Housing'},
+    {'emoji': '🛒', 'name': 'Groceries'},
+    {'emoji': '✈️', 'name': 'Travel'},
+    {'emoji': '🏥', 'name': 'Health'},
     {'emoji': '🎬', 'name': 'Entertainment'},
-    {'emoji': '💰', 'name': 'Savings'},
-    {'emoji': '💳', 'name': 'Debt Payment'},
-    {'emoji': '🛡️', 'name': 'Insurance'},
-    {'emoji': '❤️', 'name': 'Charity/Donation'},
-    {'emoji': '💒', 'name': 'Wedding'},
-    {'emoji': '🕊️', 'name': 'Funeral'},
-    {'emoji': '🎂', 'name': 'Birthday Celebration'},
-    {'emoji': '🎄', 'name': 'Holiday Expenses'},
-    {'emoji': '🔨', 'name': 'Home Improvement'},
-    {'emoji': '💻', 'name': 'Technology Purchase'},
-    {'emoji': '👕', 'name': 'Clothing'},
-    {'emoji': '🏥', 'name': 'Healthcare'},
-    {'emoji': '⚖️', 'name': 'Legal Fees'},
-    {'emoji': '📊', 'name': 'Tax Payment'},
-    {'emoji': '📈', 'name': 'Investment'},
-    {'emoji': '🏦', 'name': 'Loan Repayment'},
+    {'emoji': '🏫', 'name': 'School Fees'},
+    {'emoji': '💡', 'name': 'Bills'},
     {'emoji': '❓', 'name': 'Other'},
   ];
 
@@ -318,26 +300,26 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
       // Clear PIN on error
       ref.read(transactionPinProvider.notifier).resetForm();
 
-      // Don't close bottom sheet - let user retry
-      // Show error message in bottom sheet
-      ref
-          .read(transactionPinProvider.notifier)
-          .setError(
-            e.toString().contains('PIN') || e.toString().contains('pin')
-                ? 'Incorrect PIN. Please try again.'
-                : 'Failed to initiate transfer. Please try again.',
-          );
+      // Determine user-friendly message based on error
+      String userFriendlyMessage;
+      final errorString = e.toString().toLowerCase();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            e.toString().contains('PIN') || e.toString().contains('pin')
-                ? 'Incorrect PIN. Please try again.'
-                : 'Failed to initiate transfer: ${e.toString()}',
-          ),
-          backgroundColor: AppColors.error500,
-        ),
-      );
+      if (errorString.contains('pin') || errorString.contains('incorrect')) {
+        userFriendlyMessage = 'Incorrect PIN. Please try again.';
+      } else if (errorString.contains('insufficient') ||
+          errorString.contains('balance')) {
+        userFriendlyMessage =
+            'Insufficient wallet balance. Please fund your wallet and try again.';
+      } else {
+        // Prefer backend-provided message when available
+        userFriendlyMessage =
+            e.toString().isNotEmpty
+                ? e.toString()
+                : 'Failed to initiate transfer. Please try again.';
+      }
+
+      // Show error as a top snackbar (keeps bottom sheet open for retry)
+      TopSnackbar.show(context, message: userFriendlyMessage, isError: true);
     } finally {
       // Reset processing state (this will trigger modal rebuild via ValueNotifier)
       _isProcessingPin = false;
@@ -370,7 +352,7 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
             'Review',
             style: Theme.of(context).textTheme.headlineLarge?.copyWith(
               fontFamily: 'CabinetGrotesk',
-              fontSize: 20.sp,
+               fontSize: 19.sp, height: 1.6,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface,
             ),
@@ -378,7 +360,7 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
           centerTitle: true,
         ),
         body: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+          padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 12.h),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -395,15 +377,15 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
               // Description
               _buildDescriptionSection(),
 
-              SizedBox(height: 48.h),
+              SizedBox(height: 56.h),
 
               // Continue Button
               PrimaryButton(
-                text: 'Next - Confirm Payment',
+                text: 'Confirm Payment',
                 onPressed:
                     _selectedReason.isNotEmpty ? _proceedToPayment : null,
                 isLoading: _isLoading,
-                height: 60.h,
+                height: 48.000.h,
                 backgroundColor:
                     _selectedReason.isNotEmpty
                         ? AppColors.purple500
@@ -413,7 +395,7 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
                 textColor:
                     _selectedReason.isNotEmpty
                         ? AppColors.neutral0
-                        : AppColors.neutral0.withOpacity(.5),
+                        : AppColors.neutral0.withOpacity(.65),
                 fontFamily: 'Karla',
                 letterSpacing: -.8,
                 fontSize: 18,
@@ -467,8 +449,8 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
           Text(
             'Transfer Details',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontFamily: 'CabinetGrotesk',
-              fontSize: 18.sp,
+              fontFamily: 'Karla',
+              fontSize: 16.sp,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -492,7 +474,10 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
           child: SvgPicture.asset('assets/icons/svgs/fee.svg', height: 24),
         );
       case 'recipient':
-        return SvgPicture.asset('assets/icons/svgs/user.svg', height: 24);
+        return Padding(
+          padding: EdgeInsetsGeometry.all(1),
+          child: Image.asset("assets/icons/pngs/account_4.png", height: 22),
+        );
       case 'delivery method':
         return SvgPicture.asset('assets/icons/svgs/delivery.svg', height: 24);
       case 'transfer time':
@@ -536,8 +521,8 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
             child: Text(
               value,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                fontFamily: 'CabinetGrotesk',
-                fontSize: 14.sp,
+                fontFamily: 'Karla',
+                fontSize: 13.sp,
                 fontWeight: FontWeight.w600,
                 color: Theme.of(context).colorScheme.onSurface,
               ),
@@ -556,8 +541,8 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
         Text(
           'Additional Information (Optional)',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontFamily: 'CabinetGrotesk',
-            fontSize: 18.sp,
+            fontFamily: 'Karla',
+            fontSize: 16.sp,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -590,7 +575,7 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
               children: [
                 SizedBox(height: 18.h),
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 24.w),
+                  padding: EdgeInsets.symmetric(horizontal: 18.w),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -598,8 +583,8 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
                       Text(
                         'Transfer reason',
                         style: AppTypography.titleLarge.copyWith(
-                          fontFamily: 'CabinetGrotesk',
-                          fontSize: 18.sp,
+                          fontFamily: 'Karla',
+                          fontSize: 16.sp,
                           fontWeight: FontWeight.w600,
                           color: Theme.of(context).colorScheme.onSurface,
                         ),
@@ -621,7 +606,7 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
                 SizedBox(height: 16.h),
                 Expanded(
                   child: ListView.builder(
-                    padding: EdgeInsets.symmetric(horizontal: 24.w),
+                    padding: EdgeInsets.symmetric(horizontal: 18.w),
                     itemCount: _reasons.length,
                     itemBuilder: (context, index) {
                       final reason = _reasons[index];
@@ -636,7 +621,7 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
                           ),
                           child: Text(
                             reason['emoji']!,
-                            style: TextStyle(fontSize: 20.sp),
+                            style: TextStyle(fontSize: 24.sp),
                           ),
                         ),
                         title: Text(
@@ -673,6 +658,7 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
   }
 }
 
+// Transaction PIN Bottom Sheet Widget
 // Transaction PIN Bottom Sheet Widget
 class TransactionPinBottomSheet extends ConsumerStatefulWidget {
   final Function(String) onPinEntered;
@@ -716,7 +702,7 @@ class _TransactionPinBottomSheetState
         children: [
           SizedBox(height: 18.h),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            padding: EdgeInsets.symmetric(horizontal: 18.w),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -724,8 +710,8 @@ class _TransactionPinBottomSheetState
                 Text(
                   'Enter Transaction PIN',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontFamily: 'CabinetGrotesk',
-                    fontSize: 18.sp,
+                    fontFamily: 'Karla',
+                    fontSize: 16.sp,
                     fontWeight: FontWeight.w600,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
@@ -748,77 +734,48 @@ class _TransactionPinBottomSheetState
           SizedBox(height: MediaQuery.of(context).size.width * 0.15),
 
           // PIN dots
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(
-              4,
-              (index) => Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                child: Text(
-                  index < pinState.pin.length ? '*' : '*',
-                  style: TextStyle(
-                    fontSize: 88.sp,
-                    letterSpacing: -20,
-                    fontFamily: 'CabinetGrotesk',
-                    fontWeight: FontWeight.w700,
-                    color:
-                        index < pinState.pin.length
-                            ? AppColors.purple500ForTheme(context)
-                            : AppColors.neutral500,
+          Stack(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(
+                  4,
+                  (index) => Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                    child: Text(
+                      index < pinState.pin.length ? '*' : '*',
+                      style: TextStyle(
+                        fontSize: 70.sp,
+                        letterSpacing: -25,
+                        fontFamily: 'CabinetGrotesk',
+                        fontWeight: FontWeight.w700,
+                        color:
+                            index < pinState.pin.length
+                                ? AppColors.purple500ForTheme(context)
+                                : AppColors.neutral300,
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ),
 
-          SizedBox(height: MediaQuery.of(context).size.width * 0.075),
+              // SizedBox(height: MediaQuery.of(context).size.width * 0.075),
 
-          // Fixed height container for loading indicator and error message
-          SizedBox(
-            height: 80.h,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Loading indicator
-                if (widget.isProcessing) ...[
-                  CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      AppColors.purple500ForTheme(context),
+              // Loading indicator section
+              if (widget.isProcessing)
+                Positioned(
+                  top: 50,
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: LoadingAnimationWidget.horizontalRotatingDots(
+                      color: AppColors.purple100,
+                      size: 32.0.w,
                     ),
                   ),
-                  SizedBox(height: 16.h),
-                  Text(
-                    'Verifying PIN...',
-                    style: TextStyle(
-                      fontFamily: 'Karla',
-                      fontSize: 14.sp,
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withOpacity(0.7),
-                      letterSpacing: -0.4,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-
-                // Error message
-                if (pinState.errorMessage.isNotEmpty && !widget.isProcessing)
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24.w),
-                    child: Text(
-                      pinState.errorMessage,
-                      style: TextStyle(
-                        fontFamily: 'Karla',
-                        fontSize: 13.sp,
-                        color: Colors.red.shade800,
-                        letterSpacing: -0.4,
-                        fontWeight: FontWeight.w400,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-              ],
-            ),
+                ),
+            ],
           ),
 
           // Number pad - disabled when processing
@@ -831,7 +788,7 @@ class _TransactionPinBottomSheetState
                   childAspectRatio: 1.5,
                   mainAxisSpacing: 16,
                   crossAxisSpacing: 16,
-                  padding: EdgeInsets.symmetric(horizontal: 24.w),
+                  padding: EdgeInsets.symmetric(horizontal: 18.w),
                   physics: const NeverScrollableScrollPhysics(),
                   children: [
                     ...List.generate(9, (index) {
@@ -851,7 +808,7 @@ class _TransactionPinBottomSheetState
                     const SizedBox.shrink(),
                     _buildNumberButton('0', () {
                       if (pinState.pin.length < 4 && !widget.isProcessing) {
-                        final newPin = pinState.pin + '0';
+                        final newPin = '${pinState.pin}0';
                         pinNotifier.updatePin(newPin);
                         if (newPin.length == 4) {
                           Future.delayed(Duration(milliseconds: 300), () {
@@ -896,7 +853,13 @@ class _TransactionPinBottomSheetState
             splashColor: Colors.transparent,
             highlightColor: Colors.transparent,
             borderRadius: BorderRadius.circular(100),
-            onTap: widget.isProcessing ? null : onTap,
+            onTap:
+                widget.isProcessing
+                    ? null
+                    : () {
+                      HapticHelper.lightImpact();
+                      onTap();
+                    },
             child: Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
@@ -906,7 +869,7 @@ class _TransactionPinBottomSheetState
                 child: Text(
                   number,
                   style: TextStyle(
-                    fontSize: 32.00,
+                    fontSize: 25.60,
                     fontFamily: 'CabinetGrotesk',
                     fontWeight: FontWeight.w400,
                     color: Theme.of(context).colorScheme.onSurface,
@@ -923,13 +886,21 @@ class _TransactionPinBottomSheetState
     required VoidCallback onTap,
   }) {
     return GestureDetector(
-      onTap: widget.isProcessing ? null : onTap,
+      onTap:
+          widget.isProcessing
+              ? null
+              : () {
+                HapticHelper.lightImpact();
+                onTap();
+              },
       child: Container(
         decoration: const BoxDecoration(
           shape: BoxShape.circle,
           color: Colors.transparent,
         ),
-        child: Center(child: Icon(icon, color: AppColors.purple500ForTheme(context))),
+        child: Center(
+          child: Icon(icon, color: AppColors.purple500ForTheme(context)),
+        ),
       ),
     );
   }

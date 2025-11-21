@@ -18,7 +18,7 @@ class DayfiTagExplanationView extends ConsumerWidget {
         backgroundColor: AppColors.purple500,
         body: SafeArea(
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 4.h),
+            padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 4.h),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -47,31 +47,31 @@ class DayfiTagExplanationView extends ConsumerWidget {
 
                   children: [
                     SvgPicture.asset(
-                      'assets/icons/svgs/bankk.svg',
+                      'assets/icons/svgs/at.svg',
                       height: MediaQuery.of(context).size.width * 0.5,
                       width: MediaQuery.of(context).size.width * 0.5,
                       color: AppColors.warning500,
                     ),
-                    Text(
-                      '@',
-                      style: TextStyle(
-                        fontFamily: 'CabinetGrotesk',
-                        fontSize: MediaQuery.of(context).size.width * 0.3,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.error500,
-                      ),
-                    ),
+                    // Text(
+                    //   '@',
+                    //   style: TextStyle(
+                    //  fontFamily: 'CabinetGrotesk',
+                    //     fontSize: MediaQuery.of(context).size.width * 0.3,
+                    //     fontWeight: FontWeight.w600,
+                    //     color: AppColors.error500,
+                    //   ),
+                    // ),
                   ],
                 ),
 
                 Text(
                   "Meet your DayFi Tag",
                   style: AppTypography.headlineLarge.copyWith(
-                    fontFamily: 'CabinetGrotesk',
-                    fontSize: 28.sp,
+                 fontFamily: 'CabinetGrotesk',
+                    fontSize: 22.sp, height: 1.7,
                     fontWeight: FontWeight.w600,
                     color: AppColors.neutral0,
-                    height: 1.2,
+                    // height: 1.2,
                     letterSpacing: -0.4,
                   ),
                   textAlign: TextAlign.center,
@@ -83,7 +83,7 @@ class DayfiTagExplanationView extends ConsumerWidget {
                     fontWeight: FontWeight.w400,
                     fontFamily: 'Karla',
                     color: AppColors.neutral50,
-                    letterSpacing: -.6,
+                    letterSpacing: -.3,
                     height: 1.5,
                   ),
                   textAlign: TextAlign.center,
@@ -96,7 +96,7 @@ class DayfiTagExplanationView extends ConsumerWidget {
                 //     fontWeight: FontWeight.w400,
                 //     fontFamily: 'Karla',
                 //     color: AppColors.neutral50.withOpacity(0.9),
-                //     letterSpacing: -.6,
+                //     letterSpacing: -.3,
                 //     height: 1.5,
                 //   ),
                 //   textAlign: TextAlign.center,
@@ -104,7 +104,7 @@ class DayfiTagExplanationView extends ConsumerWidget {
                 SizedBox(height: 40.h),
                 PrimaryButton(
                   borderRadius: 38,
-                  text: "Next - Create DayFi Tag",
+                  text: "Create DayFi Tag",
                   onPressed: () async {
                     final result = await Navigator.pushNamed(
                       context,
@@ -115,7 +115,7 @@ class DayfiTagExplanationView extends ConsumerWidget {
                     }
                   },
                   backgroundColor: AppColors.neutral0,
-                  height: 60.h,
+                  height: 48.000.h,
                   textColor: AppColors.purple500ForTheme(context),
                   fontFamily: 'Karla',
                   letterSpacing: -.8,

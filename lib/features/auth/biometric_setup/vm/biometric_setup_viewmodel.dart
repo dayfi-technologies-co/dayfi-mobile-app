@@ -99,7 +99,7 @@ class BiometricSetupNotifier extends StateNotifier<BiometricSetupState> {
       AppLogger.info('Platform info: $platformInfo');
 
       // Check if biometrics are already enabled for this app
-      final String? biometricEnabled = await _secureStorage.read('biometric_enabled');
+      final String biometricEnabled = await _secureStorage.read('biometric_enabled');
       final bool isEnabled = biometricEnabled == 'true';
 
       state = state.copyWith(

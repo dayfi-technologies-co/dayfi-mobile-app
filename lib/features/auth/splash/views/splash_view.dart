@@ -30,7 +30,7 @@ class _SplashViewState extends ConsumerState<SplashView> {
     try {
       // First, check if this is a new app version and clear data if needed
       await _versionService.isNewVersion();
-      
+
       final firstTime = await _secureStorage.read(StorageKeys.isFirstTime);
       final token = await _secureStorage.read(StorageKeys.token);
       final passcode = await _secureStorage.read(StorageKeys.passcode);
@@ -99,13 +99,13 @@ class _SplashViewState extends ConsumerState<SplashView> {
           // Main content centered
           Center(
             child: Text(
-              "skrrt",
+              "Purple",
               style: TextStyle(
-                fontFamily: 'Boldonse',
+                fontFamily: 'CabinetGrotesk',
                 fontSize: 28.sp,
-                fontWeight: FontWeight.w900,
-                color: AppColors.neutral900,
-                height: 1.3,
+                fontWeight: FontWeight.w500,
+                color: AppColors.purple700,
+                // height: 1.3,
               ),
             ),
           ),
@@ -120,7 +120,7 @@ class _SplashViewState extends ConsumerState<SplashView> {
                 Text(
                   'Powered by',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.neutral500,
+                    color: AppColors.neutral900.withOpacity(.75),
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w400,
                     fontFamily: 'Karla',
@@ -133,9 +133,9 @@ class _SplashViewState extends ConsumerState<SplashView> {
                   child: Text(
                     'dayfi',
                     style: TextStyle(
-                      fontFamily: 'Boldonse',
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w900,
+                      fontFamily: 'CabinetGrotesk',
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w500,
                       color: AppColors.neutral900,
                       height: 1.3,
                     ),

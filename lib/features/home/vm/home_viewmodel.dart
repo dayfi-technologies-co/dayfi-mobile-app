@@ -88,8 +88,13 @@ class HomeViewModel extends StateNotifier<HomeState> {
   HomeViewModel() : super(const HomeState());
 
   /// Fetch wallet details from API
-  Future<void> fetchWalletDetails() async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
+  Future<void> fetchWalletDetails({bool isInitialLoad = false}) async {
+    // Only show loading state if there's no existing data (initial load)
+    final shouldShowLoading = isInitialLoad || state.wallets.isEmpty;
+    state = state.copyWith(
+      isLoading: shouldShowLoading,
+      errorMessage: null,
+    );
 
     try {
       AppLogger.info('Fetching wallet details from API...');
@@ -144,7 +149,7 @@ class HomeViewModel extends StateNotifier<HomeState> {
 
   /// Initialize wallet data (call this when view loads)
   Future<void> initialize() async {
-    await fetchWalletDetails();
+    await fetchWalletDetails(isInitialLoad: true);
   }
 }
 

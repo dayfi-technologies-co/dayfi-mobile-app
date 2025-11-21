@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dayfi/services/remote/payment_service.dart';
 import 'package:dayfi/services/remote/wallet_service.dart';
-import 'package:dayfi/models/wallet_transaction.dart';
 import 'package:dayfi/app_locator.dart';
 
 class TransactionMonitorService {

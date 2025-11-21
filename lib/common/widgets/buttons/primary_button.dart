@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
+import 'package:dayfi/common/utils/haptic_helper.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 /// A reusable primary button widget that follows the Dayfi design system.
@@ -140,7 +141,7 @@ class PrimaryButton extends StatelessWidget {
       textColor: textColor ?? AppColors.neutral0, // bg-white-0
       borderColor: borderColor,
       width: width ?? 343.w,
-      height: height ?? 48.h,
+      height: height ?? 56.h,
       horizontalPadding: 10.w,
       verticalPadding: 8.h,
       borderRadius: 10.r,
@@ -216,12 +217,12 @@ class PrimaryButton extends StatelessWidget {
       textColor: textColor ?? AppColors.neutral0,
       borderColor: borderColor,
       width: 375.w,
-      height: 60.h,
+      height: 48.000.h,
       horizontalPadding: 12.w,
       verticalPadding: 10.h,
       borderRadius: 28.r,
       borderWidth: 0,
-      fontSize: 20.sp,
+      fontSize: 24.sp,
       fontWeight: AppTypography.bold,
       letterSpacing: 0.2,
       lineHeight: 1.6,
@@ -272,50 +273,59 @@ class PrimaryButton extends StatelessWidget {
                 ]
                 : null,
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: isDisabled ? null : onPressed,
-          borderRadius: BorderRadius.circular(borderRadius ?? 10.r),
-          child: SizedBox(
-            width: double.infinity,
-            height: double.infinity,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                if (isLoading && showLoadingIndicator) ...[
-                  SizedBox(
-                    width: loadingIndicatorSize ?? 20.w,
-                    height: loadingIndicatorSize ?? 20.w,
-                    child: LoadingAnimationWidget.horizontalRotatingDots(
-                      color: loadingIndicatorColor ?? effectiveTextColor,
-                      size: loadingIndicatorSize ?? 20,
-                    ),
-                  ),
-                ] else ...[
-                  if (child != null)
-                    child!
-                  else
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 4.w),
-                      child: Text(
-                        text,
-                        style: TextStyle(
-                          color: effectiveTextColor,
-                          fontSize: fontSize ?? 18.sp,
-                          fontFamily:
-                              fontFamily ?? AppTypography.secondaryFontFamily,
-                          fontWeight: fontWeight ?? AppTypography.medium,
-                          height: lineHeight ?? 1.78,
-                          letterSpacing: -.8,
-                        ),
-                        textAlign: TextAlign.center,
+      child: Semantics(
+        button: true,
+        enabled: !isDisabled,
+        label: text,
+        hint: isLoading ? 'Loading' : null,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: isDisabled ? null : () {
+              HapticHelper.mediumImpact();
+              onPressed?.call();
+            },
+            borderRadius: BorderRadius.circular(borderRadius ?? 10.r),
+            child: SizedBox(
+              width: double.infinity,
+              height: double.infinity,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  if (isLoading && showLoadingIndicator) ...[
+                    SizedBox(
+                      width: loadingIndicatorSize ?? 20.w,
+                      height: loadingIndicatorSize ?? 20.w,
+                      child: LoadingAnimationWidget.horizontalRotatingDots(
+                        color: loadingIndicatorColor ?? effectiveTextColor,
+                        size: loadingIndicatorSize ?? 20,
                       ),
                     ),
+                  ] else ...[
+                    if (child != null)
+                      child!
+                    else
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 4.w),
+                        child: Text(
+                          text,
+                          style: TextStyle(
+                            color: effectiveTextColor,
+                            fontSize: fontSize ?? 18.sp,
+                            fontFamily:
+                                fontFamily ?? AppTypography.secondaryFontFamily,
+                            fontWeight: fontWeight ?? AppTypography.medium,
+                            height: lineHeight ?? 1.78,
+                            letterSpacing: -.8,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),

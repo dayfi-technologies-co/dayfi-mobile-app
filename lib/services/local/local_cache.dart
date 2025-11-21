@@ -88,6 +88,7 @@ class LocalCache {
       await sharedPreferences.remove(StorageKeys.faceIDTouchID);
       await sharedPreferences.remove(StorageKeys.facedIdToSharedPrefKey);
       await sharedPreferences.remove(StorageKeys.fxInflowSheet);
+      await sharedPreferences.remove('dayfi_id'); // Clear cached DayFi ID
       
       AppLogger.info('All user data cleared successfully');
     } catch (e) {

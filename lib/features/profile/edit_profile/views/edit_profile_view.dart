@@ -142,18 +142,17 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
             onPressed: () => Navigator.pop(context),
             icon: Icon(
               Icons.arrow_back_ios,
-               color: Theme.of(context).colorScheme.onSurface,
+              color: Theme.of(context).colorScheme.onSurface,
               // size: 20.sp,
             ),
           ),
           title: Text(
             "Edit Profile",
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontFamily: 'CabinetGrotesk',
-            fontSize: 20.sp,
-            fontWeight: FontWeight.w600,
-            color: Theme.of(context).colorScheme.onSurface,
-          
+           fontFamily: 'CabinetGrotesk',
+               fontSize: 19.sp, height: 1.6,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
         ),
@@ -163,7 +162,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
             child: Form(
               key: _formKey,
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 4.h),
+                padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 4.h),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -174,7 +173,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w400,
                         fontFamily: 'Karla',
-                        letterSpacing: -.6,
+                        letterSpacing: -.3,
                         height: 1.4,
                       ),
                       textAlign: TextAlign.center,
@@ -243,6 +242,42 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
 
                     // Action Buttons
                     _buildActionButtons(editProfileState, editProfileNotifier),
+                    SizedBox(height: 18.h),
+
+                    Container(
+                      padding: EdgeInsets.all(10.0),
+                      decoration: BoxDecoration(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.primaryContainer.withOpacity(0.25),
+                        borderRadius: BorderRadius.circular(4.r),
+                        // border: Border.all(
+                        //   color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                        //   width: 1.0,
+                        // ),
+                      ),
+                      child: Row(
+                        // crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(width: 8),
+                          Image.asset("assets/images/idea.png", height: 20),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'To update your profile, kindly reach out to our support team at support@dayfi.co or click the "Do you need help" button above this.',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontFamily: 'Karla',
+                                fontWeight: FontWeight.w400,
+                                letterSpacing: -0.4,
+                                height: 1.5,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                     SizedBox(height: 50.h),
                   ],
                 ),
@@ -262,6 +297,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         CustomTextField(
+          shouldFaintFillColor: true,
           label: "First Name",
           hintText: "Enter your first name",
           controller: _firstNameController,
@@ -282,7 +318,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
                 color: Colors.red,
                 fontSize: 13,
                 fontFamily: 'Karla',
-                letterSpacing: -.6,
+                letterSpacing: -.3,
                 fontWeight: FontWeight.w400,
                 height: 1.4,
               ),
@@ -302,6 +338,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         CustomTextField(
+          shouldFaintFillColor: true,
           label: "Last Name",
           hintText: "Enter your last name",
           controller: _lastNameController,
@@ -322,7 +359,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
                 color: Colors.red,
                 fontSize: 13,
                 fontFamily: 'Karla',
-                letterSpacing: -.6,
+                letterSpacing: -.3,
                 fontWeight: FontWeight.w400,
                 height: 1.4,
               ),
@@ -342,6 +379,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
       label: "Middle Name (Optional)",
       hintText: "Enter your middle name",
       controller: _middleNameController,
+      maxLength: 50,
       onChanged: notifier.setMiddleName,
       keyboardType: TextInputType.name,
       textCapitalization: TextCapitalization.words,
@@ -356,6 +394,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         CustomTextField(
+          shouldFaintFillColor: true,
           label: "Email Address",
           hintText: "Enter your email address",
           controller: _emailController,
@@ -374,7 +413,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
                 color: Colors.red,
                 fontSize: 13,
                 fontFamily: 'Karla',
-                letterSpacing: -.6,
+                letterSpacing: -.3,
                 fontWeight: FontWeight.w400,
                 height: 1.4,
               ),
@@ -390,17 +429,21 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
     EditProfileState state,
     EditProfileNotifier notifier,
   ) {
+    // Dynamically set maxLength: 11 if starts with 0, otherwise 10
+    final maxLength = state.phoneNumber.startsWith('0') ? 11 : 10;
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         CustomTextField(
+          // shouldFaintFillColor: true,
           label: "Phone Number",
           hintText: "Enter your phone number",
           controller: _phoneNumberController,
           onChanged: notifier.setPhoneNumber,
           keyboardType: TextInputType.phone,
-          maxLength: 11,
-          shouldReadOnly: true, // User cannot directly change phone number
+          maxLength: maxLength,
+          // shouldReadOnly: true, // User cannot directly change phone number
           enableInteractiveSelection:
               false, // Disable text selection and context menu
         ),
@@ -414,7 +457,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
                 color: Colors.red,
                 fontSize: 13,
                 fontFamily: 'Karla',
-                letterSpacing: -.6,
+                letterSpacing: -.3,
                 fontWeight: FontWeight.w400,
                 height: 1.4,
               ),
@@ -435,7 +478,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
         // Save Button
         PrimaryButton(
           borderRadius: 38,
-          text: "Next - Save Changes",
+          text: "Save Changes",
           onPressed:
               state.isFormValid && !state.isLoading && state.isDirty
                   ? () => _handleSave(notifier)
@@ -444,7 +487,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
               state.isFormValid && state.isDirty
                   ? AppColors.purple500
                   : AppColors.purple500.withOpacity(.25),
-          height: 60.h,
+          height: 48.000.h,
           textColor: AppColors.neutral0,
           fontFamily: 'Karla',
           letterSpacing: -.8,
@@ -463,7 +506,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
           textColor: AppColors.purple500ForTheme(context),
           width: double.infinity,
           fullWidth: true,
-          height: 60.h,
+          height: 48.000.h,
           borderRadius: 38,
           fontFamily: 'Karla',
           fontSize: 18,
@@ -493,10 +536,27 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
       hintText: "Select your date of birth",
       controller: _dateOfBirthController,
       onChanged: notifier.setDateOfBirth,
-      suffixIcon: Icon(
-        Icons.calendar_today,
-        color: AppColors.neutral400,
-        size: 20.sp,
+      suffixIcon: Container(
+        width: 40.w,
+        alignment: Alignment.centerRight,
+        constraints: BoxConstraints.tightForFinite(),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            SvgPicture.asset(
+              'assets/icons/svgs/swap.svg',
+              height: 34.sp,
+              color: AppColors.neutral700.withOpacity(.35),
+            ),
+            Center(
+              child: SvgPicture.asset(
+                'assets/icons/svgs/calendar.svg',
+                height: 26,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(.65),
+              ),
+            ),
+          ],
+        ),
       ),
       shouldReadOnly: true,
       onTap: () => _showDatePicker(notifier),
@@ -530,8 +590,31 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
       label: "Address",
       hintText: "Enter your address",
       controller: _addressController,
+      maxLength: 100,
       onChanged: notifier.setAddress,
-      suffixIcon: Icon(Icons.search, color: AppColors.neutral400, size: 20.sp),
+      textCapitalization: TextCapitalization.words,
+      suffixIcon: Container(
+        width: 40.w,
+        alignment: Alignment.centerRight,
+        constraints: BoxConstraints.tightForFinite(),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            SvgPicture.asset(
+              'assets/icons/svgs/swap.svg',
+              height: 34.sp,
+              color: AppColors.neutral700.withOpacity(.35),
+            ),
+            Center(
+              child: SvgPicture.asset(
+                'assets/icons/svgs/search-normal.svg',
+                height: 26,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(.65),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -543,8 +626,9 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
       label: "Postal Code",
       hintText: "Enter your postal code",
       controller: _postalCodeController,
+      maxLength: 10,
       onChanged: notifier.setPostalCode,
-      keyboardType: TextInputType.text,
+      keyboardType: TextInputType.number,
     );
   }
 
@@ -663,7 +747,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
           title: Text(
             'Request $fieldName Change',
             style: AppTypography.titleMedium.copyWith(
-              fontFamily: 'CabinetGrotesk',
+           fontFamily: 'CabinetGrotesk',
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -720,7 +804,11 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
                 ),
               ),
               child: Text(
-                'Next - Edit ${fieldName == 'firstName' ? 'First Name' : fieldName == 'lastName' ? 'Last Name' : 'Name'}',
+                'Edit ${fieldName == 'firstName'
+                    ? 'First Name'
+                    : fieldName == 'lastName'
+                    ? 'Last Name'
+                    : 'Name'}',
                 style: AppTypography.bodyMedium.copyWith(
                   color: Colors.white,
                   fontFamily: 'Karla',
@@ -742,7 +830,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
           title: Text(
             'Verify Phone Number Change',
             style: AppTypography.titleMedium.copyWith(
-              fontFamily: 'CabinetGrotesk',
+           fontFamily: 'CabinetGrotesk',
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -799,7 +887,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
                 ),
               ),
               child: Text(
-                'Next - Edit Phone Number',
+                'Edit Phone Number',
                 style: AppTypography.bodyMedium.copyWith(
                   color: Colors.white,
                   fontFamily: 'Karla',
@@ -922,7 +1010,7 @@ class _CountryBottomSheetState extends State<_CountryBottomSheet> {
         children: [
           SizedBox(height: 18.h),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            padding: EdgeInsets.symmetric(horizontal: 18.w),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -930,8 +1018,8 @@ class _CountryBottomSheetState extends State<_CountryBottomSheet> {
                 Text(
                   'Select Country',
                   style: AppTypography.titleLarge.copyWith(
-                    fontFamily: 'CabinetGrotesk',
-                    fontSize: 18.sp,
+                 fontFamily: 'CabinetGrotesk',
+                    fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
@@ -953,7 +1041,7 @@ class _CountryBottomSheetState extends State<_CountryBottomSheet> {
           SizedBox(height: 16.h),
           Expanded(
             child: ListView.builder(
-              padding: EdgeInsets.symmetric(horizontal: 24.w),
+              padding: EdgeInsets.symmetric(horizontal: 18.w),
               itemCount: _countries.length,
               itemBuilder: (context, index) {
                 final country = _countries[index];
@@ -1017,7 +1105,7 @@ class _GenderBottomSheetState extends State<_GenderBottomSheet> {
         children: [
           SizedBox(height: 18.h),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            padding: EdgeInsets.symmetric(horizontal: 18.w),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -1025,8 +1113,8 @@ class _GenderBottomSheetState extends State<_GenderBottomSheet> {
                 Text(
                   'Select Gender',
                   style: AppTypography.titleLarge.copyWith(
-                    fontFamily: 'CabinetGrotesk',
-                    fontSize: 18.sp,
+                 fontFamily: 'CabinetGrotesk',
+                    fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
@@ -1048,7 +1136,7 @@ class _GenderBottomSheetState extends State<_GenderBottomSheet> {
           SizedBox(height: 16.h),
           Expanded(
             child: ListView.builder(
-              padding: EdgeInsets.symmetric(horizontal: 24.w),
+              padding: EdgeInsets.symmetric(horizontal: 18.w),
               itemCount: _genders.length,
               itemBuilder: (context, index) {
                 final gender = _genders[index];

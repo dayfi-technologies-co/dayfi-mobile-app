@@ -127,9 +127,13 @@ class AuthService {
     String password = "",
   }) async {
     try {
+
       Map<String, dynamic> map = {};
       map['userOtp'] = userOtp;
-      map['type'] = type;
+      // For pin reset verification the backend expects no `type` field
+      if (type != 'pin_reset') {
+        map['type'] = type;
+      }
 
       final response = await _networkService.call(
         F.baseUrl + UrlConfig.verifyOtp,
@@ -503,6 +507,34 @@ class AuthService {
       }
 
       return authResponse;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> resetTransactionPin({
+    required String transactionPin,
+  }) async {
+    try {
+      Map<String, dynamic> map = {};
+      map['transactionPin'] = transactionPin;
+
+      final response = await _networkService.call(
+        F.baseUrl + UrlConfig.resetTransactionPin,
+        RequestMethod.patch,
+        data: map,
+      );
+
+      // Return the response data as a map
+      if (response.data is Map<String, dynamic>) {
+        return response.data;
+      } else {
+        return {
+          'error': false,
+          'success': true,
+          'message': 'Transaction PIN reset successfully',
+        };
+      }
     } catch (e) {
       rethrow;
     }

@@ -4,7 +4,6 @@ import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/services/local/secure_storage.dart';
 import 'package:dayfi/services/remote/auth_service.dart';
 import 'package:dayfi/services/local/biometric_service.dart';
-import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/models/user_model.dart';
 import 'package:dayfi/common/constants/storage_keys.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
@@ -14,6 +13,8 @@ class PasscodeState {
   final String passcode;
   final bool isVerifying;
   final bool isBiometricAvailable;
+  final bool isBiometricEnabled;
+  final bool isDeviceBiometricAvailable;
   final bool isLoading;
   final User? user;
   final String errorMessage;
@@ -23,6 +24,8 @@ class PasscodeState {
     this.passcode = '',
     this.isVerifying = false,
     this.isBiometricAvailable = false,
+    this.isBiometricEnabled = false,
+    this.isDeviceBiometricAvailable = false,
     this.isLoading = false,
     this.user,
     this.errorMessage = '',
@@ -36,6 +39,8 @@ class PasscodeState {
     String? passcode,
     bool? isVerifying,
     bool? isBiometricAvailable,
+    bool? isBiometricEnabled,
+    bool? isDeviceBiometricAvailable,
     bool? isLoading,
     User? user,
     String? errorMessage,
@@ -45,6 +50,8 @@ class PasscodeState {
       passcode: passcode ?? this.passcode,
       isVerifying: isVerifying ?? this.isVerifying,
       isBiometricAvailable: isBiometricAvailable ?? this.isBiometricAvailable,
+      isBiometricEnabled: isBiometricEnabled ?? this.isBiometricEnabled,
+      isDeviceBiometricAvailable: isDeviceBiometricAvailable ?? this.isDeviceBiometricAvailable,
       isLoading: isLoading ?? this.isLoading,
       user: user ?? this.user,
       errorMessage: errorMessage ?? this.errorMessage,
@@ -90,12 +97,16 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
   Future<void> _checkBiometricAvailability() async {
     try {
       // Check if biometrics are available on device
-      final bool isAvailable = await BiometricService.isBiometricAvailable();
+      final bool isDeviceAvailable = await BiometricService.isBiometricAvailable();
       
-      if (isAvailable) {
+      state = state.copyWith(isDeviceBiometricAvailable: isDeviceAvailable);
+      
+      if (isDeviceAvailable) {
         // Check if biometrics are enabled for this app
-        final String? biometricEnabled = await _secureStorage.read('biometric_enabled');
+        final String biometricEnabled = await _secureStorage.read('biometric_enabled');
         final bool isEnabled = biometricEnabled == 'true';
+        
+        state = state.copyWith(isBiometricEnabled: isEnabled);
         
         if (isEnabled) {
           // Get biometric type for display
@@ -112,12 +123,19 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
           AppLogger.info('Biometric authentication not enabled for this app');
         }
       } else {
-        state = state.copyWith(isBiometricAvailable: false);
+        state = state.copyWith(
+          isBiometricAvailable: false,
+          isBiometricEnabled: false,
+        );
         AppLogger.info('Biometric authentication not available on device');
       }
     } catch (e) {
       AppLogger.error('Error checking biometric availability: $e');
-      state = state.copyWith(isBiometricAvailable: false);
+      state = state.copyWith(
+        isBiometricAvailable: false,
+        isDeviceBiometricAvailable: false,
+        isBiometricEnabled: false,
+      );
     }
   }
 
@@ -139,6 +157,18 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
   }
 
   Future<bool> authenticateWithBiometrics() async {
+    // Check device availability first
+    if (!state.isDeviceBiometricAvailable) {
+      _showErrorSnackBar('Biometric authentication is not available on this device');
+      return false;
+    }
+
+    // Check if enabled for this app
+    if (!state.isBiometricEnabled) {
+      _showErrorSnackBar('Biometric authentication is not enabled. Please enable it in settings.');
+      return false;
+    }
+
     if (!state.isBiometricAvailable) {
       _showErrorSnackBar('Biometric authentication is not available');
       return false;
@@ -162,7 +192,7 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
         return true;
       } else {
         AppLogger.info('Biometric authentication failed or was cancelled');
-        _showErrorSnackBar('Biometric authentication failed. Please use your passcode.');
+        // Don't show error for cancellation - user can use passcode
         return false;
       }
     } catch (e) {

@@ -40,8 +40,13 @@ class RecipientsNotifier extends StateNotifier<RecipientsState> {
 
   RecipientsNotifier(this._walletService) : super(RecipientsState());
 
-  Future<void> loadBeneficiaries() async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
+  Future<void> loadBeneficiaries({bool isInitialLoad = false}) async {
+    // Only show loading state if there's no existing data (initial load)
+    final shouldShowLoading = isInitialLoad || state.beneficiaries.isEmpty;
+    state = state.copyWith(
+      isLoading: shouldShowLoading,
+      errorMessage: null,
+    );
     
     try {
       final beneficiaries = await _walletService.getUniqueBeneficiariesWithSource();
@@ -103,6 +108,27 @@ class RecipientsNotifier extends StateNotifier<RecipientsState> {
     }
     
     return true; // No duplicates found
+  }
+
+  /// Optimistically add a beneficiary to the list
+  /// Returns the previous state for rollback if needed
+  RecipientsState addBeneficiaryOptimistically(BeneficiaryWithSource newBeneficiary) {
+    final previousState = state;
+    final updatedBeneficiaries = [...state.beneficiaries, newBeneficiary];
+    
+    state = state.copyWith(
+      beneficiaries: updatedBeneficiaries,
+      filteredBeneficiaries: state.searchQuery.isEmpty 
+          ? updatedBeneficiaries 
+          : state.filteredBeneficiaries,
+    );
+    
+    return previousState;
+  }
+
+  /// Rollback to a previous state (used when optimistic update fails)
+  void rollbackToState(RecipientsState previousState) {
+    state = previousState;
   }
 }
 

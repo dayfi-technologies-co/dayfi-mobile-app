@@ -31,7 +31,9 @@ class OnboardingPageWidget extends StatelessWidget {
                         Text(
                               page.title,
                               textAlign: TextAlign.start,
-                              style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                              style: Theme.of(
+                                context,
+                              ).textTheme.displayLarge?.copyWith(
                                 color: AppColors.neutral900,
                                 fontSize: 60.sp,
                                 fontWeight: FontWeight.w600,
@@ -54,7 +56,9 @@ class OnboardingPageWidget extends StatelessWidget {
                             .shimmer(
                               delay: 1000.ms,
                               duration: 2000.ms,
-                              color: AppColors.purple500ForTheme(context).withOpacity(0.2),
+                              color: AppColors.purple500ForTheme(
+                                context,
+                              ).withOpacity(0.2),
                               angle: 45,
                             ),
 
@@ -64,12 +68,14 @@ class OnboardingPageWidget extends StatelessWidget {
                         Text(
                               page.subtitle,
                               textAlign: TextAlign.start,
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              style: Theme.of(
+                                context,
+                              ).textTheme.bodyMedium?.copyWith(
                                 color: AppColors.neutral900.withOpacity(.85),
                                 fontSize: 16.sp,
                                 fontWeight: FontWeight.w400,
                                 fontFamily: 'Karla',
-                                letterSpacing: -.6,
+                                letterSpacing: -.3,
                                 height: 1.4,
                               ),
                             )
@@ -90,7 +96,37 @@ class OnboardingPageWidget extends StatelessWidget {
                         SizedBox(height: 24.h),
 
                         // Illustration placeholder
-                        Center(child: SvgPicture.asset(page.illustrationPath))
+                        Center(
+                              child:
+                                  page.title == 'Safe and secure transfers'
+                                      ? Image.asset(
+                                            page.illustrationPath,
+                                            width:
+                                                MediaQuery.of(
+                                                  context,
+                                                ).size.width *
+                                                0.6,
+                                          )
+                                          .animate()
+                                          .fadeIn(
+                                            delay: 200.ms,
+                                            duration: 600.ms,
+                                            curve: Curves.easeOutCubic,
+                                          )
+                                          .slideY(
+                                            begin: 0.15,
+                                            end: 0,
+                                            delay: 200.ms,
+                                            duration: 600.ms,
+                                            curve: Curves.easeOutCubic,
+                                          )
+                                      : SvgPicture.asset(
+                                        page.illustrationPath,
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                            0.6,
+                                      ),
+                            )
                             .animate()
                             .fadeIn(
                               delay: 200.ms,

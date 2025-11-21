@@ -174,7 +174,7 @@ class PaymentData {
               }
             }).where((e) => e != null).toList().cast<Channel>()
           : null,
-      rawChannels: data['channels'] != null ? data['channels'] : null,
+      rawChannels: data['channels'],
       networks: data['networks'] != null 
           ? (data['networks'] as List).map((e) => Network.fromJson(e)).toList()
           : null,

@@ -179,16 +179,16 @@ class ConnectivityService {
       final currentResults = await _connectivity.checkConnectivity();
       if (preferredType != null) {
         if (currentResults.contains(preferredType)) {
-          subscription?.cancel();
-          timer?.cancel();
+          subscription.cancel();
+          timer.cancel();
           if (!completer.isCompleted) {
             completer.complete(true);
           }
         }
       } else {
         if (currentResults.any((result) => result != ConnectivityResult.none)) {
-          subscription?.cancel();
-          timer?.cancel();
+          subscription.cancel();
+          timer.cancel();
           if (!completer.isCompleted) {
             completer.complete(true);
           }
