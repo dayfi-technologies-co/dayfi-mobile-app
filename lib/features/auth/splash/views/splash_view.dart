@@ -99,51 +99,50 @@ class _SplashViewState extends ConsumerState<SplashView> {
           // Main content centered
           Center(
             child: Text(
-              "Purple",
+              "Dayfi App",
               style: TextStyle(
                 fontFamily: 'Boldonse',
                 fontSize: 28.sp,
                 fontWeight: FontWeight.w500,
-                color: AppColors.purple700,
+                color: AppColors.neutral900,
                 // height: 1.3,
               ),
             ),
           ),
 
           // Powered by section at bottom
-          Positioned(
-            bottom: 60.h,
-            left: 0,
-            right: 0,
-            child: Column(
-              children: [
-                Text(
-                  'Powered by',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.neutral900.withOpacity(.75),
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w400,
-                    fontFamily: 'Karla',
-                  ),
-                ),
-                SizedBox(height: 4.h),
-
-                // Dayfi logo placeholder
-                Center(
-                  child: Text(
-                    'dayfi',
-                    style: TextStyle(
-                      fontFamily: 'Boldonse',
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.neutral900,
-                      height: 1.3,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          // Positioned(
+          //   bottom: 60.h,
+          //   left: 0,
+          //   right: 0,
+          //   child: Column(
+          //     children: [
+          //       Text(
+          //         'Powered by',
+          //         style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          //           color: AppColors.neutral900.withOpacity(.75),
+          //           fontSize: 14.sp,
+          //           fontWeight: FontWeight.w400,
+          //           fontFamily: 'Karla',
+          //         ),
+          //       ),
+          //       SizedBox(height: 4.h),
+          //       // Dayfi logo placeholder
+          //       Center(
+          //         child: Text(
+          //           'dayfi',
+          //           style: TextStyle(
+          //             fontFamily: 'Boldonse',
+          //             fontSize: 12.sp,
+          //             fontWeight: FontWeight.w500,
+          //             color: AppColors.neutral900,
+          //             height: 1.3,
+          //           ),
+          //         ),
+          //       ),
+          //     ],
+          //   ),
+          // ),
         ],
       ),
     );

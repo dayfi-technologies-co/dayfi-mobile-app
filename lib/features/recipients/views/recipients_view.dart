@@ -211,11 +211,19 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
             return false;
           }
 
-          final accountNumber = beneficiary.source.accountNumber ?? '';
-          if (seenAccountNumbers.contains(accountNumber)) {
+          // Create a unique key combining source account number and beneficiary account number (DayFi tag)
+          final sourceAccountNumber = beneficiary.source.accountNumber ?? '';
+          final beneficiaryAccountNumber = beneficiary.beneficiary.accountNumber ?? '';
+          
+          // For DayFi tags, use the beneficiary's account number as the unique identifier
+          final uniqueKey = beneficiary.source.accountType?.toLowerCase() == 'dayfi'
+              ? 'dayfi_${beneficiaryAccountNumber.toLowerCase()}'
+              : 'other_${sourceAccountNumber}';
+          
+          if (seenAccountNumbers.contains(uniqueKey)) {
             return false; // Skip duplicate
           }
-          seenAccountNumbers.add(accountNumber);
+          seenAccountNumbers.add(uniqueKey);
           return true;
         }).toList();
 
@@ -511,32 +519,40 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                   SizedBox(width: 8.w),
-                                  // Container(
-                                  //   padding: EdgeInsets.symmetric(
-                                  //     vertical: 2.h,
-                                  //     horizontal: 6.w,
-                                  //   ),
-                                  //   decoration: BoxDecoration(
-                                  //     color: Colors.white.withOpacity(1),
-                                  //     borderRadius: BorderRadius.circular(20.r),
-                                  //   ),
-                                  //   child: Row(
-                                  //     mainAxisSize: MainAxisSize.min,
-                                  //     children: [
-                                  //       Text(
-                                  //         "Dayfi Tag",
-                                  //         style: TextStyle(
-                                  //           fontFamily: 'Karla',
-                                  //           fontSize: 12.sp,
-                                  //           color: const Color(0xff2A0079),
-                                  //           fontWeight: FontWeight.w600,
-                                  //           letterSpacing: -.04,
-                                  //           height: 1.450,
-                                  //         ),
-                                  //       ),
-                                  //     ],
-                                  //   ),
-                                  // ),
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                      vertical: 3.h,
+                                      horizontal: 8.w,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.warning400.withOpacity(
+                                        0.15,
+                                      ),
+                                      borderRadius: BorderRadius.circular(8.r),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        // Icon(
+                                        //   Icons.auto_awesome,
+                                        //   size: 10.sp,
+                                        //   color: Color(0xFF1A1A1A),
+                                        // ),
+                                        // SizedBox(width: 4.w),
+                                        Text(
+                                          "Dayfi Tag",
+                                          style: TextStyle(
+                                            fontFamily: 'Karla',
+                                            fontSize: 10.sp,
+                                          color: AppColors.warning600,
+                                            fontWeight: FontWeight.w600,
+                                            // letterSpacing: 0,
+                                            height: 1.2,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ],
                               )
                               : Text(
@@ -788,24 +804,24 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
     String iconAsset,
     VoidCallback onTap,
   ) {
-    return 
-    GestureDetector(
+    return GestureDetector(
       onTap: onTap,
       child: Container(
         height: 50.h,
         decoration: BoxDecoration(
-         color: Theme.of(context).scaffoldBackgroundColor,
+          color: Theme.of(context).scaffoldBackgroundColor,
           boxShadow: [
             BoxShadow(
               blurRadius: 0,
               spreadRadius: 0,
-              color: Theme.of(context).colorScheme.onSecondary,
-              offset: Offset(0, 2),
+              color: Color(0xFFFFC700).withOpacity(.5),
+              offset: Offset(0, 2.5),
             ),
+
           ],
           border: Border.all(
-            color: Theme.of(context).colorScheme.outline.withOpacity(.25),
-            width: 1.2,
+            color: Theme.of(context).colorScheme.outline.withOpacity(.5),
+            width: 1,
           ),
           borderRadius: BorderRadius.circular(48.r),
         ),

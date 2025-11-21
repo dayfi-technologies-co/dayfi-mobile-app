@@ -707,7 +707,7 @@ class _SendViewState extends ConsumerState<SendView>
             "Send Money",
             style: AppTypography.titleLarge.copyWith(
               fontFamily: 'CabinetGrotesk',
-              fontSize: 19.sp,
+              fontSize: 20.sp,
               // height: 1.6,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface,

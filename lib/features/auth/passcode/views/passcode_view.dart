@@ -75,15 +75,13 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
                   children: [
                     const Spacer(flex: 1),
 
-                    // User avatar
-                    CircleAvatar(
-                      radius: 40,
-                      backgroundColor: Theme.of(context).colorScheme.surface,
-                      // backgroundImage: const NetworkImage(
-                      //   'https://avatar.iran.liara.run/public/52',
-                      // ),
+                    Padding(
+                      padding: EdgeInsets.only(bottom: 0.h),
+                      child: Image.asset(
+                        "assets/icons/pngs/account_4.png",
+                        height: 84.h,
+                      ),
                     ),
-
                     const SizedBox(height: 16),
 
                     // Welcome text
@@ -326,7 +324,7 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
       'Are you sure you want to logout? You will be asked to create a new passcode.',
       style: TextStyle(
         fontFamily: 'CabinetGrotesk',
-        fontSize: 19.sp, // height: 1.6,
+        fontSize: 20.sp, // height: 1.6,
         fontWeight: FontWeight.w500,
         color: Theme.of(context).colorScheme.onSurface,
         letterSpacing: -0.5,

@@ -12,6 +12,10 @@ import 'package:dayfi/app_locator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dayfi/services/transaction_monitor_service.dart';
 import 'package:dayfi/common/widgets/connectivity_wrapper.dart';
+import 'package:dayfi/services/local/secure_storage.dart';
+import 'package:dayfi/services/version_service.dart';
+import 'package:dayfi/common/constants/storage_keys.dart';
+import 'package:dayfi/common/utils/app_logger.dart';
 
 import 'services/local/analytics_service.dart';
 
@@ -30,11 +34,106 @@ class ProviderScopeObserver extends ProviderObserver {
   }
 }
 
-class MyApp extends ConsumerWidget {
+class MyApp extends ConsumerStatefulWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends ConsumerState<MyApp> {
+  String _initialRoute = AppRoute.onboardingView;
+  bool _isInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _determineInitialRoute();
+  }
+
+  Future<void> _determineInitialRoute() async {
+    try {
+      final secureStorage = locator<SecureStorageService>();
+      final versionService = locator<VersionService>();
+
+      // Check if this is a new app version and clear data if needed
+      await versionService.isNewVersion();
+
+      final firstTime = await secureStorage.read(StorageKeys.isFirstTime);
+      final token = await secureStorage.read(StorageKeys.token);
+      final passcode = await secureStorage.read(StorageKeys.passcode);
+      final userData = await secureStorage.read(StorageKeys.user);
+
+      final bool isFirstTimeUser = firstTime.isEmpty || firstTime == 'true';
+      final String userToken = token;
+      final String userPasscode = passcode;
+      final String userJson = userData;
+
+      // Validate data consistency - if we have a token but no user data, something is wrong
+      if (userToken.isNotEmpty && userJson.isEmpty) {
+        // Clear inconsistent data and redirect to login
+        await _clearInconsistentData(secureStorage);
+        _initialRoute = AppRoute.loginView;
+      } else if (isFirstTimeUser && userToken.isEmpty) {
+        _initialRoute = AppRoute.onboardingView;
+      } else if (userToken.isEmpty) {
+        _initialRoute = AppRoute.loginView;
+      } else if (userPasscode.isEmpty) {
+        _initialRoute = AppRoute.loginView;
+      } else {
+        _initialRoute = AppRoute.passcodeView;
+      }
+
+      AppLogger.info('Initial route determined: $_initialRoute');
+    } catch (e) {
+      AppLogger.error('Error determining initial route: $e');
+      // Navigate to onboarding view as fallback
+      _initialRoute = AppRoute.onboardingView;
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isInitialized = true;
+        });
+      }
+    }
+  }
+
+  /// Clear inconsistent data when token exists but user data is missing
+  Future<void> _clearInconsistentData(SecureStorageService secureStorage) async {
+    try {
+      await secureStorage.delete(StorageKeys.token);
+      await secureStorage.delete(StorageKeys.email);
+      await secureStorage.delete(StorageKeys.password);
+      await secureStorage.delete(StorageKeys.passcode);
+      await secureStorage.delete(StorageKeys.user);
+    } catch (e) {
+      AppLogger.error('Error clearing inconsistent data: $e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Show a minimal loading screen while determining route
+    if (!_isInitialized) {
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          backgroundColor: const Color(0xFFFFD800),
+          body: Center(
+            child: Text(
+              "Dayfi App",
+              style: TextStyle(
+                fontFamily: 'Boldonse',
+                fontSize: 28,
+                fontWeight: FontWeight.w500,
+                color: AppColors.neutral900,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return ProviderScope(
       observers: [
         ProviderScopeObserver(),
@@ -84,7 +183,7 @@ class MyApp extends ConsumerWidget {
                             .toList(),
                   ),
                   themeMode: themeMode,
-                  initialRoute: AppRoute.splashView,
+                  initialRoute: _initialRoute,
                   navigatorKey: NavigatorKey.appNavigatorKey,
                   onGenerateRoute: AppRoute.getRoute,
                 ),

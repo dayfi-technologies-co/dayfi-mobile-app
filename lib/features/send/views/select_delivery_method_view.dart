@@ -388,7 +388,7 @@ class _SelectDeliveryMethodViewState
         title: Text(
           "Choose delivery method",
           style: AppTypography.titleLarge.copyWith(
-            fontSize: 19.sp,
+            fontSize: 20.sp,
             // height: 1.6,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,

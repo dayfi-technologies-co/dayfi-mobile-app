@@ -38,7 +38,7 @@ class _SoftposInfoViewState extends State<SoftposInfoView> {
           "Before using SoftPOS",
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
             fontFamily: 'CabinetGrotesk',
-            fontSize: 19.sp, // height: 1.6,
+            fontSize: 20.sp, // height: 1.6,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,
           ),
@@ -58,11 +58,11 @@ class _SoftposInfoViewState extends State<SoftposInfoView> {
               padding: EdgeInsets.symmetric(horizontal: 18.w),
               physics: const ClampingScrollPhysics(),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   SizedBox(height: 8.h),
                   Text(
-                    'Key information to understand before accepting contactless payments with your device using NFC technology',
+                    'Key information to understand before accepting contactless payments with your device using NFC technology.',
                     style: TextStyle(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
@@ -73,6 +73,7 @@ class _SoftposInfoViewState extends State<SoftposInfoView> {
                         context,
                       ).textTheme.bodyLarge!.color!.withOpacity(.85),
                     ),
+                    textAlign: TextAlign.center,
                   ),
                   SizedBox(height: 24.h),
                   Container(
@@ -137,11 +138,11 @@ class _SoftposInfoViewState extends State<SoftposInfoView> {
                     title: Text(
                       'I understand and agree with all the Terms & Conditions for using SoftPOS payment acceptance on dayfi.',
                       style: TextStyle(
-                        fontSize: 12.sp,
+                        fontSize: 13.00.sp,
+                        fontWeight: FontWeight.w400,
                         fontFamily: 'Karla',
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: -.04,
-                        height: 1.450,
+                        letterSpacing: -.3,
+                        height: 1.4,
                         color: Theme.of(
                           context,
                         ).textTheme.bodyMedium!.color!.withOpacity(.85),
@@ -172,7 +173,8 @@ class _SoftposInfoViewState extends State<SoftposInfoView> {
                           Future.delayed(const Duration(milliseconds: 300), () {
                             TopSnackbar.show(
                               context,
-                              message: 'SoftPOS feature is coming soon! We\'re working hard to bring contactless payment acceptance to your device.',
+                              message:
+                                  'SoftPOS feature is coming soon! We\'re working hard to bring contactless payment acceptance to your device.',
                               isError: false,
                             );
                           });

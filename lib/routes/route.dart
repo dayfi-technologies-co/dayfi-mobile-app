@@ -5,7 +5,6 @@ import 'package:dayfi/features/softpos/views/softpos_info_view.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:dayfi/features/auth/login/views/login_view.dart';
-import 'package:dayfi/features/auth/splash/views/splash_view.dart';
 import 'package:dayfi/features/auth/signup/views/signup_view.dart';
 import 'package:dayfi/features/auth/verify_email/views/verify_email_view.dart';
 import 'package:dayfi/features/auth/success_signup/views/success_signup_view.dart';
@@ -65,7 +64,6 @@ class VerifyEmailViewArguments {
 class AppRoute {
   static RouteSettings globalrouteSettings = const RouteSettings();
 
-  static const String splashView = '/splashView';
   static const String onboardingView = '/onboardingView';
   static const String loginView = '/loginView';
   static const String signupView = '/signupView';
@@ -121,8 +119,6 @@ class AppRoute {
           routeSettings,
           LoginView(showBackButton: showBackButton),
         );
-      case splashView:
-        return _getPageRoute(routeSettings, const SplashView());
       case onboardingView:
         return _getPageRoute(routeSettings, const OnboardingView());
       case signupView:

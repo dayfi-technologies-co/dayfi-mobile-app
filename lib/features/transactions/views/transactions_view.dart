@@ -350,7 +350,7 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
 
         // Transactions for this date
         Container(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(12.r),
@@ -610,45 +610,54 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
   }
 
   String _getBeneficiaryDisplayName(WalletTransaction transaction) {
+    final isCollection = transaction.status.toLowerCase().contains('collection');
+    final isPayment = transaction.status.toLowerCase().contains('payment');
+    
     // Check if this is a DayFi tag transfer
-    if (transaction.source.accountType?.toLowerCase() == 'dayfi' ||
-        transaction.beneficiary.accountType?.toLowerCase() == 'dayfi') {
-      // For DayFi transfers, show the recipient's DayFi tag
-      if (transaction.beneficiary.accountNumber != null &&
+    final isDayfiTransfer = transaction.source.accountType?.toLowerCase() == 'dayfi' ||
+        transaction.beneficiary.accountType?.toLowerCase() == 'dayfi';
+    
+    // For collection (incoming money)
+    if (isCollection) {
+      if (isDayfiTransfer && transaction.beneficiary.accountNumber != null &&
           transaction.beneficiary.accountNumber!.isNotEmpty) {
         final tag = transaction.beneficiary.accountNumber!;
-        return tag.startsWith('@')
-            ? tag.toUpperCase()
-            : '@${tag.toUpperCase()}';
+        final displayTag = tag.startsWith('@') ? tag : '@$tag';
+        return 'Money received from $displayTag';
       }
-      // Fallback to beneficiary name if no account number
-      return transaction.beneficiary.name.toUpperCase();
+      return 'Money added to your wallet';
     }
-
-    // Check if this is a collection transaction (wallet funding)
-    if (transaction.status.toLowerCase().contains('collection')) {
-      return 'Wallet Top Up';
-    }
-
-    final profileState = ref.read(profileViewModelProvider);
-    final user = profileState.user;
-
-    if (user != null) {
-      // Build user's full name from first name and last name
-      final userFullName =
-          '${user.firstName} ${user.lastName}'.trim().toUpperCase();
-      final beneficiaryName = transaction.beneficiary.name.trim().toUpperCase();
-
-      // Check if beneficiary name matches user's full name or is SELF FUNDING
-      if (beneficiaryName == userFullName ||
-          beneficiaryName == 'SELF FUNDING' ||
-          beneficiaryName.contains('SELF') &&
-              beneficiaryName.contains('FUNDING')) {
-        return 'Wallet Top Up';
+    
+    // For payment (outgoing money)
+    if (isPayment) {
+      // Check if it's a wallet top-up (sending to yourself)
+      final profileState = ref.read(profileViewModelProvider);
+      final user = profileState.user;
+      
+      if (user != null) {
+        final userFullName = '${user.firstName} ${user.lastName}'.trim().toUpperCase();
+        final beneficiaryName = transaction.beneficiary.name.trim().toUpperCase();
+        
+        if (beneficiaryName == userFullName ||
+            beneficiaryName == 'SELF FUNDING' ||
+            (beneficiaryName.contains('SELF') && beneficiaryName.contains('FUNDING'))) {
+          return 'Topped up your wallet';
+        }
       }
+      
+      // Regular payment to another person
+      if (isDayfiTransfer && transaction.beneficiary.accountNumber != null &&
+          transaction.beneficiary.accountNumber!.isNotEmpty) {
+        final tag = transaction.beneficiary.accountNumber!;
+        final displayTag = tag.startsWith('@') ? tag : '@$tag';
+        return 'Sent money to $displayTag';
+      }
+      
+      // Payment to beneficiary name
+      return 'Sent to ${transaction.beneficiary.name}';
     }
-
-    // Default: return uppercase beneficiary name
+    
+    // Fallback to beneficiary name
     return transaction.beneficiary.name.toUpperCase();
   }
 
@@ -673,7 +682,8 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
 
   String _formatTransactionTime(String timestamp) {
     try {
-      final date = DateTime.parse(timestamp);
+      // Add 1 hour to the timestamp
+      final date = DateTime.parse(timestamp).add(const Duration(hours: 1));
 
       // Format time as HH:MM AM/PM
       final hour =

@@ -614,13 +614,13 @@ class _HomeViewState extends ConsumerState<HomeView>
             BoxShadow(
               blurRadius: 0,
               spreadRadius: 0,
-              color: Theme.of(context).colorScheme.onSecondary,
-              offset: Offset(label == "Topup Wallet" ? -1 : 1, 2),
+              color: AppColors.warning600.withOpacity(.5),
+              offset: Offset(label == "Topup Wallet" ? -2.5 : 2.5, 2.5),
             ),
           ],
           border: Border.all(
-            color: Theme.of(context).colorScheme.outline.withOpacity(.25),
-            width: 1.2,
+            color: Theme.of(context).colorScheme.outline.withOpacity(.5),
+            width: 1,
           ),
           borderRadius: BorderRadius.circular(48.r),
         ),
@@ -753,56 +753,56 @@ class _HomeViewState extends ConsumerState<HomeView>
 
     return Column(
       children: [
+        SizedBox(height: 4.h),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Recent transactions',
+              style: AppTypography.titleMedium.copyWith(
+                fontFamily: 'Karla',
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                letterSpacing: -.2,
+                height: 1.450,
+                color: Theme.of(
+                  context,
+                ).textTheme.bodyLarge!.color!.withOpacity(.75),
+              ),
+              textAlign: TextAlign.start,
+              overflow: TextOverflow.ellipsis,
+            ),
+            SizedBox(width: 12.h),
+            // Check if recent transactions length is greater than 5
+            Center(
+              child: InkWell(
+                onTap: () {
+                  appRouter.pushNamed(AppRoute.transactionsView);
+                },
+                child: Text(
+                  'See All',
+                  style: AppTypography.bodyMedium.copyWith(
+                    fontFamily: 'Karla',
+                    color: AppColors.purple500ForTheme(context),
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -.3,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 8.h),
         Container(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(12.r),
           ),
           child: Column(
             children: [
-              SizedBox(height: 4.h),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Recent transactions',
-                    style: AppTypography.titleMedium.copyWith(
-                      fontFamily: 'Karla',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      letterSpacing: -.2,
-                      height: 1.450,
-                      color: Theme.of(
-                        context,
-                      ).textTheme.bodyLarge!.color!.withOpacity(.75),
-                    ),
-                    textAlign: TextAlign.start,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  SizedBox(width: 12.h),
-                  // Check if recent transactions length is greater than 5
-                  Center(
-                    child: InkWell(
-                      onTap: () {
-                        appRouter.pushNamed(AppRoute.transactionsView);
-                      },
-                      child: Text(
-                        'See all',
-                        style: AppTypography.bodyMedium.copyWith(
-                          fontFamily: 'Karla',
-                          color: AppColors.purple500ForTheme(context),
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: -.3,
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 8.h),
               for (int i = 0; i < recentTransactions.length; i++)
                 _buildTransactionCard(
                   recentTransactions[i],
@@ -875,7 +875,7 @@ class _HomeViewState extends ConsumerState<HomeView>
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontFamily: 'Karla',
                       fontSize: 18.sp,
-                      letterSpacing: -.3,
+                      letterSpacing: -.4,
                       fontWeight: FontWeight.w400,
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
@@ -992,45 +992,54 @@ class _HomeViewState extends ConsumerState<HomeView>
   }
 
   String _getBeneficiaryDisplayName(WalletTransaction transaction) {
+    final isCollection = transaction.status.toLowerCase().contains('collection');
+    final isPayment = transaction.status.toLowerCase().contains('payment');
+    
     // Check if this is a DayFi tag transfer
-    if (transaction.source.accountType?.toLowerCase() == 'dayfi' ||
-        transaction.beneficiary.accountType?.toLowerCase() == 'dayfi') {
-      // For DayFi transfers, show the recipient's DayFi tag
-      if (transaction.beneficiary.accountNumber != null &&
+    final isDayfiTransfer = transaction.source.accountType?.toLowerCase() == 'dayfi' ||
+        transaction.beneficiary.accountType?.toLowerCase() == 'dayfi';
+    
+    // For collection (incoming money)
+    if (isCollection) {
+      if (isDayfiTransfer && transaction.beneficiary.accountNumber != null &&
           transaction.beneficiary.accountNumber!.isNotEmpty) {
         final tag = transaction.beneficiary.accountNumber!;
-        return tag.startsWith('@')
-            ? tag.toUpperCase()
-            : '@${tag.toUpperCase()}';
+        final displayTag = tag.startsWith('@') ? tag : '@$tag';
+        return 'Money received from $displayTag';
       }
-      // Fallback to beneficiary name if no account number
-      return transaction.beneficiary.name.toUpperCase();
+      return 'Money added to your wallet';
     }
-
-    // Check if this is a collection transaction (wallet funding)
-    if (transaction.status.toLowerCase().contains('collection')) {
-      return 'Wallet Top Up';
-    }
-
-    final profileState = ref.read(profileViewModelProvider);
-    final user = profileState.user;
-
-    if (user != null) {
-      // Build user's full name from first name and last name
-      final userFullName =
-          '${user.firstName} ${user.lastName}'.trim().toUpperCase();
-      final beneficiaryName = transaction.beneficiary.name.trim().toUpperCase();
-
-      // Check if beneficiary name matches user's full name or is SELF FUNDING
-      if (beneficiaryName == userFullName ||
-          beneficiaryName == 'SELF FUNDING' ||
-          beneficiaryName.contains('SELF') &&
-              beneficiaryName.contains('FUNDING')) {
-        return 'Wallet Top Up';
+    
+    // For payment (outgoing money)
+    if (isPayment) {
+      // Check if it's a wallet top-up (sending to yourself)
+      final profileState = ref.read(profileViewModelProvider);
+      final user = profileState.user;
+      
+      if (user != null) {
+        final userFullName = '${user.firstName} ${user.lastName}'.trim().toUpperCase();
+        final beneficiaryName = transaction.beneficiary.name.trim().toUpperCase();
+        
+        if (beneficiaryName == userFullName ||
+            beneficiaryName == 'SELF FUNDING' ||
+            (beneficiaryName.contains('SELF') && beneficiaryName.contains('FUNDING'))) {
+          return 'Topped up your wallet';
+        }
       }
+      
+      // Regular payment to another person
+      if (isDayfiTransfer && transaction.beneficiary.accountNumber != null &&
+          transaction.beneficiary.accountNumber!.isNotEmpty) {
+        final tag = transaction.beneficiary.accountNumber!;
+        final displayTag = tag.startsWith('@') ? tag : '@$tag';
+        return 'Sent money to $displayTag';
+      }
+      
+      // Payment to beneficiary name
+      return 'Sent to ${transaction.beneficiary.name}';
     }
-
-    // Default: return uppercase beneficiary name
+    
+    // Fallback to beneficiary name
     return transaction.beneficiary.name.toUpperCase();
   }
 
@@ -1067,7 +1076,8 @@ class _HomeViewState extends ConsumerState<HomeView>
 
   String _formatTransactionTime(String timestamp) {
     try {
-      final date = DateTime.parse(timestamp);
+      // Add 1 hour to the timestamp
+      final date = DateTime.parse(timestamp).add(const Duration(hours: 1));
 
       // Format time as HH:MM AM/PM
       final hour =

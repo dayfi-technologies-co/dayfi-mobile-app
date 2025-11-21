@@ -20,6 +20,7 @@ import 'package:dayfi/common/utils/tier_utils.dart';
 import 'package:dayfi/services/notification_service.dart';
 import 'package:dayfi/services/remote/wallet_service.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
+import 'package:share_plus/share_plus.dart';
 
 // Constants for consistent styling
 class _ProfileConstants {
@@ -345,7 +346,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
           "Account",
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
             fontFamily: 'CabinetGrotesk',
-            fontSize: 19.sp, // height: 1.6,
+            fontSize: 20.sp,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,
           ),
@@ -463,7 +464,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
   // User Name Widget
   Widget _buildUserName(ProfileState profileState) {
     // Check if DayFi Tag exists
-    final hasDayfiTag = _dayfiId != null && _dayfiId!.isNotEmpty;
+    // final hasDayfiTag = _dayfiId != null && _dayfiId!.isNotEmpty;
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -570,41 +571,92 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                   ],
                 ),
                 SizedBox(width: 12.w),
-                Semantics(
-                  button: true,
-                  label: 'Copy DayFi Tag',
-                  hint: 'Double tap to copy your DayFi Tag to clipboard',
-                  child: GestureDetector(
-                    onTap: () {
-                      HapticHelper.lightImpact();
-                      Clipboard.setData(ClipboardData(text: _dayfiId!));
-                      TopSnackbar.show(
-                        context,
-                        message: 'DayFi Tag copied to clipboard',
-                        isError: false,
-                      );
-                    },
-                    child: Row(
-                      children: [
-                        Text(
-                          "copy",
-                          style: TextStyle(
-                            fontFamily: 'Karla',
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12.sp,
-                            letterSpacing: 0.00,
-                            height: 1.450,
-                            color: AppColors.purple500ForTheme(context),
-                          ),
+                Row(
+                  children: [
+                    Semantics(
+                      button: true,
+                      label: 'Copy DayFi Tag',
+                      hint: 'Double tap to copy your DayFi Tag to clipboard',
+                      child: GestureDetector(
+                        onTap: () {
+                          HapticHelper.lightImpact();
+                          Clipboard.setData(ClipboardData(text: '@$_dayfiId'));
+                          TopSnackbar.show(
+                            context,
+                            message: 'DayFi Tag copied to clipboard',
+                            isError: false,
+                          );
+                        },
+                        child: Row(
+                          children: [
+                            Text(
+                              "copy",
+                              style: TextStyle(
+                                fontFamily: 'Karla',
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12.sp,
+                                letterSpacing: 0.00,
+                                height: 1.450,
+                                color: AppColors.purple500ForTheme(context),
+                              ),
+                            ),
+                            SizedBox(width: 6.w),
+                            SvgPicture.asset(
+                              "assets/icons/svgs/copy.svg",
+                              color: AppColors.purple500ForTheme(context),
+                              height: 16.sp,
+                            ),
+                          ],
                         ),
-                        SizedBox(width: 6.w),
-                        SvgPicture.asset(
-                          "assets/icons/svgs/copy.svg",
-                          color: AppColors.purple500ForTheme(context),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
+                    SizedBox(width: 16.w),
+                    Semantics(
+                      button: true,
+                      label: 'Share DayFi Tag',
+                      hint: 'Double tap to share your DayFi Tag',
+                      child: GestureDetector(
+                        onTap: () async {
+                          HapticHelper.lightImpact();
+                          try {
+                            await Share.share(
+                              'Send me money on DayFi! My tag is @$_dayfiId\n\nDownload DayFi: https://dayfi.co',
+                              subject: 'My DayFi Tag',
+                            );
+                          } catch (e) {
+                            if (mounted) {
+                              TopSnackbar.show(
+                                context,
+                                message: 'Unable to share. Please try again.',
+                                isError: true,
+                              );
+                            }
+                          }
+                        },
+                        child: Row(
+                          children: [
+                            Text(
+                              "share",
+                              style: TextStyle(
+                                fontFamily: 'Karla',
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12.sp,
+                                letterSpacing: 0.00,
+                                height: 1.450,
+                                color: AppColors.purple500ForTheme(context),
+                              ),
+                            ),
+                            SizedBox(width: 6.w),
+                            SvgPicture.asset(
+                              "assets/icons/svgs/share.svg",
+                              color: AppColors.purple500ForTheme(context),
+                              height: 16.sp,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -1037,7 +1089,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
       'Are you sure you want to logout? You will be asked to create a new passcode.',
       style: TextStyle(
         fontFamily: 'CabinetGrotesk',
-        fontSize: 19.sp,
+        fontSize: 20.sp,
 
         // height: 1.6,
         fontWeight: FontWeight.w500,

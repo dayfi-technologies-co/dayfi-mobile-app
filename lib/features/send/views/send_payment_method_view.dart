@@ -28,6 +28,7 @@ import 'package:dayfi/common/utils/phone_country_utils.dart';
 import 'package:dayfi/features/home/vm/home_viewmodel.dart';
 import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
 import 'package:intercom_flutter/intercom_flutter.dart';
+import 'package:share_plus/share_plus.dart';
 
 class SendPaymentMethodView extends ConsumerStatefulWidget {
   final Map<String, dynamic> selectedData;
@@ -422,7 +423,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                   ],
                 ),
               ),
-              SizedBox(height: 16.h),
+              SizedBox(height: 24.h),
               Expanded(
                 child: SingleChildScrollView(
                   padding: EdgeInsets.symmetric(horizontal: 18.w),
@@ -481,7 +482,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                         onChanged: (value) {},
                         keyboardType: TextInputType.text,
                         suffixIcon: Container(
-                          width: 100.w,
+                          width: 150.w,
                           alignment:
                               Alignment.centerRight, // Align to the right
                           constraints: BoxConstraints.tightForFinite(),
@@ -490,48 +491,107 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                             horizontal: 10.0.w,
                           ),
                           height: 32.h,
-                          child: GestureDetector(
-                            onTap: () {
-                              HapticHelper.lightImpact();
-                              Clipboard.setData(
-                                ClipboardData(
-                                  text:
-                                      dayfiId.startsWith('@')
-                                          ? dayfiId
-                                          : '@$dayfiId',
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              // Copy button
+                              GestureDetector(
+                                onTap: () {
+                                  HapticHelper.lightImpact();
+                                  Clipboard.setData(
+                                    ClipboardData(
+                                      text:
+                                          dayfiId.startsWith('@')
+                                              ? dayfiId
+                                              : '@$dayfiId',
+                                    ),
+                                  );
+                                  TopSnackbar.show(
+                                    context,
+                                    message: 'DayFi Tag copied to clipboard',
+                                    isError: false,
+                                  );
+                                },
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      "copy",
+                                      style: TextStyle(
+                                        fontFamily: 'Karla',
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 12.sp,
+                                        letterSpacing: 0.00,
+                                        height: 1.450,
+                                        color: AppColors.purple500ForTheme(
+                                          context,
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(width: 6.w),
+                                    SvgPicture.asset(
+                                      "assets/icons/svgs/copy.svg",
+                                      color: AppColors.purple500ForTheme(
+                                        context,
+                                      ),
+                                      height: 16.sp,
+                                    ),
+                                  ],
                                 ),
-                              );
-                              TopSnackbar.show(
-                                context,
-                                message: 'DayFi Tag copied to clipboard',
-                                isError: false,
-                              );
-                            },
-                            child: Row(
-                              mainAxisAlignment:
-                                  MainAxisAlignment
-                                      .center, // Align content to the right
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  "copy",
-                                  style: TextStyle(
-                                    fontFamily: 'Karla',
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 12.sp,
-                                    letterSpacing: 0.00,
-                                    height: 1.450,
-                                    color: AppColors.purple500ForTheme(context),
-                                  ),
+                              ),
+                              SizedBox(width: 16.w),
+                              // Share button
+                              GestureDetector(
+                                onTap: () async {
+                                  HapticHelper.lightImpact();
+                                  try {
+                                    final tagToShare =
+                                        dayfiId.startsWith('@')
+                                            ? dayfiId
+                                            : '@$dayfiId';
+                                    await Share.share(
+                                      'Send me money on DayFi! My tag is $tagToShare\n\nDownload DayFi: https://dayfi.co',
+                                      subject: 'My DayFi Tag',
+                                    );
+                                  } catch (e) {
+                                    if (mounted) {
+                                      TopSnackbar.show(
+                                        context,
+                                        message:
+                                            'Unable to share. Please try again.',
+                                        isError: true,
+                                      );
+                                    }
+                                  }
+                                },
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      "share",
+                                      style: TextStyle(
+                                        fontFamily: 'Karla',
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 12.sp,
+                                        letterSpacing: 0.00,
+                                        height: 1.450,
+                                        color: AppColors.purple500ForTheme(
+                                          context,
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(width: 6.w),
+                                    SvgPicture.asset(
+                                      "assets/icons/svgs/share.svg",
+                                      color: AppColors.purple500ForTheme(
+                                        context,
+                                      ),
+                                      height: 16.sp,
+                                    ),
+                                  ],
                                 ),
-                                SizedBox(width: 6.w),
-                                SvgPicture.asset(
-                                  "assets/icons/svgs/copy.svg",
-                                  color: AppColors.purple500ForTheme(context),
-                                ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -620,7 +680,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
           'Topup Wallet',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
             fontFamily: 'CabinetGrotesk',
-            fontSize: 19.sp,
+            fontSize: 20.sp,
             // height: 1.6,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,

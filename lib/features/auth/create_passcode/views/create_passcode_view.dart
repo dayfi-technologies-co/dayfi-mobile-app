@@ -83,7 +83,7 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
                   'For your security, please avoid easy-to-guess passcodes. e.g. 1234, 2222',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                  fontFamily: 'CabinetGrotesk',
-                     fontSize: 19.sp, // height: 1.6,
+                     fontSize: 20.sp, // height: 1.6,
                     fontWeight: FontWeight.w400,
                     letterSpacing: -0.5,
                   ),

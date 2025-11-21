@@ -287,7 +287,7 @@ class _SendDayfiIdViewState extends ConsumerState<SendDayfiIdView> {
             'Enter Dayfi ID',
             style: Theme.of(context).textTheme.headlineLarge?.copyWith(
               fontFamily: 'CabinetGrotesk',
-              fontSize: 19.sp,
+              fontSize: 20.sp,
               // height: 1.6,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface,
@@ -308,7 +308,7 @@ class _SendDayfiIdViewState extends ConsumerState<SendDayfiIdView> {
                 CustomTextField(
                   controller: _dayfiIdController,
                   label: "Recipient's Dayfi Tag",
-                  hintText: 'johndoe',
+                  hintText: 'dayfitag',
                   textCapitalization: TextCapitalization.none,
                   autofocus: true,
                   contentPadding: EdgeInsets.only(
@@ -318,7 +318,7 @@ class _SendDayfiIdViewState extends ConsumerState<SendDayfiIdView> {
                     bottom: 16.h,
                   ),
                   prefixIcon: Padding(
-                    padding: EdgeInsets.only(left: 24.w, top: 10.w),
+                    padding: EdgeInsets.only(left: 16.w, top: 10.w),
                     child: Text(
                       '@',
                       style: TextStyle(
@@ -379,20 +379,21 @@ class _SendDayfiIdViewState extends ConsumerState<SendDayfiIdView> {
 
                 // Saved DayFi IDs Chips
                 if (_savedDayfiIds.isNotEmpty && !_isLoadingSavedIds) ...[
-                  SizedBox(height: 16.h),
-                  // Text(
-                  //   'Recent tags',
-                  //   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  //     fontFamily: 'Karla',
-                  //     fontSize: 13.sp,
-                  //     fontWeight: FontWeight.w500,
-                  //     letterSpacing: -0.2,
-                  //     color: Theme.of(
-                  //       context,
-                  //     ).colorScheme.onSurface.withOpacity(0.6),
-                  //   ),
-                  // ),
-                  // SizedBox(height: 8.h),
+                  SizedBox(height: 18.h),
+                  Text(
+                    'Recent tags',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontFamily: 'Karla',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      letterSpacing: -.2,
+                      height: 1.450,
+                      color: Theme.of(
+                        context,
+                      ).textTheme.bodyLarge!.color!.withOpacity(.75),
+                    ),
+                  ),
+                  SizedBox(height: 6.h),
                   Wrap(
                     spacing: 8.w,
                     runSpacing: 8.h,
@@ -488,11 +489,9 @@ class _SendDayfiIdViewState extends ConsumerState<SendDayfiIdView> {
                         ),
                       ),
                       child: Text(
-                        _recipientName != null &&
-                                _recipientName!.startsWith('@')
-                            ? 'Valid Dayfi ID: $_recipientName'.toUpperCase()
-                            : 'Sending to ${_recipientName ?? "@$_validatedDayfiId"}'
-                                .toUpperCase(),
+                        _recipientName != null && !_recipientName!.startsWith('@')
+                            ? 'Sending to $_recipientName (@$_validatedDayfiId)'.toUpperCase()
+                            : 'Sending to @$_validatedDayfiId'.toUpperCase(),
                         style: TextStyle(
                           fontFamily: 'CabinetGrotesk',
                           fontSize: 12.sp,

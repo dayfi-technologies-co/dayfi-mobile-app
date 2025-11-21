@@ -17,6 +17,12 @@ import 'package:dayfi/services/remote/payment_service.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:dayfi/models/payment_response.dart' as payment;
 import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
+import 'package:screenshot/screenshot.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
+import 'dart:async';
+import 'package:dayfi/features/transactions/widgets/transaction_receipt_widget.dart';
 
 class TransactionDetailsView extends ConsumerStatefulWidget {
   final WalletTransaction transaction;
@@ -36,6 +42,9 @@ class _TransactionDetailsViewState
   Map<String, dynamic>? _receiveCurrencyRates;
   String _calculatedReceiveAmount = '';
   String _exchangeRate = '';
+
+  // Screenshot controller for sharing
+  final ScreenshotController _screenshotController = ScreenshotController();
 
   // Services
   final PaymentService _paymentService = locator<PaymentService>();
@@ -66,10 +75,10 @@ class _TransactionDetailsViewState
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          "Trans. Details",
-          style: AppTypography.titleLarge.copyWith(
+          "Transaction Details",
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
             fontFamily: 'CabinetGrotesk',
-            fontSize: 28.00,
+            fontSize: 20.sp,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,
           ),
@@ -105,17 +114,22 @@ class _TransactionDetailsViewState
               SizedBox(height: 16.h),
             ],
 
-            // Hide transaction details and recipient details for wallet top-ups and collections
-            if (!_isWalletTopUp() &&
-                !widget.transaction.status.toLowerCase().contains(
-                  'collection',
-                )) ...[
+            // For collections, show sender details; for payments, show recipient details
+            if (!_isWalletTopUp()) ...[
               // Account Details
-              _buildAccountDetails(),
-              SizedBox(height: 16.h),
+              if (!widget.transaction.status.toLowerCase().contains(
+                'collection',
+              ))
+                _buildAccountDetails(),
+              if (!widget.transaction.status.toLowerCase().contains(
+                'collection',
+              ))
+                SizedBox(height: 16.h),
 
-              // Recipient Details
-              _buildRecipientDetails(),
+              // Sender Details (for collections) or Recipient Details (for payments)
+              widget.transaction.status.toLowerCase().contains('collection')
+                  ? _buildSenderDetails()
+                  : _buildRecipientDetails(),
               SizedBox(height: 16.h),
             ],
 
@@ -127,6 +141,20 @@ class _TransactionDetailsViewState
             //   SizedBox(height: 32.h),
             //   _buildActionButtons(),
             // ],
+            SizedBox(height: 20.h),
+            PrimaryButton(
+              text: 'Share transaction',
+              onPressed: () => _shareTransactionReceipt(),
+              backgroundColor: Colors.transparent,
+              textColor: AppColors.purple500ForTheme(context),
+              height: 48.000.h,
+              fontFamily: 'Karla',
+              letterSpacing: -.8,
+              fontSize: 18,
+              width: double.infinity,
+              fullWidth: true,
+              borderRadius: 40.r,
+            ),
             SizedBox(height: 40.h),
           ],
         ),
@@ -558,8 +586,8 @@ class _TransactionDetailsViewState
                   date,
                   style: AppTypography.bodySmall.copyWith(
                     fontFamily: 'Karla',
-                    fontSize: 11.sp,
-                    letterSpacing: 0.5,
+                    fontSize: 12.sp,
+                    letterSpacing: -.3,
                     height: 1.4,
                     fontWeight: FontWeight.w600,
                     color: Theme.of(
@@ -603,11 +631,13 @@ class _TransactionDetailsViewState
         children: [
           Text(
             "Transaction Details",
-            style: AppTypography.bodyLarge.copyWith(
-              fontFamily: 'CabinetGrotesk',
+            style: AppTypography.bodySmall.copyWith(
+              fontFamily: 'Karla',
               fontSize: 12.sp,
+              letterSpacing: -.3,
+              height: 1.4,
               fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.onSurface,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
             ),
           ),
           SizedBox(height: 16.h),
@@ -691,6 +721,61 @@ class _TransactionDetailsViewState
     }
   }
 
+  Widget _buildSenderDetails() {
+    final isDayfiTransfer =
+        widget.transaction.source.accountType?.toLowerCase() == 'dayfi' ||
+        widget.transaction.beneficiary.accountType?.toLowerCase() == 'dayfi';
+
+    return Container(
+      padding: EdgeInsets.all(20.w),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Sender Details",
+            style: AppTypography.bodySmall.copyWith(
+              fontFamily: 'Karla',
+              fontSize: 12.sp,
+              letterSpacing: -.3,
+              height: 1.4,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+            ),
+          ),
+          SizedBox(height: 16.h),
+          _buildDetailRow("Name", widget.transaction.beneficiary.name),
+          if (isDayfiTransfer &&
+              widget.transaction.beneficiary.accountNumber != null &&
+              widget.transaction.beneficiary.accountNumber!.isNotEmpty)
+            _buildDetailRow(
+              "DayFi Tag",
+              widget.transaction.beneficiary.accountNumber!.startsWith('@')
+                  ? widget.transaction.beneficiary.accountNumber!
+                  : '@${widget.transaction.beneficiary.accountNumber!}',
+            ),
+          if (isDayfiTransfer &&
+              widget.transaction.beneficiary.accountNumber != null &&
+              widget.transaction.beneficiary.accountNumber!.isNotEmpty)
+            _buildDetailRow(
+              "Username",
+              widget.transaction.beneficiary.accountNumber!.startsWith('@')
+                  ? widget.transaction.beneficiary.accountNumber!.substring(1)
+                  : widget.transaction.beneficiary.accountNumber!,
+            ),
+          if (widget.transaction.beneficiary.country.isNotEmpty)
+            _buildDetailRow(
+              "Country",
+              _getCountryName(widget.transaction.beneficiary.country),
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildRecipientDetails() {
     final isDayfiTransfer =
         widget.transaction.source.accountType?.toLowerCase() == 'dayfi' ||
@@ -707,11 +792,13 @@ class _TransactionDetailsViewState
         children: [
           Text(
             "Recipient Details",
-            style: AppTypography.bodyLarge.copyWith(
-              fontFamily: 'CabinetGrotesk',
+            style: AppTypography.bodySmall.copyWith(
+              fontFamily: 'Karla',
               fontSize: 12.sp,
+              letterSpacing: -.3,
+              height: 1.4,
               fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.onSurface,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
             ),
           ),
           SizedBox(height: 16.h),
@@ -825,11 +912,13 @@ class _TransactionDetailsViewState
         children: [
           Text(
             "Payment Summary",
-            style: AppTypography.bodyLarge.copyWith(
-              fontFamily: 'CabinetGrotesk',
+            style: AppTypography.bodySmall.copyWith(
+              fontFamily: 'Karla',
               fontSize: 12.sp,
+              letterSpacing: -.3,
+              height: 1.4,
               fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.onSurface,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
             ),
           ),
           SizedBox(height: 16.h),
@@ -1399,15 +1488,13 @@ class _TransactionDetailsViewState
   String _formatDateTime(String timestamp) {
     try {
       final dateTime = DateTime.parse(timestamp).toLocal();
-      // Subtract 1 hour to correct timezone offset
-      final correctedDateTime = dateTime.subtract(const Duration(hours: 1));
 
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
       final transactionDate = DateTime(
-        correctedDateTime.year,
-        correctedDateTime.month,
-        correctedDateTime.day,
+        dateTime.year,
+        dateTime.month,
+        dateTime.day,
       );
 
       String dateStr;
@@ -1417,11 +1504,13 @@ class _TransactionDetailsViewState
         dateStr = "Yesterday";
       } else {
         dateStr =
-            "${correctedDateTime.day}${_getOrdinalSuffix(correctedDateTime.day)} ${_getMonthName(correctedDateTime.month)}";
+            "${dateTime.day}${_getOrdinalSuffix(dateTime.day)} ${_getMonthName(dateTime.month)}";
       }
 
+      final hour = dateTime.hour > 12 ? dateTime.hour - 12 : (dateTime.hour == 0 ? 12 : dateTime.hour);
+      final period = dateTime.hour >= 12 ? 'PM' : 'AM';
       final timeStr =
-          "${correctedDateTime.hour.toString().padLeft(2, '0')}:${correctedDateTime.minute.toString().padLeft(2, '0')} ${correctedDateTime.hour >= 12 ? 'PM' : 'AM'}";
+          "${hour.toString()}:${dateTime.minute.toString().padLeft(2, '0')} $period";
 
       return "$dateStr, $timeStr";
     } catch (e) {
@@ -1547,7 +1636,7 @@ class _TransactionDetailsViewState
               'Are you sure you have completed the payment?',
               style: TextStyle(
                 fontFamily: 'CabinetGrotesk',
-                fontSize: 19.sp,
+                fontSize: 20.sp,
                 // height: 1.6,
                 fontWeight: FontWeight.w500,
                 color: Theme.of(context).colorScheme.onSurface,
@@ -1636,7 +1725,7 @@ class _TransactionDetailsViewState
               'Please complete your payment to proceed with the transfer.',
               style: TextStyle(
                 fontFamily: 'CabinetGrotesk',
-                fontSize: 19.sp,
+                fontSize: 20.sp,
                 // height: 1.6,
                 fontWeight: FontWeight.w500,
                 color: Theme.of(context).colorScheme.onSurface,
@@ -1707,7 +1796,7 @@ class _TransactionDetailsViewState
               'Are you sure you want to cancel this transfer?',
               style: TextStyle(
                 fontFamily: 'CabinetGrotesk',
-                fontSize: 19.sp,
+                fontSize: 20.sp,
                 // height: 1.6,
                 fontWeight: FontWeight.w500,
                 color: Theme.of(context).colorScheme.onSurface,
@@ -1763,6 +1852,118 @@ class _TransactionDetailsViewState
         TopSnackbar.show(
           context,
           message: 'Unable to open support chat. Please try again later.',
+          isError: true,
+        );
+      }
+    }
+  }
+
+  /// Share transaction receipt as an image
+  Future<void> _shareTransactionReceipt() async {
+    try {
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder:
+            (context) => Center(
+              child: Material(
+                color: Colors.transparent,
+                child: Container(
+                  padding: EdgeInsets.all(24.w),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(color: AppColors.purple500),
+                      SizedBox(height: 16.h),
+                      Text(
+                        'Generating receipt...',
+                        style: TextStyle(
+                          fontFamily: 'Karla',
+                          fontSize: 14.sp,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+      );
+
+      print('Starting receipt generation...');
+
+      // Capture the receipt widget as an image with timeout
+      final imageBytes = await _screenshotController
+          .captureFromWidget(
+            Material(
+              color: Colors.white,
+              child: TransactionReceiptWidget(
+                transaction: widget.transaction,
+                exchangeRate: _getExchangeRate(),
+                receiveAmount: _getReceiveAmount(),
+                fee: _getTransactionFee(),
+                total: _calculateTotal(),
+              ),
+            ),
+            pixelRatio: 2.5, // Reduced from 3.0 for better performance
+            context: context,
+          )
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () {
+              throw TimeoutException('Receipt generation timed out');
+            },
+          );
+
+      print('Receipt generated successfully, size: ${imageBytes.length} bytes');
+
+      // Save to temporary directory
+      final directory = await getTemporaryDirectory();
+      final imagePath =
+          '${directory.path}/transaction_receipt_${widget.transaction.id}.png';
+      final imageFile = File(imagePath);
+      await imageFile.writeAsBytes(imageBytes);
+
+      print('Image saved to: $imagePath');
+
+      // Close loading dialog
+      if (mounted) Navigator.pop(context);
+
+      // Share the image
+      await Share.shareXFiles(
+        [XFile(imagePath)],
+        text:
+            'Transaction Receipt - ${widget.transaction.id.substring(0, 8).toUpperCase()}',
+        subject: 'DayFi Transaction Receipt',
+      );
+
+      print('Share completed successfully');
+
+      // Optional: Clean up the temporary file after a delay
+      Future.delayed(const Duration(seconds: 30), () {
+        if (imageFile.existsSync()) {
+          imageFile.delete();
+        }
+      });
+    } catch (e, stackTrace) {
+      print('Error sharing receipt: $e');
+      print('Stack trace: $stackTrace');
+
+      // Close loading dialog if still open
+      if (mounted && Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+
+      // Show detailed error message
+      if (mounted) {
+        TopSnackbar.show(
+          context,
+          message: 'Failed to share transaction: ${e.toString()}',
           isError: true,
         );
       }
@@ -1943,11 +2144,13 @@ class _TransactionDetailsViewState
         children: [
           Text(
             isDayfiTransfer ? "DayFi Tag Details" : "Bank Account Details",
-            style: AppTypography.bodyLarge.copyWith(
-              fontFamily: 'CabinetGrotesk',
+            style: AppTypography.bodySmall.copyWith(
+              fontFamily: 'Karla',
               fontSize: 12.sp,
+              letterSpacing: -.3,
+              height: 1.4,
               fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.onSurface,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
             ),
           ),
           SizedBox(height: 16.h),
@@ -1977,45 +2180,65 @@ class _TransactionDetailsViewState
   }
 
   String _getRecipientDisplayName() {
+    final isCollection = widget.transaction.status.toLowerCase().contains(
+      'collection',
+    );
+    final isPayment = widget.transaction.status.toLowerCase().contains(
+      'payment',
+    );
+
     // Check if this is a DayFi tag transfer
     final isDayfiTransfer =
         widget.transaction.source.accountType?.toLowerCase() == 'dayfi' ||
         widget.transaction.beneficiary.accountType?.toLowerCase() == 'dayfi';
 
-    if (isDayfiTransfer) {
-      // For DayFi transfers, show the recipient's DayFi tag
-      if (widget.transaction.beneficiary.accountNumber != null &&
+    // For collection (incoming money)
+    if (isCollection) {
+      if (isDayfiTransfer &&
+          widget.transaction.beneficiary.accountNumber != null &&
           widget.transaction.beneficiary.accountNumber!.isNotEmpty) {
         final tag = widget.transaction.beneficiary.accountNumber!;
-        final displayTag =
-            tag.startsWith('@') ? tag.toUpperCase() : '@${tag.toUpperCase()}';
-        return 'To $displayTag';
+        final displayTag = tag.startsWith('@') ? tag : '@$tag';
+        return 'Money received from $displayTag';
       }
-      // Fallback to beneficiary name if no account number
-      return 'To ${widget.transaction.beneficiary.name.toUpperCase()}';
+      return 'Money added to your wallet';
     }
 
-    final profileState = ref.read(profileViewModelProvider);
-    final user = profileState.user;
+    // For payment (outgoing money)
+    if (isPayment) {
+      // Check if it's a wallet top-up (sending to yourself)
+      final profileState = ref.read(profileViewModelProvider);
+      final user = profileState.user;
 
-    if (user != null) {
-      // Build user's full name from first name and last name
-      final userFullName =
-          '${user.firstName} ${user.lastName}'.trim().toUpperCase();
-      final beneficiaryName =
-          widget.transaction.beneficiary.name.trim().toUpperCase();
+      if (user != null) {
+        final userFullName =
+            '${user.firstName} ${user.lastName}'.trim().toUpperCase();
+        final beneficiaryName =
+            widget.transaction.beneficiary.name.trim().toUpperCase();
 
-      // Check if beneficiary name matches user's full name or is SELF FUNDING
-      if (beneficiaryName == userFullName ||
-          beneficiaryName == 'SELF FUNDING' ||
-          beneficiaryName.contains('SELF') &&
-              beneficiaryName.contains('FUNDING')) {
-        return 'WALLET FUNDED';
+        if (beneficiaryName == userFullName ||
+            beneficiaryName == 'SELF FUNDING' ||
+            (beneficiaryName.contains('SELF') &&
+                beneficiaryName.contains('FUNDING'))) {
+          return 'Topped up your wallet';
+        }
       }
+
+      // Regular payment to another person
+      if (isDayfiTransfer &&
+          widget.transaction.beneficiary.accountNumber != null &&
+          widget.transaction.beneficiary.accountNumber!.isNotEmpty) {
+        final tag = widget.transaction.beneficiary.accountNumber!;
+        final displayTag = tag.startsWith('@') ? tag : '@$tag';
+        return 'Sent money to $displayTag';
+      }
+
+      // Payment to beneficiary name
+      return 'Sent to ${widget.transaction.beneficiary.name}';
     }
 
-    // Default: return "To [beneficiary name]" in uppercase
-    return 'To ${widget.transaction.beneficiary.name.toUpperCase()}';
+    // Fallback to beneficiary name
+    return widget.transaction.beneficiary.name.toUpperCase();
   }
 
   // Get transaction type icon (inflow/outflow)

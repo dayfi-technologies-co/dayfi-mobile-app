@@ -340,7 +340,7 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
                         'Do you want to enable ${state.biometricDescription} later?',
                         style: TextStyle(
                           fontFamily: 'CabinetGrotesk',
-                           fontSize: 19.sp, // height: 1.6,
+                           fontSize: 20.sp, // height: 1.6,
                           fontWeight: FontWeight.w400,
                           color: Theme.of(context).colorScheme.onSurface,
                           letterSpacing: -0.5,

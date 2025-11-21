@@ -51,6 +51,8 @@ dependencies:
   mixpanel_flutter: ^2.1.0
   smile_id: ^11.2.2
   shimmer: ^3.0.0
+  share_plus: ^10.1.2
+  screenshot: ^3.0.0
 
 dev_dependencies:
   flutter_test:

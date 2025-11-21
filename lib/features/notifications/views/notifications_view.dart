@@ -135,7 +135,7 @@ class _NotificationsViewState extends State<NotificationsView> {
           icon: const Icon(Icons.arrow_back_ios_new),
         ),
         title: Text(
-          "Alerts",
+          "Notifications",
           style: Theme.of(context).textTheme.headlineLarge?.copyWith(
             fontFamily: 'CabinetGrotesk',
             fontSize: 20.sp,
@@ -144,17 +144,17 @@ class _NotificationsViewState extends State<NotificationsView> {
           ),
         ),
         centerTitle: true,
-        actions: [
-          if (_notifications.any((n) => !n.isRead))
-            Padding(
-              padding: EdgeInsets.only(right: 16.w),
-              child: HelpButton(
-                onTap: _markAllAsRead,
-                text: "Read All",
-                svgIcon: const SizedBox.shrink(),
-              ),
-            ),
-        ],
+        // actions: [
+        //   if (_notifications.any((n) => !n.isRead))
+        //     Padding(
+        //       padding: EdgeInsets.only(right: 16.w),
+        //       child: HelpButton(
+        //         onTap: _markAllAsRead,
+        //         text: "Read All",
+        //         svgIcon: const SizedBox.shrink(),
+        //       ),
+        //     ),
+        // ],
       ),
 
       body:
@@ -188,22 +188,25 @@ class _NotificationsViewState extends State<NotificationsView> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Date Header
-        Padding(
-          padding: EdgeInsets.only(bottom: 8.h, top: 16.h),
-          child: Text(
-            date,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontFamily: 'Karla',
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-              letterSpacing: -.3,
-              height: 1.450,
-              color: Theme.of(
-                context,
-              ).textTheme.bodyLarge!.color!.withOpacity(.75),
-            ),
-          ),
-        ),
+        // Padding(
+        //   padding: EdgeInsets.only(bottom: 8.h, top: 16.h),
+        //   child: Text(
+        //     date,
+        //     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+        //       fontFamily: 'Karla',
+        //       fontSize: 14,
+        //       fontWeight: FontWeight.w400,
+        //       letterSpacing: -.3,
+        //       height: 1.450,
+        //       color: Theme.of(
+        //         context,
+        //       ).textTheme.bodyLarge!.color!.withOpacity(.75),
+        //     ),
+        //   ),
+        // ),
+
+        // to be removed: date header above
+        SizedBox(height: 8.h),
 
         // Notifications for this date
         Container(
@@ -328,18 +331,18 @@ class _NotificationsViewState extends State<NotificationsView> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  SizedBox(height: 4.h),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Text(
-                      _formatTime(notification.timestamp),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontFamily: 'Karla',
-                        fontWeight: FontWeight.w400,
-                        fontSize: 12.sp,
-                      ),
-                    ),
-                  ),
+                  // SizedBox(height: 4.h),
+                  // Align(
+                  //   alignment: Alignment.centerRight,
+                  //   child: Text(
+                  //     _formatTime(notification.timestamp),
+                  //     style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  //       fontFamily: 'Karla',
+                  //       fontWeight: FontWeight.w400,
+                  //       fontSize: 12.sp,
+                  //     ),
+                  //   ),
+                  // ),
                 ],
               ),
             ),
