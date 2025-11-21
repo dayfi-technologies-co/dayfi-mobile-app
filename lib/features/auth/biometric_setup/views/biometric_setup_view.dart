@@ -27,6 +27,7 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
+            bottom: false,
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 18.w),
           child: Column(

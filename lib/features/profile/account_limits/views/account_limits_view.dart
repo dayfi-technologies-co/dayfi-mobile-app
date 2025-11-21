@@ -60,6 +60,7 @@ class _AccountLimitsViewState extends ConsumerState<AccountLimitsView> {
         ),
       ),
       body: SafeArea(
+            bottom: false,
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 16.h),
           child: Column(

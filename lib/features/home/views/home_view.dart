@@ -276,9 +276,7 @@ class _HomeViewState extends ConsumerState<HomeView>
               _buildWalletBalanceCard(),
               SizedBox(height: 12.h),
               _buildHomeActionButtons(context),
-
               // SizedBox(height: 12.h),
-
               // Padding(
               //   padding: EdgeInsets.symmetric(
               //     horizontal: MediaQuery.of(context).size.width * .2,
@@ -313,8 +311,7 @@ class _HomeViewState extends ConsumerState<HomeView>
               //     fullWidth: true,
               //   ),
               // ), //
-              SizedBox(height: 32.h),
-
+              SizedBox(height: 28.h),
               _buildRecentTransactions(),
               SizedBox(height: 112.h),
             ],
@@ -499,7 +496,7 @@ class _HomeViewState extends ConsumerState<HomeView>
                                   fontWeight: FontWeight.w700,
                                   color: Theme.of(
                                     context,
-                                  ).colorScheme.onSurface.withOpacity(.95),
+                                  ).colorScheme.onSurface.withOpacity(1),
                                   letterSpacing: -.6,
                                 ),
                               ),
@@ -613,17 +610,17 @@ class _HomeViewState extends ConsumerState<HomeView>
         height: 50.h,
         decoration: BoxDecoration(
           color: Theme.of(context).scaffoldBackgroundColor,
-          // boxShadow: [
-          //   BoxShadow(
-          //     blurRadius: 0,
-          //     spreadRadius: 0,
-          //     color: const Color(0xFFFFD800),,
-          //     offset: Offset(label == "Topup Wallet" ? -1 : 1, 2),
-          //   ),
-          // ],
+          boxShadow: [
+            BoxShadow(
+              blurRadius: 0,
+              spreadRadius: 0,
+              color: Theme.of(context).colorScheme.onSecondary,
+              offset: Offset(label == "Topup Wallet" ? -1 : 1, 2),
+            ),
+          ],
           border: Border.all(
             color: Theme.of(context).colorScheme.outline.withOpacity(.25),
-            width: 1,
+            width: 1.2,
           ),
           borderRadius: BorderRadius.circular(48.r),
         ),
@@ -650,7 +647,7 @@ class _HomeViewState extends ConsumerState<HomeView>
                     child: SvgPicture.asset(
                       iconAsset,
                       // height: 18.sp,
-                      // color: AppColors.purple500ForTheme(context),
+                      color: label == 'Topup Wallet' ? Color(0xffEA4857) : null,
                     ),
                   ),
                 ],
@@ -662,7 +659,7 @@ class _HomeViewState extends ConsumerState<HomeView>
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontWeight: AppTypography.medium,
-                height: 1.450,
+                height: 1.5,
                 fontFamily: 'Karla',
                 letterSpacing: -.8,
                 fontSize: 18,
@@ -764,6 +761,7 @@ class _HomeViewState extends ConsumerState<HomeView>
           ),
           child: Column(
             children: [
+              SizedBox(height: 4.h),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -804,8 +802,7 @@ class _HomeViewState extends ConsumerState<HomeView>
                   ),
                 ],
               ),
-
-              SizedBox(height: 4.h),
+              SizedBox(height: 8.h),
               for (int i = 0; i < recentTransactions.length; i++)
                 _buildTransactionCard(
                   recentTransactions[i],
@@ -839,15 +836,15 @@ class _HomeViewState extends ConsumerState<HomeView>
           children: [
             // Transaction Type Icon (Inflow/Outflow)
             SizedBox(
-              width: 40.w,
-              height: 40.w,
+              width: 36.w,
+              height: 36.w,
               child: Stack(
                 alignment: Alignment.center,
                 children: [
                   // Background circle
                   SvgPicture.asset(
                     'assets/icons/svgs/transactions.svg',
-                    height: 40.sp,
+                    height: 36.sp,
                     color: _getTransactionTypeColorForTransaction(
                       transaction,
                     ).withOpacity(0.35),
@@ -856,7 +853,7 @@ class _HomeViewState extends ConsumerState<HomeView>
                   Center(
                     child: SvgPicture.asset(
                       _getTransactionTypeIconForTransaction(transaction),
-                      height: 28.sp,
+                      height: 20.sp,
                       color: _getTransactionTypeColorForTransaction(
                         transaction,
                       ),

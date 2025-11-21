@@ -309,10 +309,7 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
             padding: EdgeInsetsGeometry.only(bottom: 0.h),
             child:
                 recipientsState.isLoading && visibleBeneficiaries.isEmpty
-                    ? ShimmerWidgets.recipientListShimmer(
-                        context,
-                        itemCount: 6,
-                      )
+                    ? ShimmerWidgets.recipientListShimmer(context, itemCount: 6)
                     : recipientsState.errorMessage != null &&
                         visibleBeneficiaries.isEmpty
                     ? ErrorStateWidget(
@@ -487,22 +484,77 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
                 Row(
                   children: [
                     _getAccountIcon(source, beneficiary),
-                    SizedBox(width: 2.w),
+                    // SizedBox(width: 2.w),
                     Expanded(
-                      child: Text(
-                        '${_getChannelAndNetworkInfo(beneficiaryWithSource)} • ${_getAccountNumber(source, beneficiary)}',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontFamily: 'Karla',
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w400,
-                          letterSpacing: -.3,
-                          height: 1.450,
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withOpacity(0.6),
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                      child:
+                          _getChannelAndNetworkInfo(beneficiaryWithSource) ==
+                                  "DayFi Tag"
+                              ? Row(
+                                children: [
+                                  Text(
+                                    _getAccountNumber(
+                                      source,
+                                      beneficiary,
+                                    ).split("@").last,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodyMedium?.copyWith(
+                                      fontFamily: 'Karla',
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.w400,
+                                      letterSpacing: -.3,
+                                      height: 1.450,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurface.withOpacity(0.6),
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  SizedBox(width: 8.w),
+                                  // Container(
+                                  //   padding: EdgeInsets.symmetric(
+                                  //     vertical: 2.h,
+                                  //     horizontal: 6.w,
+                                  //   ),
+                                  //   decoration: BoxDecoration(
+                                  //     color: Colors.white.withOpacity(1),
+                                  //     borderRadius: BorderRadius.circular(20.r),
+                                  //   ),
+                                  //   child: Row(
+                                  //     mainAxisSize: MainAxisSize.min,
+                                  //     children: [
+                                  //       Text(
+                                  //         "Dayfi Tag",
+                                  //         style: TextStyle(
+                                  //           fontFamily: 'Karla',
+                                  //           fontSize: 12.sp,
+                                  //           color: const Color(0xff2A0079),
+                                  //           fontWeight: FontWeight.w600,
+                                  //           letterSpacing: -.04,
+                                  //           height: 1.450,
+                                  //         ),
+                                  //       ),
+                                  //     ],
+                                  //   ),
+                                  // ),
+                                ],
+                              )
+                              : Text(
+                                '  ${_getChannelAndNetworkInfo(beneficiaryWithSource)} • ${_getAccountNumber(source, beneficiary)}',
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.bodyMedium?.copyWith(
+                                  fontFamily: 'Karla',
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w400,
+                                  letterSpacing: -.3,
+                                  height: 1.450,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface.withOpacity(0.6),
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                     ),
                   ],
                 ),
@@ -736,15 +788,24 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
     String iconAsset,
     VoidCallback onTap,
   ) {
-    return GestureDetector(
+    return 
+    GestureDetector(
       onTap: onTap,
       child: Container(
         height: 50.h,
         decoration: BoxDecoration(
-          color: Theme.of(context).scaffoldBackgroundColor,
+         color: Theme.of(context).scaffoldBackgroundColor,
+          boxShadow: [
+            BoxShadow(
+              blurRadius: 0,
+              spreadRadius: 0,
+              color: Theme.of(context).colorScheme.onSecondary,
+              offset: Offset(0, 2),
+            ),
+          ],
           border: Border.all(
             color: Theme.of(context).colorScheme.outline.withOpacity(.25),
-            width: 1,
+            width: 1.2,
           ),
           borderRadius: BorderRadius.circular(48.r),
         ),
@@ -766,7 +827,7 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontWeight: AppTypography.medium,
-                height: 1.450,
+                height: 1.5,
                 fontFamily: 'Karla',
                 letterSpacing: -.8,
                 fontSize: 18,

@@ -34,6 +34,7 @@ class SuccessSignupView extends ConsumerWidget {
 
           // Main content
           SafeArea(
+            bottom: false,
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 18.w),
               child: Column(

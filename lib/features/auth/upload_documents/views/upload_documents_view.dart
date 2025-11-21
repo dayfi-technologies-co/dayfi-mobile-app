@@ -46,6 +46,7 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
       child: Scaffold(
         backgroundColor: AppColors.purple500,
         body: SafeArea(
+            bottom: false,
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 4.h),
             child: Column(

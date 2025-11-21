@@ -223,9 +223,31 @@ class BiometricSetupNotifier extends StateNotifier<BiometricSetupState> {
       state = state.copyWith(isBusy: true);
       
       try {
-        // Save preference to skip biometrics locally only
+        // Get current user id
+        final userJson = await _secureStorage.read(StorageKeys.user);
+        String? userId;
+        if (userJson.isNotEmpty) {
+          final parsed = jsonDecode(userJson);
+          if (parsed is Map<String, dynamic> && parsed['user_id'] is String) {
+            userId = parsed['user_id'] as String;
+          }
+        }
+
+        if (userId != null && userId.isNotEmpty) {
+          // Update backend to mark biometrics as not setup
+          await _authService.updateProfileBiometrics(
+            userId: userId,
+            isBiometricsSetup: false,
+          );
+          AppLogger.info('Biometric skip status updated on backend successfully');
+        }
+        
+        // Save preference to skip biometrics locally
         await _secureStorage.write('biometric_enabled', 'false');
-      } catch (_) {}
+      } catch (e) {
+        AppLogger.error('Error updating biometric skip status: $e');
+        // Continue even if backend fails
+      }
       
       state = state.copyWith(isEnabled: false, isBusy: false);
       

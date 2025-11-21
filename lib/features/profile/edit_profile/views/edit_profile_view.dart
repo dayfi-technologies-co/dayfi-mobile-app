@@ -157,6 +157,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
           ),
         ),
         body: SafeArea(
+            bottom: false,
           child: SingleChildScrollView(
             controller: _scrollController,
             child: Form(

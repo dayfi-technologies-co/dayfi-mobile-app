@@ -88,6 +88,7 @@ class _TransactionFilterBottomSheetState
         borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
       ),
       child: SafeArea(
+            bottom: false,
         child: SingleChildScrollView(
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 24.h),

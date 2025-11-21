@@ -231,15 +231,15 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                       transactionsState.isLoading &&
                               transactionsState.groupedTransactions.isEmpty
                           ? Padding(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 24.w,
-                                vertical: 16.h,
-                              ),
-                              child: ShimmerWidgets.transactionListShimmer(
-                                context,
-                                itemCount: 8,
-                              ),
-                            )
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 24.w,
+                              vertical: 16.h,
+                            ),
+                            child: ShimmerWidgets.transactionListShimmer(
+                              context,
+                              itemCount: 8,
+                            ),
+                          )
                           : transactionsState.errorMessage != null &&
                               transactionsState.groupedTransactions.isEmpty
                           ? ErrorStateWidget(
@@ -296,7 +296,6 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                                   },
                                 ),
                               ),
-
                               ListView.builder(
                                 shrinkWrap: true,
                                 physics: NeverScrollableScrollPhysics(),
@@ -398,15 +397,15 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
             children: [
               // Transaction Type Icon (Inflow/Outflow)
               SizedBox(
-                width: 40.w,
-                height: 40.w,
+                width: 36.w,
+                height: 36.w,
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
                     // Background circle
                     SvgPicture.asset(
                       'assets/icons/svgs/transactions.svg',
-                      height: 40.sp,
+                      height: 36.sp,
                       color: _getTransactionTypeColorForTransaction(
                         transaction,
                       ).withOpacity(0.35),
@@ -415,7 +414,7 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                     Center(
                       child: SvgPicture.asset(
                         _getTransactionTypeIconForTransaction(transaction),
-                       height: 28.sp,
+                        height: 20.sp,
                         color: _getTransactionTypeColorForTransaction(
                           transaction,
                         ),
@@ -462,7 +461,7 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                       Text(
                         _capitalizeWords(transaction.reason!),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                       fontFamily: 'karla',
+                          fontFamily: 'karla',
                           fontWeight: FontWeight.w400,
                           letterSpacing: -.1,
                           height: 1.5,

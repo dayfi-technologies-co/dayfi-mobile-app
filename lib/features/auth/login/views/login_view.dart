@@ -58,6 +58,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
               FocusManager.instance.primaryFocus?.unfocus();
             },
             child: SafeArea(
+            bottom: false,
               child: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

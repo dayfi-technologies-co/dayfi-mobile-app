@@ -16,6 +16,7 @@ import 'package:dayfi/common/constants/storage_keys.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/services/notification_service.dart';
+import 'package:dayfi/services/remote/auth_service.dart';
 import 'dart:convert';
 
 final mainViewKey = GlobalKey<_MainViewState>();
@@ -35,7 +36,7 @@ class _MainViewState extends ConsumerState<MainView> {
 
   final List<Widget> _screens = [
     const HomeView(),
-    // const SoftposView(),
+    const SoftposView(),
     RecipientsView(fromSendView: false, fromProfile: false),
     const ProfileView(),
   ];
@@ -251,9 +252,9 @@ class _MainViewState extends ConsumerState<MainView> {
 
                 // Skip button
                 TextButton(
-                  onPressed: () {
+                  onPressed: () async {
                     Navigator.of(context).pop();
-                    _secureStorage.write('biometric_enabled', 'false');
+                    await _updateBiometricStatus(false);
                   },
                   child: Text(
                     'Skip for now',
@@ -272,6 +273,27 @@ class _MainViewState extends ConsumerState<MainView> {
         );
       },
     );
+  }
+
+  Future<void> _updateBiometricStatus(bool isEnabled) async {
+    try {
+      final authService = locator<AuthService>();
+      
+      // Call the backend API
+      await authService.updateBiometrics(isBiometricsSetup: isEnabled);
+      
+      // Update local storage
+      final userJson = await _secureStorage.read(StorageKeys.user);
+      if (userJson.isNotEmpty) {
+        final userMap = json.decode(userJson) as Map<String, dynamic>;
+        userMap['is_biometrics_setup'] = isEnabled;
+        await _secureStorage.write(StorageKeys.user, json.encode(userMap));
+      }
+      
+      AppLogger.info('Biometric status updated: $isEnabled');
+    } catch (e) {
+      AppLogger.error('Error updating biometric status: $e');
+    }
   }
 
   @override
@@ -295,7 +317,7 @@ class _MainViewState extends ConsumerState<MainView> {
           ),
         ),
         bottomNavigationBar: Container(
-          padding: EdgeInsets.fromLTRB(32.w, 4.h, 32.w, 4.h), // float up a bit
+          padding: EdgeInsets.fromLTRB(24.w, 4.h, 24.w, 4.h), // float up a bit
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
             // borderRadius: BorderRadius.circular(100.r),
@@ -317,20 +339,20 @@ class _MainViewState extends ConsumerState<MainView> {
                   icon: "assets/icons/svgs/transactions.svg",
                   isSelected: _currentIndex == 0,
                 ),
-                // _buildNavItem(
-                //   index: 1,
-                //   icon: "assets/icons/svgs/swap.svg",
-                //   isSelected: _currentIndex == 1,
-                // ),
                 _buildNavItem(
                   index: 1,
-                  icon: "assets/icons/svgs/recipients.svg",
+                  icon: "assets/icons/svgs/pos.svg",
                   isSelected: _currentIndex == 1,
                 ),
                 _buildNavItem(
                   index: 2,
-                  icon: "assets/icons/pngs/account.png",
+                  icon: "assets/icons/svgs/recipients.svg",
                   isSelected: _currentIndex == 2,
+                ),
+                _buildNavItem(
+                  index: 3,
+                  icon: "assets/icons/pngs/account.png",
+                  isSelected: _currentIndex == 3,
                   isPNG: true,
                 ),
               ],
@@ -380,16 +402,19 @@ class _MainViewState extends ConsumerState<MainView> {
             children: [
               isPNG
                   ? Image.asset(icon, height: 40.sp)
-                  : SvgPicture.asset(icon, height: 40.sp),
+                  : SvgPicture.asset(
+                    icon,
+                    height: 40.sp,
+                    color: index == 1 ? Color(0xFF5F2EA1) : null,
+                  ),
 
               SizedBox(height: 4.h),
-
               Text(
                 index == 0
                     ? '    Home    '
                     : index == 1
-                    // ? '   SoftPOS   '
-                    // : index == 2
+                    ? '  SoftPOS   '
+                    : index == 2
                     ? ' Recipients '
                     : '   Profile   ',
                 style: AppTypography.bodySmall.copyWith(
@@ -478,14 +503,15 @@ class _MainViewState extends ConsumerState<MainView> {
                   'Manage your global wallet, check the details and status of all your payments in one dashboard.',
             ),
 
-            // SizedBox(height: 24.h),
+            SizedBox(height: 24.h),
 
-            // _buildFeatureItem(
-            //   icon: _buildSendMoneyIcon(),
-            //   title: 'Send Money',
-            //   description:
-            //       'Transfer funds across borders using any of the available payment methods on the app.',
-            // ),
+            _buildFeatureItem(
+              icon: _buildSoftPOSIcon(),
+              title: 'SoftPOS',
+              description:
+                  'Accept payments directly on your phone. Turn your device into a secure payment terminal.',
+            ),
+
             SizedBox(height: 24.h),
 
             _buildFeatureItem(
@@ -536,7 +562,6 @@ class _MainViewState extends ConsumerState<MainView> {
       children: [
         // Icon
         Center(child: icon),
-
         SizedBox(width: 16.w),
 
         // Text content
@@ -581,9 +606,13 @@ class _MainViewState extends ConsumerState<MainView> {
     return SvgPicture.asset("assets/icons/svgs/transactions.svg", height: 40.h);
   }
 
-  // Widget _buildSendMoneyIcon() {
-  //   return SvgPicture.asset("assets/icons/svgs/swap.svg", height: 40.h);
-  // }
+  Widget _buildSoftPOSIcon() {
+    return SvgPicture.asset(
+      "assets/icons/svgs/pos.svg",
+      height: 40.h,
+      color: Color(0xFF5F2EA1),
+    );
+  }
 
   Widget _buildProfileIcon() {
     return Image.asset("assets/icons/pngs/account.png", height: 40.h);

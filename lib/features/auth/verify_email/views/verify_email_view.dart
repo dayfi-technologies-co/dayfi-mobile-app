@@ -47,6 +47,7 @@ class VerifyEmailView extends ConsumerWidget {
             FocusManager.instance.primaryFocus?.unfocus();
           },
           child: SafeArea(
+            bottom: false,
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

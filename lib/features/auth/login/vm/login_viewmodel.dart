@@ -135,6 +135,10 @@ class LoginNotifier extends StateNotifier<LoginState> {
         await _secureStorage.write(StorageKeys.email, state.email);
         await _secureStorage.write(StorageKeys.password, state.password);
 
+        // Disable biometrics on backend for fresh login flow
+        // User will re-enable during biometric setup if they choose
+        await _disableBiometricsOnLogin(response.data?.user?.id);
+
         // Show success message
         // _showSnackBar(context, response.message, isError: false);
 
@@ -208,6 +212,35 @@ class LoginNotifier extends StateNotifier<LoginState> {
       emailError: emailError ?? '',
       passwordError: passwordError ?? '',
     );
+  }
+
+  /// Disable biometrics on backend immediately after login
+  /// This ensures every fresh login starts with biometrics disabled
+  /// User will re-enable during biometric setup flow if they choose
+  Future<void> _disableBiometricsOnLogin(String? userId) async {
+    try {
+      if (userId == null || userId.isEmpty) {
+        AppLogger.warning('No user ID available, skipping biometric disable on login');
+        return;
+      }
+
+      AppLogger.info('Disabling biometrics on backend after fresh login...');
+      
+      // Call backend API to disable biometrics
+      await _authService.updateProfileBiometrics(
+        userId: userId,
+        isBiometricsSetup: false,
+      );
+      
+      // Also clear local biometric flag to ensure consistency
+      await _secureStorage.delete('biometric_enabled');
+      await _secureStorage.delete(StorageKeys.biometricSetupCompleted);
+      
+      AppLogger.info('Biometrics disabled on backend after login - user can re-enable during setup');
+    } catch (e) {
+      // Don't fail login if biometric disable fails - just log it
+      AppLogger.warning('Failed to disable biometrics on login: $e');
+    }
   }
 
   // Navigate to verify email screen and automatically resend OTP

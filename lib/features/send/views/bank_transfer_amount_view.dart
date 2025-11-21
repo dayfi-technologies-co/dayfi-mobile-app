@@ -189,6 +189,7 @@ class _BankTransferAmountViewState
         ),
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: SafeArea(
+            bottom: false,
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,

@@ -217,6 +217,7 @@ class _ChangeTransactionPinConfirmViewState
             FocusManager.instance.primaryFocus?.unfocus();
           },
           child: SafeArea(
+            bottom: false,
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -413,7 +414,7 @@ class PasscodeWidget extends StatelessWidget {
             child: Text(
               number,
               style: TextStyle(
-                fontSize: 25.60,
+                fontSize: 25.60.sp,
                 fontFamily: 'CabinetGrotesk',
                 fontWeight: FontWeight.w400,
                 color: Theme.of(context).colorScheme.onSurface,

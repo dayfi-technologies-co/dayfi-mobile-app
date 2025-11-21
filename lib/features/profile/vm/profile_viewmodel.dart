@@ -1,9 +1,13 @@
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/models/user_model.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/services/notification_service.dart';
 import 'package:dayfi/services/data_clearing_service.dart';
+import 'package:dayfi/services/local/secure_storage.dart';
+import 'package:dayfi/services/remote/auth_service.dart';
+import 'package:dayfi/common/constants/storage_keys.dart';
 
 class ProfileState {
   final User? user;
@@ -335,6 +339,9 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
     try {
       AppLogger.info('User logging out...');
       
+      // Disable biometrics on backend before logout for security
+      await _disableBiometricsBeforeLogout();
+      
       // Use comprehensive data clearing service
       final dataClearingService = DataClearingService();
       await dataClearingService.clearAllUserData(ref);
@@ -352,6 +359,40 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
           errorMessage: 'Error during logout. Please try again.',
         );
       }
+    }
+  }
+
+  /// Disable biometrics on backend before logout for security
+  Future<void> _disableBiometricsBeforeLogout() async {
+    try {
+      AppLogger.info('Disabling biometrics before logout...');
+      
+      final secureStorage = locator<SecureStorageService>();
+      
+      // Check if biometrics are currently enabled
+      final biometricEnabled = await secureStorage.read('biometric_enabled');
+      
+      if (biometricEnabled == 'true') {
+        // Get user ID from stored user data
+        final userJson = await secureStorage.read(StorageKeys.user);
+        if (userJson.isNotEmpty) {
+          final userMap = json.decode(userJson) as Map<String, dynamic>;
+          final userId = userMap['_id'] as String?;
+          
+          if (userId != null && userId.isNotEmpty) {
+            final authService = locator<AuthService>();
+            // Call backend API to disable biometrics
+            await authService.updateProfileBiometrics(
+              userId: userId,
+              isBiometricsSetup: false,
+            );
+            AppLogger.info('Biometrics disabled on backend before logout');
+          }
+        }
+      }
+    } catch (e) {
+      // Don't fail logout if biometric disable fails - just log it
+      AppLogger.warning('Failed to disable biometrics before logout: $e');
     }
   }
 

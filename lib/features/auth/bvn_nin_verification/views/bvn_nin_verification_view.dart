@@ -71,6 +71,7 @@ class _BvnNinVerificationViewState
         child: Scaffold(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           body: SafeArea(
+            bottom: false,
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

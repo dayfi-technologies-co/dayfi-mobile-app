@@ -71,6 +71,7 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
     return Scaffold(
       backgroundColor: const Color(0xFFFFD800), // Bright yellow background
       body: SafeArea(
+            bottom: false,
         child: SizedBox(
           height: MediaQuery.of(context).size.height,
           child: Stack(

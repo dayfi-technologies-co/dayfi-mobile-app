@@ -695,6 +695,7 @@ class _SendCryptoNetworksViewState
           ],
         ),
         child: SafeArea(
+            bottom: false,
           child: PrimaryButton(
             text:
                 _isLoading

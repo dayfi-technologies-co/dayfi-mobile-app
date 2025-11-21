@@ -313,7 +313,7 @@ class PrimaryButton extends StatelessWidget {
                           text,
                           style: TextStyle(
                             color: effectiveTextColor,
-                            fontSize: fontSize ?? 18.sp,
+                            fontSize: fontSize ?? 18,
                             fontFamily:
                                 fontFamily ?? AppTypography.secondaryFontFamily,
                             fontWeight: fontWeight ?? AppTypography.medium,

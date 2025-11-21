@@ -177,7 +177,8 @@ class CustomBottomSheet extends StatelessWidget {
               width: double.infinity,
               height: fixedHeight,
               padding: contentPadding ?? EdgeInsets.all(24.w),
-              child: useSafeArea ? SafeArea(child: child) : child,
+              child: useSafeArea ? SafeArea(
+            bottom: false,child: child) : child,
             ),
           ),
 

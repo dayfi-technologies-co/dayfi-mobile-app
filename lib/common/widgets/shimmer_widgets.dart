@@ -88,7 +88,7 @@ class ShimmerWidgets {
                   // Reason placeholder (optional)
                   Container(
                     width: 150.w,
-                    height: 4.h,
+                    height: 12.h,
                     decoration: BoxDecoration(
                       color: shimmerColor,
                       borderRadius: BorderRadius.circular(4.r),
@@ -115,7 +115,7 @@ class ShimmerWidgets {
                 // Amount placeholder
                 Container(
                   width: 80.w,
-                  height: 4.h,
+                  height: 12.h,
                   decoration: BoxDecoration(
                     color: shimmerColor,
                     borderRadius: BorderRadius.circular(4.r),
@@ -125,7 +125,7 @@ class ShimmerWidgets {
                 // Status placeholder
                 Container(
                   width: 60.w,
-                  height: 4.h,
+                  height: 12.h,
                   decoration: BoxDecoration(
                     color: shimmerColor,
                     borderRadius: BorderRadius.circular(4.r),
@@ -421,7 +421,7 @@ class ShimmerWidgets {
             // Country name placeholder
             Expanded(
               child: Container(
-                height: 4.h,
+                height: 12.h,
                 decoration: BoxDecoration(
                   color: shimmerColor,
                   borderRadius: BorderRadius.circular(4.r),
@@ -432,7 +432,7 @@ class ShimmerWidgets {
             // Currency placeholder
             Container(
               width: 48.w,
-              height: 4.h,
+              height: 12.h,
               decoration: BoxDecoration(
                 color: shimmerColor,
                 borderRadius: BorderRadius.circular(4.r),

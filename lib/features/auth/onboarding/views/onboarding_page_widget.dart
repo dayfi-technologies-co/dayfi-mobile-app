@@ -15,6 +15,7 @@ class OnboardingPageWidget extends StatelessWidget {
     return Container(
           color: const Color(0xFFFFD800), // Bright yellow background
           child: SafeArea(
+            bottom: false,
             child: Padding(
               padding: EdgeInsets.fromLTRB(24.w, 0, 32.w, 0),
               child: Column(

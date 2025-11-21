@@ -869,7 +869,7 @@ class _TransactionPinBottomSheetState
                 child: Text(
                   number,
                   style: TextStyle(
-                    fontSize: 25.60,
+                    fontSize: 25.60.sp,
                     fontFamily: 'CabinetGrotesk',
                     fontWeight: FontWeight.w400,
                     color: Theme.of(context).colorScheme.onSurface,

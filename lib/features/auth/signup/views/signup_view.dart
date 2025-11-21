@@ -35,6 +35,7 @@ class SignupView extends ConsumerWidget {
             FocusManager.instance.primaryFocus?.unfocus();
           },
           child: SafeArea(
+            bottom: false,
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -131,7 +132,9 @@ class SignupView extends ConsumerWidget {
                             .shimmer(
                               delay: 400.ms,
                               duration: 800.ms,
-                              color: AppColors.purple500ForTheme(context).withOpacity(0.1),
+                              color: AppColors.purple500ForTheme(
+                                context,
+                              ).withOpacity(0.1),
                               angle: 15,
                             ),
 
@@ -264,7 +267,9 @@ class SignupView extends ConsumerWidget {
                             .shimmer(
                               delay: 500.ms,
                               duration: 800.ms,
-                              color: AppColors.purple500ForTheme(context).withOpacity(0.1),
+                              color: AppColors.purple500ForTheme(
+                                context,
+                              ).withOpacity(0.1),
                               angle: 15,
                             ),
 
@@ -303,7 +308,9 @@ class SignupView extends ConsumerWidget {
                             .shimmer(
                               delay: 600.ms,
                               duration: 800.ms,
-                              color: AppColors.purple500ForTheme(context).withOpacity(0.1),
+                              color: AppColors.purple500ForTheme(
+                                context,
+                              ).withOpacity(0.1),
                               angle: 15,
                             ),
 
@@ -351,7 +358,9 @@ class SignupView extends ConsumerWidget {
                             .shimmer(
                               delay: 700.ms,
                               duration: 800.ms,
-                              color: AppColors.purple500ForTheme(context).withOpacity(0.1),
+                              color: AppColors.purple500ForTheme(
+                                context,
+                              ).withOpacity(0.1),
                               angle: 15,
                             ),
 
@@ -456,7 +465,9 @@ class SignupView extends ConsumerWidget {
                             .shimmer(
                               delay: 800.ms,
                               duration: 800.ms,
-                              color: AppColors.purple500ForTheme(context).withOpacity(0.1),
+                              color: AppColors.purple500ForTheme(
+                                context,
+                              ).withOpacity(0.1),
                               angle: 15,
                             ),
 
@@ -581,7 +592,9 @@ class SignupView extends ConsumerWidget {
                             .shimmer(
                               delay: 900.ms,
                               duration: 800.ms,
-                              color: AppColors.purple500ForTheme(context).withOpacity(0.1),
+                              color: AppColors.purple500ForTheme(
+                                context,
+                              ).withOpacity(0.1),
                               angle: 15,
                             ),
 
@@ -601,8 +614,10 @@ class SignupView extends ConsumerWidget {
                               isLoading: signupState.isBusy,
                               backgroundColor:
                                   signupState.isFormValid
-                                      ? AppColors.purple500ForTheme(context)
-                                      : AppColors.purple500ForTheme(context).withOpacity(.25),
+                                      ? AppColors.purple500
+                                      : AppColors.purple500ForTheme(
+                                        context,
+                                      ).withOpacity(.25),
                               height: 48.000.h,
                               textColor:
                                   signupState.isFormValid
@@ -657,7 +672,9 @@ class SignupView extends ConsumerWidget {
                                       text: "\nSign in",
                                       style: TextStyle(
                                         fontFamily: 'Karla',
-                                        color: AppColors.purple500ForTheme(context),
+                                        color: AppColors.purple500ForTheme(
+                                          context,
+                                        ),
                                         fontSize: 16.sp,
                                         fontWeight: FontWeight.w600,
                                         letterSpacing: -.3,
@@ -777,7 +794,9 @@ class SignupView extends ConsumerWidget {
                             .shimmer(
                               delay: 900.ms,
                               duration: 800.ms,
-                              color: AppColors.purple500ForTheme(context).withOpacity(0.1),
+                              color: AppColors.purple500ForTheme(
+                                context,
+                              ).withOpacity(0.1),
                               angle: 15,
                             ),
 

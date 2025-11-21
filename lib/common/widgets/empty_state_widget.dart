@@ -100,7 +100,7 @@ class EmptyStateWidget extends StatelessWidget {
             if (message != null) ...[
               SizedBox(height: 12.h),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
                 child: Text(
                   message!,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(

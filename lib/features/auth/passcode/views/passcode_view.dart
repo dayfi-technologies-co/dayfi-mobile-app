@@ -60,6 +60,7 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
         Scaffold(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           body: SafeArea(
+            bottom: false,
             child: AnimatedOpacity(
               opacity: _visible ? 1.0 : 0.0,
               duration: const Duration(milliseconds: 300),
@@ -89,7 +90,7 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
                     Text(
                       'Welcome back, ${_capitalize(passcodeState.user?.firstName ?? '')}',
                       style: TextStyle(
-                     fontFamily: 'CabinetGrotesk',
+                        fontFamily: 'CabinetGrotesk',
                         fontSize: 28.00,
                         fontWeight: FontWeight.w500,
                         overflow: TextOverflow.ellipsis,
@@ -324,8 +325,8 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
     return Text(
       'Are you sure you want to logout? You will be asked to create a new passcode.',
       style: TextStyle(
-     fontFamily: 'CabinetGrotesk',
-         fontSize: 19.sp, // height: 1.6,
+        fontFamily: 'CabinetGrotesk',
+        fontSize: 19.sp, // height: 1.6,
         fontWeight: FontWeight.w500,
         color: Theme.of(context).colorScheme.onSurface,
         letterSpacing: -0.5,
@@ -403,8 +404,8 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
           child: Text(
             number,
             style: TextStyle(
-              fontSize: 25.60,
-           fontFamily: 'CabinetGrotesk',
+              fontSize: 25.60.sp,
+              fontFamily: 'CabinetGrotesk',
               fontWeight: FontWeight.w400,
               color: Theme.of(context).colorScheme.onSurface,
             ),
@@ -441,15 +442,15 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
               (icon == Icons.fingerprint || icon == Icons.face)
                   ? SvgPicture.asset(
                     iconSvg,
-                    height: 30,
+                    height: 36.sp,
                     color: AppColors.purple500ForTheme(context),
                   )
                   : Icon(
                     icon,
                     size:
                         (icon == Icons.fingerprint || icon == Icons.face)
-                            ? 36
-                            : 24,
+                            ? 36.sp
+                            : 24.spMax,
                     color: AppColors.purple500ForTheme(context),
                   ),
         ),

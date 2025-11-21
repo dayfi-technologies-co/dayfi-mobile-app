@@ -208,10 +208,13 @@ class SecondaryButton extends StatelessWidget {
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: isDisabled ? null : () {
-              HapticHelper.mediumImpact();
-              onPressed?.call();
-            },
+            onTap:
+                isDisabled
+                    ? null
+                    : () {
+                      HapticHelper.mediumImpact();
+                      onPressed?.call();
+                    },
             borderRadius: BorderRadius.circular(borderRadius ?? 10.r),
             child: SizedBox(
               width: double.infinity,
@@ -241,8 +244,7 @@ class SecondaryButton extends StatelessWidget {
                         text,
                         style: TextStyle(
                           color: effectiveTextColor,
-                          fontSize: fontSize ?? 18.sp,
-                          
+                          fontSize: fontSize ?? 18,
                           fontFamily:
                               fontFamily ?? AppTypography.secondaryFontFamily,
                           fontWeight: fontWeight ?? AppTypography.medium,
