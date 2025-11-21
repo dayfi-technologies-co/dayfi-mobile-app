@@ -11,6 +11,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/features/auth/passcode/vm/passcode_viewmodel.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class PasscodeView extends ConsumerStatefulWidget {
   const PasscodeView({super.key});
@@ -21,6 +22,8 @@ class PasscodeView extends ConsumerStatefulWidget {
 
 class _PasscodeViewState extends ConsumerState<PasscodeView> {
   bool _visible = false;
+  bool _hasTriggeredBiometric = false;
+  
   @override
   void initState() {
     super.initState();
@@ -31,8 +34,25 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
         setState(() {
           _visible = true;
         });
+        // Trigger biometric after UI animation completes
+        _triggerBiometricAuth();
       }
     });
+  }
+
+  Future<void> _triggerBiometricAuth() async {
+    if (_hasTriggeredBiometric) return;
+    
+    // Wait for fade-in animation to complete (300ms) + buffer
+    await Future.delayed(const Duration(milliseconds: 600));
+    
+    if (!mounted) return;
+    
+    final state = ref.read(passcodeProvider);
+    if (state.isBiometricAvailable && state.isBiometricEnabled) {
+      _hasTriggeredBiometric = true;
+      await ref.read(passcodeProvider.notifier).authenticateWithBiometrics();
+    }
   }
 
   @override
@@ -119,8 +139,13 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
                     if (passcodeState.isVerifying)
                       Padding(
                         padding: const EdgeInsets.all(6.0),
-                        child: CupertinoActivityIndicator(
-                          color: AppColors.purple500ForTheme(context),
+                        child: SizedBox(
+                          width: 20.w,
+                          height: 20.w,
+                          child: LoadingAnimationWidget.horizontalRotatingDots(
+                            color: AppColors.primary600,
+                            size: 20,
+                          ),
                         ),
                       )
                     else

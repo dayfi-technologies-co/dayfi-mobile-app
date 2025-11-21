@@ -39,6 +39,8 @@ class _HomeViewState extends ConsumerState<HomeView>
     WidgetsBinding.instance.addObserver(this);
     // Initialize wallet data when view loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Load profile first to get user name
+      ref.read(profileViewModelProvider.notifier).loadUserProfile(isInitialLoad: true);
       ref.read(homeViewModelProvider.notifier).initialize();
       ref
           .read(transactionsProvider.notifier)

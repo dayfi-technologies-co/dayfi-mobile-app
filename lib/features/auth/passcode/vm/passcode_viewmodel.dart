@@ -205,7 +205,11 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
       return false;
     }
 
+    // Set loading state immediately when biometric prompt appears
     state = state.copyWith(isVerifying: true);
+    
+    // Give UI a moment to update before showing biometric prompt
+    await Future.delayed(const Duration(milliseconds: 100));
 
     try {
       AppLogger.info('Starting manual biometric authentication...');
@@ -289,9 +293,13 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
 
             // Save updated user data if available
             if (response.data?.user != null) {
+              // Mark biometric as setup if user authenticated with biometrics
+              final userData = response.data!.user!.toJson();
+              userData['is_biometrics_setup'] = true;
+              
               await _secureStorage.write(
                 StorageKeys.user,
-                json.encode(response.data!.user!.toJson()),
+                json.encode(userData),
               );
               // Update the state with the fresh user data
               state = state.copyWith(user: response.data!.user!);
