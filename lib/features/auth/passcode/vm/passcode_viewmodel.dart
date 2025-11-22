@@ -33,7 +33,8 @@ class PasscodeState {
   });
 
   bool get hasFaceId => isBiometricAvailable && biometricType.contains('Face');
-  bool get hasFingerprint => isBiometricAvailable && biometricType.contains('Fingerprint');
+  bool get hasFingerprint =>
+      isBiometricAvailable && biometricType.contains('Fingerprint');
 
   PasscodeState copyWith({
     String? passcode,
@@ -51,7 +52,8 @@ class PasscodeState {
       isVerifying: isVerifying ?? this.isVerifying,
       isBiometricAvailable: isBiometricAvailable ?? this.isBiometricAvailable,
       isBiometricEnabled: isBiometricEnabled ?? this.isBiometricEnabled,
-      isDeviceBiometricAvailable: isDeviceBiometricAvailable ?? this.isDeviceBiometricAvailable,
+      isDeviceBiometricAvailable:
+          isDeviceBiometricAvailable ?? this.isDeviceBiometricAvailable,
       isLoading: isLoading ?? this.isLoading,
       user: user ?? this.user,
       errorMessage: errorMessage ?? this.errorMessage,
@@ -85,10 +87,10 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
         // If we have a token but no user data, this might be an inconsistent state
         // We could trigger a re-authentication here if needed
       }
-      
+
       // Check if biometric authentication is available and enabled
       await _checkBiometricAvailability();
-      
+
       // NOTE: Do not auto-trigger biometric authentication here.
       // Biometrics should only be triggered when the user explicitly
       // taps the biometric button on the passcode screen.
@@ -104,20 +106,23 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
       // Only auto-trigger if biometrics are available and enabled
       if (state.isBiometricAvailable && state.isBiometricEnabled) {
         AppLogger.info('Auto-triggering biometric authentication...');
-        
+
         // Small delay to ensure UI is ready
         await Future.delayed(const Duration(milliseconds: 300));
-        
+
         // Trigger biometric authentication
-        final bool authenticated = await BiometricService.authenticateWithPlatformMessaging(
-          customReason: 'Authenticate to access your account',
-        );
+        final bool authenticated =
+            await BiometricService.authenticateWithPlatformMessaging(
+              customReason: 'Authenticate to access your account',
+            );
 
         if (authenticated) {
           AppLogger.info('Auto biometric authentication successful');
           await _authenticateAndNavigate();
         } else {
-          AppLogger.info('Auto biometric authentication failed or cancelled - user can use passcode');
+          AppLogger.info(
+            'Auto biometric authentication failed or cancelled - user can use passcode',
+          );
         }
       }
     } catch (e) {
@@ -129,26 +134,30 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
   Future<void> _checkBiometricAvailability() async {
     try {
       // Check if biometrics are available on device
-      final bool isDeviceAvailable = await BiometricService.isBiometricAvailable();
-      
+      final bool isDeviceAvailable =
+          await BiometricService.isBiometricAvailable();
+
       state = state.copyWith(isDeviceBiometricAvailable: isDeviceAvailable);
-      
+
       if (isDeviceAvailable) {
         // Check if biometrics are enabled for this app
-        final String biometricEnabled = await _secureStorage.read('biometric_enabled');
+        final String biometricEnabled = await _secureStorage.read(
+          'biometric_enabled',
+        );
         final bool isEnabled = biometricEnabled == 'true';
-        
+
         state = state.copyWith(isBiometricEnabled: isEnabled);
-        
+
         if (isEnabled) {
           // Get biometric type for display
-          final String biometricType = await BiometricService.getPrimaryBiometricType();
-          
+          final String biometricType =
+              await BiometricService.getPrimaryBiometricType();
+
           state = state.copyWith(
             isBiometricAvailable: true,
             biometricType: biometricType,
           );
-          
+
           AppLogger.info('Biometric authentication available: $biometricType');
         } else {
           state = state.copyWith(isBiometricAvailable: false);
@@ -191,13 +200,17 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
   Future<bool> authenticateWithBiometrics() async {
     // Check device availability first
     if (!state.isDeviceBiometricAvailable) {
-      _showErrorSnackBar('Biometric authentication is not available on this device');
+      _showErrorSnackBar(
+        'Biometric authentication is not available on this device',
+      );
       return false;
     }
 
     // Check if enabled for this app
     if (!state.isBiometricEnabled) {
-      _showErrorSnackBar('Biometric authentication is not enabled. Please enable it in settings.');
+      _showErrorSnackBar(
+        'Biometric authentication is not enabled. Please enable it in settings.',
+      );
       return false;
     }
 
@@ -208,26 +221,29 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
 
     // Set loading state immediately when biometric prompt appears
     state = state.copyWith(isVerifying: true);
-    
+
     // Give UI a moment to update before showing biometric prompt
     await Future.delayed(const Duration(milliseconds: 100));
 
     try {
       AppLogger.info('Starting manual biometric authentication...');
-      
+
       // Authenticate using biometrics with platform-specific messaging
-      final bool authenticated = await BiometricService.authenticateWithPlatformMessaging(
-        customReason: 'Authenticate to access your account',
-      );
+      final bool authenticated =
+          await BiometricService.authenticateWithPlatformMessaging(
+            customReason: 'Authenticate to access your account',
+          );
 
       if (authenticated) {
         AppLogger.info('Manual biometric authentication successful');
-        
+
         // If biometric authentication succeeds, proceed with login
         await _authenticateAndNavigate();
         return true;
       } else {
-        AppLogger.info('Manual biometric authentication failed or was cancelled');
+        AppLogger.info(
+          'Manual biometric authentication failed or was cancelled',
+        );
         state = state.copyWith(isVerifying: false);
         // Don't show error for cancellation - user can use passcode
         return false;
@@ -235,7 +251,9 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
     } catch (e) {
       AppLogger.error('Error during manual biometric authentication: $e');
       state = state.copyWith(isVerifying: false);
-      _showErrorSnackBar('Biometric authentication error. Please use your passcode.');
+      _showErrorSnackBar(
+        'Biometric authentication error. Please use your passcode.',
+      );
       return false;
     }
   }
@@ -297,14 +315,16 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
               // Mark biometric as setup if user authenticated with biometrics
               final userData = response.data!.user!.toJson();
               userData['is_biometrics_setup'] = true;
-              
+
               await _secureStorage.write(
                 StorageKeys.user,
                 json.encode(userData),
               );
               // Update the state with the fresh user data
               state = state.copyWith(user: response.data!.user!);
-              AppLogger.info('User data updated after re-authentication: ${response.data!.user!.firstName}');
+              AppLogger.info(
+                'User data updated after re-authentication: ${response.data!.user!.firstName}',
+              );
             }
 
             // Navigate to main view and clear stack
@@ -352,7 +372,7 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
     try {
       // Disable biometrics on backend before logout for security
       await _disableBiometricsBeforeLogout();
-      
+
       // Use comprehensive data clearing service
       final dataClearingService = DataClearingService();
       await dataClearingService.clearAllUserData(ref);
@@ -374,21 +394,29 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
   Future<void> _disableBiometricsBeforeLogout() async {
     try {
       AppLogger.info('Disabling biometrics before logout...');
-      
+
       // Check if biometrics are currently enabled
       final biometricEnabled = await _secureStorage.read('biometric_enabled');
-      
+
       if (biometricEnabled == 'true') {
         // Get user ID from stored user data
         final userJson = await _secureStorage.read(StorageKeys.user);
         if (userJson.isNotEmpty) {
           final userMap = json.decode(userJson) as Map<String, dynamic>;
-          final userId = userMap['_id'] as String?;
-          
+
+          // Normalize user id lookup to support different key names from backend
+          String? userId;
+          if (userMap.containsKey('user_id') && userMap['user_id'] is String) {
+            userId = userMap['user_id'] as String;
+          } else if (userMap.containsKey('_id') && userMap['_id'] is String) {
+            userId = userMap['_id'] as String;
+          } else if (userMap.containsKey('id') && userMap['id'] is String) {
+            userId = userMap['id'] as String;
+          }
+
           if (userId != null && userId.isNotEmpty) {
             // Call backend API to disable biometrics
             await _authService.updateProfileBiometrics(
-              userId: userId,
               isBiometricsSetup: false,
             );
             AppLogger.info('Biometrics disabled on backend before logout');

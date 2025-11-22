@@ -213,13 +213,15 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
 
           // Create a unique key combining source account number and beneficiary account number (DayFi tag)
           final sourceAccountNumber = beneficiary.source.accountNumber ?? '';
-          final beneficiaryAccountNumber = beneficiary.beneficiary.accountNumber ?? '';
-          
+          final beneficiaryAccountNumber =
+              beneficiary.beneficiary.accountNumber ?? '';
+
           // For DayFi tags, use the beneficiary's account number as the unique identifier
-          final uniqueKey = beneficiary.source.accountType?.toLowerCase() == 'dayfi'
-              ? 'dayfi_${beneficiaryAccountNumber.toLowerCase()}'
-              : 'other_${sourceAccountNumber}';
-          
+          final uniqueKey =
+              beneficiary.source.accountType?.toLowerCase() == 'dayfi'
+                  ? 'dayfi_${beneficiaryAccountNumber.toLowerCase()}'
+                  : 'other_${sourceAccountNumber}';
+
           if (seenAccountNumbers.contains(uniqueKey)) {
             return false; // Skip duplicate
           }
@@ -544,7 +546,7 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
                                           style: TextStyle(
                                             fontFamily: 'Karla',
                                             fontSize: 10.sp,
-                                          color: AppColors.warning600,
+                                            color: AppColors.warning600,
                                             fontWeight: FontWeight.w600,
                                             // letterSpacing: 0,
                                             height: 1.2,
@@ -556,12 +558,12 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
                                 ],
                               )
                               : Text(
-                                '  ${_getChannelAndNetworkInfo(beneficiaryWithSource)} • ${_getAccountNumber(source, beneficiary)}',
+                                '${_getChannelAndNetworkInfo(beneficiaryWithSource)} • ${_getAccountNumber(source, beneficiary)}',
                                 style: Theme.of(
                                   context,
                                 ).textTheme.bodyMedium?.copyWith(
                                   fontFamily: 'Karla',
-                                  fontSize: 12.sp,
+                                  fontSize: 14.sp,
                                   fontWeight: FontWeight.w400,
                                   letterSpacing: -.3,
                                   height: 1.450,
@@ -817,7 +819,6 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
               color: Color(0xFFFFC700).withOpacity(.5),
               offset: Offset(0, 2.5),
             ),
-
           ],
           border: Border.all(
             color: Theme.of(context).colorScheme.outline.withOpacity(.5),

@@ -82,8 +82,8 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
                   Padding(
                         padding: EdgeInsets.only(
                           top: 24.h,
-                          left: 24.w,
-                          right: 24.w,
+                          left: 18.w,
+                          right: 18.w,
                         ),
                         child: Row(
                           children: List.generate(

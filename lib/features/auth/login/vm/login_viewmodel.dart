@@ -137,7 +137,8 @@ class LoginNotifier extends StateNotifier<LoginState> {
 
         // Disable biometrics on backend for fresh login flow
         // User will re-enable during biometric setup if they choose
-        await _disableBiometricsOnLogin(response.data?.user?.id);
+        // Use `userId` from the User model (API returns `user_id`) instead of `id`
+        await _disableBiometricsOnLogin(response.data?.user?.userId);
 
         // Show success message
         // _showSnackBar(context, response.message, isError: false);
@@ -219,16 +220,15 @@ class LoginNotifier extends StateNotifier<LoginState> {
   /// User will re-enable during biometric setup flow if they choose
   Future<void> _disableBiometricsOnLogin(String? userId) async {
     try {
-      if (userId == null || userId.isEmpty) {
-        AppLogger.warning('No user ID available, skipping biometric disable on login');
-        return;
-      }
+      // if (userId == null || userId.isEmpty) {
+      //   AppLogger.warning('No user ID available, skipping biometric disable on login');
+      //   return;
+      // }
 
       AppLogger.info('Disabling biometrics on backend after fresh login...');
       
       // Call backend API to disable biometrics
       await _authService.updateProfileBiometrics(
-        userId: userId,
         isBiometricsSetup: false,
       );
       

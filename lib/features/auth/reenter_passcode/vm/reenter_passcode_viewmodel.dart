@@ -92,7 +92,7 @@ class ReenterPasscodeNotifier extends StateNotifier<ReenterPasscodeState> {
 
         // Clean up temporary passcode and password
         await _secureStorage.delete('temp_passcode');
-        await _secureStorage.delete('password');
+        await _secureStorage.delete(StorageKeys.password);
 
         // Show success dialog before navigating
         _showSuccessDialog(context);

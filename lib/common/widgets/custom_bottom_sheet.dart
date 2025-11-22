@@ -277,7 +277,7 @@ class CustomBottomSheet extends StatelessWidget {
       return Container(
         padding:
             continueButtonPadding ??
-            EdgeInsets.only(left: 24.w, right: 24.w, bottom: 50.h),
+            EdgeInsets.only(left: 18.w, right: 18.w, bottom: 50.h),
         child: customContinueButton!,
       );
     }
@@ -285,7 +285,7 @@ class CustomBottomSheet extends StatelessWidget {
     return Container(
       padding:
           continueButtonPadding ??
-          EdgeInsets.only(left: 24.w, right: 24.w, bottom: 50.h),
+          EdgeInsets.only(left: 18.w, right: 18.w, bottom: 50.h),
       child: PrimaryButton.dayfi(
         text: continueButtonText ?? 'CONTINUE',
         onPressed: continueButtonEnabled ? onContinue : null,

@@ -42,10 +42,14 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
       print('   receiveCurrency: ${widget.selectedData['receiveCurrency']}');
       print('   sendCountry: ${widget.selectedData['sendCountry']}');
       print('   sendCurrency: ${widget.selectedData['sendCurrency']}');
-      print('   recipientDeliveryMethod: ${widget.selectedData['recipientDeliveryMethod']}');
-      print('   recipientChannelId: ${widget.selectedData['recipientChannelId']}');
+      print(
+        '   recipientDeliveryMethod: ${widget.selectedData['recipientDeliveryMethod']}',
+      );
+      print(
+        '   recipientChannelId: ${widget.selectedData['recipientChannelId']}',
+      );
       print('   All keys: ${widget.selectedData.keys.toList()}');
-      
+
       _loadBeneficiaries();
     });
   }
@@ -227,23 +231,24 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
   Widget build(BuildContext context) {
     final recipientsState = ref.watch(recipientsProvider);
     final allFilteredBeneficiaries = _getFilteredBeneficiaries();
-    
+
     // Remove duplicate beneficiaries based on account number and filter out empty names
     final seenAccountNumbers = <String>{};
-    final filteredBeneficiaries = allFilteredBeneficiaries.where((beneficiary) {
-      // Skip if beneficiary name is empty or whitespace only
-      if (beneficiary.beneficiary.name.trim().isEmpty) {
-        return false;
-      }
-      
-      final accountNumber = beneficiary.source.accountNumber ?? '';
-      if (seenAccountNumbers.contains(accountNumber)) {
-        return false; // Skip duplicate
-      }
-      seenAccountNumbers.add(accountNumber);
-      return true;
-    }).toList();
-    
+    final filteredBeneficiaries =
+        allFilteredBeneficiaries.where((beneficiary) {
+          // Skip if beneficiary name is empty or whitespace only
+          if (beneficiary.beneficiary.name.trim().isEmpty) {
+            return false;
+          }
+
+          final accountNumber = beneficiary.source.accountNumber ?? '';
+          if (seenAccountNumbers.contains(accountNumber)) {
+            return false; // Skip duplicate
+          }
+          seenAccountNumbers.add(accountNumber);
+          return true;
+        }).toList();
+
     final targetCountry = widget.selectedData['receiveCountry'] ?? 'Unknown';
     final targetCurrency = widget.selectedData['receiveCurrency'] ?? 'Unknown';
 
@@ -269,8 +274,8 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
           title: Text(
             'Beneficiaries',
             style: AppTypography.titleLarge.copyWith(
-           fontFamily: 'CabinetGrotesk',
-               fontSize: 20.sp, // height: 1.6,
+              fontFamily: 'CabinetGrotesk',
+              fontSize: 20.sp, // height: 1.6,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface,
             ),
@@ -340,7 +345,10 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
                       children: [
                         // Search Bar
                         Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 18.w,
+                            vertical: 8.h,
+                          ),
                           child: CustomTextField(
                             controller: _searchController,
                             label: '',
@@ -362,7 +370,9 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
                             ),
                             onChanged: (value) {
                               _searchDebouncer.run(() {
-                                setState(() {}); // Trigger rebuild to update filtered list
+                                setState(
+                                  () {},
+                                ); // Trigger rebuild to update filtered list
                               });
                             },
                           ),
@@ -373,8 +383,8 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
                           shrinkWrap: true,
                           physics: NeverScrollableScrollPhysics(),
                           padding: EdgeInsets.only(
-                            left: 24.w,
-                            right: 24.w,
+                            left: 18.w,
+                            right: 18.w,
                             bottom: 112.h,
                           ),
                           itemCount: filteredBeneficiaries.length,
@@ -416,15 +426,12 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
               child: Text(
                 'You do not have any Beneficiaries yet for $countryName in $currency and $displayChannelType',
                 style: AppTypography.bodyLarge.copyWith(
-               fontFamily: 'CabinetGrotesk',
+                  fontFamily: 'CabinetGrotesk',
+                  fontSize: 20.sp,
                   fontWeight: FontWeight.w600,
-                  fontSize: 14.sp,
-                  height: 1.4,
-                  letterSpacing: -.4,
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withOpacity(0.8),
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
+
                 textAlign: TextAlign.center,
               ),
             ),

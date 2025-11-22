@@ -604,7 +604,7 @@ class _TransactionDetailsViewState
                     letterSpacing: -0.2,
                     fontWeight: FontWeight.w500,
                     color: Theme.of(context).colorScheme.onSurface,
-                    height: 1.4,
+                    height: 1.2,
                   ),
                 ),
               ],
@@ -747,7 +747,12 @@ class _TransactionDetailsViewState
             ),
           ),
           SizedBox(height: 16.h),
-          _buildDetailRow("Name", widget.transaction.beneficiary.name),
+          _buildDetailRow(
+            "Name",
+            widget.transaction.beneficiary.name.isNotEmpty
+                ? widget.transaction.beneficiary.name
+                : 'Self funding',
+          ),
           if (isDayfiTransfer &&
               widget.transaction.beneficiary.accountNumber != null &&
               widget.transaction.beneficiary.accountNumber!.isNotEmpty)
@@ -879,7 +884,7 @@ class _TransactionDetailsViewState
                 value,
                 style: AppTypography.bodyMedium.copyWith(
                   fontFamily: 'Karla',
-                  fontSize: 15.sp,
+                  fontSize: 16.sp,
                   letterSpacing: -.4,
                   fontWeight: FontWeight.w500,
                   color: Theme.of(context).colorScheme.onSurface,
@@ -983,7 +988,7 @@ class _TransactionDetailsViewState
                     value,
                     style: AppTypography.bodyMedium.copyWith(
                       fontFamily: 'Karla',
-                      fontSize: 14.sp,
+                      fontSize: 16.sp,
                       letterSpacing: -.2,
                       fontWeight: FontWeight.w400,
                       color: Theme.of(
@@ -1035,7 +1040,7 @@ class _TransactionDetailsViewState
                                       value,
                                       style: AppTypography.bodyMedium.copyWith(
                                         fontFamily: 'Karla',
-                                        fontSize: 15.sp,
+                                        fontSize: 16.sp,
                                         letterSpacing: -.4,
                                         fontWeight:
                                             isTotal

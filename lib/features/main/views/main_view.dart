@@ -17,6 +17,7 @@ import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/services/notification_service.dart';
 import 'package:dayfi/services/remote/auth_service.dart';
+import 'package:dayfi/services/local/biometric_service.dart';
 import 'dart:convert';
 
 final mainViewKey = GlobalKey<_MainViewState>();
@@ -144,7 +145,11 @@ class _MainViewState extends ConsumerState<MainView> {
         } catch (_) {}
       }
 
-      if (!isBiometricsSetup) {
+      // Only show the biometric reminder if the device supports biometrics
+      // and the user has NOT enabled biometrics for this app.
+      final bool deviceHasBiometrics = await BiometricService.isBiometricAvailable();
+
+      if (deviceHasBiometrics && !isBiometricsSetup) {
         await Future.delayed(const Duration(seconds: 2));
         if (mounted) {
           _showBiometricReminder();

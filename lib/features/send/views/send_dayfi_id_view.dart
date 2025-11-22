@@ -313,12 +313,14 @@ class _SendDayfiIdViewState extends ConsumerState<SendDayfiIdView> {
                   autofocus: true,
                   contentPadding: EdgeInsets.only(
                     top: 16.h,
-                    left: 2.w,
-                    right: 10.w,
+                    left: 0.w,
+                    right: 12.w,
                     bottom: 16.h,
                   ),
-                  prefixIcon: Padding(
-                    padding: EdgeInsets.only(left: 16.w, top: 10.w),
+                  // Use `prefix` instead of `prefixIcon` to avoid the large
+                  // built-in prefixIcon constraints and extra horizontal gap.
+                  prefix: Padding(
+                    padding: EdgeInsets.only(right: 0.w, left: 12.w),
                     child: Text(
                       '@',
                       style: TextStyle(
@@ -490,10 +492,10 @@ class _SendDayfiIdViewState extends ConsumerState<SendDayfiIdView> {
                       ),
                       child: Text(
                         _recipientName != null && !_recipientName!.startsWith('@')
-                            ? 'Sending to $_recipientName (@$_validatedDayfiId)'.toUpperCase()
+                            ? 'Sending to $_recipientName'.toUpperCase()
                             : 'Sending to @$_validatedDayfiId'.toUpperCase(),
                         style: TextStyle(
-                          fontFamily: 'CabinetGrotesk',
+                          fontFamily: 'karla',
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w600,
                           color: AppColors.success700,

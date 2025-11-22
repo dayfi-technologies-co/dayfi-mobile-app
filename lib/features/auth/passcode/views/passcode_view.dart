@@ -188,27 +188,38 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
                                   : Icons.fingerprint,
                           onTap:
                               passcodeState.isBiometricAvailable
-                                  ? () async {
-                                    final authenticated =
-                                        await passcodeNotifier
-                                            .authenticateWithBiometrics();
-                                    if (!authenticated) {
-                                      TopSnackbar.show(
-                                        context,
-                                        message:
-                                            'Biometric authentication failed. Please use your passcode.',
-                                        isError: true,
-                                      );
-                                    }
-                                  }
-                                  : () {
-                                    TopSnackbar.show(
-                                      context,
-                                      message:
-                                          'Biometric authentication is not available on this device',
-                                      isError: true,
-                                    );
-                                  },
+                                      ? () async {
+                                          final authenticated =
+                                              await passcodeNotifier
+                                                  .authenticateWithBiometrics();
+                                          if (!authenticated) {
+                                            TopSnackbar.show(
+                                              context,
+                                              message:
+                                                  'Biometric authentication failed. Please use your passcode.',
+                                              isError: true,
+                                            );
+                                          }
+                                        }
+                                      : () {
+                                          // Distinguish between device not having biometrics
+                                          // and biometrics being available on device but not enabled for the app
+                                          if (passcodeState.isDeviceBiometricAvailable && !passcodeState.isBiometricEnabled) {
+                                            TopSnackbar.show(
+                                              context,
+                                              message:
+                                                  'Biometric authentication is available on your device but not enabled for this app. Please enable it in Settings or during setup.',
+                                              isError: true,
+                                            );
+                                          } else {
+                                            TopSnackbar.show(
+                                              context,
+                                              message:
+                                                  'Biometric authentication is not available on this device',
+                                              isError: true,
+                                            );
+                                          }
+                                        },
                           index: 9,
                         ),
                         _buildNumberButton('0', passcodeNotifier, 10),

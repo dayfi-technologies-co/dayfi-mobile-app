@@ -72,7 +72,7 @@ class LocalCache {
       // Clear secure storage data
       await storage.delete(StorageKeys.token);
       await storage.delete(StorageKeys.user);
-      await storage.delete('password');
+      await storage.delete(StorageKeys.password);
       await storage.delete(StorageKeys.isFirstTime);
       await storage.delete(StorageKeys.hasSeenWelcome);
       

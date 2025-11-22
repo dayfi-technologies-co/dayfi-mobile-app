@@ -25,17 +25,17 @@ class ProfileState {
   // Computed properties for easy access
   String get userName {
     if (user == null) return '...';
-    
+
     final firstName = user!.firstName.trim();
     final middleName = user!.middleName?.trim();
     final lastName = user!.lastName.trim();
-    
+
     // Build name parts, only including non-empty parts
     final nameParts = <String>[];
     if (firstName.isNotEmpty) nameParts.add(_capitalize(firstName));
     // if (middleName != null && middleName.isNotEmpty) nameParts.add(_capitalize(middleName));
     if (lastName.isNotEmpty) nameParts.add(_capitalize(lastName));
-    
+
     final fullName = nameParts.join(' ');
     return fullName.isEmpty ? 'User' : fullName;
   }
@@ -51,6 +51,7 @@ class ProfileState {
     if (user?.level == null || user!.level!.isEmpty) return 'Tier 1';
     return user!.level!.replaceAll('level-', 'Tier ');
   }
+
   String get userStatus => user?.status ?? 'Unknown';
 
   ProfileState copyWith({
@@ -74,21 +75,20 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
   Future<void> loadUserProfile({bool isInitialLoad = false}) async {
     // Only show loading state if there's no existing data (initial load)
     final shouldShowLoading = isInitialLoad || state.user == null;
-    state = state.copyWith(
-      isLoading: shouldShowLoading,
-      errorMessage: null,
-    );
-    
+    state = state.copyWith(isLoading: shouldShowLoading, errorMessage: null);
+
     try {
       AppLogger.info('Loading user profile from storage...');
-      
+
       // Get user data from secure storage
       final userData = await localCache.getUser();
-      
+
       if (userData.isNotEmpty) {
         // Parse user data to User model
         final user = User.fromJson(userData);
-        AppLogger.info('User profile loaded successfully: ${user.firstName} ${user.lastName}');
+        AppLogger.info(
+          'User profile loaded successfully: ${user.firstName} ${user.lastName}',
+        );
 
         // Detect presence of BVN and NIN in stored user data.
         // Check explicit keys in the raw stored map (case-insensitive),
@@ -114,12 +114,14 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
 
         // Fallback: check parsed user.idType / idNumber
         if (!hasBVN && user.idType != null && user.idNumber != null) {
-          if (user.idType!.toLowerCase() == 'bvn' && user.idNumber!.trim().isNotEmpty) {
+          if (user.idType!.toLowerCase() == 'bvn' &&
+              user.idNumber!.trim().isNotEmpty) {
             hasBVN = true;
           }
         }
         if (!hasNIN && user.idType != null && user.idNumber != null) {
-          if (user.idType!.toLowerCase() == 'nin' && user.idNumber!.trim().isNotEmpty) {
+          if (user.idType!.toLowerCase() == 'nin' &&
+              user.idNumber!.trim().isNotEmpty) {
             hasNIN = true;
           }
         }
@@ -129,7 +131,8 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
         if (hasBVN && hasNIN) {
           // Only modify if not already level-2 or higher
           final currentLevel = (user.level ?? '').toLowerCase();
-          if (!currentLevel.contains('level-2') && !currentLevel.contains('level-3')) {
+          if (!currentLevel.contains('level-2') &&
+              !currentLevel.contains('level-3')) {
             effectiveUser = User(
               userId: user.userId,
               email: user.email,
@@ -211,10 +214,10 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
     }
 
     state = state.copyWith(isLoading: true, errorMessage: null);
-    
+
     try {
       AppLogger.info('Updating user profile...');
-      
+
       // Create updated user object
       final updatedUser = User(
         userId: state.user!.userId,
@@ -256,9 +259,9 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
 
       // Save updated user to storage
       localCache.setUser = updatedUser.toJson();
-      
+
       AppLogger.info('User profile updated successfully');
-      
+
       state = state.copyWith(
         user: updatedUser,
         isLoading: false,
@@ -275,11 +278,11 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
 
   Future<void> uploadProfileImage(String imagePath) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
-    
+
     try {
       // TODO: Implement actual API call to upload image
       await Future.delayed(const Duration(seconds: 2));
-      
+
       state = state.copyWith(
         profileImageUrl: imagePath,
         isLoading: false,
@@ -301,14 +304,14 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
     }
 
     state = state.copyWith(isLoading: true, errorMessage: null);
-    
+
     try {
       AppLogger.info('Upgrading user tier...');
-      
+
       // TODO: Implement actual API call to upgrade tier
       // This should call the backend API to upgrade the user's tier
       // and return the updated user data
-      
+
       // For now, simulate tier upgrade and trigger notification
       try {
         await NotificationService().triggerTierUpgrade(
@@ -318,7 +321,7 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
       } catch (e) {
         // Handle error silently
       }
-      
+
       state = state.copyWith(
         isLoading: false,
         errorMessage: 'Tier upgrade feature is not yet implemented.',
@@ -335,21 +338,21 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
   Future<void> logout(WidgetRef ref) async {
     if (!mounted) return;
     state = state.copyWith(isLoading: true);
-    
+
     try {
       AppLogger.info('User logging out...');
-      
+
       // Disable biometrics on backend before logout for security
       await _disableBiometricsBeforeLogout();
-      
+
       // Use comprehensive data clearing service
       final dataClearingService = DataClearingService();
       await dataClearingService.clearAllUserData(ref);
-      
+
       // Don't update state after clearing data as the provider will be invalidated
       // Just navigate to login screen
       appRouter.pushNamedAndRemoveAllBehind('/loginView', arguments: false);
-      
+
       AppLogger.info('User logged out successfully');
     } catch (e) {
       AppLogger.error('Error during logout: $e');
@@ -366,26 +369,32 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
   Future<void> _disableBiometricsBeforeLogout() async {
     try {
       AppLogger.info('Disabling biometrics before logout...');
-      
+
       final secureStorage = locator<SecureStorageService>();
-      
+
       // Check if biometrics are currently enabled
       final biometricEnabled = await secureStorage.read('biometric_enabled');
-      
+
       if (biometricEnabled == 'true') {
         // Get user ID from stored user data
         final userJson = await secureStorage.read(StorageKeys.user);
         if (userJson.isNotEmpty) {
           final userMap = json.decode(userJson) as Map<String, dynamic>;
-          final userId = userMap['_id'] as String?;
-          
+
+          // Normalize user id lookup to support different key names from backend
+          String? userId;
+          if (userMap.containsKey('user_id') && userMap['user_id'] is String) {
+            userId = userMap['user_id'] as String;
+          } else if (userMap.containsKey('_id') && userMap['_id'] is String) {
+            userId = userMap['_id'] as String;
+          } else if (userMap.containsKey('id') && userMap['id'] is String) {
+            userId = userMap['id'] as String;
+          }
+
           if (userId != null && userId.isNotEmpty) {
             final authService = locator<AuthService>();
             // Call backend API to disable biometrics
-            await authService.updateProfileBiometrics(
-              userId: userId,
-              isBiometricsSetup: false,
-            );
+            await authService.updateProfileBiometrics(isBiometricsSetup: false);
             AppLogger.info('Biometrics disabled on backend before logout');
           }
         }
@@ -398,14 +407,14 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
 
   Future<void> deleteAccount() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
-    
+
     try {
       AppLogger.info('Deleting user account...');
-      
+
       // TODO: Implement actual API call to delete account
       // This should call the backend API to delete the user's account
       // and handle the response appropriately
-      
+
       state = state.copyWith(
         isLoading: false,
         errorMessage: 'Account deletion feature is not yet implemented.',
@@ -419,17 +428,17 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
     }
   }
 
-  Future<void> changePassword(String currentPassword, String newPassword) async {
+  Future<void> changePassword(
+    String currentPassword,
+    String newPassword,
+  ) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
-    
+
     try {
       // TODO: Implement actual API call to change password
       await Future.delayed(const Duration(seconds: 1));
-      
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: null,
-      );
+
+      state = state.copyWith(isLoading: false, errorMessage: null);
     } catch (e) {
       AppLogger.error('Error changing password: $e');
       state = state.copyWith(
@@ -441,15 +450,12 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
 
   Future<void> enableTwoFactorAuth() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
-    
+
     try {
       // TODO: Implement actual API call to enable 2FA
       await Future.delayed(const Duration(seconds: 1));
-      
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: null,
-      );
+
+      state = state.copyWith(isLoading: false, errorMessage: null);
     } catch (e) {
       AppLogger.error('Error enabling 2FA: $e');
       state = state.copyWith(
@@ -461,15 +467,12 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
 
   Future<void> disableTwoFactorAuth() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
-    
+
     try {
       // TODO: Implement actual API call to disable 2FA
       await Future.delayed(const Duration(seconds: 1));
-      
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: null,
-      );
+
+      state = state.copyWith(isLoading: false, errorMessage: null);
     } catch (e) {
       AppLogger.error('Error disabling 2FA: $e');
       state = state.copyWith(
@@ -478,9 +481,9 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
       );
     }
   }
-
 }
 
-final profileViewModelProvider = StateNotifierProvider<ProfileViewModel, ProfileState>((ref) {
-  return ProfileViewModel();
-});
+final profileViewModelProvider =
+    StateNotifierProvider<ProfileViewModel, ProfileState>((ref) {
+      return ProfileViewModel();
+    });

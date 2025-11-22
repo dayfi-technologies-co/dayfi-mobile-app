@@ -232,7 +232,7 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                               transactionsState.groupedTransactions.isEmpty
                           ? Padding(
                             padding: EdgeInsets.symmetric(
-                              horizontal: 24.w,
+                              horizontal: 18.w,
                               vertical: 16.h,
                             ),
                             child: ShimmerWidgets.transactionListShimmer(
@@ -300,8 +300,8 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                                 shrinkWrap: true,
                                 physics: NeverScrollableScrollPhysics(),
                                 padding: EdgeInsets.only(
-                                  left: 24.w,
-                                  right: 24.w,
+                                  left: 18.w,
+                                  right: 18.w,
                                   bottom: 124.h,
                                 ),
                                 itemCount:
@@ -442,9 +442,9 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                               context,
                             ).textTheme.bodyLarge?.copyWith(
                               fontFamily: 'Karla',
-                              fontSize: 18.sp,
-                              letterSpacing: -.6,
-                              fontWeight: FontWeight.w400,
+                              fontSize: 16.sp,
+                              letterSpacing: -.7,
+                              fontWeight: FontWeight.w500,
                               color: Theme.of(context).colorScheme.onSurface,
                             ),
                             // maxLines: 2,
@@ -610,16 +610,20 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
   }
 
   String _getBeneficiaryDisplayName(WalletTransaction transaction) {
-    final isCollection = transaction.status.toLowerCase().contains('collection');
+    final isCollection = transaction.status.toLowerCase().contains(
+      'collection',
+    );
     final isPayment = transaction.status.toLowerCase().contains('payment');
-    
+
     // Check if this is a DayFi tag transfer
-    final isDayfiTransfer = transaction.source.accountType?.toLowerCase() == 'dayfi' ||
+    final isDayfiTransfer =
+        transaction.source.accountType?.toLowerCase() == 'dayfi' ||
         transaction.beneficiary.accountType?.toLowerCase() == 'dayfi';
-    
+
     // For collection (incoming money)
     if (isCollection) {
-      if (isDayfiTransfer && transaction.beneficiary.accountNumber != null &&
+      if (isDayfiTransfer &&
+          transaction.beneficiary.accountNumber != null &&
           transaction.beneficiary.accountNumber!.isNotEmpty) {
         final tag = transaction.beneficiary.accountNumber!;
         final displayTag = tag.startsWith('@') ? tag : '@$tag';
@@ -627,36 +631,40 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
       }
       return 'Money added to your wallet';
     }
-    
+
     // For payment (outgoing money)
     if (isPayment) {
       // Check if it's a wallet top-up (sending to yourself)
       final profileState = ref.read(profileViewModelProvider);
       final user = profileState.user;
-      
+
       if (user != null) {
-        final userFullName = '${user.firstName} ${user.lastName}'.trim().toUpperCase();
-        final beneficiaryName = transaction.beneficiary.name.trim().toUpperCase();
-        
+        final userFullName =
+            '${user.firstName} ${user.lastName}'.trim().toUpperCase();
+        final beneficiaryName =
+            transaction.beneficiary.name.trim().toUpperCase();
+
         if (beneficiaryName == userFullName ||
             beneficiaryName == 'SELF FUNDING' ||
-            (beneficiaryName.contains('SELF') && beneficiaryName.contains('FUNDING'))) {
+            (beneficiaryName.contains('SELF') &&
+                beneficiaryName.contains('FUNDING'))) {
           return 'Topped up your wallet';
         }
       }
-      
+
       // Regular payment to another person
-      if (isDayfiTransfer && transaction.beneficiary.accountNumber != null &&
+      if (isDayfiTransfer &&
+          transaction.beneficiary.accountNumber != null &&
           transaction.beneficiary.accountNumber!.isNotEmpty) {
         final tag = transaction.beneficiary.accountNumber!;
         final displayTag = tag.startsWith('@') ? tag : '@$tag';
         return 'Sent money to $displayTag';
       }
-      
+
       // Payment to beneficiary name
       return 'Sent to ${transaction.beneficiary.name}';
     }
-    
+
     // Fallback to beneficiary name
     return transaction.beneficiary.name.toUpperCase();
   }

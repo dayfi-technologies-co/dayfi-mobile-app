@@ -118,7 +118,7 @@ class _ConnectivityWrapperState extends State<ConnectivityWrapper> {
                       'No Internet Connection',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 14.sp,
+                        fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
                         fontFamily: 'CabinetGrotesk',
                         letterSpacing: -0.3,
@@ -184,7 +184,7 @@ class _ConnectivityWrapperState extends State<ConnectivityWrapper> {
                   'Connection Restored',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 14.sp,
+                    fontSize: 16.sp,
                     fontWeight: FontWeight.w600,
                     fontFamily: 'CabinetGrotesk',
                     letterSpacing: -0.3,

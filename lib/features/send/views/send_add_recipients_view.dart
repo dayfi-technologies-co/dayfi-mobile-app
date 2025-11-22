@@ -521,24 +521,24 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                           // width: double.infinity,
                           padding: EdgeInsets.symmetric(
                             horizontal: 16.w,
-                            vertical: 6.h,
+                            vertical: 12.h,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.success700,
+                            color: AppColors.success50,
                             borderRadius: BorderRadius.circular(32.r),
-                            // border: Border.all(color: AppColors.success200, width: 1.0),
+                            border: Border.all(
+                              color: AppColors.success200,
+                              width: 1.0,
+                            ),
                           ),
                           child: Text(
                             _resolvedAccountName!,
-                            style: Theme.of(
-                              context,
-                            ).textTheme.titleMedium?.copyWith(
-                              fontFamily: 'CabinetGrotesk',
+                            style: TextStyle(
+                              fontFamily: 'karla',
                               fontSize: 12.sp,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.neutral0,
-                              letterSpacing: 0.5,
-                              height: 1,
+                              color: AppColors.success700,
+                              letterSpacing: -0.2,
                             ),
                           ),
                         ),
@@ -782,20 +782,20 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
       case 'bank':
         return SvgPicture.asset(
           'assets/icons/svgs/building-bank.svg',
-          height: 32.sp,
-          width: 32.sp,
+          height: 24.sp,
+          width: 24.sp,
         );
       case 'phone':
         return SvgPicture.asset(
           'assets/icons/svgs/device-mobile.svg',
-          height: 32.sp,
-          width: 32.sp,
+          height: 24.sp,
+          width: 24.sp,
         );
       default:
         return SvgPicture.asset(
           'assets/icons/svgs/paymentt.svg',
-          height: 32.sp,
-          width: 32.sp,
+          height: 24.sp,
+          width: 24.sp,
         );
     }
   }
@@ -845,11 +845,12 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                           children: [
                             SizedBox(height: 24.h, width: 22.w),
                             Text(
-                              'Select Network',
+                              'Select Bank',
                               style: AppTypography.titleLarge.copyWith(
-                                fontFamily: 'CabinetGrotesk',
-                                fontSize: 14.sp,
+                                fontFamily: 'Karla',
+                                fontSize: 18.sp,
                                 fontWeight: FontWeight.w600,
+                                letterSpacing: -.4,
                                 color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),

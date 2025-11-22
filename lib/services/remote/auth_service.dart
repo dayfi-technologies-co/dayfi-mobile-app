@@ -93,7 +93,7 @@ class AuthService {
         // save new user - store user data directly, not nested
         final userJson = json.encode(authResponse.data.user?.toJson());
         await secureStorage.write(StorageKeys.user, userJson);
-        await secureStorage.write('password', password);
+        await secureStorage.write(StorageKeys.password, password);
         await secureStorage.write(StorageKeys.token, authResponse.data.token!);
       }
 
@@ -261,14 +261,13 @@ class AuthService {
   }
 
   Future<AuthResponse> updateProfileBiometrics({
-    required String userId,
     required bool isBiometricsSetup,
   }) async {
     try {
       final map = {'isBiometricsSetup': isBiometricsSetup};
 
       final response = await _networkService.call(
-        '${F.baseUrl}${UrlConfig.updateProfile}/$userId',
+        '${F.baseUrl}${UrlConfig.updateBiometrics}',
         RequestMethod.patch,
         data: map,
       );
