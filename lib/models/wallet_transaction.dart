@@ -13,7 +13,7 @@ class WalletTransactionResponse {
 
   factory WalletTransactionResponse.fromJson(Map<String, dynamic> json) {
     try {
-      print('Parsing WalletTransactionResponse from: $json');
+      // print('Parsing WalletTransactionResponse from: $json');
       return WalletTransactionResponse(
         status: json['status']?.toString() ?? '',
         message: json['message']?.toString() ?? '',
@@ -23,8 +23,8 @@ class WalletTransactionResponse {
             : {}),
       );
     } catch (e) {
-      print('Error parsing WalletTransactionResponse: $e');
-      print('JSON data: $json');
+      // print('Error parsing WalletTransactionResponse: $e');
+      // print('JSON data: $json');
       rethrow;
     }
   }
@@ -47,7 +47,7 @@ class WalletTransactionData {
 
   factory WalletTransactionData.fromJson(Map<String, dynamic> json) {
     try {
-      print('Parsing WalletTransactionData from: $json');
+      // print('Parsing WalletTransactionData from: $json');
       final transactionsList = json['transactions'];
       List<WalletTransaction> transactions = [];
       
@@ -58,11 +58,11 @@ class WalletTransactionData {
             if (transactionData is Map<String, dynamic>) {
               transactions.add(WalletTransaction.fromJson(transactionData));
             } else {
-              print('Transaction $i is not a Map: $transactionData');
+              // print('Transaction $i is not a Map: $transactionData');
             }
           } catch (e) {
-            print('Error parsing transaction $i: $e');
-            print('Transaction data: ${transactionsList[i]}');
+            // print('Error parsing transaction $i: $e');
+            // print('Transaction data: ${transactionsList[i]}');
           }
         }
       }
@@ -75,8 +75,8 @@ class WalletTransactionData {
         limit: json['limit'] is int ? json['limit'] : int.tryParse(json['limit']?.toString() ?? '10') ?? 10,
       );
     } catch (e) {
-      print('Error parsing WalletTransactionData: $e');
-      print('JSON data: $json');
+      // print('Error parsing WalletTransactionData: $e');
+      // print('JSON data: $json');
       rethrow;
     }
   }
@@ -90,6 +90,7 @@ class WalletTransaction {
   final String? receiveChannel;
   final String? receiveNetwork;
   final double? receiveAmount;
+  final double? fee;
   final String status;
   final String? reason;
   final String timestamp;
@@ -104,6 +105,7 @@ class WalletTransaction {
     this.receiveChannel,
     this.receiveNetwork,
     this.receiveAmount,
+    this.fee,
     required this.status,
     this.reason,
     required this.timestamp,
@@ -113,7 +115,7 @@ class WalletTransaction {
 
   factory WalletTransaction.fromJson(Map<String, dynamic> json) {
     try {
-      print('🔍 Parsing transaction: ${json['id']} | send_amount: ${json['send_amount']} | receive_amount: ${json['receive_amount']}');
+      // print('🔍 Parsing transaction: ${json['id']} | send_amount: ${json['send_amount']} | receive_amount: ${json['receive_amount']}');
       return WalletTransaction(
         id: json['id']?.toString() ?? '',
         sendChannel: json['send_channel']?.toString(),
@@ -122,6 +124,7 @@ class WalletTransaction {
         receiveChannel: json['receive_channel']?.toString(),
         receiveNetwork: json['receive_network']?.toString(),
         receiveAmount: json['receive_amount'] != null ? double.tryParse(json['receive_amount'].toString()) : null,
+        fee: json['fee'] != null ? double.tryParse(json['fee'].toString()) : null,
         status: json['status']?.toString() ?? '',
         reason: json['reason']?.toString(),
         timestamp: json['timestamp']?.toString() ?? '',
@@ -133,8 +136,8 @@ class WalletTransaction {
             : {}),
       );
     } catch (e) {
-      print('Error parsing WalletTransaction: $e');
-      print('Transaction JSON: $json');
+      // print('Error parsing WalletTransaction: $e');
+      // print('Transaction JSON: $json');
       rethrow;
     }
   }
@@ -183,8 +186,8 @@ class Beneficiary {
         accountType: json['account_type']?.toString(),
       );
     } catch (e) {
-      print('Error parsing Beneficiary: $e');
-      print('Beneficiary JSON: $json');
+      // print('Error parsing Beneficiary: $e');
+      // print('Beneficiary JSON: $json');
       rethrow;
     }
   }
@@ -218,8 +221,8 @@ class Source {
         dayfiId: json['dayfi_id']?.toString() ?? json['dayfiId']?.toString(),
       );
     } catch (e) {
-      print('Error parsing Source: $e');
-      print('Source JSON: $json');
+      // print('Error parsing Source: $e');
+      // print('Source JSON: $json');
       rethrow;
     }
   }

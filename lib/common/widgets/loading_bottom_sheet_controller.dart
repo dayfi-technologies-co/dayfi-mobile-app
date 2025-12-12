@@ -360,7 +360,7 @@ class _LoadingModalState extends State<_LoadingModalWidget>
             widget.completionSubtitle!,
             style: TextStyle(
               fontFamily: AppTypography.secondaryFontFamily,
-              fontWeight: FontWeight.w400,
+              fontWeight: FontWeight.w500,
               fontSize: 14.0.sp,
               height: 20.0.sp / 14.0.sp,
               letterSpacing: 0.14,
@@ -377,7 +377,7 @@ class _LoadingModalState extends State<_LoadingModalWidget>
           '$percentage%',
           style: TextStyle(
             fontFamily: AppTypography.secondaryFontFamily,
-            fontWeight: FontWeight.w400,
+            fontWeight: FontWeight.w500,
             fontSize: 14.0.sp,
             height: 20.0.sp / 14.0.sp,
             letterSpacing: 0.14,
@@ -392,7 +392,7 @@ class _LoadingModalState extends State<_LoadingModalWidget>
           widget.completionSubtitle!,
           style: TextStyle(
             fontFamily: AppTypography.secondaryFontFamily,
-            fontWeight: FontWeight.w400,
+            fontWeight: FontWeight.w500,
             fontSize: 14.0.sp,
             height: 20.0.sp / 14.0.sp,
             letterSpacing: 0.14,

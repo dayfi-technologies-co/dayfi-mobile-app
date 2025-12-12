@@ -14,7 +14,11 @@ class SoftposView extends StatelessWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        scrolledUnderElevation: 0,
+           scrolledUnderElevation: .5,
+              foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+              shadowColor: Theme.of(context).scaffoldBackgroundColor,
+              surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: const SizedBox.shrink(),
@@ -22,8 +26,8 @@ class SoftposView extends StatelessWidget {
         title: Text(
           "Soft POS (Point of Sale)",
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontFamily: 'CabinetGrotesk',
-            fontSize: 20.sp, // height: 1.6,
+            fontFamily: 'FunnelDisplay',
+            fontSize: 24.sp, // height: 1.6,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,
           ),
@@ -41,7 +45,7 @@ class SoftposView extends StatelessWidget {
               //     color: Theme.of(
               //       context,
               //     ).colorScheme.primaryContainer.withOpacity(0.25),
-              //     borderRadius: BorderRadius.circular(8.r),
+              //     borderRadius: BorderRadius.circular(12.r),
               //   ),
               //   child: Row(
               //     children: [
@@ -59,7 +63,7 @@ class SoftposView extends StatelessWidget {
               //           style: TextStyle(
               //             fontSize: 14.sp,
               //             fontFamily: 'Karla',
-              //             fontWeight: FontWeight.w400,
+              //             fontWeight: FontWeight.w500,
               //             letterSpacing: -0.4,
               //             height: 1.5,
               //             color: Theme.of(context).colorScheme.primary,
@@ -77,7 +81,7 @@ class SoftposView extends StatelessWidget {
                   fontSize: 28.sp,
                   fontWeight: FontWeight.w600,
                   height: 1.2,
-                  fontFamily: 'CabinetGrotesk',
+                  fontFamily: 'FunnelDisplay',
                   letterSpacing: 0,
                   color: Theme.of(context).colorScheme.onSurface,
                 ),
@@ -109,7 +113,7 @@ class SoftposView extends StatelessWidget {
                 text: 'Get Started with SoftPOS',
                 backgroundColor: AppColors.purple500,
                 textColor: AppColors.neutral0,
-                height: 48.000.h,
+                height: 48.00000.h,
               ),
             ],
           ),

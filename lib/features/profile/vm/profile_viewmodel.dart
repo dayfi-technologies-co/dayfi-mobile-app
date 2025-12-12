@@ -351,7 +351,10 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
 
       // Don't update state after clearing data as the provider will be invalidated
       // Just navigate to login screen
-      appRouter.pushNamedAndRemoveAllBehind('/loginView', arguments: false);
+      appRouter.pushNamedAndRemoveAllBehind(
+        '/onboardingView',
+        arguments: false,
+      );
 
       AppLogger.info('User logged out successfully');
     } catch (e) {

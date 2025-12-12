@@ -16,11 +16,11 @@ class ShimmerWidgets {
       baseColor:
           baseColor ??
           (isDark
-              ? Colors.grey[800]!.withOpacity(.5)
-              : Colors.grey[300]!.withOpacity(.5)),
+              ? Colors.grey[800]!.withOpacity(.35)
+              : Colors.grey[300]!.withOpacity(.35)),
       highlightColor:
           highlightColor ??
-          (isDark ? Colors.grey[700]! : Colors.grey[100]!.withOpacity(.5)),
+          (isDark ? Colors.grey[700]! : Colors.grey[100]!.withOpacity(.35)),
       child: child,
     );
   }
@@ -38,7 +38,7 @@ class ShimmerWidgets {
             height: 28.h,
             decoration: BoxDecoration(
               color: shimmerColor,
-              borderRadius: BorderRadius.circular(16.r),
+              borderRadius: BorderRadius.circular(12.r),
             ),
           ),
         ],
@@ -227,7 +227,7 @@ class ShimmerWidgets {
                         height: 32.w,
                         decoration: BoxDecoration(
                           color: shimmerColor,
-                          borderRadius: BorderRadius.circular(16.r),
+                          borderRadius: BorderRadius.circular(12.r),
                         ),
                       ),
                       SizedBox(width: 2.w),
@@ -266,11 +266,12 @@ class ShimmerWidgets {
   static Widget recipientListShimmer(
     BuildContext context, {
     int itemCount = 5,
+    EdgeInsetsGeometry? padding,
   }) {
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      padding: EdgeInsets.only(left: 18.w, right: 18.w, bottom: 112.h),
+      padding: padding ?? EdgeInsets.only(left: 18.w, right: 18.w, bottom: 112.h),
       itemCount: itemCount,
       itemBuilder: (context, index) => recipientItemShimmer(context),
     );
@@ -404,7 +405,7 @@ class ShimmerWidgets {
     return shimmerEffect(
       context: context,
       child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 12.h),
+        padding: EdgeInsets.symmetric(vertical: 13.h),
         child: Row(
           children: [
             // Flag placeholder
@@ -421,18 +422,18 @@ class ShimmerWidgets {
             // Country name placeholder
             Expanded(
               child: Container(
-                height: 12.h,
+                height: 38.h,
                 decoration: BoxDecoration(
                   color: shimmerColor,
                   borderRadius: BorderRadius.circular(4.r),
                 ),
               ),
             ),
-            SizedBox(width: 24.w),
+            SizedBox(width: 18.w),
             // Currency placeholder
             Container(
               width: 48.w,
-              height: 12.h,
+              height: 38.h,
               decoration: BoxDecoration(
                 color: shimmerColor,
                 borderRadius: BorderRadius.circular(4.r),

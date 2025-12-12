@@ -1,6 +1,8 @@
 class UrlConfig {
   //Auth Endpoints
   static const String login = '/auth/login';
+  static const String checkEmail = '/auth/google-auth';
+    static const String validateEmail = '/auth/validate-email';
   static const String signup = '/auth/signup';
   static const String forgotPassword = '/auth/forgot-password';
   static const String verifyOtp = '/auth/verify-otp';
@@ -13,11 +15,16 @@ class UrlConfig {
   static const String validateDayfiId = '/payments/validate-dayfi-id';
   static const String changeTransactionPin = '/auth/change-transaction-pin';
   static const String resetTransactionPin = '/auth/update-transaction-pin';
-  
+
   //Payment Endpoints
   static const String resolveBank = '/payments/resolve-bank';
   static const String createCollection = '/payments/create-collections';
   static const String fetchChannels = '/payments/channels';
   static const String fetchNetworks = '/payments/networks';
   static const String fetchRates = '/payments/rates';
+  static const String fetchFees = '/payments/fees';
+
+  //Notification Endpoints
+  static const String fetchNotifications = '/notifications';
+  static const String markNotificationAsRead = '/notifications';
 }

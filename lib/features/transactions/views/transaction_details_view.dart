@@ -1,5 +1,6 @@
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
+import 'package:flutter/cupertino.dart' show CupertinoActivityIndicator;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -63,12 +64,17 @@ class _TransactionDetailsViewState
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        scrolledUnderElevation: 0,
+           scrolledUnderElevation: .5,
+              foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+              shadowColor: Theme.of(context).scaffoldBackgroundColor,
+              surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
           icon: Icon(
             Icons.arrow_back_ios,
+            size: 20.sp,
             color: Theme.of(context).colorScheme.onSurface,
             // size: 20.sp,
           ),
@@ -77,8 +83,8 @@ class _TransactionDetailsViewState
         title: Text(
           "Transaction Details",
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontFamily: 'CabinetGrotesk',
-            fontSize: 20.sp,
+            fontFamily: 'FunnelDisplay',
+            fontSize: 24.sp,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,
           ),
@@ -147,9 +153,9 @@ class _TransactionDetailsViewState
               onPressed: () => _shareTransactionReceipt(),
               backgroundColor: Colors.transparent,
               textColor: AppColors.purple500ForTheme(context),
-              height: 48.000.h,
+              height: 48.00000.h,
               fontFamily: 'Karla',
-              letterSpacing: -.8,
+              letterSpacing: -.70,
               fontSize: 18,
               width: double.infinity,
               fullWidth: true,
@@ -178,7 +184,7 @@ class _TransactionDetailsViewState
           amount.split('.')[0],
 
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            fontFamily: 'CabinetGrotesk',
+            fontFamily: 'FunnelDisplay',
             fontSize: 32.sp,
             letterSpacing: -.6,
             fontWeight: FontWeight.w600,
@@ -193,27 +199,25 @@ class _TransactionDetailsViewState
           children: [
             // Transaction Type Icon (Inflow/Outflow)
             SizedBox(
-              width: 56.w,
-              height: 56.w,
+              width: 40.w,
+              height: 40.w,
               child: Stack(
                 alignment: Alignment.center,
                 children: [
                   // Background circle
                   SvgPicture.asset(
-                    'assets/icons/svgs/transactions.svg',
-                    height: 56.sp,
+                    'assets/icons/svgs/account.svg',
+                    height: 40.sp,
                     color: _getTransactionTypeColor(
                       widget.transaction.status,
-                    ).withOpacity(0.35),
+                    ),
                   ),
                   // Foreground icon
                   Center(
                     child: SvgPicture.asset(
                       _getTransactionTypeIcon(widget.transaction.status),
-                      height: 24.sp,
-                      color: _getTransactionTypeColor(
-                        widget.transaction.status,
-                      ),
+                      height: 28.sp,
+                      color: Colors.white
                     ),
                   ),
                 ],
@@ -229,7 +233,7 @@ class _TransactionDetailsViewState
                     style: AppTypography.bodyLarge.copyWith(
                       fontFamily: 'Karla',
                       fontSize: 16.sp,
-                      letterSpacing: -.3,
+                      letterSpacing: -.6,
                       fontWeight: FontWeight.w500,
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
@@ -240,7 +244,7 @@ class _TransactionDetailsViewState
                     style: AppTypography.bodyMedium.copyWith(
                       fontFamily: 'Karla',
                       fontSize: 14,
-                      fontWeight: FontWeight.w400,
+                      fontWeight: FontWeight.w500,
                       letterSpacing: -.4,
                       height: 1.450,
                       color: Theme.of(
@@ -251,8 +255,8 @@ class _TransactionDetailsViewState
                 ],
               ),
             ),
-            SizedBox(width: 12.w),
-            _buildStatusIcon(),
+            // SizedBox(width: 12.w),
+            // _buildStatusIcon(),
           ],
         ),
 
@@ -321,7 +325,7 @@ class _TransactionDetailsViewState
       case 'success':
         return AppColors.success500.withOpacity(0.1);
       default:
-        return AppColors.info500.withOpacity(0.1);
+        return Theme.of(context).colorScheme.primary.withOpacity(0.1);
     }
   }
 
@@ -382,7 +386,7 @@ class _TransactionDetailsViewState
                 isSuccess && isCollection
                     ? "You received $sendAmount into your wallet"
                     : isSuccess && isPayment
-                    ? "You sent $sendAmount to $recipientName"
+                    ? "You sent $sendAmount to ${recipientName.replaceAll("Sent to ","")}"
                     : isCollection
                     ? "You set up wallet funding of $sendAmount"
                     : "You've set up a $transferPhrase of $sendAmount to $recipientName",
@@ -587,7 +591,7 @@ class _TransactionDetailsViewState
                   style: AppTypography.bodySmall.copyWith(
                     fontFamily: 'Karla',
                     fontSize: 12.sp,
-                    letterSpacing: -.3,
+                    letterSpacing: -.6,
                     height: 1.4,
                     fontWeight: FontWeight.w600,
                     color: Theme.of(
@@ -634,7 +638,7 @@ class _TransactionDetailsViewState
             style: AppTypography.bodySmall.copyWith(
               fontFamily: 'Karla',
               fontSize: 12.sp,
-              letterSpacing: -.3,
+              letterSpacing: -.6,
               height: 1.4,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
@@ -740,7 +744,7 @@ class _TransactionDetailsViewState
             style: AppTypography.bodySmall.copyWith(
               fontFamily: 'Karla',
               fontSize: 12.sp,
-              letterSpacing: -.3,
+              letterSpacing: -.6,
               height: 1.4,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
@@ -800,7 +804,7 @@ class _TransactionDetailsViewState
             style: AppTypography.bodySmall.copyWith(
               fontFamily: 'Karla',
               fontSize: 12.sp,
-              letterSpacing: -.3,
+              letterSpacing: -.6,
               height: 1.4,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
@@ -871,7 +875,7 @@ class _TransactionDetailsViewState
                 fontFamily: 'Karla',
                 fontSize: 14.sp,
                 letterSpacing: -.4,
-                fontWeight: FontWeight.w400,
+                fontWeight: FontWeight.w500,
                 color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
               ),
             ),
@@ -904,7 +908,6 @@ class _TransactionDetailsViewState
     final total = _calculateTotal();
     final exchangeRate = _getExchangeRate();
     final isTopUp = _isWalletTopUp();
-    final isFeeZero = _isFeeZero();
 
     return Container(
       padding: EdgeInsets.all(20.w),
@@ -920,7 +923,7 @@ class _TransactionDetailsViewState
             style: AppTypography.bodySmall.copyWith(
               fontFamily: 'Karla',
               fontSize: 12.sp,
-              letterSpacing: -.3,
+              letterSpacing: -.6,
               height: 1.4,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
@@ -944,8 +947,8 @@ class _TransactionDetailsViewState
               isLoading: _isRatesLoading,
             ),
           ],
-          // Only show fee if it's not zero
-          if (!isFeeZero) _buildSummaryRow("Fee", fee),
+          // Always show fee
+          _buildSummaryRow("Fee", fee),
           Divider(
             height: 24.h,
             color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
@@ -990,7 +993,7 @@ class _TransactionDetailsViewState
                       fontFamily: 'Karla',
                       fontSize: 16.sp,
                       letterSpacing: -.2,
-                      fontWeight: FontWeight.w400,
+                      fontWeight: FontWeight.w500,
                       color: Theme.of(
                         context,
                       ).colorScheme.onSurface.withOpacity(0.8),
@@ -1009,7 +1012,7 @@ class _TransactionDetailsViewState
                         fontFamily: 'Karla',
                         fontSize: 14.sp,
                         letterSpacing: -.4,
-                        fontWeight: FontWeight.w400,
+                        fontWeight: FontWeight.w500,
                         color: Theme.of(
                           context,
                         ).colorScheme.onSurface.withOpacity(0.7),
@@ -1032,7 +1035,7 @@ class _TransactionDetailsViewState
                                       height: 20.w,
                                       child:
                                           LoadingAnimationWidget.horizontalRotatingDots(
-                                            color: AppColors.primary600,
+                                            color: Theme.of(context).colorScheme.primary,
                                             size: 20,
                                           ),
                                     )
@@ -1238,8 +1241,15 @@ class _TransactionDetailsViewState
 
   /// Get transaction fee
   String _getTransactionFee() {
-    // For now, return a placeholder fee
-    // TODO: Get actual fee from transaction data when available
+    // Use actual fee from transaction data if available
+    if (widget.transaction.fee != null && widget.transaction.fee! > 0) {
+      final formattedAmount = StringUtils.formatNumberWithCommas(
+        widget.transaction.fee!.toStringAsFixed(2),
+      );
+      return '₦$formattedAmount';
+    }
+
+    // Fallback to placeholder fee
     final formattedAmount = StringUtils.formatNumberWithCommas('0.00');
     return '₦$formattedAmount';
   }
@@ -1392,7 +1402,7 @@ class _TransactionDetailsViewState
       _calculateExchangeRateAndAmount();
     } catch (e) {
       // Handle error - could show a snackbar or fallback
-      print('Error fetching exchange rates: $e');
+      // print('Error fetching exchange rates: $e');
     } finally {
       setState(() {
         _isRatesLoading = false;
@@ -1430,7 +1440,7 @@ class _TransactionDetailsViewState
         }
       }
     } catch (e) {
-      print('Error fetching rates for $currency: $e');
+      // print('Error fetching rates for $currency: $e');
     }
   }
 
@@ -1640,7 +1650,7 @@ class _TransactionDetailsViewState
             Text(
               'Are you sure you have completed the payment?',
               style: TextStyle(
-                fontFamily: 'CabinetGrotesk',
+                fontFamily: 'FunnelDisplay',
                 fontSize: 20.sp,
                 // height: 1.6,
                 fontWeight: FontWeight.w500,
@@ -1664,7 +1674,7 @@ class _TransactionDetailsViewState
               fullWidth: true,
               fontFamily: 'Karla',
               fontSize: 18,
-              fontWeight: FontWeight.w400,
+              fontWeight: FontWeight.w500,
               letterSpacing: -0.8,
             ),
             SizedBox(height: 12.h),
@@ -1679,7 +1689,7 @@ class _TransactionDetailsViewState
               borderRadius: 56,
               fontFamily: 'Karla',
               fontSize: 18,
-              fontWeight: FontWeight.w400,
+              fontWeight: FontWeight.w500,
               letterSpacing: -0.8,
             ),
           ],
@@ -1729,7 +1739,7 @@ class _TransactionDetailsViewState
             Text(
               'Please complete your payment to proceed with the transfer.',
               style: TextStyle(
-                fontFamily: 'CabinetGrotesk',
+                fontFamily: 'FunnelDisplay',
                 fontSize: 20.sp,
                 // height: 1.6,
                 fontWeight: FontWeight.w500,
@@ -1750,7 +1760,7 @@ class _TransactionDetailsViewState
               fullWidth: true,
               fontFamily: 'Karla',
               fontSize: 18,
-              fontWeight: FontWeight.w400,
+              fontWeight: FontWeight.w500,
               letterSpacing: -0.8,
             ),
           ],
@@ -1800,7 +1810,7 @@ class _TransactionDetailsViewState
             Text(
               'Are you sure you want to cancel this transfer?',
               style: TextStyle(
-                fontFamily: 'CabinetGrotesk',
+                fontFamily: 'FunnelDisplay',
                 fontSize: 20.sp,
                 // height: 1.6,
                 fontWeight: FontWeight.w500,
@@ -1824,7 +1834,7 @@ class _TransactionDetailsViewState
               fullWidth: true,
               fontFamily: 'Karla',
               fontSize: 18,
-              fontWeight: FontWeight.w400,
+              fontWeight: FontWeight.w500,
               letterSpacing: -0.8,
             ),
             SizedBox(height: 12.h),
@@ -1839,7 +1849,7 @@ class _TransactionDetailsViewState
               borderRadius: 56,
               fontFamily: 'Karla',
               fontSize: 18,
-              fontWeight: FontWeight.w400,
+              fontWeight: FontWeight.w500,
               letterSpacing: -0.8,
             ),
           ],
@@ -1883,7 +1893,7 @@ class _TransactionDetailsViewState
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      CircularProgressIndicator(color: AppColors.purple500),
+                      CupertinoActivityIndicator(),
                       SizedBox(height: 16.h),
                       Text(
                         'Generating receipt...',
@@ -1900,7 +1910,7 @@ class _TransactionDetailsViewState
             ),
       );
 
-      print('Starting receipt generation...');
+      // print('Starting receipt generation...');
 
       // Capture the receipt widget as an image with timeout
       final imageBytes = await _screenshotController
@@ -1925,7 +1935,7 @@ class _TransactionDetailsViewState
             },
           );
 
-      print('Receipt generated successfully, size: ${imageBytes.length} bytes');
+      // print('Receipt generated successfully, size: ${imageBytes.length} bytes');
 
       // Save to temporary directory
       final directory = await getTemporaryDirectory();
@@ -1934,7 +1944,7 @@ class _TransactionDetailsViewState
       final imageFile = File(imagePath);
       await imageFile.writeAsBytes(imageBytes);
 
-      print('Image saved to: $imagePath');
+      // print('Image saved to: $imagePath');
 
       // Close loading dialog
       if (mounted) Navigator.pop(context);
@@ -1947,7 +1957,7 @@ class _TransactionDetailsViewState
         subject: 'DayFi Transaction Receipt',
       );
 
-      print('Share completed successfully');
+      // print('Share completed successfully');
 
       // Optional: Clean up the temporary file after a delay
       Future.delayed(const Duration(seconds: 30), () {
@@ -1956,8 +1966,8 @@ class _TransactionDetailsViewState
         }
       });
     } catch (e, stackTrace) {
-      print('Error sharing receipt: $e');
-      print('Stack trace: $stackTrace');
+      // print('Error sharing receipt: $e');
+      // print('Stack trace: $stackTrace');
 
       // Close loading dialog if still open
       if (mounted && Navigator.canPop(context)) {
@@ -2152,7 +2162,7 @@ class _TransactionDetailsViewState
             style: AppTypography.bodySmall.copyWith(
               fontFamily: 'Karla',
               fontSize: 12.sp,
-              letterSpacing: -.3,
+              letterSpacing: -.6,
               height: 1.4,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),

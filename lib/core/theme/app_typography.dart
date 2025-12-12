@@ -84,7 +84,7 @@ class AppTypography {
     fontSize: 32,
     height: 1.125, // 36px line height
     letterSpacing: -0.6,
-    fontWeight: FontWeight.w400, // Regular weight
+    fontWeight: FontWeight.w500, // Regular weight
     fontFamily: secondaryFontFamily, // Youth
   );
 
@@ -124,7 +124,7 @@ class AppTypography {
     fontSize: 18,
     height: 1.333, // 24px line height
     letterSpacing: 0,
-    fontWeight: FontWeight.w400, // Regular for H4
+    fontWeight: FontWeight.w500, // Regular for H4
     fontFamily: secondaryFontFamily, // Youth
   );
 
@@ -137,7 +137,7 @@ class AppTypography {
     fontSize: 24,
     height: 1.167, // 28px line height
     letterSpacing: 0,
-    fontWeight: FontWeight.w400, // Semibold for large titles
+    fontWeight: FontWeight.w500, // Semibold for large titles
     fontFamily: primaryFontFamily, // Readex Pro
   );
 
@@ -164,7 +164,7 @@ class AppTypography {
     fontSize: 14,
     height: 1.429, // 20px line height
     letterSpacing: 0,
-    fontWeight: FontWeight.w400, // Regular weight (matches spec)
+    fontWeight: FontWeight.w500, // Regular weight (matches spec)
     fontFamily: primaryFontFamily, // Readex Pro
   );
 
@@ -177,7 +177,7 @@ class AppTypography {
     fontSize: 16,
     height: 1.25, // 20px line height
     letterSpacing: 0,
-    fontWeight: FontWeight.w400,
+    fontWeight: FontWeight.w500,
     fontFamily: primaryFontFamily, // Readex Pro
   );
 
@@ -186,7 +186,7 @@ class AppTypography {
     fontSize: 14,
     height: 1.429, // 20px line height
     letterSpacing: 0,
-    fontWeight: FontWeight.w400,
+    fontWeight: FontWeight.w500,
     fontFamily: primaryFontFamily, // Readex Pro
   );
 
@@ -195,7 +195,7 @@ class AppTypography {
     fontSize: 11,
     height: 1.455, // 16px line height
     letterSpacing: 0,
-    fontWeight: FontWeight.w400, // Regular weight (matches spec)
+    fontWeight: FontWeight.w500, // Regular weight (matches spec)
     fontFamily: primaryFontFamily, // Readex Pro
   );
 
@@ -204,7 +204,7 @@ class AppTypography {
     fontSize: 9,
     height: 1.333, // 12px line height
     letterSpacing: 0,
-    fontWeight: FontWeight.w400,
+    fontWeight: FontWeight.w500,
     fontFamily: primaryFontFamily, // Readex Pro
   );
 
@@ -235,7 +235,7 @@ class AppTypography {
     fontSize: 12,
     height: 1.333, // 16px line height
     letterSpacing: 0.6,
-    fontWeight: FontWeight.w400, // Regular weight (matches spec)
+    fontWeight: FontWeight.w500, // Regular weight (matches spec)
     fontFamily: secondaryFontFamily, // Youth
   );
 
@@ -244,7 +244,7 @@ class AppTypography {
     fontSize: 10,
     height: 1.4, // 14px line height
     letterSpacing: 0,
-    fontWeight: FontWeight.w400, // Regular weight (matches spec)
+    fontWeight: FontWeight.w500, // Regular weight (matches spec)
     fontFamily: secondaryFontFamily, // Youth
   );
 
@@ -253,7 +253,7 @@ class AppTypography {
     fontSize: 8,
     height: 1.5, // 12px line height
     letterSpacing: 0,
-    fontWeight: FontWeight.w400, // Regular weight (matches spec)
+    fontWeight: FontWeight.w500, // Regular weight (matches spec)
     fontFamily: secondaryFontFamily, // Youth
   );
 
@@ -266,7 +266,7 @@ class AppTypography {
     fontSize: 10,
     height: 1.2, // 12px line height
     letterSpacing: 0,
-    fontWeight: FontWeight.w400,
+    fontWeight: FontWeight.w500,
     fontFamily: primaryFontFamily, // Readex Pro
   );
 
@@ -275,7 +275,7 @@ class AppTypography {
     fontSize: 9,
     height: 1.111, // 10px line height
     letterSpacing: 0,
-    fontWeight: FontWeight.w400,
+    fontWeight: FontWeight.w500,
     fontFamily: primaryFontFamily, // Readex Pro
   );
 
@@ -297,7 +297,7 @@ class AppTypography {
     fontSize: 24,
     height: 1.2, // 24px line height
     letterSpacing: 0,
-    fontWeight: FontWeight.w400, // Semibold for card titles
+    fontWeight: FontWeight.w500, // Semibold for card titles
     fontFamily: primaryFontFamily, // Readex Pro
   );
 
@@ -306,7 +306,7 @@ class AppTypography {
     fontSize: 16,
     height: 1.25, // 20px line height
     letterSpacing: 0,
-    fontWeight: FontWeight.w400, // Semibold for buttons
+    fontWeight: FontWeight.w500, // Semibold for buttons
     fontFamily: primaryFontFamily, // Readex Pro
   );
 
@@ -315,7 +315,7 @@ class AppTypography {
     fontSize: 12,
     height: 1.333, // 16px line height
     letterSpacing: 0.6,
-    fontWeight: FontWeight.w400, // Regular for captions
+    fontWeight: FontWeight.w500, // Regular for captions
     fontFamily: secondaryFontFamily, // Youth
   );
 
@@ -342,7 +342,7 @@ class AppTypography {
     fontSize: 24,
     height: 1.167, // 28px line height
     letterSpacing: -0.8,
-    fontWeight: FontWeight.w400,
+    fontWeight: FontWeight.w500,
     fontFamily: monospaceFontFamily,
   );
 
@@ -351,7 +351,7 @@ class AppTypography {
     fontSize: 18,
     height: 1.333, // 24px line height
     letterSpacing: 0,
-    fontWeight: FontWeight.w400,
+    fontWeight: FontWeight.w500,
     fontFamily: monospaceFontFamily,
   );
 

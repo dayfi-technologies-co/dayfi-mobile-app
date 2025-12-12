@@ -135,13 +135,18 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
-          scrolledUnderElevation: 0,
+          scrolledUnderElevation: .5,
+          foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+          shadowColor: Theme.of(context).scaffoldBackgroundColor,
+          surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
           leading: IconButton(
             onPressed: () => Navigator.pop(context),
             icon: Icon(
               Icons.arrow_back_ios,
+              size: 20.sp,
               color: Theme.of(context).colorScheme.onSurface,
               // size: 20.sp,
             ),
@@ -149,21 +154,21 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
           title: Text(
             "Edit Profile",
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontFamily: 'CabinetGrotesk',
-              fontSize: 20.sp, // height: 1.6,
+              fontFamily: 'FunnelDisplay',
+              fontSize: 24.sp, // height: 1.6,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
         ),
         body: SafeArea(
-            bottom: false,
+          bottom: false,
           child: SingleChildScrollView(
             controller: _scrollController,
             child: Form(
               key: _formKey,
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 4.h),
+                padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -172,9 +177,9 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
                       "Update your personal information below.",
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontSize: 16.sp,
-                        fontWeight: FontWeight.w400,
+                        fontWeight: FontWeight.w500,
                         fontFamily: 'Karla',
-                        letterSpacing: -.3,
+                        letterSpacing: -.6,
                         height: 1.4,
                       ),
                       textAlign: TextAlign.center,
@@ -243,42 +248,43 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
 
                     // Action Buttons
                     _buildActionButtons(editProfileState, editProfileNotifier),
-                    SizedBox(height: 18.h),
 
-                    Container(
-                      padding: EdgeInsets.all(10.0),
-                      decoration: BoxDecoration(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.primaryContainer.withOpacity(0.25),
-                        borderRadius: BorderRadius.circular(4.r),
-                        // border: Border.all(
-                        //   color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-                        //   width: 1.0,
-                        // ),
-                      ),
-                      child: Row(
-                        // crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SizedBox(width: 8),
-                          Image.asset("assets/images/idea.png", height: 20),
-                          SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'To update your profile, kindly reach out to our support team at support@dayfi.co or click the "Do you need help" button above this.',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontFamily: 'Karla',
-                                fontWeight: FontWeight.w400,
-                                letterSpacing: -0.4,
-                                height: 1.5,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    // SizedBox(height: 18.h),
+
+                    // Container(
+                    //   padding: EdgeInsets.all(10.0),
+                    //   decoration: BoxDecoration(
+                    //     color: Theme.of(
+                    //       context,
+                    //     ).colorScheme.primaryContainer.withOpacity(0.25),
+                    //     borderRadius: BorderRadius.circular(4.r),
+                    //     // border: Border.all(
+                    //     //   color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                    //     //   width: 1.0,
+                    //     // ),
+                    //   ),
+                    //   child: Row(
+                    //     // crossAxisAlignment: CrossAxisAlignment.start,
+                    //     children: [
+                    //       SizedBox(width: 8),
+                    //       Image.asset("assets/images/idea.png", height: 20),
+                    //       SizedBox(width: 8),
+                    //       Expanded(
+                    //         child: Text(
+                    //           'To update your profile, kindly reach out to our support team at support@dayfi.co or click the "Do you need help" button above this.',
+                    //           style: TextStyle(
+                    //             fontSize: 14,
+                    //             fontFamily: 'Karla',
+                    //             fontWeight: FontWeight.w500,
+                    //             letterSpacing: -0.4,
+                    //             height: 1.5,
+                    //             color: Theme.of(context).colorScheme.primary,
+                    //           ),
+                    //         ),
+                    //       ),
+                    //     ],
+                    //   ),
+                    // ),
                     SizedBox(height: 50.h),
                   ],
                 ),
@@ -319,8 +325,8 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
                 color: Colors.red,
                 fontSize: 13,
                 fontFamily: 'Karla',
-                letterSpacing: -.3,
-                fontWeight: FontWeight.w400,
+                letterSpacing: -.6,
+                fontWeight: FontWeight.w500,
                 height: 1.4,
               ),
             ),
@@ -360,8 +366,8 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
                 color: Colors.red,
                 fontSize: 13,
                 fontFamily: 'Karla',
-                letterSpacing: -.3,
-                fontWeight: FontWeight.w400,
+                letterSpacing: -.6,
+                fontWeight: FontWeight.w500,
                 height: 1.4,
               ),
             ),
@@ -414,8 +420,8 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
                 color: Colors.red,
                 fontSize: 13,
                 fontFamily: 'Karla',
-                letterSpacing: -.3,
-                fontWeight: FontWeight.w400,
+                letterSpacing: -.6,
+                fontWeight: FontWeight.w500,
                 height: 1.4,
               ),
             ),
@@ -458,8 +464,8 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
                 color: Colors.red,
                 fontSize: 13,
                 fontFamily: 'Karla',
-                letterSpacing: -.3,
-                fontWeight: FontWeight.w400,
+                letterSpacing: -.6,
+                fontWeight: FontWeight.w500,
                 height: 1.4,
               ),
             ),
@@ -487,33 +493,35 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
           backgroundColor:
               state.isFormValid && state.isDirty
                   ? AppColors.purple500
-                  : AppColors.purple500.withOpacity(.25),
-          height: 48.000.h,
-          textColor: AppColors.neutral0,
+                  : AppColors.purple500.withOpacity(.15),
+          height: 48.00000.h,
+          textColor:  state.isFormValid && state.isDirty
+             ? AppColors.neutral0
+                                : AppColors.neutral0.withOpacity(.35),
           fontFamily: 'Karla',
-          letterSpacing: -.8,
+          letterSpacing: -.70,
           fontSize: 18,
           width: double.infinity,
           fullWidth: true,
           isLoading: state.isLoading,
         ),
-        SizedBox(height: 12.h),
+        // SizedBox(height: 12.h),
 
-        // Cancel Button
-        SecondaryButton(
-          text: "Cancel",
-          onPressed: state.isLoading ? null : () => Navigator.pop(context),
-          borderColor: AppColors.purple500ForTheme(context),
-          textColor: AppColors.purple500ForTheme(context),
-          width: double.infinity,
-          fullWidth: true,
-          height: 48.000.h,
-          borderRadius: 38,
-          fontFamily: 'Karla',
-          fontSize: 18,
-          fontWeight: FontWeight.w400,
-          letterSpacing: -0.8,
-        ),
+        // // Cancel Button
+        // SecondaryButton(
+        //   text: "Cancel",
+        //   onPressed: state.isLoading ? null : () => Navigator.pop(context),
+        //   borderColor: AppColors.purple500ForTheme(context),
+        //   textColor: AppColors.purple500ForTheme(context),
+        //   width: double.infinity,
+        //   fullWidth: true,
+        //   height: 48.00000.h,
+        //   borderRadius: 38,
+        //   fontFamily: 'Karla',
+        //   fontSize: 18,
+        //   fontWeight: FontWeight.w500,
+        //   letterSpacing: -0.8,
+        // ),
       ],
     );
   }
@@ -594,28 +602,28 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
       maxLength: 100,
       onChanged: notifier.setAddress,
       textCapitalization: TextCapitalization.words,
-      suffixIcon: Container(
-        width: 40.w,
-        alignment: Alignment.centerRight,
-        constraints: BoxConstraints.tightForFinite(),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            SvgPicture.asset(
-              'assets/icons/svgs/swap.svg',
-              height: 34.sp,
-              color: AppColors.neutral700.withOpacity(.35),
-            ),
-            Center(
-              child: SvgPicture.asset(
-                'assets/icons/svgs/search-normal.svg',
-                height: 26,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(.65),
-              ),
-            ),
-          ],
-        ),
-      ),
+      // suffixIcon: Container(
+      //   width: 40.w,
+      //   alignment: Alignment.centerRight,
+      //   constraints: BoxConstraints.tightForFinite(),
+      //   child: Stack(
+      //     alignment: Alignment.center,
+      //     children: [
+      //       SvgPicture.asset(
+      //         'assets/icons/svgs/swap.svg',
+      //         height: 34.sp,
+      //         color: AppColors.neutral700.withOpacity(.35),
+      //       ),
+      //       Center(
+      //         child: SvgPicture.asset(
+      //           'assets/icons/svgs/search-normal.svg',
+      //           height: 26,
+      //           color: Theme.of(context).colorScheme.onSurface.withOpacity(.65),
+      //         ),
+      //       ),
+      //     ],
+      //   ),
+      // ),
     );
   }
 
@@ -710,6 +718,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
 
   void _showCountryBottomSheet(EditProfileNotifier notifier) {
     showModalBottomSheet(
+      barrierColor: Colors.black.withOpacity(0.85),
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -726,6 +735,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
 
   void _showGenderBottomSheet(EditProfileNotifier notifier) {
     showModalBottomSheet(
+      barrierColor: Colors.black.withOpacity(0.85),
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -748,7 +758,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
           title: Text(
             'Request $fieldName Change',
             style: AppTypography.titleMedium.copyWith(
-              fontFamily: 'CabinetGrotesk',
+              fontFamily: 'FunnelDisplay',
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -801,7 +811,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.purple500,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.r),
+                  borderRadius: BorderRadius.circular(12.r),
                 ),
               ),
               child: Text(
@@ -831,7 +841,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
           title: Text(
             'Verify Phone Number Change',
             style: AppTypography.titleMedium.copyWith(
-              fontFamily: 'CabinetGrotesk',
+              fontFamily: 'FunnelDisplay',
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -884,7 +894,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.purple500,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.r),
+                  borderRadius: BorderRadius.circular(12.r),
                 ),
               ),
               child: Text(
@@ -1019,7 +1029,7 @@ class _CountryBottomSheetState extends State<_CountryBottomSheet> {
                 Text(
                   'Select Country',
                   style: AppTypography.titleLarge.copyWith(
-                    fontFamily: 'CabinetGrotesk',
+                    fontFamily: 'FunnelDisplay',
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
                     color: Theme.of(context).colorScheme.onSurface,
@@ -1114,7 +1124,7 @@ class _GenderBottomSheetState extends State<_GenderBottomSheet> {
                 Text(
                   'Select Gender',
                   style: AppTypography.titleLarge.copyWith(
-                    fontFamily: 'CabinetGrotesk',
+                    fontFamily: 'FunnelDisplay',
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
                     color: Theme.of(context).colorScheme.onSurface,

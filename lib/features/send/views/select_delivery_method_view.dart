@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart' show CupertinoActivityIndicator;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -192,42 +193,59 @@ class _SelectDeliveryMethodViewState
 
   String _getDeliveryMethodName(String? channelType) {
     if (channelType == null) return 'Unknown';
-
+    String baseName;
     switch (channelType.toLowerCase()) {
       case 'dayfi_tag':
-        return 'DayFi Tag';
+        baseName = 'DayFi Tag';
+        break;
       case 'bank_transfer':
       case 'bank':
       case 'p2p':
       case 'peer_to_peer':
       case 'peer-to-peer':
-        return 'Bank Transfer';
+      case 'eft':
+        baseName = 'Bank Transfer';
+        break;
       case 'mobile_money':
       case 'momo':
       case 'mobilemoney':
-        return 'Mobile Money';
+        baseName = 'Mobile Money';
+        break;
       case 'spenn':
-        return 'Spenn';
+        baseName = 'Spenn';
+        break;
       case 'cash_pickup':
       case 'cash':
-        return 'Cash Pickup';
+        baseName = 'Cash Pickup';
+        break;
       case 'wallet':
       case 'digital_wallet':
-        return 'Wallet';
+        baseName = 'Wallet';
+        break;
       case 'card':
       case 'card_payment':
-        return 'Card';
+        baseName = 'Card';
+        break;
       case 'crypto':
       case 'cryptocurrency':
-        return 'Crypto';
+        baseName = 'Crypto';
+        break;
       case 'digital_dollar':
       case 'stablecoins':
-        return 'Digital Dollar';
+        baseName = 'Digital Dollar';
+        break;
       default:
-        return channelType
+        baseName = channelType
             .split('_')
             .map((word) => word[0].toUpperCase() + word.substring(1))
             .join(' ');
+    }
+
+    // Add timing information
+    if (channelType.toLowerCase() == 'dayfi_tag') {
+      return '$baseName - Instant transfer';
+    } else {
+      return '$baseName - within 5 mins';
     }
   }
 
@@ -374,12 +392,17 @@ class _SelectDeliveryMethodViewState
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        scrolledUnderElevation: 0,
+        scrolledUnderElevation: .5,
+        foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+        shadowColor: Theme.of(context).scaffoldBackgroundColor,
+        surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
           icon: Icon(
             Icons.arrow_back_ios,
+            size: 20.sp,
             color: Theme.of(context).colorScheme.onSurface,
           ),
           onPressed: () => Navigator.pop(context),
@@ -411,7 +434,7 @@ class _SelectDeliveryMethodViewState
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    "Sending to ${_selectedCurrency ?? 'NGN'}",
+                    "Sending to ${_getCountryName(_selectedCountry)} (${_selectedCurrency ?? 'NGN'})",
                     style: TextStyle(
                       fontFamily: 'Karla',
                       fontSize: 12.sp,
@@ -449,11 +472,7 @@ class _SelectDeliveryMethodViewState
           Expanded(
             child:
                 sendState.isLoading
-                    ? Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.purple500,
-                      ),
-                    )
+                    ? Center(child: CupertinoActivityIndicator())
                     : deliveryMethods.isEmpty
                     ? Center(
                       child: Column(
@@ -570,8 +589,8 @@ class _SelectDeliveryMethodViewState
                                         ).textTheme.titleLarge?.copyWith(
                                           fontFamily: 'Karla',
                                           fontSize: 18.sp,
-                                          letterSpacing: -.5,
-                                          fontWeight: FontWeight.w400,
+                                          letterSpacing: -.6,
+                                          fontWeight: FontWeight.w500,
                                           color:
                                               Theme.of(
                                                 context,
@@ -621,9 +640,9 @@ class _SelectDeliveryMethodViewState
                                     style: Theme.of(
                                       context,
                                     ).textTheme.bodyMedium?.copyWith(
-                                      fontSize: 12.5.sp,
+                                      fontSize: 13.sp,
                                       fontFamily: 'Karla',
-                                      fontWeight: FontWeight.w400,
+                                      fontWeight: FontWeight.w500,
                                       letterSpacing: -0.4,
                                       height: 1.3,
                                       color: Theme.of(

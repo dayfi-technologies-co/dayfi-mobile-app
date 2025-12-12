@@ -1,7 +1,6 @@
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/common/widgets/buttons/secondary_button.dart';
 import 'package:dayfi/common/utils/haptic_helper.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -87,47 +86,48 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
                     const SizedBox(height: 16),
 
                     // Welcome text
-                    Text(
-                      'Welcome back, ${_capitalize(passcodeState.user?.firstName ?? '')}',
-                      style: TextStyle(
-                        fontFamily: 'CabinetGrotesk',
-                        fontSize: 28.00,
-                        fontWeight: FontWeight.w500,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-
-                    SizedBox(height: 12.h),
-                    // Instruction text
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 18.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 32.0),
                       child: Text(
-                        'Enter your 4-digit passcode to continue.',
+                        'Welcome back, ${_capitalize(passcodeState.user?.firstName ?? '')}',
                         style: TextStyle(
-                          // color: AppColors.neutral800,
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w400, //
-                          fontFamily: 'Karla',
-                          letterSpacing: -.3,
-                          height: 1.4,
+                          fontFamily: 'FunnelDisplay',
+                          fontSize: 24.sp,
+                          fontWeight: FontWeight.w500,
+                          overflow: TextOverflow.ellipsis,
                         ),
+                        maxLines: 2,
                         textAlign: TextAlign.center,
                       ),
                     ),
 
+                    // SizedBox(height: 12.h),
+                    // // Instruction text
+                    // Padding(
+                    //   padding: const EdgeInsets.symmetric(horizontal: 18.0),
+                    //   child: Text(
+                    //     'Enter your 4-digit passcode to continue.',
+                    //     style: TextStyle(
+                    //       // color: AppColors.neutral800,
+                    //       fontSize: 16.sp,
+                    //       fontWeight: FontWeight.w500, //
+                    //       fontFamily: 'Karla',
+                    //       letterSpacing: -.6,
+                    //       height: 1.4,
+                    //     ),
+                    //     textAlign: TextAlign.center,
+                    //   ),
+                    // ),
                     SizedBox(height: 40.h),
 
                     // Loading indicator or passcode dots
                     if (passcodeState.isVerifying)
-                      Padding(
-                        padding: const EdgeInsets.all(6.0),
-                        child: SizedBox(
-                          width: 20.w,
-                          height: 20.w,
-                          child: LoadingAnimationWidget.horizontalRotatingDots(
-                            color: AppColors.primary600,
-                            size: 20,
-                          ),
+                      SizedBox(
+                        width: 24.w,
+                        height: 24.w,
+                        child: LoadingAnimationWidget.horizontalRotatingDots(
+                          color: Theme.of(context).colorScheme.primary,
+                          size: 24,
                         ),
                       )
                     else
@@ -139,8 +139,8 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
                               horizontal: 6.0,
                             ),
                             child: Container(
-                              width: 30,
-                              height: 30,
+                              width: 24,
+                              height: 24,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color:
@@ -186,40 +186,43 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
                               passcodeState.hasFaceId
                                   ? Icons.face
                                   : Icons.fingerprint,
+
                           onTap:
                               passcodeState.isBiometricAvailable
-                                      ? () async {
-                                          final authenticated =
-                                              await passcodeNotifier
-                                                  .authenticateWithBiometrics();
-                                          if (!authenticated) {
-                                            TopSnackbar.show(
-                                              context,
-                                              message:
-                                                  'Biometric authentication failed. Please use your passcode.',
-                                              isError: true,
-                                            );
-                                          }
-                                        }
-                                      : () {
-                                          // Distinguish between device not having biometrics
-                                          // and biometrics being available on device but not enabled for the app
-                                          if (passcodeState.isDeviceBiometricAvailable && !passcodeState.isBiometricEnabled) {
-                                            TopSnackbar.show(
-                                              context,
-                                              message:
-                                                  'Biometric authentication is available on your device but not enabled for this app. Please enable it in Settings or during setup.',
-                                              isError: true,
-                                            );
-                                          } else {
-                                            TopSnackbar.show(
-                                              context,
-                                              message:
-                                                  'Biometric authentication is not available on this device',
-                                              isError: true,
-                                            );
-                                          }
-                                        },
+                                  ? () async {
+                                    final authenticated =
+                                        await passcodeNotifier
+                                            .authenticateWithBiometrics();
+                                    if (!authenticated) {
+                                      TopSnackbar.show(
+                                        context,
+                                        message:
+                                            'Biometric check failed. Use your passcode instead.',
+                                        isError: true,
+                                      );
+                                    }
+                                  }
+                                  : () {
+                                    // Distinguish between device not having biometrics
+                                    // and biometrics being available on device but not enabled for the app
+                                    if (passcodeState
+                                            .isDeviceBiometricAvailable &&
+                                        !passcodeState.isBiometricEnabled) {
+                                      TopSnackbar.show(
+                                        context,
+                                        message:
+                                            'Biometrics are available but not enabled for this app.',
+                                        isError: true,
+                                      );
+                                    } else {
+                                      TopSnackbar.show(
+                                        context,
+                                        message:
+                                            'This device doesn’t support biometric authentication.',
+                                        isError: true,
+                                      );
+                                    }
+                                  },
                           index: 9,
                         ),
                         _buildNumberButton('0', passcodeNotifier, 10),
@@ -242,10 +245,12 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
                           text: "Wrong account? ",
                           style: TextStyle(
                             fontFamily: 'Karla',
-                            color: AppColors.neutral700,
+                            color: Theme.of(
+                              context,
+                            ).textTheme.bodyLarge!.color!.withOpacity(.85),
                             fontSize: 16.sp,
-                            fontWeight: FontWeight.w400,
-                            letterSpacing: -.3,
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: -.6,
                             height: 1.450,
                           ),
                           children: [
@@ -256,7 +261,7 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
                                 color: AppColors.purple500ForTheme(context),
                                 fontSize: 16.sp,
                                 fontWeight: FontWeight.w600,
-                                letterSpacing: -.3,
+                                letterSpacing: -.6,
                                 height: 1.4,
                               ),
                               recognizer:
@@ -341,8 +346,8 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
     return Text(
       'Are you sure you want to logout? You will be asked to create a new passcode.',
       style: TextStyle(
-        fontFamily: 'CabinetGrotesk',
-        fontSize: 20.sp, // height: 1.6,
+        fontFamily: 'FunnelDisplay',
+        fontSize: 24.sp, // height: 1.6,
         fontWeight: FontWeight.w500,
         color: Theme.of(context).colorScheme.onSurface,
         letterSpacing: -0.5,
@@ -373,12 +378,12 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
       backgroundColor: AppColors.purple500,
       textColor: AppColors.neutral0,
       borderRadius: 38.0,
-      height: 48.000.h,
+      height: 48.00000.h,
       width: double.infinity,
       fullWidth: true,
       fontFamily: 'Karla',
       fontSize: 18,
-      fontWeight: FontWeight.w400,
+      fontWeight: FontWeight.w500,
       letterSpacing: -0.8,
     );
   }
@@ -392,11 +397,11 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
       textColor: AppColors.purple500ForTheme(context),
       width: double.infinity,
       fullWidth: true,
-      height: 48.000.h,
+      height: 48.00000.h,
       borderRadius: 38.0,
       fontFamily: 'Karla',
       fontSize: 18,
-      fontWeight: FontWeight.w400,
+      fontWeight: FontWeight.w500,
       letterSpacing: -0.8,
     );
   }
@@ -420,9 +425,9 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
           child: Text(
             number,
             style: TextStyle(
-              fontSize: 25.60.sp,
-              fontFamily: 'CabinetGrotesk',
-              fontWeight: FontWeight.w400,
+              fontSize: 32.sp,
+              fontFamily: 'FunnelDisplay',
+              fontWeight: FontWeight.w500,
               color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
@@ -458,14 +463,14 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
               (icon == Icons.fingerprint || icon == Icons.face)
                   ? SvgPicture.asset(
                     iconSvg,
-                    height: 36.sp,
+                    height: 32.sp,
                     color: AppColors.purple500ForTheme(context),
                   )
                   : Icon(
                     icon,
                     size:
                         (icon == Icons.fingerprint || icon == Icons.face)
-                            ? 36.sp
+                            ? 32.sp
                             : 24.spMax,
                     color: AppColors.purple500ForTheme(context),
                   ),

@@ -26,10 +26,7 @@ class BvnNinVerificationState {
   });
 
   bool get isFormValid =>
-      bvn.isNotEmpty &&
-      nin.isNotEmpty &&
-      bvnError.isEmpty &&
-      ninError.isEmpty;
+      bvn.isNotEmpty && nin.isNotEmpty && bvnError.isEmpty && ninError.isEmpty;
 
   BvnNinVerificationState copyWith({
     String? bvn,
@@ -90,7 +87,10 @@ class BvnNinVerificationNotifier
   }
 
   // Submit form
-  Future<void> submitVerification(BuildContext context) async {
+  Future<void> submitVerification(
+    BuildContext context,
+    bool hasBackButton,
+  ) async {
     if (!state.isFormValid) {
       return;
     }
@@ -122,12 +122,10 @@ class BvnNinVerificationNotifier
         isError: false,
       );
 
-      final user = await _getCurrentUser();
-      if (user?.isBiometricsSetup == true) {
-        appRouter.pushMainAndClearStack();
-      } else {
-        appRouter.pushNamed(AppRoute.biometricSetupView);
-      }
+      Future.delayed(Duration(milliseconds: 3000));
+      hasBackButton
+          ? {appRouter.pop(), appRouter.pop()}
+          : appRouter.pushNamed(AppRoute.createPasscodeView);
     } catch (e) {
       AppLogger.error('Error verifying BVN/NIN: $e');
       TopSnackbar.show(
@@ -156,11 +154,7 @@ class BvnNinVerificationNotifier
         return true;
       } else {
         AppLogger.error('BVN verification failed: ${response.message}');
-        TopSnackbar.show(
-          context,
-          message: response.message,
-          isError: true,
-        );
+        TopSnackbar.show(context, message: response.message, isError: true);
         return false;
       }
     } catch (e) {
@@ -207,11 +201,7 @@ class BvnNinVerificationNotifier
         return true;
       } else {
         AppLogger.error('Profile update failed: ${response.message}');
-        TopSnackbar.show(
-          context,
-          message: response.message,
-          isError: true,
-        );
+        TopSnackbar.show(context, message: response.message, isError: true);
         return false;
       }
     } catch (e) {
@@ -235,7 +225,8 @@ class BvnNinVerificationNotifier
         final userData = json.decode(userJson);
         AppLogger.info('Parsed user data: $userData');
 
-        if (userData is Map<String, dynamic> && userData.containsKey('user_id')) {
+        if (userData is Map<String, dynamic> &&
+            userData.containsKey('user_id')) {
           final user = User.fromJson(userData);
           AppLogger.info('Created user object with ID: ${user.userId}');
           return user;
@@ -262,6 +253,5 @@ class BvnNinVerificationNotifier
 // Provider
 final bvnNinVerificationProvider =
     StateNotifierProvider<BvnNinVerificationNotifier, BvnNinVerificationState>(
-  (ref) => BvnNinVerificationNotifier(),
-);
-
+      (ref) => BvnNinVerificationNotifier(),
+    );

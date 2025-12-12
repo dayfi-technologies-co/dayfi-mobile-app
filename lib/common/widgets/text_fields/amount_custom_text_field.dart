@@ -132,7 +132,7 @@ class AmountCustomTextField extends StatelessWidget {
               fontFamily: "Karla",
               fontSize: 12,
               color: Colors.red.shade800,
-              letterSpacing: -.3,
+              letterSpacing: -.6,
             ),
             prefixIcon: prefixIcon,
             prefix: prefix,

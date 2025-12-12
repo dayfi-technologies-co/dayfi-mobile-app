@@ -7,7 +7,6 @@ import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/common/widgets/buttons/buttons.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/services/remote/payment_service.dart';
-import 'package:dayfi/services/transaction_monitor_service.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/features/send/vm/send_viewmodel.dart';
 import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
@@ -185,7 +184,7 @@ class _SendCryptoNetworksViewState
                                       networkKey,
                                     ).withOpacity(0.15)
                                     : AppColors.neutral400.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(8.r),
+                            borderRadius: BorderRadius.circular(12.r),
                           ),
                           child: Center(
                             child: Text(
@@ -214,7 +213,7 @@ class _SendCryptoNetworksViewState
                       Text(
                         networkKey,
                         style: AppTypography.titleMedium.copyWith(
-                          fontFamily: 'CabinetGrotesk',
+                          fontFamily: 'FunnelDisplay',
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w600,
                           color:
@@ -228,7 +227,7 @@ class _SendCryptoNetworksViewState
                       Text(
                         " ($name)",
                         style: AppTypography.bodySmall.copyWith(
-                          fontFamily: 'CabinetGrotesk',
+                          fontFamily: 'FunnelDisplay',
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w500,
                           letterSpacing: -0.3,
@@ -250,7 +249,7 @@ class _SendCryptoNetworksViewState
                           ),
                           decoration: BoxDecoration(
                             color: AppColors.warning400.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(8.r),
+                            borderRadius: BorderRadius.circular(12.r),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -285,7 +284,7 @@ class _SendCryptoNetworksViewState
                   //             ),
                   //             decoration: BoxDecoration(
                   //               color: AppColors.purple500ForTheme(context).withOpacity(0.15),
-                  //               borderRadius: BorderRadius.circular(8.r),
+                  //               borderRadius: BorderRadius.circular(12.r),
                   //             ),
                   //             child: Text(
                   //               activity.toString().toUpperCase(),
@@ -516,12 +515,17 @@ class _SendCryptoNetworksViewState
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        scrolledUnderElevation: 0,
+           scrolledUnderElevation: .5,
+              foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+              shadowColor: Theme.of(context).scaffoldBackgroundColor,
+              surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
           icon: Icon(
             Icons.arrow_back_ios,
+            size: 20.sp,
             color: Theme.of(context).colorScheme.onSurface,
           ),
           onPressed: () => Navigator.pop(context),
@@ -529,8 +533,8 @@ class _SendCryptoNetworksViewState
         title: Text(
           'Select Network',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontFamily: 'CabinetGrotesk',
-            fontSize: 20.sp,
+            fontFamily: 'FunnelDisplay',
+            fontSize: 24.sp,
             // height: 1.6,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,
@@ -539,7 +543,7 @@ class _SendCryptoNetworksViewState
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 12.h),
+        padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -565,7 +569,7 @@ class _SendCryptoNetworksViewState
             //         height: 56.w,
             //         decoration: BoxDecoration(
             //           color: Theme.of(context).colorScheme.surface,
-            //           borderRadius: BorderRadius.circular(8.r),
+            //           borderRadius: BorderRadius.circular(12.r),
             //         ),
             //         child: Center(
             //           child: _getCryptoIconPath(channelCode) != null
@@ -585,7 +589,7 @@ class _SendCryptoNetworksViewState
             //               : Text(
             //                   channelCode,
             //                   style: AppTypography.titleLarge.copyWith(
-            //                  fontFamily: 'CabinetGrotesk',
+            //                  fontFamily: 'FunnelDisplay',
             //                      fontSize: 20.sp, // height: 1.6,
             //                     fontWeight: FontWeight.w700,
             //                     color: AppColors.purple500ForTheme(context),
@@ -601,7 +605,7 @@ class _SendCryptoNetworksViewState
             //             Text(
             //               channelCode,
             //               style: AppTypography.titleLarge.copyWith(
-            //              fontFamily: 'CabinetGrotesk',
+            //              fontFamily: 'FunnelDisplay',
             //                 fontSize: 14.sp,
             //                 fontWeight: FontWeight.w600,
             //                 color: Theme.of(context).colorScheme.onSurface,
@@ -612,7 +616,7 @@ class _SendCryptoNetworksViewState
             //               style: AppTypography.bodySmall.copyWith(
             //                 fontFamily: 'Karla',
             //                 fontSize: 9.sp,
-            //                 fontWeight: FontWeight.w400,
+            //                 fontWeight: FontWeight.w500,
             //                 color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
             //               ),
             //             ),
@@ -625,7 +629,7 @@ class _SendCryptoNetworksViewState
             Text(
               'What network do you want to use for $channelCode?',
               style: AppTypography.titleLarge.copyWith(
-                fontFamily: 'CabinetGrotesk',
+                fontFamily: 'FunnelDisplay',
                 fontSize: 12.sp,
                 fontWeight: FontWeight.w600,
                 color: Theme.of(context).colorScheme.onSurface,
@@ -650,7 +654,7 @@ class _SendCryptoNetworksViewState
                       Text(
                         'No Networks Available',
                         style: AppTypography.titleLarge.copyWith(
-                          fontFamily: 'CabinetGrotesk',
+                          fontFamily: 'FunnelDisplay',
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w600,
                           color: Theme.of(context).colorScheme.onSurface,
@@ -682,7 +686,7 @@ class _SendCryptoNetworksViewState
         ),
       ),
       bottomNavigationBar: Container(
-        padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 12.h),
+        padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
         decoration: BoxDecoration(
           color: Theme.of(context).scaffoldBackgroundColor,
           boxShadow: [
@@ -711,14 +715,14 @@ class _SendCryptoNetworksViewState
             backgroundColor:
                 _selectedNetwork != null && !_isLoading
                     ? AppColors.purple500
-                    : AppColors.purple500.withOpacity(.25),
+                    : AppColors.purple500.withOpacity(.15),
             textColor:
                 _selectedNetwork != null && !_isLoading
                     ? AppColors.neutral0
-                    : AppColors.neutral0.withOpacity(.65),
-            height: 48.000.h,
+                    : AppColors.neutral0.withOpacity(.35),
+            height: 48.00000.h,
             fontFamily: 'Karla',
-            letterSpacing: -.8,
+            letterSpacing: -.70,
             fontSize: 18,
             width: double.infinity,
             fullWidth: true,
@@ -775,7 +779,7 @@ class _SendCryptoNetworksViewState
           child: Text(
             label,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              letterSpacing: -.3,
+              letterSpacing: -.6,
               fontSize: 14.sp,
               fontWeight: FontWeight.w500,
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
@@ -790,7 +794,7 @@ class _SendCryptoNetworksViewState
                 child: Text(
                   value,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    fontFamily: 'CabinetGrotesk',
+                    fontFamily: 'FunnelDisplay',
                     fontSize: 11.sp,
                     fontWeight: FontWeight.w600,
                     color: Theme.of(context).colorScheme.onSurface,
@@ -827,10 +831,11 @@ class _SendCryptoNetworksViewState
   void _showCryptoWalletDetailsBottomSheet(payment.PaymentData collectionData) {
     _startCountdownTimer();
 
-    showModalBottomSheet(
+        showModalBottomSheet(
+      barrierColor: Colors.black.withOpacity(0.85),
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          backgroundColor: Theme.of(context).colorScheme.surface,
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
@@ -880,14 +885,14 @@ class _SendCryptoNetworksViewState
                         Text(
                           'Crypto Wallet Details',
                           style: AppTypography.titleLarge.copyWith(
-                            fontFamily: 'CabinetGrotesk',
+                            fontFamily: 'FunnelDisplay',
                             fontSize: 14.sp,
                             fontWeight: FontWeight.w600,
                             color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                         GestureDetector(
-                          onTap: () => Navigator.pop(context),
+                          onTap: () => {Navigator.pop(context), FocusScope.of(context).unfocus()},
                           child: Image.asset(
                             "assets/icons/pngs/cancelicon.png",
                             height: 24.h,
@@ -930,7 +935,7 @@ class _SendCryptoNetworksViewState
                                     ).textTheme.bodySmall?.copyWith(
                                       fontSize: 14.sp,
                                       fontFamily: 'Karla',
-                                      fontWeight: FontWeight.w400,
+                                      fontWeight: FontWeight.w500,
                                       letterSpacing: -0.4,
                                       height: 1.5,
                                       color:
@@ -967,7 +972,7 @@ class _SendCryptoNetworksViewState
                                   style: Theme.of(
                                     context,
                                   ).textTheme.titleLarge?.copyWith(
-                                    fontFamily: 'CabinetGrotesk',
+                                    fontFamily: 'FunnelDisplay',
                                     fontSize: 12.sp,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -1052,10 +1057,10 @@ class _SendCryptoNetworksViewState
                         Navigator.pop(context); // Close crypto network view
                       },
                       backgroundColor: AppColors.purple500,
-                      height: 48.000.h,
+                      height: 48.00000.h,
                       textColor: AppColors.neutral0,
                       fontFamily: 'Karla',
-                      letterSpacing: -.8,
+                      letterSpacing: -.70,
                       fontSize: 18,
                       width: double.infinity,
                       fullWidth: true,

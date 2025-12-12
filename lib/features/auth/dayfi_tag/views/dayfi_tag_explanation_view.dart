@@ -19,7 +19,7 @@ class DayfiTagExplanationView extends ConsumerWidget {
         body: SafeArea(
             bottom: false,
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 4.h),
+            padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -56,7 +56,7 @@ class DayfiTagExplanationView extends ConsumerWidget {
                     // Text(
                     //   '@',
                     //   style: TextStyle(
-                    //  fontFamily: 'CabinetGrotesk',
+                    //  fontFamily: 'FunnelDisplay',
                     //     fontSize: MediaQuery.of(context).size.width * 0.3,
                     //     fontWeight: FontWeight.w600,
                     //     color: AppColors.error500,
@@ -68,7 +68,7 @@ class DayfiTagExplanationView extends ConsumerWidget {
                 Text(
                   "Meet your DayFi Tag",
                   style: AppTypography.headlineLarge.copyWith(
-                 fontFamily: 'CabinetGrotesk',
+                 fontFamily: 'FunnelDisplay',
                     fontSize: 28.sp, height: 1.2,
                     fontWeight: FontWeight.w600,
                     color: AppColors.neutral0,
@@ -81,10 +81,10 @@ class DayfiTagExplanationView extends ConsumerWidget {
                   "Your unique username for instant money transfers. Share it with friends and family - no bank details needed.",
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontSize: 16.sp,
-                    fontWeight: FontWeight.w400,
+                    fontWeight: FontWeight.w500,
                     fontFamily: 'Karla',
                     color: AppColors.neutral50,
-                    letterSpacing: -.3,
+                    letterSpacing: -.6,
                     height: 1.5,
                   ),
                   textAlign: TextAlign.center,
@@ -94,10 +94,10 @@ class DayfiTagExplanationView extends ConsumerWidget {
                 //   "Benefits:\n• Easy to share - just your unique tag\n• Instant transfers\n• No bank details needed\n• Free to use",
                 //   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 //     fontSize: 14.sp,
-                //     fontWeight: FontWeight.w400,
+                //     fontWeight: FontWeight.w500,
                 //     fontFamily: 'Karla',
                 //     color: AppColors.neutral50.withOpacity(0.9),
-                //     letterSpacing: -.3,
+                //     letterSpacing: -.6,
                 //     height: 1.5,
                 //   ),
                 //   textAlign: TextAlign.center,
@@ -116,10 +116,10 @@ class DayfiTagExplanationView extends ConsumerWidget {
                     }
                   },
                   backgroundColor: AppColors.neutral0,
-                  height: 48.000.h,
+                  height: 48.00000.h,
                   textColor: AppColors.purple500ForTheme(context),
                   fontFamily: 'Karla',
-                  letterSpacing: -.8,
+                  letterSpacing: -.70,
                   fontWeight: FontWeight.w600,
                   fontSize: 18,
                   width: double.infinity,

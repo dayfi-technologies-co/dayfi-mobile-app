@@ -1,5 +1,8 @@
 import 'dart:convert';
+import 'package:dayfi/common/widgets/empty_state_widget.dart';
+import 'package:dayfi/common/widgets/error_state_widget.dart';
 import 'package:dayfi/routes/route.dart';
+import 'package:dayfi/features/send/views/crypto_networks_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -9,7 +12,6 @@ import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/services/remote/payment_service.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
-import 'package:dayfi/common/widgets/buttons/buttons.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class SendFetchCryptoChannelsView extends ConsumerStatefulWidget {
@@ -22,6 +24,7 @@ class SendFetchCryptoChannelsView extends ConsumerStatefulWidget {
 
 class _SendFetchCryptoChannelsViewState
     extends ConsumerState<SendFetchCryptoChannelsView> {
+  static List<dynamic>? _cachedCryptoChannels;
   bool _isLoading = false;
   List<dynamic> _cryptoChannels = [];
   String? _errorMessage;
@@ -29,7 +32,11 @@ class _SendFetchCryptoChannelsViewState
   @override
   void initState() {
     super.initState();
-    _fetchCryptoChannels();
+    if (_cachedCryptoChannels != null) {
+      _cryptoChannels = _cachedCryptoChannels!;
+    } else {
+      _fetchCryptoChannels();
+    }
   }
 
   Future<void> _fetchCryptoChannels() async {
@@ -54,32 +61,36 @@ class _SendFetchCryptoChannelsViewState
               final decoded = const JsonDecoder().convert(rawChannels) as List;
               channels = decoded;
             } catch (e) {
-              print('❌ Error parsing channels JSON string: $e');
+              // print('❌ Error parsing channels JSON string: $e');
             }
           }
         }
 
-        final filteredChannels = channels.where((channel) {
-          if (channel is Map<String, dynamic>) {
-            final zones = channel['zones'] as List? ?? [];
-            final enabled = channel['enabled'] ?? false;
-            final hasStablecoins = zones.any(
-              (zone) => zone.toString().toLowerCase().contains('stablecoins'),
-            );
-            return hasStablecoins && enabled;
-          }
-          return false;
-        }).toList();
+        final filteredChannels =
+            channels.where((channel) {
+              if (channel is Map<String, dynamic>) {
+                final zones = channel['zones'] as List? ?? [];
+                final enabled = channel['enabled'] ?? false;
+                final hasStablecoins = zones.any(
+                  (zone) =>
+                      zone.toString().toLowerCase().contains('stablecoins'),
+                );
+                return hasStablecoins && enabled;
+              }
+              return false;
+            }).toList();
 
         setState(() {
           _cryptoChannels = filteredChannels;
           _isLoading = false;
         });
+        _cachedCryptoChannels = filteredChannels;
       } else {
         setState(() {
-          _errorMessage = response.message.isNotEmpty
-              ? response.message
-              : 'Failed to load crypto channels';
+          _errorMessage =
+              response.message.isNotEmpty
+                  ? response.message
+                  : 'Failed to load crypto channels';
           _isLoading = false;
         });
       }
@@ -112,8 +123,16 @@ class _SendFetchCryptoChannelsViewState
     }
   }
 
-  void _navigateToNetworks(Map<String, dynamic> channel) {
-    appRouter.pushNamed(AppRoute.cryptoNetworksView, arguments: channel);
+  void _showCryptoNetworksSheet(Map<String, dynamic> channel) {
+    showModalBottomSheet(
+      barrierColor: Colors.black.withOpacity(0.85),
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      builder: (BuildContext ctx) {
+        return CryptoNetworksView(channel: channel);
+      },
+    );
   }
 
   Widget _buildCryptoChannelCard(Map<String, dynamic> channel) {
@@ -121,134 +140,71 @@ class _SendFetchCryptoChannelsViewState
     final name = channel['name'] ?? 'Unknown';
     final enabled = channel['enabled'] ?? false;
 
-    return GestureDetector(
-      onTap: () => _navigateToNetworks(channel),
-      child: Container(
-        margin: EdgeInsets.only(bottom: 16.h),
-        padding: EdgeInsets.all(16.w),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(12.r),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.neutral500.withOpacity(0.0375),
-              blurRadius: 8.0,
-              offset: const Offset(0, 8),
-              spreadRadius: 0.8,
+    return ListTile(
+      contentPadding: EdgeInsets.symmetric(vertical: 6.h, horizontal: 18.w),
+      onTap: () {
+        _showCryptoNetworksSheet(channel);
+      },
+      title: Row(
+        children: [
+          Container(
+            height: 32.0.h,
+            width: 32.0.w,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(12.r),
             ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 32.w,
-                  height: 32.w,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: Center(
-                    child: _getCryptoIconPath(code) != null
-                        ? code.toUpperCase() == 'CUSD'
-                            ? Image.asset(
-                                _getCryptoIconPath(code)!,
-                                width: 32.w,
-                                height: 32.w,
-                                fit: BoxFit.contain,
-                              )
-                            : SvgPicture.asset(
-                                _getCryptoIconPath(code)!,
-                                width: 32.w,
-                                height: 32.w,
-                                fit: BoxFit.contain,
-                                colorFilter: null,
-                              )
-                        : Text(
-                            code,
-                            style: AppTypography.titleMedium.copyWith(
-                              fontFamily: 'CabinetGrotesk',
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w700,
-                              color: enabled
+            child: Center(
+              child:
+                  _getCryptoIconPath(code) != null
+                      ? code.toUpperCase() == 'CUSD'
+                          ? Image.asset(
+                            _getCryptoIconPath(code)!,
+                            height: 32.0.h,
+                            width: 32.0.w,
+                            fit: BoxFit.contain,
+                          )
+                          : SvgPicture.asset(
+                            _getCryptoIconPath(code)!,
+                            height: 32.0.h,
+                            width: 32.0.w,
+                            fit: BoxFit.contain,
+                            colorFilter: null,
+                          )
+                      : Text(
+                        code,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontFamily: 'Karla',
+                          fontSize: 18.sp,
+                          letterSpacing: -.6,
+                          fontWeight: FontWeight.w500,
+                          color:
+                              enabled
                                   ? AppColors.purple500ForTheme(context)
                                   : AppColors.neutral600,
-                            ),
-                          ),
-                  ),
-                ),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            code,
-                            style: AppTypography.titleLarge.copyWith(
-                              fontFamily: 'CabinetGrotesk',
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w600,
-                              color: enabled
-                                  ? Theme.of(context).colorScheme.onSurface
-                                  : Theme.of(context)
-                                      .colorScheme.onSurface
-                                      .withOpacity(0.5),
-                            ),
-                          ),
-                          Text(
-                            " ($name)",
-                            style: AppTypography.bodySmall.copyWith(
-                              fontFamily: 'CabinetGrotesk',
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w500,
-                              letterSpacing: -0.3,
-                              height: 1.5,
-                              color: Theme.of(context)
-                                  .colorScheme.onSurface
-                                  .withOpacity(0.6),
-                            ),
-                            maxLines: 3,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
+                        ),
                       ),
-                      if (name.isNotEmpty) ...[
-                        SizedBox(height: 2.h),
-                        Text(
-                          "Click here to select the currency",
-                          style: AppTypography.bodySmall.copyWith(
-                            fontFamily: 'Karla',
-                            fontSize: 12.sp,
-                            letterSpacing: -0.3,
-                            fontWeight: FontWeight.w400,
-                            color: Theme.of(context)
-                                .colorScheme.onSurface
-                                .withOpacity(0.6),
-                          ),
-                        ),
-                      ],
-                      if (!enabled) ...[
-                        SizedBox(height: 4.h),
-                        Text(
-                          'Coming Soon',
-                          style: AppTypography.labelSmall.copyWith(
-                            fontFamily: 'Karla',
-                            fontSize: 10.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.neutral400,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
             ),
-          ],
+          ),
+          SizedBox(width: 12.w),
+          Text(
+            name,
+            style: AppTypography.bodyLarge.copyWith(
+              fontFamily: 'Karla',
+              fontSize: 16.sp,
+              letterSpacing: -.4,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+      trailing: Text(
+        code,
+        style: AppTypography.bodyLarge.copyWith(
+          fontFamily: 'Karla',
+          fontSize: 14.sp,
+          letterSpacing: -.4,
+          fontWeight: FontWeight.w500,
         ),
       ),
     );
@@ -256,157 +212,44 @@ class _SendFetchCryptoChannelsViewState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        scrolledUnderElevation: 0,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios,
-            color: Theme.of(context).colorScheme.onSurface,
+    return _isLoading
+        ? Center(
+          child: Padding(
+            padding: EdgeInsets.only(bottom: 60.h),
+            child: LoadingAnimationWidget.waveDots(
+              color: AppColors.purple500ForTheme(context),
+              size: 24.sp,
+            ),
           ),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          'Select Digital Dollars',
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontFamily: 'CabinetGrotesk',
-                fontSize: 20.sp,
-                // height: 1.6,
-                fontWeight: FontWeight.w600,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-        ),
-        centerTitle: true,
-      ),
-      body: _isLoading
-          ? Center(
-              child: Padding(
-                padding: EdgeInsetsGeometry.only(bottom: 60.h),
-                child: LoadingAnimationWidget.threeArchedCircle(
-                  color: AppColors.purple500ForTheme(context),
-                  size: 32.sp,
-                ),
-              ),
-            )
-          : _errorMessage != null
-              ? Center(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 56.w),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.error_outline,
-                          size: 64.sp,
-                          color: AppColors.error400,
-                        ),
-                        SizedBox(height: 16.h),
-                        Text(
-                          'Error Loading Channels',
-                          style: AppTypography.titleLarge.copyWith(
-                            fontFamily: 'CabinetGrotesk',
-                            fontSize: 18.sp,
-                            fontWeight: FontWeight.w600,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
-                        ),
-                        SizedBox(height: 8.h),
-                        Text(
-                          _errorMessage!,
-                          textAlign: TextAlign.center,
-                          style: AppTypography.bodyMedium.copyWith(
-                            fontFamily: 'Karla',
-                            fontSize: 14.sp,
-                            color: Theme.of(context)
-                                .colorScheme.onSurface
-                                .withOpacity(0.6),
-                          ),
-                        ),
-                        SizedBox(height: 24.h),
-                        PrimaryButton(
-                          text: 'Retry',
-                          onPressed: _fetchCryptoChannels,
-                          backgroundColor: AppColors.purple500,
-                          textColor: AppColors.neutral0,
-                          height: 56.h,
-                          width: 120.w,
-                          fontFamily: 'Karla',
-                          fontSize: 14.sp,
-                          borderRadius: 24.r,
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              : _cryptoChannels.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.inbox_outlined,
-                            size: 64.sp,
-                            color: AppColors.neutral400,
-                          ),
-                          SizedBox(height: 16.h),
-                          Text(
-                            'No Crypto Channels',
-                            style: AppTypography.titleLarge.copyWith(
-                              fontFamily: 'CabinetGrotesk',
-                              fontSize: 18.sp,
-                              fontWeight: FontWeight.w600,
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
-                          ),
-                          SizedBox(height: 8.h),
-                          Text(
-                            'No crypto channels available at the moment',
-                            textAlign: TextAlign.center,
-                            style: AppTypography.bodyMedium.copyWith(
-                              fontFamily: 'Karla',
-                              fontSize: 14.sp,
-                              color: Theme.of(context)
-                                  .colorScheme.onSurface
-                                  .withOpacity(0.6),
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  : RefreshIndicator(
-                      onRefresh: _fetchCryptoChannels,
-                      child: SingleChildScrollView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 18.w,
-                          vertical: 12.h,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(
-                              'What currency do you want to use as your payment method?',
-                              style: AppTypography.titleLarge.copyWith(
-                                fontFamily: 'CabinetGrotesk',
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.w600,
-                                color: Theme.of(context).colorScheme.onSurface,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            SizedBox(height: 32.h),
-                            ..._cryptoChannels.map((channel) {
-                              return _buildCryptoChannelCard(channel);
-                            }),
-                            SizedBox(height: 40.h),
-                          ],
-                        ),
-                      ),
-                    ),
-    );
+        )
+        : _errorMessage != null
+        ? ErrorStateWidget(
+          message: 'Failed to load Crypto Channels',
+          details: _errorMessage,
+          onRetry: _fetchCryptoChannels,
+        )
+        : _cryptoChannels.isEmpty
+        ? EmptyStateWidget(
+          icon: Icons.inbox_outlined,
+          title: 'No Crypto Channels',
+          message: 'No crypto channels available at the moment',
+        )
+        : RefreshIndicator(
+          onRefresh: _fetchCryptoChannels,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.only(top: 12.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+            
+                ..._cryptoChannels.map((channel) {
+                  return _buildCryptoChannelCard(channel);
+                }),
+                SizedBox(height: 40.h),
+              ],
+            ),
+          ),
+        );
   }
 }
-

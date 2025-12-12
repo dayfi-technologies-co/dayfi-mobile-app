@@ -38,7 +38,7 @@ class ThemeToggleWidget extends ConsumerWidget {
                     Icons.light_mode,
                     color:
                         themeMode == AppThemeMode.light
-                            ? AppColors.primary500
+                            ? Theme.of(context).colorScheme.primary
                             : Theme.of(context).colorScheme.onSurface,
                   ),
                   const SizedBox(width: 12),
@@ -47,7 +47,7 @@ class ThemeToggleWidget extends ConsumerWidget {
                     style: TextStyle(
                       color:
                           themeMode == AppThemeMode.light
-                              ? AppColors.primary500
+                              ? Theme.of(context).colorScheme.primary
                               : Theme.of(context).colorScheme.onSurface,
                       fontWeight:
                           themeMode == AppThemeMode.light
@@ -66,7 +66,7 @@ class ThemeToggleWidget extends ConsumerWidget {
                     Icons.dark_mode,
                     color:
                         themeMode == AppThemeMode.dark
-                            ? AppColors.primary500
+                            ? Theme.of(context).colorScheme.primary
                             : Theme.of(context).colorScheme.onSurface,
                   ),
                   const SizedBox(width: 12),
@@ -75,7 +75,7 @@ class ThemeToggleWidget extends ConsumerWidget {
                     style: TextStyle(
                       color:
                           themeMode == AppThemeMode.dark
-                              ? AppColors.primary500
+                              ? Theme.of(context).colorScheme.primary
                               : Theme.of(context).colorScheme.onSurface,
                       fontWeight:
                           themeMode == AppThemeMode.dark
@@ -94,7 +94,7 @@ class ThemeToggleWidget extends ConsumerWidget {
                     Icons.brightness_auto,
                     color:
                         themeMode == AppThemeMode.system
-                            ? AppColors.primary500
+                            ? Theme.of(context).colorScheme.primary
                             : Theme.of(context).colorScheme.onSurface,
                   ),
                   const SizedBox(width: 12),
@@ -103,7 +103,7 @@ class ThemeToggleWidget extends ConsumerWidget {
                     style: TextStyle(
                       color:
                           themeMode == AppThemeMode.system
-                              ? AppColors.primary500
+                              ? Theme.of(context).colorScheme.primary
                               : Theme.of(context).colorScheme.onSurface,
                       fontWeight:
                           themeMode == AppThemeMode.system

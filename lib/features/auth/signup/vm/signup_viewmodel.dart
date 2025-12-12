@@ -38,7 +38,7 @@ class SignupState {
     this.email = '',
     this.password = '',
     this.confirmPassword = '',
-    this.isAgreed = false,
+    this.isAgreed = true,
     this.isBusy = false,
     this.firstNameError = '',
     this.lastNameError = '',
@@ -246,7 +246,7 @@ class SignupNotifier extends StateNotifier<SignupState> {
     if (!RegExp(
       r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
     ).hasMatch(value)) {
-      return 'Please enter a valid email address (like: yourname@email.com)';
+      return 'Please enter a valid email address';
     }
     return '';
   }

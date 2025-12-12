@@ -68,7 +68,7 @@ class PlatformLocationPicker {
         ? states.indexOf(selectedState) 
         : 0;
 
-    return material.showModalBottomSheet<String>(
+    return material.    showModalBottomSheet<String>(
       context: context,
       backgroundColor: material.Colors.transparent,
       isScrollControlled: true,
@@ -102,7 +102,7 @@ class PlatformLocationPicker {
                   child: Text(
                     title,
                     style: material.Theme.of(context).textTheme.titleLarge?.copyWith(
-                   fontFamily: 'CabinetGrotesk',
+                   fontFamily: 'FunnelDisplay',
                       fontSize: 24.sp,
                       fontWeight: FontWeight.w600,
                     ),
@@ -188,7 +188,7 @@ class PlatformLocationPicker {
         ? cities.indexOf(selectedCity) 
         : 0;
 
-    return material.showModalBottomSheet<String>(
+    return material.    showModalBottomSheet<String>(
       context: context,
       backgroundColor: material.Colors.transparent,
       isScrollControlled: true,
@@ -222,7 +222,7 @@ class PlatformLocationPicker {
                   child: Text(
                     title,
                     style: material.Theme.of(context).textTheme.titleLarge?.copyWith(
-                   fontFamily: 'CabinetGrotesk',
+                   fontFamily: 'FunnelDisplay',
                       fontSize: 24.sp,
                       fontWeight: FontWeight.w600,
                     ),
@@ -302,7 +302,7 @@ class PlatformLocationPicker {
     String? selectedState,
     String? title,
   }) async {
-    return material.showModalBottomSheet<String>(
+    return material.    showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       backgroundColor: material.Colors.transparent,
@@ -335,7 +335,7 @@ class PlatformLocationPicker {
                 child: Text(
                   title ?? 'Select State',
                   style: material.Theme.of(context).textTheme.titleLarge?.copyWith(
-                 fontFamily: 'CabinetGrotesk',
+                 fontFamily: 'FunnelDisplay',
                     fontSize: 24.sp,
                     fontWeight: FontWeight.w600,
                   ),
@@ -374,7 +374,7 @@ class PlatformLocationPicker {
                       title: Text(
                         state,
                         style: TextStyle(
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                           color: isSelected 
                               ? material.Theme.of(context).primaryColor
                               : null,
@@ -407,7 +407,7 @@ class PlatformLocationPicker {
   }) async {
     final cities = NigeriaLocations.getCitiesForState(state);
     
-    return material.showModalBottomSheet<String>(
+    return material.    showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       backgroundColor: material.Colors.transparent,
@@ -440,7 +440,7 @@ class PlatformLocationPicker {
                 child: Text(
                   title ?? 'Select City in $state',
                   style: material.Theme.of(context).textTheme.titleLarge?.copyWith(
-                 fontFamily: 'CabinetGrotesk',
+                 fontFamily: 'FunnelDisplay',
                     fontSize: 24.sp,
                     fontWeight: FontWeight.w600,
                   ),
@@ -479,7 +479,7 @@ class PlatformLocationPicker {
                       title: Text(
                         city,
                         style: TextStyle(
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                           color: isSelected 
                               ? material.Theme.of(context).primaryColor
                               : null,

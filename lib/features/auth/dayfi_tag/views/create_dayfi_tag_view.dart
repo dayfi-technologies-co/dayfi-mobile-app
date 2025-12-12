@@ -60,12 +60,17 @@ class _CreateDayfiTagViewState extends ConsumerState<CreateDayfiTagView> {
         },
         child: Scaffold(
           appBar: AppBar(
-            scrolledUnderElevation: 0,
+               scrolledUnderElevation: .5,
+              foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+              shadowColor: Theme.of(context).scaffoldBackgroundColor,
+              surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             elevation: 0,
             leading: IconButton(
               icon: Icon(
                 Icons.arrow_back_ios,
+            size: 20.sp,
                 color: Theme.of(context).colorScheme.onSurface,
                 // size: 20.sp,
               ),
@@ -74,8 +79,8 @@ class _CreateDayfiTagViewState extends ConsumerState<CreateDayfiTagView> {
             title: Text(
               "Create Your DayFi Tag",
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-             fontFamily: 'CabinetGrotesk',
-                 fontSize: 20.sp, // height: 1.6,
+             fontFamily: 'FunnelDisplay',
+                 fontSize: 24.sp, // height: 1.6,
                 fontWeight: FontWeight.w600,
                 color: Theme.of(context).colorScheme.onSurface,
               ),
@@ -103,9 +108,9 @@ class _CreateDayfiTagViewState extends ConsumerState<CreateDayfiTagView> {
                             context,
                           ).textTheme.bodyMedium?.copyWith(
                             fontSize: 16.sp,
-                            fontWeight: FontWeight.w400,
+                            fontWeight: FontWeight.w500,
                             fontFamily: 'Karla',
-                            letterSpacing: -.3,
+                            letterSpacing: -.6,
                             height: 1.5,
                           ),
                           textAlign: TextAlign.center,
@@ -138,8 +143,8 @@ class _CreateDayfiTagViewState extends ConsumerState<CreateDayfiTagView> {
                                         : AppColors.error400,
                                 fontSize: 13.sp,
                                 fontFamily: 'Karla',
-                                letterSpacing: -.3,
-                                fontWeight: FontWeight.w400,
+                                letterSpacing: -.6,
+                                fontWeight: FontWeight.w500,
                                 height: 1.4,
                               ),
                             ),
@@ -161,14 +166,14 @@ class _CreateDayfiTagViewState extends ConsumerState<CreateDayfiTagView> {
                                   ? AppColors.purple500ForTheme(context)
                                   : AppColors.purple500ForTheme(
                                     context,
-                                  ).withOpacity(.25),
-                          height: 48.000.h,
+                                  ).withOpacity(.15),
+                          height: 48.00000.h,
                           textColor:
                               tagState.isFormValid
                                   ? AppColors.neutral0
-                                  : AppColors.neutral0.withOpacity(.65),
+                                  : AppColors.neutral0.withOpacity(.35),
                           fontFamily: 'Karla',
-                          letterSpacing: -.8,
+                          letterSpacing: -.70,
                           fontSize: 18,
                           width: double.infinity,
                           fullWidth: true,
@@ -236,8 +241,8 @@ class _CreateDayfiTagViewState extends ConsumerState<CreateDayfiTagView> {
                 color: AppColors.error400,
                 fontSize: 13.sp,
                 fontFamily: 'Karla',
-                letterSpacing: -.3,
-                fontWeight: FontWeight.w400,
+                letterSpacing: -.6,
+                fontWeight: FontWeight.w500,
                 height: 1.4,
               ),
             ),

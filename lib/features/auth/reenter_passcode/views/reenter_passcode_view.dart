@@ -57,7 +57,11 @@ class _ReenterPasscodeViewState extends ConsumerState<ReenterPasscodeView> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   AppBar(
-                    scrolledUnderElevation: 0,
+                    scrolledUnderElevation: .5,
+                    foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+                    shadowColor: Theme.of(context).scaffoldBackgroundColor,
+                    surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+
                     backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                     elevation: 0,
                     leading: IconButton(
@@ -72,8 +76,8 @@ class _ReenterPasscodeViewState extends ConsumerState<ReenterPasscodeView> {
                       style: Theme.of(
                         context,
                       ).textTheme.headlineMedium?.copyWith(
-                     fontFamily: 'CabinetGrotesk',
-                        fontSize: 28.00,
+                        fontFamily: 'Boldonse',
+                        fontSize: 18.sp,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -95,9 +99,9 @@ class _ReenterPasscodeViewState extends ConsumerState<ReenterPasscodeView> {
                                   context,
                                 ).textTheme.bodyMedium?.copyWith(
                                   fontSize: 16.sp,
-                                  fontWeight: FontWeight.w400,
+                                  fontWeight: FontWeight.w500,
                                   fontFamily: 'Karla',
-                                  letterSpacing: -.3,
+                                  letterSpacing: -.6,
                                   height: 1.4,
                                 ),
                                 textAlign: TextAlign.center,
@@ -168,7 +172,7 @@ class _ReenterPasscodeViewState extends ConsumerState<ReenterPasscodeView> {
                           fontSize: 13.sp,
                           color: Colors.red.shade800,
                           letterSpacing: -0.4,
-                          fontWeight: FontWeight.w400,
+                          fontWeight: FontWeight.w500,
                           height: 1.4,
                         ),
                         textAlign: TextAlign.center,
@@ -212,15 +216,18 @@ class PasscodeWidget extends StatelessWidget {
             (index) => Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6.0),
               child: Container(
-                width: 30,
-                height: 30,
+                width: 24,
+                height: 24,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color:
                       index < currentPasscode.length
                           ? AppColors.purple500ForTheme(context)
                           : Colors.transparent,
-                  border: Border.all(color: AppColors.purple500ForTheme(context), width: 2),
+                  border: Border.all(
+                    color: AppColors.purple500ForTheme(context),
+                    width: 2,
+                  ),
                 ),
               ),
             ),
@@ -283,9 +290,9 @@ class PasscodeWidget extends StatelessWidget {
                 child: Text(
                   number,
                   style: TextStyle(
-                    fontSize: 25.60.sp,
-                 fontFamily: 'CabinetGrotesk',
-                    fontWeight: FontWeight.w400,
+                    fontSize: 32.sp,
+                    fontFamily: 'FunnelDisplay',
+                    fontWeight: FontWeight.w500,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
@@ -300,19 +307,22 @@ class PasscodeWidget extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     return Builder(
-      builder: (context) => GestureDetector(
-        onTap: () {
-          HapticHelper.lightImpact();
-          onTap();
-        },
-        child: Container(
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.transparent,
+      builder:
+          (context) => GestureDetector(
+            onTap: () {
+              HapticHelper.lightImpact();
+              onTap();
+            },
+            child: Container(
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.transparent,
+              ),
+              child: Center(
+                child: Icon(icon, color: AppColors.purple500ForTheme(context)),
+              ),
+            ),
           ),
-          child: Center(child: Icon(icon, color: AppColors.purple500ForTheme(context))),
-        ),
-      ),
     );
   }
 }

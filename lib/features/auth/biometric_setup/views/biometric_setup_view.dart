@@ -7,6 +7,7 @@ import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/common/widgets/buttons/secondary_button.dart';
 import 'package:dayfi/features/auth/biometric_setup/vm/biometric_setup_viewmodel.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/routes/route.dart';
@@ -27,7 +28,7 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
-            bottom: false,
+        bottom: false,
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 18.w),
           child: Column(
@@ -49,50 +50,53 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
     return Column(
           children: [
             // Biometric icon
-            Container(
-              width: 80.w,
-              height: 80.w,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [AppColors.purple400, AppColors.purple600],
-                ),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.purple500ForTheme(
-                      context,
-                    ).withOpacity(0.3),
-                    blurRadius: 20,
-                    spreadRadius: 2,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              // child: Icon(
-              //   state.hasBothFaceAndFingerprint
-              //       ? Icons.security
-              //       : state.biometricType.toLowerCase().contains('face')
-              //       ? Icons.face
-              //       : Icons.fingerprint,
-              //   color: Colors.white,
-              //   size: 40.w,
-              // ),
-            ),
+            // Container(
+            //   width: 80.w,
+            //   height: 80.w,
+            //   decoration: BoxDecoration(
+            //     gradient: LinearGradient(
+            //       begin: Alignment.topLeft,
+            //       end: Alignment.bottomRight,
+            //       colors: [AppColors.purple400, AppColors.orange500],
+            //     ),
+            //     shape: BoxShape.circle,
+            //     boxShadow: [
+            //       BoxShadow(
+            //         color: AppColors.purple500ForTheme(
+            //           context,
+            //         ).withOpacity(0.15),
+            //         blurRadius: 20,
+            //         spreadRadius: 2,
+            //         offset: const Offset(0, 4),
+            //       ),
+            //     ],
+            //   ),
+            //   child: Padding(
+            //     padding: const EdgeInsets.all(10.0),
+            //     child: SvgPicture.asset(
+            //       state.hasBothFaceAndFingerprint
+            //           ? "assets/icons/svgs/security-safe.svg"
+            //           : state.biometricType.toLowerCase().contains('face')
+            //           ? "assets/icons/svgs/face-id.svg"
+            //           : "assets/icons/svgs/face-id..svg",
+            //       color: Colors.white,
+            //       height: 24.w,
+            //     ),
+            //   ),
+            // ),
 
-            SizedBox(height: 24.h),
+            // SizedBox(height: 24.h),
 
             // Title
             Text(
                   "Enable ${state.biometricDescription}",
                   style: AppTypography.headlineMedium.copyWith(
-                    fontFamily: 'CabinetGrotesk',
+                    fontFamily: 'FunnelDisplay',
                     fontSize: 28.sp,
                     fontWeight: FontWeight.w500,
                     color: Theme.of(context).colorScheme.onSurface,
                     // height: 1.2,
-                    letterSpacing: -.3,
+                    letterSpacing: -.6,
                   ),
                   textAlign: TextAlign.center,
                 )
@@ -125,7 +129,7 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
                   style: AppTypography.bodyLarge.copyWith(
                     fontFamily: 'Karla',
                     fontSize: 16.sp,
-                    fontWeight: FontWeight.w400,
+                    fontWeight: FontWeight.w500,
                     height: 1.4,
                     color:
                         state.isAvailable && state.isEnrolled
@@ -187,10 +191,10 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
                         ? null
                         : () => notifier.enableBiometrics(context),
                 backgroundColor: AppColors.purple500,
-                height: 48.000.h,
+                height: 48.00000.h,
                 textColor: AppColors.neutral0,
                 fontFamily: 'Karla',
-                letterSpacing: -.8,
+                letterSpacing: -.70,
                 fontSize: 18,
                 width: double.infinity,
                 fullWidth: true,
@@ -221,17 +225,27 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
 
         // Skip button
         SecondaryButton(
-              text: state.isBusy ? "Please wait..." : "Do it later",
+              text: state.isBusy ? "" : "Do it later",
               borderRadius: 38,
-              onPressed:
-                  state.isBusy
-                      ? null
-                      : () => _showSkipDialog(context, notifier, state),
+              onPressed: () async {
+                // Close dialog first to avoid navigation conflicts
+                // Navigator.of(dialogContext).pop();
+                // Wait a frame to ensure dialog is fully closed before showing snackbar
+                // await Future.delayed(const Duration(milliseconds: 100));
+                // if (parentContext.mounted) {
+                // await notifier.skipBiometrics(parentContext);
+                // Navigate after snackbar is shown
+                await Future.delayed(const Duration(milliseconds: 200));
+                // if (parentContext.mounted) {
+                appRouter.pushNamed(AppRoute.mainView);
+                // }
+                // }
+              },
               borderColor: Colors.transparent,
-              height: 48.000.h,
+              height: 48.00000.h,
               textColor: AppColors.purple500ForTheme(context),
               fontFamily: 'Karla',
-              letterSpacing: -.8,
+              letterSpacing: -.70,
               fontSize: 18,
               width: double.infinity,
               fullWidth: true,
@@ -270,7 +284,7 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
                   color: AppColors.purple500ForTheme(context),
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w600,
-                  letterSpacing: -.3,
+                  letterSpacing: -.6,
                   height: 1.4,
                 ),
               ),
@@ -295,7 +309,7 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
           (BuildContext dialogContext) => StatefulBuilder(
             builder: (context, setStateSB) {
               return Dialog(
-                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                backgroundColor: Theme.of(context).colorScheme.surface,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(24.r),
                 ),
@@ -304,7 +318,6 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Success icon with enhanced styling
                       Container(
                         width: 80.w,
                         height: 80.w,
@@ -312,24 +325,33 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
                           gradient: LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
-                            colors: [AppColors.purple400, AppColors.purple600],
+                            colors: [AppColors.purple400, AppColors.orange500],
                           ),
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
                               color: AppColors.purple500ForTheme(
                                 context,
-                              ).withOpacity(0.3),
+                              ).withOpacity(0.15),
                               blurRadius: 20,
                               spreadRadius: 2,
                               offset: const Offset(0, 4),
                             ),
                           ],
                         ),
-                        child: Icon(
-                          Icons.security,
-                          color: Colors.white,
-                          size: 40.w,
+                        child: Padding(
+                          padding: const EdgeInsets.all(10.0),
+                          child: SvgPicture.asset(
+                            state.hasBothFaceAndFingerprint
+                                ? "assets/icons/svgs/security-safe.svg"
+                                : state.biometricType.toLowerCase().contains(
+                                  'face',
+                                )
+                                ? "assets/icons/svgs/face-id.svg"
+                                : "assets/icons/svgs/face-id..svg",
+                            color: Colors.white,
+                            height: 24.w,
+                          ),
                         ),
                       ),
 
@@ -339,9 +361,9 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
                       Text(
                         'Do you want to enable ${state.biometricDescription} later?',
                         style: TextStyle(
-                          fontFamily: 'CabinetGrotesk',
-                           fontSize: 20.sp, // height: 1.6,
-                          fontWeight: FontWeight.w400,
+                          fontFamily: 'FunnelDisplay',
+                          fontSize: 24.sp, // height: 1.6,
+                          fontWeight: FontWeight.w500,
                           color: Theme.of(context).colorScheme.onSurface,
                           letterSpacing: -0.5,
                         ),
@@ -361,10 +383,7 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
 
                       // Continue button with auth view styling
                       PrimaryButton(
-                        text:
-                            dialogLoading
-                                ? 'Please wait...'
-                                : 'Yes, I\'ll do it later',
+                        text: dialogLoading ? '' : 'Yes, I\'ll do it later',
                         onPressed:
                             dialogLoading
                                 ? null
@@ -394,7 +413,7 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
                         backgroundColor: AppColors.purple500,
                         textColor: AppColors.neutral0,
                         borderRadius: 38,
-                        height: 48.000.h,
+                        height: 48.00000.h,
                         width: double.infinity,
                         fullWidth: true,
                         fontFamily: 'Karla',
@@ -418,7 +437,7 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
                         textColor: AppColors.purple500ForTheme(context),
                         width: double.infinity,
                         fullWidth: true,
-                        height: 48.000.h,
+                        height: 48.00000.h,
                         borderRadius: 38,
                         fontFamily: 'Karla',
                         fontSize: 18,

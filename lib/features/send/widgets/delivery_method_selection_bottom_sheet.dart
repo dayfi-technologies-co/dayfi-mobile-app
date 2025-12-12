@@ -51,7 +51,7 @@ class DeliveryMethodSelectionBottomSheet extends StatelessWidget {
                     'Select Delivery Method',
                     textAlign: TextAlign.center,
                     style: AppTypography.titleLarge.copyWith(
-                      fontFamily: 'CabinetGrotesk',
+                      fontFamily: 'FunnelDisplay',
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
                       color: Theme.of(context).colorScheme.onSurface,
@@ -126,11 +126,11 @@ class DeliveryMethodSelectionBottomSheet extends StatelessWidget {
                                     : AppColors.neutral0,
                                 borderRadius: BorderRadius.circular(12.r),
                                 border: isSelected 
-                                    ? Border.all(color: AppColors.primary500, width: 1.5)
+                                    ? Border.all(color: Theme.of(context).colorScheme.primary, width: 1.5)
                                     : Border.all(color: AppColors.neutral200),
                                 boxShadow: isSelected ? [
                                   BoxShadow(
-                                    color: AppColors.primary500.withOpacity(0.1),
+                                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                                     blurRadius: 8,
                                     offset: const Offset(0, 2),
                                   ),
@@ -154,7 +154,7 @@ class DeliveryMethodSelectionBottomSheet extends StatelessWidget {
                                           color: isSelected 
                                               ? AppColors.primary100 
                                               : AppColors.neutral100,
-                                          borderRadius: BorderRadius.circular(8.r),
+                                          borderRadius: BorderRadius.circular(12.r),
                                         ),
                                         child: Icon(
                                           _getChannelTypeIcon(method.channelType),
@@ -255,6 +255,7 @@ class DeliveryMethodSelectionBottomSheet extends StatelessWidget {
                                           'Min Amount',
                                           '${method.currency} ${method.min?.toStringAsFixed(2) ?? '0.00'}',
                                           isSelected,
+                                          context: context,
                                         ),
                                       ),
                                       SizedBox(width: 16.w),
@@ -263,6 +264,7 @@ class DeliveryMethodSelectionBottomSheet extends StatelessWidget {
                                           'Max Amount',
                                           '${method.currency} ${method.max?.toStringAsFixed(2) ?? '∞'}',
                                           isSelected,
+                                          context: context,
                                         ),
                                       ),
                                     ],
@@ -270,10 +272,11 @@ class DeliveryMethodSelectionBottomSheet extends StatelessWidget {
                                   
                                   if (method.feeLocal != null && method.feeLocal! > 0) ...[
                                     SizedBox(height: 8.h),
-                                    _buildDetailItem(
+                                    _buildDetailItem( 
                                       'Fee',
                                       '${method.currency} ${method.feeLocal!.toStringAsFixed(2)}',
                                       isSelected,
+                                      context: context,
                                     ),
                                   ],
                                   
@@ -283,6 +286,7 @@ class DeliveryMethodSelectionBottomSheet extends StatelessWidget {
                                       'Settlement Time',
                                       '${method.estimatedSettlementTime} minutes',
                                       isSelected,
+                                      context: context,
                                     ),
                                   ],
                                 ],
@@ -299,7 +303,7 @@ class DeliveryMethodSelectionBottomSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailItem(String label, String value, bool isSelected) {
+  Widget _buildDetailItem(String label, String value, bool isSelected, {required BuildContext context}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -322,7 +326,7 @@ class DeliveryMethodSelectionBottomSheet extends StatelessWidget {
             fontSize: 12.sp,
             color: isSelected 
                 ? AppColors.primary700 
-                : AppColors.neutral700,
+                : Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(.85),
             fontWeight: FontWeight.w600,
           ),
         ),

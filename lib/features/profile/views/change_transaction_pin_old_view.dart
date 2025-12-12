@@ -88,7 +88,11 @@ class _ChangeTransactionPinOldViewState
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         resizeToAvoidBottomInset: false,
         appBar: AppBar(
-          scrolledUnderElevation: 0,
+             scrolledUnderElevation: .5,
+              foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+              shadowColor: Theme.of(context).scaffoldBackgroundColor,
+              surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
           leading: IconButton(
@@ -102,17 +106,18 @@ class _ChangeTransactionPinOldViewState
             },
             icon: Icon(
               Icons.arrow_back_ios,
+            size: 20.sp,
               color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           title: Text(
             "Enter Old Transaction PIN",
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-               fontFamily: 'CabinetGrotesk',
-                   fontSize: 20.sp, // height: 1.6,
-                  fontWeight: FontWeight.w600,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
+              fontFamily: 'FunnelDisplay',
+              fontSize: 24.sp, // height: 1.6,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
           centerTitle: true,
         ),
@@ -139,18 +144,20 @@ class _ChangeTransactionPinOldViewState
                             style: Theme.of(
                               context,
                             ).textTheme.bodyMedium?.copyWith(
-                                  fontSize: 16.sp,
-                                  fontWeight: FontWeight.w400,
-                                  fontFamily: 'Karla',
-                                  letterSpacing: -.3,
-                                  height: 1.4,
-                                ),
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Karla',
+                              letterSpacing: -.6,
+                              height: 1.4,
+                            ),
                             textAlign: TextAlign.center,
                           ),
                         ),
                       ],
                     ),
                   ),
+                  SizedBox(height: MediaQuery.of(context).size.width * 0.1),
+
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 18.w),
                     child: PasscodeWidget(
@@ -161,41 +168,44 @@ class _ChangeTransactionPinOldViewState
                       },
                     ),
                   ),
-                  SizedBox(height: MediaQuery.of(context).size.width * 0.15),
+                  SizedBox(height: MediaQuery.of(context).size.width * 0.1),
                   // Continue button - only show when PIN is complete
                   if (_localPin.length == 4)
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 18.w),
-                      child: PrimaryButton(
-                        text: 'Set New PIN',
-                        onPressed: _localPin.length == 4 &&
-                                _errorMessage.isEmpty &&
-                                !_isLoading
-                            ? _handleContinue
-                            : null,
-                        isLoading: _isLoading,
-                        showLoadingIndicator: true,
-                        height: 48.000.h,
-                        backgroundColor: _localPin.length == 4 &&
-                                _errorMessage.isEmpty &&
-                                !_isLoading
-                            ? AppColors.purple500
-                            : AppColors.purple500ForTheme(
-                            context,
-                          ).withOpacity(.25),
-                        textColor: _localPin.length == 4 &&
-                                _errorMessage.isEmpty &&
-                                !_isLoading
-                            ? AppColors.neutral0
-                            : AppColors.neutral0.withOpacity(0.5),
-                        fontFamily: 'Karla',
-                        letterSpacing: -.8,
-                        fontSize: 18,
-                        width: double.infinity,
-                        fullWidth: true,
-                        borderRadius: 40.r,
-                      ),
-                    )
+                          padding: EdgeInsets.symmetric(horizontal: 18.w),
+                          child: PrimaryButton(
+                            text: 'Set New PIN',
+                            onPressed:
+                                _localPin.length == 4 &&
+                                        _errorMessage.isEmpty &&
+                                        !_isLoading
+                                    ? _handleContinue
+                                    : null,
+                            isLoading: _isLoading,
+                            showLoadingIndicator: true,
+                            height: 48.00000.h,
+                            backgroundColor:
+                                _localPin.length == 4 &&
+                                        _errorMessage.isEmpty &&
+                                        !_isLoading
+                                    ? AppColors.purple500
+                                    : AppColors.purple500ForTheme(
+                                      context,
+                                    ).withOpacity(.15),
+                            textColor:
+                                _localPin.length == 4 &&
+                                        _errorMessage.isEmpty &&
+                                        !_isLoading
+                                    ? AppColors.neutral0
+                                    : AppColors.neutral0.withOpacity(0.5),
+                            fontFamily: 'Karla',
+                            letterSpacing: -.70,
+                            fontSize: 18,
+                            width: double.infinity,
+                            fullWidth: true,
+                            borderRadius: 40.r,
+                          ),
+                        )
                         .animate()
                         .fadeIn(duration: 200.ms)
                         .slideY(begin: 0.2, end: 0, duration: 200.ms),
@@ -211,7 +221,7 @@ class _ChangeTransactionPinOldViewState
                         fontSize: 13.sp,
                         color: Colors.red.shade800,
                         letterSpacing: -0.4,
-                        fontWeight: FontWeight.w400,
+                        fontWeight: FontWeight.w500,
                         height: 1.4,
                       ),
                       textAlign: TextAlign.center,
@@ -255,13 +265,14 @@ class PasscodeWidget extends StatelessWidget {
               child: Text(
                 index < currentPasscode.length ? '*' : '*',
                 style: TextStyle(
-                  fontSize: 70.sp,
+                  fontSize: 88.sp,
                   letterSpacing: -10,
-               fontFamily: 'CabinetGrotesk',
+                  fontFamily: 'FunnelDisplay',
                   fontWeight: FontWeight.w700,
-                  color: index < currentPasscode.length
-                      ? AppColors.purple500ForTheme(context)
-                      : AppColors.neutral400,
+                  color:
+                      index < currentPasscode.length
+                          ? AppColors.purple500ForTheme(context)
+                          : AppColors.neutral400,
                 ),
               ),
             ),
@@ -283,6 +294,7 @@ class PasscodeWidget extends StatelessWidget {
             _buildNumberButton('0'),
             _buildIconButton(
               icon: Icons.arrow_back_ios,
+          
               onTap: () {
                 if (currentPasscode.isNotEmpty) {
                   onPasscodeChanged(
@@ -299,34 +311,35 @@ class PasscodeWidget extends StatelessWidget {
 
   Widget _buildNumberButton(String number) {
     return Builder(
-      builder: (context) => InkWell(
-        splashColor: Colors.transparent,
-        highlightColor: Colors.transparent,
-        borderRadius: BorderRadius.circular(100),
-        onTap: () {
-          HapticHelper.lightImpact();
-          if (currentPasscode.length < passcodeLength) {
-            onPasscodeChanged(currentPasscode + number);
-          }
-        },
-        child: Container(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Theme.of(context).colorScheme.surface,
-          ),
-          child: Center(
-            child: Text(
-              number,
-              style: TextStyle(
-                fontSize: 25.60.sp,
-             fontFamily: 'CabinetGrotesk',
-                fontWeight: FontWeight.w400,
-                color: Theme.of(context).colorScheme.onSurface,
+      builder:
+          (context) => InkWell(
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            borderRadius: BorderRadius.circular(100),
+            onTap: () {
+              HapticHelper.lightImpact();
+              if (currentPasscode.length < passcodeLength) {
+                onPasscodeChanged(currentPasscode + number);
+              }
+            },
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Theme.of(context).colorScheme.surface,
+              ),
+              child: Center(
+                child: Text(
+                  number,
+                  style: TextStyle(
+                    fontSize: 32.sp,
+                    fontFamily: 'FunnelDisplay',
+                    fontWeight: FontWeight.w500,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
               ),
             ),
           ),
-        ),
-      ),
     );
   }
 
@@ -335,21 +348,22 @@ class PasscodeWidget extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     return Builder(
-      builder: (context) => GestureDetector(
-        onTap: () {
-          HapticHelper.lightImpact();
-          onTap();
-        },
-        child: Container(
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.transparent,
+      builder:
+          (context) => GestureDetector(
+            onTap: () {
+              HapticHelper.lightImpact();
+              onTap();
+            },
+            child: Container(
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.transparent,
+              ),
+              child: Center(
+                child: Icon(icon, color: AppColors.purple500ForTheme(context), size: 20.sp,),
+              ),
+            ),
           ),
-          child: Center(
-              child: Icon(icon, color: AppColors.purple500ForTheme(context))),
-        ),
-      ),
     );
   }
 }
-

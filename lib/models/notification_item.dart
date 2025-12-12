@@ -69,6 +69,49 @@ class NotificationItem {
       metadata: json['metadata'],
     );
   }
+
+  factory NotificationItem.fromApiJson(Map<String, dynamic> json) {
+    // Extract data from the API response structure
+    final payload = json['payload'] as Map<String, dynamic>?;
+    final notification = payload?['notification'] as Map<String, dynamic>?;
+    final data = payload?['data'] as Map<String, dynamic>?;
+
+    // Parse timestamp from created_at
+    DateTime timestamp;
+    if (json['created_at'] is Map<String, dynamic>) {
+      final createdAt = json['created_at'] as Map<String, dynamic>;
+      final seconds = createdAt['_seconds'] as int?;
+      if (seconds != null) {
+        timestamp = DateTime.fromMillisecondsSinceEpoch(seconds * 1000);
+      } else {
+        timestamp = DateTime.now();
+      }
+    } else {
+      timestamp = DateTime.now();
+    }
+
+    // Determine notification type based on data.type
+    NotificationType type;
+    final apiType = data?['type'] as String?;
+    switch (apiType) {
+      case 'P2P_RECEIVE':
+      case 'P2P_SEND':
+        type = NotificationType.transaction;
+        break;
+      default:
+        type = NotificationType.general;
+    }
+
+    return NotificationItem(
+      id: json['id'] ?? '',
+      title: notification?['title'] ?? 'Notification',
+      message: notification?['body'] ?? '',
+      timestamp: timestamp,
+      isRead: json['read'] ?? false,
+      type: type,
+      metadata: data,
+    );
+  }
 }
 
 enum NotificationType {

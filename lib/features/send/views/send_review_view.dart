@@ -114,7 +114,7 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
   void _ensureNetworksLoaded() {
     final sendState = ref.read(sendViewModelProvider);
     if (sendState.networks.isEmpty) {
-      print('🔄 Networks not loaded, initializing send view model...');
+      // print('🔄 Networks not loaded, initializing send view model...');
       ref.read(sendViewModelProvider.notifier).initialize();
     }
   }
@@ -122,15 +122,57 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
   void _updateViewModelWithSelectedData() {
     final sendState = ref.read(sendViewModelProvider.notifier);
 
+    AppLogger.info(
+      '🔄 Updating SendViewModel with selectedData from send_review_view',
+    );
+    AppLogger.info(
+      '   Receive Country: ${widget.selectedData['receiveCountry']}',
+    );
+    AppLogger.info(
+      '   Receive Currency: ${widget.selectedData['receiveCurrency']}',
+    );
+    AppLogger.info(
+      '   Recipient Delivery Method: ${widget.selectedData['recipientDeliveryMethod']}',
+    );
+
     // Update send amount if available
     if (widget.selectedData['sendAmount'] != null) {
       sendState.updateSendAmount(widget.selectedData['sendAmount'].toString());
     }
 
-    // Update other data if available
-    if (widget.selectedData['sendCurrency'] != null) {
-      // You might need to add a method to update currency in the viewModel
+    // Update receive country and currency
+    if (widget.selectedData['receiveCountry'] != null &&
+        widget.selectedData['receiveCurrency'] != null) {
+      sendState.updateReceiveCountry(
+        widget.selectedData['receiveCountry'].toString(),
+        widget.selectedData['receiveCurrency'].toString(),
+      );
     }
+
+    // Update send country and currency
+    if (widget.selectedData['sendCountry'] != null &&
+        widget.selectedData['sendCurrency'] != null) {
+      sendState.updateSendCountry(
+        widget.selectedData['sendCountry'].toString(),
+        widget.selectedData['sendCurrency'].toString(),
+      );
+    }
+
+    // Update delivery method - CRITICAL for channel matching
+    if (widget.selectedData['recipientDeliveryMethod'] != null) {
+      sendState.updateDeliveryMethod(
+        widget.selectedData['recipientDeliveryMethod'].toString(),
+      );
+    }
+
+    // Update sender delivery method if available
+    if (widget.selectedData['senderDeliveryMethod'] != null) {
+      sendState.updateSenderDeliveryMethod(
+        widget.selectedData['senderDeliveryMethod'].toString(),
+      );
+    }
+
+    AppLogger.info('✅ SendViewModel updated successfully');
   }
 
   String _formatNumber(double amount) {
@@ -193,15 +235,15 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
     final sendState = ref.watch(sendViewModelProvider);
 
     // Debug logging
-    print('🔍 Looking for network ID: $networkId');
-    print('📊 Available networks count: ${sendState.networks.length}');
+    // print('🔍 Looking for network ID: $networkId');
+    // print('📊 Available networks count: ${sendState.networks.length}');
     print(
       '📋 Available network IDs: ${sendState.networks.map((n) => n.id).join(", ")}',
     );
 
     // If networks are empty, try to trigger a refresh
     if (sendState.networks.isEmpty) {
-      print('⚠️ No networks loaded, triggering refresh...');
+      // print('⚠️ No networks loaded, triggering refresh...');
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ref.read(sendViewModelProvider.notifier).initialize();
       });
@@ -214,11 +256,11 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
     );
 
     if (network.id == null) {
-      print('❌ Network not found for ID: $networkId');
+      // print('❌ Network not found for ID: $networkId');
       return 'Unknown Network';
     }
 
-    print('✅ Found network: ${network.name} for ID: $networkId');
+    // print('✅ Found network: ${network.name} for ID: $networkId');
     return network.name ?? 'Unknown Network';
   }
 
@@ -292,22 +334,53 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
-          scrolledUnderElevation: 0,
+          scrolledUnderElevation: .5,
+          foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+          shadowColor: Theme.of(context).scaffoldBackgroundColor,
+          surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
-          leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios,
-              color: Theme.of(context).colorScheme.onSurface,
-              // size: 20.sp,
+          leadingWidth: 72,
+          leading: InkWell(
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            onTap:
+                () => {
+                  Navigator.pop(context),
+                  FocusScope.of(context).unfocus(),
+                },
+            child: Stack(
+              alignment: AlignmentGeometry.center,
+              children: [
+                SvgPicture.asset(
+                  "assets/icons/svgs/notificationn.svg",
+                  height: 40.sp,
+                  color: Theme.of(context).colorScheme.surface,
+                ),
+                SizedBox(
+                  height: 40.sp,
+                  width: 40.sp,
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: Icon(
+                        Icons.arrow_back_ios,
+                        size: 20.sp,
+                        color: Theme.of(context).textTheme.bodyLarge!.color,
+                        // size: 20.sp,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            onPressed: () => Navigator.pop(context),
           ),
+          automaticallyImplyLeading: false,
           title: Text(
-            'Review',
+            'Review Transfer',
             style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-           fontFamily: 'CabinetGrotesk',
-               fontSize: 20.sp, // height: 1.6,
+              fontFamily: 'FunnelDisplay',
+              fontSize: 24.sp, // height: 1.6,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface,
             ),
@@ -315,25 +388,39 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
           centerTitle: true,
         ),
         body: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 12.h),
-
+          padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 18.w),
+                child: Text(
+                  "Confirm the details of your transfer before sending",
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Karla',
+                    letterSpacing: -.6,
+                    height: 1.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              SizedBox(height: 32.h),
+
               // Reason Selection
               _buildReasonSelection(),
 
-              SizedBox(height: 32.h),
+              SizedBox(height: 24.h),
 
               // Transfer Details
               _buildTransferDetails(sendState),
 
-              SizedBox(height: 32.h),
+              // SizedBox(height: 32.h),
 
-              // Description
-              _buildDescriptionSection(),
-
-              SizedBox(height: 56.h),
+              // // Description
+              // _buildDescriptionSection(),
+              SizedBox(height: 40.h),
 
               // Continue Button
               PrimaryButton(
@@ -341,19 +428,17 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
                 onPressed:
                     _selectedReason.isNotEmpty ? _proceedToPayment : null,
                 isLoading: _isLoading,
-                height: 48.000.h,
+                height: 48.00000.h,
                 backgroundColor:
                     _selectedReason.isNotEmpty
                         ? AppColors.purple500
-                        : Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withOpacity(0.12),
+                        : AppColors.purple500.withOpacity(0.12),
                 textColor:
                     _selectedReason.isNotEmpty
                         ? AppColors.neutral0
-                        : AppColors.neutral0.withOpacity(.65),
+                        : AppColors.neutral0.withOpacity(.35),
                 fontFamily: 'Karla',
-                letterSpacing: -.8,
+                letterSpacing: -.70,
                 fontSize: 18,
                 width: double.infinity,
                 fullWidth: true,
@@ -424,7 +509,9 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
           _buildDetailRow('Exchange Rate', sendState.exchangeRate),
           _buildDetailRow(
             'Transfer Fee',
-            '₦${_formatNumber(double.tryParse(sendState.fee.toString()) ?? 0)}',
+            sendState.receiverCountry.toUpperCase() == 'NG'
+                ? '₦${_formatNumber(double.tryParse(sendState.fee.toString()) ?? 0)}'
+                : '${_formatNumber(double.tryParse(sendState.fee.toString()) ?? 0)}',
           ),
 
           // _buildDetailRow('Transfer Taxes', '₦0.00'),
@@ -443,8 +530,29 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
           _buildDetailRow('Beneficiary ', widget.recipientData['name']),
           SizedBox(height: 6.h),
 
+          // Bank Name for Manual Input
+          if (widget.recipientData['bankName'] != null && widget.recipientData['bankName'].toString().isNotEmpty)
+            _buildDetailRow('Bank Name', widget.recipientData['bankName']),
+
+          // Account Name for Manual Input
+          if (widget.recipientData['accountName'] != null && widget.recipientData['accountName'].toString().isNotEmpty)
+            _buildDetailRow('Account Name', widget.recipientData['accountName']),
+
+          // Account Number - show for both bank and mobile money
           _buildDetailRow(
-            'Bank Network',
+            widget.selectedData['recipientDeliveryMethod'] == 'bank' || widget.selectedData['recipientDeliveryMethod'] == 'eft' ||
+                    widget.selectedData['recipientDeliveryMethod'] == 'p2p'
+                ? 'Account Number'
+                : 'Mobile Money Number',
+            widget.recipientData['accountNumber'] ?? 'N/A',
+          ),
+
+          // Network/Provider - change title based on delivery method
+          _buildDetailRow(
+            widget.selectedData['recipientDeliveryMethod'] == 'bank' || widget.selectedData['recipientDeliveryMethod'] == 'eft' ||
+                    widget.selectedData['recipientDeliveryMethod'] == 'p2p'
+                ? 'Bank'
+                : 'Mobile Money Provider',
             _getNetworkName(widget.recipientData['networkId']),
           ),
           _buildDetailRow(
@@ -454,10 +562,10 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
             ).toUpperCase(),
           ),
           _buildDetailRow(
-            'Transfer Time', 
+            'Transfer Time',
             _getTransferTime(
               widget.selectedData['recipientDeliveryMethod']?.toString(),
-            ), 
+            ),
             bottomPadding: 0,
           ),
         ],
@@ -467,7 +575,7 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
 
   String _getTransferTime(String? deliveryMethod) {
     if (deliveryMethod == null || deliveryMethod.isEmpty) {
-      return 'Immediate';
+      return 'Within 5 minutes';
     }
 
     final methodLower = deliveryMethod.toLowerCase();
@@ -480,11 +588,11 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
         methodLower == 'peer-to-peer' ||
         methodLower == 'eft' ||
         methodLower == 'electronic_funds_transfer') {
-      return 'Immediate';
+      return 'Within 5 minutes';
     }
 
     // Default for other methods
-    return 'Within 24 hours';
+    return 'Within 5 minutes';
   }
 
   Widget _getDetailIcon(String label) {
@@ -506,7 +614,12 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
         return SvgPicture.asset('assets/icons/svgs/rate.svg', height: 24);
       case 'network':
       case 'bank network':
-        return SvgPicture.asset('assets/icons/svgs/bank.svg', height: 24);
+      case 'bank':
+      case 'mobile money provider':
+        return SvgPicture.asset('assets/icons/svgs/bank.svg', height: 0);
+      case 'account number':
+      case 'mobile money number':
+        return SvgPicture.asset('assets/icons/svgs/user1.svg', height: 0);
       case 'beneficiary':
         return SvgPicture.asset('assets/icons/svgs/user1.svg', height: 24);
       case 'delivery method':
@@ -541,7 +654,7 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
                 label,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   fontFamily: 'Karla',
-                  letterSpacing: -.3,
+                  letterSpacing: -.6,
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w500,
                   color: Theme.of(
@@ -557,7 +670,8 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
               value,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 fontFamily: 'Karla',
-                fontSize: 13.sp,
+                fontSize: 14.sp,
+                 letterSpacing: -.6,
                 fontWeight: FontWeight.w600,
                 color: Theme.of(context).colorScheme.onSurface,
               ),
@@ -596,6 +710,7 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
 
   void _showReasonBottomSheet() {
     showModalBottomSheet(
+      barrierColor: Colors.black.withOpacity(0.85),
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -614,25 +729,49 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      SizedBox(height: 24.h, width: 22.w),
+                      SizedBox(height: 40.h, width: 40.w),
                       Text(
                         'Transfer reason',
                         style: AppTypography.titleLarge.copyWith(
-                          fontFamily: 'Karla',
-                          fontSize: 16.sp,
+                          fontFamily: 'FunnelDisplay',
+                          fontSize: 20.sp,
+                          // height: 1.6,
                           fontWeight: FontWeight.w600,
                           color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.pop(context);
-                        },
-                        child: Image.asset(
-                          "assets/icons/pngs/cancelicon.png",
-                          height: 24.h,
-                          width: 24.w,
-                          color: Theme.of(context).colorScheme.onSurface,
+                      InkWell(
+                        splashColor: Colors.transparent,
+                        highlightColor: Colors.transparent,
+                        onTap:
+                            () => {
+                              Navigator.pop(context),
+                              FocusScope.of(context).unfocus(),
+                            },
+                        child: Stack(
+                          alignment: AlignmentGeometry.center,
+                          children: [
+                            SvgPicture.asset(
+                              "assets/icons/svgs/notificationn.svg",
+                              height: 40.sp,
+                              color: Theme.of(context).colorScheme.surface,
+                            ),
+                            SizedBox(
+                              height: 40.sp,
+                              width: 40.sp,
+                              child: Center(
+                                child: Image.asset(
+                                  "assets/icons/pngs/cancelicon.png",
+                                  height: 20.h,
+                                  width: 20.w,
+                                  color:
+                                      Theme.of(
+                                        context,
+                                      ).textTheme.bodyLarge!.color,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -695,11 +834,10 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
 
   void _proceedToPayment() {
     if (_selectedReason.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Please select a reason for transfer'),
-          backgroundColor: AppColors.error500,
-        ),
+      TopSnackbar.show(
+        context,
+        message: 'Please select a reason for transfer',
+        isError: true,
       );
       return;
     }
@@ -774,6 +912,7 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
     _isProcessingPinNotifier.value = false;
 
     showModalBottomSheet(
+      barrierColor: Colors.black.withOpacity(0.85),
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -900,6 +1039,14 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
 
   /// Find the selected channel based on send state
   dynamic _findSelectedChannel(SendState sendState) {
+    AppLogger.info('🔍 Finding selected channel...');
+    AppLogger.info('   Receiver Country: ${sendState.receiverCountry}');
+    AppLogger.info('   Receiver Currency: ${sendState.receiverCurrency}');
+    AppLogger.info(
+      '   Selected Delivery Method: ${sendState.selectedDeliveryMethod}',
+    );
+    AppLogger.info('   Total Channels Available: ${sendState.channels.length}');
+
     final recipientChannels =
         sendState.channels
             .where(
@@ -910,6 +1057,10 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
                   channel.channelType == sendState.selectedDeliveryMethod,
             )
             .toList();
+
+    AppLogger.info(
+      '   Matching Recipient Channels: ${recipientChannels.length}',
+    );
 
     final validChannels =
         recipientChannels
@@ -923,9 +1074,22 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
             )
             .toList();
 
-    return validChannels.isNotEmpty
-        ? validChannels.first
-        : (recipientChannels.isNotEmpty ? recipientChannels.first : null);
+    AppLogger.info(
+      '   Valid Channels (with correct rampType): ${validChannels.length}',
+    );
+
+    final selectedChannel =
+        validChannels.isNotEmpty
+            ? validChannels.first
+            : (recipientChannels.isNotEmpty ? recipientChannels.first : null);
+
+    if (selectedChannel != null) {
+      AppLogger.info('✅ Selected Channel: ${selectedChannel.id}');
+    } else {
+      AppLogger.error('❌ No valid channel found!');
+    }
+
+    return selectedChannel;
   }
 
   /// Build payment request
@@ -1041,10 +1205,14 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
       "country": country,
       "reason": reason.toString().toLowerCase(),
       "pin": pin,
+      "fees": sendState.fee,
       "accountNumber": accountNumber,
       "networkId": networkId,
       "accountName": accountName.toString().replaceAll(',', ""),
       "metadata": metadata,
+      // Add bankName and accountName for Manual Input
+      if (widget.recipientData['bankName'] != null) "accountBank": widget.recipientData['bankName'],
+      if (widget.recipientData['accountName'] != null) "accountName": widget.recipientData['accountName'],
       // "recipient": recipient,
       // "source": source,
     };
@@ -1086,7 +1254,7 @@ class _TransactionPinBottomSheetState
     final pinNotifier = ref.read(transactionPinProvider.notifier);
 
     return Container(
-      height: MediaQuery.of(context).size.height * 0.78,
+      height: MediaQuery.of(context).size.height * 0.8,
 
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
@@ -1100,26 +1268,46 @@ class _TransactionPinBottomSheetState
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                SizedBox(height: 24.h, width: 22.w),
+                SizedBox(height: 40.h, width: 40.w),
                 Text(
                   'Enter Transaction PIN',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontFamily: 'Karla',
-                    fontSize: 16.sp,
+                    fontFamily: 'FunnelDisplay',
+                    fontSize: 20.sp,
+                    // height: 1.6,
                     fontWeight: FontWeight.w600,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
-                GestureDetector(
+
+                InkWell(
+                  splashColor: Colors.transparent,
+                  highlightColor: Colors.transparent,
                   onTap: () {
                     pinNotifier.resetForm();
                     Navigator.pop(context);
                   },
-                  child: Image.asset(
-                    "assets/icons/pngs/cancelicon.png",
-                    height: 24.h,
-                    width: 24.w,
-                    color: Theme.of(context).colorScheme.onSurface,
+                  child: Stack(
+                    alignment: AlignmentGeometry.center,
+                    children: [
+                      SvgPicture.asset(
+                        "assets/icons/svgs/notificationn.svg",
+                        height: 40.sp,
+                        color: Theme.of(context).colorScheme.surface,
+                      ),
+                      SizedBox(
+                        height: 40.sp,
+                        width: 40.sp,
+                        child: Center(
+                          child: Image.asset(
+                            "assets/icons/pngs/cancelicon.png",
+                            height: 20.h,
+                            width: 20.w,
+                            color: Theme.of(context).textTheme.bodyLarge!.color,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -1139,9 +1327,9 @@ class _TransactionPinBottomSheetState
                     child: Text(
                       index < pinState.pin.length ? '*' : '*',
                       style: TextStyle(
-                        fontSize: 70.sp,
+                        fontSize: 88.sp,
                         letterSpacing: -25,
-                     fontFamily: 'CabinetGrotesk',
+                        fontFamily: 'FunnelDisplay',
                         fontWeight: FontWeight.w700,
                         color:
                             index < pinState.pin.length
@@ -1213,6 +1401,7 @@ class _TransactionPinBottomSheetState
                     }),
                     _buildIconButton(
                       icon: Icons.arrow_back_ios,
+
                       onTap: () {
                         if (pinState.pin.isNotEmpty && !widget.isProcessing) {
                           pinNotifier.updatePin(
@@ -1263,9 +1452,9 @@ class _TransactionPinBottomSheetState
                 child: Text(
                   number,
                   style: TextStyle(
-                    fontSize: 25.60.sp,
-                 fontFamily: 'CabinetGrotesk',
-                    fontWeight: FontWeight.w400,
+                    fontSize: 32.sp,
+                    fontFamily: 'FunnelDisplay',
+                    fontWeight: FontWeight.w500,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
@@ -1293,7 +1482,11 @@ class _TransactionPinBottomSheetState
           color: Colors.transparent,
         ),
         child: Center(
-          child: Icon(icon, color: AppColors.purple500ForTheme(context)),
+          child: Icon(
+            icon,
+            color: AppColors.purple500ForTheme(context),
+            size: 20.sp,
+          ),
         ),
       ),
     );

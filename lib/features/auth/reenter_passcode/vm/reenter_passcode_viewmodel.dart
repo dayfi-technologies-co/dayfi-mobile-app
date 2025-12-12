@@ -12,6 +12,7 @@ import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/common/constants/storage_keys.dart';
 import 'package:dayfi/models/user_model.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:local_auth/local_auth.dart';
 
 class ReenterPasscodeState {
   final String passcode;
@@ -40,6 +41,19 @@ class ReenterPasscodeState {
 }
 
 class ReenterPasscodeNotifier extends StateNotifier<ReenterPasscodeState> {
+  /// Check if device supports biometrics
+  Future<bool> _deviceSupportsBiometrics() async {
+    try {
+      final localAuth = LocalAuthentication();
+      final canCheck = await localAuth.canCheckBiometrics;
+      final available = await localAuth.getAvailableBiometrics();
+      return canCheck && available.isNotEmpty;
+    } catch (e) {
+      AppLogger.warning('Biometric check failed: $e');
+      return false;
+    }
+  }
+
   final SecureStorageService _secureStorage;
   final bool isFromSignup;
 
@@ -119,7 +133,7 @@ class ReenterPasscodeNotifier extends StateNotifier<ReenterPasscodeState> {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return Dialog(
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          backgroundColor: Theme.of(context).colorScheme.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24.r),
           ),
@@ -141,11 +155,11 @@ class ReenterPasscodeNotifier extends StateNotifier<ReenterPasscodeState> {
                 Text(
                   'You have successfully created your passcode to access the app',
                   style: TextStyle(
-                    fontFamily: 'CabinetGrotesk',
+                    fontFamily: 'Karla',
                     fontSize: 20.sp,
-                    fontWeight: FontWeight.w400,
+                    fontWeight: FontWeight.w500,
                     color: Theme.of(context).colorScheme.onSurface,
-                    letterSpacing: -0.5,
+                    letterSpacing: -0.8,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -157,18 +171,22 @@ class ReenterPasscodeNotifier extends StateNotifier<ReenterPasscodeState> {
                   text: 'Continue',
                   onPressed: () async {
                     Navigator.of(context).pop();
-                    // Check if user's phone number is empty (regardless of flow)
                     final user = await _getCurrentUser();
+                    // Check if device supports biometrics
+                    final canCheckBiometrics =
+                        await _deviceSupportsBiometrics();
                     if (isFromSignup ||
                         user?.phoneNumber == null ||
                         user?.phoneNumber?.isEmpty == true) {
-                      // Either from signup flow OR phone number is empty, navigate to success signup view
                       AppLogger.info(
                         'Navigating to success signup view - isFromSignup: $isFromSignup, phoneNumber: ${user?.phoneNumber}',
                       );
-                      appRouter.pushNamed(AppRoute.successSignupView);
+                      if (canCheckBiometrics) {
+                        appRouter.pushMainAndClearStack();
+                      } else {
+                        appRouter.pushMainAndClearStack();
+                      }
                     } else {
-                      // Check if ID verification is complete
                       final hasValidId =
                           user?.idType != null &&
                           user?.idType?.isNotEmpty == true &&
@@ -176,32 +194,38 @@ class ReenterPasscodeNotifier extends StateNotifier<ReenterPasscodeState> {
                           user?.idNumber?.isNotEmpty == true;
 
                       if (!hasValidId) {
-                        // ID verification not completed, navigate to upload documents
                         AppLogger.info(
                           'ID verification not complete - navigating to upload documents. idType: ${user?.idType}, idNumber: ${user?.idNumber}',
                         );
-                        appRouter.pushNamed(AppRoute.uploadDocumentsView);
+                        if (canCheckBiometrics) {
+                          appRouter.pushMainAndClearStack();
+                        } else {
+                          appRouter.pushMainAndClearStack();
+                        }
                       } else {
-                      // Check if biometric setup is needed based on user profile flag
-                      final refreshedUser = await _getCurrentUser();
-                      if (refreshedUser?.isBiometricsSetup == true) {
-                        appRouter.pushMainAndClearStack();
-                      } else {
-                        appRouter.pushNamed(AppRoute.biometricSetupView);
-                      }
+                        final refreshedUser = await _getCurrentUser();
+                        if (refreshedUser?.isBiometricsSetup == true) {
+                          appRouter.pushMainAndClearStack();
+                        } else {
+                          if (canCheckBiometrics) {
+                            appRouter.pushMainAndClearStack();
+                          } else {
+                            appRouter.pushMainAndClearStack();
+                          }
+                        }
                       }
                     }
                   },
                   backgroundColor: AppColors.purple500,
                   textColor: AppColors.neutral0,
                   borderRadius: 38,
-                  height: 48.000.h,
+                  height: 48.00000.h,
                   width: double.infinity,
                   fullWidth: true,
                   fontFamily: 'Karla',
                   fontSize: 18,
-                  fontWeight: FontWeight.w400,
-                  letterSpacing: -.8,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: -.70,
                 ),
               ],
             ),

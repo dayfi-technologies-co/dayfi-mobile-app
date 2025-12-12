@@ -98,18 +98,8 @@ class _SplashViewState extends ConsumerState<SplashView> {
         children: [
           // Main content centered
           Center(
-            child: Text(
-              "Dayfi App",
-              style: TextStyle(
-                fontFamily: 'Boldonse',
-                fontSize: 28.sp,
-                fontWeight: FontWeight.w500,
-                color: AppColors.neutral900,
-                // height: 1.3,
-              ),
-            ),
+            child: Image.asset('assets/images/logo_splash.png', width: 150.w),
           ),
-
           // Powered by section at bottom
           // Positioned(
           //   bottom: 60.h,
@@ -122,7 +112,7 @@ class _SplashViewState extends ConsumerState<SplashView> {
           //         style: Theme.of(context).textTheme.bodySmall?.copyWith(
           //           color: AppColors.neutral900.withOpacity(.75),
           //           fontSize: 14.sp,
-          //           fontWeight: FontWeight.w400,
+          //           fontWeight: FontWeight.w500,
           //           fontFamily: 'Karla',
           //         ),
           //       ),

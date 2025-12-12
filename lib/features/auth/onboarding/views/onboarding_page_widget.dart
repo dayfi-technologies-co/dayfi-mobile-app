@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:dayfi/core/theme/app_colors.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_svg/svg.dart';
+// import 'package:dayfi/core/theme/app_colors.dart';
+// import 'package:flutter_svg/flutter_svg.dart';
 import '../models/onboarding_page.dart';
 
 class OnboardingPageWidget extends StatelessWidget {
@@ -12,150 +13,109 @@ class OnboardingPageWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-          color: const Color(0xFFFFD800), // Bright yellow background
-          child: SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(24.w, 0, 32.w, 0),
-              child: Column(
-                children: [
-                  SizedBox(height: 32.h),
-
-                  // Main content
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Title
-                        Text(
-                              page.title,
-                              textAlign: TextAlign.start,
-                              style: Theme.of(
-                                context,
-                              ).textTheme.displayLarge?.copyWith(
-                                color: AppColors.neutral900,
-                                fontSize: 60.sp,
-                                fontWeight: FontWeight.w600,
-                                fontFamily: 'CabinetGrotesk',
-                                letterSpacing: -1.2,
-                                height: .95,
-                              ),
-                            )
-                            .animate()
-                            .fadeIn(
-                              duration: 600.ms,
-                              curve: Curves.easeOutCubic,
-                            )
-                            .slideY(
-                              begin: 0.2,
-                              end: 0,
-                              duration: 600.ms,
-                              curve: Curves.easeOutCubic,
-                            )
-                            .shimmer(
-                              delay: 1000.ms,
-                              duration: 2000.ms,
-                              color: AppColors.purple500ForTheme(
-                                context,
-                              ).withOpacity(0.2),
-                              angle: 45,
+    return SafeArea(
+          bottom: false,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(24.w, 0, 32.w, 0),
+            child: Column(
+              children: [
+                SizedBox(height: 32.h),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      /// TITLE
+                      Text(
+                            page.title,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(
+                              context,
+                            ).textTheme.displayLarge?.copyWith(
+                              color:
+                                  Theme.of(
+                                    context,
+                                  ).textTheme.headlineLarge?.color,
+                              fontSize: 30.sp,
+                              // fontWeight: FontWeight.w100,
+                              fontFamily: 'Boldonse',
+                              letterSpacing: 0,
+                              height: 1.6,
                             ),
+                          )
+                          .animate()
+                          .fadeIn(duration: 600.ms)
+                          .slideY(begin: 0.25, end: 0, duration: 600.ms)
+                          .then()
+                          .shimmer(
+                            duration: 1800.ms,
+                            color: Theme.of(
+                              context,
+                            ).scaffoldBackgroundColor.withOpacity(0.4),
+                            angle: 20,
+                          ),
 
-                        SizedBox(height: 14.h),
+                      SizedBox(height: 20.h),
 
-                        // Subtitle
-                        Text(
-                              page.subtitle,
-                              textAlign: TextAlign.start,
-                              style: Theme.of(
-                                context,
-                              ).textTheme.bodyMedium?.copyWith(
-                                color: AppColors.neutral900.withOpacity(.85),
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.w400,
-                                fontFamily: 'Karla',
-                                letterSpacing: -.3,
-                                height: 1.4,
-                              ),
-                            )
-                            .animate()
-                            .fadeIn(
-                              delay: 200.ms,
-                              duration: 600.ms,
-                              curve: Curves.easeOutCubic,
-                            )
-                            .slideY(
-                              begin: 0.15,
-                              end: 0,
-                              delay: 200.ms,
-                              duration: 600.ms,
-                              curve: Curves.easeOutCubic,
+                      /// SUBTITLE
+                      Text(
+                            page.subtitle,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(
+                              context,
+                            ).textTheme.bodyMedium?.copyWith(
+                              color: Theme.of(context)
+                                  .textTheme
+                                  .headlineLarge
+                                  ?.color!
+                                  .withOpacity(0.85),
+                              fontSize: 17.sp,
+                              fontWeight: FontWeight.w500,
+                              height: 1.45,
+                              letterSpacing: -.6,
                             ),
+                          )
+                          .animate()
+                          .fadeIn(delay: 150.ms, duration: 600.ms)
+                          .slideY(begin: 0.2, end: 0, duration: 600.ms),
 
-                        SizedBox(height: 24.h),
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.08,
+                      ),
 
-                        // Illustration placeholder
-                        Center(
-                              child:
-                                  page.title == 'Safe and secure transfers'
-                                      ? Image.asset(
-                                            page.illustrationPath,
-                                            width:
-                                                MediaQuery.of(
-                                                  context,
-                                                ).size.width *
-                                                0.6,
-                                          )
-                                          .animate()
-                                          .fadeIn(
-                                            delay: 200.ms,
-                                            duration: 600.ms,
-                                            curve: Curves.easeOutCubic,
-                                          )
-                                          .slideY(
-                                            begin: 0.15,
-                                            end: 0,
-                                            delay: 200.ms,
-                                            duration: 600.ms,
-                                            curve: Curves.easeOutCubic,
-                                          )
-                                      : SvgPicture.asset(
-                                        page.illustrationPath,
-                                        width:
-                                            MediaQuery.of(context).size.width *
-                                            0.6,
-                                      ),
-                            )
-                            .animate()
-                            .fadeIn(
-                              delay: 200.ms,
-                              duration: 600.ms,
-                              curve: Curves.easeOutCubic,
-                            )
-                            .slideY(
-                              begin: 0.15,
-                              end: 0,
-                              delay: 200.ms,
-                              duration: 600.ms,
-                              curve: Curves.easeOutCubic,
-                            ),
-                      ],
-                    ),
+                      // ILLUSTRATION
+                      Center(
+                            child:
+                                page.illustrationPath.endsWith('.png')
+                                    ? Image.asset(
+                                      page.illustrationPath,
+                                      width:
+                                          MediaQuery.of(context).size.width *
+                                          .65,
+                                    )
+                                    : SvgPicture.asset(
+                                      page.illustrationPath,
+                                      width:
+                                          MediaQuery.of(context).size.width *
+                                          .65,
+                                    ),
+                          )
+                          .animate()
+                          .fadeIn(delay: 200.ms, duration: 600.ms)
+                          .slideY(begin: 0.18, end: 0, duration: 600.ms)
+                          .scale(
+                            begin: const Offset(.98, .98),
+                            duration: 500.ms,
+                          ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         )
         .animate()
-        .fadeIn(duration: 500.ms, curve: Curves.easeOutCubic)
-        .scale(
-          begin: const Offset(0.98, 0.98),
-          end: const Offset(1.0, 1.0),
-          duration: 500.ms,
-          curve: Curves.easeOutCubic,
-        );
+        .fadeIn(duration: 450.ms)
+        .blurXY(begin: 4, end: 0, duration: 450.ms);
   }
 }

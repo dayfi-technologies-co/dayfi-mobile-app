@@ -1,4 +1,4 @@
-import 'package:dayfi/common/utils/ui_helpers.dart';
+// import 'package:dayfi/common/utils/ui_helpers.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -41,10 +41,10 @@ class WordCapitalizationFormatter extends TextInputFormatter {
     // Process each character while maintaining spaces
     final StringBuffer buffer = StringBuffer();
     bool capitalizeNext = true;
-    
+
     for (int i = 0; i < newValue.text.length; i++) {
       final char = newValue.text[i];
-      
+
       if (char == ' ') {
         // Preserve spaces as-is
         buffer.write(char);
@@ -58,7 +58,7 @@ class WordCapitalizationFormatter extends TextInputFormatter {
         buffer.write(char.toLowerCase());
       }
     }
-    
+
     final transformed = buffer.toString();
 
     // Ensure cursor position is valid
@@ -107,6 +107,7 @@ class CustomTextField extends StatelessWidget {
   final EdgeInsets? contentPadding;
   final TextStyle? textStyle;
   final bool shouldFaintFillColor;
+  final bool isSearch;
 
   const CustomTextField({
     super.key,
@@ -139,6 +140,7 @@ class CustomTextField extends StatelessWidget {
     this.contentPadding,
     this.textStyle,
     this.shouldFaintFillColor = false,
+    this.isSearch = false,
   });
 
   @override
@@ -151,9 +153,9 @@ class CustomTextField extends StatelessWidget {
               label!,
               style: TextStyle(
                 fontFamily: 'Karla',
-                fontSize: 15,
-                fontWeight: FontWeight.w400,
-                letterSpacing: -.3,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                letterSpacing: -.6,
                 height: 1.450,
                 color:
                     label == "hidden"
@@ -169,141 +171,146 @@ class CustomTextField extends StatelessWidget {
             : const SizedBox(),
         SizedBox(height: (label == null || label == "") ? 0 : 4),
         Container(
+          height: isSearch ? 40.h : null,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(borderRadius.r),
-            boxShadow: [
-              BoxShadow(
-                color:
-                    errorText.toString() != "null"
-                        ? isDayfiId
-                            ? Colors.green.withOpacity(0.3)
-                            : Colors.red.withOpacity(0.3)
-                        : const Color.fromARGB(
-                          255,
-                          123,
-                          36,
-                          211,
-                        ).withOpacity(0.05),
-                blurRadius: 1.0,
-                offset: const Offset(0, 2),
-                spreadRadius: 0.25,
-              ),
-            ],
+            border: Border.all(
+              width: 1.w,
+              color:
+                  errorText.toString() != "null"
+                      ? isDayfiId
+                          ? Colors.green.withOpacity(0.3)
+                          : Colors.red.withOpacity(0.3)
+                      : Theme.of(
+                            context,
+                          ).textTheme.bodyLarge?.color?.withOpacity(0.1) ??
+                          Colors.black.withOpacity(0.1),
+            ),
           ),
           child: Semantics(
             textField: true,
-            label: label ?? hintText,
+            label: label ?? label,
             hint: hintText,
             enabled: !shouldReadOnly,
             child: TextFormField(
-            // autofocus: autofocus,
-            maxLines: obscureText ? 1 : minLines,
-            maxLengthEnforcement: MaxLengthEnforcement.enforced,
-            onTap: onTap,
-            enableInteractiveSelection: enableInteractiveSelection,
-            textCapitalization:
-                textCapitalization ?? TextCapitalization.sentences,
-            autovalidateMode: AutovalidateMode.onUserInteraction,
-            maxLength: obscureText ? null : maxLength,
-            controller: controller,
-            cursorColor: AppColors.purple500ForTheme(context),
-            textInputAction: textInputAction,
-            keyboardType: keyboardType,
-            readOnly: shouldReadOnly,
-            obscureText: obscureText,
-            onChanged: onChanged,
-            validator: validator,
-            // Custom context menu to prevent iOS paste permission duplicate dialogs
-            contextMenuBuilder: (context, editableTextState) {
-              return AdaptiveTextSelectionToolbar.editableText(
-                editableTextState: editableTextState,
-              );
-            },
-            inputFormatters: <TextInputFormatter>[
-              // If a specific formatter is provided, use it. Otherwise, automatically
-              // apply a word-capitalization formatter for fields that request
-              // `TextCapitalization.words` (e.g., names), otherwise use a default
-              // single-line filtering formatter.
-              formatter ??
-                  ((textCapitalization == TextCapitalization.words ||
-                          capitalizeFirstLetter)
-                      ? WordCapitalizationFormatter()
-                      : FilteringTextInputFormatter.singleLineFormatter),
-            ],
-            style:
-                textStyle ??
-                Theme.of(context).textTheme.bodyLarge?.copyWith(
+              // autofocus: autofocus,
+              maxLines: obscureText ? 1 : minLines,
+              maxLengthEnforcement: MaxLengthEnforcement.enforced,
+              onTap: onTap,
+              enableInteractiveSelection: enableInteractiveSelection,
+              textCapitalization:
+                  textCapitalization ?? TextCapitalization.sentences,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              maxLength: obscureText ? null : maxLength,
+              controller: controller,
+              cursorColor: AppColors.purple500ForTheme(context),
+              textInputAction: textInputAction,
+              keyboardType: keyboardType,
+              readOnly: shouldReadOnly,
+              obscureText: obscureText,
+              cursorHeight: 18.h,
+              onChanged: onChanged,
+              validator: validator,
+              // Custom context menu to prevent iOS paste permission duplicate dialogs
+              contextMenuBuilder: (context, editableTextState) {
+                return AdaptiveTextSelectionToolbar.editableText(
+                  editableTextState: editableTextState,
+                );
+              },
+              inputFormatters: <TextInputFormatter>[
+                // If a specific formatter is provided, use it. Otherwise, automatically
+                // apply a word-capitalization formatter for fields that request
+                // `TextCapitalization.words` (e.g., names), otherwise use a default
+                // single-line filtering formatter.
+                formatter ??
+                    ((textCapitalization == TextCapitalization.words ||
+                            capitalizeFirstLetter)
+                        ? WordCapitalizationFormatter()
+                        : FilteringTextInputFormatter.singleLineFormatter),
+              ],
+              style:
+                  textStyle ??
+                  Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    fontFamily: 'Karla',
+                    fontSize: 16,
+                    letterSpacing: -.6,
+                    color:
+                        shouldFaintFillColor && shouldReadOnly
+                            ? Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withOpacity(.85)
+                            : Theme.of(context).colorScheme.onSurface,
+                    fontWeight: FontWeight.w500,
+                    height: 1.450,
+                  ),
+              decoration: InputDecoration(
+                counterText: "",
+                errorText: errorText,
+                hintText: hintText,
+                hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   fontFamily: 'Karla',
                   fontSize: 16,
-                  letterSpacing: -.3,
-
-                  color:
-                      shouldFaintFillColor && shouldReadOnly
-                          ? Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withOpacity(.85)
-                          : Theme.of(context).colorScheme.onSurface,
+                  letterSpacing: -.6,
                   fontWeight: FontWeight.w500,
                   height: 1.450,
+                  overflow: TextOverflow.ellipsis,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurfaceVariant.withOpacity(.35),
                 ),
-            decoration: InputDecoration(
-              counterText: "",
-              errorText: errorText,
-              hintText: hintText,
-              hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                fontFamily: 'Karla',
-                fontSize: 16,
-                letterSpacing: -.3,
-                fontWeight: FontWeight.w500,
-                height: 1.450,
-                overflow: TextOverflow.ellipsis,
-                color: Theme.of(
-                  context,
-                ).colorScheme.onSurfaceVariant.withOpacity(.25),
-              ),
-              filled: true,
-              fillColor:
-                  shouldFaintFillColor && shouldReadOnly
-                      ? Theme.of(context).colorScheme.surface.withOpacity(.1)
-                      : errorText.toString() != "null"
-                      ? isDayfiId
-                          ? Colors.greenAccent.withOpacity(.08)
-                          : const Color.fromARGB(255, 255, 217, 214)
-                      : Theme.of(context).colorScheme.surface,
-              contentPadding:
-                  contentPadding ??
-                  EdgeInsets.symmetric(vertical: 14.h, horizontal: 10.w),
-              errorStyle: TextStyle(
-                fontFamily: 'Karla',
-                fontSize: errorFontSize ?? 13.sp,
-                color: Colors.red.shade800,
-                letterSpacing: -.3,
-                fontWeight: FontWeight.w400,
-                height: 1.4,
-              ),
-              prefixIcon: prefixIcon,
-              prefix: prefix,
-              suffixIcon: suffixIcon,
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide.none,
-                borderRadius: BorderRadius.all(Radius.circular(borderRadius.r)),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide.none,
-                borderRadius: BorderRadius.all(Radius.circular(borderRadius.r)),
-              ),
-              focusedErrorBorder: OutlineInputBorder(
-                borderSide: BorderSide.none,
-                borderRadius: BorderRadius.all(Radius.circular(borderRadius.r)),
-              ),
-              errorBorder: OutlineInputBorder(
-                borderSide: BorderSide.none,
-                borderRadius: BorderRadius.all(Radius.circular(borderRadius.r)),
+                filled: true,
+                fillColor:
+                    shouldFaintFillColor && shouldReadOnly
+                        ? Theme.of(
+                          context,
+                        ).colorScheme.surface.withOpacity(.075)
+                        : errorText.toString() != "null"
+                        ? isDayfiId
+                            ? Colors.greenAccent.withOpacity(.08)
+                            : const Color.fromARGB(255, 255, 217, 214)
+                        : Theme.of(context).colorScheme.surface,
+                contentPadding:
+                    contentPadding ??
+                    EdgeInsets.symmetric(vertical: 0.h, horizontal: 10.w),
+                errorStyle: TextStyle(
+                  fontFamily: 'Karla',
+                  fontSize: errorFontSize ?? 13.sp,
+                  color: Colors.red.shade800,
+                  letterSpacing: -.6,
+                  fontWeight: FontWeight.w500,
+                  height: 1.4,
+                ),
+                prefixIcon: prefixIcon,
+                prefix: prefix,
+                suffixIcon: suffixIcon,
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide.none,
+                  borderRadius: BorderRadius.all(
+                    Radius.circular(borderRadius.r),
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide.none,
+                  borderRadius: BorderRadius.all(
+                    Radius.circular(borderRadius.r),
+                  ),
+                ),
+                focusedErrorBorder: OutlineInputBorder(
+                  borderSide: BorderSide.none,
+                  borderRadius: BorderRadius.all(
+                    Radius.circular(borderRadius.r),
+                  ),
+                ),
+                errorBorder: OutlineInputBorder(
+                  borderSide: BorderSide.none,
+                  borderRadius: BorderRadius.all(
+                    Radius.circular(borderRadius.r),
+                  ),
+                ),
               ),
             ),
           ),
         ),
-      ),
       ],
     );
   }
@@ -370,7 +377,7 @@ class ReadOnlyCustomTextField extends StatelessWidget {
               style: const TextStyle(
                 fontFamily: 'Karla',
                 fontSize: 14,
-                fontWeight: FontWeight.w400,
+                fontWeight: FontWeight.w500,
                 letterSpacing: -.1,
                 height: 1.450,
                 color: Color(0xFF302D53),
@@ -379,123 +386,123 @@ class ReadOnlyCustomTextField extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             )
             : const SizedBox(),
-        verticalSpace((label == null || label == "") ? 0 : 4),
+        SizedBox(height: (label == null || label == "") ? 0 : 4),
         Semantics(
           textField: true,
           label: label ?? hintText,
           hint: hintText,
           enabled: false,
           child: TextFormField(
-          // autofocus: autofocus,
-          maxLines: obscureText ? 1 : minLines,
-          maxLengthEnforcement: MaxLengthEnforcement.enforced,
-          onTap: onTap,
-          enableInteractiveSelection: enableInteractiveSelection,
-          textCapitalization:
-              textCapitalization ?? TextCapitalization.sentences,
-          autovalidateMode: AutovalidateMode.onUserInteraction,
-          maxLength: obscureText ? null : maxLength,
-          controller: controller,
-          cursorColor: AppColors.purple500ForTheme(context), // innit
-          textInputAction: textInputAction,
-          keyboardType: keyboardType,
-          readOnly: true,
-          obscureText: obscureText,
-          onChanged: onChanged,
-          validator: validator,
-          // Custom context menu to prevent iOS paste permission duplicate dialogs
-          contextMenuBuilder: (context, editableTextState) {
-            return AdaptiveTextSelectionToolbar.editableText(
-              editableTextState: editableTextState,
-            );
-          },
-          inputFormatters: [
-            // For read-only, still allow a formatter if provided; otherwise keep single-line.
-            formatter ?? FilteringTextInputFormatter.singleLineFormatter,
-          ],
-          style: TextStyle(
-            fontFamily: 'Karla',
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
-            height: 1.450,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-          decoration: InputDecoration(
-            counterText: "",
-            errorText: errorText,
-            hintText: hintText,
-            hintStyle: TextStyle(
+            // autofocus: autofocus,
+            maxLines: obscureText ? 1 : minLines,
+            maxLengthEnforcement: MaxLengthEnforcement.enforced,
+            onTap: onTap,
+            enableInteractiveSelection: enableInteractiveSelection,
+            textCapitalization:
+                textCapitalization ?? TextCapitalization.sentences,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            maxLength: obscureText ? null : maxLength,
+            controller: controller,
+            cursorColor: AppColors.purple500ForTheme(context), // innit
+            textInputAction: textInputAction,
+            keyboardType: keyboardType,
+            readOnly: true,
+            obscureText: obscureText,
+            onChanged: onChanged,
+            validator: validator,
+            // Custom context menu to prevent iOS paste permission duplicate dialogs
+            contextMenuBuilder: (context, editableTextState) {
+              return AdaptiveTextSelectionToolbar.editableText(
+                editableTextState: editableTextState,
+              );
+            },
+            inputFormatters: [
+              // For read-only, still allow a formatter if provided; otherwise keep single-line.
+              formatter ?? FilteringTextInputFormatter.singleLineFormatter,
+            ],
+            style: TextStyle(
               fontFamily: 'Karla',
               fontSize: 14,
               fontWeight: FontWeight.w500,
               height: 1.450,
-              color:
-                  Theme.of(
-                    context,
-                  ).textTheme.bodyLarge?.color?.withOpacity(.5) ??
-                  Colors.black.withOpacity(.5),
+              color: Theme.of(context).colorScheme.onSurface,
             ),
-            filled: true,
-            fillColor: Theme.of(
-              context,
-            ).colorScheme.surfaceContainerHighest.withOpacity(.3),
-            contentPadding: EdgeInsets.symmetric(
-              vertical: 14.h,
-              horizontal: 14.w,
-            ),
-            errorStyle: TextStyle(
-              fontFamily: 'Karla',
-              fontSize: 12,
-              color: Colors.red.shade800,
-              letterSpacing: -.3,
-            ),
-            prefixIcon: prefixIcon,
-            prefix: prefix,
-            suffixIcon: suffixIcon,
-            focusedBorder: UnderlineInputBorder(
-              borderSide: BorderSide(
-                // color: Color( 0xff5645F5), // innit
-                color: AppColors.purple500ForTheme(context), // innit
-                width: 1.w,
+            decoration: InputDecoration(
+              counterText: "",
+              errorText: errorText,
+              hintText: hintText,
+              hintStyle: TextStyle(
+                fontFamily: 'Karla',
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                height: 1.450,
+                color:
+                    Theme.of(
+                      context,
+                    ).textTheme.bodyLarge?.color?.withOpacity(.35) ??
+                    Colors.black.withOpacity(.35),
               ),
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(8.0.r),
-                topRight: Radius.circular(8.0.r),
+              filled: true,
+              fillColor: Theme.of(
+                context,
+              ).colorScheme.surfaceContainerHighest.withOpacity(.3),
+              contentPadding: EdgeInsets.symmetric(
+                vertical: 14.h,
+                horizontal: 14.w,
               ),
-            ),
-            enabledBorder: UnderlineInputBorder(
-              borderSide: BorderSide(
-                color: AppColors.purple500ForTheme(context).withOpacity(.2),
-                width: 1.w,
+              errorStyle: TextStyle(
+                fontFamily: 'Karla',
+                fontSize: 12,
+                color: Colors.red.shade800,
+                letterSpacing: -.6,
               ),
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(8.0.r),
-                topRight: Radius.circular(8.0.r),
+              prefixIcon: prefixIcon,
+              prefix: prefix,
+              suffixIcon: suffixIcon,
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(
+                  // color: Color( 0xff5645F5), // innit
+                  color: AppColors.purple500ForTheme(context), // innit
+                  width: 1.w,
+                ),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(8.0.r),
+                  topRight: Radius.circular(8.0.r),
+                ),
               ),
-            ),
-            focusedErrorBorder: UnderlineInputBorder(
-              borderSide: BorderSide(
-                color: Colors.red.shade800.withOpacity(.85),
-                width: 1.w,
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(
+                  color: AppColors.purple500ForTheme(context).withOpacity(.2),
+                  width: 1.w,
+                ),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(8.0.r),
+                  topRight: Radius.circular(8.0.r),
+                ),
               ),
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(8.0.r),
-                topRight: Radius.circular(8.0.r),
+              focusedErrorBorder: UnderlineInputBorder(
+                borderSide: BorderSide(
+                  color: Colors.red.shade800.withOpacity(.85),
+                  width: 1.w,
+                ),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(8.0.r),
+                  topRight: Radius.circular(8.0.r),
+                ),
               ),
-            ),
-            errorBorder: UnderlineInputBorder(
-              borderSide: BorderSide(
-                color: Colors.red.shade800.withOpacity(.85),
-                width: 1.w,
-              ),
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(8.0.r),
-                topRight: Radius.circular(8.0.r),
+              errorBorder: UnderlineInputBorder(
+                borderSide: BorderSide(
+                  color: Colors.red.shade800.withOpacity(.85),
+                  width: 1.w,
+                ),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(8.0.r),
+                  topRight: Radius.circular(8.0.r),
+                ),
               ),
             ),
           ),
         ),
-      ),
       ],
     );
   }

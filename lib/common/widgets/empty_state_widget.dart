@@ -80,25 +80,31 @@ class EmptyStateWidget extends StatelessWidget {
             //     color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
             //   ),
             // SizedBox(height: 24.h),
-
+            SvgPicture.asset(
+              'assets/icons/svgs/search-normal.svg',
+              height: 64.sp,
+              color: Theme.of(context).colorScheme.error,
+            ),
+            SizedBox(height: 16.h),
             // Title
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+              padding: const EdgeInsets.symmetric(horizontal: 18.0),
               child: Text(
                 title,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontFamily: 'CabinetGrotesk',
-                  fontSize: 20.sp,
+                  fontFamily: 'FunnelDisplay',
+                  fontSize: 16.sp,
                   fontWeight: FontWeight.w600,
-                  color: Theme.of(context).colorScheme.onSurface,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.6),
                 ),
                 textAlign: TextAlign.center,
               ),
             ),
-
             // Message
             if (message != null) ...[
-              SizedBox(height: 12.h),
+              SizedBox(height: 8.h),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
                 child: Text(
@@ -106,7 +112,7 @@ class EmptyStateWidget extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontFamily: 'Karla',
                     fontSize: 14.sp,
-                    fontWeight: FontWeight.w400,
+                    fontWeight: FontWeight.w500,
                     color: Theme.of(
                       context,
                     ).colorScheme.onSurface.withOpacity(0.6),
@@ -117,11 +123,10 @@ class EmptyStateWidget extends StatelessWidget {
             ],
 
             // Custom button (e.g., for recipients "Send Money" button)
-            if (customButton != null) ...[
-              SizedBox(height: 24.h),
-              customButton!,
-            ],
-
+            // if (customButton != null) ...[
+            //   SizedBox(height: 24.h),
+            //   customButton!,
+            // ],
             SizedBox(height: 96.h),
           ],
         ),
@@ -168,7 +173,7 @@ class CompactEmptyStateWidget extends StatelessWidget {
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               fontFamily: 'Karla',
               fontSize: 14.sp,
-              fontWeight: FontWeight.w400,
+              fontWeight: FontWeight.w500,
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
             ),
             textAlign: TextAlign.center,

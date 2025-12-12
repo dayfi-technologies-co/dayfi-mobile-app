@@ -580,6 +580,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 0099DC40591530B43E303406 /* Pods-RunnerTests.debug-dev.xcconfig */;
 			buildSettings = {
+				DEVELOPMENT_TEAM = 3MCYU3SVQP;
 				PRODUCT_NAME = RunnerTests;
 			};
 			name = "Debug-dev";
@@ -588,6 +589,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 6C288C61CC0DB30F0DA48747 /* Pods-RunnerTests.profile-dev.xcconfig */;
 			buildSettings = {
+				DEVELOPMENT_TEAM = 3MCYU3SVQP;
 				PRODUCT_NAME = RunnerTests;
 			};
 			name = "Profile-dev";
@@ -596,6 +598,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 58705EA8F07B830273AF9770 /* Pods-RunnerTests.release-dev.xcconfig */;
 			buildSettings = {
+				DEVELOPMENT_TEAM = 3MCYU3SVQP;
 				PRODUCT_NAME = RunnerTests;
 			};
 			name = "Release-dev";
@@ -604,6 +607,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = A1E17CEF8223E9DCF39C12F0 /* Pods-RunnerTests.debug-pilot.xcconfig */;
 			buildSettings = {
+				DEVELOPMENT_TEAM = 3MCYU3SVQP;
 				PRODUCT_NAME = RunnerTests;
 			};
 			name = "Debug-pilot";
@@ -612,6 +616,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 4044331FE9D50F634E15438A /* Pods-RunnerTests.profile-pilot.xcconfig */;
 			buildSettings = {
+				DEVELOPMENT_TEAM = 3MCYU3SVQP;
 				PRODUCT_NAME = RunnerTests;
 			};
 			name = "Profile-pilot";
@@ -620,6 +625,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 460D180EB9F7BA3B750C2E39 /* Pods-RunnerTests.release-pilot.xcconfig */;
 			buildSettings = {
+				DEVELOPMENT_TEAM = 3MCYU3SVQP;
 				PRODUCT_NAME = RunnerTests;
 			};
 			name = "Release-pilot";
@@ -628,6 +634,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 3A43329DAAEEF0CB671FA310 /* Pods-RunnerTests.debug-prod.xcconfig */;
 			buildSettings = {
+				DEVELOPMENT_TEAM = 3MCYU3SVQP;
 				PRODUCT_NAME = RunnerTests;
 			};
 			name = "Debug-prod";
@@ -636,6 +643,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 0E9C6FA1FD35DA4110F4ABAD /* Pods-RunnerTests.profile-prod.xcconfig */;
 			buildSettings = {
+				DEVELOPMENT_TEAM = 3MCYU3SVQP;
 				PRODUCT_NAME = RunnerTests;
 			};
 			name = "Profile-prod";
@@ -644,6 +652,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = C3A84D56A17DB9452FFA865D /* Pods-RunnerTests.release-prod.xcconfig */;
 			buildSettings = {
+				DEVELOPMENT_TEAM = 3MCYU3SVQP;
 				PRODUCT_NAME = RunnerTests;
 			};
 			name = "Release-prod";
@@ -760,6 +769,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3MCYU3SVQP;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.dayfi.RunnerTests;
@@ -778,6 +788,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3MCYU3SVQP;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.dayfi.RunnerTests;
@@ -794,6 +805,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3MCYU3SVQP;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.dayfi.RunnerTests;

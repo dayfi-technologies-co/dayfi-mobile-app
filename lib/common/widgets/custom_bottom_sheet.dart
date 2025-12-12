@@ -177,8 +177,8 @@ class CustomBottomSheet extends StatelessWidget {
               width: double.infinity,
               height: fixedHeight,
               padding: contentPadding ?? EdgeInsets.all(24.w),
-              child: useSafeArea ? SafeArea(
-            bottom: false,child: child) : child,
+              child:
+                  useSafeArea ? SafeArea(bottom: false, child: child) : child,
             ),
           ),
 
@@ -316,7 +316,7 @@ class CustomBottomSheet extends StatelessWidget {
       useRootNavigator: useRootNavigator,
       isDismissible: isDismissible,
       enableDrag: enableDrag,
-      barrierColor: barrierColor ?? AppColors.neutral900.withOpacity(0.85),
+      barrierColor: barrierColor ?? Colors.black.withOpacity(0.85),
       barrierLabel: barrierLabel,
       useSafeArea: useSafeArea,
       routeSettings: routeSettings,

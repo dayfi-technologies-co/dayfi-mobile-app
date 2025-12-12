@@ -1,44 +1,58 @@
-import 'package:dayfi/common/widgets/buttons/help_button.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:dayfi/models/notification_item.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dayfi/features/notifications/vm/notifications_viewmodel.dart';
+import 'package:flutter_svg/svg.dart';
 
-class NotificationsView extends StatefulWidget {
+class NotificationsView extends ConsumerStatefulWidget {
   const NotificationsView({super.key});
 
   @override
-  State<NotificationsView> createState() => _NotificationsViewState();
+  ConsumerState<NotificationsView> createState() => _NotificationsViewState();
 }
 
-class _NotificationsViewState extends State<NotificationsView> {
-  final List<NotificationItem> _notifications = [];
+class _NotificationsViewState extends ConsumerState<NotificationsView> {
+    /// Format currency amount with commas
+    String _formatAmount(String message) {
+      final regex = RegExp(r'(NGN|USD|EUR|GBP)\s*(\d+)');
+      return message.replaceAllMapped(regex, (match) {
+        final currency = match.group(1);
+        final amount = match.group(2);
+        if (amount == null) return match.group(0) ?? '';
+        final formatted = _addCommas(amount);
+        return '$currency $formatted';
+      });
+    }
 
+    String _addCommas(String amount) {
+      if (amount.isEmpty) return amount;
+      final numValue = int.tryParse(amount);
+      if (numValue == null) return amount;
+      return numValue.toString().replaceAllMapped(
+        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+        (Match m) => '${m[1]},',
+      );
+    }
   @override
   void initState() {
     super.initState();
-    _loadNotifications();
+    // Load notifications using Riverpod
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref
+          .read(notificationsProvider.notifier)
+          .loadNotifications(isInitialLoad: true);
+    });
   }
 
-  void _loadNotifications() {
-    // Only show welcome notification for now
-    final now = DateTime.now();
-    _notifications.addAll([
-      NotificationItem(
-        id: 'welcome_1',
-        title: 'Welcome to DayFi! 🎉',
-        message: 'Your account is ready. Send money to those who matter.',
-        timestamp: now.subtract(const Duration(minutes: 5)),
-        type: NotificationType.general,
-        isRead: false,
-      ),
-    ]);
-  }
-
-  Map<String, List<NotificationItem>> _groupNotificationsByDate() {
+  Map<String, List<NotificationItem>> _groupNotificationsByDate(
+    List<NotificationItem> notifications,
+  ) {
     final Map<String, List<NotificationItem>> grouped = {};
 
-    for (final notification in _notifications) {
+    for (final notification in notifications) {
       final dateKey = _formatDate(notification.timestamp);
       grouped.putIfAbsent(dateKey, () => []).add(notification);
     }
@@ -81,34 +95,18 @@ class _NotificationsViewState extends State<NotificationsView> {
     }
   }
 
-  String _formatTime(DateTime date) {
-    final hour = date.hour;
-    final minute = date.minute.toString().padLeft(2, '0');
-    final period = hour >= 12 ? 'PM' : 'AM';
-    final displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
-    return '$displayHour:$minute $period';
-  }
-
   void _markAsRead(NotificationItem notification) {
-    setState(() {
-      final index = _notifications.indexWhere((n) => n.id == notification.id);
-      if (index != -1) {
-        _notifications[index] = notification.copyWith(isRead: true);
-      }
-    });
-  }
-
-  void _markAllAsRead() {
-    setState(() {
-      for (int i = 0; i < _notifications.length; i++) {
-        _notifications[i] = _notifications[i].copyWith(isRead: true);
-      }
-    });
+    ref.read(notificationsProvider.notifier).markAsRead(notification.id);
   }
 
   @override
   Widget build(BuildContext context) {
-    final groupedNotifications = _groupNotificationsByDate();
+    final notificationsState = ref.watch(notificationsProvider);
+    final notifications = notificationsState.notifications;
+    final isLoading = notificationsState.isLoading;
+    final errorMessage = notificationsState.errorMessage;
+
+    final groupedNotifications = _groupNotificationsByDate(notifications);
     final sortedDates =
         groupedNotifications.keys.toList()..sort((a, b) {
           // Sort dates: Today, Yesterday, then by actual date (newest first)
@@ -129,23 +127,54 @@ class _NotificationsViewState extends State<NotificationsView> {
       appBar: AppBar(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.arrow_back_ios_new),
+        scrolledUnderElevation: .5,
+        leadingWidth: 72,
+        foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+        shadowColor: Theme.of(context).scaffoldBackgroundColor,
+        surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+        leading: InkWell(
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
+          onTap:
+              () => {Navigator.pop(context), FocusScope.of(context).unfocus()},
+          child: Stack(
+            alignment: AlignmentGeometry.center,
+            children: [
+              SvgPicture.asset(
+                "assets/icons/svgs/notificationn.svg",
+                height: 40.sp,
+                color: Theme.of(context).colorScheme.surface,
+              ),
+              SizedBox(
+                height: 40.sp,
+                width: 40.sp,
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 8.0),
+                    child: Icon(
+                      Icons.arrow_back_ios,
+                      size: 20.sp,
+                      color: Theme.of(context).textTheme.bodyLarge!.color,
+                      // size: 20.sp,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
         title: Text(
           "Notifications",
           style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-            fontFamily: 'CabinetGrotesk',
-            fontSize: 20.sp,
+            fontFamily: 'FunnelDisplay',
+            fontSize: 24.sp,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         centerTitle: true,
         // actions: [
-        //   if (_notifications.any((n) => !n.isRead))
+        //   if (notifications.any((n) => !n.isRead))
         //     Padding(
         //       padding: EdgeInsets.only(right: 16.w),
         //       child: HelpButton(
@@ -158,22 +187,26 @@ class _NotificationsViewState extends State<NotificationsView> {
       ),
 
       body:
-          _notifications.isEmpty
+          isLoading
+              ? _buildLoadingState()
+              : errorMessage != null
+              ? _buildErrorState(errorMessage)
+              : notifications.isEmpty
               ? _buildEmptyState()
               : RefreshIndicator(
                 onRefresh: () async {
-                  // Simulate refresh
-                  await Future.delayed(const Duration(seconds: 1));
-                  setState(() {});
+                  await ref
+                      .read(notificationsProvider.notifier)
+                      .loadNotifications();
                 },
                 child: ListView.builder(
                   padding: EdgeInsets.symmetric(horizontal: 18.w),
                   itemCount: sortedDates.length,
                   itemBuilder: (context, index) {
                     final date = sortedDates[index];
-                    final notifications = groupedNotifications[date]!;
+                    final notificationsForDate = groupedNotifications[date]!;
 
-                    return _buildNotificationGroup(date, notifications);
+                    return _buildNotificationGroup(date, notificationsForDate);
                   },
                 ),
               ),
@@ -195,8 +228,8 @@ class _NotificationsViewState extends State<NotificationsView> {
         //     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
         //       fontFamily: 'Karla',
         //       fontSize: 14,
-        //       fontWeight: FontWeight.w400,
-        //       letterSpacing: -.3,
+        //       fontWeight: FontWeight.w500,
+        //       letterSpacing: -.6,
         //       height: 1.450,
         //       color: Theme.of(
         //         context,
@@ -243,7 +276,7 @@ class _NotificationsViewState extends State<NotificationsView> {
           Text(
             'No notifications yet',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontFamily: 'CabinetGrotesk',
+              fontFamily: 'FunnelDisplay',
               fontSize: 20.sp,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
@@ -263,10 +296,58 @@ class _NotificationsViewState extends State<NotificationsView> {
     );
   }
 
+  Widget _buildLoadingState() {
+    return Center(child: CupertinoActivityIndicator());
+  }
+
+  Widget _buildErrorState(String errorMessage) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline,
+            size: 80.sp,
+            color: Theme.of(context).colorScheme.error,
+          ),
+          SizedBox(height: 24.h),
+          Text(
+            'Failed to load notifications',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontFamily: 'FunnelDisplay',
+              fontSize: 20.sp,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+            ),
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            errorMessage,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              fontFamily: 'Karla',
+              fontSize: 16.sp,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+            ),
+          ),
+          SizedBox(height: 24.h),
+          ElevatedButton(
+            onPressed: () {
+              ref.read(notificationsProvider.notifier).loadNotifications();
+            },
+            child: const Text('Retry'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildNotificationCard(
     NotificationItem notification, {
     double bottomMargin = 24,
   }) {
+
+    final formattedMessage = '${_formatAmount(notification.message.replaceAll('.', ''))}.';
     return InkWell(
       onTap: () {
         if (!notification.isRead) {
@@ -288,7 +369,7 @@ class _NotificationsViewState extends State<NotificationsView> {
                 color: _getNotificationColor(
                   notification.type,
                 ).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(16.r),
+                borderRadius: BorderRadius.circular(12.r),
               ),
               child: Center(
                 child: Text(
@@ -309,20 +390,20 @@ class _NotificationsViewState extends State<NotificationsView> {
                     notification.title,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontFamily: 'Karla',
-                      fontSize: 18.sp,
-                      letterSpacing: -.3,
+                      fontSize: 16.sp,
+                      letterSpacing: -.6,
                       fontWeight: FontWeight.w500,
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   SizedBox(height: 6.h),
                   Text(
-                    notification.message,
+                    formattedMessage,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontFamily: 'Karla',
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      letterSpacing: -.3,
+                      letterSpacing: -.6,
                       height: 1.450,
                       color: Theme.of(
                         context,
@@ -338,7 +419,7 @@ class _NotificationsViewState extends State<NotificationsView> {
                   //     _formatTime(notification.timestamp),
                   //     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   //       fontFamily: 'Karla',
-                  //       fontWeight: FontWeight.w400,
+                  //       fontWeight: FontWeight.w500,
                   //       fontSize: 12.sp,
                   //     ),
                   //   ),
@@ -370,13 +451,13 @@ class _NotificationsViewState extends State<NotificationsView> {
       case NotificationType.transaction:
         return AppColors.success500;
       case NotificationType.security:
-        return AppColors.primary500;
+        return Theme.of(context).colorScheme.primary;
       case NotificationType.promotion:
         return AppColors.warning500;
       case NotificationType.system:
         return AppColors.neutral500;
       case NotificationType.general:
-        return AppColors.primary500;
+        return Theme.of(context).colorScheme.primary;
     }
   }
 

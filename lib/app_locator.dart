@@ -7,8 +7,8 @@ import 'package:dayfi/flavors.dart';
 import 'package:dayfi/services/remote/auth_service.dart';
 import 'package:dayfi/services/remote/payment_service.dart';
 import 'package:dayfi/services/remote/wallet_service.dart';
+import 'package:dayfi/services/remote/notification_service.dart';
 import 'package:dayfi/services/remote/network/network_service.dart';
-
 import 'package:dayfi/services/local/secure_storage.dart';
 import 'package:dayfi/services/local/local_cache.dart';
 import 'package:dayfi/services/local/connectivity_service.dart';
@@ -16,6 +16,7 @@ import 'package:dayfi/services/local/analytics_service.dart';
 import 'package:dayfi/services/kyc/kyc_service.dart';
 import 'package:dayfi/services/version_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:dayfi/features/auth/login/vm/login_viewmodel.dart';
 
 GetIt locator = GetIt.instance;
 
@@ -37,6 +38,9 @@ Future<void> setupLocator() async {
   );
   locator.registerLazySingleton<WalletService>(
     () => WalletService(networkService: locator()),
+  );
+  locator.registerLazySingleton<NotificationService>(
+    () => NotificationService(networkService: locator()),
   );
 
   final sharedPreferences = await SharedPreferences.getInstance();
@@ -66,6 +70,9 @@ Future<void> setupLocator() async {
   // Initialize version service
   locator.registerLazySingleton(() => VersionService(sharedPreferences));
   
+  // Register LoginNotifier for Google Auth persistence
+  locator.registerLazySingleton<LoginNotifier>(() => LoginNotifier());
+
   // Initialize connectivity service
   await ConnectivityService.initialize();
 }
@@ -80,6 +87,7 @@ final networkService = locator<NetworkService>();
 final authService = locator<AuthService>();
 final paymentService = locator<PaymentService>();
 final walletService = locator<WalletService>();
+final notificationService = locator<NotificationService>();
 final loadingModalController = locator<LoadingModalController>();
 final analyticsService = locator<AnalyticsService>();
 final kycService = locator<KycService>();

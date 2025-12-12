@@ -18,7 +18,7 @@ class TopSnackbar {
     } else {
       HapticHelper.success();
     }
-    
+
     final primaryColor =
         isError ? const Color(0xFFDC2626) : const Color(0xFF059669);
     final backgroundColor =
@@ -33,8 +33,8 @@ class TopSnackbar {
         children: [
           // Enhanced icon with animation
           Container(
-                width: 32,
-                height: 32,
+                width: 24,
+                height: 24,
                 decoration: BoxDecoration(
                   color: primaryColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(16),
@@ -62,10 +62,10 @@ class TopSnackbar {
             child: Text(
                   message,
                   style: TextStyle(
-                    fontSize: 16.sp,
-                 fontFamily: 'CabinetGrotesk',
+                    fontSize: 14.sp,
+                    fontFamily: 'Karla',
                     fontWeight: FontWeight.w500,
-                    letterSpacing: -0.2,
+                    letterSpacing: -0.8,
                     height: 1.4,
                     color: textColor,
                   ),
@@ -81,24 +81,24 @@ class TopSnackbar {
           ),
         ],
       ),
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      margin: const EdgeInsets.fromLTRB(8, 16, 8, 0),
       borderRadius: BorderRadius.circular(12),
       backgroundColor: backgroundColor,
-      borderColor: borderColor,
-      borderWidth: 1.5,
+      borderColor: borderColor.withOpacity(.5),
+      borderWidth: 1.2,
       duration: duration,
       flushbarPosition: FlushbarPosition.TOP,
       animationDuration: const Duration(milliseconds: 300),
       forwardAnimationCurve: Curves.easeOutCubic,
       reverseAnimationCurve: Curves.easeInCubic,
       // Add subtle shadow
-      boxShadows: [
-        BoxShadow(
-          color: primaryColor.withOpacity(0.1),
-          blurRadius: 8,
-          offset: const Offset(0, 2),
-        ),
-      ],
+      // boxShadows: [
+      //   BoxShadow(
+      //     color: primaryColor.withOpacity(0.1),
+      //     blurRadius: 8,
+      //     offset: const Offset(0, 2),
+      //   ),
+      // ],
       // Enhanced animation
       showProgressIndicator: false,
       isDismissible: true,

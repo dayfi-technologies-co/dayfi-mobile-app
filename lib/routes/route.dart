@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:dayfi/features/auth/check_email/vm/check_email_viewmodel.dart';
 import 'package:dayfi/features/recipients/views/recipients_view.dart';
 import 'package:dayfi/features/softpos/views/softpos_info_view.dart';
 import 'package:flutter/cupertino.dart';
@@ -7,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:dayfi/features/auth/login/views/login_view.dart';
 import 'package:dayfi/features/auth/signup/views/signup_view.dart';
 import 'package:dayfi/features/auth/verify_email/views/verify_email_view.dart';
+import 'package:dayfi/features/auth/check_email/views/check_email_view.dart';
 import 'package:dayfi/features/auth/success_signup/views/success_signup_view.dart';
 import 'package:dayfi/features/auth/create_passcode/views/create_passcode_view.dart';
 import 'package:dayfi/features/auth/reenter_passcode/views/reenter_passcode_view.dart';
@@ -35,6 +37,7 @@ import 'package:dayfi/features/send/views/send_recipient_view.dart';
 import 'package:dayfi/features/send/views/send_review_view.dart';
 import 'package:dayfi/features/send/views/regular_transfer_transaction_pin_view.dart';
 import 'package:dayfi/features/send/views/send_payment_success_view.dart';
+import 'package:dayfi/features/send/views/send_collection_success_view.dart';
 import 'package:dayfi/features/send/views/transaction_pin_create_view.dart';
 import 'package:dayfi/features/send/views/transaction_pin_reenter_view.dart';
 import 'package:dayfi/features/send/views/send_payment_method_view.dart';
@@ -48,6 +51,7 @@ import 'package:dayfi/features/profile/views/reset_transaction_pin_confirm_view.
 import 'package:dayfi/features/send/views/send_view.dart';
 import 'package:dayfi/features/send/views/select_destination_country_view.dart';
 import 'package:dayfi/features/send/views/select_delivery_method_view.dart';
+import 'package:dayfi/features/send/views/add_wallet_address_view.dart';
 
 class VerifyEmailViewArguments {
   final bool isSignUp;
@@ -62,9 +66,11 @@ class VerifyEmailViewArguments {
 }
 
 class AppRoute {
+    static const String addWalletAddressView = '/addWalletAddressView';
   static RouteSettings globalrouteSettings = const RouteSettings();
 
   static const String onboardingView = '/onboardingView';
+  static const String checkEmailView = '/checkEmailView';
   static const String loginView = '/loginView';
   static const String signupView = '/signupView';
   static const String verifyEmailView = '/verifyEmailView';
@@ -93,31 +99,70 @@ class AppRoute {
   static const String sendDayfiIdReviewView = '/sendDayfiIdReviewView';
   static const String sendRecipientView = '/sendRecipientView';
   static const String sendReviewView = '/sendReviewView';
-  static const String regularTransferTransactionPinView = '/regularTransferTransactionPinView';
+  static const String regularTransferTransactionPinView =
+      '/regularTransferTransactionPinView';
   static const String sendPaymentSuccessView = '/sendPaymentSuccessView';
+  static const String sendCollectionSuccessView = '/sendCollectionSuccessView';
   static const String transactionPinCreateView = '/transactionPinCreateView';
   static const String transactionPinReenterView = '/transactionPinReenterView';
   static const String sendPaymentMethodView = '/sendPaymentMethodView';
-  static const String changeTransactionPinOldView = '/changeTransactionPinOldView';
-  static const String changeTransactionPinNewView = '/changeTransactionPinNewView';
-  static const String changeTransactionPinConfirmView = '/changeTransactionPinConfirmView';
-  static const String resetTransactionPinIntroView = '/resetTransactionPinIntroView';
-  static const String resetTransactionPinOtpView = '/resetTransactionPinOtpView';
-  static const String resetTransactionPinNewView = '/resetTransactionPinNewView';
-  static const String resetTransactionPinConfirmView = '/resetTransactionPinConfirmView';
+  static const String changeTransactionPinOldView =
+      '/changeTransactionPinOldView';
+  static const String changeTransactionPinNewView =
+      '/changeTransactionPinNewView';
+  static const String changeTransactionPinConfirmView =
+      '/changeTransactionPinConfirmView';
+  static const String resetTransactionPinIntroView =
+      '/resetTransactionPinIntroView';
+  static const String resetTransactionPinOtpView =
+      '/resetTransactionPinOtpView';
+  static const String resetTransactionPinNewView =
+      '/resetTransactionPinNewView';
+  static const String resetTransactionPinConfirmView =
+      '/resetTransactionPinConfirmView';
   static const String sendView = '/send';
-  static const String selectDestinationCountryView = '/selectDestinationCountryView';
+  static const String selectDestinationCountryView =
+      '/selectDestinationCountryView';
   static const String selectDeliveryMethodView = '/selectDeliveryMethodView';
   static const String softposInfoView = '/softposInfoView';
+  static const String sendFetchCryptoChannelsView =
+      '/sendFetchCryptoChannelsView';
+  static const String sendCryptoNetworksView = '/sendCryptoNetworksView';
 
   static Route getRoute(RouteSettings routeSettings) {
     globalrouteSettings = routeSettings;
     switch (routeSettings.name) {
+      case addWalletAddressView:
+        final args = routeSettings.arguments as Map<String, dynamic>? ?? {};
+        return _getPageRoute(
+          routeSettings,
+          AddWalletAddressView(
+            selectedData: args['selectedData'] as Map<String, dynamic>? ?? {},
+            networkKey: args['networkKey'] as String? ?? '',
+            networkName: args['networkName'] as String? ?? '',
+            requiresMemo: args['requiresMemo'] as bool? ?? false,
+          ),
+        );
       case loginView:
-        bool showBackButton = routeSettings.arguments as bool? ?? true;
+        // Support both legacy (bool) and new (LoginViewArguments) navigation
+        bool showBackButton = true;
+        String? email;
+        final args = routeSettings.arguments;
+        if (args is bool) {
+          showBackButton = args;
+        } else if (args is LoginViewArguments) {
+          email = args.email;
+        }
         return _getPageRoute(
           routeSettings,
           LoginView(showBackButton: showBackButton),
+        );
+
+      case checkEmailView:
+        final showBackButton = routeSettings.arguments as bool? ?? true;
+        return _getPageRoute(
+          routeSettings,
+          CheckEmailView(showBackButton: showBackButton),
         );
       case onboardingView:
         return _getPageRoute(routeSettings, const OnboardingView());
@@ -174,10 +219,7 @@ class AppRoute {
           UploadDocumentsView(showBackButton: showBackButton),
         );
       case bvnNinVerificationView:
-        return _getPageRoute(
-          routeSettings,
-          const BvnNinVerificationView(),
-        );
+        return _getPageRoute(routeSettings, const BvnNinVerificationView());
       case biometricSetupView:
         return _getPageRoute(routeSettings, const BiometricSetupView());
       case mainView:
@@ -190,7 +232,7 @@ class AppRoute {
       case recipientsView:
         bool fromProfile = false;
         bool fromSendView = false;
-        
+
         if (routeSettings.arguments is bool) {
           // Legacy: simple bool argument
           fromProfile = routeSettings.arguments as bool;
@@ -200,13 +242,10 @@ class AppRoute {
           fromProfile = args['fromProfile'] as bool? ?? false;
           fromSendView = args['fromSendView'] as bool? ?? false;
         }
-        
+
         return _getPageRoute(
           routeSettings,
-          RecipientsView(
-            fromProfile: fromProfile,
-            fromSendView: fromSendView,
-          ),
+          RecipientsView(fromProfile: fromProfile, fromSendView: fromSendView),
         );
       case editProfileView:
         return _getPageRoute(routeSettings, const EditProfileView());
@@ -242,15 +281,9 @@ class AppRoute {
           SendAddRecipientsView(selectedData: selectedData),
         );
       case dayfiTagExplanationView:
-        return _getPageRoute(
-          routeSettings,
-          const DayfiTagExplanationView(),
-        );
+        return _getPageRoute(routeSettings, const DayfiTagExplanationView());
       case createDayfiTagView:
-        return _getPageRoute(
-          routeSettings,
-          const CreateDayfiTagView(),
-        );
+        return _getPageRoute(routeSettings, const CreateDayfiTagView());
       case sendDayfiIdView:
         final selectedData =
             routeSettings.arguments as Map<String, dynamic>? ?? {};
@@ -268,10 +301,7 @@ class AppRoute {
           ),
         );
       case transactionPinReenterView:
-        return _getPageRoute(
-          routeSettings,
-          const TransactionPinReenterView(),
-        );
+        return _getPageRoute(routeSettings, const TransactionPinReenterView());
       case sendPaymentMethodView:
         final args = routeSettings.arguments as Map<String, dynamic>? ?? {};
         return _getPageRoute(
@@ -334,6 +364,18 @@ class AppRoute {
             transactionId: args['transactionId'] as String?,
           ),
         );
+      case sendCollectionSuccessView:
+        final args = routeSettings.arguments as Map<String, dynamic>? ?? {};
+        return _getPageRoute(
+          routeSettings,
+          SendCollectionSuccessView(
+            recipientData: args['recipientData'] as Map<String, dynamic>? ?? {},
+            selectedData: args['selectedData'] as Map<String, dynamic>? ?? {},
+            paymentData: args['paymentData'] as Map<String, dynamic>? ?? {},
+            collectionData: args['collectionData'],
+            transactionId: args['transactionId'] as String?,
+          ),
+        );
       case changeTransactionPinOldView:
         return _getPageRoute(
           routeSettings,
@@ -361,10 +403,7 @@ class AppRoute {
           ResetTransactionPinOtpView(email: email),
         );
       case resetTransactionPinNewView:
-        return _getPageRoute(
-          routeSettings,
-          const ResetTransactionPinNewView(),
-        );
+        return _getPageRoute(routeSettings, const ResetTransactionPinNewView());
       case resetTransactionPinConfirmView:
         return _getPageRoute(
           routeSettings,
@@ -385,14 +424,21 @@ class AppRoute {
           const SelectDestinationCountryView(),
         );
       case selectDeliveryMethodView:
-        return _getPageRoute(
-          routeSettings,
-          const SelectDeliveryMethodView(),
-        );
+        return _getPageRoute(routeSettings, const SelectDeliveryMethodView());
       case softposInfoView:
+        return _getPageRoute(routeSettings, const SoftposInfoView());
+
+      case sendFetchCryptoChannelsView:
         return _getPageRoute(
           routeSettings,
-          const SoftposInfoView(),
+          const SendFetchCryptoChannelsView(),
+        );
+      case sendCryptoNetworksView:
+        Map<String, dynamic> channel =
+            routeSettings.arguments as Map<String, dynamic>;
+        return _getPageRoute(
+          routeSettings,
+          SendCryptoNetworksView(selectedChannel: channel),
         );
 
       default:

@@ -50,6 +50,7 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
       ref
           .read(recipientsProvider.notifier)
           .loadBeneficiaries(isInitialLoad: true);
+      // Removed redundant transaction loading - transactions are loaded when transactions view is accessed
       // Store initial count if coming from profile
       if (widget.fromProfile) {
         final currentState = ref.read(recipientsProvider);
@@ -234,7 +235,10 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
-          scrolledUnderElevation: 0,
+          scrolledUnderElevation: .5,
+          foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+          shadowColor: Theme.of(context).scaffoldBackgroundColor,
+          surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
           automaticallyImplyLeading: false,
@@ -243,6 +247,7 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
                   ? IconButton(
                     icon: Icon(
                       Icons.arrow_back_ios,
+                      size: 20.sp,
                       color: Theme.of(context).colorScheme.onSurface,
                       // size: 20.sp,
                     ),
@@ -250,10 +255,10 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
                   )
                   : const SizedBox.shrink(),
           title: Text(
-            "Beneficiaries",
+            "Recipients",
             style: AppTypography.titleLarge.copyWith(
-              fontFamily: 'CabinetGrotesk',
-              fontSize: 20.sp,
+              fontFamily: 'FunnelDisplay',
+              fontSize: 24.sp,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface,
             ),
@@ -316,97 +321,196 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
             _refreshRecipients();
           },
           child: Padding(
-            padding: EdgeInsetsGeometry.only(bottom: 0.h),
-            child:
-                recipientsState.isLoading && visibleBeneficiaries.isEmpty
-                    ? ShimmerWidgets.recipientListShimmer(context, itemCount: 6)
-                    : recipientsState.errorMessage != null &&
-                        visibleBeneficiaries.isEmpty
-                    ? ErrorStateWidget(
-                      message: 'Failed to load Beneficiaries',
-                      details: recipientsState.errorMessage,
-                      onRetry: _refreshRecipients,
-                    )
-                    : visibleBeneficiaries.isEmpty
-                    ? EmptyStateWidget(
-                      icon: Icons.people_outline,
-                      title: 'No beneficiaries yet',
-                      message:
-                          'Your beneficiaries will appear here. Start sending money quickly',
-                      customButton: _buildActionButtonWidget(
-                        context,
-                        'Send Money',
-                        'assets/icons/svgs/swap.svg',
-                        () {
-                          appRouter.pushNamed(
-                            AppRoute.selectDestinationCountryView,
-                          );
-                        },
-                      ),
-                    )
-                    : ListView(
-                      children: [
-                        // Search Bar
-                        Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 18.w,
-                            vertical: 8.h,
-                          ),
-                          child: CustomTextField(
-                            controller: _searchController,
-                            label: '',
-                            hintText: 'Search...',
-                            borderRadius: 40,
-                            prefixIcon: Container(
-                              width: 40.w,
-                              alignment: Alignment.centerRight,
-                              constraints: BoxConstraints.tightForFinite(),
-                              child: Center(
-                                child: SvgPicture.asset(
-                                  'assets/icons/svgs/search-normal.svg',
-                                  height: 22.sp,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurface.withOpacity(0.6),
-                                ),
-                              ),
-                            ),
-                            onChanged: (value) {
-                              _searchDebouncer.run(() {
-                                ref
-                                    .read(recipientsProvider.notifier)
-                                    .searchBeneficiaries(value);
-                              });
-                            },
-                          ),
-                        ),
-
-                        // Beneficiaries List
-                        ListView.builder(
-                          shrinkWrap: true,
-                          physics: NeverScrollableScrollPhysics(),
-                          padding: EdgeInsets.only(
-                            left: 18.w,
-                            right: 18.w,
-                            bottom: 112.h,
-                          ),
-                          itemCount: visibleBeneficiaries.length,
-                          itemBuilder: (context, index) {
-                            final beneficiary = visibleBeneficiaries[index];
-                            return _buildRecipientCard(
-                              beneficiary,
-                              bottomMargin:
-                                  index == visibleBeneficiaries.length - 1
-                                      ? 8
-                                      : 24,
-                            );
-                          },
-                        ),
-                      ],
-                    ),
+            padding: EdgeInsets.only(bottom: 0.h),
+            child: _buildMainContent(recipientsState, visibleBeneficiaries),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildMainContent(
+    RecipientsState recipientsState,
+    List<BeneficiaryWithSource> visibleBeneficiaries,
+  ) {
+    String key;
+    if (recipientsState.isLoading && visibleBeneficiaries.isEmpty) {
+      key = 'loading';
+    } else if (recipientsState.errorMessage != null &&
+        visibleBeneficiaries.isEmpty) {
+      key = 'error';
+    } else if (visibleBeneficiaries.isEmpty &&
+        recipientsState.searchQuery.isEmpty) {
+      key = 'empty';
+    } else {
+      key = 'content';
+    }
+
+    return SizedBox(
+      key: ValueKey(key),
+      width: double.infinity,
+      child:
+          recipientsState.isLoading && visibleBeneficiaries.isEmpty
+              ? ShimmerWidgets.recipientListShimmer(context, itemCount: 6)
+              : recipientsState.errorMessage != null &&
+                  visibleBeneficiaries.isEmpty
+              ? ErrorStateWidget(
+                message: 'Failed to load Beneficiaries',
+                details: recipientsState.errorMessage,
+                onRetry: _refreshRecipients,
+              )
+              : visibleBeneficiaries.isEmpty &&
+                  recipientsState.searchQuery.isEmpty
+              ? EmptyStateWidget(
+                icon: Icons.people_outline,
+                title: 'No beneficiaries yet',
+                message:
+                    'Your beneficiaries will appear here. Start sending money quickly',
+                customButton: _buildActionButtonWidget(
+                  context,
+                  'Send Money',
+                  'assets/icons/svgs/swap.svg',
+                  () {
+                    appRouter.pushNamed(AppRoute.selectDestinationCountryView);
+                  },
+                ),
+              )
+              : ListView(
+                children: [
+                  // Search Bar
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 18.w,
+                      vertical: 8.h,
+                    ),
+                    child: CustomTextField(
+                      controller: _searchController,
+                      label: '',
+                      hintText: 'Search...',
+                      borderRadius: 40,
+                      prefixIcon: Container(
+                        width: 40.w,
+                        alignment: Alignment.centerRight,
+                        constraints: BoxConstraints.tightForFinite(),
+                        child: Center(
+                          child: SvgPicture.asset(
+                            'assets/icons/svgs/search-normal.svg',
+                            height: 22.sp,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withOpacity(0.6),
+                          ),
+                        ),
+                      ),
+                      suffixIcon:
+                          _searchController.text.isNotEmpty
+                              ? GestureDetector(
+                                onTap: () {
+                                  HapticHelper.lightImpact();
+                                  _searchController.clear();
+                                  ref
+                                      .read(recipientsProvider.notifier)
+                                      .searchBeneficiaries('');
+                                },
+                                child: Container(
+                                  width: 40.w,
+                                  alignment: Alignment.centerLeft,
+                                  constraints: BoxConstraints.tightForFinite(),
+                                  child: Center(
+                                    child: SvgPicture.asset(
+                                      'assets/icons/svgs/close-circle.svg',
+                                      height: 20.sp,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurface.withOpacity(0.6),
+                                    ),
+                                  ),
+                                ),
+                              )
+                              : null,
+                      onChanged: (value) {
+                        _searchDebouncer.run(() {
+                          ref
+                              .read(recipientsProvider.notifier)
+                              .searchBeneficiaries(value);
+                        });
+                      },
+                    ),
+                  ),
+                  // Show no search results when searching but no beneficiaries found
+                  if (visibleBeneficiaries.isEmpty &&
+                      recipientsState.searchQuery.isNotEmpty)
+                    Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(height: 16.h),
+                          SvgPicture.asset(
+                            'assets/icons/svgs/search-normal.svg',
+                            height: 64.sp,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withOpacity(0.6),
+                          ),
+                          SizedBox(height: 16.h),
+                          Text(
+                            'No beneficiaries found',
+                            style: TextStyle(
+                              fontFamily: 'FunnelDisplay',
+                              fontSize: 16.sp,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withOpacity(0.6),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          SizedBox(height: 8.h),
+                          Text(
+                            'Try searching with different keywords',
+                            style: AppTypography.bodyMedium.copyWith(
+                              fontFamily: 'Karla',
+                              fontSize: 14.sp,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withOpacity(0.4),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    // Beneficiaries List
+                    Container(
+                      margin: EdgeInsets.only(
+                        left: 18.w,
+                        right: 18.w,
+                        bottom: 20.h,
+                        top: 16.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surface,
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        physics: NeverScrollableScrollPhysics(),
+                        padding: EdgeInsets.zero,
+                        itemCount: visibleBeneficiaries.length,
+                        itemBuilder: (context, index) {
+                          final beneficiary = visibleBeneficiaries[index];
+                          return _buildRecipientCard(
+                            beneficiary,
+                            bottomMargin:
+                                index == visibleBeneficiaries.length - 1
+                                    ? 8
+                                    : 24,
+                          );
+                        },
+                      ),
+                    ),
+                ],
+              ),
     );
   }
 
@@ -416,184 +520,200 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
   }) {
     final beneficiary = beneficiaryWithSource.beneficiary;
     final source = beneficiaryWithSource.source;
-    return Container(
-      margin: EdgeInsets.only(bottom: 8.h, top: 8.h),
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12.r),
-      ),
-      child: Row(
-        children: [
-          // Avatar
-          Stack(
-            alignment: Alignment.bottomRight,
-            children: [
-              Container(
-                width: 40.w,
-                height: 40.w,
-                margin: EdgeInsets.only(bottom: 4.w, right: 4.w),
-                decoration: BoxDecoration(
-                  color: AppColors.purple500ForTheme(context),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Text(
-                    _getInitials(beneficiary.name),
-                    style: TextStyle(
-                      color: AppColors.neutral0,
-                      fontFamily: 'Karla',
-                      fontSize: 16.sp,
-                      letterSpacing: -.3,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                ),
-              ),
-              Align(
-                alignment: Alignment.bottomRight,
-                child: Container(
-                  width: 20.w,
-                  height: 20.w,
-                  decoration: BoxDecoration(
-                    color: AppColors.neutral0,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.neutral200, width: 1),
-                  ),
-                  child: ClipOval(
-                    child: SvgPicture.asset(
-                      _getFlagPath(beneficiary.country),
-                      fit: BoxFit.cover,
-                      width: 24.w,
-                      height: 24.w,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(width: 8.w),
-
-          // Beneficiary Info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return AnimatedContainer(
+      key: ValueKey(beneficiary.id),
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOut,
+      transform: Matrix4.diagonal3Values(1.0, 1.0, 1.0),
+      child: Container(
+        margin: EdgeInsets.only(bottom: 8.h, top: 8.h),
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+        child: Row(
+          children: [
+            // Avatar
+            Stack(
+              alignment: Alignment.bottomRight,
               children: [
-                Text(
-                  beneficiary.name.toUpperCase(),
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    fontFamily: 'Karla',
-                    fontSize: 18.sp,
-                    letterSpacing: -.3,
-                    fontWeight: FontWeight.w400,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 2,
-                ),
-                Row(
+                Stack(
+                  alignment: Alignment.center,
                   children: [
-                    _getAccountIcon(source, beneficiary),
-                    // SizedBox(width: 2.w),
-                    Expanded(
-                      child:
-                          _getChannelAndNetworkInfo(beneficiaryWithSource) ==
-                                  "DayFi Tag"
-                              ? Row(
-                                children: [
-                                  Text(
-                                    _getAccountNumber(
-                                      source,
-                                      beneficiary,
-                                    ).split("@").last,
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodyMedium?.copyWith(
-                                      fontFamily: 'Karla',
-                                      fontSize: 14.sp,
-                                      fontWeight: FontWeight.w400,
-                                      letterSpacing: -.3,
-                                      height: 1.450,
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onSurface.withOpacity(0.6),
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  SizedBox(width: 8.w),
-                                  Container(
-                                    padding: EdgeInsets.symmetric(
-                                      vertical: 3.h,
-                                      horizontal: 8.w,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.warning400.withOpacity(
-                                        0.15,
-                                      ),
-                                      borderRadius: BorderRadius.circular(8.r),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        // Icon(
-                                        //   Icons.auto_awesome,
-                                        //   size: 10.sp,
-                                        //   color: Color(0xFF1A1A1A),
-                                        // ),
-                                        // SizedBox(width: 4.w),
-                                        Text(
-                                          "Dayfi Tag",
-                                          style: TextStyle(
-                                            fontFamily: 'Karla',
-                                            fontSize: 10.sp,
-                                            color: AppColors.warning600,
-                                            fontWeight: FontWeight.w600,
-                                            // letterSpacing: 0,
-                                            height: 1.2,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              )
-                              : Text(
-                                '${_getChannelAndNetworkInfo(beneficiaryWithSource)} • ${_getAccountNumber(source, beneficiary)}',
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.bodyMedium?.copyWith(
-                                  fontFamily: 'Karla',
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.w400,
-                                  letterSpacing: -.3,
-                                  height: 1.450,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurface.withOpacity(0.6),
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                    SvgPicture.asset(
+                      "assets/icons/svgs/account.svg",
+                      width: 40.w,
+                      height: 40.w,
+                      color: AppColors.info500,
+                    ),
+                    SizedBox(
+                      width: 40.w,
+                      height: 40.w,
+                      child: Center(
+                        child: Text(
+                          _getInitials(beneficiary.name),
+                          style: TextStyle(
+                            color: AppColors.neutral0,
+                            fontFamily: 'Karla',
+                            fontSize: 16.sp,
+                            letterSpacing: -.6,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),
+                Align(
+                  alignment: Alignment.bottomRight,
+                  child: Container(
+                    width: 15.w,
+                    height: 15.w,
+                    decoration: BoxDecoration(
+                      color: AppColors.neutral0,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.neutral200, width: 1),
+                    ),
+                    child: ClipOval(
+                      child: SvgPicture.asset(
+                        _getFlagPath(beneficiary.country),
+                        fit: BoxFit.cover,
+                        width: 20.w,
+                        height: 20.w,
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
-          ),
-          SizedBox(width: 12.w),
-          // Send Button
-          PrimaryButton(
-            text: 'Send',
-            onPressed: () => _navigateToSend(beneficiaryWithSource),
-            height: 32.h,
-            width: 68.w,
-            backgroundColor: AppColors.purple500,
-            textColor: AppColors.neutral0,
-            fontFamily: 'Karla',
-            fontSize: 14.sp,
-            borderRadius: 20.r,
-            fontWeight: FontWeight.w500,
-          ),
-        ],
+            SizedBox(width: 10.w),
+
+            // Beneficiary Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    beneficiary.name.toUpperCase(),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      fontFamily: 'Karla',
+                      fontSize: 16.sp,
+                      letterSpacing: -.6,
+                      fontWeight: FontWeight.w500,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
+                  ),
+                  SizedBox(height: 2.h),
+                  Row(
+                    children: [
+                      // _getAccountIcon(source, beneficiary),
+                      // SizedBox(width: 4.w),
+                      Expanded(
+                        child:
+                            _getChannelAndNetworkInfo(beneficiaryWithSource) ==
+                                    "DayFi Tag"
+                                ? Row(
+                                  children: [
+                                    Text(
+                                      _getAccountNumber(
+                                        source,
+                                        beneficiary,
+                                      ).split("@").last,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodyMedium?.copyWith(
+                                        fontFamily: 'Karla',
+                                        fontSize: 13.sp,
+                                        fontWeight: FontWeight.w500,
+                                        letterSpacing: -.6,
+                                        height: 1.450,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface
+                                            .withOpacity(0.6),
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    SizedBox(width: 8.w),
+                                    Container(
+                                      padding: EdgeInsets.symmetric(
+                                        vertical: 3.h,
+                                        horizontal: 8.w,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.warning400.withOpacity(
+                                          0.15,
+                                        ),
+                                        borderRadius: BorderRadius.circular(
+                                          8.r,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          // Icon(
+                                          //   Icons.auto_awesome,
+                                          //   size: 10.sp,
+                                          //   color: Color(0xFF1A1A1A),
+                                          // ),
+                                          // SizedBox(width: 4.w),
+                                          Text(
+                                            "Dayfi Tag",
+                                            style: TextStyle(
+                                              fontFamily: 'Karla',
+                                              fontSize: 10.sp,
+                                              color: AppColors.warning600,
+                                              fontWeight: FontWeight.w600,
+                                              // letterSpacing: 0,
+                                              height: 1.2,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                )
+                                : Text(
+                                  '${_getChannelAndNetworkInfo(beneficiaryWithSource)} - ${_getAccountNumber(source, beneficiary)}',
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.bodyMedium?.copyWith(
+                                    fontFamily: 'Karla',
+                                    fontSize: 13.sp,
+                                    fontWeight: FontWeight.w500,
+                                    letterSpacing: -.4,
+                                    height: 1.450,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface.withOpacity(0.6),
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(width: 12.w),
+            // Send Button
+            PrimaryButton(
+              text: 'Send',
+              onPressed: () => _navigateToSend(beneficiaryWithSource),
+              height: 32.h,
+              width: 68.w,
+              backgroundColor: AppColors.purple500,
+              textColor: AppColors.neutral0,
+              fontFamily: 'Karla',
+              fontSize: 14.sp,
+              borderRadius: 20.r,
+              fontWeight: FontWeight.w500,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -717,8 +837,8 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
     }
 
     return Container(
-      width: 32.w,
-      height: 32.w,
+      width: 22.w,
+      height: 22.w,
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(24.r)),
       child: Stack(
         alignment: AlignmentDirectional.center,
@@ -726,12 +846,12 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
           SvgPicture.asset(
             'assets/icons/svgs/swap.svg',
             height: 22,
-            color: AppColors.neutral700.withOpacity(.35),
+            color: Theme.of(context).textTheme.bodyLarge!.color,
           ),
           SvgPicture.asset(
             overlayIcon,
-            height: 16,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(.65),
+            height: 15,
+            color: Theme.of(context).colorScheme.surface,
           ),
         ],
       ),
@@ -780,12 +900,15 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
   }
 
   void _navigateToSend(BeneficiaryWithSource beneficiaryWithSource) {
+    HapticHelper.lightImpact();
     // Debug log the beneficiary data being passed
-    print('📤 Navigating to send with beneficiary:');
-    print('   Name: ${beneficiaryWithSource.beneficiary.name}');
-    print('   Account Type: ${beneficiaryWithSource.source.accountType}');
-    print('   Account Number: ${beneficiaryWithSource.source.accountNumber}');
-    print('   Network ID: ${beneficiaryWithSource.source.networkId}');
+    // print('📤 Navigating to send with beneficiary:');
+    // print('   Name: ${beneficiaryWithSource.beneficiary.name}');
+    // print('   Account Type: ${beneficiaryWithSource.source.accountType}');
+    // print('   Account Number: ${beneficiaryWithSource.source.accountNumber}');
+    // print('   Network ID: ${beneficiaryWithSource.source.networkId}');
+
+    final sendCurrency = ref.read(sendViewModelProvider).sendCurrency;
 
     // Navigate to send_view with beneficiary data
     // The send_view will handle routing to the appropriate review screen
@@ -796,6 +919,7 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
       arguments: <String, dynamic>{
         'beneficiaryWithSource': beneficiaryWithSource,
         'fromRecipients': true,
+        'sendCurrency': sendCurrency,
       },
     );
   }
@@ -816,12 +940,12 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
             BoxShadow(
               blurRadius: 0,
               spreadRadius: 0,
-              color: Color(0xFFFFC700).withOpacity(.5),
+              color: Color(0xFFFFC700).withOpacity(.35),
               offset: Offset(0, 2.5),
             ),
           ],
           border: Border.all(
-            color: Theme.of(context).colorScheme.outline.withOpacity(.5),
+            color: Theme.of(context).colorScheme.outline.withOpacity(.35),
             width: 1,
           ),
           borderRadius: BorderRadius.circular(48.r),
@@ -846,7 +970,7 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
                 fontWeight: AppTypography.medium,
                 height: 1.5,
                 fontFamily: 'Karla',
-                letterSpacing: -.8,
+                letterSpacing: -.70,
                 fontSize: 18,
               ),
             ),

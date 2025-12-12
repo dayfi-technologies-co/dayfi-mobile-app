@@ -53,7 +53,7 @@ class CountrySelectionBottomSheet extends StatelessWidget {
                     title,
                     textAlign: TextAlign.center,
                     style: AppTypography.titleLarge.copyWith(
-                   fontFamily: 'CabinetGrotesk',
+                   fontFamily: 'FunnelDisplay',
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
                       color: AppColors.neutral800,
@@ -82,6 +82,7 @@ class CountrySelectionBottomSheet extends StatelessWidget {
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 18.w),
                   child: Container(
+                    height: 40.h,
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12.r),
@@ -139,7 +140,7 @@ class CountrySelectionBottomSheet extends StatelessWidget {
                             onCountrySelected(country.code);
                             Navigator.pop(context);
                           },
-                          borderRadius: BorderRadius.circular(8.r),
+                          borderRadius: BorderRadius.circular(12.r),
                           child: Container(
                             padding: EdgeInsets.symmetric(
                               horizontal: 16.w,
@@ -147,7 +148,7 @@ class CountrySelectionBottomSheet extends StatelessWidget {
                             ),
                             decoration: BoxDecoration(
                               color: Colors.transparent,
-                              borderRadius: BorderRadius.circular(8.r),
+                              borderRadius: BorderRadius.circular(12.r),
                             ),
                             child: Row(
                               children: [
@@ -165,7 +166,7 @@ class CountrySelectionBottomSheet extends StatelessWidget {
                                   child: Center(
                                     child: Text(
                                       country.flag,
-                                      style: TextStyle(fontSize: 18.sp),
+                                      style: TextStyle(fontSize: 16.55.sp),
                                     ),
                                   ),
                                 ),

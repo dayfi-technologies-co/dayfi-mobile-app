@@ -217,12 +217,12 @@ class PrimaryButton extends StatelessWidget {
       textColor: textColor ?? AppColors.neutral0,
       borderColor: borderColor,
       width: 375.w,
-      height: 48.000.h,
+      height: 48.00000.h,
       horizontalPadding: 12.w,
       verticalPadding: 10.h,
       borderRadius: 28.r,
       borderWidth: 0,
-      fontSize: 24.sp,
+      fontSize: 20.sp,
       fontWeight: AppTypography.bold,
       letterSpacing: 0.2,
       // lineHeight: 1.6,
@@ -237,12 +237,12 @@ class PrimaryButton extends StatelessWidget {
     final isDisabled = !enabled || isLoading;
     final effectiveBackgroundColor =
         isDisabled
-            ? (backgroundColor ?? AppColors.primary400).withOpacity(0.5)
+            ? (backgroundColor ?? AppColors.primary400).withOpacity(0.15)
             : backgroundColor ?? AppColors.primary400;
 
     final effectiveTextColor =
         isDisabled
-            ? (textColor ?? AppColors.neutral0).withOpacity(0.7)
+            ? (textColor ?? AppColors.neutral0).withOpacity(0.35)
             : textColor ?? AppColors.neutral0;
 
 
@@ -318,7 +318,7 @@ class PrimaryButton extends StatelessWidget {
                                 fontFamily ?? AppTypography.secondaryFontFamily,
                             fontWeight: fontWeight ?? AppTypography.medium,
                             height: lineHeight ?? 1.78,
-                            letterSpacing: -.8,
+                            letterSpacing: -.70,
                           ),
                           textAlign: TextAlign.center,
                         ),

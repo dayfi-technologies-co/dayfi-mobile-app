@@ -66,6 +66,7 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
   void _showFilterBottomSheet(TransactionsState transactionsState) {
     HapticHelper.lightImpact();
     showModalBottomSheet(
+      barrierColor: Colors.black.withOpacity(0.85),
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -88,22 +89,21 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
-          scrolledUnderElevation: 0,
+          scrolledUnderElevation: .5,
+          foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+          shadowColor: Theme.of(context).scaffoldBackgroundColor,
+          surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
-          leading: IconButton(
-            onPressed: () => appRouter.pop(),
-            icon: Icon(
-              Icons.arrow_back_ios,
-              color: Theme.of(context).colorScheme.onSurface,
-              // size: 20.sp,
-            ),
-          ),
+          leading: const SizedBox.shrink(),
+          automaticallyImplyLeading: false,
+          leadingWidth: 0,
           title: Text(
             "Transactions",
             style: AppTypography.titleLarge.copyWith(
-              fontFamily: 'CabinetGrotesk',
-              fontSize: 28.00,
+              fontFamily: 'FunnelDisplay',
+              fontSize: 24.sp,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface,
             ),
@@ -226,7 +226,7 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
               // Transactions List
               Expanded(
                 child: Padding(
-                  padding: EdgeInsetsGeometry.only(bottom: 0.h),
+                  padding: EdgeInsets.only(bottom: 0.h),
                   child:
                       transactionsState.isLoading &&
                               transactionsState.groupedTransactions.isEmpty
@@ -247,7 +247,8 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                             details: transactionsState.errorMessage,
                             onRetry: _refreshTransactions,
                           )
-                          : transactionsState.groupedTransactions.isEmpty
+                          : transactionsState.groupedTransactions.isEmpty &&
+                              transactionsState.searchQuery.isEmpty
                           ? EmptyStateWidget(
                             icon: Icons.receipt_long_outlined,
                             title: 'No transactions yet',
@@ -267,6 +268,7 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                                   vertical: 8.h,
                                 ),
                                 child: CustomTextField(
+                                  isSearch: true,
                                   controller: _searchController,
                                   label: '',
                                   hintText: 'Search transactions',
@@ -296,25 +298,79 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                                   },
                                 ),
                               ),
-                              ListView.builder(
-                                shrinkWrap: true,
-                                physics: NeverScrollableScrollPhysics(),
-                                padding: EdgeInsets.only(
-                                  left: 18.w,
-                                  right: 18.w,
-                                  bottom: 124.h,
-                                ),
-                                itemCount:
-                                    transactionsState
-                                        .groupedTransactions
-                                        .length,
-                                itemBuilder: (context, index) {
-                                  final group =
+                              // Show no search results when searching but no transactions found
+                              if (transactionsState
+                                      .groupedTransactions
+                                      .isEmpty &&
+                                  transactionsState.searchQuery.isNotEmpty)
+                                Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      SizedBox(height: 16.h),
+                                      SvgPicture.asset(
+                                        'assets/icons/svgs/search-normal.svg',
+                                        height: 64.sp,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface
+                                            .withOpacity(0.6),
+                                      ),
+                                      SizedBox(height: 16.h),
+                                      Text(
+                                        'No transactions found',
+                                        style: TextStyle(
+                                          fontFamily: 'FunnelDisplay',
+                                          fontSize: 16.sp,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface
+                                              .withOpacity(0.6),
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      SizedBox(height: 8.h),
+                                      Text(
+                                        'Try searching with different keywords',
+                                        style: AppTypography.bodyMedium
+                                            .copyWith(
+                                              fontFamily: 'Karla',
+                                              fontSize: 14.sp,
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurface
+                                                  .withOpacity(0.4),
+                                            ),
+
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
+                                  ),
+                                )
+                            
+                            
+                              else
+                                ListView.builder(
+                                  shrinkWrap: true,
+                                  physics: NeverScrollableScrollPhysics(),
+                                  padding: EdgeInsets.only(
+                                    left: 18.w,
+                                    right: 18.w,
+                                    bottom: 20.h,
+                                  ),
+                                  itemCount:
                                       transactionsState
-                                          .groupedTransactions[index];
-                                  return _buildTransactionGroup(group);
-                                },
-                              ),
+                                          .groupedTransactions
+                                          .length,
+                                  itemBuilder: (context, index) {
+                                    final group =
+                                        transactionsState
+                                            .groupedTransactions[index];
+                                    return _buildTransactionGroup(group);
+                                  },
+                                ),
+
+                               
                             ],
                           ),
                 ),
@@ -328,6 +384,7 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
 
   Widget _buildTransactionGroup(TransactionGroup group) {
     return Column(
+      key: ValueKey(group.date),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Date Header
@@ -338,8 +395,8 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               fontFamily: 'Karla',
               fontSize: 14,
-              fontWeight: FontWeight.w400,
-              letterSpacing: -.3,
+              fontWeight: FontWeight.w500,
+              letterSpacing: -.6,
               height: 1.450,
               color: Theme.of(
                 context,
@@ -350,7 +407,7 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
 
         // Transactions for this date
         Container(
-          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(12.r),
@@ -390,40 +447,78 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
           );
         },
         child: Container(
-          margin: EdgeInsets.only(bottom: bottomMargin.h, top: 8.h),
+          key: ValueKey(transaction.id),
+          margin: EdgeInsets.only(
+            bottom: bottomMargin.h,
+            top: 8.h,
+            left: 8.w,
+            right: 8.w,
+          ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               // Transaction Type Icon (Inflow/Outflow)
               SizedBox(
-                width: 36.w,
-                height: 36.w,
+                width: 40.w,
+                height: 40.w,
                 child: Stack(
-                  alignment: Alignment.center,
                   children: [
-                    // Background circle
-                    SvgPicture.asset(
-                      'assets/icons/svgs/transactions.svg',
-                      height: 36.sp,
-                      color: _getTransactionTypeColorForTransaction(
-                        transaction,
-                      ).withOpacity(0.35),
-                    ),
-                    // Foreground icon
-                    Center(
-                      child: SvgPicture.asset(
-                        _getTransactionTypeIconForTransaction(transaction),
-                        height: 20.sp,
-                        color: _getTransactionTypeColorForTransaction(
-                          transaction,
-                        ),
+                    SizedBox(
+                      width: 40.w,
+                      height: 40.w,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          // Background circle
+                          SvgPicture.asset(
+                            'assets/icons/svgs/account.svg',
+                            height: 40.sp,
+                            color: _getTransactionTypeColorForTransaction(
+                              transaction,
+                            ),
+                          ),
+                          // Foreground icon
+                          Center(
+                            child: SvgPicture.asset(
+                              _getTransactionTypeIconForTransaction(
+                                transaction,
+                              ),
+                              height: 28.sp,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
+
+                    // Stack(
+                    //   alignment: Alignment.center,
+                    //   children: [
+                    //     // Background circle
+                    //     SvgPicture.asset(
+                    //       'assets/icons/svgs/account.svg',
+                    //       height: 32.sp,
+                    //       color: _getTransactionTypeColorForTransaction(
+                    //         transaction,
+                    //       ).withOpacity(0.2),
+                    //     ),
+                    //     // Foreground icon
+                    //     Center(
+                    //       child: SvgPicture.asset(
+                    //         _getTransactionTypeIconForTransaction(transaction),
+                    //         height: 0.sp,
+                    //         color: _getTransactionTypeColorForTransaction(
+                    //           transaction,
+                    //         ),
+                    //       ),
+                    //     ),
+                    //   ],
+                    // ),
                   ],
                 ),
               ),
-              SizedBox(width: 8.w),
+              SizedBox(width: 10.w),
 
               // Transaction Info
               Expanded(
@@ -447,7 +542,7 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                               fontWeight: FontWeight.w500,
                               color: Theme.of(context).colorScheme.onSurface,
                             ),
-                            // maxLines: 2,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -462,13 +557,13 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                         _capitalizeWords(transaction.reason!),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           fontFamily: 'karla',
-                          fontWeight: FontWeight.w400,
+                          fontWeight: FontWeight.w500,
                           letterSpacing: -.1,
                           height: 1.5,
                           fontSize: 12.sp,
                           color: Theme.of(
                             context,
-                          ).colorScheme.onSurface.withOpacity(.45),
+                          ).colorScheme.onSurface.withOpacity(.65),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -480,7 +575,7 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontFamily: 'Karla',
                         fontSize: 12.sp,
-                        fontWeight: FontWeight.w400,
+                        fontWeight: FontWeight.w500,
                         letterSpacing: -.2,
                         color: Theme.of(
                           context,
@@ -507,12 +602,12 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                   SizedBox(height: 2.h),
 
                   Text(
-                    _getStatusText(transaction.status).toUpperCase(),
+                    _getStatusText(transaction.status),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontFamily: 'Karla',
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w500,
-                      letterSpacing: -.5,
+                      letterSpacing: -.6,
                       height: 1.450,
                       color: _getStatusColor(transaction.status),
                     ),
@@ -626,10 +721,10 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
           transaction.beneficiary.accountNumber != null &&
           transaction.beneficiary.accountNumber!.isNotEmpty) {
         final tag = transaction.beneficiary.accountNumber!;
-        final displayTag = tag.startsWith('@') ? tag : '@$tag';
-        return 'Money received from $displayTag';
+        final displayTag = tag.startsWith('@') ? tag.substring(1) : tag;
+        return 'FROM ${displayTag.toUpperCase()}';
       }
-      return 'Money added to your wallet';
+      return 'WALLET CREDIT';
     }
 
     // For payment (outgoing money)
@@ -648,7 +743,7 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
             beneficiaryName == 'SELF FUNDING' ||
             (beneficiaryName.contains('SELF') &&
                 beneficiaryName.contains('FUNDING'))) {
-          return 'Topped up your wallet';
+          return 'TOP-UP';
         }
       }
 
@@ -657,12 +752,12 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
           transaction.beneficiary.accountNumber != null &&
           transaction.beneficiary.accountNumber!.isNotEmpty) {
         final tag = transaction.beneficiary.accountNumber!;
-        final displayTag = tag.startsWith('@') ? tag : '@$tag';
-        return 'Sent money to $displayTag';
+        final displayTag = tag.startsWith('@') ? tag.substring(1) : tag;
+        return 'TO ${displayTag.toUpperCase()}';
       }
 
       // Payment to beneficiary name
-      return 'Sent to ${transaction.beneficiary.name}';
+      return 'TO ${transaction.beneficiary.name.toUpperCase()}';
     }
 
     // Fallback to beneficiary name

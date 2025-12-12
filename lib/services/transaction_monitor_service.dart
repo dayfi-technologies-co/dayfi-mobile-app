@@ -14,7 +14,7 @@ class TransactionMonitorService {
 
   /// Start monitoring pending transactions
   void startMonitoring() {
-    print('🔄 Starting transaction monitoring...');
+    // print('🔄 Starting transaction monitoring...');
 
     // Check every 30 seconds
     _monitoringTimer = Timer.periodic(
@@ -28,7 +28,7 @@ class TransactionMonitorService {
 
   /// Stop monitoring
   void stopMonitoring() {
-    print('⏹️ Stopping transaction monitoring...');
+    // print('⏹️ Stopping transaction monitoring...');
     _monitoringTimer?.cancel();
     _monitoringTimer = null;
   }
@@ -46,20 +46,20 @@ class TransactionMonitorService {
       'retryCount': 0,
     };
 
-    print('📝 Added transaction $transactionId to monitoring');
+    // print('📝 Added transaction $transactionId to monitoring');
   }
 
   /// Remove a transaction from monitoring
   void removeTransactionFromMonitoring(String transactionId) {
     _pendingTransactions.remove(transactionId);
-    print('🗑️ Removed transaction $transactionId from monitoring');
+    // print('🗑️ Removed transaction $transactionId from monitoring');
   }
 
   /// Check all pending transactions
   Future<void> _checkPendingTransactions() async {
     if (_pendingTransactions.isEmpty) return;
 
-    print('🔍 Checking ${_pendingTransactions.length} pending transactions...');
+    // print('🔍 Checking ${_pendingTransactions.length} pending transactions...');
 
     for (final entry in _pendingTransactions.entries) {
       final transactionId = entry.key;
@@ -68,7 +68,7 @@ class TransactionMonitorService {
       try {
         await _checkTransactionStatus(transactionId, data);
       } catch (e) {
-        print('❌ Error checking transaction $transactionId: $e');
+        // print('❌ Error checking transaction $transactionId: $e');
       }
     }
   }
@@ -97,7 +97,7 @@ class TransactionMonitorService {
         collectionSequenceId,
       );
 
-      print('📊 Transaction $transactionId status: $status');
+      // print('📊 Transaction $transactionId status: $status');
 
       // Update retry count
       data['retryCount'] = retryCount + 1;
@@ -110,17 +110,17 @@ class TransactionMonitorService {
         await _createPaymentForTransaction(transactionId, data);
         removeTransactionFromMonitoring(transactionId);
       } else if (status == 'failed' || status == 'failed-collection') {
-        print('❌ Transaction $transactionId failed with status: $status');
+        // print('❌ Transaction $transactionId failed with status: $status');
         removeTransactionFromMonitoring(transactionId);
       } else if (status == 'unknown') {
-        print('⚠️ Transaction $transactionId status unknown, will retry...');
+        // print('⚠️ Transaction $transactionId status unknown, will retry...');
       } else {
         print(
           '⏳ Transaction $transactionId still pending with status: $status',
         );
       }
     } catch (e) {
-      print('❌ Error checking status for transaction $transactionId: $e');
+      // print('❌ Error checking status for transaction $transactionId: $e');
       data['retryCount'] = retryCount + 1;
     }
   }
@@ -137,7 +137,7 @@ class TransactionMonitorService {
       // Add collection sequence ID to payment data
       paymentData['collectionSequenceId'] = collectionSequenceId;
 
-      print('💳 Creating payment for transaction $transactionId...');
+      // print('💳 Creating payment for transaction $transactionId...');
       final paymentResponse = await _paymentService.createPayment(paymentData);
 
       if (paymentResponse.error) {
@@ -145,13 +145,13 @@ class TransactionMonitorService {
           '❌ Payment creation failed for transaction $transactionId: ${paymentResponse.message}',
         );
       } else {
-        print('✅ Payment created successfully for transaction $transactionId');
+        // print('✅ Payment created successfully for transaction $transactionId');
 
         // Refresh transactions to show updated status
         await _refreshTransactions();
       }
     } catch (e) {
-      print('❌ Error creating payment for transaction $transactionId: $e');
+      // print('❌ Error creating payment for transaction $transactionId: $e');
     }
   }
 
@@ -160,12 +160,12 @@ class TransactionMonitorService {
     try {
       // This would typically trigger a refresh in the transactions view
       // For now, we'll just log it
-      print('🔄 Refreshing transactions list...');
+      // print('🔄 Refreshing transactions list...');
 
       // TODO: Implement proper refresh mechanism
       // This could use a callback or event system to notify the UI
     } catch (e) {
-      print('❌ Error refreshing transactions: $e');
+      // print('❌ Error refreshing transactions: $e');
     }
   }
 

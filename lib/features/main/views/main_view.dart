@@ -1,9 +1,9 @@
 import 'package:dayfi/features/home/views/home_view.dart';
+import 'package:dayfi/features/transactions/views/transactions_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 // import 'package:dayfi/features/send/views/send_view.dart';
-import 'package:dayfi/features/softpos/views/softpos_view.dart';
 import 'package:dayfi/features/recipients/views/recipients_view.dart';
 import 'package:dayfi/features/profile/views/profile_view.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -37,7 +37,7 @@ class _MainViewState extends ConsumerState<MainView> {
 
   final List<Widget> _screens = [
     const HomeView(),
-    const SoftposView(),
+    const TransactionsView(),
     RecipientsView(fromSendView: false, fromProfile: false),
     const ProfileView(),
   ];
@@ -147,7 +147,8 @@ class _MainViewState extends ConsumerState<MainView> {
 
       // Only show the biometric reminder if the device supports biometrics
       // and the user has NOT enabled biometrics for this app.
-      final bool deviceHasBiometrics = await BiometricService.isBiometricAvailable();
+      final bool deviceHasBiometrics =
+          await BiometricService.isBiometricAvailable();
 
       if (deviceHasBiometrics && !isBiometricsSetup) {
         await Future.delayed(const Duration(seconds: 2));
@@ -167,7 +168,7 @@ class _MainViewState extends ConsumerState<MainView> {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return Dialog(
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          backgroundColor: Theme.of(context).colorScheme.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24.r),
           ),
@@ -177,63 +178,71 @@ class _MainViewState extends ConsumerState<MainView> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 // Biometric icon
-                Container(
-                  width: 80.w,
-                  height: 80.w,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [AppColors.purple400, AppColors.purple600],
-                    ),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.purple500ForTheme(
-                          context,
-                        ).withOpacity(0.3),
-                        blurRadius: 20,
-                        spreadRadius: 2,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Icon(Icons.security, color: Colors.white, size: 40.w),
-                ),
+                // Container(
+                //   width: 80.w,
+                //   height: 80.w,
+                //   decoration: BoxDecoration(
+                //     gradient: LinearGradient(
+                //       begin: Alignment.topLeft,
+                //       end: Alignment.bottomRight,
+                //       colors: [AppColors.purple400, AppColors.orange500],
+                //     ),
+                //     shape: BoxShape.circle,
+                //     boxShadow: [
+                //       BoxShadow(
+                //         color: AppColors.purple500ForTheme(
+                //           context,
+                //         ).withOpacity(0.15),
+                //         blurRadius: 20,
+                //         spreadRadius: 2,
+                //         offset: const Offset(0, 4),
+                //       ),
+                //     ],
+                //   ),
+                //   child: Padding(
+                //     padding: const EdgeInsets.all(10.0),
+                //     child: SvgPicture.asset(
+                //       "assets/icons/svgs/security-safe.svg",
+                //       color: Colors.white,
+                //       height: 24.w,
+                //     ),
+                //   ),
+                // ),
 
-                SizedBox(height: 24.h),
+                // SizedBox(height: 24.h),
 
                 // Title
-                Text(
-                  'Enable Biometric Security',
-                  style: AppTypography.titleLarge.copyWith(
-                    fontFamily: 'CabinetGrotesk',
-                    fontSize: 28.00,
-                    // // height: 1.6,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
+                // Text(
+                //   'Enable Biometric Security',
+                //   style: AppTypography.titleLarge.copyWith(
+                //     fontFamily: 'FunnelDisplay',
+                //     fontSize: 18.sp,
+                //     // // height: 1.6,
+                //     fontWeight: FontWeight.w600,
+                //     color: Theme.of(context).colorScheme.onSurface,
+                //   ),
+                //   textAlign: TextAlign.center,
+                // ),
 
-                SizedBox(height: 16.h),
+                // SizedBox(height: 16.h),
 
                 // Description
                 Text(
-                  'Add an extra layer of security to your account with biometric authentication. You can enable this later in settings if you prefer.',
+                  'Add an extra layer of security to your account with biometric authentication.',
                   style: AppTypography.bodyMedium.copyWith(
                     fontFamily: 'Karla',
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w400,
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: -.6,
                     color: Theme.of(
                       context,
-                    ).colorScheme.onSurface.withOpacity(0.7),
+                    ).colorScheme.onSurface.withOpacity(0.9),
                     height: 1.4,
                   ),
                   textAlign: TextAlign.center,
                 ),
 
-                SizedBox(height: 24.h),
+                SizedBox(height: 32.h),
 
                 // Enable button
                 PrimaryButton(
@@ -245,7 +254,7 @@ class _MainViewState extends ConsumerState<MainView> {
                   backgroundColor: AppColors.purple500,
                   textColor: AppColors.neutral0,
                   borderRadius: 38,
-                  height: 48.000.h,
+                  height: 48.00000.h,
                   width: double.infinity,
                   fullWidth: true,
                   fontFamily: 'Karla',
@@ -253,7 +262,7 @@ class _MainViewState extends ConsumerState<MainView> {
                   fontWeight: FontWeight.w500,
                   letterSpacing: -0.8,
                 ),
-                SizedBox(height: 12.h),
+                SizedBox(height: 8.h),
 
                 // Skip button
                 TextButton(
@@ -267,8 +276,9 @@ class _MainViewState extends ConsumerState<MainView> {
                       fontFamily: 'Karla',
                       fontSize: 16.sp,
                       letterSpacing: -0.8,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.neutral400,
+                      fontWeight: FontWeight.w500,
+                      color: Theme.of(context).textTheme.bodyLarge!.color,
+                      decoration: TextDecoration.underline,
                     ),
                   ),
                 ),
@@ -283,10 +293,10 @@ class _MainViewState extends ConsumerState<MainView> {
   Future<void> _updateBiometricStatus(bool isEnabled) async {
     try {
       final authService = locator<AuthService>();
-      
+
       // Call the backend API
       await authService.updateBiometrics(isBiometricsSetup: isEnabled);
-      
+
       // Update local storage
       final userJson = await _secureStorage.read(StorageKeys.user);
       if (userJson.isNotEmpty) {
@@ -294,7 +304,7 @@ class _MainViewState extends ConsumerState<MainView> {
         userMap['is_biometrics_setup'] = isEnabled;
         await _secureStorage.write(StorageKeys.user, json.encode(userMap));
       }
-      
+
       AppLogger.info('Biometric status updated: $isEnabled');
     } catch (e) {
       AppLogger.error('Error updating biometric status: $e');
@@ -341,12 +351,12 @@ class _MainViewState extends ConsumerState<MainView> {
               children: [
                 _buildNavItem(
                   index: 0,
-                  icon: "assets/icons/svgs/transactions.svg",
+                  icon: "assets/icons/svgs/swap.svg",
                   isSelected: _currentIndex == 0,
                 ),
                 _buildNavItem(
                   index: 1,
-                  icon: "assets/icons/svgs/pos.svg",
+                  icon: "assets/icons/svgs/transactions.svg",
                   isSelected: _currentIndex == 1,
                 ),
                 _buildNavItem(
@@ -410,7 +420,7 @@ class _MainViewState extends ConsumerState<MainView> {
                   : SvgPicture.asset(
                     icon,
                     height: 40.sp,
-                    color: index == 1 ? Color(0xFF5F2EA1) : null,
+                    // color: index == 1 ? Color(0xFF5F2EA1) : null,
                   ),
 
               SizedBox(height: 4.h),
@@ -418,7 +428,7 @@ class _MainViewState extends ConsumerState<MainView> {
                 index == 0
                     ? '    Home    '
                     : index == 1
-                    ? '  SoftPOS   '
+                    ? 'Transactions'
                     : index == 2
                     ? ' Recipients '
                     : '   Profile   ',
@@ -438,6 +448,7 @@ class _MainViewState extends ConsumerState<MainView> {
 
   void _showWelcomeBottomSheet() {
     showModalBottomSheet(
+      barrierColor: Colors.black.withOpacity(0.85),
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -455,6 +466,7 @@ class _MainViewState extends ConsumerState<MainView> {
 
   Widget _buildWelcomeBottomSheet() {
     return Container(
+      height: MediaQuery.of(context).size.height * 0.92,
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
         borderRadius: BorderRadius.only(
@@ -463,7 +475,7 @@ class _MainViewState extends ConsumerState<MainView> {
         ),
       ),
       child: Padding(
-        padding: EdgeInsets.fromLTRB(24.w, 12.h, 24.w, 40.h),
+        padding: EdgeInsets.fromLTRB(18.w, 18.h, 18.w, 40.h),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -471,27 +483,46 @@ class _MainViewState extends ConsumerState<MainView> {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                GestureDetector(
+                InkWell(
+                  splashColor: Colors.transparent,
+                  highlightColor: Colors.transparent,
                   onTap: () => _dismissWelcomeBottomSheet(context),
-                  child: Icon(
-                    Icons.close,
-                    color: Theme.of(context).colorScheme.onSurface,
-                    size: 28.w,
+                  child: Stack(
+                    alignment: AlignmentGeometry.center,
+                    children: [
+                      SvgPicture.asset(
+                        "assets/icons/svgs/notificationn.svg",
+                        height: 40.sp,
+                        color: Theme.of(context).colorScheme.surface,
+                      ),
+                      SizedBox(
+                        height: 40.sp,
+                        width: 40.sp,
+                        child: Center(
+                          child: Image.asset(
+                            "assets/icons/pngs/cancelicon.png",
+                            height: 20.h,
+                            width: 20.w,
+                            color: Theme.of(context).textTheme.bodyLarge!.color,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
 
-            SizedBox(height: 40.h),
+            SizedBox(height: 32.h),
 
             // Title
             Text(
               'Welcome to Dayfi App',
               style: AppTypography.headlineLarge.copyWith(
-                fontFamily: 'CabinetGrotesk',
-                fontSize: 28.sp,
-                height: 1.2,
-                fontWeight: FontWeight.w700,
+                fontSize: 18.sp,
+                fontFamily: 'Boldonse',
+                // letterSpacing: -.5,
+                fontWeight: FontWeight.w500,
                 color: Theme.of(context).colorScheme.onSurface,
                 // height: 1.2,
               ),
@@ -505,36 +536,36 @@ class _MainViewState extends ConsumerState<MainView> {
               icon: _buildTransactionsIcon(),
               title: 'Home',
               description:
-                  'Manage your global wallet, check the details and status of all your payments in one dashboard.',
+                  'Top up your wallet and send money globally with ease.',
             ),
 
             SizedBox(height: 24.h),
 
             _buildFeatureItem(
               icon: _buildSoftPOSIcon(),
-              title: 'SoftPOS',
+              title: 'Transactions',
               description:
-                  'Accept payments directly on your phone. Turn your device into a secure payment terminal.',
+                  'Track all your payment history and transaction details.',
             ),
 
             SizedBox(height: 24.h),
 
             _buildFeatureItem(
               icon: _buildRecipientsIcon(),
-              title: 'Beneficiaries',
+              title: 'Recipients',
               description:
-                  'View and manage your saved beneficiaries for quick and easy transfers.',
+                  'Manage your saved beneficiaries for quick transfers.',
             ),
             SizedBox(height: 24.h),
 
             _buildFeatureItem(
               icon: _buildProfileIcon(),
               title: 'Profile',
-              description:
-                  'Find your personal details provided during sign up. Easily update your info anytime.',
+              description: 'Update your personal details and account settings.',
             ),
 
-            SizedBox(height: MediaQuery.of(context).size.width * .46),
+            // SizedBox(height: MediaQuery.of(context).size.width * .46),
+            Spacer(),
 
             // Okay button
             PrimaryButton(
@@ -543,7 +574,7 @@ class _MainViewState extends ConsumerState<MainView> {
               backgroundColor: AppColors.purple500,
               textColor: AppColors.neutral0,
               borderRadius: 40.r,
-              height: 48.000.h,
+              height: 48.00000.h,
               width: double.infinity,
               fullWidth: true,
               fontFamily: 'Karla',
@@ -579,8 +610,8 @@ class _MainViewState extends ConsumerState<MainView> {
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   fontFamily: 'Karla',
                   fontSize: 18.sp,
-                  letterSpacing: -.3,
-                  fontWeight: FontWeight.w400,
+                  letterSpacing: -.6,
+                  fontWeight: FontWeight.w500,
                   color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
@@ -592,8 +623,8 @@ class _MainViewState extends ConsumerState<MainView> {
                 style: AppTypography.bodyMedium.copyWith(
                   fontFamily: 'Karla',
                   fontSize: 14.5,
-                  fontWeight: FontWeight.w400,
-                  letterSpacing: -.3,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: -.6,
                   height: 1.450,
                   color: Theme.of(
                     context,
@@ -608,14 +639,14 @@ class _MainViewState extends ConsumerState<MainView> {
   }
 
   Widget _buildTransactionsIcon() {
-    return SvgPicture.asset("assets/icons/svgs/transactions.svg", height: 40.h);
+    return SvgPicture.asset("assets/icons/svgs/swap.svg", height: 40.h);
   }
 
   Widget _buildSoftPOSIcon() {
     return SvgPicture.asset(
-      "assets/icons/svgs/pos.svg",
+      "assets/icons/svgs/transactions.svg",
       height: 40.h,
-      color: Color(0xFF5F2EA1),
+      // color: Color(0xFF5F2EA1),
     );
   }
 

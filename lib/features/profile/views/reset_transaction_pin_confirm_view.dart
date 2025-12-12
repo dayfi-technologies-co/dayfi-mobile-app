@@ -156,9 +156,9 @@ class _ResetTransactionPinConfirmViewState
       barrierDismissible: false,
       builder:
           (context) => Dialog(
-            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                backgroundColor: Theme.of(context).colorScheme.surface,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16.r),
+              borderRadius: BorderRadius.circular(12.r),
             ),
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 32.h),
@@ -183,7 +183,7 @@ class _ResetTransactionPinConfirmViewState
                   Text(
                     "PIN Reset Successfully!",
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontFamily: 'CabinetGrotesk',
+                      fontFamily: 'FunnelDisplay',
                       fontSize: 17.sp,
                       fontWeight: FontWeight.w600,
                     ),
@@ -194,7 +194,7 @@ class _ResetTransactionPinConfirmViewState
                     "Your transaction PIN has been reset successfully. You can now use your new PIN for wallet transfers.",
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontSize: 11.sp,
-                      fontWeight: FontWeight.w400,
+                      fontWeight: FontWeight.w500,
                       fontFamily: 'Karla',
                       color: Theme.of(
                         context,
@@ -219,7 +219,7 @@ class _ResetTransactionPinConfirmViewState
                     height: 56.h,
                     textColor: AppColors.neutral0,
                     fontFamily: 'Karla',
-                    letterSpacing: -.8,
+                    letterSpacing: -.70,
                     fontSize: 18,
                     width: double.infinity,
                     fullWidth: true,
@@ -245,7 +245,11 @@ class _ResetTransactionPinConfirmViewState
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         resizeToAvoidBottomInset: false,
         appBar: AppBar(
-          scrolledUnderElevation: 0,
+             scrolledUnderElevation: .5,
+              foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+              shadowColor: Theme.of(context).scaffoldBackgroundColor,
+              surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
           leading: IconButton(
@@ -259,14 +263,15 @@ class _ResetTransactionPinConfirmViewState
             },
             icon: Icon(
               Icons.arrow_back_ios,
+            size: 20.sp,
               color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           title: Text(
             "Confirm New Transaction PIN",
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontFamily: 'CabinetGrotesk',
-              fontSize: 20.sp, // height: 1.6,
+              fontFamily: 'FunnelDisplay',
+              fontSize: 24.sp, // height: 1.6,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface,
             ),
@@ -297,9 +302,9 @@ class _ResetTransactionPinConfirmViewState
                               context,
                             ).textTheme.bodyMedium?.copyWith(
                               fontSize: 16.sp,
-                              fontWeight: FontWeight.w400,
+                              fontWeight: FontWeight.w500,
                               fontFamily: 'Karla',
-                              letterSpacing: -.3,
+                              letterSpacing: -.6,
                               height: 1.4,
                             ),
                             textAlign: TextAlign.center,
@@ -308,6 +313,8 @@ class _ResetTransactionPinConfirmViewState
                       ],
                     ),
                   ),
+                  SizedBox(height: MediaQuery.of(context).size.width * 0.1),
+
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 18.w),
                     child: PasscodeWidget(
@@ -318,7 +325,7 @@ class _ResetTransactionPinConfirmViewState
                       },
                     ),
                   ),
-                  SizedBox(height: MediaQuery.of(context).size.width * 0.15),
+                  SizedBox(height: MediaQuery.of(context).size.width * 0.1),
                   if (_localPin.length == 4)
                     Padding(
                           padding: EdgeInsets.symmetric(horizontal: 18.w),
@@ -332,7 +339,7 @@ class _ResetTransactionPinConfirmViewState
                                     : null,
                             isLoading: _isLoading,
                             showLoadingIndicator: true,
-                            height: 48.000.h,
+                            height: 48.00000.h,
                             backgroundColor:
                                 _localPin.length == 4 &&
                                         _errorMessage.isEmpty &&
@@ -340,7 +347,7 @@ class _ResetTransactionPinConfirmViewState
                                     ? AppColors.purple500
                                     : AppColors.purple500ForTheme(
                                       context,
-                                    ).withOpacity(.25),
+                                    ).withOpacity(.15),
                             textColor:
                                 _localPin.length == 4 &&
                                         _errorMessage.isEmpty &&
@@ -348,7 +355,7 @@ class _ResetTransactionPinConfirmViewState
                                     ? AppColors.neutral0
                                     : AppColors.neutral0.withOpacity(0.5),
                             fontFamily: 'Karla',
-                            letterSpacing: -.8,
+                            letterSpacing: -.70,
                             fontSize: 18,
                             width: double.infinity,
                             fullWidth: true,
@@ -370,7 +377,7 @@ class _ResetTransactionPinConfirmViewState
                         fontSize: 13.sp,
                         color: Colors.red.shade800,
                         letterSpacing: -0.4,
-                        fontWeight: FontWeight.w400,
+                        fontWeight: FontWeight.w500,
                         height: 1.4,
                       ),
                       textAlign: TextAlign.center,
@@ -413,9 +420,9 @@ class PasscodeWidget extends StatelessWidget {
               child: Text(
                 index < currentPasscode.length ? '*' : '*',
                 style: TextStyle(
-                  fontSize: 70.sp,
+                  fontSize: 88.sp,
                   letterSpacing: -10,
-                  fontFamily: 'CabinetGrotesk',
+                  fontFamily: 'FunnelDisplay',
                   fontWeight: FontWeight.w700,
                   color:
                       index < currentPasscode.length
@@ -442,6 +449,7 @@ class PasscodeWidget extends StatelessWidget {
             _buildNumberButton('0'),
             _buildIconButton(
               icon: Icons.arrow_back_ios,
+           
               onTap: () {
                 if (currentPasscode.isNotEmpty) {
                   onPasscodeChanged(
@@ -478,9 +486,9 @@ class PasscodeWidget extends StatelessWidget {
                 child: Text(
                   number,
                   style: TextStyle(
-                    fontSize: 25.60.sp,
-                    fontFamily: 'CabinetGrotesk',
-                    fontWeight: FontWeight.w400,
+                    fontSize: 32.sp,
+                    fontFamily: 'FunnelDisplay',
+                    fontWeight: FontWeight.w500,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
@@ -507,7 +515,7 @@ class PasscodeWidget extends StatelessWidget {
                 color: Colors.transparent,
               ),
               child: Center(
-                child: Icon(icon, color: AppColors.purple500ForTheme(context)),
+                child: Icon(icon, color: AppColors.purple500ForTheme(context), size: 20.sp,),
               ),
             ),
           ),

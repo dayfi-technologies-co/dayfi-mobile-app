@@ -30,12 +30,12 @@ class DayfiTagState {
       dayfiId.isNotEmpty &&
       dayfiIdError.isEmpty &&
       dayfiIdResponse != null &&
-      dayfiIdResponse!.contains('User not found'); // For creation, tag should be available (not found)
+      dayfiIdResponse!.contains(
+        'User not found',
+      ); // For creation, tag should be available (not found)
 
   bool get isDayfiIdValid =>
-      dayfiId.isNotEmpty &&
-      dayfiId.startsWith('@') &&
-      dayfiId.length >= 3;
+      dayfiId.isNotEmpty && dayfiId.startsWith('@') && dayfiId.length >= 3;
 
   DayfiTagState copyWith({
     String? dayfiId,
@@ -50,9 +50,10 @@ class DayfiTagState {
       isBusy: isBusy ?? this.isBusy,
       isValidating: isValidating ?? this.isValidating,
       dayfiIdError: dayfiIdError ?? this.dayfiIdError,
-      dayfiIdResponse: clearDayfiIdResponse 
-          ? null 
-          : (dayfiIdResponse ?? this.dayfiIdResponse),
+      dayfiIdResponse:
+          clearDayfiIdResponse
+              ? null
+              : (dayfiIdResponse ?? this.dayfiIdResponse),
     );
   }
 }
@@ -78,9 +79,10 @@ class DayfiTagNotifier extends StateNotifier<DayfiTagState> {
       final error = _validateDayfiId(newValue);
       // Clear validation response and error when user starts typing
       state = state.copyWith(
-        dayfiId: newValue, 
+        dayfiId: newValue,
         dayfiIdError: error,
-        clearDayfiIdResponse: true, // Clear the success/error message when input changes
+        clearDayfiIdResponse:
+            true, // Clear the success/error message when input changes
         isValidating: false, // Reset validating state when input changes
       );
 
@@ -107,7 +109,7 @@ class DayfiTagNotifier extends StateNotifier<DayfiTagState> {
   Future<void> validateDayfiId(String dayfiId) async {
     // Set validating state to true and clear previous response
     state = state.copyWith(isValidating: true, clearDayfiIdResponse: true);
-    
+
     try {
       final response = await _authService.validateDayfiId(dayfiId: dayfiId);
 
@@ -131,12 +133,13 @@ class DayfiTagNotifier extends StateNotifier<DayfiTagState> {
       // Check if this is a 400 error with "Invalid dayfi ID" message - treat as success (tag available)
       if (e is ApiError) {
         if (e.errorType == 400) {
-          final errorMessage = e.apiErrorModel?.message ?? 
-                              e.errorDescription ?? 
-                              '';
+          final errorMessage =
+              e.apiErrorModel?.message ?? e.errorDescription ?? '';
           if (errorMessage.toLowerCase().contains('invalid dayfi id')) {
             // Treat as success - tag is available
-            AppLogger.info('Invalid dayfi ID (400) - treating as available tag');
+            AppLogger.info(
+              'Invalid dayfi ID (400) - treating as available tag',
+            );
             state = state.copyWith(
               dayfiIdResponse: 'User not found',
               dayfiIdError: '',
@@ -146,7 +149,7 @@ class DayfiTagNotifier extends StateNotifier<DayfiTagState> {
           }
         }
       }
-      
+
       AppLogger.error('Error validating DayFi Tag: $e');
       state = state.copyWith(
         dayfiIdResponse: 'User not found',
@@ -170,29 +173,33 @@ class DayfiTagNotifier extends StateNotifier<DayfiTagState> {
 
       if (response.error == false) {
         AppLogger.info('DayFi Tag created successfully');
-        
+
         // Show success dialog BEFORE popping
         await showModalBottomSheet(
+          barrierColor: Colors.black.withOpacity(0.85),
+          // ignore: use_build_context_synchronously
           context: context,
           isScrollControlled: true,
           backgroundColor: Colors.transparent,
           isDismissible: false,
           enableDrag: false,
-          builder: (dialogContext) => DayfiTagSuccessDialog(
-            dayfiId: state.dayfiId,
-            parentContext: context,
-            onClose: () {
-              Navigator.pop(context, state.dayfiId);
-            },
-          ),
+          builder:
+              (dialogContext) => DayfiTagSuccessDialog(
+                dayfiId: state.dayfiId,
+                parentContext: context,
+                onClose: () {
+                  Navigator.pop(context, state.dayfiId);
+                },
+              ),
         );
       } else {
         AppLogger.error('DayFi Tag creation failed: ${response.message}');
         TopSnackbar.show(
           context,
-          message: response.message.isNotEmpty
-              ? response.message
-              : 'Hmm, something went wrong. Please try again.',
+          message:
+              response.message.isNotEmpty
+                  ? response.message
+                  : 'Hmm, something went wrong. Please try again.',
           isError: true,
         );
       }
@@ -221,8 +228,6 @@ class DayfiTagNotifier extends StateNotifier<DayfiTagState> {
 }
 
 // Provider
-final dayfiTagProvider =
-    StateNotifierProvider<DayfiTagNotifier, DayfiTagState>(
+final dayfiTagProvider = StateNotifierProvider<DayfiTagNotifier, DayfiTagState>(
   (ref) => DayfiTagNotifier(),
 );
-

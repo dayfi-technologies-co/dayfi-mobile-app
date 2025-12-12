@@ -11,18 +11,25 @@ class PrivacyNoticeView extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
-        scrolledUnderElevation: 0,
+        scrolledUnderElevation: .5,
+        foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+        shadowColor: Theme.of(context).scaffoldBackgroundColor,
+        surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.arrow_back_ios_new),
+          icon: Icon(
+            Icons.arrow_back_ios_new,
+            color: Theme.of(context).textTheme.headlineLarge?.color,
+          ),
         ),
         title: Text(
           "Privacy Notice",
           style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-         fontFamily: 'CabinetGrotesk',
-              fontSize: 20.sp, // height: 1.6,
-              fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.onSurface,
+            fontFamily: 'FunnelDisplay',
+            fontSize: 24.sp, // height: 1.6,
+            fontWeight: FontWeight.w600,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         centerTitle: true,
@@ -37,7 +44,7 @@ class PrivacyNoticeView extends StatelessWidget {
             SizedBox(height: 24.h),
 
             _buildSection(context, "1. Introduction", [
-              "DayFi Technologies Inc. (\"DayFi,\" \"we,\" \"our,\" or \"us\") is committed to protecting your privacy. This Privacy Notice explains how we collect, use, share, and safeguard your personal data when you use our Services."
+              "DayFi Technologies Inc. (\"DayFi,\" \"we,\" \"our,\" or \"us\") is committed to protecting your privacy. This Privacy Notice explains how we collect, use, share, and safeguard your personal data when you use our Services.",
             ]),
 
             _buildSection(context, "2. Information We Collect", [
@@ -46,13 +53,13 @@ class PrivacyNoticeView extends StatelessWidget {
               "• Contact Information: Phone number, email address, residential address.",
               "• Financial Information: Bank account details, wallet addresses, transaction history.",
               "• Device Information: IP address, browser type, mobile device identifiers.",
-              "• Verification Data: Biometric or facial data processed by Smile ID for KYC."
+              "• Verification Data: Biometric or facial data processed by Smile ID for KYC.",
             ]),
 
             _buildSection(context, "3. How We Collect Information", [
               "• Directly from you when you register or transact.",
               "• Automatically when you use our app or website.",
-              "• From third parties such as verification providers (Smile ID) or payment partners (Yellow Card)."
+              "• From third parties such as verification providers (Smile ID) or payment partners (Yellow Card).",
             ]),
 
             _buildSection(context, "4. How We Use Information", [
@@ -62,7 +69,7 @@ class PrivacyNoticeView extends StatelessWidget {
               "• Process payments via Yellow Card.",
               "• Communicate with you via Twilio SMS or email.",
               "• Detect, prevent, and report fraud and financial crime.",
-              "• Improve our services and user experience."
+              "• Improve our services and user experience.",
             ]),
 
             _buildSection(context, "5. How We Share Information", [
@@ -72,11 +79,11 @@ class PrivacyNoticeView extends StatelessWidget {
               "• Yellow Card for payment processing.",
               "• Regulatory authorities, law enforcement, or courts when legally required.",
               "• Service providers who support our operations (e.g., cloud hosting).",
-              "We never sell your personal data."
+              "We never sell your personal data.",
             ]),
 
             _buildSection(context, "6. Data Retention", [
-              "We retain personal data for at least 5 years after account closure or as required by law/regulations."
+              "We retain personal data for at least 5 years after account closure or as required by law/regulations.",
             ]),
 
             _buildSection(context, "7. Your Rights", [
@@ -86,32 +93,32 @@ class PrivacyNoticeView extends StatelessWidget {
               "• Request deletion of your data (subject to legal obligations).",
               "• Restrict or object to processing.",
               "• Data portability (receive your data in a structured format).",
-              "To exercise your rights, email us at privacy@dayfi.com"
+              "To exercise your rights, email us at privacy@dayfi.com",
             ]),
 
             _buildSection(context, "8. Security Measures", [
               "We use strong technical and organizational safeguards to protect your data, including:",
               "• Encryption of data in transit and at rest.",
               "• Multi-factor authentication.",
-              "• Regular audits and monitoring."
+              "• Regular audits and monitoring.",
             ]),
 
             _buildSection(context, "9. International Data Transfers", [
-              "Your data may be transferred to and processed in countries outside your residence, including Nigeria, the United States, and other jurisdictions where DayFi operates. We ensure safeguards are in place for such transfers."
+              "Your data may be transferred to and processed in countries outside your residence, including Nigeria, the United States, and other jurisdictions where DayFi operates. We ensure safeguards are in place for such transfers.",
             ]),
 
             _buildSection(context, "10. Children's Privacy", [
-              "Our Services are not intended for children under 18. We do not knowingly collect data from minors."
+              "Our Services are not intended for children under 18. We do not knowingly collect data from minors.",
             ]),
 
             _buildSection(context, "11. Updates to this Notice", [
-              "We may update this Privacy Notice to reflect changes in law or business practices. We will notify you of material updates via our app, website, or email."
+              "We may update this Privacy Notice to reflect changes in law or business practices. We will notify you of material updates via our app, website, or email.",
             ]),
 
             _buildSection(context, "12. Contact Us", [
               "For privacy-related questions or concerns, contact us at:",
               "📧 privacy@dayfi.com",
-              "📧 support@dayfi.com"
+              "📧 support@dayfi.com",
             ]),
 
             SizedBox(height: 40.h),
@@ -120,7 +127,6 @@ class PrivacyNoticeView extends StatelessWidget {
       ),
     );
   }
-
 
   Widget _buildEffectiveDate(BuildContext context, String date) {
     return Text(
@@ -136,33 +142,39 @@ class PrivacyNoticeView extends StatelessWidget {
     );
   }
 
-  Widget _buildSection(BuildContext context, String title, List<String> content) {
+  Widget _buildSection(
+    BuildContext context,
+    String title,
+    List<String> content,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontFamily: 'CabinetGrotesk',
+            fontFamily: 'FunnelDisplay',
             fontSize: 18.sp,
             fontWeight: FontWeight.w600,
             letterSpacing: -0.8,
           ),
         ),
         SizedBox(height: 12.h),
-        ...content.map((paragraph) => Padding(
-          padding: EdgeInsets.only(bottom: 8.h),
-          child:             Text(
+        ...content.map(
+          (paragraph) => Padding(
+            padding: EdgeInsets.only(bottom: 8.h),
+            child: Text(
               paragraph,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontFamily: 'Karla',
                 fontSize: 16.sp,
-                fontWeight: FontWeight.w400,
+                fontWeight: FontWeight.w500,
                 height: 1.5,
                 letterSpacing: -0.8,
               ),
             ),
-        )),
+          ),
+        ),
         SizedBox(height: 20.h),
       ],
     );

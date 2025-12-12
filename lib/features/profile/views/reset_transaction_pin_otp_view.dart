@@ -130,7 +130,11 @@ class _ResetTransactionPinOtpViewState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   AppBar(
-                    scrolledUnderElevation: 0,
+                       scrolledUnderElevation: .5,
+              foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+              shadowColor: Theme.of(context).scaffoldBackgroundColor,
+              surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+
                     backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                     elevation: 0,
                     leading: IconButton(
@@ -144,7 +148,7 @@ class _ResetTransactionPinOtpViewState
                       style: Theme.of(
                         context,
                       ).textTheme.headlineMedium?.copyWith(
-                     fontFamily: 'CabinetGrotesk',
+                     fontFamily: 'FunnelDisplay',
                         fontSize: 22.40,
                         fontWeight: FontWeight.w500,
                       ),
@@ -162,9 +166,9 @@ class _ResetTransactionPinOtpViewState
                                 context,
                               ).textTheme.bodyMedium?.copyWith(
                                 fontSize: 16.sp,
-                                fontWeight: FontWeight.w400,
+                                fontWeight: FontWeight.w500,
                                 fontFamily: 'Karla',
-                                letterSpacing: -.3,
+                                letterSpacing: -.6,
                                 height: 1.4,
                               ),
                               textAlign: TextAlign.center,
@@ -228,7 +232,7 @@ class _ResetTransactionPinOtpViewState
                                   context,
                                 ).textTheme.bodyMedium?.copyWith(
                                   fontSize: 16.sp,
-                                  fontWeight: FontWeight.w400,
+                                  fontWeight: FontWeight.w500,
                                   fontFamily: 'Karla',
                                   color: AppColors.neutral400,
                                 ),
@@ -293,14 +297,14 @@ class _ResetTransactionPinOtpViewState
                                   ? AppColors.purple500ForTheme(context)
                                   : AppColors.purple500ForTheme(
                                     context,
-                                  ).withOpacity(.25),
-                          height: 48.000.h,
+                                  ).withOpacity(.15),
+                          height: 48.00000.h,
                           textColor:
                               _otp.length == 6
                                   ? AppColors.neutral0
-                                  : AppColors.neutral0.withOpacity(.65),
+                                  : AppColors.neutral0.withOpacity(.35),
                           fontFamily: 'Karla',
-                          letterSpacing: -.8,
+                          letterSpacing: -.70,
                           fontSize: 18,
                           width: 375.w,
                           fullWidth: true,

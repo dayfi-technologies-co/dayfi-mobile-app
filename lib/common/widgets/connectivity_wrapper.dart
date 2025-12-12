@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:dayfi/services/connectivity_service.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
-import 'package:flutter_svg/svg.dart';
+import 'package:dayfi/common/widgets/top_snackbar.dart';
 
 /// Wrapper widget that displays a persistent banner when internet connection is lost
 ///
@@ -38,6 +38,20 @@ class _ConnectivityWrapperState extends State<ConnectivityWrapper> {
       _isConnected = isConnected;
     });
 
+    // Show TopSnackbar if no connection (after frame is built)
+    if (!isConnected) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          TopSnackbar.show(
+            context,
+            message:
+                'No internet connection. Please check your network settings.',
+            isError: true,
+          );
+        }
+      });
+    }
+
     // Listen to connectivity changes
     _connectivityService.connectionStatus.listen((isConnected) {
       setState(() {
@@ -53,6 +67,13 @@ class _ConnectivityWrapperState extends State<ConnectivityWrapper> {
               });
             }
           });
+        } else {
+          // Show TopSnackbar when connection is lost
+          TopSnackbar.show(
+            context,
+            message: 'Internet connection lost. Please check your network.',
+            isError: true,
+          );
         }
       });
     });
@@ -88,65 +109,21 @@ class _ConnectivityWrapperState extends State<ConnectivityWrapper> {
       color: Colors.transparent,
       child: Container(
         width: double.infinity,
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AppColors.error500, AppColors.error600],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.error500.withOpacity(0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+        decoration: BoxDecoration(color: AppColors.error500),
         child: SafeArea(
           bottom: false,
-          child: Row(
-            children: [
-              Icon(Icons.wifi_off_rounded, color: Colors.white, size: 20.sp),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'No Internet Connection',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'CabinetGrotesk',
-                        letterSpacing: -0.3,
-                      ),
-                    ),
-                    SizedBox(height: 2.h),
-                    Text(
-                      'Please check your network settings',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.9),
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w400,
-                        fontFamily: 'Karla',
-                        letterSpacing: -0.2,
-                      ),
-                    ),
-                  ],
-                ),
+          child: Center(
+            child: Text(
+              'No internet connection',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12.sp,
+                letterSpacing: -.4,
+                fontWeight: FontWeight.w500,
+                fontFamily: 'Karla',
               ),
-              Container(
-                width: 8.w,
-                height: 8.w,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -158,46 +135,19 @@ class _ConnectivityWrapperState extends State<ConnectivityWrapper> {
       color: Colors.transparent,
       child: Container(
         width: double.infinity,
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AppColors.success500, AppColors.success600],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.success500.withOpacity(0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+        decoration: BoxDecoration(color: AppColors.success500),
         child: SafeArea(
           bottom: false,
-          child: Row(
-            children: [
-              Icon(Icons.wifi_rounded, color: Colors.white, size: 20.sp),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: Text(
-                  'Connection Restored',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
-                    fontFamily: 'CabinetGrotesk',
-                    letterSpacing: -0.3,
-                  ),
-                ),
-              ),
-              SvgPicture.asset(
-                'assets/icons/svgs/circle-check.svg',
-                color: Colors.white,
-                height: 24.sp,
-                width: 24.sp,
-              ),
-            ],
+          child: Text(
+            'Connection restored',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 12.sp,
+              letterSpacing: -.4,
+              fontWeight: FontWeight.w500,
+              fontFamily: 'Karla',
+            ),
           ),
         ),
       ),

@@ -52,13 +52,11 @@ class TierUtils {
     final tierLevel = getCurrentTierLevel(user);
     switch (tierLevel) {
       case 1:
-        return 'You\'re currently on Tier 1. Submit required documents to access Tier 2 and send higher amounts.';
+        return 'You\'re currently on Tier 1. Complete additional verification to access Tier 2, more features and send higher amounts.';
       case 2:
-        return 'You\'re currently on Tier 2. Complete additional verification to access Tier 3 and send higher amounts.';
-      case 3:
-        return 'You\'re currently on Tier 3. You have access to the highest transfer limits.';
+        return 'You\'re currently on Tier 2. You have access to the highest transfer limits.';
       default:
-        return 'You\'re currently on Tier 1. Submit required documents to access higher tiers and send higher amounts.';
+        return 'You\'re currently on Tier 1. Complete additional verification to access higher tiers and send higher amounts.';
     }
   }
 
@@ -69,8 +67,6 @@ class TierUtils {
       case 1:
         return 'Upgrade to Tier 2';
       case 2:
-        return 'Upgrade to Tier 3';
-      case 3:
         return 'You\'re on the highest tier';
       default:
         return 'Upgrade to Tier 2';

@@ -1,6 +1,10 @@
+import 'package:dayfi/common/widgets/error_state_widget.dart';
+import 'dart:convert';
 import 'dart:developer';
 
+import 'package:dayfi/common/constants/storage_keys.dart';
 import 'package:dayfi/common/widgets/buttons/buttons.dart';
+import 'package:dayfi/services/local/secure_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:dayfi/common/utils/haptic_helper.dart';
@@ -17,7 +21,6 @@ import 'package:dayfi/models/payment_response.dart' as payment;
 import 'package:dayfi/models/payment_response.dart' show Network, Channel;
 import 'package:dayfi/models/user_model.dart';
 import 'package:dayfi/routes/route.dart';
-import 'package:dayfi/features/send/views/send_payment_success_view.dart';
 import 'dart:async';
 import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/common/utils/error_handler.dart';
@@ -28,6 +31,7 @@ import 'package:dayfi/common/utils/phone_country_utils.dart';
 import 'package:dayfi/features/home/vm/home_viewmodel.dart';
 import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
 import 'package:intercom_flutter/intercom_flutter.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:share_plus/share_plus.dart';
 
 class SendPaymentMethodView extends ConsumerStatefulWidget {
@@ -50,12 +54,66 @@ class SendPaymentMethodView extends ConsumerStatefulWidget {
 }
 
 class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
-  bool _isLoading = false;
-  String? _selectedPaymentMethod; // No default selection
+  /// Helper to get country name from code
+  String _getCountryName(String? countryCode) {
+    switch (countryCode?.toUpperCase()) {
+      case 'NG':
+        return 'Nigeria';
+      case 'GH':
+        return 'Ghana';
+      case 'RW':
+        return 'Rwanda';
+      case 'KE':
+        return 'Kenya';
+      case 'UG':
+        return 'Uganda';
+      case 'TZ':
+        return 'Tanzania';
+      case 'ZA':
+        return 'South Africa';
+      case 'BF':
+        return 'Burkina Faso';
+      case 'BJ':
+        return 'Benin';
+      case 'BW':
+        return 'Botswana';
+      case 'CD':
+        return 'Democratic Republic of Congo';
+      case 'CG':
+        return 'Republic of Congo';
+      case 'CI':
+        return 'Côte d\'Ivoire';
+      case 'CM':
+        return 'Cameroon';
+      case 'GA':
+        return 'Gabon';
+      case 'MW':
+        return 'Malawi';
+      case 'ML':
+        return 'Mali';
+      case 'SN':
+        return 'Senegal';
+      case 'TG':
+        return 'Togo';
+      case 'ZM':
+        return 'Zambia';
+      case 'US':
+        return 'United States';
+      case 'GB':
+        return 'United Kingdom';
+      case 'CA':
+        return 'Canada';
+      default:
+        return countryCode ?? 'Unknown';
+    }
+  }
+
   payment.PaymentData? _currentPaymentData; // Store the current payment data
   Timer? _countdownTimer;
   Duration _remainingTime = const Duration(minutes: 30);
+
   bool _isCheckingWallet = false;
+  bool _isLoading = false;
 
   // Constants
   static const String _defaultPhone = '+2340000000000';
@@ -306,7 +364,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
   }
 
   void _handleDayfiTagSelection() async {
-    log('handleDayfiTagSelection');
+    // log('handleDayfiTagSelection');
 
     // Fast path: Check cached wallet data first (no network call)
     final homeState = ref.read(homeViewModelProvider);
@@ -383,12 +441,13 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
 
   void _showDayfiTagBottomSheet(String dayfiId) {
     showModalBottomSheet(
+      barrierColor: Colors.black.withOpacity(0.85),
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       builder: (BuildContext context) {
         return Container(
-          height: MediaQuery.of(context).size.height * 0.8,
+          height: MediaQuery.of(context).size.height * 0.5,
           decoration: BoxDecoration(
             color: Theme.of(context).scaffoldBackgroundColor,
             borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
@@ -401,70 +460,85 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    SizedBox(height: 24.h, width: 22.w),
+                    SizedBox(height: 40.h, width: 40.w),
                     Text(
-                      'Your DayFi Tag',
+                      'My DayFi Tag',
                       style: AppTypography.titleLarge.copyWith(
-                        fontFamily: 'Karla',
-                        fontSize: 16.sp,
+                        fontFamily: 'FunnelDisplay',
+                        fontSize: 20.sp,
+                        // height: 1.6,
                         fontWeight: FontWeight.w600,
                         color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Image.asset(
-                        "assets/icons/pngs/cancelicon.png",
-                        height: 24.h,
-                        width: 24.w,
-                        color: Theme.of(context).colorScheme.onSurface,
+
+                    InkWell(
+                      splashColor: Colors.transparent,
+                      highlightColor: Colors.transparent,
+                      onTap:
+                          () => {
+                            Navigator.pop(context),
+                            FocusScope.of(context).unfocus(),
+                          },
+                      child: Stack(
+                        alignment: AlignmentGeometry.center,
+                        children: [
+                          SvgPicture.asset(
+                            "assets/icons/svgs/notificationn.svg",
+                            height: 40.sp,
+                            color: Theme.of(context).colorScheme.surface,
+                          ),
+                          SizedBox(
+                            height: 40.sp,
+                            width: 40.sp,
+                            child: Center(
+                              child: Image.asset(
+                                "assets/icons/pngs/cancelicon.png",
+                                height: 20.h,
+                                width: 20.w,
+                                color:
+                                    Theme.of(
+                                      context,
+                                    ).textTheme.bodyLarge!.color,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
-              SizedBox(height: 24.h),
+
               Expanded(
-                child: SingleChildScrollView(
+                child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 18.w),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        padding: EdgeInsets.all(12.w),
-                        decoration: BoxDecoration(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.primaryContainer.withOpacity(0.25),
-                          borderRadius: BorderRadius.circular(4.r),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            SizedBox(width: 4.w),
-                            Image.asset("assets/images/idea.png", height: 18.h),
-                            SizedBox(width: 12.w),
-                            Expanded(
-                              child: Text(
-                                'Share your DayFi Tag with friends and family for instant money transfers.',
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.bodySmall?.copyWith(
-                                  fontSize: 14.sp,
-                                  fontFamily: 'Karla',
-                                  fontWeight: FontWeight.w400,
-                                  letterSpacing: -0.4,
-                                  height: 1.5,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                              ),
+                      SizedBox(height: 18.h),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                        child: Opacity(
+                          opacity: .85,
+                          child: Text(
+                            'Share your DayFi Tag with friends and family for instant money transfers.',
+                            style: Theme.of(
+                              context,
+                            ).textTheme.bodyMedium?.copyWith(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Karla',
+                              letterSpacing: -.6,
+                              height: 1.5,
                             ),
-                          ],
+                            textAlign: TextAlign.center,
+                          ),
                         ),
                       ),
-                      SizedBox(height: 18.h),
+                      SizedBox(height: 32.h),
                       CustomTextField(
-                        label: "dayfi ID",
+                        label: "DayFi Tag",
                         hintText: "",
                         enableInteractiveSelection: false,
                         shouldReadOnly: true,
@@ -523,17 +597,17 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                                         fontSize: 12.sp,
                                         letterSpacing: 0.00,
                                         height: 1.450,
-                                        color: AppColors.purple500ForTheme(
-                                          context,
-                                        ),
+                                        color:
+                                            Theme.of(
+                                              context,
+                                            ).colorScheme.primary,
                                       ),
                                     ),
                                     SizedBox(width: 6.w),
                                     SvgPicture.asset(
                                       "assets/icons/svgs/copy.svg",
-                                      color: AppColors.purple500ForTheme(
-                                        context,
-                                      ),
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
                                       height: 16.sp,
                                     ),
                                   ],
@@ -575,17 +649,17 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                                         fontSize: 12.sp,
                                         letterSpacing: 0.00,
                                         height: 1.450,
-                                        color: AppColors.purple500ForTheme(
-                                          context,
-                                        ),
+                                        color:
+                                            Theme.of(
+                                              context,
+                                            ).colorScheme.primary,
                                       ),
                                     ),
                                     SizedBox(width: 6.w),
                                     SvgPicture.asset(
                                       "assets/icons/svgs/share.svg",
-                                      color: AppColors.purple500ForTheme(
-                                        context,
-                                      ),
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
                                       height: 16.sp,
                                     ),
                                   ],
@@ -595,7 +669,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                           ),
                         ),
                       ),
-                      SizedBox(height: 56.h),
+                      // SizedBox(height: 40.h),
                     ],
                   ),
                 ),
@@ -610,19 +684,22 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                         Navigator.pop(context);
                       },
                       backgroundColor: AppColors.purple500,
-                      height: 48.000.h,
+                      height: 48.00000.h,
                       textColor: AppColors.neutral0,
                       fontFamily: 'Karla',
-                      letterSpacing: -.8,
+                      letterSpacing: -.70,
                       fontSize: 18,
                       width: double.infinity,
                       fullWidth: true,
                       borderRadius: 40.r,
                     ),
                     SizedBox(height: 20.h),
-                    PrimaryButton(
-                      text: 'Do you need help?',
-                      onPressed: () async {
+
+                    InkWell(
+                      splashColor: Colors.transparent,
+                      highlightColor: Colors.transparent,
+                      hoverColor: Colors.transparent,
+                      onTap: () async {
                         try {
                           await Intercom.instance.displayMessenger();
                         } catch (e) {
@@ -637,16 +714,25 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                           }
                         }
                       },
-                      backgroundColor: Colors.transparent,
-                      textColor: AppColors.purple500ForTheme(context),
-                      height: 48.000.h,
-                      fontFamily: 'Karla',
-                      letterSpacing: -.8,
-                      fontSize: 18,
-                      width: double.infinity,
-                      fullWidth: true,
-                      borderRadius: 40.r,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 12.h,
+                        ),
+                        child: Text(
+                          'Do you need help?',
+                          style: TextStyle(
+                            fontFamily: 'Karla',
+                            color: AppColors.purple500ForTheme(context),
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: -.6,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
                     ),
+
                     SizedBox(height: 20.h),
                   ],
                 ),
@@ -665,22 +751,61 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        scrolledUnderElevation: 0,
+        scrolledUnderElevation: .5,
+        foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+        shadowColor: Theme.of(context).scaffoldBackgroundColor,
+        surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios,
-            color: Theme.of(context).colorScheme.onSurface,
-            // size: 20.sp,
+        leadingWidth: 72,
+        leading: InkWell(
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
+          onTap:
+              () => {Navigator.pop(context), FocusScope.of(context).unfocus()},
+          child: Stack(
+            alignment: AlignmentGeometry.center,
+            children: [
+              SvgPicture.asset(
+                "assets/icons/svgs/notificationn.svg",
+                height: 40.sp,
+                color: Theme.of(context).colorScheme.surface,
+              ),
+              SizedBox(
+                height: 40.sp,
+                width: 40.sp,
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 8.0),
+                    child: Icon(
+                      Icons.arrow_back_ios,
+                      size: 20.sp,
+                      color: Theme.of(context).textTheme.bodyLarge!.color,
+                      // size: 20.sp,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-          onPressed: () => Navigator.pop(context),
         ),
+        // ),
+
+        //  IconButton(
+        //   icon: Icon(
+        //     Icons.arrow_back_ios,
+        //     size: 20.sp,
+        //     color: Theme.of(context).colorScheme.onSurface,
+        //     // size: 20.sp,
+        //   ),
+        //   onPressed: () => Navigator.pop(context),
+        // ),
         title: Text(
           'Topup Wallet',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontFamily: 'CabinetGrotesk',
-            fontSize: 20.sp,
+            fontFamily: 'FunnelDisplay',
+            fontSize: 24.sp,
             // height: 1.6,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,
@@ -689,20 +814,23 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 4.h),
+        padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text(
-              "Choose a funding method that works for you",
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w400,
-                fontFamily: 'Karla',
-                letterSpacing: -.3,
-                height: 1.5,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Text(
+                "How would you like to top up your wallet to start sending across borders?",
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w500,
+                  fontFamily: 'Karla',
+                  letterSpacing: -.6,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
             ),
             SizedBox(height: 36.h),
 
@@ -735,7 +863,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
             //           style: Theme.of(context).textTheme.bodySmall?.copyWith(
             //             fontSize: 14.sp,
             //             fontFamily: 'Karla',
-            //             fontWeight: FontWeight.w400,
+            //             fontWeight: FontWeight.w500,
             //             letterSpacing: -0.4,
             //             height: 1.5,
             //             color: Theme.of(context).colorScheme.primary,
@@ -745,40 +873,33 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
             //     ],
             //   ),
             // ),
-            _buildPaymentMethodCard(sendState),
-
-            SizedBox(height: 40.h),
-            PrimaryButton(
-              text:
-                  _isCheckingWallet
-                      ? 'Checking...'
-                      : _selectedPaymentMethod != null
-                      ? _selectedPaymentMethod == 'DayFi Tag'
-                          ? 'Continue'
-                          : 'Pay with $_selectedPaymentMethod'
-                      : 'Select a Funding Method',
-              onPressed:
-                  (_selectedPaymentMethod != null && !_isCheckingWallet)
-                      ? _processPayment
-                      : null,
-              isLoading: _isLoading || _isCheckingWallet,
-              height: 48.000.h,
-              backgroundColor:
-                  (_selectedPaymentMethod != null && !_isCheckingWallet)
-                      ? AppColors.purple500
-                      : AppColors.purple500.withOpacity(.25),
-              textColor:
-                  (_selectedPaymentMethod != null && !_isCheckingWallet)
-                      ? AppColors.neutral0
-                      : AppColors.neutral0.withOpacity(.65),
-              fontFamily: 'Karla',
-              letterSpacing: -.8,
-              fontSize: 18,
-              width: double.infinity,
-              fullWidth: true,
-              borderRadius: 40.r,
+            FutureBuilder<Widget>(
+              future: _buildPaymentMethodCard(sendState),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(
+                    child: Padding(
+                      padding: EdgeInsets.only(bottom: 60.h),
+                      child: LoadingAnimationWidget.waveDots(
+                        color: AppColors.purple500ForTheme(context),
+                        size: 24.sp,
+                      ),
+                    ),
+                  );
+                }
+                if (snapshot.hasError) {
+                  return ErrorStateWidget(
+                    message: 'Failed to load payment methods',
+                    details: snapshot.error?.toString(),
+                    onRetry: () => setState(() {}),
+                  );
+                }
+                return snapshot.data ?? SizedBox.shrink();
+              },
             ),
 
+            SizedBox(height: 40.h),
+            // Removed the select funding method button; navigation is now on card tap
             SizedBox(height: 40.h),
           ],
         ),
@@ -786,143 +907,192 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
     );
   }
 
-  Widget _buildPaymentMethodCard(SendState sendState) {
+  // ...existing code...
+  Future<Widget> _buildPaymentMethodCard(SendState sendState) async {
+    // Read user country from secure storage
+    final secureStorage = locator<SecureStorageService>();
+    final userJson = await secureStorage.read(StorageKeys.user);
+    User? user;
+    if (userJson != null && userJson.isNotEmpty) {
+      try {
+        user = User.fromJson(json.decode(userJson));
+      } catch (e) {
+        user = null;
+      }
+    }
+    final userCountryName = user?.country ?? 'NG';
+    // Try to get the country code from the name
+    String userCountryCode = 'NG';
+    // Reverse lookup: if userCountryName is a name, get code
+    final countryCodes = {
+      'Nigeria': 'NG',
+      'Ghana': 'GH',
+      'Rwanda': 'RW',
+      'Kenya': 'KE',
+      'Uganda': 'UG',
+      'Tanzania': 'TZ',
+      'South Africa': 'ZA',
+      'Burkina Faso': 'BF',
+      'Benin': 'BJ',
+      'Botswana': 'BW',
+      'Democratic Republic of Congo': 'CD',
+      'Republic of Congo': 'CG',
+      'Côte d\'Ivoire': 'CI',
+      'Cameroon': 'CM',
+      'Gabon': 'GA',
+      'Malawi': 'MW',
+      'Mali': 'ML',
+      'Senegal': 'SN',
+      'Togo': 'TG',
+      'Zambia': 'ZM',
+      'United States': 'US',
+      'United Kingdom': 'GB',
+      'Canada': 'CA',
+    };
+    if (countryCodes.containsKey(userCountryName)) {
+      userCountryCode = countryCodes[userCountryName]!;
+    } else if (userCountryName.length == 2) {
+      userCountryCode = userCountryName.toUpperCase();
+    }
+
+    // Filter deposit channels for user's country
+    final depositChannels =
+        sendState.channels
+            .where(
+              (channel) =>
+                  channel.rampType == 'deposit' &&
+                  channel.status == 'active' &&
+                  channel.country?.toUpperCase() == userCountryCode,
+            )
+            .toList();
+
     return Column(
       children: [
-        // DayFi ID
+        // DayFi Tag (always static)
         _buildPaymentMethodOption(
           icon: Stack(
             alignment: AlignmentDirectional.center,
             children: [
               SvgPicture.asset(
                 'assets/icons/svgs/swap.svg',
-                height: 34,
-                color: AppColors.neutral700.withOpacity(.35),
+                height: 40.sp,
+                color: Theme.of(context).textTheme.bodyLarge!.color,
               ),
               SvgPicture.asset(
                 "assets/icons/svgs/at.svg",
-                height: 26,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(.65),
+                height: 28,
+                color: Theme.of(context).colorScheme.surface,
               ),
             ],
           ),
-          title: 'DayFi Tag',
+          title: 'Via DayFi Tag',
           description:
               'Share your DayFi Tag with friends and family. Instant transfers. (NGN only)',
-          iconColor: AppColors.orange500,
-          isSelected: _selectedPaymentMethod == 'DayFi Tag',
+          iconColor: Theme.of(context).colorScheme.primary,
+          isSelected: false,
           isEnabled: true,
           onTap: () {
-            // if (sendState.receiverCurrency != 'NGN') {
-            //   ErrorHandler.showError(
-            //     context,
-            //     'DayFi Tag transfers are only available for NGN (Nigerian Naira). Please select NGN as the recipient currency.',
-            //   );
-            //   return;
-            // }
-            setState(() {
-              _selectedPaymentMethod = 'DayFi Tag';
-            });
+            _handleDayfiTagSelection();
           },
         ),
-
         SizedBox(height: 16.h),
 
-        // Bank Transfer Card
-        _buildPaymentMethodOption(
-          title: 'Bank Transfer',
-          description:
-              'Send up to ${sendState.sendCurrency} 15,000,000.00 via virtual account. Payer name must match your registered name.',
-          iconColor: AppColors.pink400,
-          isSelected: _selectedPaymentMethod == 'Bank Transfer',
-          isEnabled: true,
-          icon: Stack(
+        // Dynamically render deposit channels for user's country
+        ...depositChannels.map((channel) {
+          // Choose icon and title based on channel type
+          Widget iconWidget = Stack(
             alignment: AlignmentDirectional.center,
             children: [
               SvgPicture.asset(
                 'assets/icons/svgs/swap.svg',
-                height: 34,
-                color: AppColors.neutral700.withOpacity(.35),
+                height: 40.sp,
+                color: Theme.of(context).textTheme.bodyLarge!.color,
               ),
               SvgPicture.asset(
-                "assets/icons/svgs/building-bank.svg",
-                height: 26,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(.65),
+                channel.channelType == 'bank' ||
+                        channel.channelType == 'bank_transfer' ||
+                        channel.channelType == 'p2p'
+                    ? "assets/icons/svgs/building-bank.svg"
+                    : "assets/icons/svgs/currency-dollar.svg",
+                height: 28,
+                color: Theme.of(context).colorScheme.surface,
               ),
             ],
-          ),
-          onTap: () {
-            setState(() {
-              _selectedPaymentMethod = 'Bank Transfer';
-            });
-          },
-        ),
+          );
 
-        SizedBox(height: 16.h),
+          String title =
+              'Via ${channel.channelType == 'bank' || channel.channelType == 'bank_transfer' ? 'Bank Transfer' : (channel.channelType ?? 'Deposit')}';
 
-        // Digital Dollar Card
-        _buildPaymentMethodOption(
-          icon: Opacity(
-            opacity: .4,
-            child: Stack(
+          // Description: add NG clause only for Nigeria
+          String description =
+              'Send up to ${sendState.sendCurrency} 5,000,000.00 via virtual account.';
+          if (channel.country == 'NG') {
+            description += ' Payer name must match your registered name.';
+          }
+
+          return Column(
+            children: [
+              _buildPaymentMethodOption(
+                icon: iconWidget,
+                title:
+                    channel.channelType == 'p2p'
+                        ? "Bank Transfer (P2P)"
+                        : title,
+                description: description,
+                iconColor: AppColors.pink400,
+                isSelected: false,
+                isEnabled: true,
+                onTap: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (context) => BankTransferAmountView(
+                            selectedData: widget.selectedData,
+                            recipientData: widget.recipientData,
+                            senderData: widget.senderData,
+                            paymentData: widget.paymentData,
+                          ),
+                    ),
+                  );
+                  if (result == true) {
+                    await _processBankTransferPayment();
+                  }
+                },
+              ),
+              SizedBox(height: 16.h),
+            ],
+          );
+        }).toList(),
+
+        // Optionally, add a disabled Digital Dollar card if needed
+        Opacity(
+          opacity: .4,
+          child: _buildPaymentMethodOption(
+            icon: Stack(
               alignment: AlignmentDirectional.center,
               children: [
                 SvgPicture.asset(
                   'assets/icons/svgs/swap.svg',
-                  height: 34,
-                  color: AppColors.neutral700.withOpacity(.35),
+                  height: 40.sp,
+                  color: Theme.of(context).textTheme.bodyLarge!.color,
                 ),
                 SvgPicture.asset(
                   "assets/icons/svgs/currency-dollar.svg",
-                  height: 26,
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withOpacity(.65),
+                  height: 28,
+                  color: Theme.of(context).colorScheme.surface,
                 ),
               ],
             ),
+            title: 'Via Digital Dollar',
+            description:
+                'Pay with a digital dollar wallet via stable coin and wallet address. Cross-border made easy.',
+            iconColor: AppColors.success400,
+            isSelected: false,
+            isEnabled: false,
+            onTap: null, // Disabled
           ),
-          title: 'Digital Dollar',
-          description:
-              'Pay with a digital dollar wallet via stable coin and wallet address. Cross-border made easy.',
-          iconColor: AppColors.success400,
-          isSelected: _selectedPaymentMethod == 'Digital Dollar',
-          isEnabled: false,
-          onTap: null, // Disabled
         ),
-
-        // SizedBox(height: 16.h),
-
-        // // Debit Card Card (Commented out)
-        // _buildPaymentMethodOption(
-        //   icon: Opacity(
-        //     opacity: .4,
-        //     child: Stack(
-        //       alignment: AlignmentDirectional.center,
-        //       children: [
-        //         SvgPicture.asset(
-        //           'assets/icons/svgs/swap.svg',
-        //           height: 34,
-        //           color: AppColors.neutral700.withOpacity(.35),
-        //         ),
-        //         SvgPicture.asset(
-        //           "assets/icons/svgs/carddd.svg",
-        //           height: 26,
-        //           color: Theme.of(
-        //             context,
-        //           ).colorScheme.onSurface.withOpacity(.65),
-        //         ),
-        //       ],
-        //     ),
-        //   ),
-        //   title: 'Debit Card',
-        //   description:
-        //       'Tap (NFC) or scan your debit card for instant payment. Secure and fast transactions.',
-        //   iconColor: AppColors.info400,
-        //   isSelected: _selectedPaymentMethod == 'Debit Card',
-        //   isEnabled: false,
-        //   onTap: null, // Disabled
-        // ),
       ],
     );
   }
@@ -944,7 +1114,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
           left: 16.w,
           top: 16.h,
           bottom: 16.h,
-          right: 12.w,
+          right: 16.w,
         ),
         decoration: BoxDecoration(
           color:
@@ -952,154 +1122,109 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                   ? Theme.of(context).colorScheme.surface
                   : Theme.of(context).colorScheme.surface.withOpacity(0.6),
           borderRadius: BorderRadius.circular(12.r),
-          border:
-              isSelected
-                  ? Border.all(
-                    color: AppColors.purple500ForTheme(context),
-                    width: .75,
-                  )
-                  : Border.all(
-                    color: AppColors.purple500ForTheme(context).withOpacity(0),
-                    width: .75,
-                  ),
           boxShadow: [
             BoxShadow(
               color:
                   isEnabled
                       ? AppColors.neutral500.withOpacity(0.0375)
                       : AppColors.neutral500.withOpacity(0.02),
-              blurRadius: 8.0,
+              blurRadius: 12.r,
               offset: const Offset(0, 8),
               spreadRadius: .8,
             ),
           ],
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Expanded(
-              child: Column(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 32.w,
-                        height: 32.w,
-                        // padding: EdgeInsets.all(2.h),
-                        decoration: BoxDecoration(
-                          // color: isEnabled ? iconColor : iconColor.withOpacity(.25),
-                          borderRadius: BorderRadius.circular(24.r),
-                        ),
-                        child: icon,
-                      ),
-                      SizedBox(width: 12.w),
-                      Expanded(
-                        child: Row(
+                  Container(
+                    width: 40.w,
+                    height: 40.w,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(24.r),
+                    ),
+                    child: icon,
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
                           children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Text(
-                                        title,
-                                        style: Theme.of(
-                                          context,
-                                        ).textTheme.titleLarge?.copyWith(
-                                          fontFamily: 'Karla',
-                                          fontSize: 18.sp,
-                                          letterSpacing: -.5,
-                                          fontWeight: FontWeight.w400,
-                                          color:
-                                              Theme.of(
-                                                context,
-                                              ).colorScheme.onSurface,
-                                        ),
-                                      ),
-                                      SizedBox(width: 8.w),
-
-                                      title == "DayFi Tag"
-                                          ? Container(
-                                            padding: EdgeInsets.symmetric(
-                                              horizontal: 8.w,
-                                              vertical: 3.h,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: AppColors.warning400
-                                                  .withOpacity(0.15),
-                                              borderRadius:
-                                                  BorderRadius.circular(8.r),
-                                            ),
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Text(
-                                                  'Free',
-                                                  style: AppTypography
-                                                      .labelSmall
-                                                      .copyWith(
-                                                        fontFamily: 'Karla',
-                                                        fontSize: 10.sp,
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                        color:
-                                                            AppColors
-                                                                .warning600,
-                                                      ),
-                                                ),
-                                              ],
-                                            ),
-                                          )
-                                          : const SizedBox.shrink(),
-                                    ],
-                                  ),
-                                  SizedBox(height: 6.h),
-                                  Text(
-                                    description,
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodyMedium?.copyWith(
-                                      fontSize: 12.5.sp,
-                                      fontFamily: 'Karla',
-                                      fontWeight: FontWeight.w400,
-                                      letterSpacing: -0.4,
-                                      height: 1.3,
-                                      color:
-                                          isEnabled
-                                              ? Theme.of(context)
-                                                  .colorScheme
-                                                  .onSurface
-                                                  .withOpacity(0.6)
-                                              : Theme.of(context)
-                                                  .colorScheme
-                                                  .onSurface
-                                                  .withOpacity(0.4),
-                                    ),
-                                  ),
-                                ],
+                            Text(
+                              title,
+                              style: Theme.of(
+                                context,
+                              ).textTheme.titleLarge?.copyWith(
+                                fontFamily: 'Karla',
+                                fontSize: 18.sp,
+                                letterSpacing: -.6,
+                                fontWeight: FontWeight.w500,
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
+                            SizedBox(width: 12.w),
+                            title == "DayFi Tag"
+                                ? Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 10.w,
+                                    vertical: 4.h,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.warning400.withOpacity(
+                                      0.15,
+                                    ),
+                                    borderRadius: BorderRadius.circular(20.r),
+                                  ),
+                                  child: Text(
+                                    'FREE',
+                                    style: AppTypography.labelSmall.copyWith(
+                                      fontFamily: 'Karla',
+                                      fontSize: 13.sp,
+                                      fontWeight: FontWeight.w500,
+                                      letterSpacing: .3,
+                                      height: 1.2,
+                                      color: AppColors.warning600,
+                                    ),
+                                  ),
+                                )
+                                : const SizedBox.shrink(),
                           ],
                         ),
-                      ),
-                    ],
+                        SizedBox(height: 4.h),
+                        Opacity(
+                          opacity: .7,
+                          child: Text(
+                            description,
+                            textAlign: TextAlign.start,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w500,
+                              height: 1.4,
+                              fontFamily: 'Karla',
+                              letterSpacing: -.6,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+
+                        if (!isEnabled)
+                          Align(
+                            alignment: AlignmentGeometry.centerRight,
+                            child: _buildComingSoonBadge(),
+                          ),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
-            SizedBox(width: 24.w),
-            // Circle check icon for selected state or Coming Soon badge
-            if (isSelected)
-              SvgPicture.asset(
-                'assets/icons/svgs/circle-check.svg',
-                color: AppColors.purple500ForTheme(context),
-                height: 24.sp,
-                width: 24.sp,
-              )
-            else if (!isEnabled)
-              _buildComingSoonBadge()
-            else
-              SizedBox(width: 24.sp),
+            SizedBox(width: 32.w),
+            Icon(Icons.chevron_right, color: AppColors.neutral400, size: 20.sp),
           ],
         ),
       ),
@@ -1108,19 +1233,21 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
 
   Widget _buildComingSoonBadge() {
     return Container(
+      margin: EdgeInsets.only(top: 12.h),
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
       decoration: BoxDecoration(
-        color: AppColors.neutral400.withOpacity(.5),
-        borderRadius: BorderRadius.circular(16.r),
+        color: AppColors.neutral600,
+        borderRadius: BorderRadius.circular(20.r),
       ),
       child: Text(
         'Coming Soon',
         style: AppTypography.labelSmall.copyWith(
           color: Colors.white,
-          fontSize: 10.sp,
-          fontWeight: FontWeight.w600,
+          fontSize: 13.sp,
+          fontWeight: FontWeight.w500,
           fontFamily: 'Karla',
-          letterSpacing: -.2,
+          letterSpacing: -.6,
+          height: 1.2,
         ),
       ),
     );
@@ -1133,238 +1260,6 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
     //       '$paymentMethod payment method is coming soon! Stay tuned for updates.',
     //   isError: false,
     // );
-  }
-
-  void _processPayment() async {
-    // Safety check - should not be called without a selection
-    if (_selectedPaymentMethod == null) {
-      return;
-    }
-
-    // If Digital Dollar is selected, navigate to crypto channels instead
-    if (_selectedPaymentMethod == 'Digital Dollar') {
-      appRouter.pushNamed(AppRoute.cryptoChannelsView);
-      return;
-    }
-
-    // If DayFi Tag is selected, handle DayFi Tag flow
-    if (_selectedPaymentMethod == 'DayFi Tag') {
-      _handleDayfiTagSelection();
-      return;
-    }
-
-    // For Bank Transfer, navigate to amount entry screen first
-    if (_selectedPaymentMethod == 'Bank Transfer') {
-      final result = await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder:
-              (context) => BankTransferAmountView(
-                selectedData: widget.selectedData,
-                recipientData: widget.recipientData,
-                senderData: widget.senderData,
-                paymentData: widget.paymentData,
-              ),
-        ),
-      );
-
-      // If amount was entered successfully, proceed with payment
-      if (result == true) {
-        await _processBankTransferPayment();
-      }
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final sendState = ref.read(sendViewModelProvider);
-
-      // Validate that we have exchange rates for the currencies
-      if (sendState.sendCurrencyRates == null ||
-          sendState.receiveCurrencyRates == null) {
-        ErrorHandler.showError(
-          context,
-          'Exchange rates not available for the selected currencies. Please try again.',
-        );
-        return;
-      }
-
-      // Check if we have valid buy/sell rates
-      final sendRates = sendState.sendCurrencyRates;
-      final receiveRates = sendState.receiveCurrencyRates;
-
-      if (sendRates?['buy'] == 'N/A' || receiveRates?['buy'] == 'N/A') {
-        ErrorHandler.showError(
-          context,
-          'Exchange rates not available for ${sendState.receiverCurrency}. Please select a different currency or try again later.',
-        );
-        return;
-      }
-
-      // Analytics: collection creation started
-      analyticsService.logEvent(
-        name: 'collection_creation_started',
-        parameters: {
-          'amount': sendState.sendAmount,
-          'currency': sendState.sendCurrency,
-          'recipient_country': sendState.receiverCountry,
-          'delivery_method': sendState.selectedDeliveryMethod,
-        },
-      );
-
-      // Resolve the best channel for this transaction
-      final selectedChannel = _findSelectedChannel(sendState);
-
-      // If no valid channel is found, show an error
-      if (selectedChannel == null) {
-        TopSnackbar.show(
-          context,
-          message:
-              'No valid payment channel found for ${sendState.receiverCountry}/${sendState.receiverCurrency}',
-          isError: true,
-        );
-        return;
-      }
-
-      // Determine if redirectUrl is required for this channel/country
-      final requiresRedirectUrl = _requiresRedirectUrl(
-        selectedChannel,
-        sendState.receiverCountry,
-      );
-
-      // Debug logs for collection data
-      AppLogger.debug(
-        'Recipient account: ${widget.recipientData['accountNumber']}',
-      );
-      AppLogger.debug(
-        'Recipient networkId: ${widget.recipientData['networkId']}',
-      );
-      AppLogger.debug('UserId: ${widget.senderData['userId']}');
-      AppLogger.debug(
-        'Sender channelId: ${widget.selectedData['senderChannelId']}',
-      );
-
-      // Prepare the request data using real data from the flow
-      // Note: For Bank Transfer, encryptedPin should already be included via PIN flow
-      final requestData = _buildCollectionRequest(
-        sendState: sendState,
-        selectedChannel: selectedChannel,
-        encryptedPin: '', // This won't be used for non-Bank Transfer methods
-      );
-
-      // Debug log for source object and channelId
-      AppLogger.debug('Source: ${requestData["source"]}');
-      AppLogger.debug('Metadata: ${requestData["metadata"]}');
-      AppLogger.debug('Collection channelId: ${requestData["channelId"]}');
-
-      // Add redirectUrl if required for this channel
-      if (requiresRedirectUrl) {
-        requestData["redirectUrl"] = _getRedirectUrl();
-      }
-
-      // Also add redirectUrl for South Africa and other countries that commonly require it
-      // final commonRedirectCountries = [
-      //   'ZA',
-      //   'ZA-South Africa',
-      //   'South Africa',
-      //   'US',
-      //   'GB',
-      //   'CA',
-      // ];
-      // if (commonRedirectCountries.contains(sendState.receiverCountry)) {
-      //   requestData["redirectUrl"] = _getRedirectUrl();
-      // }
-
-      // Make the API call
-      final response = await locator<PaymentService>().createCollection(
-        requestData,
-      );
-
-      if (mounted) {
-        if (!response.error && response.data != null) {
-          // Store the payment data for later use
-          _currentPaymentData = response.data!;
-
-          // Analytics: collection creation completed
-          analyticsService.logEvent(
-            name: 'collection_creation_completed',
-            parameters: {
-              'amount': sendState.sendAmount,
-              'currency': sendState.sendCurrency,
-              'recipient_country': sendState.receiverCountry,
-              'delivery_method': sendState.selectedDeliveryMethod,
-              'collection_id': response.data?.id ?? 'unknown',
-            },
-          );
-          // Show bank details bottom sheet
-          _showBankDetailsBottomSheet(response.data!);
-        } else {
-          // Analytics: collection creation failed
-          analyticsService.logEvent(
-            name: 'collection_creation_failed',
-            parameters: {
-              'amount': sendState.sendAmount,
-              'currency': sendState.sendCurrency,
-              'recipient_country': sendState.receiverCountry,
-              'delivery_method': sendState.selectedDeliveryMethod,
-              'reason':
-                  response.message.isNotEmpty
-                      ? response.message
-                      : 'Payment processing failed',
-            },
-          );
-          // Show error with retry option
-          _showErrorWithRetry(
-            context,
-            message:
-                response.message.isNotEmpty
-                    ? response.message
-                    : 'Payment processing failed',
-            onRetry: () => _processPayment(),
-          );
-        }
-      }
-    } catch (e, st) {
-      // Report to Crashlytics
-      try {
-        await locator<CrashlyticsService>().reportError(e, st);
-      } catch (_) {}
-      if (mounted) {
-        // Analytics: collection creation failed (exception)
-        final sendState = ref.read(sendViewModelProvider);
-        analyticsService.logEvent(
-          name: 'collection_creation_failed',
-          parameters: {
-            'amount': sendState.sendAmount,
-            'currency': sendState.sendCurrency,
-            'recipient_country': sendState.receiverCountry,
-            'delivery_method': sendState.selectedDeliveryMethod,
-            'reason': e.toString(),
-            'error_type': 'exception',
-          },
-        );
-
-        // Map to user-friendly error
-        final errorMessage = _mapCollectionError(e.toString(), sendState);
-
-        // Show error with retry option
-        _showErrorWithRetry(
-          context,
-          message: errorMessage,
-          onRetry: () => _processPayment(),
-        );
-        AppLogger.error(errorMessage, error: e, stackTrace: st);
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
   }
 
   /// Determines if a redirectUrl is required for the given channel and country
@@ -1425,11 +1320,11 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
   void _showBankDetailsBottomSheet(payment.PaymentData collectionData) {
     // Start the countdown timer when showing bank details
     _startCountdownTimer();
-
     showModalBottomSheet(
+      barrierColor: Colors.black.withOpacity(0.85),
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
@@ -1466,25 +1361,49 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        SizedBox(height: 24.h, width: 22.w),
+                        SizedBox(height: 40.h, width: 40.w),
                         Text(
                           'Payment Details',
                           style: AppTypography.titleLarge.copyWith(
-                            fontFamily: 'CabinetGrotesk',
-                            fontSize: 14.sp,
+                            fontFamily: 'FunnelDisplay',
+                            fontSize: 20.sp,
+                            // height: 1.6,
                             fontWeight: FontWeight.w600,
                             color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.pop(context);
-                          },
-                          child: Image.asset(
-                            "assets/icons/pngs/cancelicon.png",
-                            height: 24.h,
-                            width: 24.w,
-                            color: Theme.of(context).colorScheme.onSurface,
+                        InkWell(
+                          splashColor: Colors.transparent,
+                          highlightColor: Colors.transparent,
+                          onTap:
+                              () => {
+                                Navigator.pop(context),
+                                FocusScope.of(context).unfocus(),
+                              },
+                          child: Stack(
+                            alignment: AlignmentGeometry.center,
+                            children: [
+                              SvgPicture.asset(
+                                "assets/icons/svgs/notificationn.svg",
+                                height: 40.sp,
+                                color: Theme.of(context).colorScheme.surface,
+                              ),
+                              SizedBox(
+                                height: 40.sp,
+                                width: 40.sp,
+                                child: Center(
+                                  child: Image.asset(
+                                    "assets/icons/pngs/cancelicon.png",
+                                    height: 20.h,
+                                    width: 20.w,
+                                    color:
+                                        Theme.of(
+                                          context,
+                                        ).textTheme.bodyLarge!.color,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -1506,7 +1425,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                               color: Theme.of(
                                 context,
                               ).colorScheme.primaryContainer.withOpacity(0.25),
-                              borderRadius: BorderRadius.circular(4.r),
+                              borderRadius: BorderRadius.circular(12.r),
                               // border: Border.all(
                               //   color: Theme.of(
                               //     context,
@@ -1532,7 +1451,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                                     ).textTheme.bodySmall?.copyWith(
                                       fontSize: 14.sp,
                                       fontFamily: 'Karla',
-                                      fontWeight: FontWeight.w400,
+                                      fontWeight: FontWeight.w500,
                                       letterSpacing: -0.4,
                                       height: 1.5,
                                       color:
@@ -1572,10 +1491,19 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                                   style: Theme.of(
                                     context,
                                   ).textTheme.titleLarge?.copyWith(
-                                    fontFamily: 'CabinetGrotesk',
-                                    fontSize: 12.sp,
-                                    fontWeight: FontWeight.w600,
+                                    fontFamily: 'Karla',
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    letterSpacing: -.2,
+                                    height: 1.450,
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .bodyLarge!
+                                        .color!
+                                        .withOpacity(.75),
                                   ),
+                                  textAlign: TextAlign.start,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
 
                                 SizedBox(height: 16.h),
@@ -1661,7 +1589,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                             style: Theme.of(
                               context,
                             ).textTheme.bodyMedium?.copyWith(
-                              letterSpacing: -.3,
+                              letterSpacing: -.6,
                               fontSize: 14.sp,
                               fontWeight: FontWeight.w500,
                               color: Theme.of(
@@ -1687,29 +1615,27 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                           onPressed: () {
                             Navigator.pop(context);
                             // Navigate to success screen and clear all previous routes
-                            Navigator.pushAndRemoveUntil(
+                            Navigator.pushNamedAndRemoveUntil(
                               context,
-                              MaterialPageRoute(
-                                builder:
-                                    (context) => SendPaymentSuccessView(
-                                      recipientData: widget.recipientData,
-                                      selectedData: widget.selectedData,
-                                      paymentData: widget.paymentData,
-                                      collectionData: _currentPaymentData,
-                                      transactionId:
-                                          _currentPaymentData?.id ??
-                                          _currentPaymentData?.sequenceId,
-                                    ),
-                              ),
+                              AppRoute.sendCollectionSuccessView,
                               (Route route) =>
                                   false, // Remove all previous routes
+                              arguments: {
+                                'recipientData': widget.recipientData,
+                                'selectedData': widget.selectedData,
+                                'paymentData': widget.paymentData,
+                                'collectionData': _currentPaymentData,
+                                'transactionId':
+                                    _currentPaymentData?.id ??
+                                    _currentPaymentData?.sequenceId,
+                              },
                             );
                           },
                           backgroundColor: AppColors.purple500,
-                          height: 48.000.h,
+                          height: 48.00000.h,
                           textColor: AppColors.neutral0,
                           fontFamily: 'Karla',
-                          letterSpacing: -.8,
+                          letterSpacing: -.70,
                           fontSize: 18,
                           width: double.infinity,
                           fullWidth: true,
@@ -1725,10 +1651,10 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                         //   backgroundColor: Colors.transparent,
                         //   textColor: AppColors.purple500ForTheme(context),
                         //   borderColor: AppColors.purple500ForTheme(context),
-                        //   height: 48.000.h,
+                        //   height: 48.00000.h,
                         //   borderRadius: 38,
                         //   fontFamily: 'Karla',
-                        //   letterSpacing: -.8,
+                        //   letterSpacing: -.70,
                         //   fontSize: 18,
                         //   width: double.infinity,
                         //   fullWidth: true,
@@ -1754,7 +1680,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
         Text(
           label,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            letterSpacing: -.3,
+            letterSpacing: -.6,
             fontSize: 14.sp,
             fontWeight: FontWeight.w500,
             color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
@@ -1765,7 +1691,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
             Text(
               value,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                fontFamily: 'CabinetGrotesk',
+                fontFamily: 'FunnelDisplay',
                 fontSize: 11.sp,
                 fontWeight: FontWeight.w600,
                 color: Theme.of(context).colorScheme.onSurface,
@@ -2063,13 +1989,13 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
 
       AppLogger.debug('Collection request payload: $requestData');
 
-      // Determine if redirectUrl is required for this channel/country
+      // Determine if redirectUrl is required for this country/country
       final requiresRedirectUrl = _requiresRedirectUrl(
         selectedChannel,
         sendState.receiverCountry,
       );
 
-      // Add redirectUrl if required for this channel
+      // Add redirectUrl if required for this country
       if (requiresRedirectUrl) {
         requestData["redirectUrl"] = _getRedirectUrl();
       }
@@ -2220,8 +2146,8 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                 Text(
                   'Payment Error',
                   style: AppTypography.titleLarge.copyWith(
-                    fontFamily: 'CabinetGrotesk',
-                    fontSize: 28.00,
+                    fontFamily: 'FunnelDisplay',
+                    fontSize: 18.sp,
                     // height: 1.6,
                     fontWeight: FontWeight.w600,
                     color: Theme.of(context).colorScheme.onSurface,
@@ -2237,7 +2163,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                 //   style: AppTypography.bodyMedium.copyWith(
                 //     fontFamily: 'Karla',
                 //     fontSize: 14.sp,
-                //     fontWeight: FontWeight.w400,
+                //     fontWeight: FontWeight.w500,
                 //     color: Theme.of(
                 //       context,
                 //     ).colorScheme.onSurface.withOpacity(0.7),
@@ -2257,12 +2183,12 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                   backgroundColor: AppColors.purple500,
                   textColor: AppColors.neutral0,
                   borderRadius: 38,
-                  height: 48.000.h,
+                  height: 48.00000.h,
                   width: double.infinity,
                   fullWidth: true,
                   fontFamily: 'Karla',
                   fontSize: 18,
-                  fontWeight: FontWeight.w400,
+                  fontWeight: FontWeight.w500,
                   letterSpacing: -0.8,
                 ),
                 SizedBox(height: 12.h),
@@ -2280,7 +2206,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                       fontFamily: 'Karla',
                       fontSize: 16.sp,
                       letterSpacing: -0.8,
-                      fontWeight: FontWeight.w400,
+                      fontWeight: FontWeight.w500,
                       color: AppColors.neutral400,
                     ),
                   ),

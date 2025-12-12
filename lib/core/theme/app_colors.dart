@@ -47,8 +47,8 @@ class AppColors {
   static const Color neutral600 = Color(0xFF5C5C5C);
   static const Color neutral700 = Color.fromARGB(255, 129, 129, 129);
   static const Color neutral800 = Color(0xFF262626);
-  static const Color neutral900 = Color(0xFF1C1C1C);
-  static const Color neutral950 = Color(0xFF111111);
+  static const Color neutral900 = Color.fromARGB(255, 22, 22, 22);
+  static const Color neutral950 = Color.fromARGB(255, 7, 7, 7);
 
   // ============================================================================
   // SEMANTIC COLORS
@@ -115,8 +115,8 @@ class AppColors {
   static const Color purple100 = Color(0xFFDCD5FF);
   static const Color purple200 = Color(0xFFCAC0FF);
   static const Color purple300 = Color(0xFFA897FF);
-  static const Color purple400 = Color(0xFF8C71F6);
-  static const Color purple500 = Color(0xFF6A31A2);
+  static const Color purple400 = Color(0xff7A30E9);
+  static const Color purple500 = Color(0xff7A30E9);
   static const Color purple600 = Color(0xFF693EE0);
   static const Color purple700 = Color(0xFF5B2CC9);
   static const Color purple800 = Color(0xFF4C25A7);

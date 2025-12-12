@@ -118,6 +118,20 @@ class AppRouter {
     );
   }
 
+
+  /// Navigate to login and clear the entire route stack
+  /// This prevents back button from going to passcode or other auth screens
+  Future<T?> pushOnboardingAndClearStack<T extends Object?>({
+    Object? arguments,
+  }) {
+    return navigatorState.pushNamedAndRemoveUntil<T>(
+      AppRoute.onboardingView,
+      (Route route) => false, // Remove all previous routes
+      arguments: arguments,
+    );
+  }
+
+
   /// Navigate to main view and clear the entire route stack
   /// This prevents back button from going to auth screens
   Future<T?> pushMainAndClearStack<T extends Object?>({

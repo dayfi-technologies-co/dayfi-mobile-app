@@ -175,10 +175,10 @@ class SecondaryButton extends StatelessWidget {
     return Container(
       width: fullWidth ? double.infinity : width,
       height: height,
-      padding: EdgeInsets.symmetric(
-        horizontal: horizontalPadding ?? 10.w,
-        vertical: verticalPadding ?? 8.h,
-      ),
+      // padding: EdgeInsets.symmetric(
+      //   horizontal: horizontalPadding ?? 10.w,
+      //   vertical: verticalPadding ?? 8.h,
+      // ),
       clipBehavior: Clip.antiAlias,
       decoration: ShapeDecoration(
         color: effectiveBackgroundColor,
@@ -186,7 +186,7 @@ class SecondaryButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(borderRadius ?? 10.r),
           side: BorderSide(
             color: effectiveBorderColor,
-            width: borderWidth ?? 1.5,
+            width:  1,
           ),
         ),
         shadows:
@@ -249,7 +249,7 @@ class SecondaryButton extends StatelessWidget {
                               fontFamily ?? AppTypography.secondaryFontFamily,
                           fontWeight: fontWeight ?? AppTypography.medium,
                           height: lineHeight ?? 1.78,
-                          letterSpacing: -.8,
+                          letterSpacing: -1,
                         ),
                         textAlign: TextAlign.center,
                       ),

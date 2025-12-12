@@ -1,7 +1,10 @@
+import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
+import 'package:dayfi/common/utils/tier_utils.dart';
+import 'package:dayfi/common/utils/haptic_helper.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/common/widgets/buttons/secondary_button.dart';
-import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
@@ -19,6 +22,7 @@ import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/features/home/vm/home_viewmodel.dart';
 import 'package:dayfi/features/send/views/send_payment_method_view.dart';
 import 'package:dayfi/models/beneficiary_with_source.dart';
+import 'package:dayfi/common/widgets/top_snackbar.dart';
 
 class SendView extends ConsumerStatefulWidget {
   const SendView({super.key});
@@ -29,6 +33,7 @@ class SendView extends ConsumerStatefulWidget {
 
 class _SendViewState extends ConsumerState<SendView>
     with WidgetsBindingObserver {
+  String? _lastDeliveryMethod;
   final TextEditingController _sendAmountController = TextEditingController();
   final TextEditingController _receiveAmountController =
       TextEditingController();
@@ -37,10 +42,22 @@ class _SendViewState extends ConsumerState<SendView>
   final FocusNode _receiveAmountFocus = FocusNode();
   bool _isCheckingWallet = false;
 
+  // Track last fetched country/currency to avoid duplicate rate API calls
+  String? _lastFetchedSendCountry;
+  String? _lastFetchedSendCurrency;
+
+  // Track last wallet fetch to avoid duplicate API calls
+  DateTime? _lastWalletFetchTime;
+
   // Route argument helpers (populated when opened via named route)
   BeneficiaryWithSource? _initialBeneficiaryWithSource;
   bool _openedFromRecipients = false;
   bool _didLoadRouteArgs = false;
+
+  // Stored data from send_add_recipients_view
+  Map<String, dynamic>? _recipientData;
+  Map<String, dynamic>? _selectedData;
+  Map<String, dynamic>? _senderData;
 
   // Helper function to get full country name from country code
   String _getCountryName(String? countryCode) {
@@ -75,6 +92,7 @@ class _SendViewState extends ConsumerState<SendView>
         return 'Cameroon';
       case 'GA':
         return 'Gabon';
+
       case 'MW':
         return 'Malawi';
       case 'ML':
@@ -150,6 +168,44 @@ class _SendViewState extends ConsumerState<SendView>
     }
   }
 
+  // Helper function to get network/bank name from recipient data
+  String _getNetworkName() {
+    // Try recipient data first (from add recipients view)
+    if (_recipientData != null) {
+      final networkName = _recipientData!['networkName'] as String?;
+      if (networkName != null && networkName.isNotEmpty) {
+        return networkName;
+      }
+    }
+
+    // Try selected data (from navigation)
+    if (_selectedData != null) {
+      final networkName = _selectedData!['networkName'] as String?;
+      if (networkName != null && networkName.isNotEmpty) {
+        return networkName;
+      }
+    }
+
+    // Try beneficiary source network
+    if (_initialBeneficiaryWithSource != null) {
+      final source = _initialBeneficiaryWithSource!.source;
+      final networkId = source.networkId;
+      if (networkId != null && networkId.isNotEmpty) {
+        // Try to find the network in the send state
+        final sendState = ref.read(sendViewModelProvider);
+        final network = sendState.networks.firstWhere(
+          (n) => n.id == networkId,
+          orElse: () => Network(id: null, name: null),
+        );
+        if (network.name != null && network.name!.isNotEmpty) {
+          return network.name!;
+        }
+      }
+    }
+
+    return '';
+  }
+
   // Flags to prevent infinite loops when updating controller text
   bool _isUpdatingSendController = false;
   bool _isUpdatingReceiveController = false;
@@ -167,40 +223,60 @@ class _SendViewState extends ConsumerState<SendView>
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       // Ensure no text field has focus when the widget is first built
       FocusScope.of(context).unfocus();
-
-      // Only initialize if not already initialized or initializing
+      // Clear controllers and reset the send form on fresh entry so fields are empty
+      // This ensures users don't see stale/prefilled amounts when starting a new send flow
       final viewModel = ref.read(sendViewModelProvider.notifier);
+
+      // Reset the viewmodel form values
+      try {
+        viewModel.resetSendForm();
+      } catch (e) {
+        // ignore errors from reset
+      }
+
+      // Clear UI controllers safely
+      _isUpdatingSendController = true;
+      _isUpdatingReceiveController = true;
+      _sendAmountController.clear();
+      _receiveAmountController.clear();
+      _isUpdatingSendController = false;
+      _isUpdatingReceiveController = false;
+
+      // Initialize viewmodel if needed
       if (!viewModel.isInitialized && !viewModel.isInitializing) {
         try {
           await viewModel.initialize();
         } catch (e) {
           // Log error but don't crash the app
-          print('Error initializing SendView: $e');
+          // print('Error initializing SendView: $e');
         }
-      } else {
-        // If already initialized, restore controller values from state
-        final state = ref.read(sendViewModelProvider);
-        if (state.sendAmount.isNotEmpty) {
-          _isUpdatingSendController = true;
-          final formattedSend = StringUtils.formatNumberWithCommas(
-            state.sendAmount,
+      }
+
+      // Fetch rates only if country/currency has changed since last fetch
+      try {
+        final currentState = ref.read(sendViewModelProvider);
+        if (_lastFetchedSendCountry != currentState.sendCountry ||
+            _lastFetchedSendCurrency != currentState.sendCurrency) {
+          await viewModel.updateSendCountry(
+            currentState.sendCountry,
+            currentState.sendCurrency,
           );
-          _sendAmountController.value = TextEditingValue(
-            text: formattedSend,
-            selection: TextSelection.collapsed(offset: formattedSend.length),
-          );
-          _isUpdatingSendController = false;
+          _lastFetchedSendCountry = currentState.sendCountry;
+          _lastFetchedSendCurrency = currentState.sendCurrency;
         }
-        if (state.receiverAmount.isNotEmpty) {
-          _isUpdatingReceiveController = true;
-          final formattedReceive = StringUtils.formatNumberWithCommas(
-            state.receiverAmount,
-          );
-          _receiveAmountController.value = TextEditingValue(
-            text: formattedReceive,
-            selection: TextSelection.collapsed(offset: formattedReceive.length),
-          );
-          _isUpdatingReceiveController = false;
+      } catch (e) {
+        AppLogger.error('Error fetching rates on SendView init: $e');
+      }
+
+      // Fetch fresh wallet balance on screen load (with caching to avoid duplicates)
+      final now = DateTime.now();
+      if (_lastWalletFetchTime == null ||
+          now.difference(_lastWalletFetchTime!).inSeconds > 30) {
+        try {
+          await ref.read(homeViewModelProvider.notifier).fetchWalletDetails();
+          _lastWalletFetchTime = now;
+        } catch (e) {
+          AppLogger.error('Error fetching wallet balance: $e');
         }
       }
 
@@ -352,7 +428,7 @@ class _SendViewState extends ConsumerState<SendView>
     return Text(
       "Your wallet balance is too low to send this amount. Please add funds and try again.",
       style: TextStyle(
-        fontFamily: 'CabinetGrotesk',
+        fontFamily: 'FunnelDisplay',
         fontSize: 20.sp,
         fontWeight: FontWeight.w500,
         color: Theme.of(context).colorScheme.onSurface,
@@ -395,12 +471,12 @@ class _SendViewState extends ConsumerState<SendView>
       backgroundColor: AppColors.purple500,
       textColor: AppColors.neutral0,
       borderRadius: 38.r,
-      height: 48.000.h,
+      height: 48.00000.h,
       width: double.infinity,
       fullWidth: true,
       fontFamily: 'Karla',
       fontSize: 18,
-      fontWeight: FontWeight.w400,
+      fontWeight: FontWeight.w500,
       letterSpacing: -0.8,
     );
   }
@@ -414,11 +490,11 @@ class _SendViewState extends ConsumerState<SendView>
       textColor: AppColors.purple500ForTheme(context),
       width: double.infinity,
       fullWidth: true,
-      height: 48.000.h,
+      height: 48.00000.h,
       borderRadius: 38.r,
       fontFamily: 'Karla',
       fontSize: 18,
-      fontWeight: FontWeight.w400,
+      fontWeight: FontWeight.w500,
       letterSpacing: -0.8,
     );
   }
@@ -516,6 +592,13 @@ class _SendViewState extends ConsumerState<SendView>
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           FocusScope.of(context).unfocus();
+          // Refresh wallet balance when app resumes (with caching)
+          final now = DateTime.now();
+          if (_lastWalletFetchTime == null ||
+              now.difference(_lastWalletFetchTime!).inSeconds > 30) {
+            ref.read(homeViewModelProvider.notifier).fetchWalletDetails();
+            _lastWalletFetchTime = now;
+          }
         }
       });
     }
@@ -538,19 +621,39 @@ class _SendViewState extends ConsumerState<SendView>
               _configureSendStateForBeneficiary();
             });
           }
+        } else if (args['recipientData'] is Map<String, dynamic>) {
+          // Store data from send_add_recipients_view
+          _recipientData = args['recipientData'] as Map<String, dynamic>;
+          _selectedData = args['selectedData'] as Map<String, dynamic>? ?? {};
+          _senderData = args['senderData'] as Map<String, dynamic>? ?? {};
         }
+      }
+      if (_selectedData == null &&
+          args is Map<String, dynamic> &&
+          args['selectedData'] is Map<String, dynamic>) {
+        _selectedData = args['selectedData'] as Map<String, dynamic>;
       }
       _didLoadRouteArgs = true;
     }
   }
 
   /// Configure send state based on beneficiary data
-  void _configureSendStateForBeneficiary() {
+  void _configureSendStateForBeneficiary() async {
     if (_initialBeneficiaryWithSource == null) return;
 
     final beneficiary = _initialBeneficiaryWithSource!.beneficiary;
     final source = _initialBeneficiaryWithSource!.source;
     final viewModel = ref.read(sendViewModelProvider.notifier);
+
+    // Ensure viewModel is initialized before configuring
+    if (!viewModel.isInitialized && !viewModel.isInitializing) {
+      try {
+        await viewModel.initialize();
+      } catch (e) {
+        // print('Error initializing in _configureSendStateForBeneficiary: $e');
+        return;
+      }
+    }
 
     // Determine delivery method based on account type
     String deliveryMethod = '';
@@ -581,7 +684,22 @@ class _SendViewState extends ConsumerState<SendView>
     final sendState = ref.watch(sendViewModelProvider);
 
     // Listen to state changes and update controllers safely
-    ref.listen(sendViewModelProvider, (previous, next) {
+    ref.listen(sendViewModelProvider, (previous, next) async {
+      // --- Detect delivery method change and trigger re-initialization ---
+      if (_lastDeliveryMethod != null &&
+          next.selectedDeliveryMethod != _lastDeliveryMethod) {
+        // Only re-initialize if the delivery method actually changed
+        _lastDeliveryMethod = next.selectedDeliveryMethod;
+        try {
+          await ref.read(sendViewModelProvider.notifier).forceReinitialize();
+        } catch (e) {
+          // Log error but don't crash the app
+          // print('Error re-initializing on delivery method change: $e');
+        }
+      } else {
+        _lastDeliveryMethod = next.selectedDeliveryMethod;
+      }
+
       // ---- Handle SEND amount ----
       if (previous?.sendAmount != next.sendAmount &&
           !_isUpdatingSendController) {
@@ -692,22 +810,54 @@ class _SendViewState extends ConsumerState<SendView>
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
-          scrolledUnderElevation: 0,
+          scrolledUnderElevation: .5,
+          foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+          shadowColor: Theme.of(context).scaffoldBackgroundColor,
+          surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
-          leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios,
-              color: Theme.of(context).colorScheme.onSurface,
+          leadingWidth: 72,
+          leading: InkWell(
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            onTap:
+                () => {
+                  Navigator.pop(context),
+                  FocusScope.of(context).unfocus(),
+                },
+            child: Stack(
+              alignment: AlignmentGeometry.center,
+              children: [
+                SvgPicture.asset(
+                  "assets/icons/svgs/notificationn.svg",
+                  height: 40.sp,
+                  color: Theme.of(context).colorScheme.surface,
+                ),
+                SizedBox(
+                  height: 40.sp,
+                  width: 40.sp,
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: Icon(
+                        Icons.arrow_back_ios,
+                        size: 20.sp,
+                        color: Theme.of(context).textTheme.bodyLarge!.color,
+                        // size: 20.sp,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            onPressed: () => Navigator.pop(context),
           ),
           automaticallyImplyLeading: false,
           title: Text(
-            "Send Money",
+            "Enter Amount",
             style: AppTypography.titleLarge.copyWith(
-              fontFamily: 'CabinetGrotesk',
-              fontSize: 20.sp,
+              fontFamily: 'FunnelDisplay',
+              fontSize: 24.sp,
               // height: 1.6,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface,
@@ -736,108 +886,303 @@ class _SendViewState extends ConsumerState<SendView>
           //   ),
           // ],
         ),
-        body: RefreshIndicator(
-          onRefresh: () async {
-            // Dismiss keyboard when refreshing
-            FocusScope.of(context).unfocus();
-
-            // Force re-initialize the view model to refresh all data
-            try {
-              await ref
-                  .read(sendViewModelProvider.notifier)
-                  .forceReinitialize();
-            } catch (e) {
-              // Log error but don't crash the app
-              print('Error refreshing SendView: $e');
-            }
-          },
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.0.h),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Transfer Limit Card
-                Container(
-                  padding: EdgeInsets.all(12.w),
-                  decoration: BoxDecoration(
-                    color:
-                        sendState.channels.isEmpty
-                            ? AppColors.warning500.withOpacity(0.1)
-                            : Theme.of(
-                              context,
-                            ).colorScheme.primaryContainer.withOpacity(0.25),
-                    borderRadius: BorderRadius.circular(8.r),
-                    border:
-                        sendState.channels.isEmpty
-                            ? Border.all(
-                              color: AppColors.warning500.withOpacity(0.3),
-                              width: 1.0,
-                            )
-                            : null,
+        body:
+            sendState.isLoading && sendState.channels.isEmpty
+                ? Center(
+                  child: LoadingAnimationWidget.horizontalRotatingDots(
+                    color: Theme.of(context).colorScheme.primary,
+                    size: 36,
                   ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      SizedBox(width: 4.w),
-                      Image.asset("assets/images/idea.png", height: 20.h),
-                      SizedBox(width: 12.w),
-                      Expanded(
-                        child: Text(
-                          sendState.channels.isEmpty
-                              ? "Channels not available. Only Dayfi tag transfer available (NGN only)."
-                              : "Send funds via dayfi tag (NGN only), bank transfer, mobile money or wallet address.",
-                          style: Theme.of(
-                            context,
-                          ).textTheme.bodySmall?.copyWith(
-                            fontSize: 14.sp,
-                            fontFamily: 'Karla',
-                            fontWeight: FontWeight.w400,
-                            letterSpacing: -0.4,
-                            height: 1.5,
-                            color:
-                                sendState.channels.isEmpty
-                                    ? AppColors.warning500
-                                    : Theme.of(context).colorScheme.primary,
+                )
+                : RefreshIndicator(
+                  onRefresh: () async {
+                    // Dismiss keyboard when refreshing
+                    FocusScope.of(context).unfocus();
+
+                    // Force re-initialize the view model to refresh all data
+                    try {
+                      await ref
+                          .read(sendViewModelProvider.notifier)
+                          .forceReinitialize();
+                    } catch (e) {
+                      // Log error but don't crash the app
+                      // print('Error refreshing SendView: $e');
+                    }
+                  },
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 18.w,
+                      vertical: 4.0.h,
+                    ),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 350),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // Transfer Limit Card
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 18.w,
+                              vertical: 4.h,
+                            ),
+                            child: Text(
+                              "Enter the amount you want to send to ${_getCountryName(sendState.receiverCountry)} (${sendState.receiverCurrency}) via ${_getDeliveryMethodDisplayName(sendState.selectedDeliveryMethod)}${_getNetworkName().isNotEmpty ? ' (${_getNetworkName()})' : ''}",
+                              style: Theme.of(
+                                context,
+                              ).textTheme.bodyMedium?.copyWith(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'Karla',
+                                letterSpacing: -.6,
+                                height: 1.5,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
                           ),
-                        ),
+                          SizedBox(height: 32.h),
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 400),
+                            switchInCurve: Curves.easeOutCubic,
+                            switchOutCurve: Curves.easeInCubic,
+                            transitionBuilder: (
+                              Widget child,
+                              Animation<double> animation,
+                            ) {
+                              final offsetAnimation = Tween<Offset>(
+                                begin: const Offset(0, 0.08),
+                                end: Offset.zero,
+                              ).animate(animation);
+                              return FadeTransition(
+                                opacity: animation,
+                                child: SlideTransition(
+                                  position: offsetAnimation,
+                                  child: child,
+                                ),
+                              );
+                            },
+                            child: Column(
+                              key: ValueKey('form-visible'),
+                              children: [
+                                // Send Amount Section
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: 350),
+                                  curve: Curves.easeInOut,
+                                  child: _buildSendAmountSection(sendState),
+                                ),
+
+                                // SizedBox(height: 20.h),
+                                AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 350),
+                                  switchInCurve: Curves.easeOutCubic,
+                                  switchOutCurve: Curves.easeInCubic,
+                                  transitionBuilder: (
+                                    Widget child,
+                                    Animation<double> animation,
+                                  ) {
+                                    final offsetAnimation = Tween<Offset>(
+                                      begin: const Offset(0, -0.15),
+                                      end: Offset.zero,
+                                    ).animate(animation);
+                                    return FadeTransition(
+                                      opacity: animation,
+                                      child: SlideTransition(
+                                        position: offsetAnimation,
+                                        child: child,
+                                      ),
+                                    );
+                                  },
+                                  child:
+                                      _getSendButtonText(
+                                                    sendState,
+                                                    ref.watch(
+                                                      sendViewModelProvider
+                                                          .notifier,
+                                                    ),
+                                                    ref
+                                                        .watch(
+                                                          sendViewModelProvider
+                                                              .notifier,
+                                                        )
+                                                        .isSendAmountValid,
+                                                    _isCheckingWallet,
+                                                  ) ==
+                                                  "Fetching rates..." ||
+                                              _getSendButtonText(
+                                                    sendState,
+                                                    ref.watch(
+                                                      sendViewModelProvider
+                                                          .notifier,
+                                                    ),
+                                                    ref
+                                                        .watch(
+                                                          sendViewModelProvider
+                                                              .notifier,
+                                                        )
+                                                        .isSendAmountValid,
+                                                    _isCheckingWallet,
+                                                  ) ==
+                                                  "Loading..."
+                                          ? Center(
+                                            child: Padding(
+                                              padding: const EdgeInsets.only(
+                                                top: 20.0,
+                                              ),
+                                              child:
+                                                  LoadingAnimationWidget.horizontalRotatingDots(
+                                                    color:
+                                                        Theme.of(
+                                                          context,
+                                                        ).colorScheme.primary,
+                                                    size: 20,
+                                                  ),
+                                            ),
+                                          )
+                                          : _getSendButtonText(
+                                                    sendState,
+                                                    ref.watch(
+                                                      sendViewModelProvider
+                                                          .notifier,
+                                                    ),
+                                                    ref
+                                                        .watch(
+                                                          sendViewModelProvider
+                                                              .notifier,
+                                                        )
+                                                        .isSendAmountValid,
+                                                    _isCheckingWallet,
+                                                  ) ==
+                                                  "Continue" ||
+                                              _getSendButtonText(
+                                                    sendState,
+                                                    ref.watch(
+                                                      sendViewModelProvider
+                                                          .notifier,
+                                                    ),
+                                                    ref
+                                                        .watch(
+                                                          sendViewModelProvider
+                                                              .notifier,
+                                                        )
+                                                        .isSendAmountValid,
+                                                    _isCheckingWallet,
+                                                  ) ==
+                                                  "Enter valid amount"
+                                          ? const SizedBox(
+                                            key: ValueKey('empty'),
+                                            height: 0,
+                                          )
+                                          : Column(
+                                            key: ValueKey('dynamicText'),
+                                            children: [
+                                              SizedBox(height: 8.h),
+                                              Center(
+                                                child: Text(
+                                                  _getSendButtonText(
+                                                    sendState,
+                                                    ref.watch(
+                                                      sendViewModelProvider
+                                                          .notifier,
+                                                    ),
+                                                    ref
+                                                        .watch(
+                                                          sendViewModelProvider
+                                                              .notifier,
+                                                        )
+                                                        .isSendAmountValid,
+                                                    _isCheckingWallet,
+                                                  ),
+
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .bodyMedium
+                                                      ?.copyWith(
+                                                        fontSize: 14.sp,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        fontFamily: 'Karla',
+                                                        letterSpacing: -.6,
+                                                        height: 1.4,
+                                                        color:
+                                                            AppColors.error600,
+                                                      ),
+                                                  textAlign: TextAlign.center,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                ),
+
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: 350),
+                                  curve: Curves.easeInOut,
+                                  height: 24.h,
+                                  child: const SizedBox.shrink(),
+                                ),
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: 350),
+                                  curve: Curves.easeInOut,
+                                  child: _buildExchangeRateSection(sendState),
+                                ),
+                                // Sender Delivery Method Section (commented out)
+                                // AnimatedContainer(
+                                //   duration: const Duration(milliseconds: 350),
+                                //   curve: Curves.easeInOut,
+                                //   child: _buildSenderDeliveryMethodSection(sendState),
+                                // ),
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: 350),
+                                  curve: Curves.easeInOut,
+                                  height: 12.h,
+                                  child: const SizedBox.shrink(),
+                                ),
+                                // Receive Amount Section
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: 350),
+                                  curve: Curves.easeInOut,
+                                  child: _buildReceiveAmountSection(sendState),
+                                ),
+                                // AnimatedContainer(
+                                //   duration: const Duration(milliseconds: 350),
+                                //   curve: Curves.easeInOut,
+                                //   height: 18.h,
+                                //   child: const SizedBox.shrink(),
+                                // ),
+                                // // Recipient Delivery Method Section
+                                // AnimatedContainer(
+                                //   duration: const Duration(milliseconds: 350),
+                                //   curve: Curves.easeInOut,
+                                //   child: _buildRecipientDeliveryMethodSection(
+                                //     sendState,
+                                //   ),
+                                // ),
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: 350),
+                                  curve: Curves.easeInOut,
+                                  height: 36.h,
+                                  child: const SizedBox.shrink(),
+                                ),
+                                // Send Button
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: 350),
+                                  curve: Curves.easeInOut,
+                                  child: _buildSendButton(sendState),
+                                ),
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: 350),
+                                  curve: Curves.easeInOut,
+                                  height: 112.h,
+                                  child: const SizedBox.shrink(),
+                                ),
+                                SizedBox(height: 112.h),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
-
-                SizedBox(height: 20.h),
-
-                Column(
-                  children: [
-                    // Send Amount Section
-                    _buildSendAmountSection(sendState),
-
-                    SizedBox(height: 24.h),
-                    _buildExchangeRateSection(sendState),
-
-                    // Sender Delivery Method Section
-                    // _buildSenderDeliveryMethodSection(sendState),
-                    SizedBox(height: 12.h),
-
-                    // Receive Amount Section
-                    _buildReceiveAmountSection(sendState),
-
-                    SizedBox(height: 18.h),
-
-                    // Recipient Delivery Method Section
-                    _buildRecipientDeliveryMethodSection(sendState),
-                  ],
-                ),
-                SizedBox(height: 36.h),
-
-                // Send Button
-                _buildSendButton(sendState),
-                SizedBox(height: 112.h),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -851,8 +1196,8 @@ class _SendViewState extends ConsumerState<SendView>
           style: AppTypography.titleMedium.copyWith(
             fontFamily: 'Karla',
             fontSize: 14,
-            fontWeight: FontWeight.w400,
-            letterSpacing: -.3,
+            fontWeight: FontWeight.w500,
+            letterSpacing: -.6,
             height: 1.450,
             color: Theme.of(
               context,
@@ -875,7 +1220,7 @@ class _SendViewState extends ConsumerState<SendView>
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
                 child: TextField(
-                  cursorColor: AppColors.primary600,
+                  cursorColor: Theme.of(context).colorScheme.primary,
                   controller: _sendAmountController,
                   focusNode: _sendAmountFocus,
                   keyboardType: TextInputType.numberWithOptions(decimal: true),
@@ -890,12 +1235,13 @@ class _SendViewState extends ConsumerState<SendView>
                       ref
                           .read(sendViewModelProvider.notifier)
                           .updateSendAmount(cleanValue);
+                      _selectedData?['sendAmount'] = cleanValue;
                     }
                   },
                   style: AppTypography.bodyLarge.copyWith(
                     fontFamily: 'Karla',
                     fontSize: 27.sp,
-                    letterSpacing: -.3,
+                    letterSpacing: -.70,
                     fontWeight: FontWeight.w500,
                   ),
                   decoration: InputDecoration(
@@ -903,11 +1249,11 @@ class _SendViewState extends ConsumerState<SendView>
                     hintStyle: AppTypography.bodyLarge.copyWith(
                       fontFamily: 'Karla',
                       fontSize: 27.sp,
-                      letterSpacing: -.3,
-                      fontWeight: FontWeight.w400,
+                      letterSpacing: -.6,
+                      fontWeight: FontWeight.w500,
                       color: Theme.of(
                         context,
-                      ).colorScheme.onSurfaceVariant.withOpacity(.25),
+                      ).colorScheme.onSurfaceVariant.withOpacity(.15),
                     ),
                     fillColor: Theme.of(context).colorScheme.surface,
                     border: InputBorder.none,
@@ -920,19 +1266,19 @@ class _SendViewState extends ConsumerState<SendView>
                       left: -4.w,
                     ),
                     suffixIcon: GestureDetector(
-                      onTap: () => _showSendCountryBottomSheet(state),
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 8.w,
-                          vertical: 8.h,
-                        ),
-                        margin: EdgeInsets.only(right: 0.w),
-                        decoration: BoxDecoration(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.primaryContainer.withOpacity(.5),
-                          borderRadius: BorderRadius.circular(40.r),
-                        ),
+                      // onTap: () => _showSendCountryBottomSheet(state),
+                      child: SizedBox(
+                        // padding: EdgeInsets.symmetric(
+                        //   horizontal: 8.w,
+                        //   vertical: 8.h,
+                        // ),
+                        // margin: EdgeInsets.only(right: 0.w),
+                        // decoration: BoxDecoration(
+                        //   color: Theme.of(
+                        //     context,
+                        //   ).colorScheme.primaryContainer.withOpacity(.35),
+                        //   borderRadius: BorderRadius.circular(40.r),
+                        // ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -941,22 +1287,22 @@ class _SendViewState extends ConsumerState<SendView>
                               _getFlagPath(state.sendCountry),
                               height: 24.00000.h,
                             ),
-                            SizedBox(width: 8.w),
+                            SizedBox(width: 6.w),
                             Text(
                               state.sendCurrency,
                               style: AppTypography.bodyMedium.copyWith(
                                 fontFamily: 'Karla',
-                                fontSize: 13.sp,
+                                fontSize: 12.sp,
                                 fontWeight: FontWeight.w600,
-                                // color: AppColors.primary600,
+                                // color: Theme.of(context).colorScheme.primary,
                               ),
                             ),
-                            SizedBox(width: 4.w),
-                            Icon(
-                              Icons.keyboard_arrow_down,
-                              color: Theme.of(context).colorScheme.primary,
-                              size: 20.sp,
-                            ),
+                            // SizedBox(width: 4.w),
+                            // Icon(
+                            //   Icons.keyboard_arrow_down,
+                            //   color: AppColors.neutral400,
+                            //   size: 20.sp,
+                            // ),
                           ],
                         ),
                       ),
@@ -965,7 +1311,7 @@ class _SendViewState extends ConsumerState<SendView>
                 ),
               ),
               // SizedBox(height: 4.h),
-              // _buildQuickAmountOptions(state),
+              _buildQuickAmountOptions(state),
             ],
           ),
         ),
@@ -990,8 +1336,8 @@ class _SendViewState extends ConsumerState<SendView>
         //           'Wallet balance: ',
         //           style: AppTypography.bodySmall.copyWith(
         //             fontFamily: 'Karla',
-        //             fontSize: 12.5.sp,
-        //             fontWeight: FontWeight.w400,
+        //             fontSize: 13.sp,
+        //             fontWeight: FontWeight.w500,
         //             color: Theme.of(
         //               context,
         //             ).colorScheme.onSurface.withOpacity(0.7),
@@ -1044,8 +1390,8 @@ class _SendViewState extends ConsumerState<SendView>
           style: AppTypography.titleMedium.copyWith(
             fontFamily: 'Karla',
             fontSize: 14,
-            fontWeight: FontWeight.w400,
-            letterSpacing: -.3,
+            fontWeight: FontWeight.w500,
+            letterSpacing: -.6,
             height: 1.450,
             color: Theme.of(
               context,
@@ -1065,7 +1411,7 @@ class _SendViewState extends ConsumerState<SendView>
             ],
           ),
           child: TextField(
-            cursorColor: AppColors.primary600,
+            cursorColor: Theme.of(context).colorScheme.primary,
             controller: _receiveAmountController,
             focusNode: _receiveAmountFocus,
             keyboardType: TextInputType.numberWithOptions(decimal: true),
@@ -1083,7 +1429,7 @@ class _SendViewState extends ConsumerState<SendView>
             style: AppTypography.bodyLarge.copyWith(
               fontFamily: 'Karla',
               fontSize: 27.sp,
-              letterSpacing: -.3,
+              letterSpacing: -.6,
               fontWeight: FontWeight.w500,
             ),
             decoration: InputDecoration(
@@ -1091,11 +1437,11 @@ class _SendViewState extends ConsumerState<SendView>
               hintStyle: AppTypography.bodyLarge.copyWith(
                 fontFamily: 'Karla',
                 fontSize: 27.sp,
-                letterSpacing: -.3,
-                fontWeight: FontWeight.w400,
+                letterSpacing: -.70,
+                fontWeight: FontWeight.w500,
                 color: Theme.of(
                   context,
-                ).colorScheme.onSurfaceVariant.withOpacity(.25),
+                ).colorScheme.onSurfaceVariant.withOpacity(.15),
               ),
               fillColor: Theme.of(context).colorScheme.surface,
               border: InputBorder.none,
@@ -1108,16 +1454,16 @@ class _SendViewState extends ConsumerState<SendView>
                 left: -4.w,
               ),
               suffixIcon: GestureDetector(
-                onTap: () => _showReceiveCountryBottomSheet(state),
+                // onTap: () => _showReceiveCountryBottomSheet(state),
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
-                  margin: EdgeInsets.only(right: 0.w),
-                  decoration: BoxDecoration(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.primaryContainer.withOpacity(.5),
-                    borderRadius: BorderRadius.circular(40.r),
-                  ),
+                  // padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
+                  // margin: EdgeInsets.only(right: 0.w),
+                  // decoration: BoxDecoration(
+                  //   color: Theme.of(
+                  //     context,
+                  //   ).colorScheme.primaryContainer.withOpacity(.35),
+                  //   borderRadius: BorderRadius.circular(40.r),
+                  // ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -1126,22 +1472,22 @@ class _SendViewState extends ConsumerState<SendView>
                         _getFlagPath(state.receiverCountry),
                         height: 24.00000.h,
                       ),
-                      SizedBox(width: 8.w),
+                      SizedBox(width: 6.w),
                       Text(
                         state.receiverCurrency,
                         style: AppTypography.bodyMedium.copyWith(
                           fontFamily: 'Karla',
                           fontSize: 13.sp,
                           fontWeight: FontWeight.w600,
-                          // color: AppColors.primary600,
+                          // color: Theme.of(context).colorScheme.primary,
                         ),
                       ),
-                      SizedBox(width: 4.w),
-                      Icon(
-                        Icons.keyboard_arrow_down,
-                        color: Theme.of(context).colorScheme.primary,
-                        size: 20.sp,
-                      ),
+                      // SizedBox(width: 4.w),
+                      // Icon(
+                      //   Icons.keyboard_arrow_down,
+                      //   color: AppColors.neutral400,
+                      //   size: 20.sp,
+                      // ),
                     ],
                   ),
                 ),
@@ -1153,42 +1499,150 @@ class _SendViewState extends ConsumerState<SendView>
     );
   }
 
-  /// Get simplified delivery method type (just the main category)
-  String _getDeliveryMethodType(String? method) {
-    if (method == null || method.isEmpty) {
-      return 'Select method';
+  /// Quick amount shortcut buttons below the send amount field
+  Widget _buildQuickAmountOptions(SendState state) {
+    // Common quick amounts (NGN-centric). Adjust as needed per currency.
+    final amounts = [2000.0, 5000.0, 10000.0];
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.only(top: 4.h, bottom: 12.h, left: 12.w, right: 12.w),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children:
+            amounts.asMap().entries.map((entry) {
+              final index = entry.key;
+              final amt = entry.value;
+              final cleanAmt = amt.toStringAsFixed(2);
+              final display = StringUtils.formatNumberWithCommas(cleanAmt);
+              final isSelected =
+                  state.sendAmount.isNotEmpty &&
+                  (double.tryParse(state.sendAmount) == amt);
+
+              return Expanded(
+                child: GestureDetector(
+                      onTap: () {
+                        HapticHelper.mediumImpact();
+                        // Update viewmodel with clean numeric string
+                        ref
+                            .read(sendViewModelProvider.notifier)
+                            .updateSendAmount(cleanAmt);
+
+                        // Update controller text while preventing feedback loops
+                        _isUpdatingSendController = true;
+                        final formatted = StringUtils.formatNumberWithCommas(
+                          cleanAmt,
+                        );
+                        _sendAmountController.value = TextEditingValue(
+                          text: formatted,
+                          selection: TextSelection.collapsed(
+                            offset: formatted.length,
+                          ),
+                        );
+                        _isUpdatingSendController = false;
+                      },
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12.w,
+                          vertical: 12.h,
+                        ),
+                        margin: EdgeInsets.symmetric(horizontal: 4.w),
+                        decoration: BoxDecoration(
+                          color:
+                              isSelected
+                                  ? Theme.of(context)
+                                      .colorScheme
+                                      .primaryContainer
+                                      .withOpacity(.15)
+                                  : Theme.of(context).scaffoldBackgroundColor,
+                          borderRadius: BorderRadius.circular(40.r),
+                          border: Border.all(
+                            width: 1,
+                            color:
+                                isSelected
+                                    ? Theme.of(
+                                      context,
+                                    ).colorScheme.primary.withOpacity(.05)
+                                    : Colors.transparent,
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            '₦${display.split('.').first}',
+                            style: AppTypography.bodyMedium.copyWith(
+                              fontFamily: 'FunnelDisplay',
+                              fontSize: 15.sp,
+                              fontWeight:
+                                  isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.w500,
+                              letterSpacing: .2,
+                              height: 1.450,
+                              color:
+                                  isSelected
+                                      ? Theme.of(context).colorScheme.primary
+                                      : Theme.of(context).colorScheme.onSurface,
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                    .animate()
+                    .fadeIn(
+                      duration: const Duration(milliseconds: 400),
+                      delay: Duration(milliseconds: 60 * index),
+                      curve: Curves.easeOut,
+                    )
+                    .scale(
+                      begin: const Offset(0.92, 0.92),
+                      end: const Offset(1.0, 1.0),
+                      duration: const Duration(milliseconds: 400),
+                      delay: Duration(milliseconds: 60 * index),
+                      curve: Curves.easeOutBack,
+                    ),
+              );
+            }).toList(),
+      ),
+    );
+  }
+
+  // Helper function to get recipient info text
+  String _getRecipientInfoText() {
+    // Try beneficiary data first (from recipients screen)
+    if (_initialBeneficiaryWithSource != null) {
+      final name = _initialBeneficiaryWithSource!.beneficiary.name;
+      if (name.isNotEmpty) {
+        return 'to $name';
+      }
     }
 
+    // Try recipient data (from add recipients view)
+    if (_recipientData != null && _recipientData!['name'] != null) {
+      final name = _recipientData!['name'] as String;
+      if (name.isNotEmpty) {
+        return 'to $name';
+      }
+    }
+
+    // No recipient info available
+    return '';
+  }
+
+  // Helper function to get delivery method display name
+  String _getDeliveryMethodDisplayName(String? method) {
+    if (method == null) return 'Unknown';
     switch (method.toLowerCase()) {
-      case 'dayfi_tag':
-        return 'DayFi Tag';
       case 'bank_transfer':
       case 'bank':
       case 'p2p':
       case 'peer_to_peer':
-      case 'peer-to-peer':
+      case 'eft':
         return 'Bank Transfer';
       case 'mobile_money':
       case 'momo':
-      case 'mobilemoney':
         return 'Mobile Money';
-      case 'spenn':
-        return 'Spenn';
-      case 'cash_pickup':
-      case 'cash':
-        return 'Cash Pickup';
-      case 'wallet':
-      case 'digital_wallet':
-        return 'Wallet';
-      case 'card':
-      case 'card_payment':
-        return 'Card';
-      case 'crypto':
-      case 'cryptocurrency':
-        return 'Crypto';
-      case 'digital_dollar':
-      case 'stablecoins':
-        return 'Digital Dollar';
+      case 'dayfi_tag':
+        return 'DayFi Tag';
       default:
         return method
             .split('_')
@@ -1197,332 +1651,8 @@ class _SendViewState extends ConsumerState<SendView>
     }
   }
 
+  /// Get simplified delivery method type (just the main category)
   /// Get delivery duration based on method type
-  String _getDeliveryDuration(
-    String? method, {
-    String? sendCurrency,
-    String? receiverCurrency,
-  }) {
-    if (method == null || method.isEmpty) {
-      return 'Select method';
-    }
-
-    final methodLower = method.toLowerCase();
-
-    // For NGN to NGN bank transfers (peer-to-peer), show "Arrives immediately"
-    final isNgnToNgn = sendCurrency == 'NGN' && receiverCurrency == 'NGN';
-    final isBankTransfer =
-        methodLower == 'bank_transfer' ||
-        methodLower == 'bank' ||
-        methodLower == 'p2p' ||
-        methodLower == 'peer_to_peer' ||
-        methodLower == 'peer-to-peer';
-
-    if (isNgnToNgn && isBankTransfer) {
-      return 'Instant delivery';
-    }
-
-    switch (methodLower) {
-      case 'dayfi_tag':
-        return 'Completely free — Instant delivery';
-      case 'bank_transfer':
-      case 'bank':
-      case 'p2p':
-      case 'peer_to_peer':
-      case 'peer-to-peer':
-        return 'Fast delivery';
-      case 'mobile_money':
-      case 'momo':
-      case 'mobilemoney':
-        return 'Instant delivery';
-      case 'spenn':
-        return 'Instant delivery';
-      case 'cash_pickup':
-      case 'cash':
-        return 'Same day delivery';
-      case 'wallet':
-      case 'digital_wallet':
-        return 'Instant delivery';
-      case 'card':
-      case 'card_payment':
-        return 'Fast delivery';
-      case 'crypto':
-      case 'cryptocurrency':
-        return 'Quick delivery';
-      case 'digital_dollar':
-      case 'stablecoins':
-        return 'Instant delivery';
-      default:
-        return 'Fast delivery';
-    }
-  }
-
-  Widget _getDeliveryMethodIcon(String? method) {
-    if (method == null || method.isEmpty) {
-      return Stack(
-        alignment: AlignmentDirectional.center,
-        children: [
-          SvgPicture.asset(
-            'assets/icons/svgs/swap.svg',
-            height: 34,
-            color: AppColors.primary500,
-          ),
-          SvgPicture.asset(
-            "assets/icons/svgs/payymentt.svg",
-            height: 18,
-            color: Colors.white,
-          ),
-        ],
-      );
-    }
-
-    // Return specific icons for different delivery methods
-    switch (method.toLowerCase()) {
-      case 'dayfi_tag':
-        return Stack(
-          alignment: AlignmentDirectional.center,
-          children: [
-            SvgPicture.asset(
-              'assets/icons/svgs/swap.svg',
-              height: 34,
-                        color: AppColors.neutral700.withOpacity(.35),
-            ),
-            SvgPicture.asset(
-              "assets/icons/svgs/at.svg",
-              height: 26,
-               color: Theme.of(context).colorScheme.onSurface.withOpacity(.65),
-            ),
-          ],
-        );
-      case 'bank_transfer':
-      case 'bank':
-        return Stack(
-          alignment: AlignmentDirectional.center,
-          children: [
-            SvgPicture.asset(
-              'assets/icons/svgs/swap.svg',
-              height: 34,
-                      color: AppColors.neutral700.withOpacity(.35),
-            ),
-            SvgPicture.asset(
-              "assets/icons/svgs/building-bank.svg",
-              height: 26,
-               color: Theme.of(context).colorScheme.onSurface.withOpacity(.65),
-            ),
-          ],
-        );
-      case 'mobile_money':
-      case 'momo':
-      case 'mobilemoney':
-        return Stack(
-          alignment: AlignmentDirectional.center,
-          children: [
-            SvgPicture.asset(
-              'assets/icons/svgs/swap.svg',
-              height: 34,
-                       color: AppColors.neutral700.withOpacity(.35),
-            ),
-            SvgPicture.asset(
-              "assets/icons/svgs/device-mobile.svg",
-              height: 26,
-             color: Theme.of(context).colorScheme.onSurface.withOpacity(.65),
-            ),
-          ],
-        );
-      case 'spenn':
-        return SvgPicture.asset(
-          'assets/icons/svgs/wallett.svg',
-          height: 32.sp,
-          width: 32.sp,
-        );
-      case 'cash_pickup':
-      case 'cash':
-        return SvgPicture.asset(
-          'assets/icons/svgs/paymentt.svg',
-          height: 32.sp,
-          width: 32.sp,
-        );
-      case 'wallet':
-      case 'digital_wallet':
-        return SvgPicture.asset(
-          'assets/icons/svgs/wallett.svg',
-          height: 32.sp,
-          width: 32.sp,
-        );
-      case 'card':
-      case 'card_payment':
-        return SvgPicture.asset(
-          'assets/icons/svgs/cardd.svg',
-          height: 32.sp,
-          width: 32.sp,
-        );
-      case 'crypto':
-      case 'cryptocurrency':
-        return SvgPicture.asset(
-          'assets/icons/svgs/cryptoo.svg',
-          height: 32.sp,
-          width: 32.sp,
-        );
-      case 'digital_dollar':
-      case 'stablecoins':
-        return SvgPicture.asset(
-          'assets/icons/svgs/cryptoo.svg',
-          height: 32.sp,
-          width: 32.sp,
-        );
-      default:
-        // Default icon for unknown delivery methods
-        return Stack(
-          alignment: AlignmentDirectional.center,
-          children: [
-            SvgPicture.asset(
-              'assets/icons/svgs/swap.svg',
-              height: 34,
-                 color: AppColors.neutral700.withOpacity(.35),
-            ),
-            SvgPicture.asset(
-              "assets/icons/svgs/building-bank.svg",
-              height: 26,
-        color: Theme.of(context).colorScheme.onSurface.withOpacity(.65),
-            ),
-          ],
-        );
-    }
-  }
-
-  Widget _buildRecipientDeliveryMethodSection(SendState state) {
-    final isDayfiTag = state.selectedDeliveryMethod.toLowerCase() == 'dayfi_tag';
-
-    return GestureDetector(
-      onTap:
-          () => _showChannelTypesBottomSheet(
-            context,
-            state.receiverCountry,
-            state.receiverCurrency,
-            state,
-          ),
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.only(
-          left: 16.w,
-          top: 16.h,
-          bottom: 16.h,
-          right: 12.w,
-        ),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(
-            color: AppColors.purple500ForTheme(context).withOpacity(0),
-            width: .75,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.neutral500.withOpacity(0.0375),
-              blurRadius: 8.0,
-              offset: const Offset(0, 8),
-              spreadRadius: .8,
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 32.w,
-              height: 32.w,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24.r),
-              ),
-              child: _getDeliveryMethodIcon(state.selectedDeliveryMethod),
-            ),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        _getDeliveryMethodType(state.selectedDeliveryMethod),
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontFamily: 'Karla',
-                          fontSize: 18.sp,
-                          letterSpacing: -.5,
-                          fontWeight: FontWeight.w400,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
-                      ),
-                      SizedBox(width: 8.w),
-                      if (isDayfiTag)
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 8.w,
-                            vertical: 3.h,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.warning400.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(8.r),
-                          ),
-                          child: Text(
-                            'Free',
-                            style: AppTypography.labelSmall.copyWith(
-                              fontFamily: 'Karla',
-                              fontSize: 10.sp,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.warning600,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    _getDeliveryDuration(
-                      state.selectedDeliveryMethod,
-                      sendCurrency: state.sendCurrency,
-                      receiverCurrency: state.receiverCurrency,
-                    ),
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontSize: 12.5.sp,
-                      fontFamily: 'Karla',
-                      fontWeight: FontWeight.w400,
-                      letterSpacing: -0.4,
-                      height: 1.3,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                    ),
-                  ),
-
-                  // SizedBox(height: 2.h),
-                  //     Text(
-                  //       _getDeliveryDuration(
-                  //         state.selectedDeliveryMethod,
-                  //         sendCurrency: state.sendCurrency,
-                  //         receiverCurrency: state.receiverCurrency,
-                  //       ),
-                  //       style: AppTypography.bodyLarge.copyWith(
-                  //  color: AppColors.outlineDark,
-                  //         fontSize: 12.sp,
-                  //         fontWeight: FontWeight.w400,
-                  //         fontFamily: 'Karla',
-                  //         letterSpacing: -.3,
-                  //         height: 1.2,
-                  //       ),
-                  //     ),
-                ],
-              ),
-            ),
-            SizedBox(width: 24.w),
-            Icon(
-              Icons.keyboard_arrow_down,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-              size: 24.sp,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildExchangeRateSection(SendState state) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -1540,8 +1670,6 @@ class _SendViewState extends ConsumerState<SendView>
           // ),
 
           // Fee
-
-          // Fee
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -1553,7 +1681,7 @@ class _SendViewState extends ConsumerState<SendView>
                     'Fee',
                     style: AppTypography.bodyMedium.copyWith(
                       fontFamily: 'Karla',
-                      letterSpacing: -.3,
+                      letterSpacing: -.6,
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w500,
                       color: Theme.of(
@@ -1563,12 +1691,13 @@ class _SendViewState extends ConsumerState<SendView>
                   ),
                 ],
               ),
+
               if (state.showRatesLoading) ...[
                 SizedBox(
                   width: 20.w,
                   height: 20.w,
                   child: LoadingAnimationWidget.horizontalRotatingDots(
-                    color: AppColors.primary600,
+                    color: Theme.of(context).colorScheme.primary,
                     size: 20,
                   ),
                 ),
@@ -1584,19 +1713,24 @@ class _SendViewState extends ConsumerState<SendView>
                 // ),
               ] else if (state.exchangeRate.isNotEmpty &&
                   state.fee.isNotEmpty) ...[
-                Text(
-                  StringUtils.formatCurrency(state.fee, state.sendCurrency),
-                  style: AppTypography.bodyMedium.copyWith(
-                    fontFamily: 'Karla',
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w500,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
+                Consumer(
+                  builder: (context, ref, child) {
+                    final sendState = ref.watch(sendViewModelProvider);
+
+                    return Text(
+                      '₦${sendState.fee}',
+                      style: AppTypography.bodyMedium.copyWith(
+                        fontFamily: 'FunnelDisplay',
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w500,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    );
+                  },
                 ),
               ],
             ],
           ),
-
           SizedBox(height: 12.h),
 
           Row(
@@ -1610,7 +1744,7 @@ class _SendViewState extends ConsumerState<SendView>
                     'Total to pay',
                     style: AppTypography.bodyMedium.copyWith(
                       fontFamily: 'Karla',
-                      letterSpacing: -.3,
+                      letterSpacing: -.6,
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w500,
                       color: Theme.of(
@@ -1626,7 +1760,7 @@ class _SendViewState extends ConsumerState<SendView>
                   width: 20.w,
                   height: 20.w,
                   child: LoadingAnimationWidget.horizontalRotatingDots(
-                    color: AppColors.primary600,
+                    color: Theme.of(context).colorScheme.primary,
                     size: 20,
                   ),
                 ),
@@ -1640,12 +1774,11 @@ class _SendViewState extends ConsumerState<SendView>
                 //     color: AppColors.neutral800,
                 //   ),
                 // ),
-              ] else if (state.exchangeRate.isNotEmpty &&
-                  state.sendAmount.isNotEmpty) ...[
+              ] else if (state.fee.isNotEmpty) ...[
                 () {
                   final fee = double.tryParse(state.fee) ?? 0.0;
                   final sendAmount = double.tryParse(state.sendAmount) ?? 0.0;
-                  if (sendAmount <= 0 && fee <= 0) {
+                  if (sendAmount <= 0) {
                     return const SizedBox.shrink();
                   }
                   final total = fee + sendAmount;
@@ -1656,7 +1789,7 @@ class _SendViewState extends ConsumerState<SendView>
                   return Text(
                     formatted,
                     style: AppTypography.bodyMedium.copyWith(
-                      fontFamily: 'Karla',
+                      fontFamily: 'FunnelDisplay',
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w500,
                       color: Theme.of(context).colorScheme.onSurface,
@@ -1679,7 +1812,7 @@ class _SendViewState extends ConsumerState<SendView>
                     'Rate',
                     style: AppTypography.bodyMedium.copyWith(
                       fontFamily: 'Karla',
-                      letterSpacing: -.3,
+                      letterSpacing: -.6,
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w500,
                       color: Theme.of(
@@ -1695,7 +1828,7 @@ class _SendViewState extends ConsumerState<SendView>
                   width: 20.w,
                   height: 20.w,
                   child: LoadingAnimationWidget.horizontalRotatingDots(
-                    color: AppColors.primary600,
+                    color: Theme.of(context).colorScheme.primary,
                     size: 20,
                   ),
                 ),
@@ -1716,7 +1849,7 @@ class _SendViewState extends ConsumerState<SendView>
                         ? '₦1 = ₦1'
                         : state.exchangeRate,
                     style: AppTypography.bodyLarge.copyWith(
-                      fontFamily: 'Karla',
+                      fontFamily: 'FunnelDisplay',
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w500,
                       color: Theme.of(context).colorScheme.onSurface,
@@ -1731,14 +1864,13 @@ class _SendViewState extends ConsumerState<SendView>
                   width: 20.w,
                   height: 20.w,
                   child: LoadingAnimationWidget.horizontalRotatingDots(
-                    color: AppColors.primary600,
+                    color: Theme.of(context).colorScheme.primary,
                     size: 20,
                   ),
                 ),
               ],
             ],
           ),
-
           SizedBox(height: 12.h),
 
           // // Send Currency Rates
@@ -1802,9 +1934,33 @@ class _SendViewState extends ConsumerState<SendView>
       return;
     }
 
+    // If we have recipient data from add recipients view, navigate directly to review
+    if (_recipientData != null) {
+      AppLogger.info(
+        '📍 Navigating with recipient data from add recipients view',
+      );
+      await _navigateToSendReviewWithRecipientData(
+        _recipientData!,
+        _selectedData!,
+        _senderData!,
+      );
+      return;
+    }
+
     AppLogger.info(
-      'ℹ️ No beneficiary from recipients, proceeding with normal flow',
+      'ℹ️ No beneficiary or recipient data, proceeding with normal flow',
     );
+
+    // Check if we have DayFi ID from send_dayfi_id_view - navigate to review
+    if (_selectedData != null && _selectedData!['dayfiId'] != null) {
+      AppLogger.info(
+        '📍 Navigating to DayFi ID review view with existing DayFi ID',
+      );
+      // Ensure sendAmount is up to date in selectedData
+      _selectedData!['sendAmount'] = state.sendAmount;
+      await _navigateToSendDayfiIdReview(_selectedData!);
+      return;
+    }
 
     // Check if delivery method is Dayfi Tag - route to Dayfi ID view
     if (state.selectedDeliveryMethod.toLowerCase() == 'dayfi_tag') {
@@ -1845,10 +2001,15 @@ class _SendViewState extends ConsumerState<SendView>
 
         if (hasDayfiId) {
           // User has a Dayfi ID, proceed to enter recipient's Dayfi ID
-          AppLogger.info('User has Dayfi ID, navigating to send Dayfi ID view');
+          AppLogger.info(
+            'User has Dayfi ID, navigating to send Dayfi ID review view',
+          );
           appRouter.pushNamed(
-            AppRoute.sendDayfiIdView,
-            arguments: selectedData,
+            AppRoute.sendDayfiIdReviewView,
+            arguments: {
+              ...selectedData,
+              'dayfiId': selectedData['dayfiId'] ?? '',
+            },
           );
         } else {
           // User doesn't have a Dayfi ID, navigate to explanation/creation view
@@ -1881,11 +2042,10 @@ class _SendViewState extends ConsumerState<SendView>
         }
 
         // Show error and navigate to explanation view as fallback
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to verify Dayfi ID. Please try again.'),
-            backgroundColor: AppColors.error500,
-          ),
+        TopSnackbar.show(
+          context,
+          message: 'Failed to verify Dayfi ID. Please try again.',
+          isError: true,
         );
         // Navigate to explanation view as fallback
         await appRouter.pushNamed(AppRoute.dayfiTagExplanationView);
@@ -1917,8 +2077,8 @@ class _SendViewState extends ConsumerState<SendView>
             : null;
 
     // Debug logs for channel IDs
-    print('🔵 SENDER CHANNEL ID: ${state.selectedSenderChannelId}');
-    print('🟢 RECIPIENT CHANNEL ID: ${selectedChannel?.id}');
+    // print('🔵 SENDER CHANNEL ID: ${state.selectedSenderChannelId}');
+    // print('🟢 RECIPIENT CHANNEL ID: ${selectedChannel?.id}');
 
     // Use real network data with fallbacks
     final selectedData = {
@@ -1932,12 +2092,13 @@ class _SendViewState extends ConsumerState<SendView>
       'recipientDeliveryMethod': state.selectedDeliveryMethod,
       'senderChannelId': state.selectedSenderChannelId,
       'recipientChannelId': selectedChannel?.id,
-      'networkId': selectedChannel?.id,
+      'networkId': selectedNetwork?.id,
       'networkName':
           selectedNetwork?.name ??
           selectedChannel?.channelType ??
           'Selected Network',
       'accountNumberType': selectedNetwork?.accountNumberType ?? 'phone',
+      'networks': state.networks,
     };
 
     appRouter.pushNamed(AppRoute.sendRecipientView, arguments: selectedData);
@@ -1986,11 +2147,10 @@ class _SendViewState extends ConsumerState<SendView>
       } catch (e) {
         AppLogger.error('❌ Failed to navigate to sendDayfiIdReviewView: $e');
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to navigate. Please try again.'),
-              backgroundColor: AppColors.error500,
-            ),
+          TopSnackbar.show(
+            context,
+            message: 'Failed to navigate. Please try again.',
+            isError: true,
           );
         }
       }
@@ -2000,6 +2160,7 @@ class _SendViewState extends ConsumerState<SendView>
     // Route to SendReviewView for bank/mobile money transfers
     AppLogger.info('✅ Routing to Send Review View for bank/mobile transfer');
 
+    // Find the network object for the beneficiary's source.networkId (if any)
     final selectedNetwork =
         source.networkId != null
             ? state.networks.firstWhere(
@@ -2009,6 +2170,24 @@ class _SendViewState extends ConsumerState<SendView>
             : null;
 
     AppLogger.info('Network found: ${selectedNetwork?.name}');
+
+    // Attempt to resolve a channel ID from the network's channelIds
+    String resolvedRecipientChannelId = '';
+    if (selectedNetwork?.channelIds != null &&
+        selectedNetwork!.channelIds!.isNotEmpty) {
+      // Prefer a channel that exists in state.channels and matches criteria
+      final candidate = state.channels.firstWhere(
+        (ch) => selectedNetwork.channelIds!.contains(ch.id ?? ''),
+        orElse: () => Channel(id: null),
+      );
+
+      if (candidate.id != null) {
+        resolvedRecipientChannelId = candidate.id!;
+      } else {
+        // Fallback to first channel id string from the network
+        resolvedRecipientChannelId = selectedNetwork.channelIds!.first;
+      }
+    }
 
     final payload = <String, dynamic>{
       'selectedData': {
@@ -2021,8 +2200,13 @@ class _SendViewState extends ConsumerState<SendView>
         'senderDeliveryMethod': state.selectedSenderDeliveryMethod,
         'recipientDeliveryMethod': state.selectedDeliveryMethod,
         'senderChannelId': state.selectedSenderChannelId,
-        'recipientChannelId': source.networkId ?? '',
-        'networkId': source.networkId ?? '',
+        // Use resolved channel id if we could find one from the network, else empty
+        'recipientChannelId':
+            resolvedRecipientChannelId.isNotEmpty
+                ? resolvedRecipientChannelId
+                : (source.networkId ?? ''),
+        // networkId should be the network's id (not a channel id)
+        'networkId': selectedNetwork?.id ?? (source.networkId ?? ''),
         'networkName': selectedNetwork?.name ?? 'Bank Transfer',
         'accountNumberType': selectedNetwork?.accountNumberType ?? 'bank',
       },
@@ -2049,11 +2233,102 @@ class _SendViewState extends ConsumerState<SendView>
     } catch (e) {
       AppLogger.error('❌ Failed to navigate to sendReviewView: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to navigate. Please try again.'),
-            backgroundColor: AppColors.error500,
-          ),
+        TopSnackbar.show(
+          context,
+          message: 'Failed to navigate. Please try again.',
+          isError: true,
+        );
+      }
+    }
+  }
+
+  /// Navigate to SendDayfiIdReviewView with selectedData (for Dayfi ID flow)
+  Future<void> _navigateToSendDayfiIdReview(
+    Map<String, dynamic> selectedData,
+  ) async {
+    try {
+      await appRouter.pushNamed(
+        AppRoute.sendDayfiIdReviewView,
+        arguments: {
+          'selectedData': selectedData,
+          'dayfiId': selectedData['dayfiId'] ?? '',
+        },
+      );
+    } catch (e) {
+      AppLogger.error('❌ Failed to navigate to sendDayfiIdReviewView: $e');
+      if (mounted) {
+        TopSnackbar.show(
+          context,
+          message: 'Failed to navigate. Please try again.',
+          isError: true,
+        );
+      }
+    }
+  }
+
+  /// Navigate to send review view with recipient data from add recipients view
+  Future<void> _navigateToSendReviewWithRecipientData(
+    Map<String, dynamic> recipientData,
+    Map<String, dynamic> selectedData,
+    Map<String, dynamic> senderData,
+  ) async {
+    AppLogger.info(
+      '📍 Navigating to send review with recipient data from add recipients view',
+    );
+
+    final state = ref.read(sendViewModelProvider);
+
+    // Find the network object for the recipient's networkId
+    final selectedNetwork =
+        recipientData['networkId'] != null
+            ? state.networks.firstWhere(
+              (n) => n.id == recipientData['networkId'],
+              orElse: () => Network(id: null, name: null),
+            )
+            : null;
+
+    AppLogger.info('Network found: ${selectedNetwork?.name}');
+
+    // Build the payload for send review view
+    final payload = <String, dynamic>{
+      'selectedData': {
+        'sendAmount': state.sendAmount,
+        'receiveAmount': state.receiverAmount,
+        'sendCurrency': state.sendCurrency,
+        'receiveCurrency': state.receiverCurrency,
+        'sendCountry': state.sendCountry,
+        'receiveCountry': state.receiverCountry,
+        'senderDeliveryMethod': state.selectedSenderDeliveryMethod,
+        'recipientDeliveryMethod':
+            recipientData['recipientDeliveryMethod'] ??
+            selectedData['recipientDeliveryMethod'] ??
+            '',
+        'senderChannelId': state.selectedSenderChannelId,
+        'recipientChannelId':
+            recipientData['recipientChannelId'] ??
+            selectedData['recipientChannelId'] ??
+            '',
+        'networkId': selectedNetwork?.id ?? recipientData['networkId'] ?? '',
+        'networkName': selectedNetwork?.name ?? 'Bank Transfer',
+        'accountNumberType': selectedNetwork?.accountNumberType ?? 'bank',
+      },
+      'recipientData': recipientData,
+      'senderData': senderData,
+    };
+
+    AppLogger.info(
+      '📤 Pushing to sendReviewView with payload from add recipients',
+    );
+    try {
+      await appRouter.pushNamed(AppRoute.sendReviewView, arguments: payload);
+      AppLogger.info('✅ Successfully navigated to sendReviewView');
+    } catch (e) {
+      AppLogger.error('❌ Failed to navigate to sendReviewView: $e');
+      if (mounted) {
+        TopSnackbar.show(
+          context,
+          message: 'Failed to navigate. Please try again.',
+          isError: true,
         );
       }
     }
@@ -2065,40 +2340,55 @@ class _SendViewState extends ConsumerState<SendView>
     final parsedSend = double.tryParse(state.sendAmount) ?? 0.0;
     final hasValidAmount =
         isAmountValid && state.sendAmount.isNotEmpty && parsedSend > 0;
-    final isLoading = state.isLoading || _isCheckingWallet;
-
-    // Enable button if amount is valid (exchange rate will be calculated on next screen)
-    final isButtonEnabled = hasValidAmount;
+    final isLoading = _isCheckingWallet;
+    final hasRates = state.exchangeRate.isNotEmpty && !state.showRatesLoading;
+    final isButtonEnabled =
+        hasValidAmount && state.channels.isNotEmpty && hasRates;
 
     return PrimaryButton(
-      text: _getSendButtonText(
-        state,
-        viewModel,
-        isButtonEnabled,
-        _isCheckingWallet,
-      ),
-      onPressed:
-          isLoading || !isButtonEnabled
-              ? null
-              : () {
-                _navigateToRecipientScreen(state);
-              },
+      text: 'Review Transfer',
+      onPressed: isButtonEnabled
+          ? () async {
+              // 1. Check for insufficient funds
+              final homeState = ref.read(homeViewModelProvider);
+              final balance = homeState.balance;
+              final balanceValue = double.tryParse(balance.replaceAll(',', '')) ?? 0.0;
+              if (balance.isEmpty || balance == '0.00' || balanceValue <= 0 || balanceValue < parsedSend) {
+                _showInsufficientBalanceDialog();
+                return;
+              }
+              // 2. Check user tier
+              final profileState = ref.read(profileViewModelProvider);
+              final user = profileState.user;
+              final userTierLevel = TierUtils.getCurrentTierLevel(user);
+              if (userTierLevel == 1) {
+                Navigator.pushNamed(
+                  context,
+                  AppRoute.uploadDocumentsView,
+                  arguments: {'showBackButton': true},
+                );
+                return;
+              }
+              // 3. Proceed as normal
+              _navigateToRecipientScreen(state);
+            }
+          : null,
       isLoading: isLoading,
+      height: 50.h,
       backgroundColor:
-          !isButtonEnabled
-              ? AppColors.purple500.withOpacity(.25)
-              : AppColors.purple500,
-      height: 48.000.h,
+          isButtonEnabled
+              ? AppColors.purple500
+              : AppColors.purple500ForTheme(context).withOpacity(0.12),
       textColor:
-          !isButtonEnabled
-              ? AppColors.neutral0.withOpacity(.65)
-              : AppColors.neutral0,
+          isButtonEnabled
+              ? AppColors.neutral0
+              : AppColors.neutral0.withOpacity(.35),
       fontFamily: 'Karla',
-      letterSpacing: -.8,
+      letterSpacing: -.7,
       fontSize: 18,
-      width: 375.w,
+      width: double.infinity,
       fullWidth: true,
-      borderRadius: 40.r,
+      borderRadius: 48.r,
     );
   }
 
@@ -2108,18 +2398,19 @@ class _SendViewState extends ConsumerState<SendView>
     bool isAmountValid,
     bool isCheckingWallet,
   ) {
-    if (isCheckingWallet) {
-      return 'Checking balance...';
-    }
-
     if (state.isLoading) {
       return 'Loading...';
     }
 
+    // Show "Fetching rates..." when rates are being loaded
+    if (state.showRatesLoading) {
+      return 'Fetching rates...';
+    }
+
     if (!isAmountValid) {
-      if (state.sendAmount.isEmpty) {
-        return 'Enter amount to continue';
-      }
+      // if (state.sendAmount.isEmpty) {
+      //   return 'Enter amount to continue';
+      // }
 
       final cleanAmount = state.sendAmount.replaceAll(RegExp(r'[,\s]'), '');
       final sendAmount = double.tryParse(cleanAmount);
@@ -2168,906 +2459,5 @@ class _SendViewState extends ConsumerState<SendView>
     return 'Continue';
   }
 
-  void _showSendCountryBottomSheet(SendState state) {
-    // Dismiss keyboard when opening bottom sheet
-    FocusScope.of(context).unfocus();
-
-    // Filter channels for deposit (send) countries - where user can send FROM
-    final depositChannels =
-        state.channels
-            .where(
-              (channel) =>
-                  channel.rampType == 'deposit' &&
-                  channel.status == 'active' &&
-                  channel.currency != null &&
-                  channel.country != null,
-            )
-            .toList();
-
-    // Deduplicate by country-currency combination, keeping the one with highest max limit
-    final uniqueDepositChannels = <String, Channel>{};
-    for (final channel in depositChannels) {
-      final key = '${channel.country} - ${channel.currency}';
-      if (!uniqueDepositChannels.containsKey(key) ||
-          (channel.max ?? 0) > (uniqueDepositChannels[key]?.max ?? 0)) {
-        uniqueDepositChannels[key] = channel;
-      }
-    }
-
-    // Always ensure NG-NGN is available for Dayfi tag transfers
-    final ngnKey = 'NG - NGN';
-    if (!uniqueDepositChannels.containsKey(ngnKey)) {
-      uniqueDepositChannels[ngnKey] = Channel(
-        country: 'NG',
-        currency: 'NGN',
-        rampType: 'deposit',
-        status: 'active',
-        min: 1000.0,
-        max: 5000000.0,
-      );
-    }
-
-    final finalDepositChannels =
-        uniqueDepositChannels.values.toList()..sort(
-          (a, b) => '${a.country ?? ''} - ${a.currency ?? ''}'.compareTo(
-            '${b.country ?? ''} - ${b.currency ?? ''}',
-          ),
-        );
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder:
-          (context) => Container(
-            height: MediaQuery.of(context).size.height * 0.92,
-            decoration: BoxDecoration(
-              color: Theme.of(context).scaffoldBackgroundColor,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-            ),
-            child: Column(
-              children: [
-                // Container(
-                //   width: 40.w,
-                //   height: 4.h,
-                //   margin: EdgeInsets.symmetric(vertical: 12.h),
-                //   decoration: BoxDecoration(
-                //     color: AppColors.neutral400,
-                //     borderRadius: BorderRadius.circular(2.r),
-                //   ),
-                // ),
-                SizedBox(height: 18.h),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 18.w),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      SizedBox(height: 24.h, width: 22.w),
-                      Text(
-                        'Sending currency',
-                        style: AppTypography.titleLarge.copyWith(
-                          fontFamily: 'Karla',
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w600,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.pop(context);
-                          FocusScope.of(context).unfocus();
-                        },
-                        child: Image.asset(
-                          "assets/icons/pngs/cancelicon.png",
-                          height: 24.h,
-                          width: 24.w,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 16.h),
-                Expanded(
-                  child: Builder(
-                    builder: (context) {
-                      final channelsToShow =
-                          finalDepositChannels.isEmpty
-                              ? (() {
-                                final fallbackChannels =
-                                    state.channels
-                                        .where(
-                                          (c) =>
-                                              c.status == 'active' &&
-                                              c.currency != null &&
-                                              c.country != null &&
-                                              (c.rampType == 'deposit' ||
-                                                  c.rampType == 'receive' ||
-                                                  c.rampType == 'funding'),
-                                        )
-                                        .toList();
-
-                                // Deduplicate fallback channels too
-                                final uniqueFallbackChannels =
-                                    <String, Channel>{};
-                                for (final channel in fallbackChannels) {
-                                  final key =
-                                      '${channel.country} - ${channel.currency}';
-                                  if (!uniqueFallbackChannels.containsKey(
-                                        key,
-                                      ) ||
-                                      (channel.max ?? 0) >
-                                          (uniqueFallbackChannels[key]?.max ??
-                                              0)) {
-                                    uniqueFallbackChannels[key] = channel;
-                                  }
-                                }
-
-                                final deduplicatedFallback =
-                                    uniqueFallbackChannels.values.toList()..sort(
-                                      (
-                                        a,
-                                        b,
-                                      ) => '${a.country ?? ''} - ${a.currency ?? ''}'
-                                          .compareTo(
-                                            '${b.country ?? ''} - ${b.currency ?? ''}',
-                                          ),
-                                    );
-                                return deduplicatedFallback;
-                              })()
-                              : finalDepositChannels;
-
-                      return ListView.builder(
-                        padding: EdgeInsets.symmetric(horizontal: 18.w),
-                        itemCount: channelsToShow.length,
-                        itemBuilder: (context, index) {
-                          final channel = channelsToShow[index];
-                          return channel.country == "NG"
-                              ? ListTile(
-                                contentPadding: EdgeInsets.symmetric(
-                                  vertical: 4.h,
-                                ),
-                                onTap: () {
-                                  ref
-                                      .read(sendViewModelProvider.notifier)
-                                      .updateSendCountry(
-                                        channel.country!,
-                                        channel.currency!,
-                                      );
-                                  // print(channel.id);
-                                  Navigator.pop(context);
-                                  FocusScope.of(context).unfocus();
-                                },
-                                title: Row(
-                                  children: [
-                                    SvgPicture.asset(
-                                      _getFlagPath(channel.country),
-                                      height: 32.00000.h,
-                                    ),
-                                    SizedBox(width: 12.w),
-                                    Text(
-                                      _getCountryName(channel.country),
-                                      style: AppTypography.bodyLarge.copyWith(
-                                        fontFamily: 'Karla',
-                                        fontSize: 16.sp,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                // subtitle: Column(
-                                //   crossAxisAlignment: CrossAxisAlignment.start,
-                                //   children: [
-                                //     Text(
-                                //       '${channel.vendorId ?? 'Unknown'} - ${channel.channelType ?? 'Unknown'} - ${channel.settlementType ?? 'Unknown'}',
-                                //       style: AppTypography.bodySmall.copyWith(
-                                //         fontFamily: 'Karla',
-                                //         fontSize: 12.sp,
-                                //         color: AppColors.primary600,
-                                //         fontWeight: FontWeight.w500,
-                                //       ),
-                                //     ),
-                                //     SizedBox(height: 1.h),
-                                //     Text(
-                                //       '${channel.rampType ?? 'Unknown'} - ${channel.status ?? 'Unknown'}',
-                                //       style: AppTypography.bodySmall.copyWith(
-                                //         fontFamily: 'Karla',
-                                //         fontSize: 11.sp,
-                                //         color: AppColors.neutral600,
-                                //         fontWeight: FontWeight.w400,
-                                //       ),
-                                //     ),
-                                //     SizedBox(height: 2.h),
-                                //     Text(
-                                //       'Min: ${channel.min} ${channel.currency} | Max: ${channel.max} ${channel.currency}',
-                                //       style: AppTypography.bodySmall.copyWith(
-                                //         fontFamily: 'Karla',
-                                //         fontSize: 12.sp,
-                                //         color: AppColors.neutral400,
-                                //       ),
-                                //     ),
-                                //   ],
-                                // ),
-                                trailing: Text(
-                                  '${channel.currency}',
-                                  style: AppTypography.bodyLarge.copyWith(
-                                    fontFamily: 'Karla',
-                                    fontSize: 14.sp,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                // state.sendCountry == channel.country &&
-                                //         state.sendCurrency == channel.currency
-                                //     ? Icon(
-                                //       Icons.check_circle,
-                                //       color: AppColors.primary600,
-                                //     )
-                                //     : null,
-                              )
-                              : const SizedBox.shrink();
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-    );
-  }
-
-  void _showReceiveCountryBottomSheet(SendState state) {
-    // Dismiss keyboard when opening bottom sheet
-    FocusScope.of(context).unfocus();
-
-    // Filter channels for withdrawal (receive) countries - where user can send TO
-    final withdrawalChannels =
-        state.channels
-            .where(
-              (channel) =>
-                  (channel.rampType == 'withdrawal' ||
-                      channel.rampType == 'withdraw' ||
-                      channel.rampType == 'payout' ||
-                      channel.rampType == 'deposit' ||
-                      channel.rampType == 'receive') &&
-                  channel.status == 'active' &&
-                  channel.currency != null &&
-                  channel.country != null,
-            )
-            .toList();
-
-    // Deduplicate by country-currency combination, keeping the one with highest max limit
-    final uniqueWithdrawalChannels = <String, Channel>{};
-    for (final channel in withdrawalChannels) {
-      final key = '${channel.country} - ${channel.currency}';
-      if (!uniqueWithdrawalChannels.containsKey(key) ||
-          (channel.max ?? 0) > (uniqueWithdrawalChannels[key]?.max ?? 0)) {
-        uniqueWithdrawalChannels[key] = channel;
-      }
-    }
-
-    // Always ensure NG-NGN is available for Dayfi tag transfers
-    final ngnKey = 'NG - NGN';
-    if (!uniqueWithdrawalChannels.containsKey(ngnKey)) {
-      uniqueWithdrawalChannels[ngnKey] = Channel(
-        country: 'NG',
-        currency: 'NGN',
-        rampType: 'withdrawal',
-        status: 'active',
-        min: 1000.0,
-        max: 5000000.0,
-      );
-    }
-
-    List<Channel> finalWithdrawalChannels =
-        uniqueWithdrawalChannels.values.toList()..sort(
-          (a, b) => '${a.country ?? ''} - ${a.currency ?? ''}'.compareTo(
-            '${b.country ?? ''} - ${b.currency ?? ''}',
-          ),
-        );
-
-    // If no withdrawal channels, let's try a different approach
-    if (finalWithdrawalChannels.isEmpty) {
-      // Try filtering by different criteria but still only withdrawal-related channels
-      final alternativeChannels =
-          state.channels
-              .where(
-                (channel) =>
-                    channel.status == 'active' &&
-                    channel.currency != null &&
-                    channel.country != null &&
-                    (channel.rampType == 'withdrawal' ||
-                        channel.rampType == 'withdraw' ||
-                        channel.rampType == 'payout' ||
-                        channel.rampType == 'deposit' ||
-                        channel.rampType == 'receive'),
-              )
-              .toList();
-
-      // Use alternative channels if available, otherwise ensure NGN is there
-      if (alternativeChannels.isNotEmpty) {
-        finalWithdrawalChannels = alternativeChannels;
-      } else {
-        // Fallback: add NGN for Dayfi transfers
-        finalWithdrawalChannels = [
-          Channel(
-            country: 'NG',
-            currency: 'NGN',
-            rampType: 'withdrawal',
-            status: 'active',
-            min: 1000.0,
-            max: 5000000.0,
-          ),
-        ];
-      }
-    }
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder:
-          (context) => StatefulBuilder(
-            builder: (context, setModalState) {
-              return Container(
-                height: MediaQuery.of(context).size.height * 0.92,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).scaffoldBackgroundColor,
-                  borderRadius: BorderRadius.vertical(
-                    top: Radius.circular(20.r),
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    SizedBox(height: 18.h),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 18.w),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          SizedBox(height: 24.h, width: 22.w),
-                          Text(
-                            'Receiving currency',
-                            style: AppTypography.titleLarge.copyWith(
-                              fontFamily: 'Karla',
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w600,
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.pop(context);
-                              FocusScope.of(context).unfocus();
-                            },
-                            child: Image.asset(
-                              "assets/icons/pngs/cancelicon.png",
-                              height: 24.h,
-                              width: 24.w,
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: 16.h),
-                    // Search field
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 18.w),
-                      child: CustomTextField(
-                        controller: _searchController,
-                        label: '',
-                        hintText: 'Search countries',
-                        borderRadius: 40,
-                        prefixIcon: Container(
-                          width: 40.w,
-                          alignment: Alignment.centerRight,
-                          constraints: BoxConstraints.tightForFinite(),
-                          child: Center(
-                            child: SvgPicture.asset(
-                              'assets/icons/svgs/search-normal.svg',
-                              height: 22.sp,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurface.withOpacity(0.6),
-                            ),
-                          ),
-                        ),
-                        onChanged: (value) {
-                          setModalState(() {});
-                        },
-                      ),
-                    ),
-                    SizedBox(height: 8.h),
-                    Expanded(
-                      child: Builder(
-                        builder: (context) {
-                          // Get all channels
-                          final allChannels =
-                              finalWithdrawalChannels.isEmpty
-                                  ? (() {
-                                    final fallbackChannels =
-                                        state.channels
-                                            .where(
-                                              (c) =>
-                                                  c.status == 'active' &&
-                                                  c.currency != null &&
-                                                  c.country != null &&
-                                                  (c.rampType == 'withdrawal' ||
-                                                      c.rampType ==
-                                                          'withdraw' ||
-                                                      c.rampType == 'payout' ||
-                                                      c.rampType == 'deposit' ||
-                                                      c.rampType == 'receive'),
-                                            )
-                                            .toList();
-
-                                    // Deduplicate fallback channels
-                                    final uniqueFallbackChannels =
-                                        <String, Channel>{};
-                                    for (final channel in fallbackChannels) {
-                                      final key =
-                                          '${channel.country} - ${channel.currency}';
-                                      if (!uniqueFallbackChannels.containsKey(
-                                            key,
-                                          ) ||
-                                          (channel.max ?? 0) >
-                                              (uniqueFallbackChannels[key]
-                                                      ?.max ??
-                                                  0)) {
-                                        uniqueFallbackChannels[key] = channel;
-                                      }
-                                    }
-
-                                    return uniqueFallbackChannels.values
-                                        .toList();
-                                  })()
-                                  : finalWithdrawalChannels;
-
-                          // Additional deduplication to ensure no duplicates
-                          final uniqueChannels = <String, Channel>{};
-                          for (final channel in allChannels) {
-                            final key =
-                                '${channel.country} - ${channel.currency}';
-                            if (!uniqueChannels.containsKey(key)) {
-                              uniqueChannels[key] = channel;
-                            }
-                          }
-                          final deduplicatedChannels =
-                              uniqueChannels.values.toList();
-
-                          // Sort alphabetically by country name
-                          deduplicatedChannels.sort((a, b) {
-                            final countryA = _getCountryName(a.country);
-                            final countryB = _getCountryName(b.country);
-                            return countryA.compareTo(countryB);
-                          });
-
-                          // Filter based on search
-                          final searchQuery =
-                              _searchController.text.toLowerCase();
-                          final filteredChannels =
-                              deduplicatedChannels.where((channel) {
-                                if (searchQuery.isEmpty) return true;
-
-                                final countryName =
-                                    _getCountryName(
-                                      channel.country,
-                                    ).toLowerCase();
-                                final currency =
-                                    channel.currency?.toLowerCase() ?? '';
-                                final countryCode =
-                                    channel.country?.toLowerCase() ?? '';
-
-                                return countryName.contains(searchQuery) ||
-                                    currency.contains(searchQuery) ||
-                                    countryCode.contains(searchQuery);
-                              }).toList();
-
-                          return ListView.builder(
-                            padding: EdgeInsets.symmetric(horizontal: 18.w),
-                            itemCount: filteredChannels.length,
-                            itemBuilder: (context, index) {
-                              final channel = filteredChannels[index];
-                              return ListTile(
-                                contentPadding: EdgeInsets.symmetric(
-                                  vertical: 4.h,
-                                ),
-                                onTap: () {
-                                  ref
-                                      .read(sendViewModelProvider.notifier)
-                                      .updateReceiveCountry(
-                                        channel.country!,
-                                        channel.currency!,
-                                      );
-                                  Navigator.pop(context);
-                                  FocusScope.of(context).unfocus();
-                                },
-                                // subtitle: Column(
-                                //   crossAxisAlignment: CrossAxisAlignment.start,
-                                //   children: [
-                                //     Text(
-                                //       '${channel.vendorId ?? 'Unknown'} - ${channel.channelType ?? 'Unknown'} - ${channel.settlementType ?? 'Unknown'}',
-                                //       style: AppTypography.bodySmall.copyWith(
-                                //         fontFamily: 'Karla',
-                                //         fontSize: 12.sp,
-                                //         color: AppColors.primary600,
-                                //         fontWeight: FontWeight.w500,
-                                //       ),
-                                //     ),
-                                //     SizedBox(height: 1.h),
-                                //     Text(
-                                //       '${channel.rampType ?? 'Unknown'} - ${channel.status ?? 'Unknown'}',
-                                //       style: AppTypography.bodySmall.copyWith(
-                                //         fontFamily: 'Karla',
-                                //         fontSize: 11.sp,
-                                //         color: AppColors.neutral600,
-                                //         fontWeight: FontWeight.w400,
-                                //       ),
-                                //     ),
-                                //     SizedBox(height: 2.h),
-                                //     Text(
-                                //       'Min: ${channel.min} ${channel.currency} | Max: ${channel.max} ${channel.currency}',
-                                //       style: AppTypography.bodySmall.copyWith(
-                                //         fontFamily: 'Karla',
-                                //         fontSize: 12.sp,
-                                //         color: AppColors.neutral400,
-                                //       ),
-                                //     ),
-                                //   ],
-                                // ),
-                                // state.receiverCountry == channel.country &&
-                                //         state.receiverCurrency ==
-                                //             channel.currency
-                                //     ? Icon(
-                                //       Icons.check_circle,
-                                //       color: AppColors.primary600,
-                                //     )
-                                //     : null,
-                                title: Row(
-                                  children: [
-                                    SvgPicture.asset(
-                                      _getFlagPath(channel.country),
-                                      height: 32.00000.h,
-                                    ),
-                                    SizedBox(width: 12.w),
-                                    Text(
-                                      _getCountryName(channel.country),
-                                      style: AppTypography.bodyLarge.copyWith(
-                                        fontFamily: 'Karla',
-                                        fontSize: 16.sp,
-                                        letterSpacing: -.4,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                trailing: Text(
-                                  '${channel.currency}',
-                                  style: AppTypography.bodyLarge.copyWith(
-                                    fontFamily: 'Karla',
-                                    fontSize: 14.sp,
-                                    letterSpacing: -.4,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              );
-                            },
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-    );
-  }
-
   // Helper function to get the canonical name for sorting
-  String _getCanonicalChannelName(String? channelType) {
-    if (channelType == null) return 'zzz';
-    final lower = channelType.toLowerCase();
-
-    // DayFi Tag should always be first
-    if (lower == 'dayfi_tag') return '000_dayfi_tag';
-    if (lower == 'bank_transfer' || lower == 'bank') return '001_bank_transfer';
-    if (lower == 'mobile_money' || lower == 'momo' || lower == 'mobilemoney') {
-      return '002_mobile_money';
-    }
-
-    // Other allowed methods fall here
-    return '999_$channelType';
-  }
-
-  void _showChannelTypesBottomSheet(
-    BuildContext context,
-    String country,
-    String currency,
-    SendState state,
-  ) {
-    // Dismiss keyboard when opening bottom sheet
-    FocusScope.of(context).unfocus();
-    // Filter channels by status, rampType, and country/currency
-    final filteredChannels =
-        state.channels
-            .where(
-              (channel) =>
-                  channel.status == 'active' &&
-                  (channel.rampType == 'withdrawal' ||
-                      channel.rampType == 'withdraw' ||
-                      channel.rampType == 'payout' ||
-                      channel.rampType == 'deposit' ||
-                      channel.rampType == 'receive') &&
-                  (channel.country == country || channel.currency == currency),
-            )
-            .toList();
-
-    // Check if this is NGN to NGN transfer
-    final isNgnToNgn = state.sendCurrency == 'NGN' && currency == 'NGN';
-
-    // For NGN to NGN transfers, add DayFi Tag as an option if not already present
-    if (isNgnToNgn) {
-      final hasDayfiTag = filteredChannels.any(
-        (channel) => channel.channelType?.toLowerCase() == 'dayfi_tag',
-      );
-
-      if (!hasDayfiTag) {
-        // Create a synthetic DayFi Tag channel
-        final dayfiTagChannel = Channel(
-          channelType: 'dayfi_tag',
-          country: country,
-          currency: currency,
-          status: 'active',
-          rampType: 'withdrawal',
-          min: 0,
-          max: 999999999,
-          id: 'dayfi_tag_synthetic',
-        );
-        filteredChannels.add(dayfiTagChannel);
-      }
-    }
-
-    // Deduplicate channels by channelType to merge similar options
-    final Map<String, Channel> uniqueChannels = {};
-    for (final channel in filteredChannels) {
-      // ...existing code...l type for merging
-      final canonicalType = _getCanonicalChannelName(channel.channelType);
-
-      // Keep the channel with the highest max limit if duplicates exist
-      if (!uniqueChannels.containsKey(canonicalType)) {
-        uniqueChannels[canonicalType] = channel;
-      } else {
-        final existing = uniqueChannels[canonicalType]!;
-        if ((channel.max ?? 0) > (existing.max ?? 0)) {
-          uniqueChannels[canonicalType] = channel;
-        }
-      }
-    }
-
-    // Sort channels by canonical channel name
-    final allChannels =
-        uniqueChannels.values.toList()..sort(
-          (a, b) => _getCanonicalChannelName(
-            a.channelType,
-          ).compareTo(_getCanonicalChannelName(b.channelType)),
-        );
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return Container(
-          height: MediaQuery.of(context).size.height * 0.92,
-          decoration: BoxDecoration(
-            color: Theme.of(context).scaffoldBackgroundColor,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-          ),
-          child: Column(
-            children: [
-              SizedBox(height: 18.h),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 18.w),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    SizedBox(height: 24.h, width: 22.w),
-                    Text(
-                      'Delivery methods for $currency',
-                      style: AppTypography.titleLarge.copyWith(
-                        fontFamily: 'CabinetGrotesk',
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pop(context);
-                        FocusScope.of(context).unfocus();
-                      },
-                      child: Image.asset(
-                        "assets/icons/pngs/cancelicon.png",
-                        height: 24.h,
-                        width: 24.w,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 16.h),
-              Expanded(
-                child: Builder(
-                  builder: (context) {
-                    // Auto-select DayFi Tag for NGN to NGN if no delivery method is selected
-                    if (isNgnToNgn &&
-                        state.selectedDeliveryMethod.isEmpty &&
-                        allChannels.isNotEmpty) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        // Find DayFi Tag channel
-                        final dayfiTagChannel = allChannels.firstWhere(
-                          (ch) => ch.channelType?.toLowerCase() == 'dayfi_tag',
-                          orElse: () => allChannels[0],
-                        );
-                        ref
-                            .read(sendViewModelProvider.notifier)
-                            .updateDeliveryMethod(
-                              dayfiTagChannel.channelType ?? 'Unknown',
-                            );
-                      });
-                    } else if (!isNgnToNgn &&
-                        state.selectedDeliveryMethod.isEmpty &&
-                        allChannels.isNotEmpty) {
-                      // For non-NGN to NGN, auto-select first channel
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        ref
-                            .read(sendViewModelProvider.notifier)
-                            .updateDeliveryMethod(
-                              allChannels[0].channelType ?? 'Unknown',
-                            );
-                      });
-                    }
-
-                    return ListView.builder(
-                      padding: EdgeInsets.symmetric(horizontal: 18.w),
-                      itemCount: allChannels.length,
-                      itemBuilder: (context, index) {
-                        final channel = allChannels[index];
-                        final isDayfiTag = channel.channelType?.toLowerCase() == 'dayfi_tag';
-
-                        return Padding(
-                          padding: EdgeInsets.only(bottom: 12.h),
-                          child: GestureDetector(
-                            onTap: () {
-                              ref
-                                  .read(sendViewModelProvider.notifier)
-                                  .updateDeliveryMethod(
-                                    channel.channelType ?? 'Unknown',
-                                  );
-
-                              Navigator.pop(context);
-                              FocusScope.of(context).unfocus();
-                            },
-                            child: Container(
-                              width: double.infinity,
-                              padding: EdgeInsets.only(
-                                left: 16.w,
-                                top: 16.h,
-                                bottom: 16.h,
-                                right: 12.w,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.surface,
-                                borderRadius: BorderRadius.circular(12.r),
-                                border: Border.all(
-                                  color: state.selectedDeliveryMethod == channel.channelType
-                                      ? AppColors.purple500ForTheme(context).withOpacity(0.5)
-                                      : AppColors.purple500ForTheme(context).withOpacity(0),
-                                  width: .75,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppColors.neutral500.withOpacity(0.0375),
-                                    blurRadius: 8.0,
-                                    offset: const Offset(0, 8),
-                                    spreadRadius: .8,
-                                  ),
-                                ],
-                              ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 32.w,
-                                    height: 32.w,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(24.r),
-                                    ),
-                                    child: _getDeliveryMethodIcon(channel.channelType),
-                                  ),
-                                  SizedBox(width: 12.w),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            Text(
-                                              _getDeliveryMethodType(channel.channelType),
-                                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                                fontFamily: 'Karla',
-                                                fontSize: 18.sp,
-                                                letterSpacing: -.5,
-                                                fontWeight: FontWeight.w400,
-                                                color: Theme.of(context).colorScheme.onSurface,
-                                              ),
-                                            ),
-                                            SizedBox(width: 8.w),
-                                            if (isDayfiTag)
-                                              Container(
-                                                padding: EdgeInsets.symmetric(
-                                                  horizontal: 8.w,
-                                                  vertical: 3.h,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  color: AppColors.warning400.withOpacity(0.15),
-                                                  borderRadius: BorderRadius.circular(8.r),
-                                                ),
-                                                child: Text(
-                                                  'Free',
-                                                  style: AppTypography.labelSmall.copyWith(
-                                                    fontFamily: 'Karla',
-                                                    fontSize: 10.sp,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: AppColors.warning600,
-                                                  ),
-                                                ),
-                                              ),
-                                          ],
-                                        ),
-                                        SizedBox(height: 4.h),
-                                        Text(
-                                          _getDeliveryDuration(
-                                            channel.channelType,
-                                            sendCurrency: state.sendCurrency,
-                                            receiverCurrency: state.receiverCurrency,
-                                          ),
-                                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                            fontSize: 12.5.sp,
-                                            fontFamily: 'Karla',
-                                            fontWeight: FontWeight.w400,
-                                            letterSpacing: -0.4,
-                                            height: 1.3,
-                                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  SizedBox(width: 12.w),
-                                  if (state.selectedDeliveryMethod == channel.channelType)
-                                    SvgPicture.asset(
-                                      'assets/icons/svgs/circle-check.svg',
-                                      color: AppColors.purple500ForTheme(context),
-                                      width: 24.sp,
-                                      height: 24.sp,
-                                    ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
 }

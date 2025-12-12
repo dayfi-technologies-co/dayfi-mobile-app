@@ -246,9 +246,9 @@ class $AssetsIconsSvgsGen {
   /// File path: assets/icons/svgs/total.svg
   SvgGenImage get total => const SvgGenImage('assets/icons/svgs/total.svg');
 
-  /// File path: assets/icons/svgs/transactions.svg
+  /// File path: assets/icons/svgs/account.svg
   SvgGenImage get transactions =>
-      const SvgGenImage('assets/icons/svgs/transactions.svg');
+      const SvgGenImage('assets/icons/svgs/account.svg');
 
   /// File path: assets/icons/svgs/wallet-2.svg
   SvgGenImage get wallet2 =>

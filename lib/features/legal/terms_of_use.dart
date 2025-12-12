@@ -11,16 +11,23 @@ class TermsOfUseView extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
-        scrolledUnderElevation: 0,
+        scrolledUnderElevation: .5,
+        foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+        shadowColor: Theme.of(context).scaffoldBackgroundColor,
+        surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.arrow_back_ios_new),
+          icon: Icon(
+            Icons.arrow_back_ios_new,
+            color: Theme.of(context).textTheme.headlineLarge?.color,
+          ),
         ),
         title: Text(
           "Terms of Use",
           style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-            fontFamily: 'CabinetGrotesk',
-            fontSize: 20.sp, // height: 1.6,
+            fontFamily: 'FunnelDisplay',
+            fontSize: 24.sp, // height: 1.6,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,
           ),
@@ -165,8 +172,8 @@ class TermsOfUseView extends StatelessWidget {
         Text(
           title,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontFamily: 'CabinetGrotesk',
-            fontSize: 20.sp, // height: 1.6,
+            fontFamily: 'FunnelDisplay',
+            fontSize: 24.sp, // height: 1.6,
             fontWeight: FontWeight.w600,
             letterSpacing: -0.8,
           ),
@@ -180,7 +187,7 @@ class TermsOfUseView extends StatelessWidget {
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontFamily: 'Karla',
                 fontSize: 16.sp,
-                fontWeight: FontWeight.w400,
+                fontWeight: FontWeight.w500,
                 height: 1.5,
                 letterSpacing: -0.8,
               ),

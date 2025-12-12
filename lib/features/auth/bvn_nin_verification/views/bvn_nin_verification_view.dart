@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
 import 'package:dayfi/features/auth/bvn_nin_verification/vm/bvn_nin_verification_viewmodel.dart';
+import 'package:flutter_svg/svg.dart';
 
 class BvnNinVerificationView extends ConsumerStatefulWidget {
-  const BvnNinVerificationView({super.key});
+  final bool showBackButton;
+
+  const BvnNinVerificationView({super.key, this.showBackButton = false});
 
   @override
   ConsumerState<BvnNinVerificationView> createState() =>
@@ -56,104 +60,163 @@ class _BvnNinVerificationViewState
   @override
   Widget build(BuildContext context) {
     final verificationState = ref.watch(bvnNinVerificationProvider);
-    final verificationNotifier =
-        ref.read(bvnNinVerificationProvider.notifier);
+    final verificationNotifier = ref.read(bvnNinVerificationProvider.notifier);
 
     // Update controllers when state changes
     _updateControllers(verificationState);
 
-    return WillPopScope(
-      onWillPop: () async => false, // Disable device back button
-      child: GestureDetector(
-        onTap: () {
-          FocusManager.instance.primaryFocus?.unfocus();
-        },
-        child: Scaffold(
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          body: SafeArea(
-            bottom: false,
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  AppBar(
-                    scrolledUnderElevation: 0,
-                    backgroundColor:
-                        Theme.of(context).scaffoldBackgroundColor,
-                    elevation: 0,
-                    automaticallyImplyLeading: false, // Remove back button
-                    title: Text(
-                      "KYC Level 2 Verification",
-                      style: Theme.of(context)
-                          .textTheme
-                          .headlineMedium
-                          ?.copyWith(
-                           fontFamily: 'CabinetGrotesk',
-               fontSize: 20.sp, // height: 1.6,
-              fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.onSurface,
+    // Get showBackButton from arguments if available
+    final args = ModalRoute.of(context)?.settings.arguments;
+    final showBackButton = (args is Map && args['showBackButton'] == true) || widget.showBackButton;
+
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        scrolledUnderElevation: .5,
+        foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+        shadowColor: Theme.of(context).scaffoldBackgroundColor,
+        surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        elevation: 0,
+        leadingWidth: 72,
+        leading: showBackButton
+            ? InkWell(
+                onTap: () {
+                  verificationNotifier.resetForm();
+                  Navigator.pop(context);
+                  FocusScope.of(context).unfocus();
+                },
+                child: Stack(
+                  alignment: AlignmentGeometry.center,
+                  children: [
+                    SvgPicture.asset(
+                      "assets/icons/svgs/notificationn.svg",
+                      height: 40.sp,
+                      color: Theme.of(context).colorScheme.surface,
+                    ),
+                    SizedBox(
+                      height: 40.sp,
+                      width: 40.sp,
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: Icon(
+                            Icons.arrow_back_ios,
+                            size: 20.sp,
+                            color: Theme.of(context).textTheme.bodyLarge!.color,
                           ),
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 4.h),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Subtitle
-                        Text(
-                          "Please provide your BVN and NIN to complete your KYC Level 2 verification.",
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.w400,
-                                fontFamily: 'Karla',
-                                letterSpacing: -.3,
-                                height: 1.4,
-                              ),
-                          textAlign: TextAlign.center,
                         ),
-                        SizedBox(height: 36.h),
-
-                        // BVN field
-                        _buildBvnField(verificationState, verificationNotifier),
-                        SizedBox(height: 18.h),
-
-                        // NIN field
-                        _buildNinField(verificationState, verificationNotifier),
-                        SizedBox(height: 40.h),
-
-                        // Submit Button
-                        PrimaryButton(
-                          borderRadius: 38,
-                          text: "Verify",
-                          onPressed: verificationState.isFormValid &&
-                                  !verificationState.isBusy
-                              ? () => verificationNotifier.submitVerification(context)
-                              : null,
-                          backgroundColor: verificationState.isFormValid
-                              ? AppColors.purple500ForTheme(context)
-                              : AppColors.purple500ForTheme(context).withOpacity(.25),
-                          height: 48.000.h,
-                          textColor: verificationState.isFormValid
-                              ? AppColors.neutral0
-                              : AppColors.neutral0.withOpacity(.65),
-                          fontFamily: 'Karla',
-                          letterSpacing: -.8,
-                          fontSize: 18,
-                          width: double.infinity,
-                          fullWidth: true,
-                          isLoading: verificationState.isBusy,
-                        ),
-                        SizedBox(height: 50.h),
-                      ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              )
+            : null,
+        automaticallyImplyLeading: false,
+      ),
+
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.fromLTRB(18.0, 12, 18.0, 40.0),
+        child: // Submit Button
+            PrimaryButton(
+              borderRadius: 38,
+              text: "Verify",
+              onPressed:
+                  verificationState.isFormValid && !verificationState.isBusy
+                      ? () => verificationNotifier.submitVerification(context, widget.showBackButton)
+                      : null,
+              backgroundColor:
+                  verificationState.isFormValid
+                      ? AppColors.purple500ForTheme(context)
+                      : AppColors.purple500ForTheme(context).withOpacity(.15),
+              height: 48.00000.h,
+              textColor:
+                  verificationState.isFormValid
+                      ? AppColors.neutral0
+                      : AppColors.neutral0.withOpacity(.35),
+              fontFamily: 'Karla',
+              letterSpacing: -.70,
+              fontSize: 18,
+              width: double.infinity,
+              fullWidth: true,
+              isLoading: verificationState.isBusy,
+            )
+            .animate()
+            .fadeIn(delay: 500.ms, duration: 300.ms, curve: Curves.easeOutCubic)
+            .slideY(
+              begin: 0.2,
+              end: 0,
+              delay: 500.ms,
+              duration: 300.ms,
+              curve: Curves.easeOutCubic,
+            )
+            .scale(
+              begin: const Offset(0.95, 0.95),
+              end: const Offset(1.0, 1.0),
+              delay: 500.ms,
+              duration: 300.ms,
+              curve: Curves.easeOutCubic,
             ),
+      ),
+      body: SafeArea(
+        bottom: false,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: 8.h),
+                    Text(
+                      "KYC Level 2 Verification",
+                      style: Theme.of(
+                        context,
+                      ).textTheme.headlineMedium?.copyWith(
+                        fontSize: 18.sp,
+                        fontFamily: 'Boldonse',
+                        letterSpacing: -.5,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+
+                    SizedBox(height: 18.h),
+                    Padding(
+                      padding: EdgeInsets.only(
+                        right: MediaQuery.of(context).size.width * .2,
+                      ),
+                      child: Text(
+                        "Enter your BVN and NIN to complete your KYC Level 2 verification. This will only take about 30 seconds.",
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w500,
+                          fontFamily: 'Karla',
+                          letterSpacing: -.6,
+                          height: 1.4,
+                        ),
+                        textAlign: TextAlign.start,
+                      ),
+                    ),
+                    SizedBox(height: 32.h),
+
+                    // BVN field
+                    _buildBvnField(verificationState, verificationNotifier),
+                    SizedBox(height: 18.h),
+
+                    // NIN field
+                    _buildNinField(verificationState, verificationNotifier),
+                    SizedBox(height: 40.h),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),
+      // ),
+      // ),
     );
   }
 
@@ -182,8 +245,8 @@ class _BvnNinVerificationViewState
                 color: Colors.red,
                 fontSize: 13,
                 fontFamily: 'Karla',
-                letterSpacing: -.3,
-                fontWeight: FontWeight.w400,
+                letterSpacing: -.6,
+                fontWeight: FontWeight.w500,
                 height: 1.4,
               ),
             ),
@@ -219,8 +282,8 @@ class _BvnNinVerificationViewState
                 color: Colors.red,
                 fontSize: 13,
                 fontFamily: 'Karla',
-                letterSpacing: -.3,
-                fontWeight: FontWeight.w400,
+                letterSpacing: -.6,
+                fontWeight: FontWeight.w500,
                 height: 1.4,
               ),
             ),
@@ -231,4 +294,3 @@ class _BvnNinVerificationViewState
     );
   }
 }
-

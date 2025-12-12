@@ -13,6 +13,8 @@ import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
 import 'package:dayfi/services/transaction_monitor_service.dart';
 import 'package:dayfi/routes/route.dart';
 import 'dart:async';
+import 'package:dayfi/common/widgets/top_snackbar.dart';
+import 'package:flutter/cupertino.dart';
 
 class RegularTransferTransactionPinView extends ConsumerStatefulWidget {
   final Map<String, dynamic> selectedData;
@@ -59,20 +61,22 @@ class _RegularTransferTransactionPinViewState
 
     if (!hasTransactionPin) {
       // Navigate to create pin with return route info
-      appRouter.pushNamed(
-        AppRoute.transactionPinCreateView,
-        arguments: {
-          'returnRoute': AppRoute.sendReviewView,
-          'returnArguments': {
-            'selectedData': widget.selectedData,
-            'recipientData': widget.recipientData,
-            'senderData': widget.senderData,
-          },
-        },
-      ).then((value) {
-        // After creating pin, check again and show enter pin
-        _checkAndShowPinEntry();
-      });
+      appRouter
+          .pushNamed(
+            AppRoute.transactionPinCreateView,
+            arguments: {
+              'returnRoute': AppRoute.sendReviewView,
+              'returnArguments': {
+                'selectedData': widget.selectedData,
+                'recipientData': widget.recipientData,
+                'senderData': widget.senderData,
+              },
+            },
+          )
+          .then((value) {
+            // After creating pin, check again and show enter pin
+            _checkAndShowPinEntry();
+          });
     } else {
       // Show PIN entry bottom sheet
       _showPinEntryBottomSheet();
@@ -80,16 +84,18 @@ class _RegularTransferTransactionPinViewState
   }
 
   void _showPinEntryBottomSheet() {
-    showModalBottomSheet(
+        showModalBottomSheet(
+      barrierColor: Colors.black.withOpacity(0.85),
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       isDismissible: false,
       enableDrag: false,
-      builder: (context) => TransactionPinBottomSheet(
-        onPinEntered: _handlePinEntered,
-        isProcessing: _isProcessing,
-      ),
+      builder:
+          (context) => TransactionPinBottomSheet(
+            onPinEntered: _handlePinEntered,
+            isProcessing: _isProcessing,
+          ),
     );
   }
 
@@ -165,9 +171,11 @@ class _RegularTransferTransactionPinViewState
           },
         );
       } else {
-        throw Exception(response.message.isNotEmpty
-            ? response.message
-            : 'Failed to create collection');
+        throw Exception(
+          response.message.isNotEmpty
+              ? response.message
+              : 'Failed to create collection',
+        );
       }
     } catch (e) {
       AppLogger.error('Error creating collection: $e');
@@ -177,11 +185,10 @@ class _RegularTransferTransactionPinViewState
         Navigator.pop(context);
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to initiate transfer: ${e.toString()}'),
-          backgroundColor: AppColors.error500,
-        ),
+      TopSnackbar.show(
+        context,
+        message: 'Failed to initiate transfer: ${e.toString()}',
+        isError: true,
       );
     } finally {
       setState(() {
@@ -200,29 +207,33 @@ class _RegularTransferTransactionPinViewState
         widget.selectedData['cryptoNetwork'] != null;
 
     // Find selected channel
-    final recipientChannels = sendState.channels
-        .where(
-          (channel) =>
-              channel.country == sendState.receiverCountry &&
-              channel.currency == sendState.receiverCurrency &&
-              channel.status == 'active' &&
-              channel.channelType == sendState.selectedDeliveryMethod,
-        )
-        .toList();
+    final recipientChannels =
+        sendState.channels
+            .where(
+              (channel) =>
+                  channel.country == sendState.receiverCountry &&
+                  channel.currency == sendState.receiverCurrency &&
+                  channel.status == 'active' &&
+                  channel.channelType == sendState.selectedDeliveryMethod,
+            )
+            .toList();
 
-    final validChannels = recipientChannels
-        .where(
-          (channel) =>
-              channel.rampType == 'deposit' ||
-              channel.rampType == 'collection' ||
-              channel.rampType == 'withdrawal' ||
-              channel.rampType == 'withdraw' ||
-              channel.rampType == 'payout',
-        )
-        .toList();
+    final validChannels =
+        recipientChannels
+            .where(
+              (channel) =>
+                  channel.rampType == 'deposit' ||
+                  channel.rampType == 'collection' ||
+                  channel.rampType == 'withdrawal' ||
+                  channel.rampType == 'withdraw' ||
+                  channel.rampType == 'payout',
+            )
+            .toList();
 
     final selectedChannel =
-        validChannels.isNotEmpty ? validChannels.first : (recipientChannels.isNotEmpty ? recipientChannels.first : null);
+        validChannels.isNotEmpty
+            ? validChannels.first
+            : (recipientChannels.isNotEmpty ? recipientChannels.first : null);
 
     final requestData = {
       "amount":
@@ -239,7 +250,9 @@ class _RegularTransferTransactionPinViewState
       "country": sendState.sendCountry,
       "reason": widget.reason.isNotEmpty ? widget.reason : "Money Transfer",
       "receiveChannel":
-          widget.selectedData['recipientChannelId'] ?? selectedChannel?.id ?? "",
+          widget.selectedData['recipientChannelId'] ??
+          selectedChannel?.id ??
+          "",
       "receiveNetwork": widget.recipientData['networkId'] ?? "",
       "receiveAmount":
           double.tryParse(
@@ -271,7 +284,8 @@ class _RegularTransferTransactionPinViewState
       "sender": {
         "name":
             widget.senderData['name'] ??
-            '${widget.senderData['firstName'] ?? ''} ${widget.senderData['lastName'] ?? ''}'.trim(),
+            '${widget.senderData['firstName'] ?? ''} ${widget.senderData['lastName'] ?? ''}'
+                .trim(),
         "country": widget.senderData['country'] ?? sendState.sendCountry,
         "phone": widget.senderData['phone'] ?? '+2340000000000',
         "address": widget.senderData['address'] ?? 'Not provided',
@@ -316,8 +330,7 @@ class _RegularTransferTransactionPinViewState
           0,
       "currency": sendState.sendCurrency,
       "channelId": widget.selectedData['senderChannelId'] ?? "",
-      "receiveChannel":
-          widget.selectedData['recipientChannelId'] ?? "",
+      "receiveChannel": widget.selectedData['recipientChannelId'] ?? "",
       "receiveNetwork": widget.recipientData['networkId'] ?? "",
       "receiveAmount":
           double.tryParse(
@@ -331,10 +344,7 @@ class _RegularTransferTransactionPinViewState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Container(),
-    );
+    return Scaffold(backgroundColor: Colors.transparent, body: Container());
   }
 }
 
@@ -378,11 +388,11 @@ class _TransactionPinBottomSheetState
                 Text(
                   'Enter Transaction PIN',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontFamily: 'CabinetGrotesk',
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
+                    fontFamily: 'FunnelDisplay',
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                 ),
                 GestureDetector(
                   onTap: () {
@@ -408,21 +418,25 @@ class _TransactionPinBottomSheetState
               (index) => Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12.0),
                 child: Container(
-                  width: 20,
+                  width: 24,
                   height: 20,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: index < pinState.pin.length
-                        ? AppColors.purple500ForTheme(context)
-                        : Colors.transparent,
-                    border: Border.all(color: AppColors.purple500ForTheme(context), width: 2),
+                    color:
+                        index < pinState.pin.length
+                            ? AppColors.purple500ForTheme(context)
+                            : Colors.transparent,
+                    border: Border.all(
+                      color: AppColors.purple500ForTheme(context),
+                      width: 2,
+                    ),
                   ),
                 ),
               ),
             ),
           ),
 
-          SizedBox(height: 56.h),
+          SizedBox(height: 40.h),
 
           // Number pad
           Expanded(
@@ -463,6 +477,7 @@ class _TransactionPinBottomSheetState
                 }),
                 _buildIconButton(
                   icon: Icons.arrow_back_ios,
+
                   onTap: () {
                     if (pinState.pin.isNotEmpty && !widget.isProcessing) {
                       pinNotifier.updatePin(
@@ -477,7 +492,7 @@ class _TransactionPinBottomSheetState
 
           if (widget.isProcessing) ...[
             SizedBox(height: 16.h),
-            CircularProgressIndicator(),
+            CupertinoActivityIndicator(),
             SizedBox(height: 16.h),
           ],
 
@@ -489,29 +504,30 @@ class _TransactionPinBottomSheetState
 
   Widget _buildNumberButton(String number, VoidCallback onTap) {
     return Builder(
-      builder: (context) => InkWell(
-        splashColor: Colors.transparent,
-        highlightColor: Colors.transparent,
-        borderRadius: BorderRadius.circular(100),
-        onTap: widget.isProcessing ? null : onTap,
-        child: Container(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Theme.of(context).colorScheme.surface,
-          ),
-          child: Center(
-            child: Text(
-              number,
-              style: TextStyle(
-                fontSize: 25.60.sp,
-                fontFamily: 'CabinetGrotesk',
-                fontWeight: FontWeight.w400,
-                color: Theme.of(context).colorScheme.onSurface,
+      builder:
+          (context) => InkWell(
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            borderRadius: BorderRadius.circular(100),
+            onTap: widget.isProcessing ? null : onTap,
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Theme.of(context).colorScheme.surface,
+              ),
+              child: Center(
+                child: Text(
+                  number,
+                  style: TextStyle(
+                    fontSize: 32.sp,
+                    fontFamily: 'FunnelDisplay',
+                    fontWeight: FontWeight.w500,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
               ),
             ),
           ),
-        ),
-      ),
     );
   }
 
@@ -526,7 +542,9 @@ class _TransactionPinBottomSheetState
           shape: BoxShape.circle,
           color: Colors.transparent,
         ),
-        child: Center(child: Icon(icon, color: AppColors.purple500ForTheme(context))),
+        child: Center(
+          child: Icon(icon, color: AppColors.purple500ForTheme(context), size: 20.sp,),
+        ),
       ),
     );
   }

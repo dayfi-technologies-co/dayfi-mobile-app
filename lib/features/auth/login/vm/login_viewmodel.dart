@@ -54,6 +54,22 @@ class LoginState {
 }
 
 class LoginNotifier extends StateNotifier<LoginState> {
+  /// Save user token, user data, and credentials after Google auth
+  Future<void> saveGoogleAuthData({
+    required String token,
+    required Map<String, dynamic> userJson,
+    required String email,
+    required String password,
+  }) async {
+    await _secureStorage.write(StorageKeys.token, token);
+    await _secureStorage.write(StorageKeys.isFirstTime, 'false');
+    await _secureStorage.write(StorageKeys.user, json.encode(userJson));
+    await _secureStorage.write(StorageKeys.email, email);
+    await _secureStorage.write(StorageKeys.password, password);
+    // Optionally, you can call _disableBiometricsOnLogin if needed
+    // await _disableBiometricsOnLogin(userJson['user_id'] ?? userJson['id']);
+  }
+
   final AuthService _authService = authService;
   final SecureStorageService _secureStorage = locator<SecureStorageService>();
 
@@ -77,7 +93,7 @@ class LoginNotifier extends StateNotifier<LoginState> {
   String _validateEmail(String value) {
     if (value.isEmpty) return 'Please enter your email address';
     if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-      return 'Please enter a valid email address (like: yourname@email.com)';
+      return 'Please enter a valid email address';
     }
     return '';
   }
@@ -98,7 +114,7 @@ class LoginNotifier extends StateNotifier<LoginState> {
       // Analytics: login started
       analyticsService.logEvent(
         name: AnalyticsEvents.loginStarted,
-        parameters: { 'email': state.email },
+        parameters: {'email': state.email},
       );
       AppLogger.info('Starting login process for email: ${state.email}');
 
@@ -116,11 +132,14 @@ class LoginNotifier extends StateNotifier<LoginState> {
         // Analytics: login completed
         analyticsService.logEvent(
           name: AnalyticsEvents.loginCompleted,
-          parameters: { 'email': state.email },
+          parameters: {'email': state.email},
         );
 
         // Save user token and data
-        await _secureStorage.write(StorageKeys.token, response.data?.token ?? '');
+        await _secureStorage.write(
+          StorageKeys.token,
+          response.data?.token ?? '',
+        );
         await _secureStorage.write(StorageKeys.isFirstTime, 'false');
 
         // Save user data if available
@@ -150,7 +169,7 @@ class LoginNotifier extends StateNotifier<LoginState> {
         // Analytics: login failed
         analyticsService.logEvent(
           name: AnalyticsEvents.loginFailed,
-          parameters: { 'email': state.email, 'reason': response.message },
+          parameters: {'email': state.email, 'reason': response.message},
         );
 
         // Check if it's a 401 error with activation message
@@ -179,13 +198,13 @@ class LoginNotifier extends StateNotifier<LoginState> {
         _navigateToVerifyEmailAndResendOTP(context, state.email);
       } else {
         AppLogger.error('Login error: $e');
-        
+
         // Get user-friendly error message
         final errorMessage = await ConnectivityUtils.getErrorMessage(e);
-        
+
         analyticsService.logEvent(
           name: AnalyticsEvents.loginFailed,
-          parameters: { 'email': state.email, 'reason': errorMessage },
+          parameters: {'email': state.email, 'reason': errorMessage},
         );
         TopSnackbar.show(context, message: errorMessage, isError: true);
       }
@@ -226,17 +245,17 @@ class LoginNotifier extends StateNotifier<LoginState> {
       // }
 
       AppLogger.info('Disabling biometrics on backend after fresh login...');
-      
+
       // Call backend API to disable biometrics
-      await _authService.updateProfileBiometrics(
-        isBiometricsSetup: false,
-      );
-      
+      await _authService.updateProfileBiometrics(isBiometricsSetup: false);
+
       // Also clear local biometric flag to ensure consistency
       await _secureStorage.delete('biometric_enabled');
       await _secureStorage.delete(StorageKeys.biometricSetupCompleted);
-      
-      AppLogger.info('Biometrics disabled on backend after login - user can re-enable during setup');
+
+      AppLogger.info(
+        'Biometrics disabled on backend after login - user can re-enable during setup',
+      );
     } catch (e) {
       // Don't fail login if biometric disable fails - just log it
       AppLogger.warning('Failed to disable biometrics on login: $e');
@@ -264,20 +283,18 @@ class LoginNotifier extends StateNotifier<LoginState> {
     );
 
     // Automatically resend OTP after a short delay to ensure the screen is loaded
-   _authService
-          .resendOTP(email: email)
-          .then((response) {
-            if (response.statusCode == 200) {
-              AppLogger.info('OTP resent successfully: ${response.message}');
-            } else {
-              AppLogger.error('Failed to resend OTP: ${response.message}');
-            }
-          })
-          .catchError((e) {
-            AppLogger.error('Error resending OTP: $e');
-          });
-
- 
+    _authService
+        .resendOTP(email: email)
+        .then((response) {
+          if (response.statusCode == 200) {
+            AppLogger.info('OTP resent successfully: ${response.message}');
+          } else {
+            AppLogger.error('Failed to resend OTP: ${response.message}');
+          }
+        })
+        .catchError((e) {
+          AppLogger.error('Error resending OTP: $e');
+        });
   }
 
   void navigateToForgotPassword() {

@@ -30,15 +30,18 @@ class _SoftposInfoViewState extends State<SoftposInfoView> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
-        scrolledUnderElevation: 0,
+        scrolledUnderElevation: .5,
+        foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+        shadowColor: Theme.of(context).scaffoldBackgroundColor,
+        surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
-        surfaceTintColor: Colors.transparent,
+        // surfaceTintColor: Colors.transparent,
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         title: Text(
           "Before using SoftPOS",
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontFamily: 'CabinetGrotesk',
-            fontSize: 20.sp, // height: 1.6,
+            fontFamily: 'FunnelDisplay',
+            fontSize: 24.sp, // height: 1.6,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,
           ),
@@ -47,6 +50,7 @@ class _SoftposInfoViewState extends State<SoftposInfoView> {
           onPressed: () => Navigator.pop(context),
           icon: Icon(
             Icons.arrow_back_ios,
+            size: 20.sp,
             // color: AppColors.purple500ForTheme(context),
           ),
         ),
@@ -83,7 +87,7 @@ class _SoftposInfoViewState extends State<SoftposInfoView> {
                       color: Theme.of(
                         context,
                       ).colorScheme.primaryContainer.withOpacity(0.25),
-                      borderRadius: BorderRadius.circular(8.r),
+                      borderRadius: BorderRadius.circular(12.r),
                       border: Border.all(
                         color: Theme.of(context).colorScheme.primaryContainer,
                       ),
@@ -116,7 +120,7 @@ class _SoftposInfoViewState extends State<SoftposInfoView> {
                                       style: TextStyle(
                                         fontSize: 14.sp,
                                         fontFamily: 'Karla',
-                                        fontWeight: FontWeight.w400,
+                                        fontWeight: FontWeight.w500,
                                         letterSpacing: -0.4,
                                         height: 1.5,
                                         color:
@@ -139,9 +143,9 @@ class _SoftposInfoViewState extends State<SoftposInfoView> {
                       'I understand and agree with all the Terms & Conditions for using SoftPOS payment acceptance on dayfi.',
                       style: TextStyle(
                         fontSize: 13.00.sp,
-                        fontWeight: FontWeight.w400,
+                        fontWeight: FontWeight.w500,
                         fontFamily: 'Karla',
-                        letterSpacing: -.3,
+                        letterSpacing: -.6,
                         height: 1.4,
                         color: Theme.of(
                           context,
@@ -181,16 +185,16 @@ class _SoftposInfoViewState extends State<SoftposInfoView> {
                         }
                         : null,
                 text: 'Confirm and proceed',
-                height: 48.000.h,
+                height: 48.00000.h,
                 borderRadius: 38,
                 textColor:
                     _isAgreed
                         ? AppColors.neutral0
-                        : AppColors.neutral0.withOpacity(.65),
+                        : AppColors.neutral0.withOpacity(.35),
                 backgroundColor:
                     _isAgreed
                         ? AppColors.purple500
-                        : AppColors.purple500ForTheme(context).withOpacity(.25),
+                        : AppColors.purple500ForTheme(context).withOpacity(.15),
               ),
             ),
           ),

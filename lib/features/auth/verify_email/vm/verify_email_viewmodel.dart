@@ -161,7 +161,7 @@ class VerifyEmailNotifier extends StateNotifier<VerifyEmailState> {
         TopSnackbar.show(context, message: response.message, isError: false);
 
         // Navigate to create passcode screen (for signup flow)
-        appRouter.pushNamed(AppRoute.createPasscodeView, arguments: true);
+        appRouter.pushNamed(AppRoute.successSignupView, arguments: true);
       } else {
         AppLogger.error('Signup verification failed: ${response.message}');
         state = state.copyWith(errorMessage: response.message);

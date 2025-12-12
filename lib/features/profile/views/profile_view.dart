@@ -32,7 +32,7 @@ class _ProfileConstants {
   static const double buttonBorderRadius = 38.0;
   static const double containerBorderRadius = 12.0;
   static const double tierContainerBorderRadius = 40.0;
-  static const double iconContainerSize = 36.0;
+  static const double iconContainerSize = 40.0;
   static const double profileImageHeight = 84.0;
   static const double tierImageHeight = 32.0;
   static const double dialogIconSize = 80.0;
@@ -52,6 +52,7 @@ class ProfileView extends ConsumerStatefulWidget {
 class _ProfileViewState extends ConsumerState<ProfileView> {
   String? _dayfiId;
   bool _isLoadingDayfiId = true;
+  bool _isBiometricEnabled = false;
 
   @override
   void initState() {
@@ -61,7 +62,67 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
           .read(profileViewModelProvider.notifier)
           .loadUserProfile(isInitialLoad: true);
       _loadDayfiId();
+      _loadBiometricStatus();
     });
+  }
+
+  Future<void> _loadBiometricStatus() async {
+    try {
+      final userData = await localCache.getUser();
+      final biometricEnabled = userData['biometric_enabled'] as bool? ?? false;
+      if (mounted) {
+        setState(() {
+          _isBiometricEnabled = biometricEnabled;
+        });
+      }
+    } catch (e) {
+      AppLogger.error('Error loading biometric status: $e');
+    }
+  }
+
+  Future<void> _handleBiometricToggle(bool value) async {
+    if (value) {
+      // Navigate to biometric setup
+      await appRouter.pushNamed(
+        AppRoute.biometricSetupView,
+        arguments: {'fromProfile': true},
+      );
+
+      // Reload biometric status after returning
+      await _loadBiometricStatus();
+    } else {
+      // Disable biometrics
+      try {
+        await localCache.saveToLocalCache(
+          key: 'biometric_enabled',
+          value: false,
+        );
+        final userData = await localCache.getUser();
+        userData['biometric_enabled'] = false;
+        await localCache.saveToLocalCache(key: 'user', value: userData);
+
+        setState(() {
+          _isBiometricEnabled = false;
+        });
+
+        if (mounted) {
+          TopSnackbar.show(
+            context,
+            message: 'Biometric authentication disabled',
+            isError: false,
+          );
+        }
+      } catch (e) {
+        AppLogger.error('Error disabling biometrics: $e');
+        if (mounted) {
+          TopSnackbar.show(
+            context,
+            message: 'Failed to disable biometrics',
+            isError: true,
+          );
+        }
+      }
+    }
   }
 
   Future<void> _loadDayfiId() async {
@@ -146,7 +207,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
     // },
     // {
     //   'icon': "assets/icons/svgs/recipients.svg",
-    //   'iconColor': AppColors.primary500,
+    //   'iconColor': Theme.of(context).colorScheme.primary,
     //   'title': 'Beneficiaries',
     //   'subtitle': 'View and manage your beneficiaries',
     //   'onTap': () => _navigateToBeneficiaries(),
@@ -174,6 +235,15 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
   ];
 
   List<Map<String, dynamic>> get _securitySettings => [
+    // {
+    //   'icon': "assets/icons/svgs/account.svg",
+    //   'icon2': "assets/icons/svgs/fingerprint.svg",
+    //   'iconColor': AppColors.neutral700.withOpacity(.35),
+    //   'title': 'Biometric Authentication',
+    //   'subtitle': '',
+    //   'isToggle': true,
+    //   'onTap': null, // Will be handled by toggle
+    // },
     {
       'icon': "assets/icons/svgs/account.svg",
       'icon2': "assets/icons/svgs/security-safe.svg",
@@ -337,7 +407,11 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        scrolledUnderElevation: 0,
+        scrolledUnderElevation: .5,
+        foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+        shadowColor: Theme.of(context).scaffoldBackgroundColor,
+        surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: const SizedBox.shrink(),
@@ -345,8 +419,8 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
         title: Text(
           "Account",
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontFamily: 'CabinetGrotesk',
-            fontSize: 20.sp,
+            fontFamily: 'FunnelDisplay',
+            fontSize: 24.sp,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,
           ),
@@ -452,7 +526,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                 fontFamily: AppTypography.secondaryFontFamily,
                 fontWeight: AppTypography.regular,
                 height: 1,
-                letterSpacing: -.8,
+                letterSpacing: -.70,
               ),
             ),
           ],
@@ -476,9 +550,9 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
             color: Theme.of(context).colorScheme.onSurface,
             fontSize: 28.sp,
             fontWeight: FontWeight.w600,
-            fontFamily: 'CabinetGrotesk',
+            fontFamily: 'FunnelDisplay',
             height: .95,
-            letterSpacing: -.3,
+            letterSpacing: -.6,
           ),
           textAlign: TextAlign.center,
         ),
@@ -517,12 +591,12 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
           onPressed: profileState.isLoading ? null : _navigateToEditProfile,
           backgroundColor:
               profileState.isLoading
-                  ? AppColors.neutral300
+                  ? AppColors.purple500
                   : AppColors.purple500,
           height: _ProfileConstants.buttonHeight.h,
           textColor: AppColors.neutral0,
           fontFamily: 'Karla',
-          letterSpacing: -.8,
+          letterSpacing: -.70,
           fontSize: 18,
           width: 375.w,
           fullWidth: true,
@@ -549,7 +623,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                     Text(
                       '@',
                       style: TextStyle(
-                        // fontFamily: 'CabinetGrotesk',',
+                        // fontFamily: 'FunnelDisplay',',
                         fontWeight: FontWeight.w600,
                         fontSize: 14.sp,
                         letterSpacing: 0.00,
@@ -560,7 +634,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                     Text(
                       _dayfiId!,
                       style: TextStyle(
-                        // fontFamily: 'CabinetGrotesk',',
+                        // fontFamily: 'FunnelDisplay',',
                         fontWeight: FontWeight.w600,
                         fontSize: 14.sp,
                         letterSpacing: 0.00,
@@ -597,13 +671,13 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                                 fontSize: 12.sp,
                                 letterSpacing: 0.00,
                                 height: 1.450,
-                                color: AppColors.purple500ForTheme(context),
+                                color: Theme.of(context).colorScheme.primary,
                               ),
                             ),
                             SizedBox(width: 6.w),
                             SvgPicture.asset(
                               "assets/icons/svgs/copy.svg",
-                              color: AppColors.purple500ForTheme(context),
+                              color: Theme.of(context).colorScheme.primary,
                               height: 16.sp,
                             ),
                           ],
@@ -643,13 +717,13 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                                 fontSize: 12.sp,
                                 letterSpacing: 0.00,
                                 height: 1.450,
-                                color: AppColors.purple500ForTheme(context),
+                                color: Theme.of(context).colorScheme.primary,
                               ),
                             ),
                             SizedBox(width: 6.w),
                             SvgPicture.asset(
                               "assets/icons/svgs/share.svg",
-                              color: AppColors.purple500ForTheme(context),
+                              color: Theme.of(context).colorScheme.primary,
                               height: 16.sp,
                             ),
                           ],
@@ -704,7 +778,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                   color: AppColors.purple500ForTheme(context),
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w600,
-                  letterSpacing: -.3,
+                  letterSpacing: -.6,
                   height: 1.4,
                 ),
               ),
@@ -767,6 +841,13 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                       title: item['title'],
                       subtitle: item['subtitle'],
                       onTap: item['onTap'],
+                      isToggle: item['isToggle'] ?? false,
+                      toggleValue:
+                          item['isToggle'] == true ? _isBiometricEnabled : null,
+                      onToggleChanged:
+                          item['isToggle'] == true
+                              ? _handleBiometricToggle
+                              : null,
                     ),
                   )
                   .toList(),
@@ -866,11 +947,11 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
     return Text(
       title,
       style: AppTypography.labelLarge.copyWith(
-        color: AppColors.neutral700,
+        color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(.85),
         fontSize: 11.sp,
-        fontWeight: FontWeight.w400,
+        fontWeight: FontWeight.w500,
         fontFamily: 'Karla',
-        letterSpacing: -.3,
+        letterSpacing: -.6,
         height: 1.2,
       ),
     );
@@ -897,11 +978,14 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
     required Color iconColor,
     required String title,
     required String subtitle,
-    required VoidCallback onTap,
+    required VoidCallback? onTap,
     required String icon2,
+    bool isToggle = false,
+    bool? toggleValue,
+    ValueChanged<bool>? onToggleChanged,
   }) {
     return InkWell(
-      onTap: onTap,
+      onTap: isToggle ? null : onTap,
       borderRadius: BorderRadius.circular(
         _ProfileConstants.containerBorderRadius.r,
       ),
@@ -912,7 +996,13 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
             _buildIconContainer(iconColor, icon, icon2),
             SizedBox(width: 16.w),
             Expanded(child: _buildItemText(title, iconColor)),
-            _buildChevronIcon(),
+            isToggle
+                ? Switch(
+                  value: toggleValue ?? false,
+                  onChanged: onToggleChanged,
+                  activeColor: Theme.of(context).colorScheme.primary,
+                )
+                : _buildChevronIcon(),
           ],
         ),
       ),
@@ -931,17 +1021,22 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
       child: Stack(
         alignment: AlignmentGeometry.center,
         children: [
-          SvgPicture.asset(icon, height: 34.sp, color: iconColor),
+          SvgPicture.asset(
+            icon,
+            height: 40.sp,
+            color:
+                icon2 == "assets/icons/svgs/logout1.svg"
+                    ? AppColors.error600
+                    : Theme.of(context).scaffoldBackgroundColor,
+          ),
           Center(
             child: SvgPicture.asset(
               icon2,
-              height: 26,
+              height: 24,
               color:
                   icon2 == "assets/icons/svgs/logout1.svg"
                       ? Colors.white
-                      : Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withOpacity(.65),
+                      : Theme.of(context).colorScheme.onSurface.withOpacity(.8),
             ),
           ),
         ],
@@ -960,7 +1055,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                 ? AppColors.error500
                 : Theme.of(context).colorScheme.onSurface,
         fontSize: 18.sp,
-        fontWeight: FontWeight.w400,
+        fontWeight: FontWeight.w500,
         letterSpacing: -1,
         height: 1.2,
       ),
@@ -969,7 +1064,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
 
   // Chevron Icon
   Widget _buildChevronIcon() {
-    return Icon(Icons.chevron_right, color: AppColors.neutral400, size: 26.sp);
+    return Icon(Icons.chevron_right, color: AppColors.neutral400, size: 20.sp);
   }
 
   // Promotion Item Widget
@@ -1019,10 +1114,10 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
         actionText,
         style: AppTypography.labelMedium.copyWith(
           color: Colors.white,
-          fontSize: 12.5.sp,
-          fontWeight: FontWeight.w400,
+          fontSize: 13.sp,
+          fontWeight: FontWeight.w500,
           fontFamily: 'Karla',
-          letterSpacing: -.3,
+          letterSpacing: -.6,
           height: 1.2,
         ),
       ),
@@ -1088,7 +1183,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
     return Text(
       'Are you sure you want to logout? You will be asked to create a new passcode.',
       style: TextStyle(
-        fontFamily: 'CabinetGrotesk',
+        fontFamily: 'FunnelDisplay',
         fontSize: 20.sp,
 
         // height: 1.6,
@@ -1127,7 +1222,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
       fullWidth: true,
       fontFamily: 'Karla',
       fontSize: 18,
-      fontWeight: FontWeight.w400,
+      fontWeight: FontWeight.w500,
       letterSpacing: -0.8,
     );
   }
@@ -1145,7 +1240,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
       borderRadius: _ProfileConstants.buttonBorderRadius,
       fontFamily: 'Karla',
       fontSize: 18,
-      fontWeight: FontWeight.w400,
+      fontWeight: FontWeight.w500,
       letterSpacing: -0.8,
     );
   }
@@ -1164,8 +1259,8 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
           //         context,
           //       ).colorScheme.onSurface.withOpacity(0.75),
           //       fontSize: 14.sp,
-          //       fontWeight: FontWeight.w400,
-          //       letterSpacing: -.3,
+          //       fontWeight: FontWeight.w500,
+          //       letterSpacing: -.6,
           //       height: 1.2,
           //     ),
           //     textAlign: TextAlign.center,
@@ -1181,8 +1276,8 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                   context,
                 ).colorScheme.onSurface.withOpacity(0.75),
                 fontSize: 14.sp,
-                fontWeight: FontWeight.w400,
-                letterSpacing: -.3,
+                fontWeight: FontWeight.w500,
+                letterSpacing: -.6,
                 height: 1.2,
               ),
               textAlign: TextAlign.center,
@@ -1206,8 +1301,8 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                   context,
                 ).colorScheme.onSurface.withOpacity(0.75),
                 fontSize: 14.sp,
-                fontWeight: FontWeight.w400,
-                letterSpacing: -.3,
+                fontWeight: FontWeight.w500,
+                letterSpacing: -.6,
                 height: 1.2,
               ),
               textAlign: TextAlign.center,

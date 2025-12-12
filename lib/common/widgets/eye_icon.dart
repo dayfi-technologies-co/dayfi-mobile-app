@@ -15,18 +15,17 @@ class EyeIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SvgPicture.asset(
-      isVisible 
-        ? 'assets/icons/svgs/eye.svg'
-        : 'assets/icons/svgs/eye-closed.svg',
-      width: size,
-      height: size,
-      colorFilter: color != null 
-        ? ColorFilter.mode(color!, BlendMode.srcIn)
-        : null,
+    return Padding(
+      padding: const EdgeInsets.all(10.0),
+      child: SvgPicture.asset(
+        isVisible
+            ? 'assets/icons/svgs/eye.svg'
+            : 'assets/icons/svgs/eye-closed.svg',
+        width: size,
+        height: size,
+        colorFilter:
+            color != null ? ColorFilter.mode(color!, BlendMode.srcIn) : null,
+      ),
     );
   }
 }
-
-
-

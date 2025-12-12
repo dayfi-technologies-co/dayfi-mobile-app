@@ -11,7 +11,7 @@ class AuthResponse {
   AuthResponse({this.data, this.error = false, this.message = "", this.statusCode});
 
   factory AuthResponse.fromJson(Map<String, dynamic> data) {
-    log("AuthResponse============> ${json.encode(data)}");
+    // log("AuthResponse============> ${json.encode(data)}");
     
     // Handle status code - prioritize 'code' field, then 'status'
     int? statusCode;
@@ -46,13 +46,15 @@ class AuthResponse {
 class AuthData {
   String? token;
   User? user;
+  String? action;
 
-  AuthData({this.token, this.user});
+  AuthData({this.token, this.user, this.action});
 
   factory AuthData.fromJson(Map<String, dynamic> data) {
     return AuthData(
       token: data['token'],
       user: data.containsKey('user_id') ? User.fromJson(data) : null,
+      action: data['action'] as String?,
     );
   }
 
@@ -60,6 +62,7 @@ class AuthData {
     return {
       'token': token,
       'user': user?.toJson(),
+      'action': action,
     };
   }
 }

@@ -1,0 +1,585 @@
+import 'package:dayfi/common/widgets/top_snackbar.dart';
+import 'package:dayfi/core/theme/app_colors.dart';
+import 'package:dayfi/core/theme/app_typography.dart';
+import 'package:dayfi/features/send/vm/send_viewmodel.dart';
+import 'package:dayfi/models/payment_response.dart';
+import 'package:dayfi/routes/route.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
+class DeliveryMethodsSheet extends ConsumerWidget {
+  final String selectedCountry;
+  final String selectedCurrency;
+
+  const DeliveryMethodsSheet({
+    super.key,
+    required this.selectedCountry,
+    required this.selectedCurrency,
+  });
+
+  String _getDeliveryMethodName(String? channelType) {
+    if (channelType == null) return 'Unknown';
+    String baseName;
+    switch (channelType.toLowerCase()) {
+      case 'dayfi_tag':
+        baseName = 'DayFi Tag';
+        break;
+      case 'bank_transfer':
+      case 'bank':
+        baseName = 'Bank Transfer';
+        break;
+
+      case 'p2p':
+      case 'peer_to_peer':
+      case 'peer-to-peer':
+        baseName = 'Bank Transfer (P2P)';
+        break;
+
+      case 'eft':
+        baseName = 'Bank Transfer (EFT)';
+        break;
+      case 'mobile_money':
+      case 'momo':
+      case 'mobilemoney':
+        baseName = 'Mobile Money';
+        break;
+      case 'spenn':
+        baseName = 'Spenn';
+        break;
+      case 'cash_pickup':
+      case 'cash':
+        baseName = 'Cash Pickup';
+        break;
+      case 'wallet':
+      case 'digital_wallet':
+        baseName = 'Wallet';
+        break;
+      case 'card':
+      case 'card_payment':
+        baseName = 'Card';
+        break;
+      case 'crypto':
+      case 'cryptocurrency':
+        baseName = 'Crypto';
+        break;
+      case 'digital_dollar':
+      case 'stablecoins':
+        baseName = 'Digital Dollar';
+        break;
+      default:
+        baseName = channelType
+            .split('_')
+            .map((word) => word[0].toUpperCase() + word.substring(1))
+            .join(' ');
+    }
+
+    // Add timing information
+    if (channelType.toLowerCase() == 'dayfi_tag') {
+      return '$baseName - Instant transfer';
+    } else {
+      return '$baseName - within 5 mins';
+    }
+  }
+
+  String _getCountryCurrency(String country) {
+    switch (country.toUpperCase()) {
+      case 'NG':
+        return 'NGN';
+      case 'GH':
+        return 'GHS';
+      case 'RW':
+        return 'RWF';
+      case 'KE':
+        return 'KES';
+      case 'UG':
+        return 'UGX';
+      case 'TZ':
+        return 'TZS';
+      case 'ZA':
+        return 'ZAR';
+      case 'BF':
+        return 'XOF';
+      case 'BJ':
+        return 'XOF';
+      case 'BW':
+        return 'BWP';
+      case 'CD':
+        return 'CDF';
+      case 'CG':
+        return 'XAF';
+      case 'CI':
+        return 'XOF';
+      case 'CM':
+        return 'XAF';
+      case 'GA':
+        return 'XAF';
+      case 'MW':
+        return 'MWK';
+      case 'ML':
+        return 'XOF';
+      case 'SN':
+        return 'XOF';
+      case 'TG':
+        return 'XOF';
+      case 'ZM':
+        return 'ZMW';
+      case 'US':
+        return 'USD';
+      case 'GB':
+        return 'GBP';
+      case 'CA':
+        return 'CAD';
+      default:
+        return 'NGN';
+    }
+  }
+
+  Widget _getDeliveryMethodIcon(String? method, BuildContext context) {
+    if (method == null || method.isEmpty) {
+      return SvgPicture.asset('assets/icons/svgs/swap.svg', height: 34);
+    }
+    switch (method.toLowerCase()) {
+      case 'dayfi_tag':
+        return Stack(
+          alignment: AlignmentDirectional.center,
+          children: [
+            SvgPicture.asset(
+              'assets/icons/svgs/swap.svg',
+              height: 40.sp,
+              color: Theme.of(context).textTheme.bodyLarge!.color,
+            ),
+            SvgPicture.asset(
+              'assets/icons/svgs/at.svg',
+              height: 28,
+              color: Theme.of(context).colorScheme.surface,
+            ),
+          ],
+        );
+      case 'bank_transfer':
+      case 'bank':
+      case 'p2p':
+      case 'peer_to_peer':
+      case 'peer-to-peer':
+        return Stack(
+          alignment: AlignmentDirectional.center,
+          children: [
+            SvgPicture.asset(
+              'assets/icons/svgs/swap.svg',
+              height: 40.sp,
+              color: Theme.of(context).textTheme.bodyLarge!.color,
+            ),
+            SvgPicture.asset(
+              'assets/icons/svgs/building-bank.svg',
+              height: 28,
+              color: Theme.of(context).colorScheme.surface,
+            ),
+          ],
+        );
+      case 'mobile_money':
+      case 'momo':
+      case 'mobilemoney':
+        return Stack(
+          alignment: AlignmentDirectional.center,
+          children: [
+            SvgPicture.asset(
+              'assets/icons/svgs/swap.svg',
+              height: 40.sp,
+              color: Theme.of(context).textTheme.bodyLarge!.color,
+            ),
+            SvgPicture.asset(
+              'assets/icons/svgs/device-mobile.svg',
+              height: 28,
+              color: Theme.of(context).colorScheme.surface,
+            ),
+          ],
+        );
+      case 'spenn':
+        return SvgPicture.asset(
+          'assets/icons/svgs/wallett.svg',
+          height: 32.sp,
+          width: 32.sp,
+        );
+      case 'cash_pickup':
+      case 'cash':
+        return SvgPicture.asset(
+          'assets/icons/svgs/paymentt.svg',
+          height: 32.sp,
+          width: 32.sp,
+        );
+      case 'wallet':
+      case 'digital_wallet':
+        return SvgPicture.asset(
+          'assets/icons/svgs/wallett.svg',
+          height: 32.sp,
+          width: 32.sp,
+        );
+      case 'card':
+      case 'card_payment':
+        return SvgPicture.asset(
+          'assets/icons/svgs/cardd.svg',
+          height: 32.sp,
+          width: 32.sp,
+        );
+      case 'crypto':
+      case 'cryptocurrency':
+        return SvgPicture.asset(
+          'assets/icons/svgs/cryptoo.svg',
+          height: 32.sp,
+          width: 32.sp,
+        );
+      default:
+        return Stack(
+          alignment: AlignmentDirectional.center,
+          children: [
+            SvgPicture.asset(
+              'assets/icons/svgs/swap.svg',
+              height: 40.sp,
+              color: Theme.of(context).textTheme.bodyLarge!.color,
+            ),
+            SvgPicture.asset(
+              'assets/icons/svgs/building-bank.svg',
+              height: 28,
+              color: Theme.of(context).colorScheme.surface,
+            ),
+          ],
+        );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sendState = ref.watch(sendViewModelProvider);
+
+    // Filter channels for the selected country/currency
+    final filteredChannels =
+        sendState.channels.where((channel) {
+          return channel.status == 'active' &&
+              (channel.rampType == 'withdrawal' ||
+                  channel.rampType == 'withdraw' ||
+                  channel.rampType == 'payout' ||
+                  channel.rampType == 'deposit' ||
+                  channel.rampType == 'receive') &&
+              (channel.country == selectedCountry ||
+                  channel.currency == selectedCurrency);
+        }).toList();
+
+    // Add synthetic DayFi Tag for NGN->NGN
+    final isNgnToNgn =
+        sendState.sendCurrency == 'NGN' && selectedCurrency == 'NGN';
+    if (isNgnToNgn) {
+      final hasDayfiTag = filteredChannels.any(
+        (c) => c.channelType?.toLowerCase() == 'dayfi_tag',
+      );
+      if (!hasDayfiTag) {
+        filteredChannels.add(
+          Channel(
+            channelType: 'dayfi_tag',
+            country: selectedCountry,
+            currency: selectedCurrency,
+            status: 'active',
+            rampType: 'withdrawal',
+            min: 0,
+            max: 999999999,
+            id: 'dayfi_tag_synthetic',
+          ),
+        );
+      }
+    }
+
+    // Deduplicate by canonical name
+    Map<String, Channel> unique = {};
+    for (final channel in filteredChannels) {
+      final key = channel.channelType?.toLowerCase() ?? 'unknown';
+      if (!unique.containsKey(key) ||
+          (channel.max ?? 0) > (unique[key]!.max ?? 0)) {
+        unique[key] = channel;
+      }
+    }
+
+    final deliveryMethods =
+        unique.values.toList()..sort(
+          (a, b) => (a.channelType ?? '').compareTo(b.channelType ?? ''),
+        );
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.5,
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+      ),
+      child: Column(
+        children: [
+          SizedBox(height: 18.h),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 18.w),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                SizedBox(height: 40.h, width: 40.w),
+                Text(
+                  'Choose delivery method',
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontFamily: 'FunnelDisplay',
+                    fontSize: 20.sp,
+                    // height: 1.6,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+
+                InkWell(
+                  splashColor: Colors.transparent,
+                  highlightColor: Colors.transparent,
+                  onTap:
+                      () => {
+                        Navigator.pop(context),
+                        FocusScope.of(context).unfocus(),
+                      },
+                  child: Stack(
+                    alignment: AlignmentGeometry.center,
+                    children: [
+                      SvgPicture.asset(
+                        "assets/icons/svgs/notificationn.svg",
+                        height: 40.sp,
+                        color: Theme.of(context).colorScheme.surface,
+                      ),
+                      SizedBox(
+                        height: 40.sp,
+                        width: 40.sp,
+                        child: Center(
+                          child: Image.asset(
+                            "assets/icons/pngs/cancelicon.png",
+                            height: 20.h,
+                            width: 20.w,
+                            color: Theme.of(context).textTheme.bodyLarge!.color,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 8.h),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40.0),
+            child: Opacity(
+              opacity: .7,
+              child: Text(
+                'How would you like the recipient in $selectedCountry to receive the money?',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w500,
+                  fontFamily: 'Karla',
+                  letterSpacing: -.6,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+          SizedBox(height: 24.h),
+
+          Expanded(
+            child:
+                deliveryMethods.isEmpty
+                    ? Center(
+                      child: Text(
+                        'No delivery methods available',
+                        style: Theme.of(
+                          context,
+                        ).textTheme.headlineMedium?.copyWith(
+                          fontFamily: 'FunnelDisplay',
+                          fontSize: 20.sp,
+                          // height: 1.6,
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                    )
+                    : ListView.separated(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 18.w,
+                        vertical: 8.h,
+                      ),
+                      itemCount: deliveryMethods.length,
+                      separatorBuilder: (_, __) => SizedBox(height: 12.h),
+                      itemBuilder: (context, index) {
+                        final method = deliveryMethods[index];
+                        final isDayfi =
+                            method.channelType?.toLowerCase() == 'dayfi_tag';
+                        return 
+                        GestureDetector(
+                          onTap: () {
+                            // Update delivery method in the view model
+                            ref
+                                .read(sendViewModelProvider.notifier)
+                                .updateDeliveryMethod(method.channelType ?? '');
+
+                            // Build selectedData map expected by AddRecipientsView
+                            final selectedData = <String, dynamic>{
+                              'receiveCountry': selectedCountry,
+                              'receiveCurrency': _getCountryCurrency(
+                                selectedCountry,
+                              ),
+                              'sendCountry': 'NG', // User's country
+                              'sendCurrency':
+                                  ref.read(sendViewModelProvider).sendCurrency,
+                              'recipientDeliveryMethod':
+                                  method.channelType ?? '',
+                              'recipientChannelId': method.id ?? '',
+                            };
+
+                            // Check if networks are available for this country/currency
+                            final allNetworks =
+                                ref.read(sendViewModelProvider).networks;
+                            final availableNetworks = allNetworks.where(
+                              (network) =>
+                                  network.status == 'active' &&
+                                  network.country == selectedCountry,
+                            );
+                            if (availableNetworks.isEmpty) {
+                              TopSnackbar.show(
+                                context,
+                                message:
+                                    'No networks available for $selectedCountry',
+                                isError: true,
+                              );
+                              return;
+                            }
+
+                            // Navigator.pop(context);
+
+                            // Special handling for DayFi Tag (NGN to NGN only)
+                            if (selectedCountry == 'NG' &&
+                                selectedCurrency == 'NGN' &&
+                                method.channelType?.toLowerCase() ==
+                                    'dayfi_tag') {
+                              // Navigate to DayFi ID view for NGN-NGN DayFi Tag transfers
+                              Navigator.pushNamed(
+                                context,
+                                AppRoute.sendDayfiIdView,
+                                arguments: selectedData,
+                              );
+                            } else {
+                              // Navigate to Add Recipients view with selectedData
+                              Navigator.pushNamed(
+                                context,
+                                AppRoute.addRecipientsView,
+                                arguments: selectedData,
+                              );
+                            }
+                          },
+                          child: Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16.w,
+                              vertical: 16.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surface,
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                            child: Row(
+                              children: [
+                                SizedBox(
+                                  width: 40.w,
+                                  height: 40.w,
+                                  child: _getDeliveryMethodIcon(
+                                    method.channelType,
+                                    context,
+                                  ),
+                                ),
+                                SizedBox(width: 12.w),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Text(
+                                            _getDeliveryMethodName(
+                                              method.channelType,
+                                            ).split(' -')[0],
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.titleLarge?.copyWith(
+                                              fontFamily: 'Karla',
+                                              fontSize: 18.sp,
+                                              letterSpacing: -.6,
+                                              fontWeight: FontWeight.w500,
+                                              color:
+                                                  Theme.of(
+                                                    context,
+                                                  ).colorScheme.onSurface,
+                                            ),
+                                          ),
+                                          SizedBox(width: 12.w),
+                                          if (isDayfi)
+                                            Container(
+                                              padding: EdgeInsets.symmetric(
+                                                horizontal: 10.w,
+                                                vertical: 4.h,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: AppColors.warning400
+                                                    .withOpacity(0.15),
+                                                borderRadius:
+                                                    BorderRadius.circular(20.r),
+                                              ),
+                                              child: Text(
+                                                'FREE',
+                                                style: AppTypography.labelSmall
+                                                    .copyWith(
+                                                      fontFamily: 'Karla',
+                                                      fontSize: 13.sp,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                      letterSpacing: .3,
+                                                      height: 1.2,
+                                                      color:
+                                                          AppColors.warning600,
+                                                    ),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                      SizedBox(height: 4.h),
+                                      Text(
+                                        _getDeliveryMethodName(
+                                          method.channelType,
+                                        ).split('- ')[1],
+                                        textAlign: TextAlign.start,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                          height: 1.4,
+                                          fontFamily: 'Karla',
+                                          letterSpacing: -.6,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                SizedBox(width: 32.w),
+                                Icon(
+                                  Icons.chevron_right,
+                                  color: AppColors.neutral400,
+                                  size: 20.sp,
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+          ),
+        ],
+      ),
+    );
+  }
+}

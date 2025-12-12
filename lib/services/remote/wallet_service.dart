@@ -160,10 +160,10 @@ class WalletService {
           );
           
           // Debug log to verify accountType is being passed
-          print('🔍 Creating beneficiary with source:');
-          print('   Account Type: ${source.accountType}');
-          print('   Account Number: ${source.accountNumber}');
-          print('   Network ID: ${source.networkId}');
+          // print('🔍 Creating beneficiary with source:');
+          // print('   Account Type: ${source.accountType}');
+          // print('   Account Number: ${source.accountNumber}');
+          // print('   Network ID: ${source.networkId}');
           
           uniqueBeneficiaries[uniqueKey] = BeneficiaryWithSource(
             beneficiary: beneficiary,

@@ -440,7 +440,7 @@ class AppTheme {
       // Inverse colors
       inverseSurface: AppColors.neutral800,
       onInverseSurface: AppColors.neutral200,
-      inversePrimary: AppColors.primary600,
+      inversePrimary: AppColors.info500,
     );
   }
 
@@ -573,7 +573,7 @@ class AppTheme {
       centerTitle: true,
       titleTextStyle: TextStyle(
         fontSize: 18,
-        fontWeight: FontWeight.w400,
+        fontWeight: FontWeight.w500,
         color: AppColors.neutral900,
       ),
       systemOverlayStyle: SystemUiOverlayStyle.dark,
@@ -673,7 +673,7 @@ class AppTheme {
       centerTitle: true,
       titleTextStyle: TextStyle(
         fontSize: 18,
-        fontWeight: FontWeight.w400,
+        fontWeight: FontWeight.w500,
         color: AppColors.neutral100,
       ),
       systemOverlayStyle: SystemUiOverlayStyle.light,

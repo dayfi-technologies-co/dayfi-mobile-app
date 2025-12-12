@@ -120,7 +120,7 @@ class _TransactionFilterBottomSheetState
         Text(
           'Filter & Sort',
           style: AppTypography.titleLarge.copyWith(
-         fontFamily: 'CabinetGrotesk',
+         fontFamily: 'FunnelDisplay',
              fontSize: 20.sp, // height: 1.6,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,
@@ -157,8 +157,8 @@ class _TransactionFilterBottomSheetState
           style: AppTypography.labelMedium.copyWith(
             fontFamily: 'Karla',
             fontSize: 11.sp,
-            fontWeight: FontWeight.w400,
-            color: AppColors.neutral700,
+            fontWeight: FontWeight.w500,
+            color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(.85),
             letterSpacing: 0.5,
           ),
         ),
@@ -239,7 +239,7 @@ class _TransactionFilterBottomSheetState
                 style: AppTypography.bodyMedium.copyWith(
                   fontFamily: 'Karla',
                   fontSize: 16.sp,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                   color:
                       isSelected
                           ? AppColors.purple500ForTheme(context)
@@ -269,8 +269,8 @@ class _TransactionFilterBottomSheetState
           style: AppTypography.labelMedium.copyWith(
             fontFamily: 'Karla',
             fontSize: 11.sp,
-            fontWeight: FontWeight.w400,
-            color: AppColors.neutral700,
+            fontWeight: FontWeight.w500,
+            color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(.85),
             letterSpacing: 0.5,
           ),
         ),
@@ -340,8 +340,8 @@ class _TransactionFilterBottomSheetState
           style: AppTypography.labelMedium.copyWith(
             fontFamily: 'Karla',
             fontSize: 11.sp,
-            fontWeight: FontWeight.w400,
-            color: AppColors.neutral700,
+            fontWeight: FontWeight.w500,
+            color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(.85),
             letterSpacing: 0.5,
           ),
         ),
@@ -419,7 +419,7 @@ class _TransactionFilterBottomSheetState
               style: AppTypography.bodySmall.copyWith(
                 fontFamily: 'Karla',
                 fontSize: 12.sp,
-                fontWeight: FontWeight.w400,
+                fontWeight: FontWeight.w500,
                 color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
               ),
             ),
@@ -514,7 +514,7 @@ class _TransactionFilterBottomSheetState
           fullWidth: true,
           fontFamily: 'Karla',
           fontSize: 18,
-          fontWeight: FontWeight.w400,
+          fontWeight: FontWeight.w500,
           letterSpacing: -0.8,
         ),
         SizedBox(height: 12.h),
@@ -531,7 +531,7 @@ class _TransactionFilterBottomSheetState
           borderRadius: 38,
           fontFamily: 'Karla',
           fontSize: 18,
-          fontWeight: FontWeight.w400,
+          fontWeight: FontWeight.w500,
           letterSpacing: -0.8,
         ),
       ],

@@ -92,7 +92,7 @@ Future<T?> showAppDialog<T>({
 
 /// Shows a modal bottom sheet with consistent dark barrier color
 /// 
-/// This is a wrapper around [showModalBottomSheet] that applies a consistent
+/// This is a wrapper around [    showModalBottomSheet] that applies a consistent
 /// dark barrier color (AppColors.neutral900.withOpacity(0.85))
 /// for all bottom sheets in the app.
 Future<T?> showAppBottomSheet<T>({
@@ -114,7 +114,7 @@ Future<T?> showAppBottomSheet<T>({
   AnimationController? transitionAnimationController,
   Offset? anchorPoint,
 }) {
-  return showModalBottomSheet<T>(
+  return     showModalBottomSheet<T>(
     context: context,
     builder: builder,
     isScrollControlled: isScrollControlled,

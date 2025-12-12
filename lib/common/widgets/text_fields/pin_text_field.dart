@@ -52,7 +52,7 @@ class PinTextField extends StatelessWidget {
       obscureText: obscureText,
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
       textStyle: Theme.of(context).textTheme.headlineMedium?.copyWith(
-        fontSize: 24.sp,
+        fontSize: 20.sp,
        fontWeight: FontWeight.w500,
         fontFamily: 'Karla',
         letterSpacing: 0,

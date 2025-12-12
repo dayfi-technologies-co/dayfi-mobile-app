@@ -1,5 +1,10 @@
 import 'dart:developer';
 
+import 'package:dayfi/common/utils/ui_helpers.dart';
+import 'package:dayfi/common/widgets/top_snackbar.dart';
+import 'package:dayfi/features/recipients/vm/recipients_viewmodel.dart';
+import 'package:dayfi/models/beneficiary_with_source.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -17,6 +22,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 // ignore: depend_on_referenced_packages
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:dayfi/routes/route.dart';
+import 'package:dayfi/features/send/vm/send_viewmodel.dart';
 
 class SendAddRecipientsView extends ConsumerStatefulWidget {
   final Map<String, dynamic> selectedData;
@@ -36,9 +42,11 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
   final _emailController = TextEditingController();
   final _accountNumberController = TextEditingController();
   final _networkController = TextEditingController();
+  final _bankNameController = TextEditingController();
+  final _accountNameController = TextEditingController();
 
   String _selectedCountry = '';
-  String _selectedChannelId = ''; // This is the channel ID from selectedData
+  String _selectedChannelId = ''; // This is the actual channel ID for filtering
   String _selectedNetworkId = ''; // This will be the selected network's ID
 
   // Network state
@@ -54,23 +62,54 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
   bool _isResolving = false;
   String? _resolveError;
   String? _resolvedAccountName;
+  String? _lastResolvedAccountNumber;
+  String? _lastResolvedNetworkId;
 
   @override
   void initState() {
     super.initState();
     _selectedCountry = widget.selectedData['receiveCountry'] ?? '';
-    _selectedChannelId =
-        widget.selectedData['networkId'] ??
-        ''; // This is actually the channel ID
 
-    print('🚀 SendAddRecipientsView initialized');
-    print('🌍 Selected country: $_selectedCountry');
-    print('🔗 Selected channel ID: $_selectedChannelId');
-    print('📋 Full selectedData: ${widget.selectedData}');
+    // Get the correct channel ID based on delivery method
+    if (widget.selectedData['recipientDeliveryMethod'] == 'bank' ||
+        widget.selectedData['recipientDeliveryMethod'] == 'eft' ||
+        widget.selectedData['recipientDeliveryMethod'] == 'p2p') {
+      _selectedChannelId = widget.selectedData['recipientChannelId'] ?? '';
+    } else {
+      _selectedChannelId = widget.selectedData['recipientChannelId'] ?? '';
+    }
+
+    // print('🚀 SendAddRecipientsView initialized');
+    // print('🌍 Selected country: $_selectedCountry');
+    // print('🔗 Selected channel ID for filtering: $_selectedChannelId');
+    // print('📋 Full selectedData: ${widget.selectedData}');
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       analyticsService.trackScreenView(screenName: 'SendAddRecipientsView');
-      _fetchNetworks();
+
+      // Load beneficiaries if not already loaded
+      final recipientsState = ref.read(recipientsProvider);
+      if (recipientsState.beneficiaries.isEmpty && !recipientsState.isLoading) {
+        ref
+            .read(recipientsProvider.notifier)
+            .loadBeneficiaries(isInitialLoad: true);
+      }
+
+      // Use networks from sendState if available, otherwise from selectedData, otherwise fetch
+      final sendState = ref.read(sendViewModelProvider);
+      if (sendState.networks.isNotEmpty) {
+        setState(() {
+          _allNetworks = sendState.networks;
+          _filterNetworks();
+        });
+      } else if (widget.selectedData['networks'] != null) {
+        setState(() {
+          _allNetworks = List<Network>.from(widget.selectedData['networks']);
+          _filterNetworks();
+        });
+      } else {
+        _fetchNetworks();
+      }
     });
 
     // Add listener to account number field for auto-resolution
@@ -85,6 +124,8 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
     _emailController.dispose();
     _accountNumberController.dispose();
     _networkController.dispose();
+    _bankNameController.dispose();
+    _accountNameController.dispose();
     _networkSearchController.dispose();
     super.dispose();
   }
@@ -128,8 +169,8 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
   void _filterNetworks() {
     if (_allNetworks.isEmpty || _selectedChannelId.isEmpty) return;
 
-    print('🔍 Filtering networks for channel ID: $_selectedChannelId');
-    print('📊 Total networks available: ${_allNetworks.length}');
+    // print('🔍 Filtering networks for channel ID: $_selectedChannelId');
+    // print('📊 Total networks available: ${_allNetworks.length}');
 
     // Filter networks by channel ID - networks that support the selected channel
     final channelNetworks =
@@ -144,7 +185,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
           return network.status == 'active' && hasChannelId;
         }).toList();
 
-    print('🎯 Filtered networks count: ${channelNetworks.length}');
+    // print('🎯 Filtered networks count: ${channelNetworks.length}');
 
     // Sort networks alphabetically by name
     channelNetworks.sort((a, b) {
@@ -212,6 +253,10 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
       // Clear previous account resolution when network changes
       _resolvedAccountName = null;
       _resolveError = null;
+
+      // Clear manual input fields
+      _bankNameController.clear();
+      _accountNameController.clear();
     });
 
     // If there's a valid account number entered, try to resolve it with the new network
@@ -259,6 +304,9 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
   }
 
   void _onAccountNumberChanged() {
+    if (_selectedNetwork?.name == 'Manual Input')
+      return; // No resolution for manual input
+
     final accountNumber = _accountNumberController.text.trim();
 
     // If account number is reduced below 10 digits, immediately clear everything
@@ -267,6 +315,8 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
         _resolveError = null;
         _resolvedAccountName = null;
         _isResolving = false; // Stop any ongoing resolution
+        _lastResolvedAccountNumber = null;
+        _lastResolvedNetworkId = null;
       });
       return;
     }
@@ -276,6 +326,15 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
         RegExp(r'^\d{10}$').hasMatch(accountNumber) &&
         _selectedNetwork != null &&
         _selectedNetworkId.isNotEmpty) {
+      // Check if we already resolved this account number for this network
+      if (accountNumber == _lastResolvedAccountNumber &&
+          _selectedNetworkId == _lastResolvedNetworkId &&
+          _resolvedAccountName != null) {
+        // Already resolved, no need to call API again
+        return;
+      }
+      // Close keyboard when account number is complete
+      FocusScope.of(context).unfocus();
       _resolveAccount(accountNumber);
     } else {
       // Clear resolved name if account number is not 10 digits or network not selected
@@ -283,6 +342,8 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
         _resolveError = null;
         _resolvedAccountName = null;
         _isResolving = false; // Stop any ongoing resolution
+        _lastResolvedAccountNumber = null;
+        _lastResolvedNetworkId = null;
       });
     }
   }
@@ -330,6 +391,8 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
         setState(() {
           _resolvedAccountName = accountName.toUpperCase();
           _resolveError = null;
+          _lastResolvedAccountNumber = accountNumber;
+          _lastResolvedNetworkId = _selectedNetworkId;
         });
       } else {
         setState(() {
@@ -352,6 +415,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
 
   @override
   Widget build(BuildContext context) {
+    final sendState = ref.watch(sendViewModelProvider);
     return Stack(
       children: [
         GestureDetector(
@@ -359,22 +423,52 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
           child: Scaffold(
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             appBar: AppBar(
-              scrolledUnderElevation: 0,
               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               elevation: 0,
-              leading: IconButton(
-                icon: Icon(
-                  Icons.arrow_back_ios,
-                  color: Theme.of(context).colorScheme.onSurface,
-                  // size: 20.sp,
+              leadingWidth: 72,
+              scrolledUnderElevation: .5,
+              foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+              shadowColor: Theme.of(context).scaffoldBackgroundColor,
+              surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+              leading: InkWell(
+                splashColor: Colors.transparent,
+                highlightColor: Colors.transparent,
+                onTap:
+                    () => {
+                      Navigator.pop(context),
+                      FocusScope.of(context).unfocus(),
+                    },
+                child: Stack(
+                  alignment: AlignmentGeometry.center,
+                  children: [
+                    SvgPicture.asset(
+                      "assets/icons/svgs/notificationn.svg",
+                      height: 40.sp,
+                      color: Theme.of(context).colorScheme.surface,
+                    ),
+                    SizedBox(
+                      height: 40.sp,
+                      width: 40.sp,
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: Icon(
+                            Icons.arrow_back_ios,
+                            size: 20.sp,
+                            color: Theme.of(context).textTheme.bodyLarge!.color,
+                            // size: 20.sp,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                onPressed: () => Navigator.pop(context),
               ),
               title: Text(
-                'Add Beneficiary',
+                'Add Recipient',
                 style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                  fontFamily: 'CabinetGrotesk',
-                  fontSize: 20.sp,
+                  fontFamily: 'FunnelDisplay',
+                  fontSize: 24.sp,
                   // height: 1.6,
                   fontWeight: FontWeight.w600,
                   color: Theme.of(context).colorScheme.onSurface,
@@ -383,12 +477,27 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
               centerTitle: true,
             ),
             body: SingleChildScrollView(
-              padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 12.h),
+              padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
               child: Form(
                 key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      child: Text(
+                        "Add a recipient to continue your transfer to ${_getCountryName(widget.selectedData['receiveCountry'])} (${widget.selectedData['receiveCurrency'] ?? 'Unknown'}) via ${_getDeliveryMethodDisplayName(widget.selectedData['recipientDeliveryMethod'])}",
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w500,
+                          fontFamily: 'Karla',
+                          letterSpacing: -.6,
+                          height: 1.5,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    SizedBox(height: 32.h),
                     // Network Selection Field
                     _buildNetworkSelectionField(),
                     if (_selectedNetwork == null) ...[
@@ -400,17 +509,153 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                                       'bank' ||
                                   widget.selectedData['recipientDeliveryMethod'] ==
                                       'p2p'
-                              ? 'Please select a bank to enable account resolution'
-                              : 'Please select a mobile money provider to enable account resolution',
+                              ? 'Select a bank to enable account resolution'
+                              : 'Select a mobile money provider to enable account resolution',
                           style: AppTypography.bodySmall.copyWith(
                             fontFamily: 'Karla',
                             fontSize: 12.sp,
-                            letterSpacing: -.3,
+                            letterSpacing: -.6,
                             color: Theme.of(
                               context,
                             ).colorScheme.onSurface.withOpacity(0.6),
                           ),
                           textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ],
+
+                    _networkController.text == 'Mobile Money'
+                        ? Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(
+                            "This network supports all mobile money providers in ${_getCountryName(_selectedCountry)}. Please ensure the account number you enter is registered with a mobile money provider in that country.",
+                            style: AppTypography.bodySmall.copyWith(
+                              fontFamily: 'Karla',
+                              fontSize: 12.sp,
+                              letterSpacing: -.6,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withOpacity(0.6),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        )
+                        : SizedBox(height: 0.h),
+
+                    _networkController.text == 'Manual Input'
+                        ? Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(
+                            "Manual Input allows you to enter bank details directly for transfers to any bank in ${_getCountryName(_selectedCountry)}. Please provide the bank name and account holder name.",
+                            style: AppTypography.bodySmall.copyWith(
+                              fontFamily: 'Karla',
+                              fontSize: 12.sp,
+                              letterSpacing: -.6,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withOpacity(0.6),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        )
+                        : SizedBox(height: 0.h),
+
+                    AnimatedContainer(
+                      duration: Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                      height:
+                          (_selectedNetwork?.name == 'Manual Input')
+                              ? 180.h
+                              : 0,
+                      child:
+                          (_selectedNetwork?.name == 'Manual Input')
+                              ? Padding(
+                                padding: EdgeInsets.only(top: 18.h),
+                                child: Column(
+                                  children: [
+                                    CustomTextField(
+                                      controller: _bankNameController,
+                                      label: 'Bank Name',
+                                      hintText: 'Enter bank name',
+                                      textCapitalization:
+                                          TextCapitalization.words,
+                                      validator: (value) {
+                                        if (_selectedNetwork?.name ==
+                                            'Manual Input') {
+                                          if (value == null ||
+                                              value.trim().isEmpty) {
+                                            return 'Please enter bank name';
+                                          }
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                    SizedBox(height: 18.h),
+                                    CustomTextField(
+                                      controller: _accountNameController,
+                                      label: 'Account Name',
+                                      hintText: 'Enter account holder name',
+                                      textCapitalization:
+                                          TextCapitalization.words,
+                                      validator: (value) {
+                                        if (_selectedNetwork?.name ==
+                                            'Manual Input') {
+                                          if (value == null ||
+                                              value.trim().isEmpty) {
+                                            return 'Please enter account name';
+                                          }
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              )
+                              : SizedBox.shrink(),
+                    ),
+
+                    if (_filteredNetworks.isEmpty &&
+                        !_isLoadingNetworks &&
+                        _networkError == null) ...[
+                      SizedBox(height: 16.h),
+                      Center(
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
+                          decoration: BoxDecoration(
+                            color: AppColors.error50,
+                            borderRadius: BorderRadius.circular(20.r),
+                            border: Border.all(
+                              color: AppColors.error200,
+                              width: 1.0,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.info_outline,
+                                color: AppColors.error600,
+                                size: 14.sp,
+                              ),
+                              SizedBox(width: 6.w),
+                              Text(
+                                widget.selectedData['recipientDeliveryMethod'] ==
+                                            'bank' ||
+                                        widget.selectedData['recipientDeliveryMethod'] ==
+                                            'p2p'
+                                    ? 'No banks available for this delivery method'
+                                    : 'No providers available for this delivery method',
+                                style: TextStyle(
+                                  fontFamily: 'Karla',
+                                  fontSize: 13.sp,
+                                  letterSpacing: -.6,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.error700,
+                                ),
+                              ),
+                                    SizedBox(width: 2.w),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -420,7 +665,9 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                     CustomTextField(
                       controller: _accountNumberController,
                       label:
-                          widget.selectedData['recipientDeliveryMethod'] ==
+                          _selectedNetwork?.name == 'Manual Input'
+                              ? 'Account Number'
+                              : widget.selectedData['recipientDeliveryMethod'] ==
                                       'bank' ||
                                   widget.selectedData['recipientDeliveryMethod'] ==
                                       'p2p'
@@ -452,10 +699,88 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                                       color: AppColors.purple500ForTheme(
                                         context,
                                       ),
-                                      size: 20,
+                                      size: 22,
                                     ),
                               )
+                              : _resolvedAccountName != null
+                              ? Padding(
+                                padding: EdgeInsets.all(12.w),
+                                child: SvgPicture.asset(
+                                  'assets/icons/svgs/circle-check.svg',
+                                  width: 26.w,
+                                  height: 26.h,
+                                  color: AppColors.success600,
+                                ),
+                              )
+                              : _resolveError != null &&
+                                  _accountNumberController.text.isNotEmpty
+                              ? GestureDetector(
+                                onTap: () {
+                                  _accountNumberController.clear();
+                                  setState(() {
+                                    _resolveError = null;
+                                    _resolvedAccountName = null;
+                                  });
+                                },
+                                child: Padding(
+                                  padding: EdgeInsets.all(12.w),
+                                  child: SvgPicture.asset(
+                                    'assets/icons/svgs/circle-x.svg',
+                                    width: 26.w,
+                                    height: 26.h,
+                                    color: AppColors.error600,
+                                  ),
+                                ),
+                              )
                               : null,
+
+                      // GestureDetector(
+                      //   onTap: () async {
+                      //     HapticHelper.lightImpact();
+                      //     // Paste from clipboard
+                      //     final clipboardData = await Clipboard.getData(
+                      //       Clipboard.kTextPlain,
+                      //     );
+                      //     if (clipboardData?.text != null &&
+                      //         clipboardData!.text!.isNotEmpty) {
+                      //       _accountNumberController.text =
+                      //           clipboardData.text!;
+                      //       _onAccountNumberChanged();
+                      //     }
+                      //   },
+                      //   child: Padding(
+                      //     padding: EdgeInsets.all(16.w),
+                      //     child: Row(
+                      //       mainAxisAlignment: MainAxisAlignment.end,
+                      //       mainAxisSize: MainAxisSize.min,
+                      //       children: [
+                      //         Text(
+                      //           "paste",
+                      //           style: TextStyle(
+                      //             fontFamily: 'Karla',
+                      //             fontWeight: FontWeight.w600,
+                      //             fontSize: 12.sp,
+                      //             letterSpacing: 0.00,
+                      //             height: 1.450,
+                      //             color:
+                      //                 Theme.of(
+                      //                   context,
+                      //                 ).colorScheme.primary,
+                      //           ),
+                      //         ),
+                      //         SizedBox(width: 6.w),
+                      //         SvgPicture.asset(
+                      //           "assets/icons/svgs/paste.svg",
+                      //           color:
+                      //               Theme.of(
+                      //                 context,
+                      //               ).colorScheme.primary,
+                      //           height: 16.sp,
+                      //         ),
+                      //       ],
+                      //     ),
+                      //   ),
+                      // ),
                       validator: (value) {
                         if (_selectedNetwork == null) {
                           return 'Please select a network first';
@@ -473,79 +798,112 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                       },
                     ),
 
-                    // Account resolution error display
-                    if (_resolveError != null) ...[
-                      SizedBox(height: 8.h),
-                      Container(
-                        width: double.infinity,
-                        padding: EdgeInsets.all(12.w),
-                        decoration: BoxDecoration(
-                          color: AppColors.error50,
-                          borderRadius: BorderRadius.circular(8.r),
-                          border: Border.all(
-                            color: AppColors.error200,
-                            width: 1.0,
+                    // Account resolution messages
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 350),
+                      switchInCurve: Curves.easeOutCubic,
+                      switchOutCurve: Curves.easeInCubic,
+                      transitionBuilder: (
+                        Widget child,
+                        Animation<double> animation,
+                      ) {
+                        final offsetAnimation = Tween<Offset>(
+                          begin: const Offset(0, -0.15),
+                          end: Offset.zero,
+                        ).animate(animation);
+                        return FadeTransition(
+                          opacity: animation,
+                          child: SlideTransition(
+                            position: offsetAnimation,
+                            child: child,
                           ),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.error_outline,
-                              color: AppColors.error600,
-                              size: 20.sp,
-                            ),
-                            SizedBox(width: 8.w),
-                            Expanded(
-                              child: Text(
-                                _resolveError!,
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.bodyMedium?.copyWith(
-                                  fontFamily: 'Karla',
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.error700,
-                                ),
+                        );
+                      },
+                      child:
+                          _resolveError != null
+                              ? Column(
+                                key: ValueKey('error'),
+                                children: [
+                                  SizedBox(height: 8.h),
+                                  Container(
+                                    width: double.infinity,
+                                    padding: EdgeInsets.all(12.w),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.error50,
+                                      borderRadius: BorderRadius.circular(12.r),
+                                      border: Border.all(
+                                        color: AppColors.error200,
+                                        width: 1.0,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.error_outline,
+                                          color: AppColors.error600,
+                                          size: 20.sp,
+                                        ),
+                                        SizedBox(width: 8.w),
+                                        Expanded(
+                                          child: Text(
+                                            _resolveError!,
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.bodyMedium?.copyWith(
+                                              fontFamily: 'Karla',
+                                              fontSize: 14.sp,
+                                              fontWeight: FontWeight.w500,
+                                              color: AppColors.error700,
+                                              height: 1.3,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              )
+                              : _resolvedAccountName != null
+                              ? Column(
+                                key: ValueKey('success'),
+                                children: [
+                                  SizedBox(height: 12.h),
+                                  Center(
+                                    child: Container(
+                                      // width: double.infinity,
+                                      padding: EdgeInsets.all(12.w),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.success50,
+                                        borderRadius: BorderRadius.circular(
+                                          12.r,
+                                        ),
+                                        border: Border.all(
+                                          color: AppColors.success200,
+                                          width: 1.0,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        _resolvedAccountName!,
+                                        style: TextStyle(
+                                          fontFamily: 'karla',
+                                          fontSize: 14.sp,
+                                          fontWeight: FontWeight.w500,
+                                          color: AppColors.success700,
+                                          height: 1.3,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              )
+                              : const SizedBox(
+                                key: ValueKey('empty'),
+                                height: 0,
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                    ),
 
-                    // Resolved Account Name Container (Green container showing resolved name)
-                    if (_resolvedAccountName != null) ...[
-                      SizedBox(height: 12.h),
-                      Center(
-                        child: Container(
-                          // width: double.infinity,
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 16.w,
-                            vertical: 12.h,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.success50,
-                            borderRadius: BorderRadius.circular(32.r),
-                            border: Border.all(
-                              color: AppColors.success200,
-                              width: 1.0,
-                            ),
-                          ),
-                          child: Text(
-                            _resolvedAccountName!,
-                            style: TextStyle(
-                              fontFamily: 'karla',
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.success700,
-                              letterSpacing: -0.2,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-
-                    SizedBox(height: 32.h),
+                    // SizedBox(height: 24.h),
 
                     // // Optional Fields Section
                     // Center(
@@ -559,7 +917,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                     //       style: Theme.of(
                     //         context,
                     //       ).textTheme.titleMedium?.copyWith(
-                    //      fontFamily: 'CabinetGrotesk',
+                    //      fontFamily: 'FunnelDisplay',
                     //         fontSize: 12.sp,
                     //         fontWeight: FontWeight.w600,
                     //         // color: AppColors.neutral900,
@@ -624,14 +982,14 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                     //     return null;
                     //   },
                     // ),
-                    // SizedBox(height: 18.h),
+                    SizedBox(height: 18.h),
                     Container(
                       padding: EdgeInsets.all(12.w),
                       decoration: BoxDecoration(
                         color: Theme.of(
                           context,
                         ).colorScheme.primaryContainer.withOpacity(0.25),
-                        borderRadius: BorderRadius.circular(4.r),
+                        borderRadius: BorderRadius.circular(12.r),
                         // border: Border.all(
                         //   color: Theme.of(
                         //     context,
@@ -657,7 +1015,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                               ).textTheme.bodySmall?.copyWith(
                                 fontSize: 14.sp,
                                 fontFamily: 'Karla',
-                                fontWeight: FontWeight.w400,
+                                fontWeight: FontWeight.w500,
                                 letterSpacing: -0.4,
                                 height: 1.5,
                                 color: Theme.of(context).colorScheme.primary,
@@ -667,25 +1025,599 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                         ],
                       ),
                     ),
-
-                    SizedBox(height: 56.h),
+                    SizedBox(height: 40.h),
 
                     // Continue Button
                     PrimaryButton(
-                      text: 'Review Transfer',
+                      text: 'Enter Amount',
                       onPressed: _validateAndContinue,
-                      height: 48.000.h,
+                      enabled: _isFormValid(),
+                      height: 48.00000.h,
                       backgroundColor: AppColors.purple500,
                       textColor: AppColors.neutral0,
                       fontFamily: 'Karla',
-                      letterSpacing: -.8,
+                      letterSpacing: -.70,
                       fontSize: 18,
                       width: double.infinity,
                       fullWidth: true,
                       borderRadius: 40.r,
                     ),
 
-                    SizedBox(height: 40.h),
+                    SizedBox(height: 20.h),
+
+                    Center(
+                      child: InkWell(
+                        splashColor: Colors.transparent,
+                        highlightColor: Colors.transparent,
+                        hoverColor: Colors.transparent,
+                        onTap: () async {
+                          // Show recent beneficiaries in a bottom sheet and allow selection
+                          final result = await showAppBottomSheet<
+                            BeneficiaryWithSource
+                          >(
+                            context: context,
+                            isScrollControlled: true,
+                            barrierColor: Colors.black.withOpacity(0.85),
+                            backgroundColor:
+                                Theme.of(context).scaffoldBackgroundColor,
+                            builder:
+                                (context) => Consumer(
+                                  builder: (context, sheetRef, _) {
+                                    final recipientsState = sheetRef.watch(
+                                      recipientsProvider,
+                                    );
+                                    final allBeneficiaries =
+                                        recipientsState.beneficiaries
+                                            .where(
+                                              (b) =>
+                                                  (b.beneficiary.country ??
+                                                      '') ==
+                                                  (widget.selectedData['receiveCountry'] ??
+                                                      ''),
+                                            )
+                                            .toList();
+
+                                    final networks =
+                                        sheetRef
+                                            .watch(sendViewModelProvider)
+                                            .networks ??
+                                        [];
+
+                                    return StatefulBuilder(
+                                      builder: (context, setModalState) {
+                                        return Container(
+                                          height:
+                                              MediaQuery.of(
+                                                context,
+                                              ).size.height *
+                                              0.92,
+                                          decoration: BoxDecoration(
+                                            color:
+                                                Theme.of(
+                                                  context,
+                                                ).scaffoldBackgroundColor,
+                                            borderRadius: BorderRadius.vertical(
+                                              top: Radius.circular(20.r),
+                                            ),
+                                          ),
+                                          child: Column(
+                                            children: [
+                                              SizedBox(height: 18.h),
+                                              Padding(
+                                                padding: EdgeInsets.symmetric(
+                                                  horizontal: 18.w,
+                                                ),
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceBetween,
+                                                  children: [
+                                                    SizedBox(
+                                                      height: 40.h,
+                                                      width: 40.w,
+                                                    ),
+                                                    Text(
+                                                      'Select Beneficiary',
+                                                      style: AppTypography
+                                                          .titleLarge
+                                                          .copyWith(
+                                                            fontFamily:
+                                                                'FunnelDisplay',
+                                                            fontSize: 20.sp,
+                                                            // height: 1.6,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            color:
+                                                                Theme.of(
+                                                                      context,
+                                                                    )
+                                                                    .colorScheme
+                                                                    .onSurface,
+                                                          ),
+                                                    ),
+                                                    InkWell(
+                                                      splashColor:
+                                                          Colors.transparent,
+                                                      highlightColor:
+                                                          Colors.transparent,
+                                                      onTap:
+                                                          () => Navigator.pop(
+                                                            context,
+                                                          ),
+                                                      child: Stack(
+                                                        alignment:
+                                                            AlignmentGeometry
+                                                                .center,
+                                                        children: [
+                                                          SvgPicture.asset(
+                                                            "assets/icons/svgs/notificationn.svg",
+                                                            height: 40.sp,
+                                                            color:
+                                                                Theme.of(
+                                                                      context,
+                                                                    )
+                                                                    .colorScheme
+                                                                    .surface,
+                                                          ),
+                                                          SizedBox(
+                                                            height: 40.sp,
+                                                            width: 40.sp,
+                                                            child: Center(
+                                                              child: Image.asset(
+                                                                "assets/icons/pngs/cancelicon.png",
+                                                                height: 20.h,
+                                                                width: 20.w,
+                                                                color:
+                                                                    Theme.of(
+                                                                          context,
+                                                                        )
+                                                                        .textTheme
+                                                                        .bodyLarge!
+                                                                        .color,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              SizedBox(height: 9.h),
+                                              Expanded(
+                                                child: SingleChildScrollView(
+                                                  child: Column(
+                                                    children: [
+                                                      SizedBox(height: 9.h),
+                                                      Padding(
+                                                        padding:
+                                                            const EdgeInsets.symmetric(
+                                                              horizontal: 24.0,
+                                                            ),
+                                                        child: Opacity(
+                                                          opacity: .85,
+                                                          child: Text(
+                                                            'Choose a recent beneficiary to auto-fill recipient details',
+                                                            style: Theme.of(
+                                                                  context,
+                                                                )
+                                                                .textTheme
+                                                                .bodyMedium
+                                                                ?.copyWith(
+                                                                  fontSize:
+                                                                      16.sp,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w400,
+                                                                  fontFamily:
+                                                                      'Karla',
+                                                                  letterSpacing:
+                                                                      -.3,
+                                                                  height: 1.5,
+                                                                ),
+                                                            textAlign:
+                                                                TextAlign
+                                                                    .center,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      SizedBox(height: 32.h),
+                                                      allBeneficiaries.isEmpty
+                                                          ? Center(
+                                                            child: Column(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .center,
+                                                              children: [
+                                                                SizedBox(
+                                                                  height: 16.h,
+                                                                ),
+                                                                SvgPicture.asset(
+                                                                  'assets/icons/svgs/search-normal.svg',
+                                                                  height: 64.sp,
+                                                                  color: Theme.of(
+                                                                        context,
+                                                                      )
+                                                                      .colorScheme
+                                                                      .onSurface
+                                                                      .withOpacity(
+                                                                        0.6,
+                                                                      ),
+                                                                ),
+                                                                SizedBox(
+                                                                  height: 16.h,
+                                                                ),
+                                                                Text(
+                                                                  'No beneficiaries found',
+                                                                  style: TextStyle(
+                                                                    fontFamily:
+                                                                        'FunnelDisplay',
+                                                                    fontSize:
+                                                                        16.sp,
+                                                                    color: Theme.of(
+                                                                          context,
+                                                                        )
+                                                                        .colorScheme
+                                                                        .onSurface
+                                                                        .withOpacity(
+                                                                          0.6,
+                                                                        ),
+                                                                  ),
+                                                                  textAlign:
+                                                                      TextAlign
+                                                                          .center,
+                                                                ),
+                                                                SizedBox(
+                                                                  height: 8.h,
+                                                                ),
+                                                                Padding(
+                                                                  padding:
+                                                                      const EdgeInsets.symmetric(
+                                                                        horizontal:
+                                                                            32.0,
+                                                                      ),
+                                                                  child: Text(
+                                                                    'No recent beneficiaries for this country and payment type',
+                                                                    style: AppTypography.bodyMedium.copyWith(
+                                                                      fontFamily:
+                                                                          'Karla',
+                                                                      fontSize:
+                                                                          14.sp,
+                                                                      color: Theme.of(
+                                                                            context,
+                                                                          )
+                                                                          .colorScheme
+                                                                          .onSurface
+                                                                          .withOpacity(
+                                                                            0.4,
+                                                                          ),
+                                                                    ),
+                                                                    textAlign:
+                                                                        TextAlign
+                                                                            .center,
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          )
+                                                          : Container(
+                                                            margin:
+                                                                EdgeInsets.only(
+                                                                  left: 18.w,
+                                                                  right: 18.w,
+                                                                  bottom: 20.h,
+                                                                  // top: 16.h,
+                                                                ),
+                                                            decoration: BoxDecoration(
+                                                              color:
+                                                                  Theme.of(
+                                                                        context,
+                                                                      )
+                                                                      .colorScheme
+                                                                      .surface,
+                                                              borderRadius:
+                                                                  BorderRadius.circular(
+                                                                    12.r,
+                                                                  ),
+                                                            ),
+                                                            child: ListView.separated(
+                                                              shrinkWrap: true,
+                                                              physics:
+                                                                  NeverScrollableScrollPhysics(),
+                                                              padding:
+                                                                  EdgeInsets
+                                                                      .zero,
+                                                              itemCount:
+                                                                  allBeneficiaries
+                                                                      .length,
+                                                              separatorBuilder:
+                                                                  (
+                                                                    _,
+                                                                    __,
+                                                                  ) => SizedBox(
+                                                                    height:
+                                                                        12.h,
+                                                                  ),
+                                                              itemBuilder: (
+                                                                context,
+                                                                index,
+                                                              ) {
+                                                                final b =
+                                                                    allBeneficiaries[index];
+                                                                return AnimatedContainer(
+                                                                  key: ValueKey(
+                                                                    b
+                                                                        .beneficiary
+                                                                        .id,
+                                                                  ),
+                                                                  duration:
+                                                                      const Duration(
+                                                                        milliseconds:
+                                                                            200,
+                                                                      ),
+                                                                  curve:
+                                                                      Curves
+                                                                          .easeOut,
+                                                                  transform:
+                                                                      Matrix4.diagonal3Values(
+                                                                        1.0,
+                                                                        1.0,
+                                                                        1.0,
+                                                                      ),
+                                                                  child: Container(
+                                                                    margin: EdgeInsets.only(
+                                                                      bottom:
+                                                                          8.h,
+                                                                      top: 8.h,
+                                                                    ),
+                                                                    padding: EdgeInsets.symmetric(
+                                                                      horizontal:
+                                                                          16.w,
+                                                                      vertical:
+                                                                          12.h,
+                                                                    ),
+                                                                    decoration: BoxDecoration(
+                                                                      color:
+                                                                          Theme.of(
+                                                                            context,
+                                                                          ).colorScheme.surface,
+                                                                      borderRadius:
+                                                                          BorderRadius.circular(
+                                                                            12.r,
+                                                                          ),
+                                                                    ),
+                                                                    child: InkWell(
+                                                                      onTap: () {
+                                                                        Navigator.pop(
+                                                                          context,
+                                                                          b,
+                                                                        );
+                                                                      },
+                                                                      child: Row(
+                                                                        children: [
+                                                                          // Avatar
+                                                                          Stack(
+                                                                            alignment:
+                                                                                Alignment.bottomRight,
+                                                                            children: [
+                                                                              Stack(
+                                                                                alignment:
+                                                                                    Alignment.center,
+                                                                                children: [
+                                                                                  SvgPicture.asset(
+                                                                                    'assets/icons/svgs/account.svg',
+                                                                                    width:
+                                                                                        40.w,
+                                                                                    height:
+                                                                                        40.w,
+                                                                                    color: AppColors.purple500ForTheme(
+                                                                                      context,
+                                                                                    ),
+                                                                                  ),
+                                                                                  Text(
+                                                                                    (b.beneficiary.name.isNotEmpty
+                                                                                            ? b.beneficiary.name[0]
+                                                                                            : '?')
+                                                                                        .toUpperCase(),
+                                                                                    style: TextStyle(
+                                                                                      color:
+                                                                                          AppColors.neutral0,
+                                                                                      fontFamily:
+                                                                                          'Karla',
+                                                                                      fontSize:
+                                                                                          16.sp,
+                                                                                      fontWeight:
+                                                                                          FontWeight.w500,
+                                                                                    ),
+                                                                                  ),
+                                                                                ],
+                                                                              ),
+
+                                                                              Align(
+                                                                                alignment:
+                                                                                    Alignment.bottomRight,
+                                                                                child: Container(
+                                                                                  width:
+                                                                                      15.w,
+                                                                                  height:
+                                                                                      15.w,
+                                                                                  decoration: BoxDecoration(
+                                                                                    color:
+                                                                                        AppColors.neutral0,
+                                                                                    shape:
+                                                                                        BoxShape.circle,
+                                                                                    border: Border.all(
+                                                                                      color:
+                                                                                          AppColors.neutral200,
+                                                                                      width:
+                                                                                          1,
+                                                                                    ),
+                                                                                  ),
+                                                                                  child: ClipOval(
+                                                                                    child: SvgPicture.asset(
+                                                                                      _getFlagPath(
+                                                                                        b.beneficiary.country,
+                                                                                      ),
+                                                                                      fit:
+                                                                                          BoxFit.cover,
+                                                                                      width:
+                                                                                          20.w,
+                                                                                      height:
+                                                                                          20.w,
+                                                                                    ),
+                                                                                  ),
+                                                                                ),
+                                                                              ),
+                                                                            ],
+                                                                          ),
+                                                                          SizedBox(
+                                                                            width:
+                                                                                10.w,
+                                                                          ),
+                                                                          // Beneficiary Info
+                                                                          Expanded(
+                                                                            child: Column(
+                                                                              crossAxisAlignment:
+                                                                                  CrossAxisAlignment.start,
+                                                                              children: [
+                                                                                Text(
+                                                                                  b.beneficiary.name.toUpperCase(),
+                                                                                  style: AppTypography.bodyLarge.copyWith(
+                                                                                    fontFamily:
+                                                                                        'Karla',
+                                                                                    fontSize:
+                                                                                        16.sp,
+                                                                                    fontWeight:
+                                                                                        FontWeight.w600,
+                                                                                  ),
+                                                                                ),
+                                                                                SizedBox(
+                                                                                  height:
+                                                                                      2.h,
+                                                                                ),
+                                                                                Text(
+                                                                                  (() {
+                                                                                    final networkName =
+                                                                                        networks.any(
+                                                                                              (
+                                                                                                n,
+                                                                                              ) =>
+                                                                                                  n.id ==
+                                                                                                  b.source.networkId,
+                                                                                            )
+                                                                                            ? networks
+                                                                                                .firstWhere(
+                                                                                                  (
+                                                                                                    n,
+                                                                                                  ) =>
+                                                                                                      n.id ==
+                                                                                                      b.source.networkId,
+                                                                                                )
+                                                                                                .name
+                                                                                            : _getDeliveryMethodDisplayName(
+                                                                                              b.beneficiary.accountType,
+                                                                                            );
+                                                                                    return "$networkName - ${b.source.accountNumber ?? b.beneficiary.accountNumber ?? ''}";
+                                                                                  })(),
+                                                                                  style: AppTypography.bodyMedium.copyWith(
+                                                                                    fontFamily:
+                                                                                        'Karla',
+                                                                                    fontSize:
+                                                                                        13.sp,
+                                                                                    color: Theme.of(
+                                                                                      context,
+                                                                                    ).colorScheme.onSurface.withOpacity(
+                                                                                      0.6,
+                                                                                    ),
+                                                                                  ),
+                                                                                ),
+                                                                              ],
+                                                                            ),
+                                                                          ),
+                                                                          SizedBox(
+                                                                            width:
+                                                                                12.w,
+                                                                          ),
+                                                                          Icon(
+                                                                            Icons.chevron_right,
+                                                                            color:
+                                                                                AppColors.neutral400,
+                                                                          ),
+                                                                        ],
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                );
+                                                              },
+                                                            ),
+                                                          ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  },
+                                ),
+                          );
+
+                          if (result != null) {
+                            setState(() {
+                              // Populate form with selected beneficiary details
+                              _selectedNetworkId =
+                                  result.source.networkId ?? '';
+                              _accountNumberController.text =
+                                  result.source.accountNumber ??
+                                  result.beneficiary.accountNumber ??
+                                  '';
+                              _resolvedAccountName = result.beneficiary.name;
+                              _phoneController.text =
+                                  result.beneficiary.phone ?? '';
+
+                              // Try to find matching network in loaded networks
+                              final match =
+                                  _allNetworks
+                                      .where(
+                                        (n) => n.id == result.source.networkId,
+                                      )
+                                      .toList();
+                              if (match.isNotEmpty) {
+                                _selectedNetwork = match.first;
+                                _networkController.text =
+                                    match.first.name ?? '';
+                                _selectedNetworkId = match.first.id ?? '';
+                              } else {
+                                // Fallback to using the network name from source if available
+                                _networkController.text =
+                                    result.source.networkId ?? '';
+                              }
+                            });
+                          }
+                        },
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 16.w,
+                            vertical: 12.h,
+                          ),
+                          child: Text(
+                            'See recents and beneficiaries',
+                            style: TextStyle(
+                              fontFamily: 'Karla',
+                              color: AppColors.purple500ForTheme(context),
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: -.6,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(height: 20.h),
                   ],
                 ),
               ),
@@ -694,13 +1626,13 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
         ), // Loading overlay that freezes the screen during account resolution
         if (_isResolving)
           Container(
-            color: Colors.black.withOpacity(0.3),
-            child: Center(
-              child: LoadingAnimationWidget.horizontalRotatingDots(
-                color: AppColors.purple500ForTheme(context),
-                size: 40,
-              ),
-            ),
+            color: Colors.black.withOpacity(0.425),
+            child: Center(child: CupertinoActivityIndicator()),
+          ),
+        if (_isLoadingNetworks)
+          Container(
+            color: Colors.black.withOpacity(0.425),
+            child: Center(child: CupertinoActivityIndicator()),
           ),
       ],
     );
@@ -711,7 +1643,10 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
     return CustomTextField(
       controller: _networkController,
       label:
-          widget.selectedData['recipientDeliveryMethod'] == 'bank' ||
+          _networkController.text == 'Manual Input'
+              ? ""
+              : widget.selectedData['recipientDeliveryMethod'] == 'bank' ||
+                  widget.selectedData['recipientDeliveryMethod'] == 'eft' ||
                   widget.selectedData['recipientDeliveryMethod'] == 'p2p'
               ? 'Bank Name'
               : 'Mobile Money Provider',
@@ -722,32 +1657,172 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
       errorText: _networkError,
       validator: (value) {
         if (_selectedNetwork == null) {
-          return 'Please select a network';
+          return widget.selectedData['recipientDeliveryMethod'] == 'bank' ||
+                  widget.selectedData['recipientDeliveryMethod'] == 'eft' ||
+                  widget.selectedData['recipientDeliveryMethod'] == 'p2p'
+              ? 'Please select a bank'
+              : 'Please select a mobile money provider';
         }
         return null;
       },
     );
   }
 
+  // Helper function to get full country name from country code
+  String _getCountryName(String? countryCode) {
+    switch (countryCode?.toUpperCase()) {
+      case 'NG':
+        return 'Nigeria';
+      case 'GH':
+        return 'Ghana';
+      case 'RW':
+        return 'Rwanda';
+      case 'KE':
+        return 'Kenya';
+      case 'UG':
+        return 'Uganda';
+      case 'TZ':
+        return 'Tanzania';
+      case 'ZA':
+        return 'South Africa';
+      case 'BF':
+        return 'Burkina Faso';
+      case 'BJ':
+        return 'Benin';
+      case 'BW':
+        return 'Botswana';
+      case 'CD':
+        return 'Democratic Republic of Congo';
+      case 'CG':
+        return 'Republic of Congo';
+      case 'CI':
+        return 'Côte d\'Ivoire';
+      case 'CM':
+        return 'Cameroon';
+      case 'GA':
+        return 'Gabon';
+
+      case 'MW':
+        return 'Malawi';
+      case 'ML':
+        return 'Mali';
+      case 'SN':
+        return 'Senegal';
+      case 'TG':
+        return 'Togo';
+      case 'ZM':
+        return 'Zambia';
+      case 'US':
+        return 'United States';
+      case 'GB':
+        return 'United Kingdom';
+      case 'CA':
+        return 'Canada';
+      default:
+        return countryCode ?? 'Unknown';
+    }
+  }
+
+  // Helper function to get flag SVG path from country code
+  String _getFlagPath(String? countryCode) {
+    switch (countryCode?.toUpperCase()) {
+      case 'NG':
+        return 'assets/icons/svgs/world_flags/nigeria.svg';
+      case 'GH':
+        return 'assets/icons/svgs/world_flags/ghana.svg';
+      case 'RW':
+        return 'assets/icons/svgs/world_flags/rwanda.svg';
+      case 'KE':
+        return 'assets/icons/svgs/world_flags/kenya.svg';
+      case 'UG':
+        return 'assets/icons/svgs/world_flags/uganda.svg';
+      case 'TZ':
+        return 'assets/icons/svgs/world_flags/tanzania.svg';
+      case 'ZA':
+        return 'assets/icons/svgs/world_flags/south africa.svg';
+      case 'BF':
+        return 'assets/icons/svgs/world_flags/burkina faso.svg';
+      case 'BJ':
+        return 'assets/icons/svgs/world_flags/benin.svg';
+      case 'BW':
+        return 'assets/icons/svgs/world_flags/botswana.svg';
+      case 'CD':
+        return 'assets/icons/svgs/world_flags/democratic republic of congo.svg';
+      case 'CG':
+        return 'assets/icons/svgs/world_flags/republic of the congo.svg';
+      case 'CI':
+        return 'assets/icons/svgs/world_flags/ivory coast.svg';
+      case 'CM':
+        return 'assets/icons/svgs/world_flags/cameroon.svg';
+      case 'GA':
+        return 'assets/icons/svgs/world_flags/gabon.svg';
+      case 'MW':
+        return 'assets/icons/svgs/world_flags/malawi.svg';
+      case 'ML':
+        return 'assets/icons/svgs/world_flags/mali.svg';
+      case 'SN':
+        return 'assets/icons/svgs/world_flags/senegal.svg';
+      case 'TG':
+        return 'assets/icons/svgs/world_flags/togo.svg';
+      case 'ZM':
+        return 'assets/icons/svgs/world_flags/zambia.svg';
+      case 'US':
+        return 'assets/icons/svgs/world_flags/united states.svg';
+      case 'GB':
+        return 'assets/icons/svgs/world_flags/united kingdom.svg';
+      case 'CA':
+        return 'assets/icons/svgs/world_flags/canada.svg';
+      default:
+        return 'assets/icons/svgs/world_flags/nigeria.svg'; // fallback
+    }
+  }
+
+  // Helper function to get delivery method display name
+  String _getDeliveryMethodDisplayName(String? method) {
+    if (method == null) return 'Unknown';
+    switch (method.toLowerCase()) {
+      case 'bank':
+      case 'bank_transfer':
+      case 'p2p':
+      case 'peer_to_peer':
+      case 'eft':
+        return 'Bank Transfer';
+      case 'mobile_money':
+      case 'momo':
+        return 'Mobile Money';
+      case 'dayfi_tag':
+        return 'DayFi Tag';
+      default:
+        return method
+            .split('_')
+            .map((word) => word[0].toUpperCase() + word.substring(1))
+            .join(' ');
+    }
+  }
+
   /// Get the hint text based on current state
   String _getNetworkHintText() {
     if (_isLoadingNetworks) {
       return widget.selectedData['recipientDeliveryMethod'] == 'bank' ||
+              widget.selectedData['recipientDeliveryMethod'] == 'eft' ||
               widget.selectedData['recipientDeliveryMethod'] == 'p2p'
-          ? 'Loading banks...'
-          : 'Loading mobile money providers...';
+          ? 'Select a bank'
+          : 'Select a mobile money provider';
     } else if (_networkError != null) {
       return widget.selectedData['recipientDeliveryMethod'] == 'bank' ||
+              widget.selectedData['recipientDeliveryMethod'] == 'eft' ||
               widget.selectedData['recipientDeliveryMethod'] == 'p2p'
           ? 'Error loading banks'
           : 'Error loading mobile money providers';
     } else if (_filteredNetworks.isEmpty) {
       return widget.selectedData['recipientDeliveryMethod'] == 'bank' ||
+              widget.selectedData['recipientDeliveryMethod'] == 'eft' ||
               widget.selectedData['recipientDeliveryMethod'] == 'p2p'
-          ? 'No banks available for this channel'
-          : 'No mobile money providers available for this channel';
+          ? 'No banks available for this country'
+          : 'No mobile money providers available for this country';
     } else {
       return widget.selectedData['recipientDeliveryMethod'] == 'bank' ||
+              widget.selectedData['recipientDeliveryMethod'] == 'eft' ||
               widget.selectedData['recipientDeliveryMethod'] == 'p2p'
           ? 'Select a bank'
           : 'Select a mobile money provider';
@@ -800,6 +1875,14 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
     }
   }
 
+  /// Get account type from delivery method
+  String _getAccountTypeFromDeliveryMethod() {
+    final method = widget.selectedData['recipientDeliveryMethod'];
+    if (method == 'bank' || method == 'eft' || method == 'p2p') return 'bank';
+    if (method == 'mobile_money') return 'phone';
+    return 'bank'; // default
+  }
+
   /// Get display name for account type
   String _getAccountTypeDisplayName(String accountType) {
     switch (accountType) {
@@ -821,9 +1904,10 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
     _searchedNetworks = _filteredNetworks;
 
     showModalBottomSheet(
+      barrierColor: Colors.black.withOpacity(0.85),
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+          backgroundColor: Theme.of(context).colorScheme.surface,
       builder:
           (context) => StatefulBuilder(
             builder:
@@ -843,182 +1927,213 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            SizedBox(height: 24.h, width: 22.w),
+                            SizedBox(height: 40.h, width: 40.w),
                             Text(
-                              'Select Bank',
-                              style: AppTypography.titleLarge.copyWith(
-                                fontFamily: 'Karla',
-                                fontSize: 18.sp,
+                              'Select ${_getAccountTypeFromDeliveryMethod() == 'bank' ? 'Bank' : 'Mobile Money Provider'}',
+                              style: Theme.of(
+                                context,
+                              ).textTheme.headlineMedium?.copyWith(
+                                fontFamily: 'FunnelDisplay',
+                                fontSize: 20.sp,
+                                // height: 1.6,
                                 fontWeight: FontWeight.w600,
-                                letterSpacing: -.4,
                                 color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
-                            GestureDetector(
-                              onTap: () {
-                                Navigator.pop(context);
-                              },
-                              child: Image.asset(
-                                "assets/icons/pngs/cancelicon.png",
-                                height: 24.h,
-                                width: 24.w,
-                                color: Theme.of(context).colorScheme.onSurface,
+
+                            InkWell(
+                              splashColor: Colors.transparent,
+                              highlightColor: Colors.transparent,
+                              onTap:
+                                  () => {
+                                    Navigator.pop(context),
+                                    FocusScope.of(context).unfocus(),
+                                  },
+                              child: Stack(
+                                alignment: AlignmentGeometry.center,
+                                children: [
+                                  SvgPicture.asset(
+                                    "assets/icons/svgs/notificationn.svg",
+                                    height: 40.sp,
+                                    color:
+                                        Theme.of(context).colorScheme.surface,
+                                  ),
+                                  SizedBox(
+                                    height: 40.sp,
+                                    width: 40.sp,
+                                    child: Center(
+                                      child: Image.asset(
+                                        "assets/icons/pngs/cancelicon.png",
+                                        height: 20.h,
+                                        width: 20.w,
+                                        color:
+                                            Theme.of(
+                                              context,
+                                            ).textTheme.bodyLarge!.color,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                         ),
                       ),
                       SizedBox(height: 16.h),
-                      // Search field
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 18.w),
-                        child: CustomTextField(
-                          controller: _networkSearchController,
-                          label: '',
-                          hintText: 'Search networks',
-                          borderRadius: 40,
-                          prefixIcon: Container(
-                            width: 40.w,
-                            alignment: Alignment.centerRight,
-                            constraints: BoxConstraints.tightForFinite(),
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                SvgPicture.asset(
-                                  'assets/icons/svgs/swap.svg',
-                                  height: 34,
-                                  color: AppColors.neutral700.withOpacity(.35),
-                                ),
-                                Center(
-                                  child: SvgPicture.asset(
-                                    'assets/icons/svgs/search-normal.svg',
-                                    height: 26,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurface.withOpacity(0.6),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          onChanged: (value) {
-                            _filterNetworksBySearch(value);
-                            setModalState(() {});
-                          },
-                        ),
-                      ),
-                      SizedBox(height: 16.h),
                       Expanded(
-                        child:
-                            _searchedNetworks.isEmpty
-                                ? Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      SvgPicture.asset(
+                        child: SingleChildScrollView(
+                          child: Column(
+                            children: [
+                              // Search field
+                              Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 18.w),
+                                child: CustomTextField(
+                                  isSearch: true,
+                                  controller: _networkSearchController,
+                                  label: '',
+                                  hintText:
+                                      'Search ${widget.selectedData['recipientDeliveryMethod'] == 'bank' || widget.selectedData['recipientDeliveryMethod'] == 'eft' || widget.selectedData['recipientDeliveryMethod'] == 'p2p' ? 'banks' : 'mobile money providers'} ',
+                                  borderRadius: 40,
+                                  prefixIcon: Container(
+                                    width: 40.w,
+                                    alignment: Alignment.centerRight,
+                                    constraints:
+                                        BoxConstraints.tightForFinite(),
+                                    child: Center(
+                                      child: SvgPicture.asset(
                                         'assets/icons/svgs/search-normal.svg',
-                                        height: 64.sp,
+                                        height: 26,
                                         color: Theme.of(context)
                                             .colorScheme
                                             .onSurface
                                             .withOpacity(0.6),
                                       ),
-
-                                      SizedBox(height: 16.h),
-                                      Text(
-                                        'No networks found',
-                                        style: TextStyle(
-                                          fontFamily: 'CabinetGrotesk',
-                                          fontSize: 16.sp,
+                                    ),
+                                  ),
+                                  onChanged: (value) {
+                                    _filterNetworksBySearch(value);
+                                    setModalState(() {});
+                                  },
+                                ),
+                              ),
+                              SizedBox(height: 16.h),
+                              _searchedNetworks.isEmpty
+                                  ? Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        SvgPicture.asset(
+                                          'assets/icons/svgs/search-normal.svg',
+                                          height: 64.sp,
                                           color: Theme.of(context)
                                               .colorScheme
                                               .onSurface
                                               .withOpacity(0.6),
                                         ),
-                                      ),
 
-                                      SizedBox(height: 8.h),
-                                      Text(
-                                        'Try searching with different keywords',
-                                        style: AppTypography.bodyMedium
-                                            .copyWith(
-                                              fontFamily: 'Karla',
-                                              fontSize: 14.sp,
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .onSurface
-                                                  .withOpacity(0.4),
-                                            ),
-                                      ),
-                                    ],
-                                  ),
-                                )
-                                : ListView.builder(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 18.w,
-                                  ),
-                                  itemCount: _searchedNetworks.length,
-                                  itemBuilder: (context, index) {
-                                    final network = _searchedNetworks[index];
-                                    final isSelected =
-                                        _selectedNetwork?.id == network.id;
+                                        SizedBox(height: 16.h),
+                                        Text(
+                                          'No ${_getAccountTypeFromDeliveryMethod() == 'bank' ? 'banks' : 'mobile money providers'} found',
+                                          style: TextStyle(
+                                            fontFamily: 'FunnelDisplay',
+                                            fontSize: 16.sp,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSurface
+                                                .withOpacity(0.6),
+                                          ),
+                                        ),
 
-                                    return ListTile(
-                                      contentPadding: EdgeInsets.symmetric(
-                                        vertical: 4.h,
-                                      ),
-                                      leading: Container(
-                                        padding: EdgeInsets.all(6.r),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.neutral0,
-                                          shape: BoxShape.circle,
+                                        SizedBox(height: 8.h),
+                                        Text(
+                                          'Try searching with different keywords',
+                                          style: AppTypography.bodyMedium
+                                              .copyWith(
+                                                fontFamily: 'Karla',
+                                                fontSize: 14.sp,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurface
+                                                    .withOpacity(0.4),
+                                              ),
                                         ),
-                                        child: _getNetworkIcon(network),
-                                      ),
-                                      title: Text(
-                                        network.name ?? 'Unknown Network',
-                                        style: AppTypography.bodyLarge.copyWith(
-                                          fontFamily: 'Karla',
-                                          fontSize: 16.sp,
-                                          letterSpacing: -.4,
-                                          fontWeight: FontWeight.w500,
+                                      ],
+                                    ),
+                                  )
+                                  : ListView.builder(
+                                    shrinkWrap: true,
+                                    physics: NeverScrollableScrollPhysics(),
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 18.w,
+                                    ),
+                                    itemCount: _searchedNetworks.length,
+                                    itemBuilder: (context, index) {
+                                      final network = _searchedNetworks[index];
+                                      final isSelected =
+                                          _selectedNetwork?.id == network.id;
+
+                                      return ListTile(
+                                        contentPadding: EdgeInsets.symmetric(
+                                          vertical: 4.h,
                                         ),
-                                      ),
-                                      subtitle:
-                                          network.accountNumberType != null
-                                              ? Text(
-                                                _getAccountTypeDisplayName(
-                                                  network.accountNumberType!,
-                                                ),
-                                                style: AppTypography.bodyMedium
-                                                    .copyWith(
-                                                      fontFamily: 'Karla',
-                                                      fontSize: 14.sp,
-                                                      letterSpacing: -.4,
-                                                      color: Theme.of(context)
-                                                          .colorScheme
-                                                          .onSurface
-                                                          .withOpacity(0.6),
-                                                    ),
-                                              )
-                                              : null,
-                                      trailing:
-                                          isSelected
-                                              ? SvgPicture.asset(
-                                                'assets/icons/svgs/circle-check.svg',
-                                                color:
-                                                    AppColors.purple500ForTheme(
-                                                      context,
-                                                    ),
-                                              )
-                                              : null,
-                                      onTap: () {
-                                        _onNetworkChanged(network);
-                                        Navigator.pop(context);
-                                      },
-                                    );
-                                  },
-                                ),
+                                        leading: Container(
+                                          padding: EdgeInsets.all(6.r),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.neutral0,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: _getNetworkIcon(network),
+                                        ),
+                                        title: Text(
+                                          network.name?.replaceAll("_", " ") ?? 'Unknown Network',
+                                          style: AppTypography.bodyLarge
+                                              .copyWith(
+                                                fontFamily: 'Karla',
+                                                fontSize: 16.sp,
+                                                letterSpacing: -.4,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                        ),
+                                        subtitle:
+                                            network.accountNumberType != null
+                                                ? Text(
+                                                  _getAccountTypeDisplayName(
+                                                    network.accountNumberType!,
+                                                  ),
+                                                  style: AppTypography
+                                                      .bodyMedium
+                                                      .copyWith(
+                                                        fontFamily: 'Karla',
+                                                        fontSize: 14.sp,
+                                                        letterSpacing: -.4,
+                                                        color: Theme.of(context)
+                                                            .colorScheme
+                                                            .onSurface
+                                                            .withOpacity(0.6),
+                                                      ),
+                                                )
+                                                : null,
+                                        trailing:
+                                            isSelected
+                                                ? SvgPicture.asset(
+                                                  'assets/icons/svgs/circle-check.svg',
+                                                  color:
+                                                      AppColors.purple500ForTheme(
+                                                        context,
+                                                      ),
+                                                )
+                                                : null,
+                                        onTap: () {
+                                          _onNetworkChanged(network);
+                                          Navigator.pop(context);
+                                        },
+                                      );
+                                    },
+                                  ),
+                            ],
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -1045,8 +2160,9 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
   void _validateAndContinue() {
     if (_formKey.currentState!.validate() &&
         _selectedNetwork != null &&
-        _resolvedAccountName != null &&
-        _resolvedAccountName!.isNotEmpty) {
+        (_selectedNetwork!.name == 'Manual Input' ||
+            (_resolvedAccountName != null &&
+                _resolvedAccountName!.isNotEmpty))) {
       analyticsService.logEvent(
         name: 'recipient_added',
         parameters: {
@@ -1055,7 +2171,10 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
         },
       );
       final recipientData = {
-        'name': _resolvedAccountName!.trim(),
+        'name':
+            _selectedNetwork!.name == 'Manual Input'
+                ? _accountNameController.text.trim()
+                : _resolvedAccountName!.trim(),
         'country': _selectedCountry,
         'phone':
             _getFormattedPhoneNumber(), // Use formatted phone number with country code
@@ -1064,6 +2183,17 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
         'email': _emailController.text.trim(),
         'accountNumber': _accountNumberController.text.trim(),
         'networkId': _selectedNetworkId,
+        'recipientDeliveryMethod':
+            widget.selectedData['recipientDeliveryMethod'] ?? '',
+        'recipientChannelId': widget.selectedData['recipientChannelId'] ?? '',
+        'bankName':
+            _selectedNetwork!.name == 'Manual Input'
+                ? _bankNameController.text.trim()
+                : null,
+        'accountName':
+            _selectedNetwork!.name == 'Manual Input'
+                ? _accountNameController.text.trim()
+                : null,
       };
 
       // Get user profile data for sender information
@@ -1085,7 +2215,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
       };
 
       appRouter.pushNamed(
-        AppRoute.sendReviewView,
+        AppRoute.sendView,
         arguments: {
           'selectedData': widget.selectedData,
           'recipientData': recipientData,
@@ -1095,7 +2225,8 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
     } else {
       String errorMessage = 'Please complete the following:';
       if (_selectedNetwork == null) {
-        errorMessage += '\n• Select a network';
+        errorMessage +=
+            '\n• ${widget.selectedData['recipientDeliveryMethod'] == 'bank' || widget.selectedData['recipientDeliveryMethod'] == 'eft' || widget.selectedData['recipientDeliveryMethod'] == 'p2p' ? 'Select a bank' : 'Select a mobile money provider'}';
       }
       if (_resolvedAccountName == null ||
           _resolvedAccountName!.isEmpty &&
@@ -1109,13 +2240,39 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
             '\n• Enter a valid mobile money number to resolve the recipient name';
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(errorMessage),
-          backgroundColor: AppColors.error500,
-        ),
-      );
+      TopSnackbar.show(context, message: errorMessage, isError: true);
     }
+  }
+
+  /// Check if the form is valid for submission
+  bool _isFormValid() {
+    // Check if network is selected
+    if (_selectedNetwork == null) return false;
+
+    if (_selectedNetwork!.name == 'Manual Input') {
+      // For manual input, check bank name, account name, and account number
+      if (_bankNameController.text.trim().isEmpty ||
+          _accountNameController.text.trim().isEmpty ||
+          _accountNumberController.text.trim().isEmpty) {
+        return false;
+      }
+    } else {
+      // Check if account number is valid (10 digits)
+      final accountNumber = _accountNumberController.text.trim();
+      if (accountNumber.length != 10 ||
+          !RegExp(r'^\d{10}$').hasMatch(accountNumber)) {
+        return false;
+      }
+
+      // Check if account is resolved (for non-p2p methods)
+      if (widget.selectedData['recipientDeliveryMethod'] != 'p2p') {
+        if (_resolvedAccountName == null || _resolvedAccountName!.isEmpty) {
+          return false;
+        }
+      }
+    }
+
+    return true;
   }
 
   /// Get recipient country from selected data
@@ -1157,7 +2314,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
               style: AppTypography.bodyMedium.copyWith(
                 fontFamily: 'Karla',
                 fontSize: 16,
-                letterSpacing: -.3,
+                letterSpacing: -.6,
                 fontWeight: FontWeight.w500,
                 height: 1.450,
                 color: Theme.of(context).colorScheme.onSurface,

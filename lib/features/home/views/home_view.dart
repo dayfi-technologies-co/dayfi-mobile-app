@@ -1,19 +1,26 @@
 import 'package:dayfi/app_locator.dart';
-import 'package:dayfi/common/utils/tier_utils.dart';
 import 'package:dayfi/common/utils/haptic_helper.dart';
+import 'package:dayfi/common/utils/tier_utils.dart';
 import 'package:dayfi/common/widgets/empty_state_widget.dart';
 import 'package:dayfi/common/widgets/shimmer_widgets.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
+import 'package:dayfi/features/home/vm/home_viewmodel.dart';
 import 'package:dayfi/features/notifications/views/notifications_view.dart';
 import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
-import 'package:dayfi/features/home/vm/home_viewmodel.dart';
+import 'package:dayfi/features/send/vm/send_viewmodel.dart';
+import 'package:dayfi/features/send/widgets/delivery_methods_sheet.dart';
 import 'package:dayfi/features/transactions/vm/transactions_viewmodel.dart';
 import 'package:dayfi/models/wallet_transaction.dart';
+import 'package:dayfi/models/payment_response.dart' as payment;
 import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/services/remote/wallet_service.dart';
+import 'package:dayfi/services/local/secure_storage.dart';
+import 'package:dayfi/common/constants/storage_keys.dart';
+import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:flutter/material.dart';
+import 'package:dayfi/features/auth/upload_documents/views/upload_documents_view.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
@@ -29,9 +36,23 @@ class HomeView extends ConsumerStatefulWidget {
 
 class _HomeViewState extends ConsumerState<HomeView>
     with WidgetsBindingObserver {
+  // Top 7 African countries for quick send
+  final List<Map<String, String>> topAfricanCountries = [
+    {'code': 'NG', 'name': 'Nigeria', 'currency': 'NGN'},
+    {'code': 'KE', 'name': 'Kenya', 'currency': 'KES'},
+    {'code': 'TZ', 'name': 'Tanzania', 'currency': 'TZS'},
+    {'code': 'ZA', 'name': 'South Africa', 'currency': 'ZAR'},
+    {'code': 'SN', 'name': 'Senegal', 'currency': 'XOF'},
+    {'code': 'CM', 'name': 'Cameroon', 'currency': 'XAF'},
+    {'code': 'BW', 'name': 'Botswana', 'currency': 'BWP'},
+    {'code': 'UG', 'name': 'Uganda', 'currency': 'UGX'},
+    {'code': 'RW', 'name': 'Rwanda', 'currency': 'RWF'},
+  ];
+
   String? _dayfiId;
   bool _isLoadingDayfiId = true;
   bool _isBalanceVisible = true;
+  final SecureStorageService _secureStorage = locator<SecureStorageService>();
 
   @override
   void initState() {
@@ -40,12 +61,15 @@ class _HomeViewState extends ConsumerState<HomeView>
     // Initialize wallet data when view loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Load profile first to get user name
-      ref.read(profileViewModelProvider.notifier).loadUserProfile(isInitialLoad: true);
+      ref
+          .read(profileViewModelProvider.notifier)
+          .loadUserProfile(isInitialLoad: true);
       ref.read(homeViewModelProvider.notifier).initialize();
       ref
           .read(transactionsProvider.notifier)
           .loadTransactions(isInitialLoad: true);
       _loadDayfiId();
+      _loadBalanceVisibilityPreference();
     });
   }
 
@@ -53,6 +77,53 @@ class _HomeViewState extends ConsumerState<HomeView>
     setState(() {
       _isBalanceVisible = !_isBalanceVisible;
     });
+    // Save the preference to persistent storage
+    _saveBalanceVisibilityPreference(_isBalanceVisible);
+  }
+
+  Future<void> _loadBalanceVisibilityPreference() async {
+    try {
+      final hideBalance = await _secureStorage.read(
+        StorageKeys.hideUserBalance,
+      );
+      if (hideBalance.isNotEmpty) {
+        setState(() {
+          _isBalanceVisible = hideBalance != 'true';
+        });
+      }
+    } catch (e) {
+      // If there's an error loading the preference, keep the default (visible)
+      AppLogger.error('Error loading balance visibility preference: $e');
+    }
+  }
+
+  Future<void> _saveBalanceVisibilityPreference(bool isVisible) async {
+    try {
+      await _secureStorage.write(
+        StorageKeys.hideUserBalance,
+        (!isVisible).toString(),
+      );
+    } catch (e) {
+      AppLogger.error('Error saving balance visibility preference: $e');
+    }
+  }
+
+  // Helper to get initials from a name
+  String _getInitials(String name) {
+    final words =
+        name.trim().split(RegExp(r"\\s+")).where((w) => w.isNotEmpty).toList();
+    if (words.isEmpty) return '?';
+    if (words.length == 1) {
+      final w = words[0];
+      if (w.isEmpty) return '?';
+      return w[0].toUpperCase();
+    }
+    final first = words.first;
+    final last = words.last;
+    final firstChar = first.isNotEmpty ? first[0] : '';
+    final lastChar = last.isNotEmpty ? last[0] : '';
+    final initials = (firstChar + lastChar).toUpperCase();
+    return initials.isEmpty ? '?' : initials;
   }
 
   Future<void> _loadDayfiId() async {
@@ -139,47 +210,51 @@ class _HomeViewState extends ConsumerState<HomeView>
 
   @override
   Widget build(BuildContext context) {
+    // Ensure channels are loaded in the background for quick send
+    final sendState = ref.watch(sendViewModelProvider);
+    final sendViewModel = ref.read(sendViewModelProvider.notifier);
+    if (sendState.channels.isEmpty && !sendState.isLoading) {
+      // Trigger channel loading if not already loaded
+      Future.microtask(() => sendViewModel.initialize());
+    }
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        scrolledUnderElevation: 0,
+        scrolledUnderElevation: .5,
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
-        leadingWidth: 0,
+        leadingWidth: 1,
+        foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+        shadowColor: Theme.of(context).scaffoldBackgroundColor,
+        surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
         leading: const SizedBox.shrink(),
-        title: Row(
-          children: [
-            Image.asset("assets/icons/pngs/account_4.png", height: 40.sp),
-            SizedBox(width: 8.w),
-            Expanded(
-              child: Consumer(
-                builder: (context, ref, child) {
-                  final profileState = ref.watch(profileViewModelProvider);
-                  final userName = profileState.userName;
-                  final firstName = userName.split(' ').first;
+        title: Consumer(
+          builder: (context, ref, child) {
+            final profileState = ref.watch(profileViewModelProvider);
+            final userName = profileState.userName;
+            final firstName = userName.split(' ').first;
 
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Hi, $firstName',
-                        style: AppTypography.titleMedium.copyWith(
-                          fontFamily: 'CabinetGrotesk',
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
-          ],
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Home',
+                  style: AppTypography.titleMedium.copyWith(
+                    fontFamily: 'FunnelDisplay',
+                    fontSize: 24.sp,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            );
+          },
         ),
 
         // leadingWidth: 0,
-        centerTitle: false,
+        centerTitle: true,
         actions: [
           Padding(
             padding: EdgeInsets.only(right: 8.w),
@@ -193,15 +268,13 @@ class _HomeViewState extends ConsumerState<HomeView>
                   SvgPicture.asset(
                     "assets/icons/svgs/notificationn.svg",
                     height: 40.sp,
-                    color: AppColors.neutral700.withOpacity(.35),
+                    color: Theme.of(context).colorScheme.surface,
                   ),
                   Center(
                     child: SvgPicture.asset(
                       "assets/icons/svgs/support.svg",
                       height: 28,
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withOpacity(.65),
+                      color: Theme.of(context).textTheme.bodyLarge!.color,
                     ),
                   ),
                 ],
@@ -225,15 +298,13 @@ class _HomeViewState extends ConsumerState<HomeView>
                   SvgPicture.asset(
                     "assets/icons/svgs/notificationn.svg",
                     height: 40.sp,
-                    color: AppColors.neutral700.withOpacity(.35),
+                    color: Theme.of(context).colorScheme.surface,
                   ),
                   Center(
                     child: SvgPicture.asset(
                       "assets/icons/svgs/bell.svg",
                       height: 28,
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withOpacity(.65),
+                      color: Theme.of(context).textTheme.bodyLarge!.color,
                     ),
                   ),
                 ],
@@ -263,258 +334,175 @@ class _HomeViewState extends ConsumerState<HomeView>
             // Error haptic
             HapticHelper.error();
             // Log error but don't crash the app
-            print('Error refreshing HomeView: $e');
+            // print('Error refreshing HomeView: $e');
           }
         },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.0.h),
+          padding: EdgeInsets.symmetric(vertical: 8.0.h),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Transfer Limit Card
-              // _buildUpgradeCard(),
-              // SizedBox(height: 16.h),
-              _buildWalletBalanceCard(),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 18.w),
+                child: _buildUpgradeCard(),
+              ),
+
               SizedBox(height: 12.h),
-              _buildHomeActionButtons(context),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 18.w),
+                child: _buildWalletBalanceCard(),
+              ),
+
               // SizedBox(height: 12.h),
               // Padding(
-              //   padding: EdgeInsets.symmetric(
-              //     horizontal: MediaQuery.of(context).size.width * .2,
+              //   padding: EdgeInsets.symmetric(horizontal: 18.w),
+              //   child: _infoCard(),
+              // ),
+              SizedBox(height: 12.h),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 18.w),
+                child: _buildHomeActionButtons(context),
+              ),
+
+              SizedBox(height: 32.h),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 18.w),
+                child: Text(
+                  'Quick Send',
+                  style: AppTypography.titleMedium.copyWith(
+                    fontFamily: 'Karla',
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: -.2,
+                    height: 1.450,
+                    color: Theme.of(
+                      context,
+                    ).textTheme.bodyLarge!.color!.withOpacity(.75),
+                  ),
+                  textAlign: TextAlign.start,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              SizedBox(
+                height: 72.h,
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  scrollDirection: Axis.horizontal,
+                  padding: EdgeInsets.symmetric(horizontal: 12.w),
+                  itemCount: topAfricanCountries.length,
+                  // separatorBuilder: (context, idx) => SizedBox(width: 8.w),
+                  itemBuilder: (context, idx) {
+                    final country = topAfricanCountries[idx];
+                    // Only show chip if channel exists for this country/currency
+                    final hasChannel = sendState.channels.any(
+                      (c) =>
+                          c.country?.toUpperCase() == country['code'] &&
+                          c.currency?.toUpperCase() == country['currency'] &&
+                          c.status == 'active',
+                    );
+                    if (!hasChannel) return const SizedBox.shrink();
+                    return GestureDetector(
+                      onTap: () {
+                        sendViewModel.updateReceiveCountry(
+                          country['code']!,
+                          country['currency']!,
+                        );
+
+                        showModalBottomSheet(
+                          barrierColor: Colors.black.withOpacity(0.85),
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor:
+                              Theme.of(context).scaffoldBackgroundColor,
+                          builder: (BuildContext ctx) {
+                            return DeliveryMethodsSheet(
+                              selectedCountry: country['code']!,
+                              selectedCurrency: country['currency']!,
+                            );
+                          },
+                        );
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(6.0),
+                        child: Chip(
+                          padding: EdgeInsets.all(4),
+                          backgroundColor:
+                              Theme.of(context).colorScheme.surface,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                            side: BorderSide(color: Colors.transparent),
+                          ),
+                          labelPadding: EdgeInsets.symmetric(
+                            horizontal: 8.w,
+                            vertical: 5.h,
+                          ),
+                          avatar: SvgPicture.asset(
+                            _getFlagPath(country['code']),
+                            height: 32.h,
+                          ),
+                          label: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                country['name']!,
+                                style: AppTypography.bodyLarge.copyWith(
+                                  fontWeight: AppTypography.medium,
+                                  height: 1.5,
+                                  fontFamily: 'Karla',
+                                  letterSpacing: -.7,
+                                  fontSize: 18,
+                                  color:
+                                      Theme.of(
+                                        context,
+                                      ).textTheme.bodyLarge!.color,
+                                ),
+                              ),
+                              SizedBox(height: 2.h),
+                              Text(
+                                country['currency']!,
+                                style: AppTypography.bodyLarge.copyWith(
+                                  fontFamily: 'Karla',
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w500,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+
+              // SizedBox(height: 18.h),
+
+              // Padding(
+              //   padding: EdgeInsets.symmetric(horizontal: 18.w),
+              //   child: Text(
+              //     'Quick Send',
+              //     style: AppTypography.titleMedium.copyWith(
+              //       fontFamily: 'Karla',
+              //       fontSize: 14,
+              //       fontWeight: FontWeight.w500,
+              //       letterSpacing: -.2,
+              //       height: 1.450,
+              //       color: Theme.of(
+              //         context,
+              //       ).textTheme.bodyLarge!.color!.withOpacity(.75),
+              //     ),
+              //     textAlign: TextAlign.start,
+              //     overflow: TextOverflow.ellipsis,
               //   ),
-              //   child: PrimaryButton(
-              //     borderRadius: 38.r,
-              //     text: "Add Money",
-              //     onPressed: () async {
-              //       try {
-              //         await Navigator.pushNamed(
-              //           context,
-              //           AppRoute.sendPaymentMethodView,
-              //           arguments: <String, dynamic>{
-              //             'selectedData': <String, dynamic>{},
-              //             'recipientData': <String, dynamic>{},
-              //             'senderData': <String, dynamic>{},
-              //             'paymentData': <String, dynamic>{},
-              //           },
-              //         );
-              //       } catch (e) {
-              //         // Handle navigation error silently or show a message
-              //         debugPrint('Navigation error: $e');
-              //       }
-              //     },
-              //     backgroundColor: AppColors.purple500,
-              //     height: 48.000.h,
-              //     textColor: AppColors.neutral0,
-              //     fontFamily: 'Karla',
-              //     letterSpacing: -.8,
-              //     fontSize: 18,
-              //     width: 375.w,
-              //     fullWidth: true,
-              //   ),
-              // ), //
-              SizedBox(height: 28.h),
-              _buildRecentTransactions(),
+              // ),
+              // _buildRecentTransactions(),
               SizedBox(height: 112.h),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildWalletBalanceCard() {
-    final homeState = ref.watch(homeViewModelProvider);
-    final isLoading = homeState.isLoading;
-    final balance = homeState.balance;
-    final hasBalance = balance != '0.00' && balance.isNotEmpty;
-
-    return AspectRatio(
-      aspectRatio: 15 / 6.9,
-      child: Container(
-        width: MediaQuery.of(context).size.width,
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          // border: Border.all(color: AppColors.neutral200),
-          borderRadius: BorderRadius.circular(12.r),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.neutral500.withOpacity(0.05),
-              blurRadius: 2.0,
-              offset: const Offset(0, 2),
-              spreadRadius: 0.25,
-            ),
-          ],
-          // border: Border.all(color: Theme.of(context).colorScheme.outline),
-        ),
-        child: Stack(
-          fit: StackFit.passthrough,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12.r),
-              child: Image.asset(
-                'assets/icons/pngs/backgroud.png',
-                fit: BoxFit.cover,
-                // color: Colors.orangeAccent.shade200,
-                width: MediaQuery.of(context).size.width,
-              ),
-            ),
-
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 24, 12, 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 3,
-                                horizontal: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(1),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Row(
-                                children: [
-                                  Text(
-                                    homeState.currency,
-                                    style: const TextStyle(
-                                      fontFamily: 'Karla',
-                                      fontSize: 12,
-                                      color: Color(0xff2A0079),
-                                      fontWeight: FontWeight.w600,
-                                      letterSpacing: -.04,
-                                      height: 1.450,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  SvgPicture.asset(
-                                    _getFlagPath(
-                                      _getCountryCodeFromCurrency(
-                                        homeState.currency,
-                                      ),
-                                    ),
-                                    height: 18.0.h,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                "  Local wallet",
-                                style: TextStyle(
-                                  fontFamily: 'Karla',
-                                  fontSize: 12,
-                                  color: AppColors.purple500ForTheme(
-                                    context,
-                                  ), // innit
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: -.04,
-                                  overflow: TextOverflow.ellipsis,
-                                  height: 1.450,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // InkWell(
-                      //   splashColor: Colors.transparent,
-                      //   highlightColor: Colors.transparent,
-                      //   onTap: _toggleBalanceVisibility,
-                      //   child: Stack(
-                      //     alignment: AlignmentGeometry.center,
-                      //     children: [
-                      //       SvgPicture.asset(
-                      //         "assets/icons/svgs/notificationn.svg",
-                      //         height: 32.sp,
-                      //         color: AppColors.neutral700.withOpacity(.35),
-                      //       ),
-                      //       Center(
-                      //         child: SvgPicture.asset(
-                      //           _isBalanceVisible
-                      //               ? "assets/icons/svgs/eye.svg"
-                      //               : "assets/icons/svgs/eye-closed.svg",
-                      //           height: 28,
-                      //           color: Theme.of(
-                      //             context,
-                      //           ).colorScheme.onSurface.withOpacity(.65),
-                      //         ),
-                      //       ),
-                      //     ],
-                      //   ),
-                      // ),
-                    ],
-                  ),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Your balance ".toUpperCase(),
-                        style: TextStyle(
-                          fontFamily: 'Karla',
-                          fontSize: 12,
-                          color: AppColors.neutral700,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: -.04,
-                          height: 1.450,
-                        ),
-                      ),
-                      if (isLoading && !hasBalance)
-                        LoadingAnimationWidget.horizontalRotatingDots(
-                          color: AppColors.primary600,
-                          size: 20,
-                        )
-                      else
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                _isBalanceVisible
-                                    ? _formatNumber(
-                                      double.tryParse(
-                                            balance.replaceAll(
-                                              RegExp(r'[^\d.]'),
-                                              '',
-                                            ),
-                                          ) ??
-                                          0.0,
-                                    )
-                                    : '*****',
-                                style: TextStyle(
-                                  fontSize: 38.sp,
-                                  height: 1.2,
-                                  fontFamily: 'CabinetGrotesk',
-                                  fontWeight: FontWeight.w700,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurface.withOpacity(1),
-                                  letterSpacing: -.6,
-                                ),
-                              ),
-                            ),
-                            Image.asset(
-                              'assets/icons/pngs/logoo.png',
-                              height: 28,
-                            ),
-                          ],
-                        ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
         ),
       ),
     );
@@ -532,67 +520,261 @@ class _HomeViewState extends ConsumerState<HomeView>
     final tierDescription = TierUtils.getTierDescription(user);
     final nextTierInfo = TierUtils.getNextTierInfo(user);
 
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12.r),
-        // border: Border.all(color: AppColors.warning400.withOpacity(0.5)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.neutral500.withOpacity(0.05),
-            blurRadius: 4.0,
-            offset: const Offset(0, 4),
-            spreadRadius: 0.5,
+    return tierDescription ==
+            'You\'re currently on Tier 2. You have access to the highest transfer limits.'
+        ? const SizedBox()
+        : Container(
+          width: double.infinity,
+          padding: EdgeInsets.all(16.w),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(12.r),
+            // border: Border.all(color: AppColors.warning400.withOpacity(0.5)),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.neutral500.withOpacity(0.05),
+                blurRadius: 4.0,
+                offset: const Offset(0, 4),
+                spreadRadius: 0.5,
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Image.asset("assets/icons/pngs/account_4.png", height: 40.sp),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Increase transfer limit',
-                  style: AppTypography.titleMedium.copyWith(
-                    fontFamily: 'CabinetGrotesk',
-                    fontSize: 15.20,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                SizedBox(height: 4.h),
-                RichText(
-                  text: TextSpan(
-                    text: tierDescription,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurface,
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w400,
-                      fontFamily: 'Karla',
-                      letterSpacing: -.3,
-                      height: 1.4,
+          child: Row(
+            children: [
+              Image.asset("assets/icons/pngs/account_4.png", height: 40.sp),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Increase transfer limit',
+                      style: AppTypography.titleMedium.copyWith(
+                        fontFamily: 'FunnelDisplay',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                    children: [
-                      TextSpan(
-                        text: ' $nextTierInfo.',
+                    SizedBox(height: 4.h),
+                    RichText(
+                      text: TextSpan(
+                        text: "$tierDescription ",
                         style: TextStyle(
-                          color: Color(0xFF2787A1),
+                          color: Theme.of(context).colorScheme.onSurface,
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w500,
                           fontFamily: 'Karla',
-                          letterSpacing: -.4,
-                          height: 1.2,
-                          // decoration: TextDecoration.underline,
+                          letterSpacing: -.3,
+                          height: 1.4,
+                        ),
+                        children: [
+                          WidgetSpan(
+                            alignment: PlaceholderAlignment.baseline,
+                            baseline: TextBaseline.alphabetic,
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder:
+                                        (context) =>
+                                        // Import the correct class for the upload documents view
+                                        // If it's UploadDocumentsView, adjust as needed
+                                        // ignore: prefer_const_constructors
+                                        UploadDocumentsView(
+                                          showBackButton: true,
+                                        ),
+                                  ),
+                                );
+                              },
+                              child: Text(
+                                nextTierInfo,
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w600,
+                                  fontFamily: 'Karla',
+                                  letterSpacing: -.4,
+                                  height: 1.2,
+                                  // decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+  }
+
+  Widget _buildWalletBalanceCard() {
+    final homeState = ref.watch(homeViewModelProvider);
+    final isLoading = homeState.isLoading;
+    final balance = homeState.balance;
+    final hasBalance = balance != '0.00' && balance.isNotEmpty;
+
+    return Container(
+      width: MediaQuery.of(context).size.width,
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(18.r)),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(0, 24, 0, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  "Your balance   ",
+                  style: TextStyle(
+                    fontFamily: 'Karla',
+                    fontSize: 12,
+                    color: Theme.of(
+                      context,
+                    ).textTheme.bodyLarge!.color!.withOpacity(.85),
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -.04,
+                    height: 1.450,
+                  ),
+                ),
+
+                InkWell(
+                  splashColor: Colors.transparent,
+                  highlightColor: Colors.transparent,
+                  onTap: _toggleBalanceVisibility,
+                  child: Stack(
+                    alignment: AlignmentGeometry.center,
+                    children: [
+                      SvgPicture.asset(
+                        "assets/icons/svgs/notificationn.svg",
+                        height: 20.sp,
+                        color: Theme.of(context).textTheme.bodyLarge!.color,
+                      ),
+                      Center(
+                        child: SvgPicture.asset(
+                          _isBalanceVisible
+                              ? "assets/icons/svgs/eye.svg"
+                              : "assets/icons/svgs/eye-closed.svg",
+                          height: 16,
+                          color: Theme.of(context).colorScheme.surface,
                         ),
                       ),
                     ],
                   ),
                 ),
               ],
+            ),
+            SizedBox(height: 16.h),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(40.r),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SvgPicture.asset(
+                    _getFlagPath(
+                      _getCountryCodeFromCurrency(homeState.currency),
+                    ),
+                    height: 24.0.h,
+                  ),
+                  SizedBox(width: 8.h),
+                  Text(
+                    "${homeState.currency} ",
+                    style: AppTypography.labelMedium.copyWith(
+                      color: AppColors.success600,
+                      fontSize: 16.sp,
+                      fontFamily: AppTypography.secondaryFontFamily,
+                      fontWeight: AppTypography.regular,
+                      height: 1,
+                      letterSpacing: -.70,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            SizedBox(height: 6.h),
+
+            if (isLoading && !hasBalance)
+              Padding(
+                padding: const EdgeInsets.only(top: 16.0, bottom: 5),
+                child: LoadingAnimationWidget.horizontalRotatingDots(
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 24.sp,
+                ),
+              )
+            else
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    _isBalanceVisible
+                        ? _formatNumber(
+                          double.tryParse(
+                                balance.replaceAll(RegExp(r'[^\d.]'), ''),
+                              ) ??
+                              0.0,
+                        )
+                        : '*****',
+                    style: TextStyle(
+                      fontSize: _isBalanceVisible ? 44.sp : 44.sp,
+                      height: 1.2,
+                      fontFamily: 'Karla',
+                      fontWeight: FontWeight.w700,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(1),
+                      letterSpacing: -.8,
+                    ),
+                  ),
+                  // Image.asset(
+                  //   'assets/icons/pngs/logoo.png',
+                  //   height: 28,
+                  // ),
+                ],
+              ),
+
+            SizedBox(height: 18.h),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _infoCard() {
+    return Container(
+      padding: EdgeInsets.all(12.w),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.25),
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(width: 4.w),
+          Image.asset("assets/images/idea.png", height: 20.h),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Text(
+              'Send money via bank transfers, mobile money and more globally.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                fontSize: 14.sp,
+                fontFamily: 'Karla',
+                fontWeight: FontWeight.w500,
+                letterSpacing: -0.4,
+                height: 1.5,
+                color: Theme.of(context).colorScheme.primary,
+              ),
             ),
           ),
         ],
@@ -603,68 +785,99 @@ class _HomeViewState extends ConsumerState<HomeView>
   Widget _buildActionButtonWidget(
     BuildContext context,
     String label,
+    String description,
     String iconAsset,
     VoidCallback onTap,
   ) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 50.h,
+        padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
         decoration: BoxDecoration(
-          color: Theme.of(context).scaffoldBackgroundColor,
-          boxShadow: [
-            BoxShadow(
-              blurRadius: 0,
-              spreadRadius: 0,
-              color: AppColors.warning600.withOpacity(.5),
-              offset: Offset(label == "Topup Wallet" ? -2.5 : 2.5, 2.5),
-            ),
-          ],
-          border: Border.all(
-            color: Theme.of(context).colorScheme.outline.withOpacity(.5),
-            width: 1,
-          ),
-          borderRadius: BorderRadius.circular(48.r),
+          color: Theme.of(context).colorScheme.surface,
+
+          // boxShadow: [
+          //   BoxShadow(
+          //     color: const Color.fromARGB(255, 123, 36, 211).withOpacity(0.05),
+          //     blurRadius: 2.0,
+          //     offset: const Offset(0, 2.0),
+          //     spreadRadius: 0.5,
+          //   ),
+          // ],
+
+          // border: Border.all(
+          //   color: Theme.of(context).colorScheme.outline.withOpacity(.15),
+          //   width: .5,
+          // ),
+          borderRadius: BorderRadius.circular(12.r),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(
-              width: 32.w,
-              height: 32.w,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // Background circle
-                  // label == "Topup Wallet"
-                  //     ? SvgPicture.asset(
-                  //       iconAsset,
-                  //       height: 32.sp,
-                  //       color: Color(0xFFFFD800),
-                  //     )
-                  //     : const SizedBox.shrink(),
-                  // // Foreground icon
-                  Center(
-                    child: SvgPicture.asset(
-                      iconAsset,
-                      // height: 18.sp,
-                      color: label == 'Topup Wallet' ? Color(0xffEA4857) : null,
-                    ),
+            Stack(
+              children: [
+                SizedBox(
+                  width: 32.w,
+                  height: 32.w,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Background circle
+                      SvgPicture.asset(
+                        iconAsset,
+                        height: 32.sp,
+                        color: Theme.of(
+                          context,
+                        ).textTheme.bodySmall?.color?.withOpacity(0.1),
+                      ),
+
+                      // Foreground icon
+                      Center(
+                        child: Transform.rotate(
+                          angle: label == "Send Money" ? -.8 : 0,
+                          child: Icon(
+                            label == "Send Money"
+                                ? Icons.arrow_forward
+                                : Icons.add,
+                            size: label == "Send Money" ? 26.sp : 28.sp,
+                            color: Theme.of(
+                              context,
+                            ).textTheme.bodySmall?.color?.withOpacity(1),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            const SizedBox(width: 8),
+            const SizedBox(height: 12),
             Text(
               label,
-              textAlign: TextAlign.center,
+              textAlign: TextAlign.start,
               style: TextStyle(
-                fontWeight: AppTypography.medium,
+                fontWeight: FontWeight.w600,
                 height: 1.5,
                 fontFamily: 'Karla',
                 letterSpacing: -.7,
+
                 fontSize: 18,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Opacity(
+              opacity: .7,
+              child: Text(
+                description,
+                textAlign: TextAlign.start,
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  height: 1.4,
+                  fontFamily: 'Karla',
+                  letterSpacing: -.6,
+                  fontSize: 14,
+                ),
               ),
             ),
           ],
@@ -677,12 +890,12 @@ class _HomeViewState extends ConsumerState<HomeView>
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        // Fund
         Expanded(
           child: _buildActionButtonWidget(
             context,
             'Topup Wallet',
-            'assets/icons/svgs/topup.svg',
+            "Add money to your Dayfi wallet instantly",
+            'assets/icons/svgs/transactions.svg',
             () async {
               try {
                 await Navigator.pushNamed(
@@ -697,37 +910,141 @@ class _HomeViewState extends ConsumerState<HomeView>
                 );
               } catch (e) {
                 // Handle navigation error silently or show a message
-                debugPrint('Navigation error: $e');
+                // debug// print('Navigation error: $e');
               }
             },
           ),
         ),
 
-        const SizedBox(width: 8),
+        const SizedBox(width: 12),
 
-        // Send
         Expanded(
           child: _buildActionButtonWidget(
             context,
             'Send Money',
+            'Transfer funds locally or across borders',
             'assets/icons/svgs/swap.svg',
             () {
               appRouter.pushNamed(AppRoute.selectDestinationCountryView);
             },
           ),
         ),
+        // const SizedBox(width: 12),
+
+        // Expanded(
+        //   child: _buildActionButtonWidget(
+        //     context,
+        //     'Send crypto',
+        //     "Send funds straight to wallet addresses",
+        //     'assets/icons/svgs/swap.svg',
+        //     () async {
+        //       try {
+        //         await Navigator.pushNamed(
+        //           context,
+        //           AppRoute.sendFetchCryptoChannelsView,
+        //           // arguments: <String, dynamic>{
+        //           //   'selectedData': <String, dynamic>{},
+        //           //   'recipientData': <String, dynamic>{},
+        //           //   'senderData': <String, dynamic>{},
+        //           //   'paymentData': <String, dynamic>{},
+        //           // },
+        //         );
+        //       } catch (e) {
+        //         // Handle navigation error silently or show a message
+        //         // debug// print('Navigation error: $e');
+        //       }
+        //     },
+        //   ),
+        // ),
       ],
     );
   }
 
   Widget _buildRecentTransactions() {
     final transactionsState = ref.watch(transactionsProvider);
+    final profileState = ref.watch(profileViewModelProvider);
+    final user = profileState.user;
 
-    // Sort transactions by timestamp (most recent first) and get top 5
+    // Build multiple name variations for comparison
+    Set<String> userNames = {};
+    if (user != null) {
+      final firstName = user.firstName.trim().toLowerCase();
+      final middleName = user.middleName?.trim().toLowerCase();
+      final lastName = user.lastName.trim().toLowerCase();
+
+      // Add different name combinations
+      if (firstName.isNotEmpty && lastName.isNotEmpty) {
+        userNames.add('$firstName $lastName');
+        userNames.add('$firstName$lastName');
+        userNames.add('$firstName $lastName'.trim());
+      }
+
+      if (middleName != null && middleName.isNotEmpty) {
+        if (firstName.isNotEmpty && lastName.isNotEmpty) {
+          userNames.add('$firstName $middleName $lastName');
+          userNames.add('$firstName $middleName$lastName');
+          userNames.add('$firstName$middleName$lastName');
+        }
+      }
+
+      // Also add the userName from profileState (which includes middle name)
+      final userName = profileState.userName.toLowerCase().trim();
+      if (userName.isNotEmpty && userName != 'loading...') {
+        userNames.add(userName);
+        // Add without spaces
+        userNames.add(userName.replaceAll(' ', ''));
+      }
+    }
+
+    // Sort transactions by timestamp (most recent first)
     final sortedTransactions = List<WalletTransaction>.from(
       transactionsState.transactions,
     )..sort((a, b) => b.timestamp.compareTo(a.timestamp));
-    final recentTransactions = sortedTransactions.take(5).toList();
+
+    // Filter out duplicates and self-transactions
+    final seenAccountNumbers = <String>{};
+    final filteredTransactions =
+        sortedTransactions.where((tx) {
+          final beneficiary = tx.beneficiary;
+          final source = tx.source;
+
+          // Skip if beneficiary name is empty or whitespace only
+          if (beneficiary.name.trim().isEmpty) {
+            return false;
+          }
+
+          // Filter out self-transactions
+          final beneficiaryName = beneficiary.name.toLowerCase().trim();
+          final beneficiaryNameNoSpaces = beneficiaryName.replaceAll(' ', '');
+
+          for (final userName in userNames) {
+            final userNameNoSpaces = userName.replaceAll(' ', '');
+
+            if (beneficiaryName == userName ||
+                beneficiaryNameNoSpaces == userNameNoSpaces) {
+              return false; // Hide this transaction
+            }
+          }
+
+          // Create a unique key combining source account number and beneficiary account number (DayFi tag)
+          final sourceAccountNumber = source.accountNumber ?? '';
+          final beneficiaryAccountNumber = beneficiary.accountNumber ?? '';
+
+          // For DayFi tags, use the beneficiary's account number as the unique identifier
+          final uniqueKey =
+              source.accountType?.toLowerCase() == 'dayfi'
+                  ? 'dayfi_${beneficiaryAccountNumber.toLowerCase()}'
+                  : 'other_${sourceAccountNumber}';
+
+          if (seenAccountNumbers.contains(uniqueKey)) {
+            return false; // Skip duplicate
+          }
+          seenAccountNumbers.add(uniqueKey);
+          return true;
+        }).toList();
+
+    // Get top 5 recent transactions
+    final recentTransactions = filteredTransactions.take(5).toList();
 
     // Show shimmer loading only if there's no cached data
     if (transactionsState.isLoading && recentTransactions.isEmpty) {
@@ -754,67 +1071,221 @@ class _HomeViewState extends ConsumerState<HomeView>
     }
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(height: 4.h),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Recent transactions',
-              style: AppTypography.titleMedium.copyWith(
-                fontFamily: 'Karla',
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-                letterSpacing: -.2,
-                height: 1.450,
-                color: Theme.of(
-                  context,
-                ).textTheme.bodyLarge!.color!.withOpacity(.75),
-              ),
-              textAlign: TextAlign.start,
-              overflow: TextOverflow.ellipsis,
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 18.w),
+          child: Text(
+            'Send Again',
+            style: AppTypography.titleMedium.copyWith(
+              fontFamily: 'Karla',
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              letterSpacing: -.2,
+              height: 1.450,
+              color: Theme.of(
+                context,
+              ).textTheme.bodyLarge!.color!.withOpacity(.75),
             ),
-            SizedBox(width: 12.h),
-            // Check if recent transactions length is greater than 5
-            Center(
-              child: InkWell(
-                onTap: () {
-                  appRouter.pushNamed(AppRoute.transactionsView);
-                },
-                child: Text(
-                  'See All',
-                  style: AppTypography.bodyMedium.copyWith(
-                    fontFamily: 'Karla',
-                    color: AppColors.purple500ForTheme(context),
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: -.3,
-                    height: 1.4,
-                  ),
-                ),
-              ),
-            ),
-          ],
+            textAlign: TextAlign.start,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
         SizedBox(height: 8.h),
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(12.r),
-          ),
-          child: Column(
-            children: [
-              for (int i = 0; i < recentTransactions.length; i++)
-                _buildTransactionCard(
-                  recentTransactions[i],
-                  isLast: i == recentTransactions.length - 1,
+        SizedBox(
+          height: 72.h,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: EdgeInsets.symmetric(horizontal: 12.w),
+            itemCount: recentTransactions.length,
+            itemBuilder: (context, i) {
+              final tx = recentTransactions[i];
+              final beneficiary = tx.beneficiary;
+              final source = tx.source;
+              return GestureDetector(
+                onTap: () {
+                  Navigator.pushNamed(
+                    context,
+                    AppRoute.sendView,
+                    arguments: <String, dynamic>{
+                      'beneficiaryWithSource': {
+                        'beneficiary': beneficiary,
+                        'source': source,
+                      },
+                      'fromRecipients': true,
+                    },
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6.0),
+                  child: Chip(
+                    padding: EdgeInsets.all(4),
+                    backgroundColor: Theme.of(context).colorScheme.surface,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                      side: BorderSide(color: Colors.transparent),
+                    ),
+                    labelPadding: EdgeInsets.symmetric(
+                      horizontal: 8.w,
+                      vertical: 5.h,
+                    ),
+                    avatar: Stack(
+                      alignment: Alignment.bottomRight,
+                      children: [
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            SvgPicture.asset(
+                              "assets/icons/svgs/recipients.svg",
+                              width: 40.w,
+                              height: 40.w,
+                              color: AppColors.purple500ForTheme(context),
+                            ),
+                            SizedBox(
+                              width: 40.w,
+                              height: 40.w,
+                              child: Center(
+                                child: Text(
+                                  _getInitials(beneficiary.name),
+                                  style: TextStyle(
+                                    color: AppColors.neutral0,
+                                    fontFamily: 'Karla',
+                                    fontSize: 16.sp,
+                                    letterSpacing: -.6,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Align(
+                          alignment: Alignment.bottomRight,
+                          child: Container(
+                            width: 16.w,
+                            height: 16.w,
+                            decoration: BoxDecoration(
+                              color: AppColors.neutral0,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: AppColors.neutral200,
+                                width: 1,
+                              ),
+                            ),
+                            child: ClipOval(
+                              child: SvgPicture.asset(
+                                _getFlagPath(beneficiary.country),
+                                fit: BoxFit.cover,
+                                width: 24.w,
+                                height: 24.w,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    label: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          beneficiary.name.split(' ').first,
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodyLarge?.copyWith(
+                            fontFamily: 'Karla',
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w500,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                        SizedBox(height: 2.h),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _getAccountIcon(source, beneficiary),
+                            SizedBox(width: 4.w),
+                            Flexible(
+                              child:
+                                  source.accountType?.toLowerCase() == 'dayfi'
+                                      ? Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            beneficiary.accountNumber
+                                                    ?.split("@")
+                                                    .last ??
+                                                '',
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.bodyMedium?.copyWith(
+                                              fontFamily: 'Karla',
+                                              fontSize: 13.sp,
+                                              fontWeight: FontWeight.w500,
+                                              letterSpacing: -.6,
+                                              height: 1.450,
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurface
+                                                  .withOpacity(0.6),
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          SizedBox(width: 8.w),
+                                          Container(
+                                            padding: EdgeInsets.symmetric(
+                                              vertical: 3.h,
+                                              horizontal: 8.w,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.warning400
+                                                  .withOpacity(0.15),
+                                              borderRadius:
+                                                  BorderRadius.circular(12.r),
+                                            ),
+                                            child: Text(
+                                              "Dayfi Tag",
+                                              style: TextStyle(
+                                                fontFamily: 'Karla',
+                                                fontSize: 10.sp,
+                                                color: AppColors.warning600,
+                                                fontWeight: FontWeight.w600,
+                                                height: 1.2,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                      : Text(
+                                        '${_getNetworkName(source)} • ${_getAccountNumber(source, beneficiary)}',
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodyMedium?.copyWith(
+                                          fontFamily: 'Karla',
+                                          fontSize: 13.sp,
+                                          fontWeight: FontWeight.w500,
+                                          letterSpacing: -.4,
+                                          height: 1.450,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface
+                                              .withOpacity(0.6),
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-            ],
+              );
+            },
           ),
         ),
-
-        // SizedBox(height: 32.h),
       ],
     );
   }
@@ -831,22 +1302,22 @@ class _HomeViewState extends ConsumerState<HomeView>
         );
       },
       child: Container(
-        margin: EdgeInsets.only(bottom: isLast ? 12.h : 24.h, top: 12.h),
+        margin: EdgeInsets.only(bottom: isLast ? 12.h : 24.h, top: 8.h),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             // Transaction Type Icon (Inflow/Outflow)
             SizedBox(
-              width: 36.w,
-              height: 36.w,
+              width: 40.w,
+              height: 40.w,
               child: Stack(
                 alignment: Alignment.center,
                 children: [
                   // Background circle
                   SvgPicture.asset(
-                    'assets/icons/svgs/transactions.svg',
-                    height: 36.sp,
+                    'assets/icons/svgs/account.svg',
+                    height: 40.sp,
                     color: _getTransactionTypeColorForTransaction(
                       transaction,
                     ).withOpacity(0.35),
@@ -864,7 +1335,7 @@ class _HomeViewState extends ConsumerState<HomeView>
                 ],
               ),
             ),
-            SizedBox(width: 8.w),
+            SizedBox(width: 12.w),
 
             // Transaction Info
             Expanded(
@@ -881,7 +1352,7 @@ class _HomeViewState extends ConsumerState<HomeView>
                       fontWeight: FontWeight.w500,
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
-                    // maxLines: 2,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
 
@@ -892,13 +1363,13 @@ class _HomeViewState extends ConsumerState<HomeView>
                       _capitalizeWords(transaction.reason!),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         fontFamily: 'Karla',
-                        fontWeight: FontWeight.w400,
+                        fontWeight: FontWeight.w500,
                         letterSpacing: -.1,
                         height: 1.5,
                         fontSize: 12.sp,
                         color: Theme.of(
                           context,
-                        ).colorScheme.onSurface.withOpacity(.45),
+                        ).colorScheme.onSurface.withOpacity(.65),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -908,8 +1379,8 @@ class _HomeViewState extends ConsumerState<HomeView>
                     _formatTransactionTime(transaction.timestamp),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontFamily: 'Karla',
-                      fontSize: 12.5.sp,
-                      fontWeight: FontWeight.w400,
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w500,
                       letterSpacing: -.2,
                       color: Theme.of(
                         context,
@@ -929,19 +1400,18 @@ class _HomeViewState extends ConsumerState<HomeView>
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     fontFamily: 'Karla',
                     fontSize: 16.sp,
-
                     fontWeight: FontWeight.w600,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 SizedBox(height: 2.h),
                 Text(
-                  _getStatusText(transaction.status).toUpperCase(),
+                  _getStatusText(transaction.status),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontFamily: 'Karla',
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w500,
-                    letterSpacing: -.5,
+                    letterSpacing: -.6,
                     height: 1.450,
                     color: _getStatusColor(transaction.status),
                   ),
@@ -994,16 +1464,20 @@ class _HomeViewState extends ConsumerState<HomeView>
   }
 
   String _getBeneficiaryDisplayName(WalletTransaction transaction) {
-    final isCollection = transaction.status.toLowerCase().contains('collection');
+    final isCollection = transaction.status.toLowerCase().contains(
+      'collection',
+    );
     final isPayment = transaction.status.toLowerCase().contains('payment');
-    
+
     // Check if this is a DayFi tag transfer
-    final isDayfiTransfer = transaction.source.accountType?.toLowerCase() == 'dayfi' ||
+    final isDayfiTransfer =
+        transaction.source.accountType?.toLowerCase() == 'dayfi' ||
         transaction.beneficiary.accountType?.toLowerCase() == 'dayfi';
-    
+
     // For collection (incoming money)
     if (isCollection) {
-      if (isDayfiTransfer && transaction.beneficiary.accountNumber != null &&
+      if (isDayfiTransfer &&
+          transaction.beneficiary.accountNumber != null &&
           transaction.beneficiary.accountNumber!.isNotEmpty) {
         final tag = transaction.beneficiary.accountNumber!;
         final displayTag = tag.startsWith('@') ? tag : '@$tag';
@@ -1011,36 +1485,40 @@ class _HomeViewState extends ConsumerState<HomeView>
       }
       return 'Money added to your wallet';
     }
-    
+
     // For payment (outgoing money)
     if (isPayment) {
       // Check if it's a wallet top-up (sending to yourself)
       final profileState = ref.read(profileViewModelProvider);
       final user = profileState.user;
-      
+
       if (user != null) {
-        final userFullName = '${user.firstName} ${user.lastName}'.trim().toUpperCase();
-        final beneficiaryName = transaction.beneficiary.name.trim().toUpperCase();
-        
+        final userFullName =
+            '${user.firstName} ${user.lastName}'.trim().toUpperCase();
+        final beneficiaryName =
+            transaction.beneficiary.name.trim().toUpperCase();
+
         if (beneficiaryName == userFullName ||
             beneficiaryName == 'SELF FUNDING' ||
-            (beneficiaryName.contains('SELF') && beneficiaryName.contains('FUNDING'))) {
+            (beneficiaryName.contains('SELF') &&
+                beneficiaryName.contains('FUNDING'))) {
           return 'Topped up your wallet';
         }
       }
-      
+
       // Regular payment to another person
-      if (isDayfiTransfer && transaction.beneficiary.accountNumber != null &&
+      if (isDayfiTransfer &&
+          transaction.beneficiary.accountNumber != null &&
           transaction.beneficiary.accountNumber!.isNotEmpty) {
         final tag = transaction.beneficiary.accountNumber!;
         final displayTag = tag.startsWith('@') ? tag : '@$tag';
         return 'Sent money to $displayTag';
       }
-      
+
       // Payment to beneficiary name
       return 'Sent to ${transaction.beneficiary.name}';
     }
-    
+
     // Fallback to beneficiary name
     return transaction.beneficiary.name.toUpperCase();
   }
@@ -1236,6 +1714,42 @@ class _HomeViewState extends ConsumerState<HomeView>
       default:
         return 'assets/icons/svgs/world_flags/nigeria.svg'; // fallback
     }
+  }
+
+  String _getAccountNumber(Source source, Beneficiary beneficiary) {
+    // For DayFi transfers, use beneficiary.accountNumber (the DayFi tag)
+    if (source.accountType?.toLowerCase() == 'dayfi' &&
+        beneficiary.accountNumber != null &&
+        beneficiary.accountNumber!.isNotEmpty) {
+      return '@${beneficiary.accountNumber!}';
+    }
+
+    // For other transfers, use source.accountNumber
+    if (source.accountNumber != null && source.accountNumber!.isNotEmpty) {
+      return source.accountNumber!;
+    }
+
+    return 'N/A';
+  }
+
+  String _getNetworkName(Source source) {
+    if (source.accountType?.toLowerCase() == 'dayfi') {
+      return 'DayFi Tag';
+    }
+
+    final sendState = ref.watch(sendViewModelProvider);
+    final networkId = source.networkId;
+
+    if (networkId == null || networkId.isEmpty) {
+      return 'Bank Transfer';
+    }
+
+    final network = sendState.networks.firstWhere(
+      (n) => n.id == networkId,
+      orElse: () => payment.Network(id: null, name: null),
+    );
+
+    return network.name ?? 'Bank Transfer';
   }
 
   Widget _getAccountIcon(Source source, Beneficiary beneficiary) {

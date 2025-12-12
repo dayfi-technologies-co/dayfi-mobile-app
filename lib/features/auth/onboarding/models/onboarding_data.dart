@@ -3,29 +3,30 @@ import 'onboarding_page.dart';
 class OnboardingData {
   static const List<OnboardingPage> pages = [
     OnboardingPage(
-      title: 'Send money to those who matter',
+      title: 'Stream money\nto anyone',
       subtitle:
-          'Make international transfers to local bank accounts and mobile money wallets.',
+          'Send salaries, gig payouts, and remittances that update every second.',
       description:
-          'Empower your relationships with seamless financial connections worldwide.',
+          'Experience real-time financial flows powered by Stellar USDC and our instant streaming engine.',
       illustrationPath: 'assets/icons/svgs/recipients.svg',
       decorativeElements: ['purple_starburst', 'green_starburst'],
     ),
     OnboardingPage(
-      title: '20+\ncountries & currencies',
-      subtitle: 'Send money to your Beneficiaries in their local currency.',
+      title: 'Cross-border\nin real time',
+      subtitle:
+          'Stream USD globally and settle instantly into NGN, ZAR, GHS, and more.',
       description:
-          'Experience global connectivity with local banking convenience.',
+          'Your recipients get live-updating balances in their local currency—no delays, no friction.',
       illustrationPath: 'assets/icons/svgs/transactions.svg',
       decorativeElements: ['purple_starburst', 'green_starburst'],
     ),
     OnboardingPage(
-      title: 'Safe and secure transfers',
+      title: 'Secure and\nprogrammable',
       subtitle:
-          'Your transactions and personal data are securely protected.',
+          'Built with end-to-end encryption, KYC/KYB, and automated compliance rules.',
       description:
-          'Your financial data stays private with enterprise-level security measures.',
-      illustrationPath: 'assets/icons/pngs/account.png',
+          'Our programmable ledger gives you full transparency, audit trails, and enterprise-grade safety.',
+      illustrationPath: 'assets/icons/pngs/account_4.png',
       decorativeElements: [
         'padlock',
         'green_star',
@@ -34,10 +35,12 @@ class OnboardingData {
       ],
     ),
     OnboardingPage(
-      title: 'Send\nmoney in minutes',
-      subtitle: 'Beneficiaries typically receive funds almost instantly.',
-      description: 'Experience the speed of modern financial technology.',
-      illustrationPath: 'assets/icons/svgs/swap.svg',
+      title: 'Instant cash-out\nwhen needed',
+      subtitle:
+          'Recipients withdraw in seconds to bank accounts and mobile wallets.',
+      description:
+          'We stream continuously, and settle instantly—so funds are available whenever they’re needed.',
+      illustrationPath: 'assets/icons/svgs/transactions.svg',
       decorativeElements: ['hand_stopwatch'],
     ),
   ];

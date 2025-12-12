@@ -50,7 +50,7 @@ class NumericalKeyboard extends StatelessWidget {
           children: [
             if (showFaceID) ...[
               CircleAvatar(
-                backgroundColor: AppColors.primary500.withOpacity(.05),
+                backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(.05),
                 child: InkWell(
                     onTap: () => onKeyPressed!(faceIDKey),
                     child: Assets.icons.svgs.faceScan.svg(height: 34.h, width: 34.w)),
@@ -71,7 +71,7 @@ class NumericalKeyboard extends StatelessWidget {
   Widget _buildNumberKey(int n, BuildContext context) {
     return _buildKey(
         CircleAvatar(
-            backgroundColor: AppColors.primary500.withOpacity(.05),
+            backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(.05),
             child: Text(
               '$n',
               style: AppTypography.bodyLarge.copyWith(

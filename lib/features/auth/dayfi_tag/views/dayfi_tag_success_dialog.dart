@@ -126,8 +126,8 @@ class DayfiTagSuccessDialog extends StatelessWidget {
                 Text(
                   "Your Dayfi ID is all set",
                   style: AppTypography.titleLarge.copyWith(
-                 fontFamily: 'CabinetGrotesk',
-                     fontSize: 20.sp, // height: 1.6,
+                 fontFamily: 'FunnelDisplay',
+                     fontSize: 24.sp, // height: 1.6,
                     fontWeight: FontWeight.w500,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
@@ -141,7 +141,7 @@ class DayfiTagSuccessDialog extends StatelessWidget {
                   style: AppTypography.bodyMedium.copyWith(
                     fontFamily: 'Karla',
                     fontSize: 16.sp,
-                    fontWeight: FontWeight.w400,
+                    fontWeight: FontWeight.w500,
                     color: Theme.of(
                       context,
                     ).colorScheme.onSurface.withOpacity(0.7),
@@ -159,12 +159,12 @@ class DayfiTagSuccessDialog extends StatelessWidget {
                   backgroundColor: AppColors.purple500,
                   textColor: AppColors.neutral0,
                   borderRadius: 38.r,
-                  height: 48.000.h,
+                  height: 48.00000.h,
                   width: double.infinity,
                   fullWidth: true,
                   fontFamily: 'Karla',
                   fontSize: 18.sp,
-                  fontWeight: FontWeight.w400,
+                  fontWeight: FontWeight.w500,
                   letterSpacing: -0.8,
                 ),
                 SizedBox(height: 20.h),

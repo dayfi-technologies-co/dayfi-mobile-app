@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'package:dayfi/flavors.dart';
 import 'package:dayfi/models/payment_response.dart';
+import 'package:dayfi/models/fees_response.dart';
 import 'package:dayfi/services/remote/network/network_service.dart';
 import 'package:dayfi/services/remote/network/url_config.dart';
+import 'package:dayfi/common/utils/app_logger.dart';
 
 class PaymentService {
   NetworkService _networkService;
@@ -202,6 +204,37 @@ class PaymentService {
     }
   }
 
+  /// Create settlement request
+  /// POST /api/v1/payments/settlement
+  Future<PaymentResponse> createSettlement(
+    Map<String, dynamic> requestData,
+  ) async {
+    try {
+      final response = await _networkService.call(
+        '${F.baseUrl}/payments/settlement',
+        RequestMethod.post,
+        data: requestData,
+      );
+
+      // Handle response data - check if it's a Map or String
+      Map<String, dynamic> responseData;
+      if (response.data is Map<String, dynamic>) {
+        responseData = response.data;
+      } else if (response.data is String) {
+        // Try to parse JSON string
+        responseData = json.decode(response.data);
+      } else {
+        throw Exception('Invalid response format');
+      }
+
+      final paymentResponse = PaymentResponse.fromJson(responseData);
+
+      return paymentResponse;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   /// Check collection status (returns just the status string)
   Future<String> checkCollectionStatus(String collectionSequenceId) async {
     try {
@@ -222,11 +255,11 @@ class PaymentService {
 
       // Extract status from response
       final status = responseData['status']?.toString() ?? 'unknown';
-      print('🔍 Collection status for $collectionSequenceId: $status');
+      // print('🔍 Collection status for $collectionSequenceId: $status');
 
       return status;
     } catch (e) {
-      print('❌ Error checking collection status: $e');
+      // print('❌ Error checking collection status: $e');
       return 'unknown';
     }
   }
@@ -332,6 +365,38 @@ class PaymentService {
 
       return paymentResponse;
     } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Fetch payment fees
+  /// GET /api/v1/payments/fees
+  Future<FeesResponse> fetchFees() async {
+    try {
+      AppLogger.debug('🔄 PaymentService: Calling fees API');
+      final response = await _networkService.call(
+        F.baseUrl + UrlConfig.fetchFees,
+        RequestMethod.get,
+      );
+      AppLogger.debug('🔄 PaymentService: Fees API response received');
+
+      // Handle response data - check if it's a Map or String
+      Map<String, dynamic> responseData;
+      if (response.data is Map<String, dynamic>) {
+        responseData = response.data;
+      } else if (response.data is String) {
+        // Try to parse JSON string
+        responseData = json.decode(response.data);
+      } else {
+        throw Exception('Invalid response format');
+      }
+
+      final feesResponse = FeesResponse.fromJson(responseData);
+      AppLogger.debug('🔄 PaymentService: Fees response parsed successfully');
+
+      return feesResponse;
+    } catch (e) {
+      AppLogger.error('❌ PaymentService: Error in fetchFees: $e');
       rethrow;
     }
   }

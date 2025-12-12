@@ -36,7 +36,7 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return Dialog(
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+              backgroundColor: Theme.of(context).colorScheme.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24.r),
           ),
@@ -82,10 +82,11 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
                 Text(
                   'For your security, please avoid easy-to-guess passcodes. e.g. 1234, 2222',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                 fontFamily: 'CabinetGrotesk',
-                     fontSize: 20.sp, // height: 1.6,
-                    fontWeight: FontWeight.w400,
-                    letterSpacing: -0.5,
+                    fontFamily: 'Karla',
+
+                    fontSize: 20.sp, // height: 1.6,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: -0.8,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -101,13 +102,13 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
                   backgroundColor: AppColors.purple500,
                   textColor: AppColors.neutral0,
                   borderRadius: 38,
-                  height: 48.000.h,
+                  height: 48.00000.h,
                   width: double.infinity,
                   fullWidth: true,
                   fontFamily: 'Karla',
                   fontSize: 18,
-                  fontWeight: FontWeight.w400,
-                  letterSpacing: -.8,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: -.70,
                 ),
               ],
             ),
@@ -146,7 +147,10 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   AppBar(
-                    scrolledUnderElevation: 0,
+                    scrolledUnderElevation: .5,
+                    foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+                    shadowColor: Theme.of(context).scaffoldBackgroundColor,
+                    surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
                     backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                     elevation: 0,
                     leading: IconButton(
@@ -161,8 +165,8 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
                       style: Theme.of(
                         context,
                       ).textTheme.headlineMedium?.copyWith(
-                     fontFamily: 'CabinetGrotesk',
-                        fontSize: 28.00,
+                        fontFamily: 'Boldonse',
+                        fontSize: 18.sp,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -184,9 +188,9 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
                                   context,
                                 ).textTheme.bodyMedium?.copyWith(
                                   fontSize: 16.sp,
-                                  fontWeight: FontWeight.w400,
+                                  fontWeight: FontWeight.w500,
                                   fontFamily: 'Karla',
-                                  letterSpacing: -.3,
+                                  letterSpacing: -.6,
                                   height: 1.4,
                                 ),
                                 textAlign: TextAlign.center,
@@ -251,7 +255,7 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
                         fontSize: 13.sp,
                         color: Colors.red.shade800,
                         letterSpacing: -0.4,
-                        fontWeight: FontWeight.w400,
+                        fontWeight: FontWeight.w500,
                         height: 1.4,
                       ),
                       textAlign: TextAlign.center,
@@ -294,8 +298,8 @@ class PasscodeWidget extends StatelessWidget {
             (index) => Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6.0),
               child: Container(
-                width: 30,
-                height: 30,
+                width: 24,
+                height: 24,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color:
@@ -368,9 +372,9 @@ class PasscodeWidget extends StatelessWidget {
                 child: Text(
                   number,
                   style: TextStyle(
-                    fontSize: 25.60.sp,
-                 fontFamily: 'CabinetGrotesk',
-                    fontWeight: FontWeight.w400,
+                    fontSize: 32.sp,
+                    fontFamily: 'FunnelDisplay',
+                    fontWeight: FontWeight.w500,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
@@ -385,21 +389,26 @@ class PasscodeWidget extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     return Builder(
-      builder: (context) => GestureDetector(
-        onTap: () {
-          HapticHelper.lightImpact();
-          onTap();
-        },
-        child: Container(
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.transparent,
+      builder:
+          (context) => GestureDetector(
+            onTap: () {
+              HapticHelper.lightImpact();
+              onTap();
+            },
+            child: Container(
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.transparent,
+              ),
+              child: Center(
+                child: Icon(
+                  icon,
+                  color: AppColors.purple500ForTheme(context),
+                  size: 20.sp,
+                ),
+              ),
+            ),
           ),
-          child: Center(
-            child: Icon(icon, color: AppColors.purple500ForTheme(context)),
-          ),
-        ),
-      ),
     );
   }
 }

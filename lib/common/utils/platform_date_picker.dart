@@ -5,14 +5,14 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 
 /// Platform-specific date picker utility
-/// 
+///
 /// This utility provides a consistent interface for showing date pickers
 /// while using the native platform UI:
 /// - iOS: CupertinoDatePicker in a bottom sheet
 /// - Android: Material showDatePicker
 class PlatformDatePicker {
   /// Shows a platform-appropriate date picker
-  /// 
+  ///
   /// [context] - The build context
   /// [initialDate] - The initial date to show
   /// [firstDate] - The earliest selectable date
@@ -84,22 +84,24 @@ class PlatformDatePicker {
                   borderRadius: BorderRadius.circular(2.r),
                 ),
               ),
-              
+
               // Title
               if (title != null) ...[
                 Padding(
                   padding: EdgeInsets.all(16.w),
                   child: Text(
                     title,
-                    style: material.Theme.of(context).textTheme.titleLarge?.copyWith(
-                   fontFamily: 'CabinetGrotesk',
+                    style: material.Theme.of(
+                      context,
+                    ).textTheme.titleLarge?.copyWith(
+                      fontFamily: 'FunnelDisplay',
                       fontSize: 24.sp,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
               ],
-              
+
               // Date picker
               Expanded(
                 child: CupertinoDatePicker(
@@ -112,7 +114,7 @@ class PlatformDatePicker {
                   },
                 ),
               ),
-              
+
               // Action buttons
               Padding(
                 padding: EdgeInsets.all(16.w),
@@ -190,7 +192,7 @@ class PlatformDatePicker {
     final now = DateTime.now();
     final eighteenYearsAgo = DateTime(now.year - 18, now.month, now.day);
     final firstDate = DateTime(1900);
-    
+
     // Ensure initial date is within valid range
     DateTime defaultInitialDate;
     if (initialDate != null) {
@@ -236,7 +238,8 @@ class PlatformDatePicker {
     final now = DateTime.now();
     final defaultInitialDate = initialDate ?? now;
     final defaultFirstDate = firstDate ?? DateTime(1900);
-    final defaultLastDate = lastDate ?? DateTime(now.year + 10, now.month, now.day);
+    final defaultLastDate =
+        lastDate ?? DateTime(now.year + 10, now.month, now.day);
 
     if (Platform.isIOS) {
       return _showIOSDatePicker(

@@ -139,11 +139,10 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
 
   void _proceedToPayment() {
     if (_selectedReason.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Please select a reason for transfer'),
-          backgroundColor: AppColors.error500,
-        ),
+      TopSnackbar.show(
+        context,
+        message: 'Please select a reason for transfer',
+        isError: true,
       );
       return;
     }
@@ -216,7 +215,8 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
     // Reset processing state
     _isProcessingPinNotifier.value = false;
 
-    showModalBottomSheet(
+        showModalBottomSheet(
+      barrierColor: Colors.black.withOpacity(0.85),
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -338,21 +338,54 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
-          scrolledUnderElevation: 0,
+             scrolledUnderElevation: .5,
+              foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+              shadowColor: Theme.of(context).scaffoldBackgroundColor,
+              surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
-          leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios,
-              color: Theme.of(context).colorScheme.onSurface,
+          leadingWidth: 72,
+          leading: InkWell(
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            onTap:
+                () => {
+                  Navigator.pop(context),
+                  FocusScope.of(context).unfocus(),
+                },
+            child: Stack(
+              alignment: AlignmentGeometry.center,
+              children: [
+                SvgPicture.asset(
+                  "assets/icons/svgs/notificationn.svg",
+                  height: 40.sp,
+                  color: Theme.of(context).colorScheme.surface,
+                ),
+                SizedBox(
+                  height: 40.sp,
+                  width: 40.sp,
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: Icon(
+                        Icons.arrow_back_ios,
+                        size: 20.sp,
+                        color: Theme.of(context).textTheme.bodyLarge!.color,
+                        // size: 20.sp,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            onPressed: () => Navigator.pop(context),
           ),
+          automaticallyImplyLeading: false,
           title: Text(
-            'Review',
+            'Review Transfer',
             style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-              fontFamily: 'CabinetGrotesk',
-               fontSize: 20.sp, // height: 1.6,
+              fontFamily: 'FunnelDisplay',
+              fontSize: 24.sp, // height: 1.6,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface,
             ),
@@ -360,24 +393,39 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
           centerTitle: true,
         ),
         body: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 12.h),
+          padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 18.w),
+                child: Text(
+                  "Confirm the details of your transfer before sending",
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Karla',
+                    letterSpacing: -.6,
+                    height: 1.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              SizedBox(height: 32.h),
+
               // Reason Selection
               _buildReasonSelection(),
 
-              SizedBox(height: 32.h),
+              SizedBox(height: 24.h),
 
               // Transfer Details
               _buildTransferDetails(sendAmount),
 
-              SizedBox(height: 32.h),
+              // SizedBox(height: 32.h),
 
-              // Description
-              _buildDescriptionSection(),
-
-              SizedBox(height: 56.h),
+              // // Description
+              // _buildDescriptionSection(),
+              SizedBox(height: 40.h),
 
               // Continue Button
               PrimaryButton(
@@ -385,19 +433,17 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
                 onPressed:
                     _selectedReason.isNotEmpty ? _proceedToPayment : null,
                 isLoading: _isLoading,
-                height: 48.000.h,
+                height: 48.00000.h,
                 backgroundColor:
                     _selectedReason.isNotEmpty
                         ? AppColors.purple500
-                        : Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withOpacity(0.12),
+                        : AppColors.purple500.withOpacity(0.12),
                 textColor:
                     _selectedReason.isNotEmpty
                         ? AppColors.neutral0
-                        : AppColors.neutral0.withOpacity(.65),
+                        : AppColors.neutral0.withOpacity(.35),
                 fontFamily: 'Karla',
-                letterSpacing: -.8,
+                letterSpacing: -.70,
                 fontSize: 18,
                 width: double.infinity,
                 fullWidth: true,
@@ -460,6 +506,15 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
           _buildDetailRow('Transfer Amount', '₦${_formatNumber(sendAmount)}'),
           _buildDetailRow('Recipient', '@${widget.dayfiId}'),
           _buildDetailRow('Delivery Method', 'Dayfi ID Transfer'),
+          Divider(
+            color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+            height: 24.h,
+          ),
+          _buildDetailRow(
+            'Total',
+            '₦${_formatNumber(sendAmount)}',
+            isTotal: true,
+          ),
           _buildDetailRow('Transfer Time', 'Instant', bottomPadding: 0),
         ],
       ),
@@ -490,6 +545,7 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
   Widget _buildDetailRow(
     String label,
     String value, {
+    bool isTotal = false,
     double bottomPadding = 12,
   }) {
     return Padding(
@@ -506,9 +562,9 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
                 label,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   fontFamily: 'Karla',
-                  letterSpacing: -.3,
+                  letterSpacing: -.6,
                   fontSize: 14.sp,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: isTotal ? FontWeight.w600 : FontWeight.w500,
                   color: Theme.of(
                     context,
                   ).colorScheme.onSurface.withOpacity(0.6),
@@ -522,8 +578,8 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
               value,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 fontFamily: 'Karla',
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w600,
+                fontSize: isTotal ? 16.sp : 13.sp,
+                fontWeight: isTotal ? FontWeight.w700 : FontWeight.w600,
                 color: Theme.of(context).colorScheme.onSurface,
               ),
               textAlign: TextAlign.end,
@@ -560,13 +616,15 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
   }
 
   void _showReasonBottomSheet() {
-    showModalBottomSheet(
+        showModalBottomSheet(
+      barrierColor: Colors.black.withOpacity(0.85),
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder:
           (context) => Container(
             height: MediaQuery.of(context).size.height * 0.92,
+
             decoration: BoxDecoration(
               color: Theme.of(context).scaffoldBackgroundColor,
               borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
@@ -579,25 +637,49 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      SizedBox(height: 24.h, width: 22.w),
+                      SizedBox(height: 40.h, width: 40.w),
                       Text(
                         'Transfer reason',
                         style: AppTypography.titleLarge.copyWith(
-                          fontFamily: 'Karla',
-                          fontSize: 16.sp,
+                          fontFamily: 'FunnelDisplay',
+                          fontSize: 20.sp,
+                          // height: 1.6,
                           fontWeight: FontWeight.w600,
                           color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.pop(context);
-                        },
-                        child: Image.asset(
-                          "assets/icons/pngs/cancelicon.png",
-                          height: 24.h,
-                          width: 24.w,
-                          color: Theme.of(context).colorScheme.onSurface,
+                      InkWell(
+                        splashColor: Colors.transparent,
+                        highlightColor: Colors.transparent,
+                        onTap:
+                            () => {
+                              Navigator.pop(context),
+                              FocusScope.of(context).unfocus(),
+                            },
+                        child: Stack(
+                          alignment: AlignmentGeometry.center,
+                          children: [
+                            SvgPicture.asset(
+                              "assets/icons/svgs/notificationn.svg",
+                              height: 40.sp,
+                              color: Theme.of(context).colorScheme.surface,
+                            ),
+                            SizedBox(
+                              height: 40.sp,
+                              width: 40.sp,
+                              child: Center(
+                                child: Image.asset(
+                                  "assets/icons/pngs/cancelicon.png",
+                                  height: 20.h,
+                                  width: 20.w,
+                                  color:
+                                      Theme.of(
+                                        context,
+                                      ).textTheme.bodyLarge!.color,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -745,9 +827,9 @@ class _TransactionPinBottomSheetState
                     child: Text(
                       index < pinState.pin.length ? '*' : '*',
                       style: TextStyle(
-                        fontSize: 70.sp,
+                        fontSize: 88.sp,
                         letterSpacing: -25,
-                        fontFamily: 'CabinetGrotesk',
+                        fontFamily: 'FunnelDisplay',
                         fontWeight: FontWeight.w700,
                         color:
                             index < pinState.pin.length
@@ -819,6 +901,7 @@ class _TransactionPinBottomSheetState
                     }),
                     _buildIconButton(
                       icon: Icons.arrow_back_ios,
+
                       onTap: () {
                         if (pinState.pin.isNotEmpty && !widget.isProcessing) {
                           pinNotifier.updatePin(
@@ -869,9 +952,9 @@ class _TransactionPinBottomSheetState
                 child: Text(
                   number,
                   style: TextStyle(
-                    fontSize: 25.60.sp,
-                    fontFamily: 'CabinetGrotesk',
-                    fontWeight: FontWeight.w400,
+                    fontSize: 32.sp,
+                    fontFamily: 'FunnelDisplay',
+                    fontWeight: FontWeight.w500,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
@@ -899,7 +982,11 @@ class _TransactionPinBottomSheetState
           color: Colors.transparent,
         ),
         child: Center(
-          child: Icon(icon, color: AppColors.purple500ForTheme(context)),
+          child: Icon(
+            icon,
+            color: AppColors.purple500ForTheme(context),
+            size: 20.sp,
+          ),
         ),
       ),
     );

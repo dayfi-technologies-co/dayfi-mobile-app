@@ -53,6 +53,9 @@ dependencies:
   shimmer: ^3.0.0
   share_plus: ^10.1.2
   screenshot: ^3.0.0
+  google_sign_in: ^6.2.1
+  lottie: 
+  firebase_storage: ^13.0.4
 
 dev_dependencies:
   flutter_test:
@@ -122,68 +125,7 @@ flutter:
 
   # Custom fonts configuration
   fonts:
-    - family: Readex Pro
-      fonts:
-        - asset: assets/fonts/ReadexPro-ExtraLight.ttf
-          weight: 200
-        - asset: assets/fonts/ReadexPro-Light.ttf
-          weight: 300
-        - asset: assets/fonts/ReadexPro-Regular.ttf
-          weight: 400
-        - asset: assets/fonts/ReadexPro-Medium.ttf
-          weight: 500
-        - asset: assets/fonts/ReadexPro-SemiBold.ttf
-          weight: 600
-        - asset: assets/fonts/ReadexPro-Bold.ttf
-          weight: 700
-    - family: Youth
-      fonts:
-        - asset: assets/fonts/Youth-Thin.otf
-          weight: 100
-        - asset: assets/fonts/Youth-Light.otf
-          weight: 300
-        - asset: assets/fonts/Youth-Regular.otf
-          weight: 400
-        - asset: assets/fonts/Youth-Medium.otf
-          weight: 500
-        - asset: assets/fonts/Youth-Bold.otf
-          weight: 700
-        - asset: assets/fonts/Youth-Black.otf
-          weight: 900
-
-    - family: CabinetGrotesk
-      fonts:
-        - asset: assets/fonts/cabinet_grotesk/CabinetGrotesk-Black.otf
-          weight: 900
-        - asset: assets/fonts/cabinet_grotesk/CabinetGrotesk-Bold.otf
-          weight: 700
-        - asset: assets/fonts/cabinet_grotesk/CabinetGrotesk-Extrabold.otf
-          weight: 800
-        - asset: assets/fonts/cabinet_grotesk/CabinetGrotesk-Extralight.otf
-          weight: 200
-        - asset: assets/fonts/cabinet_grotesk/CabinetGrotesk-Light.otf
-          weight: 300
-        - asset: assets/fonts/cabinet_grotesk/CabinetGrotesk-Medium.otf
-          weight: 500
-        - asset: assets/fonts/cabinet_grotesk/CabinetGrotesk-Regular.otf
-          weight: 400
-        - asset: assets/fonts/cabinet_grotesk/CabinetGrotesk-Thin.otf
-          weight: 100
-
-    - family: SpaceGrotesk
-      fonts:
-        - asset: assets/fonts/space_grotesk/SpaceGrotesk-Bold.ttf
-          weight: 700
-        - asset: assets/fonts/space_grotesk/SpaceGrotesk-Light.ttf
-          weight: 300
-        - asset: assets/fonts/space_grotesk/SpaceGrotesk-Medium.ttf
-          weight: 500
-        - asset: assets/fonts/space_grotesk/SpaceGrotesk-Regular.ttf
-          weight: 400
-        - asset: assets/fonts/space_grotesk/SpaceGrotesk-SemiBold.ttf
-          weight: 600
-        - asset: assets/fonts/space_grotesk/SpaceGrotesk-VariableFont_wght.ttf
-
+        
     - family: Karla
       fonts:
         - asset: assets/fonts/karla/Karla-Regular.ttf
@@ -221,6 +163,27 @@ flutter:
         - asset: assets/fonts/karla/Karla-ExtraLightItalic.ttf
           weight: 200
           style: italic
+
+    - family: FunnelDisplay
+      fonts:
+        - asset: assets/fonts/Funnel_Display/otf/FunnelDisplay-Light.otf
+          weight: 300
+        - asset: assets/fonts/Funnel_Display/otf/FunnelDisplay-Regular.otf
+          weight: 400
+        - asset: assets/fonts/Funnel_Display/otf/FunnelDisplay-Medium.otf
+          weight: 500
+        - asset: assets/fonts/Funnel_Display/otf/FunnelDisplay-Bold.otf
+          weight: 700
+        - asset: assets/fonts/Funnel_Display/otf/FunnelDisplay-ExtraBold.otf
+          weight: 800
+      
+    - family: Moco
+      fonts:
+        - asset: assets/fonts/Moco.ttf
+
+    - family: TuskerGrotesk
+      fonts:
+        - asset: assets/fonts/tusker-grotesk-7800-super.otf
 
     - family: Boldonse
       fonts:

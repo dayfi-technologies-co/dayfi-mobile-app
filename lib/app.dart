@@ -73,13 +73,13 @@ class _MyAppState extends ConsumerState<MyApp> {
       if (userToken.isNotEmpty && userJson.isEmpty) {
         // Clear inconsistent data and redirect to login
         await _clearInconsistentData(secureStorage);
-        _initialRoute = AppRoute.loginView;
+        _initialRoute = AppRoute.onboardingView;
       } else if (isFirstTimeUser && userToken.isEmpty) {
         _initialRoute = AppRoute.onboardingView;
       } else if (userToken.isEmpty) {
-        _initialRoute = AppRoute.loginView;
+        _initialRoute = AppRoute.onboardingView;
       } else if (userPasscode.isEmpty) {
-        _initialRoute = AppRoute.loginView;
+        _initialRoute = AppRoute.onboardingView;
       } else {
         _initialRoute = AppRoute.passcodeView;
       }
@@ -99,7 +99,9 @@ class _MyAppState extends ConsumerState<MyApp> {
   }
 
   /// Clear inconsistent data when token exists but user data is missing
-  Future<void> _clearInconsistentData(SecureStorageService secureStorage) async {
+  Future<void> _clearInconsistentData(
+    SecureStorageService secureStorage,
+  ) async {
     try {
       await secureStorage.delete(StorageKeys.token);
       await secureStorage.delete(StorageKeys.email);
@@ -120,24 +122,14 @@ class _MyAppState extends ConsumerState<MyApp> {
         home: Scaffold(
           backgroundColor: const Color(0xFFFFD800),
           body: Center(
-            child: Text(
-              "Dayfi App",
-              style: TextStyle(
-                fontFamily: 'Boldonse',
-                fontSize: 28,
-                fontWeight: FontWeight.w500,
-                color: AppColors.neutral900,
-              ),
-            ),
+            child: Image.asset('assets/images/logo_splash.png', width: 150.0)
           ),
         ),
       );
     }
 
     return ProviderScope(
-      observers: [
-        ProviderScopeObserver(),
-      ],
+      observers: [ProviderScopeObserver()],
       overrides: [
         // Override the theme provider with SharedPreferences
         themeProvider.overrideWith((ref) {
@@ -157,7 +149,7 @@ class _MyAppState extends ConsumerState<MyApp> {
           return Consumer(
             builder: (context, ref, child) {
               final themeData = ref.watch(themeDataProvider);
-              
+
               // Initialize transaction monitoring
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 final transactionMonitor = ref.read(transactionMonitorProvider);

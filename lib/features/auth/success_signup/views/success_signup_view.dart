@@ -1,4 +1,5 @@
 import 'package:dayfi/common/widgets/buttons/buttons.dart';
+import 'package:lottie/lottie.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
@@ -7,11 +8,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dayfi/app_locator.dart';
-import 'package:dayfi/services/notification_service.dart';
-import 'package:dayfi/common/utils/app_logger.dart';
-import 'package:dayfi/services/local/secure_storage.dart';
-import 'package:dayfi/common/constants/storage_keys.dart';
-import 'dart:convert';
 
 class SuccessSignupView extends ConsumerWidget {
   const SuccessSignupView({super.key});
@@ -21,17 +17,21 @@ class SuccessSignupView extends ConsumerWidget {
     // Note: Signup success notification is now triggered in main_view.dart
     // when user first lands on the home screen after signup
     // This ensures the notification is shown at the right time
-    
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         children: [
-          // // Beautiful gradient background
-          // _buildGradientBackground(),
-
-          // // Decorative background elements
-          // _buildBackgroundElements(context),
-
+          // Confetti Lottie animation
+          Positioned.fill(
+            child: IgnorePointer(
+              child: Lottie.asset(
+                'assets/icons/svgs/confetti.json',
+                fit: BoxFit.cover,
+                repeat: false,
+              ),
+            ),
+          ),
           // Main content
           SafeArea(
             bottom: false,
@@ -41,8 +41,6 @@ class SuccessSignupView extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   SizedBox(height: 40.h),
-                  // _buildSuccessIcon(),
-                  // SizedBox(height: 32.h),
                   _buildContentCard(context),
                   SizedBox(height: 40.h),
                   _buildNextStepButton(context),
@@ -139,7 +137,10 @@ class SuccessSignupView extends ConsumerWidget {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [AppColors.purple500ForTheme(context), AppColors.purple600],
+              colors: [
+                AppColors.purple500ForTheme(context),
+                AppColors.purple600,
+              ],
             ),
             shape: BoxShape.circle,
             boxShadow: [
@@ -198,12 +199,13 @@ class SuccessSignupView extends ConsumerWidget {
             Text(
                   "Welcome onboard!",
                   style: AppTypography.headlineMedium.copyWith(
-                 fontFamily: 'CabinetGrotesk',
-                    fontSize: 28.sp, height: 1.2,
+                    fontFamily: 'Boldonse',
+                    fontSize: 20.sp,
+                    height: 1.2,
                     fontWeight: FontWeight.w600,
                     color: Theme.of(context).colorScheme.onSurface,
                     // height: 1.2,
-                    letterSpacing: -.3,
+                    // letterSpacing: -.4,
                   ),
                   textAlign: TextAlign.center,
                 )
@@ -230,7 +232,7 @@ class SuccessSignupView extends ConsumerWidget {
                     style: AppTypography.bodyLarge.copyWith(
                       fontFamily: 'Karla',
                       fontSize: 16.sp,
-                      fontWeight: FontWeight.w400,
+                      fontWeight: FontWeight.w500,
                       color: AppColors.neutral600,
                       height: 1.4,
                     ),
@@ -268,7 +270,7 @@ class SuccessSignupView extends ConsumerWidget {
         );
   }
 
-  Widget _buildFeaturesList() {
+  Widget _buildFeaturesList(BuildContext context) {
     final features = [
       {"icon": "💸", "text": "Send money instantly"},
       {"icon": "🌍", "text": "Global transfers"},
@@ -294,7 +296,9 @@ class SuccessSignupView extends ConsumerWidget {
                             fontFamily: 'Karla',
                             fontSize: 14.sp,
                             fontWeight: FontWeight.w500,
-                            color: AppColors.neutral700,
+                            color: Theme.of(
+                              context,
+                            ).textTheme.bodyLarge!.color!.withOpacity(.85),
                           ),
                         ),
                       ),
@@ -322,14 +326,13 @@ class SuccessSignupView extends ConsumerWidget {
     return PrimaryButton(
           text: "Complete Profile",
           borderRadius: 38,
-
           onPressed:
               () => appRouter.pushNamed(AppRoute.completePersonalInfoView),
           backgroundColor: AppColors.purple500,
-          height: 48.000.h,
+          height: 48.00000.h,
           textColor: AppColors.neutral0,
           fontFamily: 'Karla',
-          letterSpacing: -.8,
+          letterSpacing: -.70,
           fontSize: 18,
           width: double.infinity,
           fullWidth: true,

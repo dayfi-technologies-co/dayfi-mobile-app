@@ -3,6 +3,7 @@ import 'package:dayfi/flavors.dart';
 import 'package:dayfi/models/api_response.dart';
 import 'package:dayfi/models/auth_response.dart';
 import 'package:dayfi/services/local/secure_storage.dart';
+import 'package:dayfi/services/notification_service.dart';
 import 'package:dayfi/services/remote/network/network_service.dart';
 import 'package:dayfi/services/remote/network/url_config.dart';
 import 'package:dayfi/common/constants/storage_keys.dart';
@@ -23,6 +24,20 @@ class AuthService {
       Map<String, dynamic> map = {};
       map['email'] = username;
       map['password'] = password;
+
+      // Get FCM token from NotificationService
+      String? fcmToken;
+      try {
+        // Import NotificationService at the top if not already
+        // import 'package:dayfi/services/notification_service.dart';
+        final notificationService = NotificationService();
+        await notificationService.init();
+        fcmToken = notificationService.fcmToken;
+      } catch (e) {
+        fcmToken = null;
+      }
+      map['fcmToken'] = fcmToken ?? "";
+
       final response = await _networkService.call(
         F.baseUrl + UrlConfig.login,
         RequestMethod.post,
@@ -54,6 +69,53 @@ class AuthService {
 
       final response = await _networkService.call(
         F.baseUrl + UrlConfig.signup,
+        RequestMethod.post,
+        data: map,
+      );
+
+      return AuthResponse.fromJson(response.data);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<AuthResponse> googleAuth({required String authToken}) async {
+    try {
+      Map<String, dynamic> map = {};
+      map['authToken'] = authToken;
+
+      // Get FCM token from NotificationService
+      String? fcmToken;
+      try {
+        // Import NotificationService at the top if not already
+        // import 'package:dayfi/services/notification_service.dart';
+        final notificationService = NotificationService();
+        await notificationService.init();
+        fcmToken = notificationService.fcmToken;
+      } catch (e) {
+        fcmToken = null;
+      }
+      map['fcmToken'] = fcmToken ?? "";
+
+      final response = await _networkService.call(
+        F.baseUrl + UrlConfig.checkEmail,
+        RequestMethod.post,
+        data: map,
+      );
+
+      return AuthResponse.fromJson(response.data);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<AuthResponse> validateEmail({required String email}) async {
+    try {
+      Map<String, dynamic> map = {};
+      map['email'] = email;
+
+      final response = await _networkService.call(
+        F.baseUrl + UrlConfig.validateEmail,
         RequestMethod.post,
         data: map,
       );
@@ -127,7 +189,6 @@ class AuthService {
     String password = "",
   }) async {
     try {
-
       Map<String, dynamic> map = {};
       map['userOtp'] = userOtp;
       // For pin reset verification the backend expects no `type` field
@@ -203,7 +264,7 @@ class AuthService {
     required String state,
     required String street,
     required String city,
-    required String postalCode,
+    // required String postalCode,
     required String address,
     required String gender,
     required String dob,
@@ -213,18 +274,18 @@ class AuthService {
   }) async {
     try {
       Map<String, dynamic> map = {};
-      map['country'] = country;
-      map['state'] = state;
-      map['street'] = street;
-      map['city'] = city;
-      map['postalCode'] = postalCode;
-      map['address'] = address;
-      map['gender'] = gender;
-      map['dateOfBirth'] = dob;
+      if (country.isNotEmpty) map['country'] = country;
+      if (state.isNotEmpty) map['state'] = state;
+      if (street.isNotEmpty) map['street'] = street;
+      if (city.isNotEmpty) map['city'] = city;
+      // if (postalCode.isNotEmpty) map['postalCode'] = postalCode;
+      if (address.isNotEmpty) map['address'] = address;
+      if (gender.isNotEmpty) map['gender'] = gender;
+      if (dob.isNotEmpty) map['dateOfBirth'] = dob;
       if (phoneNumber != null && phoneNumber.isNotEmpty) {
         map['phoneNumber'] = phoneNumber;
       }
-      map['bvn'] = bvn;
+      if (bvn.isNotEmpty) map['bvn'] = bvn;
 
       final response = await _networkService.call(
         '${F.baseUrl}${UrlConfig.updateProfile}/$userId',

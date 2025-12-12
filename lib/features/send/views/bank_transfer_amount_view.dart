@@ -1,3 +1,5 @@
+import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
+import 'package:dayfi/common/utils/tier_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,7 +20,7 @@ import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/common/utils/phone_country_utils.dart';
-import 'package:dayfi/features/send/views/send_payment_success_view.dart';
+import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/services/local/crashlytics_service.dart';
 import 'package:dayfi/services/local/local_cache.dart';
 import 'package:intercom_flutter/intercom_flutter.dart';
@@ -165,21 +167,53 @@ class _BankTransferAmountViewState
       },
       child: Scaffold(
         appBar: AppBar(
-          scrolledUnderElevation: 0,
+             scrolledUnderElevation: .5,
+              foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+              shadowColor: Theme.of(context).scaffoldBackgroundColor,
+              surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
-          leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios,
-              color: Theme.of(context).colorScheme.onSurface,
+          leadingWidth: 72,
+          leading: InkWell(
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            onTap:
+                () => {
+                  Navigator.pop(context),
+                  FocusScope.of(context).unfocus(),
+                },
+            child: Stack(
+              alignment: AlignmentGeometry.center,
+              children: [
+                SvgPicture.asset(
+                  "assets/icons/svgs/notificationn.svg",
+                  height: 40.sp,
+                  color: Theme.of(context).colorScheme.surface,
+                ),
+                SizedBox(
+                  height: 40.sp,
+                  width: 40.sp,
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: Icon(
+                        Icons.arrow_back_ios,
+                        size: 20.sp,
+                        color: Theme.of(context).textTheme.bodyLarge!.color,
+                        // size: 20.sp,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            onPressed: () => Navigator.of(context).pop(),
           ),
           title: Text(
             "Enter Amount",
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontFamily: 'CabinetGrotesk',
-              fontSize: 20.sp,
+              fontFamily: 'FunnelDisplay',
+              fontSize: 24.sp,
               // height: 1.6,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface,
@@ -189,7 +223,7 @@ class _BankTransferAmountViewState
         ),
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: SafeArea(
-            bottom: false,
+          bottom: false,
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -207,9 +241,9 @@ class _BankTransferAmountViewState
                         "Enter the amount you want to recieve",
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontSize: 16.sp,
-                          fontWeight: FontWeight.w400,
+                          fontWeight: FontWeight.w500,
                           fontFamily: 'Karla',
-                          letterSpacing: -.3,
+                          letterSpacing: -.6,
                           height: 1.5,
                         ),
                         textAlign: TextAlign.center,
@@ -229,8 +263,8 @@ class _BankTransferAmountViewState
                               color: AppColors.error400,
                               fontSize: 13.sp,
                               fontFamily: 'Karla',
-                              letterSpacing: -.3,
-                              fontWeight: FontWeight.w400,
+                              letterSpacing: -.6,
+                              fontWeight: FontWeight.w500,
                               height: 1.4,
                             ),
                           ),
@@ -251,15 +285,15 @@ class _BankTransferAmountViewState
                         backgroundColor:
                             isAmountValid && !_isLoading
                                 ? AppColors.purple500
-                                : AppColors.purple500.withOpacity(.25),
-                        height: 48.000.h,
+                                : AppColors.purple500.withOpacity(.15),
+                        height: 48.00000.h,
                         isLoading: _isLoading,
                         textColor:
                             isAmountValid && !_isLoading
                                 ? AppColors.neutral0
-                                : AppColors.neutral0.withOpacity(.65),
+                                : AppColors.neutral0.withOpacity(.35),
                         fontFamily: 'Karla',
-                        letterSpacing: -.8,
+                        letterSpacing: -.70,
                         fontSize: 18,
                         width: double.infinity,
                         fullWidth: true,
@@ -285,8 +319,8 @@ class _BankTransferAmountViewState
           style: AppTypography.titleMedium.copyWith(
             fontFamily: 'Karla',
             fontSize: 14,
-            fontWeight: FontWeight.w400,
-            letterSpacing: -.3,
+            fontWeight: FontWeight.w500,
+            letterSpacing: -.6,
             height: 1.450,
             color: Theme.of(
               context,
@@ -305,7 +339,7 @@ class _BankTransferAmountViewState
             ],
           ),
           child: TextField(
-            cursorColor: AppColors.primary600,
+            cursorColor: Theme.of(context).colorScheme.primary,
             controller: _amountController,
             focusNode: _amountFocus,
             keyboardType: TextInputType.numberWithOptions(decimal: true),
@@ -317,7 +351,7 @@ class _BankTransferAmountViewState
             style: AppTypography.bodyLarge.copyWith(
               fontFamily: 'Karla',
               fontSize: 27.sp,
-              letterSpacing: -.3,
+              letterSpacing: -.70,
               fontWeight: FontWeight.w500,
             ),
             decoration: InputDecoration(
@@ -325,11 +359,11 @@ class _BankTransferAmountViewState
               hintStyle: AppTypography.bodyLarge.copyWith(
                 fontFamily: 'Karla',
                 fontSize: 27.sp,
-                letterSpacing: -.3,
-                fontWeight: FontWeight.w400,
+                letterSpacing: -.6,
+                fontWeight: FontWeight.w500,
                 color: Theme.of(
                   context,
-                ).colorScheme.onSurfaceVariant.withOpacity(.25),
+                ).colorScheme.onSurfaceVariant.withOpacity(.15),
               ),
               fillColor: Theme.of(context).colorScheme.surface,
               border: InputBorder.none,
@@ -348,7 +382,7 @@ class _BankTransferAmountViewState
                   Text(
                     sendState.sendCurrency,
                     style: AppTypography.bodyMedium.copyWith(
-                      fontFamily: 'CabinetGrotesk',
+                      fontFamily: 'FunnelDisplay',
                       fontSize: 11.sp,
                       fontWeight: FontWeight.w600,
                     ),
@@ -369,6 +403,20 @@ class _BankTransferAmountViewState
   }
 
   void _handleContinue() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    // Check user tier from profileViewModelProvider
+    final profileState = ref.read(profileViewModelProvider);
+    final user = profileState.user;
+    final userTierLevel = TierUtils.getCurrentTierLevel(user);
+    if (userTierLevel == 1) {
+      // Navigate to UploadDocumentsView for Tier 1 users
+      Navigator.pushNamed(
+        context,
+        AppRoute.uploadDocumentsView,
+        arguments: {'showBackButton': true},
+      );
+      return;
+    }
     // Update the viewmodel with the amount
     final cleanValue = NumberFormatterUtils.removeCommas(
       _amountController.text,
@@ -592,13 +640,13 @@ class _BankTransferAmountViewState
 
       AppLogger.debug('Collection request payload: $requestData');
 
-      // Determine if redirectUrl is required for this channel/country
+      // Determine if redirectUrl is required for this country/country
       final requiresRedirectUrl = _requiresRedirectUrl(
         selectedChannel,
         sendState.receiverCountry,
       );
 
-      // Add redirectUrl if required for this channel
+      // Add redirectUrl if required for this country
       if (requiresRedirectUrl) {
         requestData["redirectUrl"] = _getRedirectUrl();
       }
@@ -885,7 +933,7 @@ class _BankTransferAmountViewState
                 Text(
                   'Payment Error',
                   style: AppTypography.titleLarge.copyWith(
-                    fontFamily: 'CabinetGrotesk',
+                    fontFamily: 'FunnelDisplay',
                     fontSize: 20.sp,
                     // height: 1.6,
                     fontWeight: FontWeight.w500,
@@ -904,12 +952,12 @@ class _BankTransferAmountViewState
                   backgroundColor: AppColors.purple500,
                   textColor: AppColors.neutral0,
                   borderRadius: 38,
-                  height: 48.000.h,
+                  height: 48.00000.h,
                   width: double.infinity,
                   fullWidth: true,
                   fontFamily: 'Karla',
                   fontSize: 18,
-                  fontWeight: FontWeight.w400,
+                  fontWeight: FontWeight.w500,
                   letterSpacing: -0.8,
                 ),
 
@@ -928,7 +976,7 @@ class _BankTransferAmountViewState
                       fontFamily: 'Karla',
                       fontSize: 16.sp,
                       letterSpacing: -0.8,
-                      fontWeight: FontWeight.w400,
+                      fontWeight: FontWeight.w500,
                       color: AppColors.neutral400,
                     ),
                   ),
@@ -1022,9 +1070,10 @@ class _BankTransferAmountViewState
     _startCountdownTimer();
 
     showModalBottomSheet(
+      barrierColor: Colors.black.withOpacity(0.85),
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          backgroundColor: Theme.of(context).colorScheme.surface,
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
@@ -1048,7 +1097,7 @@ class _BankTransferAmountViewState
             });
 
             return Container(
-              height: MediaQuery.of(context).size.height * 0.87,
+              height: MediaQuery.of(context).size.height * 0.88,
               decoration: BoxDecoration(
                 color: Theme.of(context).scaffoldBackgroundColor,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
@@ -1061,25 +1110,49 @@ class _BankTransferAmountViewState
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        SizedBox(height: 24.h, width: 22.w),
+                        SizedBox(height: 40.h, width: 40.w),
                         Text(
                           'Payment Details',
                           style: AppTypography.titleLarge.copyWith(
-                            fontFamily: 'CabinetGrotesk',
-                            fontSize: 14.sp,
+                            fontFamily: 'FunnelDisplay',
+                            fontSize: 20.sp,
+                            // height: 1.6,
                             fontWeight: FontWeight.w600,
                             color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.pop(context);
-                          },
-                          child: Image.asset(
-                            "assets/icons/pngs/cancelicon.png",
-                            height: 24.h,
-                            width: 24.w,
-                            color: Theme.of(context).colorScheme.onSurface,
+                        InkWell(
+                          splashColor: Colors.transparent,
+                          highlightColor: Colors.transparent,
+                          onTap:
+                              () => {
+                                Navigator.pop(context),
+                                FocusScope.of(context).unfocus(),
+                              },
+                          child: Stack(
+                            alignment: AlignmentGeometry.center,
+                            children: [
+                              SvgPicture.asset(
+                                "assets/icons/svgs/notificationn.svg",
+                                height: 40.sp,
+                                color: Theme.of(context).colorScheme.surface,
+                              ),
+                              SizedBox(
+                                height: 40.sp,
+                                width: 40.sp,
+                                child: Center(
+                                  child: Image.asset(
+                                    "assets/icons/pngs/cancelicon.png",
+                                    height: 20.h,
+                                    width: 20.w,
+                                    color:
+                                        Theme.of(
+                                          context,
+                                        ).textTheme.bodyLarge!.color,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -1101,7 +1174,7 @@ class _BankTransferAmountViewState
                               color: Theme.of(
                                 context,
                               ).colorScheme.primaryContainer.withOpacity(0.25),
-                              borderRadius: BorderRadius.circular(4.r),
+                              borderRadius: BorderRadius.circular(12.r),
                             ),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.center,
@@ -1120,7 +1193,7 @@ class _BankTransferAmountViewState
                                     ).textTheme.bodySmall?.copyWith(
                                       fontSize: 14.sp,
                                       fontFamily: 'Karla',
-                                      fontWeight: FontWeight.w400,
+                                      fontWeight: FontWeight.w500,
                                       letterSpacing: -0.4,
                                       height: 1.5,
                                       color:
@@ -1157,13 +1230,20 @@ class _BankTransferAmountViewState
                                 // Transfer details
                                 Text(
                                   'Transfer details:',
-                                  style: Theme.of(
-                                    context,
-                                  ).textTheme.titleLarge?.copyWith(
-                                    fontFamily: 'CabinetGrotesk',
-                                    fontSize: 12.sp,
-                                    fontWeight: FontWeight.w600,
+                                  style: AppTypography.titleMedium.copyWith(
+                                    fontFamily: 'Karla',
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    letterSpacing: -.2,
+                                    height: 1.450,
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .bodyLarge!
+                                        .color!
+                                        .withOpacity(.75),
                                   ),
+                                  textAlign: TextAlign.start,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
 
                                 SizedBox(height: 16.h),
@@ -1211,19 +1291,51 @@ class _BankTransferAmountViewState
                                 Row(
                                   children: [
                                     Expanded(
-                                      child: Text(
-                                        'The account details is valid for only this transaction and it expires in ${_formatRemainingTime()} minutes.',
-                                        style: Theme.of(
-                                          context,
-                                        ).textTheme.bodyMedium?.copyWith(
-                                          fontFamily: 'Karla',
-                                          fontWeight: FontWeight.w500,
-                                          letterSpacing: -0.4,
-                                          fontSize: 14.sp,
-                                          color:
-                                              Theme.of(
+                                      child: RichText(
+                                        text: TextSpan(
+                                          text:
+                                              'The account details is valid for only this transaction and it expires in ',
+                                          style: Theme.of(
+                                            context,
+                                          ).textTheme.bodyMedium?.copyWith(
+                                            fontFamily: 'Karla',
+                                            fontWeight: FontWeight.w500,
+                                            letterSpacing: -0.4,
+                                            fontSize: 14.sp,
+                                            color:
+                                                Theme.of(
+                                                  context,
+                                                ).colorScheme.onSurface,
+                                          ),
+                                          children: [
+                                            TextSpan(
+                                              text: _formatRemainingTime(),
+                                              style: Theme.of(
                                                 context,
-                                              ).colorScheme.onSurface,
+                                              ).textTheme.bodyMedium?.copyWith(
+                                                fontFamily: 'Karla',
+                                                fontWeight: FontWeight.w600,
+                                                letterSpacing: -0.4,
+                                                fontSize: 14.sp,
+                                                color: AppColors.error500,
+                                              ),
+                                            ),
+                                            TextSpan(
+                                              text: ' minutes.',
+                                              style: Theme.of(
+                                                context,
+                                              ).textTheme.bodyMedium?.copyWith(
+                                                fontFamily: 'Karla',
+                                                fontWeight: FontWeight.w500,
+                                                letterSpacing: -0.4,
+                                                fontSize: 14.sp,
+                                                color:
+                                                    Theme.of(
+                                                      context,
+                                                    ).colorScheme.onSurface,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ),
@@ -1243,7 +1355,7 @@ class _BankTransferAmountViewState
                             style: Theme.of(
                               context,
                             ).textTheme.bodyMedium?.copyWith(
-                              letterSpacing: -.3,
+                              letterSpacing: -.6,
                               fontSize: 14.sp,
                               fontWeight: FontWeight.w500,
                               color: Theme.of(
@@ -1269,29 +1381,24 @@ class _BankTransferAmountViewState
                           onPressed: () {
                             Navigator.pop(context);
                             // Navigate to success screen and clear all previous routes
-                            Navigator.pushAndRemoveUntil(
+                            Navigator.pushNamedAndRemoveUntil(
                               context,
-                              MaterialPageRoute(
-                                builder:
-                                    (context) => SendPaymentSuccessView(
-                                      recipientData: widget.recipientData,
-                                      selectedData: widget.selectedData,
-                                      paymentData: widget.paymentData,
-                                      collectionData: _currentPaymentData,
-                                      transactionId:
-                                          _currentPaymentData?.id ??
-                                          _currentPaymentData?.sequenceId,
-                                    ),
-                              ),
-                              (Route route) =>
-                                  false, // Remove all previous routes
+                              AppRoute.sendCollectionSuccessView,
+                              (Route route) => false, // Remove all previous routes
+                              arguments: {
+                                'recipientData': widget.recipientData,
+                                'selectedData': widget.selectedData,
+                                'paymentData': widget.paymentData,
+                                'collectionData': _currentPaymentData,
+                                'transactionId': _currentPaymentData?.id ?? _currentPaymentData?.sequenceId,
+                              },
                             );
                           },
                           backgroundColor: AppColors.purple500,
-                          height: 48.000.h,
+                          height: 48.00000.h,
                           textColor: AppColors.neutral0,
                           fontFamily: 'Karla',
-                          letterSpacing: -.8,
+                          letterSpacing: -.70,
                           fontSize: 18,
                           width: double.infinity,
                           fullWidth: true,
@@ -1301,9 +1408,11 @@ class _BankTransferAmountViewState
                     ),
                   ),
 
-                  PrimaryButton(
-                    text: 'Do you need help?',
-                    onPressed: () async {
+                  InkWell(
+                    splashColor: Colors.transparent,
+                    highlightColor: Colors.transparent,
+                    hoverColor: Colors.transparent,
+                    onTap: () async {
                       try {
                         await Intercom.instance.displayMessenger();
                       } catch (e) {
@@ -1318,15 +1427,23 @@ class _BankTransferAmountViewState
                         }
                       }
                     },
-                    backgroundColor: Colors.transparent,
-                    textColor: AppColors.purple500ForTheme(context),
-                    height: 48.000.h,
-                    fontFamily: 'Karla',
-                    letterSpacing: -.8,
-                    fontSize: 18,
-                    width: double.infinity,
-                    fullWidth: true,
-                    borderRadius: 40.r,
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16.w,
+                        vertical: 12.h,
+                      ),
+                      child: Text(
+                        'Do you need help?',
+                        style: TextStyle(
+                          fontFamily: 'Karla',
+                          color: AppColors.purple500ForTheme(context),
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: -.6,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
                   ),
 
                   SizedBox(height: 24.h),
@@ -1346,7 +1463,7 @@ class _BankTransferAmountViewState
         Text(
           label,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            letterSpacing: -.3,
+            letterSpacing: -.6,
             fontSize: 14.sp,
             fontWeight: FontWeight.w500,
             color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
@@ -1360,7 +1477,7 @@ class _BankTransferAmountViewState
                 fontFamily: 'karla',
                 fontSize: 15.sp,
                 fontWeight: FontWeight.w600,
-                letterSpacing: -.3,
+                letterSpacing: -.6,
                 color: Theme.of(context).colorScheme.onSurface,
               ),
             ),

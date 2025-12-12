@@ -291,61 +291,18 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
   /// Shared authentication and navigation logic for both passcode and biometric auth
   Future<void> _authenticateAndNavigate() async {
     try {
-      // Retrieve saved login credentials
-      final savedEmail = await _secureStorage.read(StorageKeys.email);
-      final savedPassword = await _secureStorage.read(StorageKeys.password);
+      // Check for valid token and user data
+      final token = await _secureStorage.read(StorageKeys.token);
+      final userJson = await _secureStorage.read(StorageKeys.user);
 
-      if (savedEmail.isNotEmpty && savedPassword.isNotEmpty) {
-        try {
-          // Re-authenticate to get fresh JWT token
-          final response = await _authService.login(
-            email: savedEmail,
-            password: savedPassword,
-          );
-
-          if (response.statusCode == 200) {
-            // Save fresh token
-            await _secureStorage.write(
-              StorageKeys.token,
-              response.data?.token ?? '',
-            );
-
-            // Save updated user data if available
-            if (response.data?.user != null) {
-              // Mark biometric as setup if user authenticated with biometrics
-              final userData = response.data!.user!.toJson();
-              userData['is_biometrics_setup'] = true;
-
-              await _secureStorage.write(
-                StorageKeys.user,
-                json.encode(userData),
-              );
-              // Update the state with the fresh user data
-              state = state.copyWith(user: response.data!.user!);
-              AppLogger.info(
-                'User data updated after re-authentication: ${response.data!.user!.firstName}',
-              );
-            }
-
-            // Navigate to main view and clear stack
-            appRouter.pushMainAndClearStack();
-          } else {
-            // If re-authentication fails, clear credentials and show error
-            await _clearStoredCredentials();
-            _showErrorSnackBar('Session expired. Please login again.');
-            appRouter.pushLoginAndClearStack();
-          }
-        } catch (e) {
-          AppLogger.error('Error during re-authentication: $e');
-          // If re-authentication fails, clear credentials and show error
-          await _clearStoredCredentials();
-          _showErrorSnackBar('Session expired. Please login again.');
-          appRouter.pushLoginAndClearStack();
-        }
+      if (token.isNotEmpty && userJson.isNotEmpty) {
+        // Token and user data exist, allow access to main view
+        appRouter.pushMainAndClearStack();
       } else {
-        // No saved credentials found, redirect to login
+        // No valid session, redirect to login
+        await _clearStoredCredentials();
         _showErrorSnackBar('Please login again.');
-        appRouter.pushLoginAndClearStack();
+        appRouter.pushOnboardingAndClearStack();
       }
     } catch (e) {
       AppLogger.error('Error in authentication and navigation: $e');
@@ -378,7 +335,7 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
       await dataClearingService.clearAllUserData(ref);
 
       // Navigate to login and clear stack (hide back button)
-      appRouter.pushLoginAndClearStack(arguments: false);
+      appRouter.pushOnboardingAndClearStack(arguments: false);
     } catch (e) {
       if (mounted) {
         _showErrorSnackBar('Error during logout: ${e.toString()}');

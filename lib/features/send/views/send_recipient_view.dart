@@ -12,7 +12,7 @@ import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/features/send/vm/send_viewmodel.dart';
 import 'package:dayfi/features/recipients/vm/recipients_viewmodel.dart';
 import 'package:dayfi/models/beneficiary_with_source.dart';
-// import 'package:dayfi/models/wallet_transaction.dart';
+import 'package:dayfi/models/wallet_transaction.dart' show Beneficiary;
 import 'package:dayfi/models/payment_response.dart' as payment;
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
@@ -37,18 +37,18 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Debug: Print received data
-      print('📦 SendRecipientView - Received selectedData:');
-      print('   receiveCountry: ${widget.selectedData['receiveCountry']}');
-      print('   receiveCurrency: ${widget.selectedData['receiveCurrency']}');
-      print('   sendCountry: ${widget.selectedData['sendCountry']}');
-      print('   sendCurrency: ${widget.selectedData['sendCurrency']}');
+      // print('📦 SendRecipientView - Received selectedData:');
+      // print('   receiveCountry: ${widget.selectedData['receiveCountry']}');
+      // print('   receiveCurrency: ${widget.selectedData['receiveCurrency']}');
+      // print('   sendCountry: ${widget.selectedData['sendCountry']}');
+      // print('   sendCurrency: ${widget.selectedData['sendCurrency']}');
       print(
         '   recipientDeliveryMethod: ${widget.selectedData['recipientDeliveryMethod']}',
       );
       print(
         '   recipientChannelId: ${widget.selectedData['recipientChannelId']}',
       );
-      print('   All keys: ${widget.selectedData.keys.toList()}');
+      // print('   All keys: ${widget.selectedData.keys.toList()}');
 
       _loadBeneficiaries();
     });
@@ -257,12 +257,17 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
-          scrolledUnderElevation: 0,
+             scrolledUnderElevation: .5,
+              foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+              shadowColor: Theme.of(context).scaffoldBackgroundColor,
+              surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
           leading: IconButton(
             icon: Icon(
               Icons.arrow_back_ios,
+            size: 20.sp,
               color: Theme.of(context).colorScheme.onSurface,
             ),
             onPressed:
@@ -274,8 +279,8 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
           title: Text(
             'Beneficiaries',
             style: AppTypography.titleLarge.copyWith(
-              fontFamily: 'CabinetGrotesk',
-              fontSize: 20.sp, // height: 1.6,
+              fontFamily: 'FunnelDisplay',
+              fontSize: 24.sp, // height: 1.6,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface,
             ),
@@ -325,6 +330,7 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
                       child: ShimmerWidgets.recipientListShimmer(
                         context,
                         itemCount: 8,
+                        padding: EdgeInsets.zero,
                       ),
                     )
                     : recipientsState.errorMessage != null &&
@@ -426,7 +432,7 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
               child: Text(
                 'You do not have any Beneficiaries yet for $countryName in $currency and $displayChannelType',
                 style: AppTypography.bodyLarge.copyWith(
-                  fontFamily: 'CabinetGrotesk',
+                  fontFamily: 'FunnelDisplay',
                   fontSize: 20.sp,
                   fontWeight: FontWeight.w600,
                   color: Theme.of(context).colorScheme.onSurface,
@@ -436,7 +442,7 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
               ),
             ),
 
-            SizedBox(height: 56.h),
+            SizedBox(height: 40.h),
 
             // Create Beneficiaries Button
             PrimaryButton(
@@ -449,16 +455,16 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
                 );
               },
               backgroundColor: AppColors.purple500,
-              height: 48.000.h,
+              height: 48.00000.h,
               textColor: AppColors.neutral0,
               fontFamily: 'Karla',
-              letterSpacing: -.8,
+              letterSpacing: -.70,
               fontSize: 18,
               width: double.infinity,
               fullWidth: true,
             ),
 
-            SizedBox(height: 56.h),
+            SizedBox(height: 40.h),
           ],
         ),
       ),
@@ -493,32 +499,39 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
           Stack(
             alignment: Alignment.bottomRight,
             children: [
-              Container(
-                width: 40.w,
-                height: 40.w,
-                margin: EdgeInsets.only(bottom: 4.w, right: 4.w),
-                decoration: BoxDecoration(
-                  color: AppColors.purple500ForTheme(context),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Text(
-                    _getInitials(beneficiary.name),
-                    style: TextStyle(
-                      color: AppColors.neutral0,
-                      fontFamily: 'Karla',
-                      fontSize: 16.sp,
-                      letterSpacing: -.3,
-                      fontWeight: FontWeight.w400,
+              Stack(
+                alignment: Alignment.center,
+
+                children: [
+                  SvgPicture.asset(
+                    "assets/icons/svgs/account.svg",
+                    width: 40.w,
+                    height: 40.w,
+                    color: AppColors.purple500ForTheme(context),
+                  ),
+                  SizedBox(
+                    width: 40.w,
+                    height: 40.w,
+                    child: Center(
+                      child: Text(
+                        _getInitials(beneficiary.name),
+                        style: TextStyle(
+                          color: AppColors.neutral0,
+                          fontFamily: 'Karla',
+                          fontSize: 16.sp,
+                          letterSpacing: -.6,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
               Align(
                 alignment: Alignment.bottomRight,
                 child: Container(
-                  width: 20.w,
-                  height: 20.w,
+                  width: 16.w,
+                  height: 16.w,
                   decoration: BoxDecoration(
                     color: AppColors.neutral0,
                     shape: BoxShape.circle,
@@ -536,7 +549,7 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
               ),
             ],
           ),
-          SizedBox(width: 12.w),
+          SizedBox(width: 8.w),
 
           // Beneficiary Info
           Expanded(
@@ -547,9 +560,8 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
                   beneficiary.name.toUpperCase(),
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     fontFamily: 'Karla',
-                    fontSize: 18.sp,
-                    letterSpacing: -.3,
-                    fontWeight: FontWeight.w400,
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w600,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -557,23 +569,86 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
                 ),
                 Row(
                   children: [
-                    _getAccountIcon(source),
-                    SizedBox(width: 2.w),
+                    // _getAccountIcon(source, beneficiary),
+                    // SizedBox(width: 2.w),
                     Expanded(
-                      child: Text(
-                        '${_getChannelAndNetworkInfo(beneficiaryWithSource)} • ${_getAccountNumber(source)}',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontFamily: 'Karla',
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w400,
-                          letterSpacing: -.3,
-                          height: 1.450,
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withOpacity(0.6),
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                      child:
+                          _getChannelAndNetworkInfo(beneficiaryWithSource) ==
+                                  "DayFi Tag"
+                              ? Row(
+                                children: [
+                                  Text(
+                                    _getAccountNumber(
+                                      source,
+                                      beneficiary,
+                                    ).split("@").last,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodyMedium?.copyWith(
+                                      fontFamily: 'Karla',
+                                      fontSize: 13.sp,
+                                      fontWeight: FontWeight.w500,
+                                      letterSpacing: -.6,
+                                      height: 1.450,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurface.withOpacity(0.6),
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  SizedBox(width: 8.w),
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                      vertical: 3.h,
+                                      horizontal: 8.w,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.warning400.withOpacity(
+                                        0.15,
+                                      ),
+                                      borderRadius: BorderRadius.circular(12.r),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        // Icon(
+                                        //   Icons.auto_awesome,
+                                        //   size: 10.sp,
+                                        //   color: Color(0xFF1A1A1A),
+                                        // ),
+                                        // SizedBox(width: 4.w),
+                                        Text(
+                                          "Dayfi Tag",
+                                          style: TextStyle(
+                                            fontFamily: 'Karla',
+                                            fontSize: 10.sp,
+                                            color: AppColors.warning600,
+                                            fontWeight: FontWeight.w600,
+                                            // letterSpacing: 0,
+                                            height: 1.2,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              )
+                              : Text(
+                                '${_getChannelAndNetworkInfo(beneficiaryWithSource)} • ${_getAccountNumber(source, beneficiary)}',
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.bodyMedium?.copyWith(
+                                  fontFamily: 'Karla',
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w500,
+                                  letterSpacing: -.4,
+                                  height: 1.450,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface.withOpacity(0.6),
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                     ),
                   ],
                 ),
@@ -581,12 +656,12 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
             ),
           ),
           SizedBox(width: 12.w),
-          // Select Button
+          // Send Button
           PrimaryButton(
-            text: 'Select',
-            onPressed: () => _selectBeneficiary(beneficiaryWithSource),
+            text: 'Send',
+            onPressed: () => _navigateToSend(beneficiaryWithSource),
             height: 32.h,
-            width: 80.w,
+            width: 68.w,
             backgroundColor: AppColors.purple500,
             textColor: AppColors.neutral0,
             fontFamily: 'Karla',
@@ -675,18 +750,29 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
     }
   }
 
-  String _getAccountNumber(payment.Source source) {
+  String _getAccountNumber(payment.Source source, Beneficiary beneficiary) {
+    // For DayFi transfers, use beneficiary.accountNumber (the DayFi tag)
+    if (source.accountType?.toLowerCase() == 'dayfi' &&
+        beneficiary.accountNumber != null &&
+        beneficiary.accountNumber!.isNotEmpty) {
+      return '@${beneficiary.accountNumber!}';
+    }
+
+    // For other transfers, use source.accountNumber
     if (source.accountNumber != null && source.accountNumber!.isNotEmpty) {
       return source.accountNumber!;
-    } else {
-      return 'N/A';
     }
+
+    return 'N/A';
   }
 
-  Widget _getAccountIcon(payment.Source source) {
+  Widget  _getAccountIcon(payment.Source source, Beneficiary beneficiary) {
     final accountType = source.accountType?.toLowerCase() ?? '';
     String overlayIcon;
     switch (accountType) {
+      case 'dayfi':
+        overlayIcon = 'assets/icons/svgs/at.svg';
+        break;
       case 'bank':
         overlayIcon = 'assets/icons/svgs/building-bank.svg';
         break;
@@ -764,7 +850,7 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
     }
   }
 
-  void _selectBeneficiary(BeneficiaryWithSource beneficiaryWithSource) {
+  void _navigateToSend(BeneficiaryWithSource beneficiaryWithSource) {
     final beneficiary = beneficiaryWithSource.beneficiary;
     final source = beneficiaryWithSource.source;
 

@@ -376,7 +376,7 @@ class EditProfileNotifier extends StateNotifier<EditProfileState> {
         state: state.state.isNotEmpty ? state.state : (state.user!.state?.isNotEmpty == true ? state.user!.state! : 'Lagos'),
         street: state.user!.street?.isNotEmpty == true ? state.user!.street! : 'Not provided',
         city: state.city.isNotEmpty ? state.city : (state.user!.city?.isNotEmpty == true ? state.user!.city! : 'Lagos'),
-        postalCode: state.postalCode.isNotEmpty ? state.postalCode : (state.user!.postalCode?.isNotEmpty == true ? state.user!.postalCode! : '100001'),
+        // postalCode: state.postalCode.isNotEmpty ? state.postalCode : (state.user!.postalCode?.isNotEmpty == true ? state.user!.postalCode! : '100001'),
         address: state.address.isNotEmpty ? state.address : (state.user!.address?.isNotEmpty == true ? state.user!.address! : 'Not provided'),
         gender: _normalizeGender(state.gender.isNotEmpty ? state.gender : (state.user!.gender?.isNotEmpty == true ? state.user!.gender! : 'male')),
         dob: state.dateOfBirth.isNotEmpty ? state.dateOfBirth : (state.user!.dateOfBirth?.isNotEmpty == true ? state.user!.dateOfBirth! : '1990-01-01'),

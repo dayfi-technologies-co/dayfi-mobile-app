@@ -7,14 +7,12 @@ import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
 import 'package:dayfi/common/widgets/eye_icon.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/features/auth/reset_password/vm/reset_password_viewmodel.dart';
+import 'package:flutter_svg/svg.dart';
 
 class ResetPasswordView extends ConsumerWidget {
   final String email;
-  
-  const ResetPasswordView({
-    super.key,
-    required this.email,
-  });
+
+  const ResetPasswordView({super.key, required this.email});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -40,19 +38,44 @@ class ResetPasswordView extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   AppBar(
-                    scrolledUnderElevation: 0,
+                    scrolledUnderElevation: .5,
+                    foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+                    shadowColor: Theme.of(context).scaffoldBackgroundColor,
+                    surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
                     backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                     elevation: 0,
-                    leading: IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.arrow_back_ios_new),
-                    ),
-                    title: Text(
-                      "Create Password",
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontFamily: 'CabinetGrotesk',
-                        fontSize: 28.00,
-                        fontWeight: FontWeight.w500,
+                    leadingWidth: 72,
+                    leading: InkWell(
+                      splashColor: Colors.transparent,
+                      highlightColor: Colors.transparent,
+                      onTap: () => Navigator.pop(context),
+                      child: Stack(
+                        alignment: AlignmentGeometry.center,
+                        children: [
+                          SvgPicture.asset(
+                            "assets/icons/svgs/notificationn.svg",
+                            height: 40.sp,
+                            color: Theme.of(context).colorScheme.surface,
+                          ),
+                          SizedBox(
+                            height: 40.sp,
+                            width: 40.sp,
+                            child: Center(
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 8.0),
+                                child: Icon(
+                                  Icons.arrow_back_ios,
+                                  size: 20.sp,
+                                  color:
+                                      Theme.of(
+                                        context,
+                                      ).textTheme.bodyLarge!.color,
+                                  // size: 20.sp,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -65,79 +88,88 @@ class ResetPasswordView extends ConsumerWidget {
 
                         // Subtitle
                         Center(
-                          child: Text(
-                            "Create a strong password with at least 8 characters, including uppercase, numbers, and special characters",
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w400,
-                              fontFamily: 'Karla',
-                              letterSpacing: -.3,
-                              height: 1.4,
+                              child: Text(
+                                "Create a strong password with at least 8 characters, including uppercase, numbers, and special characters",
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.bodyMedium?.copyWith(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.w500,
+                                  fontFamily: 'Karla',
+                                  letterSpacing: -.6,
+                                  height: 1.4,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            )
+                            .animate()
+                            .fadeIn(
+                              delay: 100.ms,
+                              duration: 300.ms,
+                              curve: Curves.easeOutCubic,
+                            )
+                            .slideY(
+                              begin: 0.2,
+                              end: 0,
+                              delay: 100.ms,
+                              duration: 300.ms,
+                              curve: Curves.easeOutCubic,
                             ),
-                            textAlign: TextAlign.center,
-                          ),
-                        )
-                        .animate()
-                        .fadeIn(
-                          delay: 100.ms,
-                          duration: 300.ms,
-                          curve: Curves.easeOutCubic,
-                        )
-                        .slideY(
-                          begin: 0.2,
-                          end: 0,
-                          delay: 100.ms,
-                          duration: 300.ms,
-                          curve: Curves.easeOutCubic,
-                        ),
 
                         SizedBox(height: 36.h),
 
                         // Password field
                         CustomTextField(
-                          label: "New Password",
-                            hintText: "Create a strong password",
-                          // errorText: resetPasswordState.passwordError,
-                          onChanged: resetPasswordNotifier.setPassword,
-                          keyboardType: TextInputType.visiblePassword,
-                          textInputAction: TextInputAction.next,
-                          textCapitalization: TextCapitalization.none,
-                          obscureText: !resetPasswordState.isPasswordVisible,
-                          suffixIcon: IconButton(
-                            icon: EyeIcon(
-                              isVisible: resetPasswordState.isPasswordVisible,
-                              color: AppColors.neutral400,
-                              size: 20.0,
+                              label: "New Password",
+                              hintText: "Create a strong password",
+                              // errorText: resetPasswordState.passwordError,
+                              onChanged: resetPasswordNotifier.setPassword,
+                              keyboardType: TextInputType.visiblePassword,
+                              textInputAction: TextInputAction.next,
+                              textCapitalization: TextCapitalization.none,
+                              obscureText:
+                                  !resetPasswordState.isPasswordVisible,
+                              suffixIcon: InkWell(
+                                child: EyeIcon(
+                                  isVisible:
+                                      resetPasswordState.isPasswordVisible,
+                                  color: AppColors.neutral400,
+                                  size: 20.0,
+                                ),
+                                onTap:
+                                    () =>
+                                        resetPasswordNotifier
+                                            .togglePasswordVisibility(),
+                              ),
+                            )
+                            .animate()
+                            .fadeIn(
+                              delay: 200.ms,
+                              duration: 300.ms,
+                              curve: Curves.easeOutCubic,
+                            )
+                            .slideY(
+                              begin: 0.3,
+                              end: 0,
+                              delay: 200.ms,
+                              duration: 300.ms,
+                              curve: Curves.easeOutCubic,
+                            )
+                            .scale(
+                              begin: const Offset(0.98, 0.98),
+                              end: const Offset(1.0, 1.0),
+                              delay: 200.ms,
+                              duration: 300.ms,
+                              curve: Curves.easeOutCubic,
+                            )
+                            .shimmer(
+                              delay: 400.ms,
+                              duration: 800.ms,
+                              color: AppColors.purple500ForTheme(
+                                context,
+                              ).withOpacity(0.1),
+                              angle: 15,
                             ),
-                            onPressed: () => resetPasswordNotifier.togglePasswordVisibility(),
-                          ),
-                        )
-                        .animate()
-                        .fadeIn(
-                          delay: 200.ms,
-                          duration: 300.ms,
-                          curve: Curves.easeOutCubic,
-                        )
-                        .slideY(
-                          begin: 0.3,
-                          end: 0,
-                          delay: 200.ms,
-                          duration: 300.ms,
-                          curve: Curves.easeOutCubic,
-                        )
-                        .scale(
-                          begin: const Offset(0.98, 0.98),
-                          end: const Offset(1.0, 1.0),
-                          delay: 200.ms,
-                          duration: 300.ms,
-                          curve: Curves.easeOutCubic,
-                        )
-                        .shimmer(
-                          delay: 400.ms,
-                          duration: 800.ms,
-                          color: AppColors.purple500ForTheme(context).withOpacity(0.1),
-                          angle: 15,
-                        ),
 
                         // Password error text
                         if (resetPasswordState.passwordError.isNotEmpty)
@@ -149,8 +181,8 @@ class ResetPasswordView extends ConsumerWidget {
                                 color: Colors.red,
                                 fontSize: 13,
                                 fontFamily: 'Karla',
-                                letterSpacing: -.3,
-                                fontWeight: FontWeight.w400,
+                                letterSpacing: -.6,
+                                fontWeight: FontWeight.w500,
                                 height: 1.4,
                               ),
                             ),
@@ -162,48 +194,57 @@ class ResetPasswordView extends ConsumerWidget {
 
                         // Confirm Password field
                         CustomTextField(
-                          label: "Confirm new password",
-                          hintText: "Type your new password again",
-                          // errorText: resetPasswordState.confirmPasswordError,
-                          onChanged: resetPasswordNotifier.setConfirmPassword,
-                          keyboardType: TextInputType.visiblePassword,
-                          textInputAction: TextInputAction.done,
-                          obscureText: !resetPasswordState.isConfirmPasswordVisible,
-                          suffixIcon: IconButton(
-                            icon: EyeIcon(
-                              isVisible: resetPasswordState.isConfirmPasswordVisible,
-                              color: AppColors.neutral400,
-                              size: 20.0,
+                              label: "Confirm new password",
+                              hintText: "Type your new password again",
+                              // errorText: resetPasswordState.confirmPasswordError,
+                              onChanged:
+                                  resetPasswordNotifier.setConfirmPassword,
+                              keyboardType: TextInputType.visiblePassword,
+                              textInputAction: TextInputAction.done,
+                              obscureText:
+                                  !resetPasswordState.isConfirmPasswordVisible,
+                              suffixIcon: InkWell(
+                                child: EyeIcon(
+                                  isVisible:
+                                      resetPasswordState
+                                          .isConfirmPasswordVisible,
+                                  color: AppColors.neutral400,
+                                  size: 20.0,
+                                ),
+                                onTap:
+                                    () =>
+                                        resetPasswordNotifier
+                                            .toggleConfirmPasswordVisibility(),
+                              ),
+                            )
+                            .animate()
+                            .fadeIn(
+                              delay: 300.ms,
+                              duration: 300.ms,
+                              curve: Curves.easeOutCubic,
+                            )
+                            .slideY(
+                              begin: 0.3,
+                              end: 0,
+                              delay: 300.ms,
+                              duration: 300.ms,
+                              curve: Curves.easeOutCubic,
+                            )
+                            .scale(
+                              begin: const Offset(0.98, 0.98),
+                              end: const Offset(1.0, 1.0),
+                              delay: 300.ms,
+                              duration: 300.ms,
+                              curve: Curves.easeOutCubic,
+                            )
+                            .shimmer(
+                              delay: 500.ms,
+                              duration: 800.ms,
+                              color: AppColors.purple500ForTheme(
+                                context,
+                              ).withOpacity(0.1),
+                              angle: 15,
                             ),
-                            onPressed: () => resetPasswordNotifier.toggleConfirmPasswordVisibility(),
-                          ),
-                        )
-                        .animate()
-                        .fadeIn(
-                          delay: 300.ms,
-                          duration: 300.ms,
-                          curve: Curves.easeOutCubic,
-                        )
-                        .slideY(
-                          begin: 0.3,
-                          end: 0,
-                          delay: 300.ms,
-                          duration: 300.ms,
-                          curve: Curves.easeOutCubic,
-                        )
-                        .scale(
-                          begin: const Offset(0.98, 0.98),
-                          end: const Offset(1.0, 1.0),
-                          delay: 300.ms,
-                          duration: 300.ms,
-                          curve: Curves.easeOutCubic,
-                        )
-                        .shimmer(
-                          delay: 500.ms,
-                          duration: 800.ms,
-                          color: AppColors.purple500ForTheme(context).withOpacity(0.1),
-                          angle: 15,
-                        ),
 
                         // Confirm Password error text
                         if (resetPasswordState.confirmPasswordError.isNotEmpty)
@@ -215,8 +256,8 @@ class ResetPasswordView extends ConsumerWidget {
                                 color: Colors.red,
                                 fontSize: 13,
                                 fontFamily: 'Karla',
-                                letterSpacing: -.3,
-                                fontWeight: FontWeight.w400,
+                                letterSpacing: -.6,
+                                fontWeight: FontWeight.w500,
                                 height: 1.4,
                               ),
                             ),
@@ -225,51 +266,6 @@ class ResetPasswordView extends ConsumerWidget {
                           const SizedBox.shrink(),
 
                         SizedBox(height: 72.h),
-
-                        // Submit button
-                        PrimaryButton(
-                          borderRadius: 38,
-                          text: "Save Password",
-                          onPressed: resetPasswordState.isFormValid && !resetPasswordState.isBusy
-                              ? () => resetPasswordNotifier.resetPassword(email, context)
-                              : null,
-                          enabled: resetPasswordState.isFormValid && !resetPasswordState.isBusy,
-                          isLoading: resetPasswordState.isBusy,
-                          backgroundColor: resetPasswordState.isFormValid
-                              ? AppColors.purple500ForTheme(context)
-                              : AppColors.purple500ForTheme(context).withOpacity(.25),
-                          height: 48.000.h,
-                          textColor: resetPasswordState.isFormValid
-                              ? AppColors.neutral0
-                              : AppColors.neutral0.withOpacity(.65),
-                          fontFamily: 'Karla',
-                          letterSpacing: -.8,
-                          fontSize: 18,
-                          width: 375.w,
-                          fullWidth: true,
-                        )
-                        .animate()
-                        .fadeIn(
-                          delay: 400.ms,
-                          duration: 300.ms,
-                          curve: Curves.easeOutCubic,
-                        )
-                        .slideY(
-                          begin: 0.2,
-                          end: 0,
-                          delay: 400.ms,
-                          duration: 300.ms,
-                          curve: Curves.easeOutCubic,
-                        )
-                        .scale(
-                          begin: const Offset(0.95, 0.95),
-                          end: const Offset(1.0, 1.0),
-                          delay: 400.ms,
-                          duration: 300.ms,
-                          curve: Curves.easeOutCubic,
-                        ),
-
-                        SizedBox(height: 40.h),
                       ],
                     ),
                   ),
@@ -277,6 +273,79 @@ class ResetPasswordView extends ConsumerWidget {
               ),
             ),
           ),
+        ),
+
+        bottomNavigationBar: Padding(
+          padding: const EdgeInsets.fromLTRB(18.0, 12, 18.0, 40.0),
+          child:
+          // Submit button
+          PrimaryButton(
+                borderRadius: 38,
+                text: "Save Password",
+                onPressed:
+                    resetPasswordState.isFormValid && !resetPasswordState.isBusy
+                        ? () =>
+                            resetPasswordNotifier.resetPassword(email, context)
+                        : null,
+                enabled:
+                    resetPasswordState.isFormValid &&
+                    !resetPasswordState.isBusy,
+                isLoading: resetPasswordState.isBusy,
+                backgroundColor:
+                    resetPasswordState.isFormValid
+                        ? AppColors.purple500ForTheme(context)
+                        : AppColors.purple500ForTheme(context).withOpacity(.15),
+                height: 48.00000.h,
+                textColor:
+                    resetPasswordState.isFormValid
+                        ? AppColors.neutral0
+                        : AppColors.neutral0.withOpacity(.35),
+                fontFamily: 'Karla',
+                letterSpacing: -.70,
+                fontSize: 18,
+                width: 375.w,
+                fullWidth: true,
+              )
+              .animate()
+              .fadeIn(
+                delay: 400.ms,
+                duration: 300.ms,
+                curve: Curves.easeOutCubic,
+              )
+              .slideY(
+                begin: 0.2,
+                end: 0,
+                delay: 400.ms,
+                duration: 300.ms,
+                curve: Curves.easeOutCubic,
+              )
+              .scale(
+                begin: const Offset(0.95, 0.95),
+                end: const Offset(1.0, 1.0),
+                delay: 400.ms,
+                duration: 300.ms,
+                curve: Curves.easeOutCubic,
+              )
+              .animate()
+              .fadeIn(
+                delay: 600.ms,
+                duration: 400.ms,
+                curve: Curves.easeOutCubic,
+              )
+              .slideY(
+                begin: 0.3,
+                end: 0,
+                delay: 600.ms,
+                duration: 400.ms,
+                curve: Curves.easeOutCubic,
+              )
+              .scale(
+                begin: const Offset(0.95, 0.95),
+                end: const Offset(1.0, 1.0),
+                delay: 600.ms,
+                duration: 400.ms,
+                curve: Curves.easeOutCubic,
+              ),
         ),
       ),
     );

@@ -62,7 +62,7 @@ class ErrorStateWidget extends StatelessWidget {
             Text(
               message,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-             fontFamily: 'CabinetGrotesk',
+             fontFamily: 'FunnelDisplay',
                 fontSize: 18.sp,
                 fontWeight: FontWeight.w600,
                 color: Theme.of(context).colorScheme.onSurface,
@@ -78,7 +78,7 @@ class ErrorStateWidget extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontFamily: 'Karla',
                   fontSize: 14.sp,
-                  fontWeight: FontWeight.w400,
+                  fontWeight: FontWeight.w500,
                   color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                 ),
                 textAlign: TextAlign.center,
@@ -145,19 +145,19 @@ class CompactErrorStateWidget extends StatelessWidget {
               ),
             ),
           ),
-          SizedBox(width: 12.w),
-          TextButton(
-            onPressed: onRetry,
-            child: Text(
-              retryButtonText,
-              style: TextStyle(
-             fontFamily: 'CabinetGrotesk',
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w600,
-                color: AppColors.purple500ForTheme(context),
-              ),
-            ),
-          ),
+          // SizedBox(width: 12.w),
+          // TextButton(
+          //   onPressed: onRetry,
+          //   child: Text(
+          //     retryButtonText,
+          //     style: TextStyle(
+          //    fontFamily: 'FunnelDisplay',
+          //       fontSize: 14.sp,
+          //       fontWeight: FontWeight.w600,
+          //       color: AppColors.purple500ForTheme(context),
+          //     ),
+          //   ),
+          // ),
         ],
       ),
     );

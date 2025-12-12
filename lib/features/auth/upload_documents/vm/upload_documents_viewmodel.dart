@@ -48,207 +48,170 @@ class UploadDocumentsNotifier extends StateNotifier<UploadDocumentsState> {
        super(const UploadDocumentsState());
 
   // Start Smile ID verification process
-  Future<void> startSmileIdVerification(BuildContext context) async {
-    state = state.copyWith(isBusy: true, errorMessage: '');
+  // Future<void> startSmileIdVerification(BuildContext context) async {
+  //   state = state.copyWith(isBusy: true, errorMessage: '');
 
-    try {
-      _analyticsService.logEvent(name: 'kyc_tier2_verification_started');
+  //   try {
+  //     _analyticsService.logEvent(name: 'kyc_tier2_verification_started');
 
-      // Initialize Smile ID SDK
-      await _initializeSmileId();
+  //     // Initialize Smile ID SDK
+  //     await _initializeSmileId();
 
-      // Launch Smile ID verification flow
-      await _launchSmileIdVerification(context);
-    } catch (e) {
-      state = state.copyWith(
-        isBusy: false,
-        errorMessage: 'Failed to start verification. Please try again.',
-      );
+  //     // Launch Smile ID verification flow
+  //     await _launchSmileIdVerification(context);
+  //   } catch (e) {
+  //     state = state.copyWith(
+  //       isBusy: false,
+  //       errorMessage: 'Failed to start verification. Please try again.',
+  //     );
 
-      _analyticsService.logEvent(
-        name: 'kyc_tier2_verification_failed',
-        parameters: {'reason': e.toString()},
-      );
+  //     _analyticsService.logEvent(
+  //       name: 'kyc_tier2_verification_failed',
+  //       parameters: {'reason': e.toString()},
+  //     );
 
-      TopSnackbar.show(context, message: state.errorMessage, isError: true);
-    }
-  }
+  //     TopSnackbar.show(context, message: state.errorMessage, isError: true);
+  //   }
+  // }
 
-  // Alternative method for Enhanced KYC with BVN (if you want to use this instead)
-  Future<void> startEnhancedKycVerification(BuildContext context, String bvnNumber) async {
-    state = state.copyWith(isBusy: true, errorMessage: '');
-
-    try {
-      _analyticsService.logEvent(name: 'kyc_tier2_enhanced_verification_started');
-
-      // For now, we'll simulate the verification process
-      // The actual Smile ID SDK integration will depend on the specific API methods available
-      // in the version you're using. Based on the documentation, you may need to use:
-      // - SmileID.api.doEnhancedKycAsync() for Enhanced KYC
-      // - SmileID.api.pollBiometricKycJobStatus() for polling job status
-      
-      await Future.delayed(const Duration(seconds: 2));
-
-      // Simulate successful verification
-      AppLogger.info('Smile ID Enhanced KYC successful (simulated)');
-      _analyticsService.logEvent(name: 'kyc_tier2_verification_completed');
-      
-      // Update user KYC tier to Tier 2
-      await _updateUserKycTier();
-      
-      // Trigger KYC success notification
-      try {
-        await NotificationService().triggerKycSuccess();
-      } catch (e) {
-        // Handle error silently
-      }
-      
-      // Navigate to main view
-      _appRouter.pushNamed(AppRoute.mainView);
-
-    } catch (e) {
-      AppLogger.error('Error launching Enhanced KYC: $e');
-      state = state.copyWith(
-        isBusy: false,
-        errorMessage: 'Failed to start verification. Please try again.',
-      );
-
-      _analyticsService.logEvent(
-        name: 'kyc_tier2_verification_failed',
-        parameters: {'reason': e.toString()},
-      );
-
-      TopSnackbar.show(context, message: state.errorMessage, isError: true);
-    }
-  }
 
   // Initialize Smile ID SDK
-  Future<void> _initializeSmileId() async {
-    try {
-      // Smile ID SDK is already initialized in main.dart
-      // We just need to verify it's ready
-      state = state.copyWith(isSmileIdInitialized: true);
-    } catch (e) {
-      AppLogger.error('Error initializing Smile ID: $e');
-      state = state.copyWith(
-        isSmileIdInitialized: false,
-        errorMessage: 'Failed to initialize verification service',
-      );
-    }
-  }
+  // Future<void> _initializeSmileId() async {
+  //   try {
+  //     // Smile ID SDK is already initialized in main.dart
+  //     // We just need to verify it's ready
+  //     state = state.copyWith(isSmileIdInitialized: true);
+  //   } catch (e) {
+  //     AppLogger.error('Error initializing Smile ID: $e');
+  //     state = state.copyWith(
+  //       isSmileIdInitialized: false,
+  //       errorMessage: 'Failed to initialize verification service',
+  //     );
+  //   }
+  // }
 
   // Launch Smile ID verification using Enhanced KYC
-  Future<void> _launchSmileIdVerification(BuildContext context) async {
-    try {
-      AppLogger.info('Starting Smile ID Enhanced KYC verification process...');
+  // Future<void> _launchSmileIdVerification(BuildContext context) async {
+  //   try {
+  //     AppLogger.info('Starting Smile ID Enhanced KYC verification process...');
 
-      // For now, we'll simulate the verification process
-      // The actual Smile ID SDK integration will depend on the specific API methods available
-      // in the version you're using. Based on the documentation, you may need to use:
-      // - SmileID.api.doEnhancedKycAsync() for Enhanced KYC
-      // - SmileID.api.pollBiometricKycJobStatus() for polling job status
-      
-      await Future.delayed(const Duration(seconds: 2));
+  //     // For now, we'll simulate the verification process
+  //     // The actual Smile ID SDK integration will depend on the specific API methods available
+  //     // in the version you're using. Based on the documentation, you may need to use:
+  //     // - SmileID.api.doEnhancedKycAsync() for Enhanced KYC
+  //     // - SmileID.api.pollBiometricKycJobStatus() for polling job status
 
-      // Simulate successful verification
-      AppLogger.info('Smile ID verification successful (simulated)');
-      _analyticsService.logEvent(name: 'kyc_tier2_verification_completed');
+  //     await Future.delayed(const Duration(seconds: 2));
 
-      // Update user KYC tier to Tier 2
-      await _updateUserKycTier();
+  //     // Simulate successful verification
+  //     AppLogger.info('Smile ID verification successful (simulated)');
+  //     _analyticsService.logEvent(name: 'kyc_tier2_verification_completed');
 
-      // Trigger KYC success notification
-      try {
-        await NotificationService().triggerKycSuccess();
-      } catch (e) {
-        // Handle error silently
-      }
+  //     // Update user KYC tier to Tier 2
+  //     await _updateUserKycTier();
 
-      // Navigate to BVN/NIN verification
-      _appRouter.pushNamed(AppRoute.bvnNinVerificationView);
-    } catch (e) {
-      AppLogger.error('Error launching Smile ID verification: $e');
-      state = state.copyWith(
-        isBusy: false,
-        errorMessage: 'Failed to start verification. Please try again.',
-      );
+  //     // Trigger KYC success notification
+  //     try {
+  //       await NotificationService().triggerKycSuccess();
+  //     } catch (e) {
+  //       // Handle error silently
+  //     }
 
-      _analyticsService.logEvent(
-        name: 'kyc_tier2_verification_failed',
-        parameters: {'reason': e.toString()},
-      );
+  //     // Navigate to BVN/NIN verification
+  //     _appRouter.pushNamed(AppRoute.bvnNinVerificationView);
+  //   } catch (e) {
+  //     AppLogger.error('Error launching Smile ID verification: $e');
+  //     state = state.copyWith(
+  //       isBusy: false,
+  //       errorMessage: 'Failed to start verification. Please try again.',
+  //     );
 
-      TopSnackbar.show(
-        context,
-        message: 'Failed to start verification. Please try again.',
-        isError: true,
-      );
-    }
-  }
+  //     _analyticsService.logEvent(
+  //       name: 'kyc_tier2_verification_failed',
+  //       parameters: {'reason': e.toString()},
+  //     );
+
+  //     TopSnackbar.show(
+  //       context,
+  //       message: 'Failed to start verification. Please try again.',
+  //       isError: true,
+  //     );
+  //   }
+  // }
 
   // Update user KYC tier in backend
-  Future<void> _updateUserKycTier() async {
-    // Update KYC tier to Tier 2
-    await _kycService.setKycTier(KycTier.tier2);
+  // Future<void> _updateUserKycTier() async {
+  //   // Update KYC tier to Tier 2
+  //   await _kycService.setKycTier(KycTier.tier2);
 
-    // TODO: Implement API call to update user KYC tier on backend
-    // This would:
-    // 1. Call backend API to update user tier
-    // 2. Store verification data
-    // 3. Update transaction limits on server
+  //   // This would:
+  //   // 1. Call backend API to update user tier
+  //   // 2. Store verification data
+  //   // 3. Update transaction limits on server
 
-    await Future.delayed(const Duration(seconds: 1)); // Simulate API call
-  }
+  //   await Future.delayed(const Duration(seconds: 1)); // Simulate API call
+  // }
 
   // Skip verification for later
   void skipForLater(BuildContext context) {
     _analyticsService.logEvent(name: 'kyc_tier2_verification_skipped');
 
-    // Navigate to BVN/NIN verification
-    _appRouter.pushNamed(AppRoute.bvnNinVerificationView);
+    // Navigate to Biometrics
+    _appRouter.pushNamed(AppRoute.createPasscodeView);
+  }
+
+    // Skip verification for later
+  void navigateToNINAndBVNVerification(BuildContext context, {bool showBackButton = false}) {
+    _analyticsService.logEvent(name: 'kyc_tier2_verification_not_skipped');
+
+    // Pass showBackButton as argument
+    _appRouter.pushNamed(
+      AppRoute.bvnNinVerificationView,
+      arguments: {'showBackButton': showBackButton},
+    );
   }
 
   // Handle verification result from Smile ID
-  void handleSmileIdResult({
-    required bool isSuccess,
-    required String message,
-    Map<String, dynamic>? verificationData,
-  }) {
-    if (isSuccess) {
-      _analyticsService.logEvent(name: 'kyc_tier2_verification_success');
-      // Process successful verification
-      _processSuccessfulVerification(verificationData);
-    } else {
-      _analyticsService.logEvent(
-        name: 'kyc_tier2_verification_failed',
-        parameters: {'reason': message},
-      );
-      state = state.copyWith(isBusy: false, errorMessage: message);
-    }
-  }
+  // void handleSmileIdResult({
+  //   required bool isSuccess,
+  //   required String message,
+  //   Map<String, dynamic>? verificationData,
+  // }) {
+  //   if (isSuccess) {
+  //     _analyticsService.logEvent(name: 'kyc_tier2_verification_success');
+  //     // Process successful verification
+  //     _processSuccessfulVerification(verificationData);
+  //   } else {
+  //     _analyticsService.logEvent(
+  //       name: 'kyc_tier2_verification_failed',
+  //       parameters: {'reason': message},
+  //     );
+  //     state = state.copyWith(isBusy: false, errorMessage: message);
+  //   }
+  // }
 
   // Process successful verification
-  Future<void> _processSuccessfulVerification(
-    Map<String, dynamic>? verificationData,
-  ) async {
-    try {
-      // TODO: Process verification data
-      // This would include:
-      // 1. Extracting BVN and ID information
-      // 2. Updating user profile
-      // 3. Setting KYC tier to 2
-      // 4. Updating transaction limits
+  // Future<void> _processSuccessfulVerification(
+  //   Map<String, dynamic>? verificationData,
+  // ) async {
+  //   try {
+  //     // TODO: Process verification data
+  //     // This would include:
+  //     // 1. Extracting BVN and ID information
+  //     // 2. Updating user profile
+  //     // 3. Setting KYC tier to 2
+  //     // 4. Updating transaction limits
 
-      await _updateUserKycTier();
+  //     await _updateUserKycTier();
 
-      state = state.copyWith(isBusy: false);
-    } catch (e) {
-      state = state.copyWith(
-        isBusy: false,
-        errorMessage: 'Failed to process verification. Please try again.',
-      );
-    }
-  }
+  //     state = state.copyWith(isBusy: false);
+  //   } catch (e) {
+  //     state = state.copyWith(
+  //       isBusy: false,
+  //       errorMessage: 'Failed to process verification. Please try again.',
+  //     );
+  //   }
+  // }
 
   // Clear error message
   void clearError() {
