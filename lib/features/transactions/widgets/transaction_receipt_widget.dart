@@ -78,10 +78,7 @@ class TransactionReceiptWidget extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         // Logo
-        Image.asset(
-          'assets/icons/pngs/logoo.png',
-          height: 32.h,
-        ),
+        Image.asset('assets/icons/pngs/logoo.png', height: 32.h),
         Text(
           'Transaction Receipt',
           style: TextStyle(
@@ -157,7 +154,9 @@ class TransactionReceiptWidget extends StatelessWidget {
             fontFamily: 'Karla',
             fontSize: 16.sp,
             fontWeight: FontWeight.w500,
-            color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(.85),
+            color: Theme.of(
+              context,
+            ).textTheme.bodyLarge!.color!.withOpacity(.85),
           ),
         ),
         SizedBox(height: 4.h),
@@ -176,7 +175,7 @@ class TransactionReceiptWidget extends StatelessWidget {
 
   Widget _buildTransactionDetails() {
     final isDayfiTransfer = _isDayfiTransfer();
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -196,7 +195,12 @@ class TransactionReceiptWidget extends StatelessWidget {
         ),
         _buildDetailRow('Date', _formatDateTime(transaction.timestamp)),
         _buildDetailRow('Status', _getStatusText()),
-        _buildDetailRow('Send Type', isDayfiTransfer ? 'DayFi Tag' : _getChannelDisplayName(transaction.sendChannel)),
+        _buildDetailRow(
+          'Send Type',
+          isDayfiTransfer
+              ? 'DayFi Tag'
+              : _getChannelDisplayName(transaction.sendChannel),
+        ),
         if (transaction.reason != null && transaction.reason!.isNotEmpty)
           _buildDetailRow('Description', _capitalizeWords(transaction.reason!)),
       ],
@@ -204,10 +208,12 @@ class TransactionReceiptWidget extends StatelessWidget {
   }
 
   Widget _buildRecipientDetails() {
-    final isCollection = transaction.status.toLowerCase().contains('collection');
+    final isCollection = transaction.status.toLowerCase().contains(
+      'collection',
+    );
     final isPayment = transaction.status.toLowerCase().contains('payment');
     final isDayfiTransfer = _isDayfiTransfer();
-    
+
     // For COLLECTION (money IN) - show sender details
     if (isCollection) {
       return Column(
@@ -246,7 +252,7 @@ class TransactionReceiptWidget extends StatelessWidget {
         ],
       );
     }
-    
+
     // For PAYMENT (money OUT) - show recipient details
     if (isPayment) {
       return Column(
@@ -280,7 +286,7 @@ class TransactionReceiptWidget extends StatelessWidget {
         ],
       );
     }
-    
+
     // Fallback
     return SizedBox.shrink();
   }
@@ -357,16 +363,13 @@ class TransactionReceiptWidget extends StatelessWidget {
               color: AppColors.neutral600,
             ),
           ),
-          Flexible(
-            child: Text(
-              value,
-              textAlign: TextAlign.end,
-              style: TextStyle(
-                fontFamily: 'Karla',
-                fontSize: 12.sp,
-                fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,
-                color: AppColors.neutral900,
-              ),
+          Text(
+            value,
+            style: TextStyle(
+              fontFamily: 'Karla',
+              fontSize: 12.sp,
+              fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,
+              color: AppColors.neutral900,
             ),
           ),
         ],
@@ -393,7 +396,9 @@ class TransactionReceiptWidget extends StatelessWidget {
   }
 
   String _getRecipientDisplayName() {
-    final isCollection = transaction.status.toLowerCase().contains('collection');
+    final isCollection = transaction.status.toLowerCase().contains(
+      'collection',
+    );
     final isPayment = transaction.status.toLowerCase().contains('payment');
     final isDayfiTransfer = _isDayfiTransfer();
 
@@ -414,9 +419,9 @@ class TransactionReceiptWidget extends StatelessWidget {
 
     // For PAYMENT (money OUT)
     if (isPayment) {
-      if (_isWalletTopUp()) {
-        return 'Topped up your wallet';
-      }
+      // if (_isWalletTopUp()) {
+      //   return 'Topped up your wallet';
+      // }
       if (isDayfiTransfer &&
           transaction.beneficiary.accountNumber != null &&
           transaction.beneficiary.accountNumber!.isNotEmpty) {

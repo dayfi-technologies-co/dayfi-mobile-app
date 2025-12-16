@@ -1,5 +1,8 @@
+import 'dart:convert';
 import 'package:dayfi/models/wallet_transaction.dart';
 import 'package:dayfi/models/payment_response.dart' as payment;
+
+List<dynamic> beneficiariesFromJson(String str) => List<dynamic>.from(json.decode(str));
 
 class BeneficiaryWithSource {
   final Beneficiary beneficiary;

@@ -79,7 +79,7 @@ class DeliveryMethodsSheet extends ConsumerWidget {
     if (channelType.toLowerCase() == 'dayfi_tag') {
       return '$baseName - Instant transfer';
     } else {
-      return '$baseName - within 5 mins';
+      return '$baseName - Instant (5 minutes max)';
     }
   }
 
@@ -441,15 +441,15 @@ class DeliveryMethodsSheet extends ConsumerWidget {
                                   network.status == 'active' &&
                                   network.country == selectedCountry,
                             );
-                            if (availableNetworks.isEmpty) {
-                              TopSnackbar.show(
-                                context,
-                                message:
-                                    'No networks available for $selectedCountry',
-                                isError: true,
-                              );
-                              return;
-                            }
+                            // if (availableNetworks.isEmpty) {
+                            //   TopSnackbar.show(
+                            //     context,
+                            //     message:
+                            //         'No networks available for $selectedCountry',
+                            //     isError: true,
+                            //   );
+                            //   return;
+                            // }
 
                             // Navigator.pop(context);
 

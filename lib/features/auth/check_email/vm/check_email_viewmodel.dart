@@ -71,17 +71,17 @@ class CheckEmailNotifier extends StateNotifier<CheckEmailState> {
 
       AppLogger.info('Checking email: ${state.email}');
 
-      final response = await _authService.validateEmail(email: state.email);
+      final response = await _authService.validateEmail(email: state.email.toLowerCase());
 
       // ✅ Success (2xx)
-      TopSnackbar.show(context, message: response.message, isError: false);
+      // TopSnackbar.show(context, message: response.message, isError: false);
 
       analyticsService.logEvent(
         name: AnalyticsEvents.signupCompleted,
         parameters: {'email': state.email},
       );
 
-      await Future.delayed(const Duration(milliseconds: 500));
+      // await Future.delayed(const Duration(milliseconds: 1000));
 
       if (response.message.toLowerCase().contains('does not exist')) {
         appRouter.pushNamed(

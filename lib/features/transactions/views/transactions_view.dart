@@ -228,37 +228,32 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                 child: Padding(
                   padding: EdgeInsets.only(bottom: 0.h),
                   child:
-                      transactionsState.isLoading &&
-                              transactionsState.groupedTransactions.isEmpty
-                          ? Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 18.w,
-                              vertical: 16.h,
-                            ),
-                            child: ShimmerWidgets.transactionListShimmer(
-                              context,
-                              itemCount: 8,
-                            ),
-                          )
-                          : transactionsState.errorMessage != null &&
-                              transactionsState.groupedTransactions.isEmpty
-                          ? ErrorStateWidget(
-                            message: 'Failed to load transactions',
-                            details: transactionsState.errorMessage,
-                            onRetry: _refreshTransactions,
-                          )
-                          : transactionsState.groupedTransactions.isEmpty &&
-                              transactionsState.searchQuery.isEmpty
-                          ? EmptyStateWidget(
-                            icon: Icons.receipt_long_outlined,
-                            title: 'No transactions yet',
-                            message:
-                                'Your transaction history will appear here',
-                            actionText: 'Send Money',
-                            onAction: () {
-                              Navigator.pushNamed(context, '/send');
-                            },
-                          )
+                      // If we have cached transactions (even if empty), show empty state immediately if not loading new data
+                      transactionsState.groupedTransactions.isEmpty
+                          ? (
+                              transactionsState.isLoading && transactionsState.transactions.isEmpty
+                                  ? ShimmerWidgets.recipientListShimmer(
+                                    context,
+                                    itemCount: 8,
+                                  )
+                                  : transactionsState.errorMessage != null
+                                      ? ErrorStateWidget(
+                                          message: 'Failed to load transactions',
+                                          details: transactionsState.errorMessage,
+                                          onRetry: _refreshTransactions,
+                                        )
+                                      : transactionsState.searchQuery.isEmpty
+                                          ? EmptyStateWidget(
+                                              icon: Icons.receipt_long_outlined,
+                                              title: 'No transactions yet',
+                                              message: 'Your transaction history will appear here',
+                                              actionText: 'Send Money',
+                                              onAction: () {
+                                                Navigator.pushNamed(context, '/send');
+                                              },
+                                            )
+                                          : Container() // No search results handled below
+                            )
                           : ListView(
                             children: [
                               // Search Bar
@@ -739,12 +734,12 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
         final beneficiaryName =
             transaction.beneficiary.name.trim().toUpperCase();
 
-        if (beneficiaryName == userFullName ||
-            beneficiaryName == 'SELF FUNDING' ||
-            (beneficiaryName.contains('SELF') &&
-                beneficiaryName.contains('FUNDING'))) {
-          return 'TOP-UP';
-        }
+        // if (beneficiaryName == userFullName ||
+        //     beneficiaryName == 'SELF FUNDING' ||
+        //     (beneficiaryName.contains('SELF') &&
+        //         beneficiaryName.contains('FUNDING'))) {
+        //   return 'TOP-UP';
+        // }
       }
 
       // Regular payment to another person

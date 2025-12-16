@@ -1,4 +1,7 @@
-import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
+// #if !dart.library.html
+import 'dart:io' show Platform;
+// #endif
 
 import 'package:dayfi/features/auth/check_email/vm/check_email_viewmodel.dart';
 import 'package:dayfi/features/recipients/views/recipients_view.dart';
@@ -451,14 +454,18 @@ class AppRoute {
     Widget screen, {
     bool isFullScreen = false,
   }) {
-    if (Platform.isIOS) {
-      return CupertinoPageRoute(
-        settings: routeSettings,
-        builder: (context) {
-          return screen;
-        },
-        fullscreenDialog: isFullScreen,
-      );
+    if (!kIsWeb) {
+// #if !dart.library.html
+      if (Platform.isIOS) {
+        return CupertinoPageRoute(
+          settings: routeSettings,
+          builder: (context) {
+            return screen;
+          },
+          fullscreenDialog: isFullScreen,
+        );
+      }
+// #endif
     }
     return MaterialPageRoute(
       settings: routeSettings,

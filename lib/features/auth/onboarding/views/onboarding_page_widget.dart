@@ -25,6 +25,39 @@ class OnboardingPageWidget extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
+                                 SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.08,
+                      ),
+                    
+                      // ILLUSTRATION
+                      Center(
+                            child:
+                                page.illustrationPath.endsWith('.png')
+                                    ? Image.asset(
+                                      page.illustrationPath,
+                                      width:
+                                          MediaQuery.of(context).size.width *
+                                          .5,
+                                    )
+                                    : SvgPicture.asset(
+                                      page.illustrationPath,
+                                      width:
+                                          MediaQuery.of(context).size.width *
+                                          .5,
+                                    ),
+                          )
+                          .animate()
+                          .fadeIn(delay: 200.ms, duration: 600.ms)
+                          .slideY(begin: 0.18, end: 0, duration: 600.ms)
+                          .scale(
+                            begin: const Offset(.98, .98),
+                            duration: 500.ms,
+                          ),
+
+                               SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.06,
+                      ),
+
                       /// TITLE
                       Text(
                             page.title,
@@ -36,10 +69,11 @@ class OnboardingPageWidget extends StatelessWidget {
                                   Theme.of(
                                     context,
                                   ).textTheme.headlineLarge?.color,
-                              fontSize: 30.sp,
+                              fontSize: 32.sp,
+                              fontWeight: FontWeight.w900,
                               // fontWeight: FontWeight.w100,
                               fontFamily: 'Boldonse',
-                              letterSpacing: 0,
+                              letterSpacing: -.6,
                               height: 1.6,
                             ),
                           )
@@ -55,58 +89,34 @@ class OnboardingPageWidget extends StatelessWidget {
                             angle: 20,
                           ),
 
-                      SizedBox(height: 20.h),
+                      SizedBox(height: 18.h),
 
                       /// SUBTITLE
-                      Text(
-                            page.subtitle,
-                            textAlign: TextAlign.center,
-                            style: Theme.of(
-                              context,
-                            ).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context)
-                                  .textTheme
-                                  .headlineLarge
-                                  ?.color!
-                                  .withOpacity(0.85),
-                              fontSize: 17.sp,
-                              fontWeight: FontWeight.w500,
-                              height: 1.45,
-                              letterSpacing: -.6,
-                            ),
-                          )
-                          .animate()
-                          .fadeIn(delay: 150.ms, duration: 600.ms)
-                          .slideY(begin: 0.2, end: 0, duration: 600.ms),
-
-                      SizedBox(
-                        height: MediaQuery.of(context).size.height * 0.08,
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.08),
+                        child: Text(
+                              page.subtitle,
+                              textAlign: TextAlign.center,
+                              style: Theme.of(
+                                context,
+                              ).textTheme.bodyMedium?.copyWith(
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .headlineLarge
+                                    ?.color!
+                                    .withOpacity(0.85),
+                                fontSize: 18.sp,
+                                fontWeight: FontWeight.w500,
+                                height: 1.45,
+                                letterSpacing: -.6,
+                              ),
+                            )
+                            .animate()
+                            .fadeIn(delay: 150.ms, duration: 600.ms)
+                            .slideY(begin: 0.2, end: 0, duration: 600.ms),
                       ),
 
-                      // ILLUSTRATION
-                      Center(
-                            child:
-                                page.illustrationPath.endsWith('.png')
-                                    ? Image.asset(
-                                      page.illustrationPath,
-                                      width:
-                                          MediaQuery.of(context).size.width *
-                                          .65,
-                                    )
-                                    : SvgPicture.asset(
-                                      page.illustrationPath,
-                                      width:
-                                          MediaQuery.of(context).size.width *
-                                          .65,
-                                    ),
-                          )
-                          .animate()
-                          .fadeIn(delay: 200.ms, duration: 600.ms)
-                          .slideY(begin: 0.18, end: 0, duration: 600.ms)
-                          .scale(
-                            begin: const Offset(.98, .98),
-                            duration: 500.ms,
-                          ),
+                   
                     ],
                   ),
                 ),

@@ -245,7 +245,7 @@ class _SelectDeliveryMethodViewState
     if (channelType.toLowerCase() == 'dayfi_tag') {
       return '$baseName - Instant transfer';
     } else {
-      return '$baseName - within 5 mins';
+      return '$baseName - Instant (5 minutes max)';
     }
   }
 

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:flutter/foundation.dart';
 import 'package:mixpanel_flutter/mixpanel_flutter.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
@@ -10,10 +11,10 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 /// Google Firebase Analytics Service Provider
-FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
-FirebaseAnalyticsObserver analyticsObserver = FirebaseAnalyticsObserver(
-  analytics: _analytics,
-);
+FirebaseAnalytics? _analytics = !kIsWeb ? FirebaseAnalytics.instance : null;
+FirebaseAnalyticsObserver? analyticsObserver = !kIsWeb && _analytics != null
+    ? FirebaseAnalyticsObserver(analytics: _analytics!)
+    : null;
 
 class AnalyticsService {
   late Mixpanel _mixpanel;
@@ -23,7 +24,7 @@ class AnalyticsService {
   String? _networkType;
 
   ///get instance of FirebaseAnalytics [analytics]
-  FirebaseAnalytics get analytics => _analytics;
+  FirebaseAnalytics? get analytics => _analytics;
 
   ///get instance of Mixpanel [mixpanel]
   Mixpanel get mixpanel => _mixpanel;
@@ -105,13 +106,13 @@ class AnalyticsService {
       _currentUserId = user.userId;
       
       // Firebase Analytics
-      _analytics.setUserId(id: user.userId);
-      _analytics.setUserProperty(
+      _analytics?.setUserId(id: user.userId);
+      _analytics?.setUserProperty(
         name: "Name",
         value: '${user.lastName} ${user.firstName}',
       );
-      _analytics.setUserProperty(name: "Email", value: user.email);
-      _analytics.setUserProperty(name: "Mobile", value: user.phoneNumber ?? '');
+      _analytics?.setUserProperty(name: "Email", value: user.email);
+      _analytics?.setUserProperty(name: "Mobile", value: user.phoneNumber ?? '');
       
       // Mixpanel
       _mixpanel.identify(user.userId);
@@ -160,7 +161,7 @@ class AnalyticsService {
       AppLogger.debug('Sending event: $name');
 
       // Log to Firebase Analytics
-      await _analytics.logEvent(name: name, parameters: enrichedParameters);
+      await _analytics?.logEvent(name: name, parameters: enrichedParameters);
       
       // Log to Mixpanel
       _mixpanel.track(name, properties: enrichedParameters);

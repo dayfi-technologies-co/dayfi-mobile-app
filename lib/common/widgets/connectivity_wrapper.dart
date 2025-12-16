@@ -139,14 +139,16 @@ class _ConnectivityWrapperState extends State<ConnectivityWrapper> {
         decoration: BoxDecoration(color: AppColors.success500),
         child: SafeArea(
           bottom: false,
-          child: Text(
-            'Connection restored',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 12.sp,
-              letterSpacing: -.4,
-              fontWeight: FontWeight.w500,
-              fontFamily: 'Karla',
+          child: Center(
+            child: Text(
+              'Connection restored',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12.sp,
+                letterSpacing: -.4,
+                fontWeight: FontWeight.w500,
+                fontFamily: 'Karla',
+              ),
             ),
           ),
         ),

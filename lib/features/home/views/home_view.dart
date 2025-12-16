@@ -354,15 +354,16 @@ class _HomeViewState extends ConsumerState<HomeView>
                 child: _buildWalletBalanceCard(),
               ),
 
-              // SizedBox(height: 12.h),
-              // Padding(
-              //   padding: EdgeInsets.symmetric(horizontal: 18.w),
-              //   child: _infoCard(),
-              // ),
               SizedBox(height: 12.h),
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 18.w),
                 child: _buildHomeActionButtons(context),
+              ),
+
+              SizedBox(height: 12.h),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 18.w),
+                child: _infoCard(),
               ),
 
               SizedBox(height: 32.h),
@@ -478,6 +479,7 @@ class _HomeViewState extends ConsumerState<HomeView>
                   },
                 ),
               ),
+
 
               // SizedBox(height: 18.h),
 
@@ -727,7 +729,7 @@ class _HomeViewState extends ConsumerState<HomeView>
                         )
                         : '*****',
                     style: TextStyle(
-                      fontSize: _isBalanceVisible ? 44.sp : 44.sp,
+                      fontSize: _isBalanceVisible ? 40.sp : 40.sp,
                       height: 1.2,
                       fontFamily: 'Karla',
                       fontWeight: FontWeight.w700,
@@ -766,7 +768,7 @@ class _HomeViewState extends ConsumerState<HomeView>
           SizedBox(width: 12.w),
           Expanded(
             child: Text(
-              'Send money via bank transfers, mobile money and more globally.',
+              'Send money via bank transfers, mobile money and more globally',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 fontSize: 14.sp,
                 fontFamily: 'Karla',
@@ -818,18 +820,16 @@ class _HomeViewState extends ConsumerState<HomeView>
             Stack(
               children: [
                 SizedBox(
-                  width: 32.w,
-                  height: 32.w,
+                  width: 40.w,
+                  height: 40.w,
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
                       // Background circle
                       SvgPicture.asset(
                         iconAsset,
-                        height: 32.sp,
-                        color: Theme.of(
-                          context,
-                        ).textTheme.bodySmall?.color?.withOpacity(0.1),
+                        height: 40.sp,
+                        color: AppColors.purple400,
                       ),
 
                       // Foreground icon
@@ -841,9 +841,7 @@ class _HomeViewState extends ConsumerState<HomeView>
                                 ? Icons.arrow_forward
                                 : Icons.add,
                             size: label == "Send Money" ? 26.sp : 28.sp,
-                            color: Theme.of(
-                              context,
-                            ).textTheme.bodySmall?.color?.withOpacity(1),
+                            color: Colors.white,
                           ),
                         ),
                       ),
@@ -923,7 +921,7 @@ class _HomeViewState extends ConsumerState<HomeView>
             context,
             'Send Money',
             'Transfer funds locally or across borders',
-            'assets/icons/svgs/swap.svg',
+            'assets/icons/svgs/transactions.svg',
             () {
               appRouter.pushNamed(AppRoute.selectDestinationCountryView);
             },
@@ -1046,28 +1044,31 @@ class _HomeViewState extends ConsumerState<HomeView>
     // Get top 5 recent transactions
     final recentTransactions = filteredTransactions.take(5).toList();
 
-    // Show shimmer loading only if there's no cached data
-    if (transactionsState.isLoading && recentTransactions.isEmpty) {
-      return Padding(
-        padding: EdgeInsets.only(top: 16.h),
-        child: ShimmerWidgets.transactionListShimmer(context, itemCount: 5),
-      );
-    }
-
+    // If we have cached transactions (even if empty), show empty state immediately if not loading new data
     if (recentTransactions.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.only(top: 88.0),
-        child: EmptyStateWidget(
-          icon: Icons.receipt_long_outlined,
-          title: 'No transactions yet',
-          message:
-              'Your transactions will appear here once you start sending or receiving money',
-          actionText: 'Send Money',
-          onAction: () {
-            Navigator.pushNamed(context, '/send');
-          },
-        ),
-      );
+      if (transactionsState.isLoading &&
+          transactionsState.transactions.isEmpty) {
+        // Only show shimmer if there is truly no cached data at all
+        return Padding(
+          padding: EdgeInsets.only(top: 16.h),
+          child: ShimmerWidgets.transactionListShimmer(context, itemCount: 5),
+        );
+      } else {
+        // Show empty state if not loading or if we have already loaded once
+        return Padding(
+          padding: const EdgeInsets.only(top: 88.0),
+          child: EmptyStateWidget(
+            icon: Icons.receipt_long_outlined,
+            title: 'No transactions yet',
+            message:
+                'Your transactions will appear here once you start sending or receiving money',
+            actionText: 'Send Money',
+            onAction: () {
+              Navigator.pushNamed(context, '/send');
+            },
+          ),
+        );
+      }
     }
 
     return Column(
@@ -1498,12 +1499,12 @@ class _HomeViewState extends ConsumerState<HomeView>
         final beneficiaryName =
             transaction.beneficiary.name.trim().toUpperCase();
 
-        if (beneficiaryName == userFullName ||
-            beneficiaryName == 'SELF FUNDING' ||
-            (beneficiaryName.contains('SELF') &&
-                beneficiaryName.contains('FUNDING'))) {
-          return 'Topped up your wallet';
-        }
+        // if (beneficiaryName == userFullName ||
+        //     beneficiaryName == 'SELF FUNDING' ||
+        //     (beneficiaryName.contains('SELF') &&
+        //         beneficiaryName.contains('FUNDING'))) {
+        //   return 'Topped up your wallet';
+        // }
       }
 
       // Regular payment to another person

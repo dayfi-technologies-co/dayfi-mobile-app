@@ -334,14 +334,18 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
     List<BeneficiaryWithSource> visibleBeneficiaries,
   ) {
     String key;
-    if (recipientsState.isLoading && visibleBeneficiaries.isEmpty) {
-      key = 'loading';
-    } else if (recipientsState.errorMessage != null &&
-        visibleBeneficiaries.isEmpty) {
-      key = 'error';
-    } else if (visibleBeneficiaries.isEmpty &&
-        recipientsState.searchQuery.isEmpty) {
-      key = 'empty';
+
+    // If we have cached beneficiaries (even if empty), show empty state immediately if not loading new data
+    if (visibleBeneficiaries.isEmpty) {
+      if (recipientsState.isLoading && recipientsState.beneficiaries.isEmpty) {
+        key = 'loading';
+      } else if (recipientsState.errorMessage != null) {
+        key = 'error';
+      } else if (recipientsState.searchQuery.isEmpty) {
+        key = 'empty';
+      } else {
+        key = 'content';
+      }
     } else {
       key = 'content';
     }
@@ -350,31 +354,33 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
       key: ValueKey(key),
       width: double.infinity,
       child:
-          recipientsState.isLoading && visibleBeneficiaries.isEmpty
-              ? ShimmerWidgets.recipientListShimmer(context, itemCount: 6)
-              : recipientsState.errorMessage != null &&
-                  visibleBeneficiaries.isEmpty
-              ? ErrorStateWidget(
-                message: 'Failed to load Beneficiaries',
-                details: recipientsState.errorMessage,
-                onRetry: _refreshRecipients,
-              )
-              : visibleBeneficiaries.isEmpty &&
-                  recipientsState.searchQuery.isEmpty
-              ? EmptyStateWidget(
-                icon: Icons.people_outline,
-                title: 'No beneficiaries yet',
-                message:
-                    'Your beneficiaries will appear here. Start sending money quickly',
-                customButton: _buildActionButtonWidget(
-                  context,
-                  'Send Money',
-                  'assets/icons/svgs/swap.svg',
-                  () {
-                    appRouter.pushNamed(AppRoute.selectDestinationCountryView);
-                  },
-                ),
-              )
+          visibleBeneficiaries.isEmpty
+              ? (
+                  recipientsState.isLoading && recipientsState.beneficiaries.isEmpty
+                      ? ShimmerWidgets.recipientListShimmer(context, itemCount: 6)
+                      : recipientsState.errorMessage != null
+                          ? ErrorStateWidget(
+                              message: 'Failed to load Beneficiaries',
+                              details: recipientsState.errorMessage,
+                              onRetry: _refreshRecipients,
+                            )
+                          : recipientsState.searchQuery.isEmpty
+                              ? EmptyStateWidget(
+                                  icon: Icons.people_outline,
+                                  title: 'No beneficiaries yet',
+                                  message:
+                                      'Your beneficiaries will appear here. Start sending money quickly',
+                                  customButton: _buildActionButtonWidget(
+                                    context,
+                                    'Send Money',
+                                    'assets/icons/svgs/swap.svg',
+                                    () {
+                                      appRouter.pushNamed(AppRoute.selectDestinationCountryView);
+                                    },
+                                  ),
+                                )
+                              : Container() // No search results handled below
+                )
               : ListView(
                 children: [
                   // Search Bar
@@ -384,6 +390,7 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
                       vertical: 8.h,
                     ),
                     child: CustomTextField(
+                      isSearch: true,
                       controller: _searchController,
                       label: '',
                       hintText: 'Search...',

@@ -87,8 +87,6 @@ class AuthService {
       // Get FCM token from NotificationService
       String? fcmToken;
       try {
-        // Import NotificationService at the top if not already
-        // import 'package:dayfi/services/notification_service.dart';
         final notificationService = NotificationService();
         await notificationService.init();
         fcmToken = notificationService.fcmToken;

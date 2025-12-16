@@ -146,16 +146,8 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
                                         ),
                                         color:
                                             index == currentPage
-                                                ? Theme.of(context)
-                                                    .textTheme
-                                                    .headlineLarge
-                                                    ?.color
-                                                    ?.withOpacity(.85)
-                                                : Theme.of(context)
-                                                    .textTheme
-                                                    .headlineLarge
-                                                    ?.color
-                                                    ?.withOpacity(.15),
+                                                ? Theme.of(context).colorScheme.shadow.withOpacity(.8)
+                                                : Theme.of(context).colorScheme.shadow.withOpacity(.15),
                                       ),
                                     )
                                     .animate()

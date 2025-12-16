@@ -3,7 +3,7 @@ import 'onboarding_page.dart';
 class OnboardingData {
   static const List<OnboardingPage> pages = [
     OnboardingPage(
-      title: 'Stream money\nto anyone',
+      title: 'Send money\nto anyone',
       subtitle:
           'Send salaries, gig payouts, and remittances that update every second.',
       description:
@@ -14,7 +14,7 @@ class OnboardingData {
     OnboardingPage(
       title: 'Cross-border\nin real time',
       subtitle:
-          'Stream USD globally and settle instantly into NGN, ZAR, GHS, and more.',
+          'Send USD globally and settle instantly into NGN, ZAR, GHS, and more.',
       description:
           'Your recipients get live-updating balances in their local currency—no delays, no friction.',
       illustrationPath: 'assets/icons/svgs/transactions.svg',
@@ -40,7 +40,7 @@ class OnboardingData {
           'Recipients withdraw in seconds to bank accounts and mobile wallets.',
       description:
           'We stream continuously, and settle instantly—so funds are available whenever they’re needed.',
-      illustrationPath: 'assets/icons/svgs/transactions.svg',
+      illustrationPath: 'assets/icons/svgs/swap.svg',
       decorativeElements: ['hand_stopwatch'],
     ),
   ];

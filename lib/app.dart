@@ -120,9 +120,9 @@ class _MyAppState extends ConsumerState<MyApp> {
       return MaterialApp(
         debugShowCheckedModeBanner: false,
         home: Scaffold(
-          backgroundColor: const Color(0xFFFFD800),
+          backgroundColor: const Color(0xFFFFF9E3),
           body: Center(
-            child: Image.asset('assets/images/logo_splash.png', width: 150.0)
+            child: Image.asset('assets/images/logo_splash.png', width: 88.0)
           ),
         ),
       );
@@ -159,7 +159,7 @@ class _MyAppState extends ConsumerState<MyApp> {
 
               return ConnectivityWrapper(
                 child: MaterialApp(
-                  navigatorObservers: [analyticsObserver],
+                  navigatorObservers: [if (analyticsObserver != null) analyticsObserver!],
                   debugShowCheckedModeBanner: false,
                   title: AppConstants.appName,
                   theme: themeData.copyWith(

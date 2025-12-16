@@ -1,3 +1,4 @@
+import 'package:dayfi/services/local/local_cache.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dayfi/models/beneficiary_with_source.dart';
 import 'package:dayfi/services/remote/wallet_service.dart';
@@ -36,34 +37,34 @@ class RecipientsState {
 }
 
 class RecipientsNotifier extends StateNotifier<RecipientsState> {
+    final LocalCache _localCache = locator<LocalCache>();
   final WalletService _walletService;
 
   RecipientsNotifier(this._walletService) : super(RecipientsState());
 
   Future<void> loadBeneficiaries({bool isInitialLoad = false}) async {
-    // Only show loading state if there's no existing data (initial load)
-    final shouldShowLoading = isInitialLoad || state.beneficiaries.isEmpty;
-    state = state.copyWith(
-      isLoading: shouldShowLoading,
-      errorMessage: null,
-    );
-    
+    // Try to load cached beneficiaries first
+    if (state.beneficiaries.isEmpty) {
+      final cached = _localCache.getFromLocalCache('recipients');
+      if (cached != null) {
+        try {
+          final List<dynamic> benJson = (cached is String) ? (beneficiariesFromJson(cached)) : (cached as List<dynamic>);
+          final bens = benJson.map((e) => BeneficiaryWithSource.fromJson(e)).toList();
+          state = state.copyWith(beneficiaries: bens, filteredBeneficiaries: bens, isLoading: false);
+        } catch (_) {}
+      }
+    }
+    // Only show loading if no cache
+    final shouldShowLoading = state.beneficiaries.isEmpty;
+    state = state.copyWith(isLoading: shouldShowLoading, errorMessage: null);
     try {
       final beneficiaries = await _walletService.getUniqueBeneficiariesWithSource();
-      
-      // Additional client-side deduplication using Set to ensure no duplicates
       final uniqueBeneficiaries = beneficiaries.toSet().toList();
-      
-      state = state.copyWith(
-        beneficiaries: uniqueBeneficiaries,
-        filteredBeneficiaries: uniqueBeneficiaries,
-        isLoading: false,
-      );
+      // Cache recipients
+      await _localCache.saveToLocalCache(key: 'recipients', value: uniqueBeneficiaries.map((e) => e.toJson()).toList());
+      state = state.copyWith(beneficiaries: uniqueBeneficiaries, filteredBeneficiaries: uniqueBeneficiaries, isLoading: false);
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: 'Failed to load recipients. Please try again.',
-      );
+      state = state.copyWith(isLoading: false, errorMessage: 'Failed to load recipients. Please try again.');
     }
   }
 

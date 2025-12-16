@@ -298,8 +298,8 @@ class PasscodeWidget extends StatelessWidget {
             (index) => Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6.0),
               child: Container(
-                width: 24,
-                height: 24,
+                width: 20,
+                height: 30,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color:

@@ -4,7 +4,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intercom_flutter/intercom_flutter.dart';
-import 'package:smile_id/smile_id.dart';
+// import 'package:smile_id/smile_id.dart';
 
 import 'package:dayfi/app.dart';
 import 'package:dayfi/app_locator.dart';
@@ -18,7 +18,7 @@ void main() async {
 
   // Initialize Smile ID SDK
   try {
-    SmileID.initialize(useSandbox: true, enableCrashReporting: true);
+    // SmileID.initialize(useSandbox: true, enableCrashReporting: true);
     AppLogger.info('Smile ID initialized successfully');
   } catch (e) {
     AppLogger.error('Smile ID initialization error: $e');

@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/services/local/secure_storage.dart';
@@ -61,7 +60,6 @@ class _SplashViewState extends ConsumerState<SplashView> {
           appRouter.pushLoginAndClearStack(arguments: false);
         } else {
           // Skip biometric setup for now - go directly to passcode view
-          // TODO: Re-enable biometric setup later
           // } else if (!hasCompletedBiometricSetup) {
           //   // If user has token and passcode but hasn't completed biometric setup, go to biometric setup
           //   Navigator.of(context).pushReplacementNamed(AppRoute.biometricSetupView);
@@ -92,13 +90,13 @@ class _SplashViewState extends ConsumerState<SplashView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFD800), // Bright yellow background
+      backgroundColor: const Color(0xFFFFF9E3), // Bright yellow background
       body: Stack(
         fit: StackFit.expand,
         children: [
           // Main content centered
           Center(
-            child: Image.asset('assets/images/logo_splash.png', width: 150.w),
+            child: Image.asset('assets/images/logo_splash.png', width: 88.w),
           ),
           // Powered by section at bottom
           // Positioned(

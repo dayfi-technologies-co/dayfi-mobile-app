@@ -1,3 +1,4 @@
+import 'package:dayfi/services/local/local_cache.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/models/wallet.dart';
@@ -83,36 +84,36 @@ class HomeState {
 }
 
 class HomeViewModel extends StateNotifier<HomeState> {
+    final LocalCache _localCache = locator<LocalCache>();
   final WalletService _walletService = walletService;
 
   HomeViewModel() : super(const HomeState());
 
-  /// Fetch wallet details from API
+  /// Fetch wallet details from API, with local cache fallback
   Future<void> fetchWalletDetails({bool isInitialLoad = false}) async {
-    // Only show loading state if there's no existing data (initial load)
-    final shouldShowLoading = isInitialLoad || state.wallets.isEmpty;
-    state = state.copyWith(
-      isLoading: shouldShowLoading,
-      errorMessage: null,
-    );
-
+    // Try to load cached wallets first
+    if (state.wallets.isEmpty) {
+      final cached = _localCache.getFromLocalCache('wallets');
+      if (cached != null) {
+        try {
+          final List<dynamic> walletsJson = (cached is String) ? (walletsFromJson(cached)) : (cached as List<dynamic>);
+          final wallets = walletsJson.map((e) => Wallet.fromJson(e)).toList();
+          Wallet? primaryWallet = wallets.firstWhere((w) => w.currency.toUpperCase() == 'NGN', orElse: () => wallets.first);
+          state = state.copyWith(wallets: wallets, primaryWallet: primaryWallet, isLoading: false);
+        } catch (_) {}
+      }
+    }
+    // Only show loading if no cache
+    final shouldShowLoading = state.wallets.isEmpty;
+    state = state.copyWith(isLoading: shouldShowLoading, errorMessage: null);
     try {
       AppLogger.info('Fetching wallet details from API...');
-
       final response = await _walletService.fetchWalletDetails();
-
       if (response.wallets.isEmpty) {
         AppLogger.warning('No wallets found in response');
-        state = state.copyWith(
-          wallets: [],
-          primaryWallet: null,
-          isLoading: false,
-          errorMessage: null,
-        );
+        state = state.copyWith(wallets: [], primaryWallet: null, isLoading: false, errorMessage: null);
         return;
       }
-
-      // Find primary wallet (prefer NGN, otherwise first wallet)
       Wallet? primaryWallet;
       for (final wallet in response.wallets) {
         if (wallet.currency.toUpperCase() == 'NGN') {
@@ -121,24 +122,12 @@ class HomeViewModel extends StateNotifier<HomeState> {
         }
       }
       primaryWallet ??= response.wallets.first;
-
-      AppLogger.info(
-        'Wallet details fetched successfully: ${response.wallets.length} wallet(s), '
-        'Primary balance: ${primaryWallet.formattedBalance}',
-      );
-
-      state = state.copyWith(
-        wallets: response.wallets,
-        primaryWallet: primaryWallet,
-        isLoading: false,
-        errorMessage: null,
-      );
+      // Cache wallets
+      await _localCache.saveToLocalCache(key: 'wallets', value: response.wallets.map((e) => e.toJson()).toList());
+      state = state.copyWith(wallets: response.wallets, primaryWallet: primaryWallet, isLoading: false, errorMessage: null);
     } catch (e) {
       AppLogger.error('Error fetching wallet details: $e');
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: 'Failed to load wallet balance. Please try again.',
-      );
+      state = state.copyWith(isLoading: false, errorMessage: 'Failed to load wallet balance. Please try again.');
     }
   }
 

@@ -2231,12 +2231,12 @@ class _TransactionDetailsViewState
         final beneficiaryName =
             widget.transaction.beneficiary.name.trim().toUpperCase();
 
-        if (beneficiaryName == userFullName ||
-            beneficiaryName == 'SELF FUNDING' ||
-            (beneficiaryName.contains('SELF') &&
-                beneficiaryName.contains('FUNDING'))) {
-          return 'Topped up your wallet';
-        }
+        // if (beneficiaryName == userFullName ||
+        //     beneficiaryName == 'SELF FUNDING' ||
+        //     (beneficiaryName.contains('SELF') &&
+        //         beneficiaryName.contains('FUNDING'))) {
+        //   return 'Topped up your wallet';
+        // }
       }
 
       // Regular payment to another person

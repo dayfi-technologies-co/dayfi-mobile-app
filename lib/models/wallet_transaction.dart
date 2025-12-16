@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+List<dynamic> walletTransactionsFromJson(String str) => List<dynamic>.from(json.decode(str));
 class WalletTransactionResponse {
   final String status;
   final String message;
@@ -83,6 +86,42 @@ class WalletTransactionData {
 }
 
 class WalletTransaction {
+    Map<String, dynamic> toJson() {
+      return {
+        'id': id,
+        'send_channel': sendChannel,
+        'send_network': sendNetwork,
+        'send_amount': sendAmount,
+        'receive_channel': receiveChannel,
+        'receive_network': receiveNetwork,
+        'receive_amount': receiveAmount,
+        'fee': fee,
+        'status': status,
+        'reason': reason,
+        'timestamp': timestamp,
+        'beneficiary': {
+          'id': beneficiary.id,
+          'name': beneficiary.name,
+          'country': beneficiary.country,
+          'phone': beneficiary.phone,
+          'address': beneficiary.address,
+          'dob': beneficiary.dob,
+          'email': beneficiary.email,
+          'idNumber': beneficiary.idNumber,
+          'idType': beneficiary.idType,
+          'account_number': beneficiary.accountNumber,
+          'account_type': beneficiary.accountType,
+        },
+        'source': {
+          'id': source.id,
+          'accountType': source.accountType,
+          'accountNumber': source.accountNumber,
+          'networkId': source.networkId,
+          'beneficiaryId': source.beneficiaryId,
+          'dayfi_id': source.dayfiId,
+        },
+      };
+    }
   final String id;
   final String? sendChannel;
   final String? sendNetwork;

@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+List<dynamic> walletsFromJson(String str) => List<dynamic>.from(json.decode(str));
 class Wallet {
   final String walletId;
   final String userId;

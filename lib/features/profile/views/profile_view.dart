@@ -545,7 +545,12 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
       children: [
         // User's name
         Text(
-          profileState.userName,
+          profileState.userName.isNotEmpty
+              ? profileState.userName
+                  .split(' ')
+                  .map((word) => word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : '')
+                  .join(' ')
+              : '',
           style: AppTypography.headlineSmall.copyWith(
             color: Theme.of(context).colorScheme.onSurface,
             fontSize: 28.sp,

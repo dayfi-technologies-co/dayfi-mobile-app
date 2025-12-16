@@ -841,7 +841,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                                         Icon(
                                           Icons.error_outline,
                                           color: AppColors.error600,
-                                          size: 20.sp,
+                                          size: 16.sp,
                                         ),
                                         SizedBox(width: 8.w),
                                         Expanded(
@@ -852,6 +852,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                                             ).textTheme.bodyMedium?.copyWith(
                                               fontFamily: 'Karla',
                                               fontSize: 14.sp,
+                                               letterSpacing: -.6,
                                               fontWeight: FontWeight.w500,
                                               color: AppColors.error700,
                                               height: 1.3,
@@ -887,6 +888,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                                         style: TextStyle(
                                           fontFamily: 'karla',
                                           fontSize: 14.sp,
+                                           letterSpacing: -.6,
                                           fontWeight: FontWeight.w500,
                                           color: AppColors.success700,
                                           height: 1.3,

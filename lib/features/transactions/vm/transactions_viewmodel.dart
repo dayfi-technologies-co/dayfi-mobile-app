@@ -1,3 +1,4 @@
+import 'package:dayfi/services/local/local_cache.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dayfi/models/wallet_transaction.dart';
 import 'package:dayfi/services/remote/wallet_service.dart';
@@ -51,60 +52,47 @@ class TransactionGroup {
 }
 
 class TransactionsNotifier extends StateNotifier<TransactionsState> {
+    final LocalCache _localCache = locator<LocalCache>();
   final WalletService _walletService;
 
   TransactionsNotifier(this._walletService) : super(TransactionsState());
 
   Future<void> loadTransactions({bool isInitialLoad = false}) async {
-    // Only show loading state if there's no existing data (initial load)
-    final shouldShowLoading = isInitialLoad || state.transactions.isEmpty;
-    state = state.copyWith(
-      isLoading: shouldShowLoading,
-      errorMessage: null,
-    );
-    
+    // Try to load cached transactions first
+    if (state.transactions.isEmpty) {
+      final cached = _localCache.getFromLocalCache('transactions');
+      if (cached != null) {
+        try {
+          final List<dynamic> txJson = (cached is String) ? (walletTransactionsFromJson(cached)) : (cached as List<dynamic>);
+          final txs = txJson.map((e) => WalletTransaction.fromJson(e)).toList();
+          final grouped = _groupTransactionsByDate(txs);
+          state = state.copyWith(transactions: txs, groupedTransactions: grouped, isLoading: false);
+        } catch (_) {}
+      }
+    }
+    // Only show loading if no cache
+    final shouldShowLoading = state.transactions.isEmpty;
+    state = state.copyWith(isLoading: shouldShowLoading, errorMessage: null);
     try {
       // Fetch first page to get total pages count
-      final firstResponse = await _walletService.getWalletTransactions(
-        limit: 100, // Use a larger limit per page
-      );
-      
+      final firstResponse = await _walletService.getWalletTransactions(limit: 100);
       List<WalletTransaction> allTransactions = List.from(firstResponse.data.transactions);
-      
-      // Fetch remaining pages if there are more
       final totalPages = firstResponse.data.totalPages;
       if (totalPages > 1) {
-        final remainingPages = List.generate(
-          totalPages - 1,
-          (index) => index + 2, // Pages 2, 3, 4, etc.
-        );
-        
-        // Fetch all remaining pages
+        final remainingPages = List.generate(totalPages - 1, (index) => index + 2);
         final remainingResponses = await Future.wait(
-          remainingPages.map((page) => _walletService.getWalletTransactions(
-            page: page,
-            limit: 100,
-          )),
+          remainingPages.map((page) => _walletService.getWalletTransactions(page: page, limit: 100)),
         );
-        
-        // Combine all transactions
         for (final response in remainingResponses) {
           allTransactions.addAll(response.data.transactions);
         }
       }
-      
       final groupedTransactions = _groupTransactionsByDate(allTransactions);
-      
-      state = state.copyWith(
-        transactions: allTransactions,
-        groupedTransactions: groupedTransactions,
-        isLoading: false,
-      );
+      // Cache transactions
+      await _localCache.saveToLocalCache(key: 'transactions', value: allTransactions.map((e) => e.toJson()).toList());
+      state = state.copyWith(transactions: allTransactions, groupedTransactions: groupedTransactions, isLoading: false);
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: 'Failed to load transactions. Please try again.',
-      );
+      state = state.copyWith(isLoading: false, errorMessage: 'Failed to load transactions. Please try again.');
     }
   }
 
