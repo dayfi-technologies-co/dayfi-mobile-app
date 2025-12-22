@@ -85,25 +85,25 @@ class _TransactionFilterBottomSheetState
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SafeArea(
             bottom: false,
         child: SingleChildScrollView(
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 24.h),
+            padding: EdgeInsets.symmetric(horizontal: 18, vertical: 24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeader(),
-                SizedBox(height: 24.h),
+                SizedBox(height: 24),
                 _buildSortSection(),
-                SizedBox(height: 24.h),
+                SizedBox(height: 24),
                 _buildStatusSection(),
-                SizedBox(height: 24.h),
+                SizedBox(height: 24),
                 _buildDateRangeSection(),
-                SizedBox(height: 32.h),
+                SizedBox(height: 32),
                 _buildActionButtons(),
               ],
             ),
@@ -121,7 +121,7 @@ class _TransactionFilterBottomSheetState
           'Filter & Sort',
           style: AppTypography.titleLarge.copyWith(
          fontFamily: 'FunnelDisplay',
-             fontSize: 20.sp, // height: 1.6,
+             fontSize: 20, // height: 1.6,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,
           ),
@@ -137,8 +137,8 @@ class _TransactionFilterBottomSheetState
             child: Text(
               'Clear All',
               style: AppTypography.bodyMedium.copyWith(
-                fontFamily: 'Karla',
-                fontSize: 14.sp,
+                fontFamily: 'Chirp',
+                fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: AppColors.purple500ForTheme(context),
               ),
@@ -155,32 +155,32 @@ class _TransactionFilterBottomSheetState
         Text(
           'SORT BY',
           style: AppTypography.labelMedium.copyWith(
-            fontFamily: 'Karla',
-            fontSize: 11.sp,
+            fontFamily: 'Chirp',
+            fontSize: 11,
             fontWeight: FontWeight.w500,
             color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(.85),
             letterSpacing: 0.5,
           ),
         ),
-        SizedBox(height: 12.h),
+        SizedBox(height: 12),
         _buildSortOption(
           'Newest First',
           TransactionSortBy.newest,
           Icons.arrow_downward,
         ),
-        SizedBox(height: 8.h),
+        SizedBox(height: 8),
         _buildSortOption(
           'Oldest First',
           TransactionSortBy.oldest,
           Icons.arrow_upward,
         ),
-        SizedBox(height: 8.h),
+        SizedBox(height: 8),
         _buildSortOption(
           'Highest Amount',
           TransactionSortBy.amountHighest,
           Icons.trending_up,
         ),
-        SizedBox(height: 8.h),
+        SizedBox(height: 8),
         _buildSortOption(
           'Lowest Amount',
           TransactionSortBy.amountLowest,
@@ -203,15 +203,15 @@ class _TransactionFilterBottomSheetState
           _filters = _filters.copyWith(sortBy: value);
         });
       },
-      borderRadius: BorderRadius.circular(12.r),
+      borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color:
               isSelected
                   ? AppColors.purple500ForTheme(context).withOpacity(0.1)
                   : Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(12.r),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color:
                 isSelected
@@ -224,7 +224,7 @@ class _TransactionFilterBottomSheetState
           children: [
             Icon(
               icon,
-              size: 20.sp,
+              size: 20,
               color:
                   isSelected
                       ? AppColors.purple500ForTheme(context)
@@ -232,13 +232,13 @@ class _TransactionFilterBottomSheetState
                         context,
                       ).colorScheme.onSurface.withOpacity(0.6),
             ),
-            SizedBox(width: 12.w),
+            SizedBox(width: 12),
             Expanded(
               child: Text(
                 label,
                 style: AppTypography.bodyMedium.copyWith(
-                  fontFamily: 'Karla',
-                  fontSize: 16.sp,
+                  fontFamily: 'Chirp',
+                  fontSize: 16,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                   color:
                       isSelected
@@ -251,8 +251,8 @@ class _TransactionFilterBottomSheetState
               SvgPicture.asset(
                 'assets/icons/svgs/circle-check.svg',
                 color: AppColors.purple500ForTheme(context),
-                height: 24.sp,
-                width: 24.sp,
+                height: 24,
+                width: 24,
               ),
           ],
         ),
@@ -267,17 +267,17 @@ class _TransactionFilterBottomSheetState
         Text(
           'STATUS',
           style: AppTypography.labelMedium.copyWith(
-            fontFamily: 'Karla',
-            fontSize: 11.sp,
+            fontFamily: 'Chirp',
+            fontSize: 11,
             fontWeight: FontWeight.w500,
             color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(.85),
             letterSpacing: 0.5,
           ),
         ),
-        SizedBox(height: 12.h),
+        SizedBox(height: 12),
         Wrap(
-          spacing: 8.w,
-          runSpacing: 8.h,
+          spacing: 8,
+          runSpacing: 8,
           children: [
             _buildStatusChip('All', TransactionStatus.all),
             _buildStatusChip('Success', TransactionStatus.success),
@@ -299,15 +299,15 @@ class _TransactionFilterBottomSheetState
           _filters = _filters.copyWith(status: value);
         });
       },
-      borderRadius: BorderRadius.circular(20.r),
+      borderRadius: BorderRadius.circular(20),
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color:
               isSelected
                   ? AppColors.purple500ForTheme(context)
                   : Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(20.r),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color:
                 isSelected
@@ -318,8 +318,8 @@ class _TransactionFilterBottomSheetState
         child: Text(
           label,
           style: AppTypography.bodyMedium.copyWith(
-            fontFamily: 'Karla',
-            fontSize: 14.sp,
+            fontFamily: 'Chirp',
+            fontSize: 14,
             fontWeight: FontWeight.w500,
             color:
                 isSelected
@@ -338,14 +338,14 @@ class _TransactionFilterBottomSheetState
         Text(
           'DATE RANGE',
           style: AppTypography.labelMedium.copyWith(
-            fontFamily: 'Karla',
-            fontSize: 11.sp,
+            fontFamily: 'Chirp',
+            fontSize: 11,
             fontWeight: FontWeight.w500,
             color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(.85),
             letterSpacing: 0.5,
           ),
         ),
-        SizedBox(height: 12.h),
+        SizedBox(height: 12),
         Row(
           children: [
             Expanded(
@@ -355,7 +355,7 @@ class _TransactionFilterBottomSheetState
                 onTap: () => _selectDate(true),
               ),
             ),
-            SizedBox(width: 12.w),
+            SizedBox(width: 12),
             Expanded(
               child: _buildDateButton(
                 label: 'End Date',
@@ -367,7 +367,7 @@ class _TransactionFilterBottomSheetState
         ),
         if (_filters.startDate != null || _filters.endDate != null)
           Padding(
-            padding: EdgeInsets.only(top: 8.h),
+            padding: EdgeInsets.only(top: 8),
             child: TextButton(
               onPressed: () {
                 HapticHelper.lightImpact();
@@ -378,8 +378,8 @@ class _TransactionFilterBottomSheetState
               child: Text(
                 'Clear Date Range',
                 style: AppTypography.bodySmall.copyWith(
-                  fontFamily: 'Karla',
-                  fontSize: 12.sp,
+                  fontFamily: 'Chirp',
+                  fontSize: 12,
                   fontWeight: FontWeight.w500,
                   color: AppColors.purple500ForTheme(context),
                 ),
@@ -397,12 +397,12 @@ class _TransactionFilterBottomSheetState
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12.r),
+      borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(12.r),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color:
                 date != null
@@ -417,13 +417,13 @@ class _TransactionFilterBottomSheetState
             Text(
               label,
               style: AppTypography.bodySmall.copyWith(
-                fontFamily: 'Karla',
-                fontSize: 12.sp,
+                fontFamily: 'Chirp',
+                fontSize: 12,
                 fontWeight: FontWeight.w500,
                 color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
               ),
             ),
-            SizedBox(height: 4.h),
+            SizedBox(height: 4),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -432,8 +432,8 @@ class _TransactionFilterBottomSheetState
                       ? '${date.day}/${date.month}/${date.year}'
                       : 'Select',
                   style: AppTypography.bodyMedium.copyWith(
-                    fontFamily: 'Karla',
-                    fontSize: 14.sp,
+                    fontFamily: 'Chirp',
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color:
                         date != null
@@ -445,7 +445,7 @@ class _TransactionFilterBottomSheetState
                 ),
                 Icon(
                   Icons.calendar_today,
-                  size: 16.sp,
+                  size: 16,
                   color:
                       date != null
                           ? AppColors.purple500ForTheme(context)
@@ -509,15 +509,15 @@ class _TransactionFilterBottomSheetState
           backgroundColor: AppColors.purple500,
           textColor: Colors.white,
           borderRadius: 38,
-          height: 56.h,
+          height: 56,
           width: double.infinity,
           fullWidth: true,
-          fontFamily: 'Karla',
+          fontFamily: 'Chirp',
           fontSize: 18,
           fontWeight: FontWeight.w500,
           letterSpacing: -0.8,
         ),
-        SizedBox(height: 12.h),
+        SizedBox(height: 12),
         SecondaryButton(
           text: 'Cancel',
           onPressed: () {
@@ -527,9 +527,9 @@ class _TransactionFilterBottomSheetState
           textColor: AppColors.purple500ForTheme(context),
           width: double.infinity,
           fullWidth: true,
-          height: 56.h,
+          height: 56,
           borderRadius: 38,
-          fontFamily: 'Karla',
+          fontFamily: 'Chirp',
           fontSize: 18,
           fontWeight: FontWeight.w500,
           letterSpacing: -0.8,

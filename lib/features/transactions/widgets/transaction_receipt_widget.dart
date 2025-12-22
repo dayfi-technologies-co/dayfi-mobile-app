@@ -26,45 +26,45 @@ class TransactionReceiptWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 375.w,
+      width: 375,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20.r),
+        borderRadius: BorderRadius.circular(20),
       ),
-      padding: EdgeInsets.all(24.w),
+      padding: EdgeInsets.all(24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header with logo
           _buildHeader(),
-          SizedBox(height: 24.h),
+          SizedBox(height: 24),
 
           // Transaction Status Badge
           _buildStatusBadge(),
-          SizedBox(height: 24.h),
+          SizedBox(height: 24),
 
           // Amount
           _buildAmountSection(context),
-          SizedBox(height: 24.h),
+          SizedBox(height: 24),
 
           // Divider
           Container(height: 1, color: AppColors.neutral200),
-          SizedBox(height: 24.h),
+          SizedBox(height: 24),
 
           // Transaction Details
           _buildTransactionDetails(),
-          SizedBox(height: 20.h),
+          SizedBox(height: 20),
 
           // Recipient Details (if not a wallet top-up)
           if (!_isWalletTopUp()) ...[
             _buildRecipientDetails(),
-            SizedBox(height: 20.h),
+            SizedBox(height: 20),
           ],
 
           // Payment Summary
           _buildPaymentSummary(),
-          SizedBox(height: 24.h),
+          SizedBox(height: 24),
 
           // Footer
           _buildFooter(),
@@ -78,12 +78,12 @@ class TransactionReceiptWidget extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         // Logo
-        Image.asset('assets/icons/pngs/logoo.png', height: 32.h),
+        Image.asset('assets/icons/pngs/logoo.png', height: 32),
         Text(
           'Transaction Receipt',
           style: TextStyle(
-            fontFamily: 'Karla',
-            fontSize: 12.sp,
+            fontFamily: 'Chirp',
+            fontSize: 12,
             fontWeight: FontWeight.w500,
             color: AppColors.neutral600,
           ),
@@ -112,16 +112,16 @@ class TransactionReceiptWidget extends StatelessWidget {
     }
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: badgeColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20.r),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
         statusText.toUpperCase(),
         style: TextStyle(
-          fontFamily: 'Karla',
-          fontSize: 10.sp,
+          fontFamily: 'Chirp',
+          fontSize: 10,
           fontWeight: FontWeight.w700,
           color: badgeColor,
           letterSpacing: 1,
@@ -142,29 +142,29 @@ class TransactionReceiptWidget extends StatelessWidget {
           amount,
           style: TextStyle(
             fontFamily: 'FunnelDisplay',
-            fontSize: 36.sp,
+            fontSize: 36,
             fontWeight: FontWeight.w700,
             color: AppColors.neutral900,
           ),
         ),
-        SizedBox(height: 8.h),
+        SizedBox(height: 8),
         Text(
           recipientName,
           style: TextStyle(
-            fontFamily: 'Karla',
-            fontSize: 16.sp,
+            fontFamily: 'Chirp',
+            fontSize: 16,
             fontWeight: FontWeight.w500,
             color: Theme.of(
               context,
             ).textTheme.bodyLarge!.color!.withOpacity(.85),
           ),
         ),
-        SizedBox(height: 4.h),
+        SizedBox(height: 4),
         Text(
           dateTime,
           style: TextStyle(
-            fontFamily: 'Karla',
-            fontSize: 12.sp,
+            fontFamily: 'Chirp',
+            fontSize: 12,
             fontWeight: FontWeight.w500,
             color: AppColors.neutral500,
           ),
@@ -182,13 +182,13 @@ class TransactionReceiptWidget extends StatelessWidget {
         Text(
           'Transaction Details',
           style: TextStyle(
-            fontFamily: 'Karla',
-            fontSize: 14.sp,
+            fontFamily: 'Chirp',
+            fontSize: 14,
             fontWeight: FontWeight.w700,
             color: AppColors.neutral900,
           ),
         ),
-        SizedBox(height: 12.h),
+        SizedBox(height: 12),
         _buildDetailRow(
           'Transaction ID',
           transaction.id.substring(0, 8).toUpperCase(),
@@ -198,7 +198,7 @@ class TransactionReceiptWidget extends StatelessWidget {
         _buildDetailRow(
           'Send Type',
           isDayfiTransfer
-              ? 'DayFi Tag'
+              ? 'Dayfi Tag'
               : _getChannelDisplayName(transaction.sendChannel),
         ),
         if (transaction.reason != null && transaction.reason!.isNotEmpty)
@@ -222,13 +222,13 @@ class TransactionReceiptWidget extends StatelessWidget {
           Text(
             'Sender Details',
             style: TextStyle(
-              fontFamily: 'Karla',
-              fontSize: 14.sp,
+              fontFamily: 'Chirp',
+              fontSize: 14,
               fontWeight: FontWeight.w700,
               color: AppColors.neutral900,
             ),
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: 12),
           _buildDetailRow(
             'Name',
             transaction.beneficiary.name.isNotEmpty
@@ -239,7 +239,7 @@ class TransactionReceiptWidget extends StatelessWidget {
               transaction.beneficiary.accountNumber != null &&
               transaction.beneficiary.accountNumber!.isNotEmpty)
             _buildDetailRow(
-              'DayFi Tag',
+              'Dayfi Tag',
               transaction.beneficiary.accountNumber!.startsWith('@')
                   ? transaction.beneficiary.accountNumber!
                   : '@${transaction.beneficiary.accountNumber!}',
@@ -261,19 +261,19 @@ class TransactionReceiptWidget extends StatelessWidget {
           Text(
             'Recipient Details',
             style: TextStyle(
-              fontFamily: 'Karla',
-              fontSize: 14.sp,
+              fontFamily: 'Chirp',
+              fontSize: 14,
               fontWeight: FontWeight.w700,
               color: AppColors.neutral900,
             ),
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: 12),
           _buildDetailRow('Name', transaction.beneficiary.name),
           if (isDayfiTransfer &&
               transaction.beneficiary.accountNumber != null &&
               transaction.beneficiary.accountNumber!.isNotEmpty)
             _buildDetailRow(
-              'DayFi Tag',
+              'Dayfi Tag',
               transaction.beneficiary.accountNumber!.startsWith('@')
                   ? transaction.beneficiary.accountNumber!
                   : '@${transaction.beneficiary.accountNumber!}',
@@ -298,21 +298,21 @@ class TransactionReceiptWidget extends StatelessWidget {
         Text(
           'Payment Summary',
           style: TextStyle(
-            fontFamily: 'Karla',
-            fontSize: 14.sp,
+            fontFamily: 'Chirp',
+            fontSize: 14,
             fontWeight: FontWeight.w700,
             color: AppColors.neutral900,
           ),
         ),
-        SizedBox(height: 12.h),
+        SizedBox(height: 12),
         if (!_isWalletTopUp()) ...[
           _buildDetailRow('Exchange Rate', exchangeRate),
           _buildDetailRow('Recipient Got', receiveAmount),
         ],
         _buildDetailRow('Fee', fee),
-        SizedBox(height: 8.h),
+        SizedBox(height: 8),
         Container(height: 1, color: AppColors.neutral200),
-        SizedBox(height: 8.h),
+        SizedBox(height: 8),
         _buildDetailRow('Total Paid', total, isBold: true),
       ],
     );
@@ -322,24 +322,24 @@ class TransactionReceiptWidget extends StatelessWidget {
     return Column(
       children: [
         Container(height: 1, color: AppColors.neutral200),
-        SizedBox(height: 16.h),
+        SizedBox(height: 16),
         Text(
           'Thank you for using DayFi',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontFamily: 'Karla',
-            fontSize: 12.sp,
+            fontFamily: 'Chirp',
+            fontSize: 12,
             fontWeight: FontWeight.w500,
             color: AppColors.neutral500,
           ),
         ),
-        SizedBox(height: 4.h),
+        SizedBox(height: 4),
         Text(
           'For support, contact us via the app',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontFamily: 'Karla',
-            fontSize: 10.sp,
+            fontFamily: 'Chirp',
+            fontSize: 10,
             fontWeight: FontWeight.w500,
             color: AppColors.neutral400,
           ),
@@ -350,15 +350,15 @@ class TransactionReceiptWidget extends StatelessWidget {
 
   Widget _buildDetailRow(String label, String value, {bool isBold = false}) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 8.h),
+      padding: EdgeInsets.only(bottom: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             label,
             style: TextStyle(
-              fontFamily: 'Karla',
-              fontSize: 12.sp,
+              fontFamily: 'Chirp',
+              fontSize: 12,
               fontWeight: FontWeight.w500,
               color: AppColors.neutral600,
             ),
@@ -366,8 +366,8 @@ class TransactionReceiptWidget extends StatelessWidget {
           Text(
             value,
             style: TextStyle(
-              fontFamily: 'Karla',
-              fontSize: 12.sp,
+              fontFamily: 'Chirp',
+              fontSize: 12,
               fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,
               color: AppColors.neutral900,
             ),
@@ -499,7 +499,7 @@ class TransactionReceiptWidget extends StatelessWidget {
     switch (channel.toLowerCase()) {
       case 'dayfi':
       case 'dayfi_tag':
-        return 'DayFi Tag';
+        return 'Dayfi Tag';
       case 'bank':
       case 'bank_transfer':
         return 'Bank Transfer';

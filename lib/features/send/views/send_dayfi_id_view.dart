@@ -65,10 +65,9 @@ class _SendDayfiIdViewState extends ConsumerState<SendDayfiIdView> {
         });
       }
     } catch (e) {
-      AppLogger.error('Error loading my DayFi ID: $e');
+      AppLogger.error('Error loading my Dayfi Tag: $e');
     }
   }
-
 
   // Helper function to get flag SVG path from country code
   String _getFlagPath(String? countryCode) {
@@ -123,7 +122,6 @@ class _SendDayfiIdViewState extends ConsumerState<SendDayfiIdView> {
         return 'assets/icons/svgs/world_flags/nigeria.svg'; // fallback
     }
   }
-
 
   @override
   void dispose() {
@@ -194,7 +192,7 @@ class _SendDayfiIdViewState extends ConsumerState<SendDayfiIdView> {
           AppLogger.debug('Could not extract recipient name: $e');
         }
 
-        // Prevent sending to own Dayfi ID
+        // Prevent sending to own Dayfi Tag
         try {
           final localCache = locator<LocalCache>();
           final userData = await localCache.getUser();
@@ -213,7 +211,7 @@ class _SendDayfiIdViewState extends ConsumerState<SendDayfiIdView> {
               myDayfi.toLowerCase() == cleanDayfiId.toLowerCase()) {
             if (mounted) {
               setState(() {
-                _validationError = 'Cannot send to your own Dayfi ID';
+                _validationError = 'Cannot send to your own Dayfi Tag';
                 _validatedDayfiId = null;
                 _recipientName = null;
               });
@@ -228,7 +226,7 @@ class _SendDayfiIdViewState extends ConsumerState<SendDayfiIdView> {
             }
           }
         } catch (e) {
-          AppLogger.error('Error checking local Dayfi ID: $e');
+          AppLogger.error('Error checking local Dayfi Tag: $e');
           if (mounted) {
             setState(() {
               _validatedDayfiId = cleanDayfiId;
@@ -240,17 +238,17 @@ class _SendDayfiIdViewState extends ConsumerState<SendDayfiIdView> {
       } else {
         if (mounted) {
           setState(() {
-            _validationError = 'Dayfi ID not found';
+            _validationError = 'Dayfi Tag not found';
             _validatedDayfiId = null;
             _recipientName = null;
           });
         }
       }
     } catch (e) {
-      AppLogger.error('Error validating Dayfi ID: $e');
+      AppLogger.error('Error validating Dayfi Tag: $e');
       if (mounted) {
         setState(() {
-          _validationError = 'Unable to verify ID. Please try again';
+          _validationError = 'Unable to verify username';
           _validatedDayfiId = null;
           _recipientName = null;
         });
@@ -319,7 +317,7 @@ class _SendDayfiIdViewState extends ConsumerState<SendDayfiIdView> {
         context,
         message:
             _validatedDayfiId == null
-                ? 'Please enter a valid Dayfi ID'
+                ? 'Please enter a valid Dayfi Tag'
                 : 'Please complete the form',
         isError: true,
       );
@@ -354,20 +352,20 @@ class _SendDayfiIdViewState extends ConsumerState<SendDayfiIdView> {
               children: [
                 SvgPicture.asset(
                   "assets/icons/svgs/notificationn.svg",
-                  height: 40.sp,
+                  height: 40,
                   color: Theme.of(context).colorScheme.surface,
                 ),
                 SizedBox(
-                  height: 40.sp,
-                  width: 40.sp,
+                  height: 40,
+                  width: 40,
                   child: Center(
                     child: Padding(
                       padding: const EdgeInsets.only(left: 8.0),
                       child: Icon(
                         Icons.arrow_back_ios,
-                        size: 20.sp,
+                        size: 20,
                         color: Theme.of(context).textTheme.bodyLarge!.color,
-                        // size: 20.sp,
+                        // size: 20,
                       ),
                     ),
                   ),
@@ -380,7 +378,7 @@ class _SendDayfiIdViewState extends ConsumerState<SendDayfiIdView> {
             'Add Recipient',
             style: Theme.of(context).textTheme.headlineLarge?.copyWith(
               fontFamily: 'FunnelDisplay',
-              fontSize: 24.sp,
+              fontSize: 24,
               // height: 1.6,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface,
@@ -388,856 +386,914 @@ class _SendDayfiIdViewState extends ConsumerState<SendDayfiIdView> {
           ),
           centerTitle: true,
         ),
-        body: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: Text(
-                    "Add a recipient via dayfi tag to proceed with your transfer",
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w500,
-                      fontFamily: 'Karla',
-                      letterSpacing: -.6,
-                      height: 1.5,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final bool isWide = constraints.maxWidth > 600;
+            return Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: isWide ? 500 : double.infinity,
                 ),
-                SizedBox(height: 24.h),
-
-                // Dayfi ID Input Field
-                CustomTextField(
-                  controller: _dayfiIdController,
-                  label: "Recipient's Dayfi Tag",
-                  hintText: 'dayfitag',
-                  textCapitalization: TextCapitalization.none,
-                  autofocus: true,
-                  contentPadding: EdgeInsets.only(
-                    top: 16.h,
-                    left: 0.w,
-                    right: 12.w,
-                    bottom: 16.h,
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isWide ? 24 : 18,
+                    vertical: 8,
                   ),
-                  // Use `prefix` instead of `prefixIcon` to avoid the large
-                  // built-in prefixIcon constraints and extra horizontal gap.
-                  prefix: Padding(
-                    padding: EdgeInsets.only(right: 0.w, left: 12.w),
-                    child: Text(
-                      '@',
-                      style: TextStyle(
-                        fontSize: 18.sp,
-                        fontFamily: 'Karla',
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.purple500ForTheme(context),
-                      ),
-                    ),
-                  ),
-                  onChanged: _onDayfiIdChanged,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return null; // Don't show error until they try to continue
-                    }
-                    final cleanValue = value.replaceAll('@', '').trim();
-                    if (cleanValue.length < 3) {
-                      return 'Minimum 3 characters required';
-                    }
-                    if (_validationError != null) {
-                      return _validationError;
-                    }
-                    return null;
-                  },
-                  errorFontSize: 0,
-                  suffixIcon:
-                      _isValidating
-                          ? Container(
-                            margin: EdgeInsets.all(12.w),
-                            child:
-                                LoadingAnimationWidget.horizontalRotatingDots(
-                                  color: AppColors.purple500ForTheme(context),
-                                  size: 22,
-                                ),
-                          )
-                          : _validatedDayfiId != null
-                          ? Padding(
-                            padding: EdgeInsets.all(12.w),
-                            child: SvgPicture.asset(
-                              'assets/icons/svgs/circle-check.svg',
-                              width: 26.w,
-                              height: 26.h,
-                              color: AppColors.success600,
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isWide ? 24 : 24,
+                          ),
+                          child: Text(
+                            "Add a recipient via Dayfi Tag to proceed with your transfer",
+                            style: Theme.of(
+                              context,
+                            ).textTheme.bodyMedium?.copyWith(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Chirp',
+                              letterSpacing: -.25,
+                              height: 1.5,
                             ),
-                          )
-                          : _validationError != null &&
-                              _dayfiIdController.text.isNotEmpty
-                          ? GestureDetector(
-                            onTap: () {
-                              _dayfiIdController.clear();
-                              _onDayfiIdChanged('');
-                            },
-                            child: Padding(
-                              padding: EdgeInsets.all(12.w),
-                              child: SvgPicture.asset(
-                                'assets/icons/svgs/circle-x.svg',
-                                width: 26.w,
-                                height: 26.h,
-                                color: AppColors.error600,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        SizedBox(height: 24),
+
+                        // Dayfi Tag Input Field
+                        CustomTextField(
+                          controller: _dayfiIdController,
+                          label: "Recipient's Dayfi Tag",
+                          hintText: 'dayfitag',
+                          textCapitalization: TextCapitalization.none,
+                          autofocus: true,
+                          contentPadding: EdgeInsets.only(
+                            top: 16,
+                            left: 0,
+                            right: 12,
+                            bottom: 16,
+                          ),
+                          // Use `prefix` instead of `prefixIcon` to avoid the large
+                          // built-in prefixIcon constraints and extra horizontal gap.
+                          prefix: Padding(
+                            padding: EdgeInsets.only(right: 0, left: 12),
+                            child: Text(
+                              '@',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontFamily: 'Chirp',
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.purple500ForTheme(context),
                               ),
                             ),
-                          )
-                          : null,
-
-                  // GestureDetector(
-                  //   onTap: () async {
-                  //     HapticHelper.lightImpact();
-                  //     // Paste from clipboard
-                  //     final clipboardData = await Clipboard.getData(
-                  //       Clipboard.kTextPlain,
-                  //     );
-                  //     if (clipboardData?.text != null &&
-                  //         clipboardData!.text!.isNotEmpty) {
-                  //       _dayfiIdController.text = clipboardData.text!;
-                  //       _onDayfiIdChanged(clipboardData.text!);
-                  //     }
-                  //   },
-                  //   child: Padding(
-                  //     padding: EdgeInsets.all(16.w),
-                  //     child: Row(
-                  //       mainAxisAlignment: MainAxisAlignment.end,
-                  //       mainAxisSize: MainAxisSize.min,
-                  //       children: [
-                  //         Text(
-                  //           "paste",
-                  //           style: TextStyle(
-                  //             fontFamily: 'Karla',
-                  //             fontWeight: FontWeight.w600,
-                  //             fontSize: 12.sp,
-                  //             letterSpacing: 0.00,
-                  //             height: 1.450,
-                  //             color:
-                  //                 Theme.of(context).colorScheme.primary,
-                  //           ),
-                  //         ),
-                  //         SizedBox(width: 6.w),
-                  //         SvgPicture.asset(
-                  //           "assets/icons/svgs/paste.svg",
-                  //           color:
-                  //               Theme.of(context).colorScheme.primary,
-                  //           height: 16.sp,
-                  //         ),
-                  //       ],
-                  //     ),
-                  //   ),
-                  // ),
-                ),
-
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 350),
-                  switchInCurve: Curves.easeOutCubic,
-                  switchOutCurve: Curves.easeInCubic,
-                  transitionBuilder: (
-                    Widget child,
-                    Animation<double> animation,
-                  ) {
-                    final offsetAnimation = Tween<Offset>(
-                      begin: const Offset(0, -0.15),
-                      end: Offset.zero,
-                    ).animate(animation);
-                    return FadeTransition(
-                      opacity: animation,
-                      child: SlideTransition(
-                        position: offsetAnimation,
-                        child: child,
-                      ),
-                    );
-                  },
-                  child:
-                      _isValidating
-                          ? Center(
-                            key: ValueKey('loading'),
-                            child: Padding(
-                              padding: const EdgeInsets.only(top: 20.0),
-                              child:
-                                  LoadingAnimationWidget.horizontalRotatingDots(
-                                    color:
-                                        Theme.of(context).colorScheme.primary,
-                                    size: 20,
-                                  ),
-                            ),
-                          )
-                          : _validatedDayfiId != null
-                          ? Column(
-                            key: ValueKey('success'),
-                            children: [
-                              SizedBox(height: 16.h),
-                              Center(
-                                child: Container(
-                                  padding: EdgeInsets.all(12.w),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.success50,
-                                    borderRadius: BorderRadius.circular(12.r),
-                                    border: Border.all(
-                                      color: AppColors.success200,
-                                      width: 1.0,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    _recipientName != null &&
-                                            !_recipientName!.startsWith('@')
-                                        ? 'Sending to $_recipientName'
-                                            .toUpperCase()
-                                        : 'Sending to @$_validatedDayfiId'
-                                            .toUpperCase(),
-                                    style: TextStyle(
-                                      fontFamily: 'karla',
-                                      fontSize: 14.sp,
-                                      fontWeight: FontWeight.w500,
-                                      color: AppColors.success700,
-                                      height: 1.3,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          )
-                          : _validationError != null &&
-                              _dayfiIdController.text.isNotEmpty
-                          ? Container(
-                            key: ValueKey('error'),
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 16.w,
-                              vertical: 12.h,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.error50,
-                              borderRadius: BorderRadius.circular(12.r),
-                              border: Border.all(
-                                color: AppColors.error200,
-                                width: 1.0,
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.info_outline,
-                                  color: AppColors.error600,
-                                  size: 20.sp,
-                                ),
-                                SizedBox(width: 10.w),
-                                Expanded(
-                                  child: Text(
-                                    _validationError!,
-                                    style: TextStyle(
-                                      fontFamily: 'Karla',
-                                      fontSize: 14.sp,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.error700,
-                                      letterSpacing: -0.2,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                          : const SizedBox(key: ValueKey('empty'), height: 0),
-                ),
-
-                SizedBox(height: 40.h),
-
-                // Continue Button
-                PrimaryButton(
-                  text: 'Enter Amount',
-                  onPressed: _validatedDayfiId != null ? _handleContinue : null,
-                  height: 48.00000.h,
-                  backgroundColor:
-                      _validatedDayfiId != null
-                          ? AppColors.purple500
-                          : AppColors.purple500ForTheme(
-                            context,
-                          ).withOpacity(.15),
-                  textColor:
-                      _validatedDayfiId != null
-                          ? AppColors.neutral0
-                          : AppColors.neutral0.withOpacity(.35),
-                  fontFamily: 'Karla',
-                  letterSpacing: -.70,
-                  fontSize: 18,
-                  width: double.infinity,
-                  fullWidth: true,
-                  borderRadius: 40.r,
-                ),
-
-                SizedBox(height: 20.h),
-
-                Center(
-                  child: InkWell(
-                    splashColor: Colors.transparent,
-                    highlightColor: Colors.transparent,
-                    hoverColor: Colors.transparent,
-                    onTap: () async {
-                      FocusScope.of(context).unfocus();
-                      // Show recent beneficiaries in a bottom sheet and allow selection
-                      final result = await showAppBottomSheet<
-                        BeneficiaryWithSource
-                      >(
-                        context: context,
-                        isScrollControlled: true,
-                        barrierColor: Colors.black.withOpacity(0.85),
-
-                        backgroundColor:
-                            Theme.of(context).scaffoldBackgroundColor,
-                        builder:
-                            (context) => Consumer(
-                              builder: (context, sheetRef, _) {
-                                final recipientsState = sheetRef.watch(
-                                  recipientsProvider,
-                                );
-                                final allBeneficiaries =
-                                    recipientsState.beneficiaries
-                                        .where((b) {
-                                          final isDayFi =
-                                              b.source.accountType
-                                                      ?.toLowerCase() ==
-                                                  'dayfi' ||
-                                              b.source.accountNumber
-                                                      ?.startsWith('@') ==
-                                                  true ||
-                                              b.beneficiary.accountNumber
-                                                      ?.startsWith('@') ==
-                                                  true ||
-                                              b.beneficiary.accountType
-                                                      ?.toLowerCase() ==
-                                                  'dayfi';
-                                          final isNotOwn =
-                                              (b.beneficiary.accountNumber ??
-                                                  '') !=
-                                              (_myDayfiId ?? '');
-                                          return isDayFi && isNotOwn;
-                                        })
-                                        .fold<
-                                          Map<String, BeneficiaryWithSource>
-                                        >({}, (map, b) {
-                                          final key =
-                                              b.beneficiary.accountNumber ?? '';
-                                          if (!map.containsKey(key))
-                                            map[key] = b;
-                                          return map;
-                                        })
-                                        .values
-                                        .toList();
-                                return StatefulBuilder(
-                                  builder: (context, setModalState) {
-                                    return Container(
-                                      height:
-                                          MediaQuery.of(context).size.height *
-                                          0.92,
-                                      decoration: BoxDecoration(
-                                        color:
-                                            Theme.of(
-                                              context,
-                                            ).scaffoldBackgroundColor,
-                                        borderRadius: BorderRadius.vertical(
-                                          top: Radius.circular(20.r),
+                          ),
+                          onChanged: _onDayfiIdChanged,
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return null; // Don't show error until they try to continue
+                            }
+                            final cleanValue = value.replaceAll('@', '').trim();
+                            if (cleanValue.length < 3) {
+                              return 'Minimum 3 characters required';
+                            }
+                            if (_validationError != null) {
+                              return _validationError;
+                            }
+                            return null;
+                          },
+                          errorFontSize: 0,
+                          suffixIcon:
+                              _isValidating
+                                  ? Container(
+                                    margin: EdgeInsets.all(12),
+                                    child:
+                                        LoadingAnimationWidget.horizontalRotatingDots(
+                                          color: AppColors.purple500ForTheme(
+                                            context,
+                                          ),
+                                          size: 22,
                                         ),
+                                  )
+                                  : _validatedDayfiId != null
+                                  ? Padding(
+                                    padding: EdgeInsets.all(12),
+                                    child: SvgPicture.asset(
+                                      'assets/icons/svgs/circle-check.svg',
+                                      width: 26,
+                                      height: 26,
+                                      color: AppColors.success600,
+                                    ),
+                                  )
+                                  : _validationError != null &&
+                                      _dayfiIdController.text.isNotEmpty
+                                  ? GestureDetector(
+                                    onTap: () {
+                                      _dayfiIdController.clear();
+                                      _onDayfiIdChanged('');
+                                    },
+                                    child: Padding(
+                                      padding: EdgeInsets.all(12),
+                                      child: SvgPicture.asset(
+                                        'assets/icons/svgs/circle-x.svg',
+                                        width: 26,
+                                        height: 26,
+                                        color: AppColors.error600,
                                       ),
-                                      child: Column(
-                                        children: [
-                                          SizedBox(height: 18.h),
-                                          Padding(
-                                            padding: EdgeInsets.symmetric(
-                                              horizontal: 18.w,
+                                    ),
+                                  )
+                                  : null,
+
+                          // GestureDetector(
+                          //   onTap: () async {
+                          //     HapticHelper.lightImpact();
+                          //     // Paste from clipboard
+                          //     final clipboardData = await Clipboard.getData(
+                          //       Clipboard.kTextPlain,
+                          //     );
+                          //     if (clipboardData?.text != null &&
+                          //         clipboardData!.text!.isNotEmpty) {
+                          //       _dayfiIdController.text = clipboardData.text!;
+                          //       _onDayfiIdChanged(clipboardData.text!);
+                          //     }
+                          //   },
+                          //   child: Padding(
+                          //     padding: EdgeInsets.all(16),
+                          //     child: Row(
+                          //       mainAxisAlignment: MainAxisAlignment.end,
+                          //       mainAxisSize: MainAxisSize.min,
+                          //       children: [
+                          //         Text(
+                          //           "paste",
+                          //           style: TextStyle(
+                          //             fontFamily: 'Chirp',
+                          //             fontWeight: FontWeight.w600,
+                          //             fontSize: 12,
+                          //             letterSpacing: 0.00,
+                          //             height: 1.450,
+                          //             color:
+                          //                 Theme.of(context).colorScheme.primary,
+                          //           ),
+                          //         ),
+                          //         SizedBox(width: 6),
+                          //         SvgPicture.asset(
+                          //           "assets/icons/svgs/paste.svg",
+                          //           color:
+                          //               Theme.of(context).colorScheme.primary,
+                          //           height: 16,
+                          //         ),
+                          //       ],
+                          //     ),
+                          //   ),
+                          // ),
+                        ),
+
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 350),
+                          switchInCurve: Curves.easeOutCubic,
+                          switchOutCurve: Curves.easeInCubic,
+                          transitionBuilder: (
+                            Widget child,
+                            Animation<double> animation,
+                          ) {
+                            final offsetAnimation = Tween<Offset>(
+                              begin: const Offset(0, -0.15),
+                              end: Offset.zero,
+                            ).animate(animation);
+                            return FadeTransition(
+                              opacity: animation,
+                              child: SlideTransition(
+                                position: offsetAnimation,
+                                child: child,
+                              ),
+                            );
+                          },
+                          child:
+                              _isValidating
+                                  ? Center(
+                                    key: ValueKey('loading'),
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(top: 20.0),
+                                      child:
+                                          LoadingAnimationWidget.horizontalRotatingDots(
+                                            color:
+                                                Theme.of(
+                                                  context,
+                                                ).colorScheme.primary,
+                                            size: 20,
+                                          ),
+                                    ),
+                                  )
+                                  : _validatedDayfiId != null
+                                  ? Column(
+                                    key: ValueKey('success'),
+                                    children: [
+                                      SizedBox(height: 16),
+                                      Center(
+                                        child: Container(
+                                          padding: EdgeInsets.all(12),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.success50,
+                                            borderRadius: BorderRadius.circular(
+                                              12,
                                             ),
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                SizedBox(
-                                                  height: 40.h,
-                                                  width: 40.w,
-                                                ),
-                                                Text(
-                                                  'Select Beneficiary',
-                                                  style: AppTypography
-                                                      .titleLarge
-                                                      .copyWith(
-                                                        fontFamily:
-                                                            'FunnelDisplay',
-                                                        fontSize: 20.sp,
-                                                        // height: 1.6,
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                        color:
-                                                            Theme.of(context)
-                                                                .colorScheme
-                                                                .onSurface,
-                                                      ),
-                                                ),
-                                                InkWell(
-                                                  splashColor:
-                                                      Colors.transparent,
-                                                  highlightColor:
-                                                      Colors.transparent,
-                                                  onTap:
-                                                      () => Navigator.pop(
-                                                        context,
-                                                      ),
-                                                  child: Stack(
-                                                    alignment:
-                                                        AlignmentGeometry
-                                                            .center,
-                                                    children: [
-                                                      SvgPicture.asset(
-                                                        "assets/icons/svgs/notificationn.svg",
-                                                        height: 40.sp,
-                                                        color:
-                                                            Theme.of(context)
-                                                                .colorScheme
-                                                                .surface,
-                                                      ),
-                                                      SizedBox(
-                                                        height: 40.sp,
-                                                        width: 40.sp,
-                                                        child: Center(
-                                                          child: Image.asset(
-                                                            "assets/icons/pngs/cancelicon.png",
-                                                            height: 20.h,
-                                                            width: 20.w,
-                                                            color:
-                                                                Theme.of(
-                                                                      context,
-                                                                    )
-                                                                    .textTheme
-                                                                    .bodyLarge!
-                                                                    .color,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ],
+                                            border: Border.all(
+                                              color: AppColors.success200,
+                                              width: 1.0,
                                             ),
                                           ),
-                                          SizedBox(height: 18.h),
-
-                                          Expanded(
-                                            child: SingleChildScrollView(
-                                              child: Column(
-                                                children: [
-                                                  Padding(
-                                                    padding:
-                                                        const EdgeInsets.symmetric(
-                                                          horizontal: 24.0,
-                                                        ),
-                                                    child: Opacity(
-                                                      opacity: .85,
-                                                      child: Text(
-                                                        'Choose a recent beneficiary to auto-fill recipient details',
-                                                        style: Theme.of(context)
-                                                            .textTheme
-                                                            .bodyMedium
-                                                            ?.copyWith(
-                                                              fontSize: 16.sp,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w400,
-                                                              fontFamily:
-                                                                  'Karla',
-                                                              letterSpacing:
-                                                                  -.3,
-                                                              height: 1.5,
-                                                            ),
-                                                        textAlign:
-                                                            TextAlign.center,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  SizedBox(height: 32.h),
-                                                  allBeneficiaries.isEmpty
-                                                      ? Center(
-                                                        child: Column(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .center,
-                                                          children: [
-                                                            SizedBox(
-                                                              height: 16.h,
-                                                            ),
-                                                            SvgPicture.asset(
-                                                              'assets/icons/svgs/search-normal.svg',
-                                                              height: 64.sp,
-                                                              color: Theme.of(
-                                                                    context,
-                                                                  )
-                                                                  .colorScheme
-                                                                  .onSurface
-                                                                  .withOpacity(
-                                                                    0.6,
-                                                                  ),
-                                                            ),
-                                                            SizedBox(
-                                                              height: 16.h,
-                                                            ),
-                                                            Text(
-                                                              'No beneficiaries found',
-                                                              style: TextStyle(
-                                                                fontFamily:
-                                                                    'FunnelDisplay',
-                                                                fontSize: 16.sp,
-                                                                color: Theme.of(
-                                                                      context,
-                                                                    )
-                                                                    .colorScheme
-                                                                    .onSurface
-                                                                    .withOpacity(
-                                                                      0.6,
-                                                                    ),
-                                                              ),
-                                                              textAlign:
-                                                                  TextAlign
-                                                                      .center,
-                                                            ),
-                                                            SizedBox(
-                                                              height: 8.h,
-                                                            ),
-                                                            Padding(
-                                                              padding:
-                                                                  const EdgeInsets.symmetric(
-                                                                    horizontal:
-                                                                        32.0,
-                                                                  ),
-                                                              child: Text(
-                                                                'No recent beneficiaries for this country and payment type',
-                                                                style: AppTypography.bodyMedium.copyWith(
-                                                                  fontFamily:
-                                                                      'Karla',
-                                                                  fontSize:
-                                                                      14.sp,
-                                                                  color: Theme.of(
-                                                                        context,
-                                                                      )
-                                                                      .colorScheme
-                                                                      .onSurface
-                                                                      .withOpacity(
-                                                                        0.4,
-                                                                      ),
-                                                                ),
-                                                                textAlign:
-                                                                    TextAlign
-                                                                        .center,
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      )
-                                                      : Container(
-                                                        margin: EdgeInsets.only(
-                                                          left: 18.w,
-                                                          right: 18.w,
-                                                          bottom: 20.h,
-                                                          // top: 16.h,
-                                                        ),
-                                                        decoration: BoxDecoration(
-                                                          color:
-                                                              Theme.of(context)
-                                                                  .colorScheme
-                                                                  .surface,
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                12.r,
-                                                              ),
-                                                        ),
-                                                        child: ListView.separated(
-                                                          shrinkWrap: true,
-                                                          physics:
-                                                              NeverScrollableScrollPhysics(),
-                                                          padding:
-                                                              EdgeInsets.zero,
-                                                          itemCount:
-                                                              allBeneficiaries
-                                                                  .length,
-                                                          separatorBuilder:
-                                                              (_, __) =>
-                                                                  SizedBox(
-                                                                    height:
-                                                                        12.h,
-                                                                  ),
-                                                          itemBuilder: (
-                                                            context,
-                                                            index,
-                                                          ) {
-                                                            final b =
-                                                                allBeneficiaries[index];
-                                                            return AnimatedContainer(
-                                                              key: ValueKey(
-                                                                b
-                                                                    .beneficiary
-                                                                    .id,
-                                                              ),
-                                                              duration:
-                                                                  const Duration(
-                                                                    milliseconds:
-                                                                        200,
-                                                                  ),
-                                                              curve:
-                                                                  Curves
-                                                                      .easeOut,
-                                                              transform:
-                                                                  Matrix4.diagonal3Values(
-                                                                    1.0,
-                                                                    1.0,
-                                                                    1.0,
-                                                                  ),
-                                                              child: Container(
-                                                               margin: EdgeInsets.only(
-                                                                      bottom:
-                                                                          8.h,
-                                                                      top: 8.h,
-                                                                    ),
-                                                                    padding: EdgeInsets.symmetric(
-                                                                      horizontal:
-                                                                          16.w,
-                                                                      vertical:
-                                                                          12.h,
-                                                                    ),
-                                                                decoration: BoxDecoration(
-                                                                  color:
-                                                                      Theme.of(
-                                                                        context,
-                                                                      ).colorScheme.surface,
-                                                                  borderRadius:
-                                                                      BorderRadius.circular(
-                                                                        12.r,
-                                                                      ),
-                                                                ),
-                                                                child: InkWell(
-                                                                  onTap: () {
-                                                                    Navigator.pop(
-                                                                      context,
-                                                                      b,
-                                                                    );
-                                                                  },
-                                                                  child: Row(
-                                                                    children: [
-                                                                      // Avatar
-                                                                      Column(
-                                                                        children: [
-                                                                          Stack(
-                                                                            alignment: Alignment.bottomRight,
-                                                                            children:
-                                                                             [
-                                                                              Stack(
-                                                                                alignment:
-                                                                                    Alignment.center,
-                                                                                children: [
-                                                                                  SvgPicture.asset(
-                                                                                    'assets/icons/svgs/account.svg',
-                                                                                    width:
-                                                                                        40.w,
-                                                                                    height:
-                                                                                        40.w,
-                                                                                    color: AppColors.purple500ForTheme(
-                                                                                      context,
-                                                                                    ),
-                                                                                  ),
-                                                                                  Text(
-                                                                                    (b.beneficiary.name.isNotEmpty
-                                                                                            ? b.beneficiary.name[0]
-                                                                                            : '?')
-                                                                                        .toUpperCase(),
-                                                                                    style: TextStyle(
-                                                                                      color:
-                                                                                          AppColors.neutral0,
-                                                                                      fontFamily:
-                                                                                          'Karla',
-                                                                                      fontSize:
-                                                                                          16.sp,
-                                                                                      fontWeight:
-                                                                                          FontWeight.w500,
-                                                                                    ),
-                                                                                  ),
-                                                                                ],
-                                                                              ),
-
-                                                                               Align(
-                                                                                alignment:
-                                                                                    Alignment.bottomRight,
-                                                                                child: Container(
-                                                                                  width:
-                                                                                      15.w,
-                                                                                  height:
-                                                                                      15.w,
-                                                                                  decoration: BoxDecoration(
-                                                                                    color:
-                                                                                        AppColors.neutral0,
-                                                                                    shape:
-                                                                                        BoxShape.circle,
-                                                                                    border: Border.all(
-                                                                                      color:
-                                                                                          AppColors.neutral200,
-                                                                                      width:
-                                                                                          1,
-                                                                                    ),
-                                                                                  ),
-                                                                                  child: ClipOval(
-                                                                                    child: SvgPicture.asset(
-                                                                                      _getFlagPath(
-                                                                                        b.beneficiary.country,
-                                                                                      ),
-                                                                                      fit:
-                                                                                          BoxFit.cover,
-                                                                                      width:
-                                                                                          20.w,
-                                                                                      height:
-                                                                                          20.w,
-                                                                                    ),
-                                                                                  ),
-                                                                                ),
-                                                                              ),
-                                                                            ],
-                                                                          ),
-                                                                        ],
-                                                                      ),
-                                                                      SizedBox(
-                                                                        width:
-                                                                            10.w,
-                                                                      ),
-                                                                      // Beneficiary Info
-                                                                      Expanded(
-                                                                        child: Column(
-                                                                          crossAxisAlignment:
-                                                                              CrossAxisAlignment.start,
-                                                                          children: [
-                                                                            Text(
-                                                                              b.beneficiary.name.toUpperCase(),
-                                                                              style: AppTypography.bodyLarge.copyWith(
-                                                                                fontFamily:
-                                                                                    'Karla',
-                                                                                fontSize:
-                                                                                    16.sp,
-                                                                                fontWeight:
-                                                                                    FontWeight.w600,
-                                                                              ),
-                                                                            ),
-                                                                            SizedBox(
-                                                                              height:
-                                                                                  2.h,
-                                                                            ),
-                                                                            Text(
-                                                                              (() {
-                                                                                String
-                                                                                accountNum =
-                                                                                    b.beneficiary.accountNumber ??
-                                                                                    b.source.accountNumber ??
-                                                                                    '';
-                                                                                // If accountNum looks like a wallet ID, use beneficiary name instead
-                                                                                if (accountNum.startsWith(
-                                                                                  'wallet-',
-                                                                                )) {
-                                                                                  accountNum =
-                                                                                      b.beneficiary.name;
-                                                                                }
-                                                                                // Always add @ prefix for DayFi tags in this view
-                                                                                if (!accountNum.startsWith(
-                                                                                  '@',
-                                                                                )) {
-                                                                                  accountNum =
-                                                                                      '@$accountNum';
-                                                                                }
-                                                                                return accountNum;
-                                                                              })(),
-                                                                              style: AppTypography.bodyMedium.copyWith(
-                                                                                fontFamily:
-                                                                                    'Karla',
-                                                                                fontSize:
-                                                                                    13.sp,
-                                                                                color: Theme.of(
-                                                                                  context,
-                                                                                ).colorScheme.onSurface.withOpacity(
-                                                                                  0.6,
-                                                                                ),
-                                                                              ),
-                                                                            ),
-                                                                          ],
-                                                                        ),
-                                                                      ),
-                                                                      SizedBox(
-                                                                        width:
-                                                                            12.w,
-                                                                      ),
-                                                                      Icon(
-                                                                        Icons
-                                                                            .chevron_right,
-                                                                        color:
-                                                                            AppColors.neutral400,
-                                                                      ),
-                                                                    ],
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            );
-                                                          },
-                                                        ),
-                                                      ),
-                                                ],
-                                              ),
+                                          child: Text(
+                                            _recipientName != null &&
+                                                    !_recipientName!.startsWith(
+                                                      '@',
+                                                    )
+                                                ? 'Sending to $_recipientName'
+                                                    .toUpperCase()
+                                                : 'Sending to @$_validatedDayfiId'
+                                                    .toUpperCase(),
+                                            style: TextStyle(
+                                              fontFamily: 'Chirp',
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                              color: AppColors.success700,
+                                              height: 1.3,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                  : _validationError != null &&
+                                      _dayfiIdController.text.isNotEmpty
+                                  ? Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    key: ValueKey('error'),
+                                    children: [
+                                      SizedBox(height: 8),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.error_outline,
+                                            color: AppColors.error600,
+                                            size: 16,
+                                          ),
+                                          SizedBox(width: 4),
+                                          Text(
+                                            _validationError!,
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.bodyMedium?.copyWith(
+                                              fontFamily: 'Chirp',
+                                              fontSize: 14,
+                                              letterSpacing: -.25,
+                                              fontWeight: FontWeight.w500,
+                                              color: AppColors.error700,
+                                              height: 1.3,
                                             ),
                                           ),
                                         ],
                                       ),
-                                    );
-                                  },
-                                );
-                              },
-                            ),
-                      );
-
-                      if (result != null) {
-                        // For DayFi tag flow, just set the DayFi ID from the beneficiary
-                        final dayfiId =
-                            result.beneficiary.accountNumber?.replaceAll(
-                              '@',
-                              '',
-                            ) ??
-                            result.source.accountNumber?.replaceAll('@', '') ??
-                            '';
-                        if (dayfiId.isNotEmpty) {
-                          _dayfiIdController.text = dayfiId;
-                          _onDayfiIdChanged(dayfiId);
-                        }
-                      }
-                    },
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 12.h,
-                      ),
-                      child: Text(
-                        'See recents and beneficiaries',
-                        style: TextStyle(
-                          fontFamily: 'Karla',
-                          color: AppColors.purple500ForTheme(context),
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: -.6,
-                          height: 1.4,
+                                    ],
+                                  )
+                                  : const SizedBox(
+                                    key: ValueKey('empty'),
+                                    height: 0,
+                                  ),
                         ),
-                      ),
+
+                        SizedBox(height: 32),
+
+                        // Continue Button
+                        PrimaryButton(
+                          text: 'Enter Amount',
+                          onPressed:
+                              _validatedDayfiId != null
+                                  ? _handleContinue
+                                  : null,
+                          height: 48.00000,
+                          backgroundColor:
+                              _validatedDayfiId != null
+                                  ? AppColors.purple500
+                                  : AppColors.purple500ForTheme(
+                                    context,
+                                  ).withOpacity(.15),
+                          textColor:
+                              _validatedDayfiId != null
+                                  ? AppColors.neutral0
+                                  : AppColors.neutral0.withOpacity(.20),
+                          fontFamily: 'Chirp',
+                          letterSpacing: -.70,
+                          fontSize: 18,
+                          width: double.infinity,
+                          fullWidth: true,
+                          borderRadius: 40,
+                        ),
+
+                        SizedBox(height: 20),
+
+                        Center(
+                          child: Center(
+                            child: TextButton(
+                              style: TextButton.styleFrom(
+                                // padding: EdgeInsets.zero,
+                                // minimumSize: Size(50, 30),
+                                splashFactory: NoSplash.splashFactory,
+                                backgroundColor: Colors.transparent,
+                                foregroundColor: Colors.transparent,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                alignment: Alignment.center,
+                              ),
+                              onPressed: () async {
+                                FocusScope.of(context).unfocus();
+                                // Show recent beneficiaries in a bottom sheet and allow selection
+                                final result = await showAppBottomSheet<
+                                  BeneficiaryWithSource
+                                >(
+                                  context: context,
+                                  isScrollControlled: true,
+                                  barrierColor: Colors.black.withOpacity(0.85),
+
+                                  backgroundColor:
+                                      Theme.of(context).scaffoldBackgroundColor,
+                                  builder:
+                                      (context) => Consumer(
+                                        builder: (context, sheetRef, _) {
+                                          final recipientsState = sheetRef
+                                              .watch(recipientsProvider);
+                                          final allBeneficiaries =
+                                              recipientsState.beneficiaries
+                                                  .where((b) {
+                                                    final isDayFi =
+                                                        b.source.accountType
+                                                                ?.toLowerCase() ==
+                                                            'dayfi' ||
+                                                        b.source.accountNumber
+                                                                ?.startsWith(
+                                                                  '@',
+                                                                ) ==
+                                                            true ||
+                                                        b
+                                                                .beneficiary
+                                                                .accountNumber
+                                                                ?.startsWith(
+                                                                  '@',
+                                                                ) ==
+                                                            true ||
+                                                        b
+                                                                .beneficiary
+                                                                .accountType
+                                                                ?.toLowerCase() ==
+                                                            'dayfi';
+                                                    final isNotOwn =
+                                                        (b
+                                                                .beneficiary
+                                                                .accountNumber ??
+                                                            '') !=
+                                                        (_myDayfiId ?? '');
+                                                    return isDayFi && isNotOwn;
+                                                  })
+                                                  .fold<
+                                                    Map<
+                                                      String,
+                                                      BeneficiaryWithSource
+                                                    >
+                                                  >({}, (map, b) {
+                                                    final key =
+                                                        b
+                                                            .beneficiary
+                                                            .accountNumber ??
+                                                        '';
+                                                    if (!map.containsKey(key))
+                                                      map[key] = b;
+                                                    return map;
+                                                  })
+                                                  .values
+                                                  .toList();
+                                          return StatefulBuilder(
+                                            builder: (context, setModalState) {
+                                              return Container(
+                                                height:
+                                                    MediaQuery.of(
+                                                      context,
+                                                    ).size.height *
+                                                    0.92,
+                                                decoration: BoxDecoration(
+                                                  color:
+                                                      Theme.of(
+                                                        context,
+                                                      ).scaffoldBackgroundColor,
+                                                  borderRadius:
+                                                      BorderRadius.vertical(
+                                                        top: Radius.circular(
+                                                          20,
+                                                        ),
+                                                      ),
+                                                ),
+                                                child: Column(
+                                                  children: [
+                                                    SizedBox(height: 18),
+                                                    Padding(
+                                                      padding:
+                                                          EdgeInsets.symmetric(
+                                                            horizontal: 18,
+                                                          ),
+                                                      child: Row(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .spaceBetween,
+                                                        children: [
+                                                          SizedBox(
+                                                            height: 40,
+                                                            width: 40,
+                                                          ),
+                                                          Text(
+                                                            'Select Beneficiary',
+                                                            style: AppTypography
+                                                                .titleLarge
+                                                                .copyWith(
+                                                                  fontFamily:
+                                                                      'FunnelDisplay',
+                                                                  fontSize: 20,
+                                                                  // height: 1.6,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600,
+                                                                  color:
+                                                                      Theme.of(
+                                                                        context,
+                                                                      ).colorScheme.onSurface,
+                                                                ),
+                                                          ),
+                                                          InkWell(
+                                                            splashColor:
+                                                                Colors
+                                                                    .transparent,
+                                                            highlightColor:
+                                                                Colors
+                                                                    .transparent,
+                                                            onTap:
+                                                                () =>
+                                                                    Navigator.pop(
+                                                                      context,
+                                                                    ),
+                                                            child: Stack(
+                                                              alignment:
+                                                                  AlignmentGeometry
+                                                                      .center,
+                                                              children: [
+                                                                SvgPicture.asset(
+                                                                  "assets/icons/svgs/notificationn.svg",
+                                                                  height: 40,
+                                                                  color:
+                                                                      Theme.of(
+                                                                        context,
+                                                                      ).colorScheme.surface,
+                                                                ),
+                                                                SizedBox(
+                                                                  height: 40,
+                                                                  width: 40,
+                                                                  child: Center(
+                                                                    child: Image.asset(
+                                                                      "assets/icons/pngs/cancelicon.png",
+                                                                      height:
+                                                                          20,
+                                                                      width: 20,
+                                                                      color:
+                                                                          Theme.of(
+                                                                            context,
+                                                                          ).textTheme.bodyLarge!.color,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                    SizedBox(height: 18),
+
+                                                    Expanded(
+                                                      child: SingleChildScrollView(
+                                                        child: Column(
+                                                          children: [
+                                                            Padding(
+                                                              padding:
+                                                                  const EdgeInsets.symmetric(
+                                                                    horizontal:
+                                                                        24.0,
+                                                                  ),
+                                                              child: Opacity(
+                                                                opacity: .85,
+                                                                child: Text(
+                                                                  'Choose a recent beneficiary to auto-fill recipient details',
+                                                                  style: Theme.of(
+                                                                    context,
+                                                                  ).textTheme.bodyMedium?.copyWith(
+                                                                    fontSize:
+                                                                        16,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w400,
+                                                                    fontFamily:
+                                                                        'Chirp',
+                                                                    letterSpacing:
+                                                                        -.3,
+                                                                    height: 1.5,
+                                                                  ),
+                                                                  textAlign:
+                                                                      TextAlign
+                                                                          .center,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                            SizedBox(
+                                                              height: 32,
+                                                            ),
+                                                            allBeneficiaries
+                                                                    .isEmpty
+                                                                ? Center(
+                                                                  child: Column(
+                                                                    mainAxisAlignment:
+                                                                        MainAxisAlignment
+                                                                            .center,
+                                                                    children: [
+                                                                      SizedBox(
+                                                                        height:
+                                                                            16,
+                                                                      ),
+                                                                      SvgPicture.asset(
+                                                                        'assets/icons/svgs/search-normal.svg',
+                                                                        height:
+                                                                            64,
+                                                                        color: Theme.of(
+                                                                          context,
+                                                                        ).colorScheme.onSurface.withOpacity(
+                                                                          0.6,
+                                                                        ),
+                                                                      ),
+                                                                      SizedBox(
+                                                                        height:
+                                                                            16,
+                                                                      ),
+                                                                      Text(
+                                                                        'No beneficiaries found',
+                                                                        style: TextStyle(
+                                                                          fontFamily:
+                                                                              'FunnelDisplay',
+                                                                          fontSize:
+                                                                              16,
+                                                                          color: Theme.of(
+                                                                            context,
+                                                                          ).colorScheme.onSurface.withOpacity(
+                                                                            0.6,
+                                                                          ),
+                                                                        ),
+                                                                        textAlign:
+                                                                            TextAlign.center,
+                                                                      ),
+                                                                      SizedBox(
+                                                                        height:
+                                                                            8,
+                                                                      ),
+                                                                      Padding(
+                                                                        padding: const EdgeInsets.symmetric(
+                                                                          horizontal:
+                                                                              32.0,
+                                                                        ),
+                                                                        child: Text(
+                                                                          'No recent beneficiaries for this country and payment type',
+                                                                          style: AppTypography.bodyMedium.copyWith(
+                                                                            fontFamily:
+                                                                                'Chirp',
+                                                                            fontSize:
+                                                                                14,
+                                                                            color: Theme.of(
+                                                                              context,
+                                                                            ).colorScheme.onSurface.withOpacity(
+                                                                              0.4,
+                                                                            ),
+                                                                          ),
+                                                                          textAlign:
+                                                                              TextAlign.center,
+                                                                        ),
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                )
+                                                                : Container(
+                                                                  margin:
+                                                                      EdgeInsets.only(
+                                                                        left:
+                                                                            18,
+                                                                        right:
+                                                                            18,
+                                                                        bottom:
+                                                                            20,
+                                                                        // top: 16,
+                                                                      ),
+                                                                  decoration: BoxDecoration(
+                                                                    color:
+                                                                        Theme.of(
+                                                                          context,
+                                                                        ).colorScheme.surface,
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                          12,
+                                                                        ),
+                                                                  ),
+                                                                  child: ListView.separated(
+                                                                    shrinkWrap:
+                                                                        true,
+                                                                    physics:
+                                                                        NeverScrollableScrollPhysics(),
+                                                                    padding:
+                                                                        EdgeInsets
+                                                                            .zero,
+                                                                    itemCount:
+                                                                        allBeneficiaries
+                                                                            .length,
+                                                                    separatorBuilder:
+                                                                        (
+                                                                          _,
+                                                                          __,
+                                                                        ) => SizedBox(
+                                                                          height:
+                                                                              12,
+                                                                        ),
+                                                                    itemBuilder: (
+                                                                      context,
+                                                                      index,
+                                                                    ) {
+                                                                      final b =
+                                                                          allBeneficiaries[index];
+                                                                      return AnimatedContainer(
+                                                                        key: ValueKey(
+                                                                          b.beneficiary.id,
+                                                                        ),
+                                                                        duration: const Duration(
+                                                                          milliseconds:
+                                                                              200,
+                                                                        ),
+                                                                        curve:
+                                                                            Curves.easeOut,
+                                                                        transform: Matrix4.diagonal3Values(
+                                                                          1.0,
+                                                                          1.0,
+                                                                          1.0,
+                                                                        ),
+                                                                        child: Container(
+                                                                          margin: EdgeInsets.only(
+                                                                            bottom:
+                                                                                8,
+                                                                            top:
+                                                                                8,
+                                                                          ),
+                                                                          padding: EdgeInsets.symmetric(
+                                                                            horizontal:
+                                                                                16,
+                                                                            vertical:
+                                                                                12,
+                                                                          ),
+                                                                          decoration: BoxDecoration(
+                                                                            color:
+                                                                                Theme.of(
+                                                                                  context,
+                                                                                ).colorScheme.surface,
+                                                                            borderRadius: BorderRadius.circular(
+                                                                              12,
+                                                                            ),
+                                                                          ),
+                                                                          child: InkWell(
+                                                                            onTap: () {
+                                                                              Navigator.pop(
+                                                                                context,
+                                                                                b,
+                                                                              );
+                                                                            },
+                                                                            child: Row(
+                                                                              children: [
+                                                                                // Avatar
+                                                                                Column(
+                                                                                  children: [
+                                                                                    Stack(
+                                                                                      alignment:
+                                                                                          Alignment.bottomRight,
+                                                                                      children: [
+                                                                                        Stack(
+                                                                                          alignment:
+                                                                                              Alignment.center,
+                                                                                          children: [
+                                                                                            SvgPicture.asset(
+                                                                                              'assets/icons/svgs/account.svg',
+                                                                                              width:
+                                                                                                  40,
+                                                                                              height:
+                                                                                                  40,
+                                                                                              color: AppColors.purple500ForTheme(
+                                                                                                context,
+                                                                                              ),
+                                                                                            ),
+                                                                                            Text(
+                                                                                              (b.beneficiary.name.isNotEmpty
+                                                                                                      ? b.beneficiary.name[0]
+                                                                                                      : '?')
+                                                                                                  .toUpperCase(),
+                                                                                              style: TextStyle(
+                                                                                                color:
+                                                                                                    AppColors.neutral0,
+                                                                                                fontFamily:
+                                                                                                    'Chirp',
+                                                                                                fontSize:
+                                                                                                    16,
+                                                                                                fontWeight:
+                                                                                                    FontWeight.w500,
+                                                                                              ),
+                                                                                            ),
+                                                                                          ],
+                                                                                        ),
+
+                                                                                        Align(
+                                                                                          alignment:
+                                                                                              Alignment.bottomRight,
+                                                                                          child: Container(
+                                                                                            width:
+                                                                                                15,
+                                                                                            height:
+                                                                                                15,
+                                                                                            decoration: BoxDecoration(
+                                                                                              color:
+                                                                                                  AppColors.neutral0,
+                                                                                              shape:
+                                                                                                  BoxShape.circle,
+                                                                                              border: Border.all(
+                                                                                                color:
+                                                                                                    AppColors.neutral200,
+                                                                                                width:
+                                                                                                    1,
+                                                                                              ),
+                                                                                            ),
+                                                                                            child: ClipOval(
+                                                                                              child: SvgPicture.asset(
+                                                                                                _getFlagPath(
+                                                                                                  b.beneficiary.country,
+                                                                                                ),
+                                                                                                fit:
+                                                                                                    BoxFit.cover,
+                                                                                                width:
+                                                                                                    20,
+                                                                                                height:
+                                                                                                    20,
+                                                                                              ),
+                                                                                            ),
+                                                                                          ),
+                                                                                        ),
+                                                                                      ],
+                                                                                    ),
+                                                                                  ],
+                                                                                ),
+                                                                                SizedBox(
+                                                                                  width:
+                                                                                      10,
+                                                                                ),
+                                                                                // Beneficiary Info
+                                                                                Expanded(
+                                                                                  child: Column(
+                                                                                    crossAxisAlignment:
+                                                                                        CrossAxisAlignment.start,
+                                                                                    children: [
+                                                                                      Text(
+                                                                                        b.beneficiary.name.toUpperCase(),
+                                                                                        style: AppTypography.bodyLarge.copyWith(
+                                                                                          fontFamily:
+                                                                                              'Chirp',
+                                                                                          fontSize:
+                                                                                              16,
+                                                                                          fontWeight:
+                                                                                              FontWeight.w600,
+                                                                                        ),
+                                                                                      ),
+                                                                                      SizedBox(
+                                                                                        height:
+                                                                                            2,
+                                                                                      ),
+                                                                                      Text(
+                                                                                        (() {
+                                                                                          String accountNum =
+                                                                                              b.beneficiary.accountNumber ??
+                                                                                              b.source.accountNumber ??
+                                                                                              '';
+                                                                                          // If accountNum looks like a wallet ID, use beneficiary name instead
+                                                                                          if (accountNum.startsWith(
+                                                                                            'wallet-',
+                                                                                          )) {
+                                                                                            accountNum =
+                                                                                                b.beneficiary.name;
+                                                                                          }
+                                                                                          // Always add @ prefix for Dayfi Tags in this view
+                                                                                          if (!accountNum.startsWith(
+                                                                                            '@',
+                                                                                          )) {
+                                                                                            accountNum =
+                                                                                                '@$accountNum';
+                                                                                          }
+                                                                                          return accountNum;
+                                                                                        })(),
+                                                                                        style: AppTypography.bodyMedium.copyWith(
+                                                                                          fontFamily:
+                                                                                              'Chirp',
+                                                                                          fontSize:
+                                                                                              13,
+                                                                                          color: Theme.of(
+                                                                                            context,
+                                                                                          ).colorScheme.onSurface.withOpacity(
+                                                                                            0.6,
+                                                                                          ),
+                                                                                        ),
+                                                                                      ),
+                                                                                    ],
+                                                                                  ),
+                                                                                ),
+                                                                                SizedBox(
+                                                                                  width:
+                                                                                      12,
+                                                                                ),
+                                                                                Icon(
+                                                                                  Icons.chevron_right,
+                                                                                  color:
+                                                                                      AppColors.neutral400,
+                                                                                ),
+                                                                              ],
+                                                                            ),
+                                                                          ),
+                                                                        ),
+                                                                      );
+                                                                    },
+                                                                  ),
+                                                                ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            },
+                                          );
+                                        },
+                                      ),
+                                );
+
+                                if (result != null) {
+                                  // For Dayfi Tag flow, just set the Dayfi Tag from the beneficiary
+                                  final dayfiId =
+                                      result.beneficiary.accountNumber
+                                          ?.replaceAll('@', '') ??
+                                      result.source.accountNumber?.replaceAll(
+                                        '@',
+                                        '',
+                                      ) ??
+                                      '';
+                                  if (dayfiId.isNotEmpty) {
+                                    _dayfiIdController.text = dayfiId;
+                                    _onDayfiIdChanged(dayfiId);
+                                  }
+                                }
+                              },
+                              child: Text(
+                                'See recents and beneficiaries',
+                                style: TextStyle(
+                                  fontFamily: 'Chirp',
+                                  color: AppColors.purple500ForTheme(context),
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  letterSpacing: -.40,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        SizedBox(height: 20),
+                      ],
                     ),
                   ),
                 ),
-
-                SizedBox(height: 20.h),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ),
     );

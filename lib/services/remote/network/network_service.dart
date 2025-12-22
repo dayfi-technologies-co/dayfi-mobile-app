@@ -10,7 +10,6 @@ import 'package:dayfi/services/data_clearing_service.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-
 /// description: A network provider class which manages network connections
 /// between the app and external services. This is a wrapper around [Dio].
 ///
@@ -87,11 +86,11 @@ class NetworkService {
     classTag = '',
   }) async {
     _initialiseDio();
-    
+
     if (dio == null) {
       throw Exception('Dio is not initialized');
     }
-    
+
     Response response;
     var params = queryParams ?? {};
     if (params.keys.contains("searchTerm")) {
@@ -154,8 +153,20 @@ class NetworkService {
     } catch (error, stackTrace) {
       var apiError = ApiError.fromDio(error);
       if (apiError.errorType == 401) {
-        // User is not authorized, handle token expiry
-        await _handleUnauthorized();
+        // Skip unauthorized handling for auth endpoints (login, signup, etc.)
+        // These endpoints return 401 for invalid credentials, not expired tokens
+        final isAuthEndpoint =
+            path.contains('/auth/login') ||
+            path.contains('/auth/signup') ||
+            path.contains('/auth/validate-email') ||
+            path.contains('/auth/forgot-password') ||
+            path.contains('/auth/reset-password') ||
+            path.contains('/auth/verify');
+
+        if (!isAuthEndpoint) {
+          // Only handle unauthorized for non-auth endpoints (token expiry)
+          await _handleUnauthorized();
+        }
       }
       return Future.error(apiError, stackTrace);
     }
@@ -165,17 +176,17 @@ class NetworkService {
   Future<void> _handleUnauthorized() async {
     try {
       AppLogger.info('Unauthorized access detected, clearing all user data...');
-      
+
       // Create a temporary container for data clearing
       final container = ProviderContainer();
-      
+
       // Use comprehensive data clearing service
       final dataClearingService = DataClearingService();
       await dataClearingService.clearAllUserDataWithContainer(container);
-      
+
       // Navigate to login screen (hide back button)
       appRouter.pushNamedAndRemoveAllBehind('/loginView', arguments: false);
-      
+
       AppLogger.info('Unauthorized access handled successfully');
     } catch (e) {
       AppLogger.error('Error handling unauthorized access: $e');
@@ -183,7 +194,9 @@ class NetworkService {
       try {
         appRouter.pushNamedAndRemoveAllBehind('/loginView', arguments: false);
       } catch (navError) {
-        AppLogger.error('Error navigating to login after unauthorized access: $navError');
+        AppLogger.error(
+          'Error navigating to login after unauthorized access: $navError',
+        );
       }
     }
   }

@@ -3,8 +3,8 @@ import 'package:dayfi/common/widgets/buttons/secondary_button.dart';
 import 'package:dayfi/common/utils/haptic_helper.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 // Removed flutter_animate usage in favor of a single AnimatedOpacity fade-in
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
@@ -66,223 +66,298 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
               opacity: _visible ? 1.0 : 0.0,
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeOutCubic,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 32.0,
-                  vertical: 16.0,
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Spacer(flex: 1),
-
-                    Padding(
-                      padding: EdgeInsets.only(bottom: 0.h),
-                      child: Image.asset(
-                        "assets/icons/pngs/account_4.png",
-                        height: 84.h,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final bool isWide = constraints.maxWidth > 600;
+                  return Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: isWide ? 400 : double.infinity,
                       ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Welcome text
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                      child: Text(
-                        'Welcome back, ${_capitalize(passcodeState.user?.firstName ?? '')}',
-                        style: TextStyle(
-                          fontFamily: 'FunnelDisplay',
-                          fontSize: 24.sp,
-                          fontWeight: FontWeight.w500,
-                          overflow: TextOverflow.ellipsis,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isWide ? 24.0 : 32.0,
+                          vertical: 16.0,
                         ),
-                        maxLines: 2,
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-
-                    // SizedBox(height: 12.h),
-                    // // Instruction text
-                    // Padding(
-                    //   padding: const EdgeInsets.symmetric(horizontal: 18.0),
-                    //   child: Text(
-                    //     'Enter your 4-digit passcode to continue.',
-                    //     style: TextStyle(
-                    //       // color: AppColors.neutral800,
-                    //       fontSize: 16.sp,
-                    //       fontWeight: FontWeight.w500, //
-                    //       fontFamily: 'Karla',
-                    //       letterSpacing: -.6,
-                    //       height: 1.4,
-                    //     ),
-                    //     textAlign: TextAlign.center,
-                    //   ),
-                    // ),
-                    SizedBox(height: 40.h),
-
-                    // Loading indicator or passcode dots
-                    if (passcodeState.isVerifying)
-                      SizedBox(
-                        width: 24.w,
-                        height: 24.w,
-                        child: LoadingAnimationWidget.horizontalRotatingDots(
-                          color: Theme.of(context).colorScheme.primary,
-                          size: 24,
-                        ),
-                      )
-                    else
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(4, (index) {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6.0,
-                            ),
-                            child: Container(
-                              width: 24,
-                              height: 24,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color:
-                                    index < passcodeState.passcode.length
-                                        ? AppColors.purple500ForTheme(context)
-                                        : Colors.transparent,
-                                border: Border.all(
-                                  color: AppColors.purple500ForTheme(context),
-                                  width: 1.50,
-                                ),
-                              ),
-                            ),
-                          );
-                        }),
-                      ),
-
-                    SizedBox(height: MediaQuery.of(context).size.width * .2),
-
-                    // Number pad
-                    GridView.count(
-                      crossAxisCount: 3,
-                      shrinkWrap: true,
-                      childAspectRatio: 1.5,
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
-                      physics: const NeverScrollableScrollPhysics(),
-                      children: [
-                        ...List.generate(9, (index) {
-                          final number = (index + 1).toString();
-                          return _buildNumberButton(
-                            number,
-                            passcodeNotifier,
-                            index,
-                          );
-                        }),
-
-                        _buildIconButton(
-                          iconSvg:
-                              passcodeState.hasFaceId
-                                  ? "assets/icons/svgs/face-id.svg"
-                                  : "assets/icons/svgs/face-id.svg",
-                          icon:
-                              passcodeState.hasFaceId
-                                  ? Icons.face
-                                  : Icons.fingerprint,
-
-                          onTap:
-                              passcodeState.isBiometricAvailable
-                                  ? () async {
-                                    final authenticated =
-                                        await passcodeNotifier
-                                            .authenticateWithBiometrics();
-                                    if (!authenticated) {
-                                      TopSnackbar.show(
-                                        context,
-                                        message:
-                                            'Biometric check failed. Use your passcode instead.',
-                                        isError: true,
-                                      );
-                                    }
-                                  }
-                                  : () {
-                                    // Distinguish between device not having biometrics
-                                    // and biometrics being available on device but not enabled for the app
-                                    if (passcodeState
-                                            .isDeviceBiometricAvailable &&
-                                        !passcodeState.isBiometricEnabled) {
-                                      TopSnackbar.show(
-                                        context,
-                                        message:
-                                            'Biometrics are available but not enabled for this app.',
-                                        isError: true,
-                                      );
-                                    } else {
-                                      TopSnackbar.show(
-                                        context,
-                                        message:
-                                            'This device doesn’t support biometric authentication.',
-                                        isError: true,
-                                      );
-                                    }
-                                  },
-                          index: 9,
-                        ),
-                        _buildNumberButton('0', passcodeNotifier, 10),
-                        _buildIconButton(
-                          iconSvg: "",
-                          icon: Icons.arrow_back_ios,
-                          onTap: passcodeNotifier.removeDigit,
-                          index: 11,
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    // Logout option
-                    Center(
-                      child: Text.rich(
-                        textAlign: TextAlign.center,
-                        TextSpan(
-                          text: "Wrong account? ",
-                          style: TextStyle(
-                            fontFamily: 'Karla',
-                            color: Theme.of(
-                              context,
-                            ).textTheme.bodyLarge!.color!.withOpacity(.85),
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: -.6,
-                            height: 1.450,
-                          ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            TextSpan(
-                              text: "Sign out",
-                              style: TextStyle(
-                                fontFamily: 'Karla',
-                                color: AppColors.purple500ForTheme(context),
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: -.6,
-                                height: 1.4,
+                            const Spacer(flex: 1),
+
+                            Padding(
+                              padding: EdgeInsets.only(bottom: 0),
+                              child: Image.asset(
+                                "assets/icons/pngs/account_4.png",
+                                height: isWide ? 96 : 84,
                               ),
-                              recognizer:
-                                  TapGestureRecognizer()
-                                    ..onTap = () {
-                                      _showLogoutDialog();
-                                    },
                             ),
+                            const SizedBox(height: 16),
+
+                            // Welcome text
+                            Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: isWide ? 16.0 : 32.0,
+                              ),
+                              child: Text(
+                                    'Welcome back, ${_capitalize(passcodeState.user?.firstName ?? '')}',
+
+                                    textAlign: TextAlign.center,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.displayLarge?.copyWith(
+                                      color:
+                                          Theme.of(
+                                            context,
+                                          ).textTheme.headlineLarge?.color,
+                                      fontSize:
+                                          MediaQuery.of(context).size.width >
+                                                  600
+                                              ? 32
+                                              : 28,
+                                      letterSpacing: -.250,
+                                      fontWeight: FontWeight.w900,
+                                      // fontWeight: FontWeight.w100,
+                                      fontFamily: 'FunnelDisplay',
+                                      // letterspacing: 0,
+                                      height: 1,
+                                    ),
+                                    maxLines: 2,
+                                  )
+                                  .animate()
+                                  .fadeIn(duration: 600.ms)
+                                  .slideY(begin: 0.25, end: 0, duration: 600.ms)
+                                  .then()
+                                  .shimmer(
+                                    duration: 1800.ms,
+                                    color: Theme.of(
+                                      context,
+                                    ).scaffoldBackgroundColor.withOpacity(0.4),
+                                    angle: 20,
+                                  ),
+                            ),
+
+                            // SizedBox(height: 12),
+                            // // Instruction text
+                            // Padding(
+                            //   padding: const EdgeInsets.symmetric(horizontal: 18.0),
+                            //   child: Text(
+                            //     'Enter your 4-digit passcode to continue.',
+                            //     style: TextStyle(
+                            //       // color: AppColors.neutral800,
+                            //       fontSize: 16,
+                            //       fontWeight: FontWeight.w500, //
+                            //       fontFamily: 'Chirp',
+                            //       letterSpacing: -.25,
+                            //       height: 1.2,
+                            //     ),
+                            //     textAlign: TextAlign.center,
+                            //   ),
+                            // ),
+                            SizedBox(height: 32),
+
+                            // Loading indicator or passcode dots
+                            if (passcodeState.isVerifying)
+                              SizedBox(
+                                width: 24,
+                                height: 24,
+                                child:
+                                    LoadingAnimationWidget.horizontalRotatingDots(
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
+                                      size: 24,
+                                    ),
+                              )
+                            else
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: List.generate(4, (index) {
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6.0,
+                                    ),
+                                    child: Container(
+                                      width: isWide ? 28 : 24,
+                                      height: isWide ? 28 : 24,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color:
+                                            index <
+                                                    passcodeState
+                                                        .passcode
+                                                        .length
+                                                ? AppColors.purple500ForTheme(
+                                                  context,
+                                                )
+                                                : Colors.transparent,
+                                        border: Border.all(
+                                          color: AppColors.purple500ForTheme(
+                                            context,
+                                          ),
+                                          width: 1.50,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }),
+                              ),
+
+                            SizedBox(
+                              height:
+                                  isWide
+                                      ? 60
+                                      : MediaQuery.of(context).size.width * .2,
+                            ),
+
+                            // Number pad
+                            SizedBox(
+                              width: isWide ? 320 : 420,
+                              child: GridView.count(
+                                crossAxisCount: 3,
+                                shrinkWrap: true,
+                                childAspectRatio: 1.5,
+                                mainAxisSpacing: 16,
+                                crossAxisSpacing: 16,
+                                physics: const NeverScrollableScrollPhysics(),
+                                children: [
+                                  ...List.generate(9, (index) {
+                                    final number = (index + 1).toString();
+                                    return _buildNumberButton(
+                                      number,
+                                      passcodeNotifier,
+                                      index,
+                                    );
+                                  }),
+
+                                  _buildIconButton(
+                                    iconSvg:
+                                        passcodeState.hasFaceId
+                                            ? "assets/icons/svgs/face-id.svg"
+                                            : "assets/icons/svgs/face-id.svg",
+                                    icon:
+                                        passcodeState.hasFaceId
+                                            ? Icons.face
+                                            : Icons.fingerprint,
+
+                                    onTap:
+                                        passcodeState.isBiometricAvailable
+                                            ? () async {
+                                              final authenticated =
+                                                  await passcodeNotifier
+                                                      .authenticateWithBiometrics();
+                                              if (!authenticated) {
+                                                TopSnackbar.show(
+                                                  context,
+                                                  message:
+                                                      'Biometric check failed. Use your passcode instead.',
+                                                  isError: true,
+                                                );
+                                              }
+                                            }
+                                            : () {
+                                              // Distinguish between device not having biometrics
+                                              // and biometrics being available on device but not enabled for the app
+                                              if (passcodeState
+                                                      .isDeviceBiometricAvailable &&
+                                                  !passcodeState
+                                                      .isBiometricEnabled) {
+                                                TopSnackbar.show(
+                                                  context,
+                                                  message:
+                                                      'Biometrics are available but not enabled for this app.',
+                                                  isError: true,
+                                                );
+                                              } else {
+                                                TopSnackbar.show(
+                                                  context,
+                                                  message:
+                                                      'This device doesn’t support biometric authentication.',
+                                                  isError: true,
+                                                );
+                                              }
+                                            },
+                                    index: 9,
+                                  ),
+                                  _buildNumberButton('0', passcodeNotifier, 10),
+                                  _buildIconButton(
+                                    iconSvg: "",
+                                    icon: Icons.arrow_back_ios,
+                                    onTap: passcodeNotifier.removeDigit,
+                                    index: 11,
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            const SizedBox(height: 32),
+
+                            // Logout option
+                            Center(
+                              child: Text.rich(
+                                textAlign: TextAlign.center,
+                                TextSpan(
+                                  text: "Wrong account? ",
+                                  style: TextStyle(
+                                    fontFamily: 'Chirp',
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .bodyLarge!
+                                        .color!
+                                        .withOpacity(.85),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                    letterSpacing: -.25,
+                                    height: 1.450,
+                                  ),
+                                  children: [
+                                    TextSpan(
+                                      text: "Sign out",
+                                      style: TextStyle(
+                                        fontFamily: 'Chirp',
+                                        color: AppColors.purple500ForTheme(
+                                          context,
+                                        ),
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: -.25,
+                                        height: 1.2,
+                                      ),
+                                      recognizer:
+                                          TapGestureRecognizer()
+                                            ..onTap = () {
+                                              _showLogoutDialog();
+                                            },
+                                    ),
+                                  ],
+                                ),
+                                semanticsLabel: '',
+                              ),
+                            ),
+
+                            const Spacer(flex: 1),
                           ],
                         ),
-                        semanticsLabel: '',
                       ),
                     ),
-
-                    const Spacer(flex: 1),
-                  ],
-                ),
+                  );
+                },
               ),
             ),
           ),
         ),
+
+        if (passcodeState.isVerifying)
+          Scaffold(
+            backgroundColor: Colors.transparent,
+            resizeToAvoidBottomInset: true,
+            body: Opacity(
+              opacity: 0.5,
+              child: Container(
+                width: double.infinity,
+                height: double.infinity,
+                color: Colors.black,
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -300,16 +375,16 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
   Widget _buildLogoutDialog() {
     return Dialog(
       backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Container(
-        padding: EdgeInsets.all(28.w),
+        padding: EdgeInsets.all(28),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             _buildDialogIcon(),
-            SizedBox(height: 24.h),
+            SizedBox(height: 24),
             _buildDialogTitle(),
-            SizedBox(height: 16.h),
+            SizedBox(height: 16),
             _buildDialogButtons(),
           ],
         ),
@@ -320,8 +395,8 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
   // Dialog Icon
   Widget _buildDialogIcon() {
     return Container(
-      width: 80.w,
-      height: 80.w,
+      width: 80,
+      height: 80,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
@@ -347,7 +422,7 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
       'Are you sure you want to logout? You will be asked to create a new passcode.',
       style: TextStyle(
         fontFamily: 'FunnelDisplay',
-        fontSize: 24.sp, // height: 1.6,
+        fontSize: 24, // height: 1.6,
         fontWeight: FontWeight.w500,
         color: Theme.of(context).colorScheme.onSurface,
         letterSpacing: -0.5,
@@ -361,7 +436,7 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
     return Column(
       children: [
         _buildDialogLogoutButton(),
-        SizedBox(height: 12.h),
+        SizedBox(height: 12),
         _buildCancelButton(),
       ],
     );
@@ -378,10 +453,10 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
       backgroundColor: AppColors.purple500,
       textColor: AppColors.neutral0,
       borderRadius: 38.0,
-      height: 48.00000.h,
+      height: 48.00000,
       width: double.infinity,
       fullWidth: true,
-      fontFamily: 'Karla',
+      fontFamily: 'Chirp',
       fontSize: 18,
       fontWeight: FontWeight.w500,
       letterSpacing: -0.8,
@@ -397,9 +472,9 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
       textColor: AppColors.purple500ForTheme(context),
       width: double.infinity,
       fullWidth: true,
-      height: 48.00000.h,
+      height: 48.00000,
       borderRadius: 38.0,
-      fontFamily: 'Karla',
+      fontFamily: 'Chirp',
       fontSize: 18,
       fontWeight: FontWeight.w500,
       letterSpacing: -0.8,
@@ -425,7 +500,7 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
           child: Text(
             number,
             style: TextStyle(
-              fontSize: 32.sp,
+              fontSize: 24,
               fontFamily: 'FunnelDisplay',
               fontWeight: FontWeight.w500,
               color: Theme.of(context).colorScheme.onSurface,
@@ -463,15 +538,15 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
               (icon == Icons.fingerprint || icon == Icons.face)
                   ? SvgPicture.asset(
                     iconSvg,
-                    height: 32.sp,
+                    height: 32,
                     color: AppColors.purple500ForTheme(context),
                   )
                   : Icon(
                     icon,
                     size:
                         (icon == Icons.fingerprint || icon == Icons.face)
-                            ? 32.sp
-                            : 24.spMax,
+                            ? 32
+                            : 24,
                     color: AppColors.purple500ForTheme(context),
                   ),
         ),

@@ -34,11 +34,11 @@ class ShimmerWidgets {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            width: 200.w,
-            height: 28.h,
+            width: 200,
+            height: 28,
             decoration: BoxDecoration(
               color: shimmerColor,
-              borderRadius: BorderRadius.circular(12.r),
+              borderRadius: BorderRadius.circular(12),
             ),
           ),
         ],
@@ -52,15 +52,15 @@ class ShimmerWidgets {
     return shimmerEffect(
       context: context,
       child: Container(
-        margin: EdgeInsets.only(bottom: 24.h, top: 12.h),
+        margin: EdgeInsets.only(bottom: 24, top: 12),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             // Transaction Type Icon placeholder (with circle background)
             SizedBox(
-              width: 40.w,
-              height: 40.w,
+              width: 40,
+              height: 40,
               child: Container(
                 decoration: BoxDecoration(
                   color: shimmerColor,
@@ -68,7 +68,7 @@ class ShimmerWidgets {
                 ),
               ),
             ),
-            SizedBox(width: 8.w),
+            SizedBox(width: 8),
             // Transaction Info placeholders
             Expanded(
               child: Column(
@@ -78,57 +78,57 @@ class ShimmerWidgets {
                   // Beneficiary name placeholder
                   Container(
                     width: double.infinity,
-                    height: 18.h,
+                    height: 18,
                     decoration: BoxDecoration(
                       color: shimmerColor,
-                      borderRadius: BorderRadius.circular(4.r),
+                      borderRadius: BorderRadius.circular(4),
                     ),
                   ),
-                  SizedBox(height: 4.h),
+                  SizedBox(height: 4),
                   // Reason placeholder (optional)
                   Container(
-                    width: 150.w,
-                    height: 12.h,
+                    width: 150,
+                    height: 12,
                     decoration: BoxDecoration(
                       color: shimmerColor,
-                      borderRadius: BorderRadius.circular(4.r),
+                      borderRadius: BorderRadius.circular(4),
                     ),
                   ),
-                  SizedBox(height: 4.h),
+                  SizedBox(height: 4),
                   // Time placeholder
                   Container(
-                    width: 80.w,
-                    height: 12.h,
+                    width: 80,
+                    height: 12,
                     decoration: BoxDecoration(
                       color: shimmerColor,
-                      borderRadius: BorderRadius.circular(4.r),
+                      borderRadius: BorderRadius.circular(4),
                     ),
                   ),
                 ],
               ),
             ),
-            SizedBox(width: 12.w),
+            SizedBox(width: 12),
             // Amount and Status placeholders
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 // Amount placeholder
                 Container(
-                  width: 80.w,
-                  height: 12.h,
+                  width: 80,
+                  height: 12,
                   decoration: BoxDecoration(
                     color: shimmerColor,
-                    borderRadius: BorderRadius.circular(4.r),
+                    borderRadius: BorderRadius.circular(4),
                   ),
                 ),
-                SizedBox(height: 2.h),
+                SizedBox(height: 2),
                 // Status placeholder
                 Container(
-                  width: 60.w,
-                  height: 12.h,
+                  width: 60,
+                  height: 12,
                   decoration: BoxDecoration(
                     color: shimmerColor,
-                    borderRadius: BorderRadius.circular(4.r),
+                    borderRadius: BorderRadius.circular(4),
                   ),
                 ),
               ],
@@ -145,10 +145,10 @@ class ShimmerWidgets {
     int itemCount = 5,
   }) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -167,11 +167,11 @@ class ShimmerWidgets {
     return shimmerEffect(
       context: context,
       child: Container(
-        margin: EdgeInsets.only(bottom: 8.h, top: 8.h),
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+        margin: EdgeInsets.only(bottom: 8, top: 8),
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(12.r),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
           children: [
@@ -180,9 +180,9 @@ class ShimmerWidgets {
               alignment: Alignment.bottomRight,
               children: [
                 Container(
-                  width: 40.w,
-                  height: 40.w,
-                  margin: EdgeInsets.only(bottom: 4.w, right: 4.w),
+                  width: 40,
+                  height: 40,
+                  margin: EdgeInsets.only(bottom: 4, right: 4),
                   decoration: BoxDecoration(
                     color: shimmerColor,
                     shape: BoxShape.circle,
@@ -192,8 +192,8 @@ class ShimmerWidgets {
                 Align(
                   alignment: Alignment.bottomRight,
                   child: Container(
-                    width: 20.w,
-                    height: 20.w,
+                    width: 20,
+                    height: 20,
                     decoration: BoxDecoration(
                       color: shimmerColor,
                       shape: BoxShape.circle,
@@ -202,7 +202,7 @@ class ShimmerWidgets {
                 ),
               ],
             ),
-            SizedBox(width: 8.w),
+            SizedBox(width: 8),
             // Text placeholders
             Expanded(
               child: Column(
@@ -211,33 +211,33 @@ class ShimmerWidgets {
                   // Name placeholder
                   Container(
                     width: double.infinity,
-                    height: 18.h,
+                    height: 18,
                     decoration: BoxDecoration(
                       color: shimmerColor,
-                      borderRadius: BorderRadius.circular(4.r),
+                      borderRadius: BorderRadius.circular(4),
                     ),
                   ),
-                  SizedBox(height: 4.h),
+                  SizedBox(height: 4),
                   // Account info placeholder (icon + text)
                   Row(
                     children: [
                       // Icon placeholder
                       Container(
-                        width: 32.w,
-                        height: 32.w,
+                        width: 32,
+                        height: 32,
                         decoration: BoxDecoration(
                           color: shimmerColor,
-                          borderRadius: BorderRadius.circular(12.r),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      SizedBox(width: 2.w),
+                      SizedBox(width: 2),
                       // Text placeholder
                       Expanded(
                         child: Container(
-                          height: 12.h,
+                          height: 12,
                           decoration: BoxDecoration(
                             color: shimmerColor,
-                            borderRadius: BorderRadius.circular(4.r),
+                            borderRadius: BorderRadius.circular(4),
                           ),
                         ),
                       ),
@@ -246,14 +246,14 @@ class ShimmerWidgets {
                 ],
               ),
             ),
-            SizedBox(width: 12.w),
+            SizedBox(width: 12),
             // Send button placeholder
             Container(
-              width: 68.w,
-              height: 32.h,
+              width: 68,
+              height: 32,
               decoration: BoxDecoration(
                 color: shimmerColor,
-                borderRadius: BorderRadius.circular(20.r),
+                borderRadius: BorderRadius.circular(20),
               ),
             ),
           ],
@@ -271,7 +271,7 @@ class ShimmerWidgets {
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      padding: padding ?? EdgeInsets.only(left: 18.w, right: 18.w, bottom: 112.h),
+      padding: padding ?? EdgeInsets.only(left: 18, right: 18, bottom: 112),
       itemCount: itemCount,
       itemBuilder: (context, index) => recipientItemShimmer(context),
     );
@@ -283,40 +283,40 @@ class ShimmerWidgets {
     return shimmerEffect(
       context: context,
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: 22.h),
+        padding: EdgeInsets.symmetric(vertical: 22),
         decoration: BoxDecoration(
           color: shimmerColor,
-          borderRadius: BorderRadius.circular(12.r),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
           children: [
             // Avatar
             Container(
-              width: 80.w,
-              height: 80.h,
+              width: 80,
+              height: 80,
               decoration: BoxDecoration(
                 color: shimmerColor,
                 shape: BoxShape.circle,
               ),
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: 16),
             // Name
             Container(
-              width: 150.w,
-              height: 20.h,
+              width: 150,
+              height: 20,
               decoration: BoxDecoration(
                 color: shimmerColor,
-                borderRadius: BorderRadius.circular(4.r),
+                borderRadius: BorderRadius.circular(4),
               ),
             ),
-            SizedBox(height: 8.h),
+            SizedBox(height: 8),
             // Email
             Container(
-              width: 200.w,
-              height: 14.h,
+              width: 200,
+              height: 14,
               decoration: BoxDecoration(
                 color: shimmerColor,
-                borderRadius: BorderRadius.circular(4.r),
+                borderRadius: BorderRadius.circular(4),
               ),
             ),
           ],
@@ -337,10 +337,10 @@ class ShimmerWidgets {
       context: context,
       child: Container(
         width: width ?? double.infinity,
-        height: height ?? 100.h,
+        height: height ?? 100,
         decoration: BoxDecoration(
           color: shimmerColor,
-          borderRadius: BorderRadius.circular(borderRadius ?? 12.r),
+          borderRadius: BorderRadius.circular(borderRadius ?? 12),
         ),
       ),
     );
@@ -357,11 +357,11 @@ class ShimmerWidgets {
     return shimmerEffect(
       context: context,
       child: Container(
-        width: width ?? 100.w,
-        height: height ?? 14.h,
+        width: width ?? 100,
+        height: height ?? 14,
         decoration: BoxDecoration(
           color: shimmerColor,
-          borderRadius: BorderRadius.circular(borderRadius ?? 4.r),
+          borderRadius: BorderRadius.circular(borderRadius ?? 4),
         ),
       ),
     );
@@ -382,8 +382,8 @@ class ShimmerWidgets {
         physics: const NeverScrollableScrollPhysics(),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: crossAxisCount,
-          crossAxisSpacing: 12.w,
-          mainAxisSpacing: 12.h,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
           childAspectRatio: childAspectRatio,
         ),
         itemCount: itemCount,
@@ -391,7 +391,7 @@ class ShimmerWidgets {
           return Container(
             decoration: BoxDecoration(
               color: shimmerColor,
-              borderRadius: BorderRadius.circular(12.r),
+              borderRadius: BorderRadius.circular(12),
             ),
           );
         },
@@ -405,38 +405,38 @@ class ShimmerWidgets {
     return shimmerEffect(
       context: context,
       child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 13.h),
+        padding: EdgeInsets.symmetric(vertical: 13),
         child: Row(
           children: [
             // Flag placeholder
             Container(
-              width: 38.h,
-              height: 38.h,
+              width: 38,
+              height: 38,
               decoration: BoxDecoration(
                 color: shimmerColor,
-                // borderRadius: BorderRadius.circular(4.r),
+                // borderRadius: BorderRadius.circular(4),
                 shape: BoxShape.circle,
               ),
             ),
-            SizedBox(width: 12.w),
+            SizedBox(width: 12),
             // Country name placeholder
             Expanded(
               child: Container(
-                height: 38.h,
+                height: 38,
                 decoration: BoxDecoration(
                   color: shimmerColor,
-                  borderRadius: BorderRadius.circular(4.r),
+                  borderRadius: BorderRadius.circular(4),
                 ),
               ),
             ),
-            SizedBox(width: 18.w),
+            SizedBox(width: 18),
             // Currency placeholder
             Container(
-              width: 48.w,
-              height: 38.h,
+              width: 48,
+              height: 38,
               decoration: BoxDecoration(
                 color: shimmerColor,
-                borderRadius: BorderRadius.circular(4.r),
+                borderRadius: BorderRadius.circular(4),
               ),
             ),
           ],
@@ -448,9 +448,124 @@ class ShimmerWidgets {
   // Country list shimmer
   static Widget countryListShimmer(BuildContext context, {int itemCount = 10}) {
     return ListView.builder(
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      padding: EdgeInsets.symmetric(horizontal: 16),
       itemCount: itemCount,
       itemBuilder: (context, index) => countryItemShimmer(context),
+    );
+  }
+
+  // Quick Send chip shimmer (horizontal scrollable list)
+  static Widget quickSendChipShimmer(BuildContext context) {
+    final shimmerColor = Theme.of(context).colorScheme.surfaceContainerHighest;
+    return shimmerEffect(
+      context: context,
+      child: Padding(
+        padding: const EdgeInsets.all(6.0),
+        child: Container(
+          height: 48,
+          width: 140,
+          decoration: BoxDecoration(
+            color: shimmerColor,
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Quick Send list shimmer (horizontal)
+  static Widget quickSendListShimmer(BuildContext context, {int itemCount = 5}) {
+    return SizedBox(
+      height: 72,
+      child: ListView.builder(
+        shrinkWrap: true,
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.symmetric(horizontal: 12),
+        itemCount: itemCount,
+        itemBuilder: (context, index) => quickSendChipShimmer(context),
+      ),
+    );
+  }
+
+  // Delivery method card shimmer
+  static Widget deliveryMethodCardShimmer(BuildContext context) {
+    final shimmerColor = Theme.of(context).colorScheme.surfaceContainerHighest;
+    return shimmerEffect(
+      context: context,
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            // Icon placeholder
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: shimmerColor,
+                borderRadius: BorderRadius.circular(24),
+              ),
+            ),
+            SizedBox(width: 12),
+            // Text placeholders
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title placeholder
+                  Container(
+                    width: 150,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      color: shimmerColor,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  // Subtitle placeholder
+                  Container(
+                    width: 100,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: shimmerColor,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Arrow placeholder
+            Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: shimmerColor,
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Delivery method list shimmer
+  static Widget deliveryMethodListShimmer(
+    BuildContext context, {
+    int itemCount = 4,
+    EdgeInsetsGeometry? padding,
+  }) {
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: padding ?? EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+      itemCount: itemCount,
+      separatorBuilder: (context, index) => SizedBox(height: 12),
+      itemBuilder: (context, index) => deliveryMethodCardShimmer(context),
     );
   }
 }

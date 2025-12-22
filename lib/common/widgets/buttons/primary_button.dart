@@ -85,6 +85,8 @@ class PrimaryButton extends StatelessWidget {
   /// The shadow color of the button
   final Color? shadowColor;
 
+  final bool isSmall;
+
   const PrimaryButton({
     super.key,
     required this.text,
@@ -111,7 +113,8 @@ class PrimaryButton extends StatelessWidget {
     this.child,
     this.fullWidth = false,
     this.elevation,
-    this.shadowColor, 
+    this.shadowColor,
+    this.isSmall = false,
   });
 
   /// Creates a primary button with default Dayfi styling
@@ -140,13 +143,13 @@ class PrimaryButton extends StatelessWidget {
           AppColors.primary400, // send-app-accent-primary-base
       textColor: textColor ?? AppColors.neutral0, // bg-white-0
       borderColor: borderColor,
-      width: width ?? 343.w,
-      height: height ?? 56.h,
-      horizontalPadding: 10.w,
-      verticalPadding: 8.h,
-      borderRadius: 10.r,
+      width: width ?? 343,
+      height: height ?? 56,
+      horizontalPadding: 10,
+      verticalPadding: 8,
+      borderRadius: 10,
       borderWidth: 0,
-      fontSize: 18.sp,
+      fontSize: 18,
       fontWeight: AppTypography.bold, // FontWeight.w700
       letterSpacing: 0.18,
       lineHeight: 1.78,
@@ -178,13 +181,13 @@ class PrimaryButton extends StatelessWidget {
       backgroundColor: backgroundColor ?? AppColors.primary400,
       textColor: textColor ?? AppColors.neutral0,
       borderColor: borderColor,
-      width: 200.w,
-      height: 40.h,
-      horizontalPadding: 8.w,
-      verticalPadding: 6.h,
-      borderRadius: 20.r,
+      width: 200,
+      height: 40,
+      horizontalPadding: 8,
+      verticalPadding: 6,
+      borderRadius: 20,
       borderWidth: 0,
-      fontSize: 16.sp,
+      fontSize: 16,
       fontWeight: AppTypography.semibold, // FontWeight.w600
       letterSpacing: 0.16,
       lineHeight: 1.5,
@@ -206,6 +209,7 @@ class PrimaryButton extends StatelessWidget {
     Color? borderColor,
     bool fullWidth = false,
     Widget? child,
+    bool isSmall = false,
   }) {
     return PrimaryButton(
       key: key,
@@ -216,18 +220,17 @@ class PrimaryButton extends StatelessWidget {
       backgroundColor: backgroundColor ?? AppColors.primary400,
       textColor: textColor ?? AppColors.neutral0,
       borderColor: borderColor,
-      width: 375.w,
-      height: 48.00000.h,
-      horizontalPadding: 12.w,
-      verticalPadding: 10.h,
-      borderRadius: 28.r,
+      horizontalPadding: 12,
+      verticalPadding: 10,
+      borderRadius: 28,
       borderWidth: 0,
-      fontSize: 20.sp,
+      fontSize: 20,
       fontWeight: AppTypography.bold,
       letterSpacing: 0.2,
       // lineHeight: 1.6,
       fontFamily: AppTypography.secondaryFontFamily,
       fullWidth: fullWidth,
+      isSmall: isSmall,
       child: child,
     );
   }
@@ -237,27 +240,26 @@ class PrimaryButton extends StatelessWidget {
     final isDisabled = !enabled || isLoading;
     final effectiveBackgroundColor =
         isDisabled
-            ? (backgroundColor ?? AppColors.primary400).withOpacity(0.15)
+            ? (backgroundColor ?? AppColors.primary400)
             : backgroundColor ?? AppColors.primary400;
 
     final effectiveTextColor =
         isDisabled
-            ? (textColor ?? AppColors.neutral0).withOpacity(0.35)
+            ? (textColor ?? AppColors.neutral0)
             : textColor ?? AppColors.neutral0;
 
-
     return Container(
-      width: fullWidth ? double.infinity : width,
-      height: height,
+      width: MediaQuery.of(context).size.width > 600 ? 300 : 400,
+      height: 48,
       // padding: EdgeInsets.symmetric(
-      //   horizontal: horizontalPadding ?? 10.w,
-      //   vertical: verticalPadding ?? 8.h,
+      //   horizontal: horizontalPadding ?? 10,
+      //   vertical: verticalPadding ?? 8,
       // ),
       clipBehavior: Clip.antiAlias,
       decoration: ShapeDecoration(
         color: effectiveBackgroundColor,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(borderRadius ?? 10.r),
+          borderRadius: BorderRadius.circular(400),
           side: BorderSide.none,
         ),
         shadows:
@@ -281,11 +283,16 @@ class PrimaryButton extends StatelessWidget {
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: isDisabled ? null : () {
-              HapticHelper.mediumImpact();
-              onPressed?.call();
-            },
-            borderRadius: BorderRadius.circular(borderRadius ?? 10.r),
+            splashColor: Colors.transparent,
+            // highlightColor: Colors.transparent,
+            onTap:
+                isDisabled
+                    ? null
+                    : () {
+                      // HapticHelper.mediumImpact();
+                      onPressed?.call();
+                    },
+            borderRadius: BorderRadius.circular(borderRadius ?? 10),
             child: SizedBox(
               width: double.infinity,
               height: double.infinity,
@@ -296,8 +303,8 @@ class PrimaryButton extends StatelessWidget {
                 children: [
                   if (isLoading && showLoadingIndicator) ...[
                     SizedBox(
-                      width: loadingIndicatorSize ?? 20.w,
-                      height: loadingIndicatorSize ?? 20.w,
+                      width: loadingIndicatorSize ?? 20,
+                      height: loadingIndicatorSize ?? 20,
                       child: LoadingAnimationWidget.horizontalRotatingDots(
                         color: loadingIndicatorColor ?? effectiveTextColor,
                         size: loadingIndicatorSize ?? 20,
@@ -308,17 +315,16 @@ class PrimaryButton extends StatelessWidget {
                       child!
                     else
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 4.w),
+                        padding: EdgeInsets.symmetric(horizontal: 4),
                         child: Text(
                           text,
                           style: TextStyle(
                             color: effectiveTextColor,
-                            fontSize: fontSize ?? 18,
-                            fontFamily:
-                                fontFamily ?? AppTypography.secondaryFontFamily,
-                            fontWeight: fontWeight ?? AppTypography.medium,
-                            height: lineHeight ?? 1.78,
-                            letterSpacing: -.70,
+                            fontSize: isSmall ? 14 : 16,
+                            fontFamily: AppTypography.secondaryFontFamily,
+                            fontWeight: AppTypography.bold,
+                            height: 1,
+                            letterSpacing: -.4,
                           ),
                           textAlign: TextAlign.center,
                         ),

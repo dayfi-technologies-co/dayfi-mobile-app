@@ -1,3 +1,5 @@
+import 'package:dayfi/features/legal/privacy_notice.dart';
+import 'package:dayfi/features/legal/terms_of_use.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 // #if !dart.library.html
 import 'dart:io' show Platform;
@@ -51,6 +53,7 @@ import 'package:dayfi/features/profile/views/reset_transaction_pin_intro_view.da
 import 'package:dayfi/features/profile/views/reset_transaction_pin_otp_view.dart';
 import 'package:dayfi/features/profile/views/reset_transaction_pin_new_view.dart';
 import 'package:dayfi/features/profile/views/reset_transaction_pin_confirm_view.dart';
+import 'package:dayfi/features/profile/views/faq_view.dart';
 import 'package:dayfi/features/send/views/send_view.dart';
 import 'package:dayfi/features/send/views/select_destination_country_view.dart';
 import 'package:dayfi/features/send/views/select_delivery_method_view.dart';
@@ -69,10 +72,12 @@ class VerifyEmailViewArguments {
 }
 
 class AppRoute {
-    static const String addWalletAddressView = '/addWalletAddressView';
+  static const String addWalletAddressView = '/addWalletAddressView';
   static RouteSettings globalrouteSettings = const RouteSettings();
 
   static const String onboardingView = '/onboardingView';
+  static const String termsOfUseView = '/termsOfUseView';
+  static const String privacyNoticeView = '/privacyNoticeView';
   static const String checkEmailView = '/checkEmailView';
   static const String loginView = '/loginView';
   static const String signupView = '/signupView';
@@ -123,6 +128,7 @@ class AppRoute {
       '/resetTransactionPinNewView';
   static const String resetTransactionPinConfirmView =
       '/resetTransactionPinConfirmView';
+  static const String faqView = '/faqView';
   static const String sendView = '/send';
   static const String selectDestinationCountryView =
       '/selectDestinationCountryView';
@@ -135,6 +141,10 @@ class AppRoute {
   static Route getRoute(RouteSettings routeSettings) {
     globalrouteSettings = routeSettings;
     switch (routeSettings.name) {
+      case termsOfUseView:
+        return _getPageRoute(routeSettings, const TermsOfUseView());
+      case privacyNoticeView:
+        return _getPageRoute(routeSettings, const PrivacyNoticeView());
       case addWalletAddressView:
         final args = routeSettings.arguments as Map<String, dynamic>? ?? {};
         return _getPageRoute(
@@ -197,7 +207,8 @@ class AppRoute {
           ReenterPasscodeView(isFromSignup: isFromSignup),
         );
       case forgotPasswordView:
-        return _getPageRoute(routeSettings, const ForgotPasswordView());
+        String? email = routeSettings.arguments as String?;
+        return _getPageRoute(routeSettings, ForgotPasswordView(initialEmail: email));
       case resetPasswordView:
         String email = routeSettings.arguments as String;
         return _getPageRoute(routeSettings, ResetPasswordView(email: email));
@@ -412,6 +423,8 @@ class AppRoute {
           routeSettings,
           const ResetTransactionPinConfirmView(),
         );
+      case faqView:
+        return _getPageRoute(routeSettings, const FaqView());
       case sendView:
         return MaterialPageRoute(
           settings: routeSettings,
@@ -455,7 +468,7 @@ class AppRoute {
     bool isFullScreen = false,
   }) {
     if (!kIsWeb) {
-// #if !dart.library.html
+      // #if !dart.library.html
       if (Platform.isIOS) {
         return CupertinoPageRoute(
           settings: routeSettings,
@@ -465,7 +478,7 @@ class AppRoute {
           fullscreenDialog: isFullScreen,
         );
       }
-// #endif
+      // #endif
     }
     return MaterialPageRoute(
       settings: routeSettings,

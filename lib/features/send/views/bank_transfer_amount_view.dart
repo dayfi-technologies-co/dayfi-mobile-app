@@ -167,10 +167,10 @@ class _BankTransferAmountViewState
       },
       child: Scaffold(
         appBar: AppBar(
-             scrolledUnderElevation: .5,
-              foregroundColor: Theme.of(context).scaffoldBackgroundColor,
-              shadowColor: Theme.of(context).scaffoldBackgroundColor,
-              surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+          scrolledUnderElevation: .5,
+          foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+          shadowColor: Theme.of(context).scaffoldBackgroundColor,
+          surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
 
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
@@ -188,20 +188,20 @@ class _BankTransferAmountViewState
               children: [
                 SvgPicture.asset(
                   "assets/icons/svgs/notificationn.svg",
-                  height: 40.sp,
+                  height: 40,
                   color: Theme.of(context).colorScheme.surface,
                 ),
                 SizedBox(
-                  height: 40.sp,
-                  width: 40.sp,
+                  height: 40,
+                  width: 40,
                   child: Center(
                     child: Padding(
                       padding: const EdgeInsets.only(left: 8.0),
                       child: Icon(
                         Icons.arrow_back_ios,
-                        size: 20.sp,
+                        size: 20,
                         color: Theme.of(context).textTheme.bodyLarge!.color,
-                        // size: 20.sp,
+                        // size: 20,
                       ),
                     ),
                   ),
@@ -213,7 +213,7 @@ class _BankTransferAmountViewState
             "Enter Amount",
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
               fontFamily: 'FunnelDisplay',
-              fontSize: 24.sp,
+              fontSize: 24,
               // height: 1.6,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface,
@@ -222,89 +222,107 @@ class _BankTransferAmountViewState
           centerTitle: true,
         ),
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        body: SafeArea(
-          bottom: false,
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 18.w,
-                    vertical: 4.h,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // Subtitle
-                      Text(
-                        "Enter the amount you want to recieve",
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w500,
-                          fontFamily: 'Karla',
-                          letterSpacing: -.6,
-                          height: 1.5,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      SizedBox(height: 36.h),
-
-                      // Amount field
-                      _buildAmountField(sendState),
-
-                      // Show validation error
-                      if (_amountError.isNotEmpty)
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final bool isWide = constraints.maxWidth > 600;
+            return Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: isWide ? 500 : double.infinity,
+                ),
+                child: SafeArea(
+                  bottom: false,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
                         Padding(
-                          padding: const EdgeInsets.only(top: 8.0, left: 14),
-                          child: Text(
-                            _amountError,
-                            style: TextStyle(
-                              color: AppColors.error400,
-                              fontSize: 13.sp,
-                              fontFamily: 'Karla',
-                              letterSpacing: -.6,
-                              fontWeight: FontWeight.w500,
-                              height: 1.4,
-                            ),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isWide ? 24 : 18,
+                            vertical: 4,
                           ),
-                        )
-                      else
-                        const SizedBox.shrink(),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              // Subtitle
+                              Text(
+                                "Enter the amount you want to recieve",
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.bodyMedium?.copyWith(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  fontFamily: 'Chirp',
+                                  letterSpacing: -.25,
+                                  height: 1.5,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              SizedBox(height: 36),
 
-                      SizedBox(height: 40.h),
+                              // Amount field
+                              _buildAmountField(sendState),
 
-                      // Submit Button
-                      PrimaryButton(
-                        borderRadius: 38,
-                        text: "Process Payment",
-                        onPressed:
-                            isAmountValid && !_isLoading
-                                ? () => _handleContinue()
-                                : null,
-                        backgroundColor:
-                            isAmountValid && !_isLoading
-                                ? AppColors.purple500
-                                : AppColors.purple500.withOpacity(.15),
-                        height: 48.00000.h,
-                        isLoading: _isLoading,
-                        textColor:
-                            isAmountValid && !_isLoading
-                                ? AppColors.neutral0
-                                : AppColors.neutral0.withOpacity(.35),
-                        fontFamily: 'Karla',
-                        letterSpacing: -.70,
-                        fontSize: 18,
-                        width: double.infinity,
-                        fullWidth: true,
-                      ),
-                      SizedBox(height: 50.h),
-                    ],
+                              // Show validation error
+                              if (_amountError.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    top: 8.0,
+                                    left: 14,
+                                  ),
+                                  child: Text(
+                                    _amountError,
+                                    style: TextStyle(
+                                      color: AppColors.error400,
+                                      fontSize: 13,
+                                      fontFamily: 'Chirp',
+                                      letterSpacing: -.25,
+                                      fontWeight: FontWeight.w500,
+                                      height: 1.2,
+                                    ),
+                                  ),
+                                )
+                              else
+                                const SizedBox.shrink(),
+
+                              SizedBox(height: 32),
+
+                              // Submit Button
+                              PrimaryButton(
+                                borderRadius: 38,
+                                text: "Process Payment",
+                                onPressed:
+                                    isAmountValid && !_isLoading
+                                        ? () => _handleContinue()
+                                        : null,
+                                backgroundColor:
+                                    isAmountValid && !_isLoading
+                                        ? AppColors.purple500
+                                        : AppColors.purple500.withOpacity(.15),
+                                height: 48.00000,
+                                isLoading: _isLoading,
+                                textColor:
+                                    isAmountValid && !_isLoading
+                                        ? AppColors.neutral0
+                                        : AppColors.neutral0.withOpacity(.20),
+                                fontFamily: 'Chirp',
+                                letterSpacing: -.70,
+                                fontSize: 18,
+                                width: double.infinity,
+                                fullWidth: true,
+                              ),
+                              SizedBox(height: 50),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -317,10 +335,10 @@ class _BankTransferAmountViewState
         Text(
           'Amount',
           style: AppTypography.titleMedium.copyWith(
-            fontFamily: 'Karla',
+            fontFamily: 'Chirp',
             fontSize: 14,
             fontWeight: FontWeight.w500,
-            letterSpacing: -.6,
+            letterSpacing: -.25,
             height: 1.450,
             color: Theme.of(
               context,
@@ -330,10 +348,10 @@ class _BankTransferAmountViewState
         ),
         SizedBox(height: 4),
         Container(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(12.r),
+            borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(color: AppColors.neutral500.withOpacity(0.1)),
             ],
@@ -349,17 +367,17 @@ class _BankTransferAmountViewState
               _validateAmount(value);
             },
             style: AppTypography.bodyLarge.copyWith(
-              fontFamily: 'Karla',
-              fontSize: 27.sp,
+              fontFamily: 'Chirp',
+              fontSize: 27,
               letterSpacing: -.70,
               fontWeight: FontWeight.w500,
             ),
             decoration: InputDecoration(
               hintText: '0.00',
               hintStyle: AppTypography.bodyLarge.copyWith(
-                fontFamily: 'Karla',
-                fontSize: 27.sp,
-                letterSpacing: -.6,
+                fontFamily: 'Chirp',
+                fontSize: 27,
+                letterSpacing: -.25,
                 fontWeight: FontWeight.w500,
                 color: Theme.of(
                   context,
@@ -370,10 +388,10 @@ class _BankTransferAmountViewState
               enabledBorder: InputBorder.none,
               focusedBorder: InputBorder.none,
               contentPadding: EdgeInsets.only(
-                right: 16.w,
-                top: 16.h,
-                bottom: 16.h,
-                left: -4.w,
+                right: 16,
+                top: 16,
+                bottom: 16,
+                left: -4,
               ),
               prefixIcon: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -382,17 +400,17 @@ class _BankTransferAmountViewState
                   Text(
                     sendState.sendCurrency,
                     style: AppTypography.bodyMedium.copyWith(
-                      fontFamily: 'FunnelDisplay',
-                      fontSize: 11.sp,
+                      fontFamily: 'Chirp',
+                      fontSize: 13,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  SizedBox(width: 8.w),
+                  SizedBox(width: 8),
                   SvgPicture.asset(
                     _getFlagPath(sendState.sendCountry),
-                    height: 24.0.h,
+                    height: 24.0,
                   ),
-                  SizedBox(width: 12.w),
+                  SizedBox(width: 12),
                 ],
               ),
             ),
@@ -914,34 +932,34 @@ class _BankTransferAmountViewState
       builder: (BuildContext context) {
         return Dialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24.r),
+            borderRadius: BorderRadius.circular(24),
           ),
           child: Container(
-            padding: EdgeInsets.all(28.w),
+            padding: EdgeInsets.all(28),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 // Error icon
                 Container(
-                  width: 64.w,
-                  height: 64.w,
+                  width: 64,
+                  height: 64,
                   decoration: BoxDecoration(shape: BoxShape.circle),
                   child: SvgPicture.asset('assets/icons/svgs/cautionn.svg'),
                 ),
-                SizedBox(height: 24.h),
+                SizedBox(height: 24),
                 // Title
                 Text(
                   'Payment Error',
                   style: AppTypography.titleLarge.copyWith(
                     fontFamily: 'FunnelDisplay',
-                    fontSize: 20.sp,
+                    fontSize: 20,
                     // height: 1.6,
                     fontWeight: FontWeight.w500,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                SizedBox(height: 24.h),
+                SizedBox(height: 24),
                 // Retry button
                 PrimaryButton(
                   text: 'Retry',
@@ -952,16 +970,16 @@ class _BankTransferAmountViewState
                   backgroundColor: AppColors.purple500,
                   textColor: AppColors.neutral0,
                   borderRadius: 38,
-                  height: 48.00000.h,
+                  height: 48.00000,
                   width: double.infinity,
                   fullWidth: true,
-                  fontFamily: 'Karla',
+                  fontFamily: 'Chirp',
                   fontSize: 18,
                   fontWeight: FontWeight.w500,
                   letterSpacing: -0.8,
                 ),
 
-                SizedBox(height: 12.h),
+                SizedBox(height: 12),
 
                 // Skip button
                 TextButton(
@@ -973,8 +991,8 @@ class _BankTransferAmountViewState
                   child: Text(
                     "Cancel",
                     style: AppTypography.bodyMedium.copyWith(
-                      fontFamily: 'Karla',
-                      fontSize: 16.sp,
+                      fontFamily: 'Chirp',
+                      fontSize: 16,
                       letterSpacing: -0.8,
                       fontWeight: FontWeight.w500,
                       color: AppColors.neutral400,
@@ -1073,7 +1091,7 @@ class _BankTransferAmountViewState
       barrierColor: Colors.black.withOpacity(0.85),
       context: context,
       isScrollControlled: true,
-          backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
@@ -1100,22 +1118,22 @@ class _BankTransferAmountViewState
               height: MediaQuery.of(context).size.height * 0.88,
               decoration: BoxDecoration(
                 color: Theme.of(context).scaffoldBackgroundColor,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
               child: Column(
                 children: [
-                  SizedBox(height: 18.h),
+                  SizedBox(height: 18),
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 18.w),
+                    padding: EdgeInsets.symmetric(horizontal: 18),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        SizedBox(height: 40.h, width: 40.w),
+                        SizedBox(height: 40, width: 40),
                         Text(
                           'Payment Details',
                           style: AppTypography.titleLarge.copyWith(
                             fontFamily: 'FunnelDisplay',
-                            fontSize: 20.sp,
+                            fontSize: 20,
                             // height: 1.6,
                             fontWeight: FontWeight.w600,
                             color: Theme.of(context).colorScheme.onSurface,
@@ -1134,17 +1152,17 @@ class _BankTransferAmountViewState
                             children: [
                               SvgPicture.asset(
                                 "assets/icons/svgs/notificationn.svg",
-                                height: 40.sp,
+                                height: 40,
                                 color: Theme.of(context).colorScheme.surface,
                               ),
                               SizedBox(
-                                height: 40.sp,
-                                width: 40.sp,
+                                height: 40,
+                                width: 40,
                                 child: Center(
                                   child: Image.asset(
                                     "assets/icons/pngs/cancelicon.png",
-                                    height: 20.h,
-                                    width: 20.w,
+                                    height: 20,
+                                    width: 20,
                                     color:
                                         Theme.of(
                                           context,
@@ -1158,41 +1176,41 @@ class _BankTransferAmountViewState
                       ],
                     ),
                   ),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: 16),
 
                   // Content
                   Expanded(
                     child: SingleChildScrollView(
-                      padding: EdgeInsets.symmetric(horizontal: 18.w),
+                      padding: EdgeInsets.symmetric(horizontal: 18),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // Instruction banner
                           Container(
-                            padding: EdgeInsets.all(12.w),
+                            padding: EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               color: Theme.of(
                                 context,
                               ).colorScheme.primaryContainer.withOpacity(0.25),
-                              borderRadius: BorderRadius.circular(12.r),
+                              borderRadius: BorderRadius.circular(12),
                             ),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                SizedBox(width: 4.w),
+                                SizedBox(width: 4),
                                 Image.asset(
                                   "assets/images/idea.png",
-                                  height: 20.h,
+                                  height: 20,
                                 ),
-                                SizedBox(width: 12.w),
+                                SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
                                     'When paying into this account, ensure the name on the bank account matches your verified name on Dayfi App.',
                                     style: Theme.of(
                                       context,
                                     ).textTheme.bodySmall?.copyWith(
-                                      fontSize: 14.sp,
-                                      fontFamily: 'Karla',
+                                      fontSize: 14,
+                                      fontFamily: 'Chirp',
                                       fontWeight: FontWeight.w500,
                                       letterSpacing: -0.4,
                                       height: 1.5,
@@ -1204,17 +1222,17 @@ class _BankTransferAmountViewState
                               ],
                             ),
                           ),
-                          SizedBox(height: 12.h),
+                          SizedBox(height: 12),
 
                           Container(
                             width: double.infinity,
                             padding: EdgeInsets.symmetric(
-                              horizontal: 16.w,
-                              vertical: 24.h,
+                              horizontal: 16,
+                              vertical: 24,
                             ),
                             decoration: BoxDecoration(
                               color: Theme.of(context).colorScheme.surface,
-                              borderRadius: BorderRadius.circular(12.r),
+                              borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: Theme.of(
                                   context,
@@ -1225,13 +1243,13 @@ class _BankTransferAmountViewState
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                SizedBox(height: 8.h),
+                                SizedBox(height: 8),
 
                                 // Transfer details
                                 Text(
                                   'Transfer details:',
                                   style: AppTypography.titleMedium.copyWith(
-                                    fontFamily: 'Karla',
+                                    fontFamily: 'Chirp',
                                     fontSize: 14,
                                     fontWeight: FontWeight.w500,
                                     letterSpacing: -.2,
@@ -1246,7 +1264,7 @@ class _BankTransferAmountViewState
                                   overflow: TextOverflow.ellipsis,
                                 ),
 
-                                SizedBox(height: 16.h),
+                                SizedBox(height: 16),
 
                                 // Amount to send
                                 _buildDetailRow(
@@ -1255,7 +1273,7 @@ class _BankTransferAmountViewState
                                   showCopy: true,
                                 ),
 
-                                SizedBox(height: 12.h),
+                                SizedBox(height: 12),
 
                                 // Account number
                                 _buildDetailRow(
@@ -1265,14 +1283,14 @@ class _BankTransferAmountViewState
                                   showCopy: true,
                                 ),
 
-                                SizedBox(height: 12.h),
+                                SizedBox(height: 12),
                                 _buildDetailRow(
                                   'Account name',
                                   collectionData.bankInfo?.accountName ?? 'N/A',
                                   showCopy: true,
                                 ),
 
-                                SizedBox(height: 12.h),
+                                SizedBox(height: 12),
 
                                 // Bank name
                                 _buildDetailRow(
@@ -1284,7 +1302,7 @@ class _BankTransferAmountViewState
                                   color: Theme.of(
                                     context,
                                   ).colorScheme.outline.withOpacity(0.2),
-                                  height: 56.h,
+                                  height: 56,
                                 ),
 
                                 // Expiration warning
@@ -1298,10 +1316,10 @@ class _BankTransferAmountViewState
                                           style: Theme.of(
                                             context,
                                           ).textTheme.bodyMedium?.copyWith(
-                                            fontFamily: 'Karla',
+                                            fontFamily: 'Chirp',
                                             fontWeight: FontWeight.w500,
                                             letterSpacing: -0.4,
-                                            fontSize: 14.sp,
+                                            fontSize: 14,
                                             color:
                                                 Theme.of(
                                                   context,
@@ -1313,10 +1331,10 @@ class _BankTransferAmountViewState
                                               style: Theme.of(
                                                 context,
                                               ).textTheme.bodyMedium?.copyWith(
-                                                fontFamily: 'Karla',
+                                                fontFamily: 'Chirp',
                                                 fontWeight: FontWeight.w600,
                                                 letterSpacing: -0.4,
-                                                fontSize: 14.sp,
+                                                fontSize: 14,
                                                 color: AppColors.error500,
                                               ),
                                             ),
@@ -1325,10 +1343,10 @@ class _BankTransferAmountViewState
                                               style: Theme.of(
                                                 context,
                                               ).textTheme.bodyMedium?.copyWith(
-                                                fontFamily: 'Karla',
+                                                fontFamily: 'Chirp',
                                                 fontWeight: FontWeight.w500,
                                                 letterSpacing: -0.4,
-                                                fontSize: 14.sp,
+                                                fontSize: 14,
                                                 color:
                                                     Theme.of(
                                                       context,
@@ -1342,12 +1360,12 @@ class _BankTransferAmountViewState
                                   ],
                                 ),
 
-                                SizedBox(height: 8.h),
+                                SizedBox(height: 8),
                               ],
                             ),
                           ),
 
-                          SizedBox(height: 18.h),
+                          SizedBox(height: 18),
 
                           // Instruction text
                           Text(
@@ -1355,8 +1373,8 @@ class _BankTransferAmountViewState
                             style: Theme.of(
                               context,
                             ).textTheme.bodyMedium?.copyWith(
-                              letterSpacing: -.6,
-                              fontSize: 14.sp,
+                              letterSpacing: -.25,
+                              fontSize: 14,
                               fontWeight: FontWeight.w500,
                               color: Theme.of(
                                 context,
@@ -1364,7 +1382,7 @@ class _BankTransferAmountViewState
                             ),
                           ),
 
-                          SizedBox(height: 24.h),
+                          SizedBox(height: 24),
                         ],
                       ),
                     ),
@@ -1372,7 +1390,7 @@ class _BankTransferAmountViewState
 
                   // Action buttons
                   Padding(
-                    padding: EdgeInsets.all(24.w),
+                    padding: EdgeInsets.all(24),
                     child: Column(
                       children: [
                         // I have paid button
@@ -1384,20 +1402,23 @@ class _BankTransferAmountViewState
                             Navigator.pushNamedAndRemoveUntil(
                               context,
                               AppRoute.sendCollectionSuccessView,
-                              (Route route) => false, // Remove all previous routes
+                              (Route route) =>
+                                  false, // Remove all previous routes
                               arguments: {
                                 'recipientData': widget.recipientData,
                                 'selectedData': widget.selectedData,
                                 'paymentData': widget.paymentData,
                                 'collectionData': _currentPaymentData,
-                                'transactionId': _currentPaymentData?.id ?? _currentPaymentData?.sequenceId,
+                                'transactionId':
+                                    _currentPaymentData?.id ??
+                                    _currentPaymentData?.sequenceId,
                               },
                             );
                           },
                           backgroundColor: AppColors.purple500,
-                          height: 48.00000.h,
+                          height: 48.00000,
                           textColor: AppColors.neutral0,
-                          fontFamily: 'Karla',
+                          fontFamily: 'Chirp',
                           letterSpacing: -.70,
                           fontSize: 18,
                           width: double.infinity,
@@ -1429,24 +1450,24 @@ class _BankTransferAmountViewState
                     },
                     child: Padding(
                       padding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 12.h,
+                        horizontal: 16,
+                        vertical: 12,
                       ),
                       child: Text(
                         'Do you need help?',
                         style: TextStyle(
-                          fontFamily: 'Karla',
+                          fontFamily: 'Chirp',
                           color: AppColors.purple500ForTheme(context),
-                          fontSize: 16.sp,
+                          fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          letterSpacing: -.6,
-                          height: 1.4,
+                          letterSpacing: -.25,
+                          height: 1.2,
                         ),
                       ),
                     ),
                   ),
 
-                  SizedBox(height: 24.h),
+                  SizedBox(height: 24),
                 ],
               ),
             );
@@ -1463,8 +1484,8 @@ class _BankTransferAmountViewState
         Text(
           label,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            letterSpacing: -.6,
-            fontSize: 14.sp,
+            letterSpacing: -.25,
+            fontSize: 14,
             fontWeight: FontWeight.w500,
             color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
           ),
@@ -1474,15 +1495,15 @@ class _BankTransferAmountViewState
             Text(
               value,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                fontFamily: 'karla',
-                fontSize: 15.sp,
+                fontFamily: 'Chirp',
+                fontSize: 15,
                 fontWeight: FontWeight.w600,
-                letterSpacing: -.6,
+                letterSpacing: -.25,
                 color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             if (showCopy) ...[
-              SizedBox(width: 8.w),
+              SizedBox(width: 8),
               Semantics(
                 button: true,
                 label: 'Copy $label',
@@ -1496,14 +1517,14 @@ class _BankTransferAmountViewState
                     TopSnackbar.show(
                       context,
                       message:
-                          label == 'DayFi Tag'
-                              ? 'DayFi Tag copied to clipboard'
+                          label == 'Dayfi Tag'
+                              ? 'Dayfi Tag copied to clipboard'
                               : 'Account number copied to clipboard',
                     );
                   },
                   child: SvgPicture.asset(
                     "assets/icons/svgs/copy.svg",
-                    height: 20.w,
+                    height: 20,
                     color: Theme.of(
                       context,
                     ).colorScheme.onSurface.withOpacity(0.6),

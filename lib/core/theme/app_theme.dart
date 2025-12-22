@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'app_colors.dart';
 import 'app_typography.dart';
 
@@ -565,7 +566,7 @@ class AppTheme {
   // ============================================================================
 
   static AppBarTheme get _lightAppBarTheme {
-    return const AppBarTheme(
+    return AppBarTheme(
       backgroundColor: Color(0xffFEF9F3),
       foregroundColor: AppColors.neutral900,
       elevation: 0,
@@ -665,7 +666,7 @@ class AppTheme {
   // ============================================================================
 
   static AppBarTheme get _darkAppBarTheme {
-    return const AppBarTheme(
+    return AppBarTheme(
       backgroundColor: AppColors.neutral950,
       foregroundColor: AppColors.neutral100,
       elevation: 0,

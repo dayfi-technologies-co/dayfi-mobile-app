@@ -19,6 +19,10 @@ class TopSnackbar {
       HapticHelper.success();
     }
 
+    // Check if screen is wide (iPad/tablet)
+    final screenWidth = MediaQuery.of(context).size.width;
+    final bool isWide = screenWidth > 600;
+
     final primaryColor =
         isError ? const Color(0xFFDC2626) : const Color(0xFF059669);
     final backgroundColor =
@@ -27,6 +31,9 @@ class TopSnackbar {
         isError ? const Color(0xFFFECACA) : const Color(0xFFBBF7D0);
     final textColor =
         isError ? const Color(0xFF991B1B) : const Color(0xFF065F46);
+
+    // Calculate horizontal margin for centering on wide screens
+    final horizontalMargin = isWide ? (screenWidth - 500) / 2 : 8.0;
 
     Flushbar(
       messageText: Row(
@@ -44,8 +51,8 @@ class TopSnackbar {
                       ? 'assets/icons/svgs/circle-x.svg'
                       : 'assets/icons/svgs/circle-check.svg',
                   color: primaryColor,
-                  height: 24.sp,
-                  width: 24.sp,
+                  height: 24,
+                  width: 24,
                 ),
               )
               .animate()
@@ -62,11 +69,11 @@ class TopSnackbar {
             child: Text(
                   message,
                   style: TextStyle(
-                    fontSize: 14.sp,
-                    fontFamily: 'Karla',
+                    fontSize: 14,
+                    fontFamily: 'Chirp',
                     fontWeight: FontWeight.w500,
                     letterSpacing: -0.8,
-                    height: 1.4,
+                    height: 1.2,
                     color: textColor,
                   ),
                 )
@@ -81,7 +88,7 @@ class TopSnackbar {
           ),
         ],
       ),
-      margin: const EdgeInsets.fromLTRB(8, 16, 8, 0),
+      margin: EdgeInsets.fromLTRB(horizontalMargin, 16, horizontalMargin, 0),
       borderRadius: BorderRadius.circular(12),
       backgroundColor: backgroundColor,
       borderColor: borderColor.withOpacity(.5),

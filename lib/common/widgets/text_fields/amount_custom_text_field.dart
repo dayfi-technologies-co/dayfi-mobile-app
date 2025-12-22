@@ -64,7 +64,7 @@ class AmountCustomTextField extends StatelessWidget {
         Text(
           label!,
           style: theme.textTheme.bodySmall?.copyWith(
-            fontFamily: 'Karla',
+            fontFamily: 'Chirp',
             fontSize: 15,
             fontWeight: FontWeight.w600,
             letterSpacing: -.1,
@@ -94,7 +94,7 @@ class AmountCustomTextField extends StatelessWidget {
           inputFormatters:
               formatter ?? [FilteringTextInputFormatter.singleLineFormatter],
           style: TextStyle(
-            fontFamily: 'Karla', //
+            fontFamily: 'Chirp', //
             fontSize: 15,
             fontWeight: FontWeight.w600,
             height: 1.450,
@@ -105,7 +105,7 @@ class AmountCustomTextField extends StatelessWidget {
             counterText: "",
             hintText: hintText,
             hintStyle: TextStyle(
-              fontFamily: 'Karla', //
+              fontFamily: 'Chirp', //
               fontSize: 15,
               fontWeight: FontWeight.w600,
               height: 1.450,
@@ -118,21 +118,21 @@ class AmountCustomTextField extends StatelessWidget {
               fontSize: 14,
               fontWeight: FontWeight.w600,
               letterSpacing: -.01,
-              fontFamily: "Karla",
+              fontFamily: "Chirp",
               height: 1.450,
               color: theme.textTheme.bodyLarge!.color!.withOpacity(0.75),
             ),
             floatingLabelBehavior: FloatingLabelBehavior.always,
             fillColor: theme.colorScheme.surface,
             contentPadding: EdgeInsets.symmetric(
-              vertical: 14.h,
-              horizontal: 14.w,
+              vertical: 14,
+              horizontal: 14,
             ),
             errorStyle: TextStyle(
-              fontFamily: "Karla",
+              fontFamily: "Chirp",
               fontSize: 12,
               color: Colors.red.shade800,
-              letterSpacing: -.6,
+              letterSpacing: -.25,
             ),
             prefixIcon: prefixIcon,
             prefix: prefix,
@@ -141,38 +141,38 @@ class AmountCustomTextField extends StatelessWidget {
               borderSide: BorderSide(
                 // color: Color( 0xff5645F5), // innit
                 color: const Color(0xff5645F5), // innit
-                width: 2.w,
+                width: 2,
               ),
               borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(4.r),
-                  topRight: Radius.circular(4.r)),
+                  topLeft: Radius.circular(4),
+                  topRight: Radius.circular(4)),
             ),
             enabledBorder: UnderlineInputBorder(
               borderSide: BorderSide(
                 color: const Color(0xff5645F5).withOpacity(.2),
-                width: 2.w,
+                width: 2,
               ),
               borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(4.r),
-                  topRight: Radius.circular(4.r)),
+                  topLeft: Radius.circular(4),
+                  topRight: Radius.circular(4)),
             ),
             focusedErrorBorder: UnderlineInputBorder(
               borderSide: BorderSide(
                 color: Colors.red.shade800.withOpacity(.85),
-                width: 2.w,
+                width: 2,
               ),
               borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(4.r),
-                  topRight: Radius.circular(4.r)),
+                  topLeft: Radius.circular(4),
+                  topRight: Radius.circular(4)),
             ),
             errorBorder: UnderlineInputBorder(
               borderSide: BorderSide(
                 color: Colors.red.shade800.withOpacity(.85),
-                width: 2.w,
+                width: 2,
               ),
               borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(4.r),
-                  topRight: Radius.circular(4.r)),
+                  topLeft: Radius.circular(4),
+                  topRight: Radius.circular(4)),
             ),
           ),
         ),

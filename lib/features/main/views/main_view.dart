@@ -170,17 +170,17 @@ class _MainViewState extends ConsumerState<MainView> {
         return Dialog(
           backgroundColor: Theme.of(context).colorScheme.surface,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24.r),
+            borderRadius: BorderRadius.circular(24),
           ),
           child: Container(
-            padding: EdgeInsets.all(28.w),
+            padding: EdgeInsets.all(28),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 // Biometric icon
                 // Container(
-                //   width: 80.w,
-                //   height: 80.w,
+                //   width: 80,
+                //   height: 80,
                 //   decoration: BoxDecoration(
                 //     gradient: LinearGradient(
                 //       begin: Alignment.topLeft,
@@ -204,19 +204,19 @@ class _MainViewState extends ConsumerState<MainView> {
                 //     child: SvgPicture.asset(
                 //       "assets/icons/svgs/security-safe.svg",
                 //       color: Colors.white,
-                //       height: 24.w,
+                //       height: 24,
                 //     ),
                 //   ),
                 // ),
 
-                // SizedBox(height: 24.h),
+                // SizedBox(height: 24),
 
                 // Title
                 // Text(
                 //   'Enable Biometric Security',
                 //   style: AppTypography.titleLarge.copyWith(
                 //     fontFamily: 'FunnelDisplay',
-                //     fontSize: 18.sp,
+                //     fontSize: 18,
                 //     // // height: 1.6,
                 //     fontWeight: FontWeight.w600,
                 //     color: Theme.of(context).colorScheme.onSurface,
@@ -224,25 +224,25 @@ class _MainViewState extends ConsumerState<MainView> {
                 //   textAlign: TextAlign.center,
                 // ),
 
-                // SizedBox(height: 16.h),
+                // SizedBox(height: 16),
 
                 // Description
                 Text(
                   'Add an extra layer of security to your account with biometric authentication.',
                   style: AppTypography.bodyMedium.copyWith(
-                    fontFamily: 'Karla',
-                    fontSize: 20.sp,
+                    fontFamily: 'Chirp',
+                    fontSize: 20,
                     fontWeight: FontWeight.w500,
-                    letterSpacing: -.6,
+                    letterSpacing: -.25,
                     color: Theme.of(
                       context,
                     ).colorScheme.onSurface.withOpacity(0.9),
-                    height: 1.4,
+                    height: 1.2,
                   ),
                   textAlign: TextAlign.center,
                 ),
 
-                SizedBox(height: 32.h),
+                SizedBox(height: 32),
 
                 // Enable button
                 PrimaryButton(
@@ -254,15 +254,15 @@ class _MainViewState extends ConsumerState<MainView> {
                   backgroundColor: AppColors.purple500,
                   textColor: AppColors.neutral0,
                   borderRadius: 38,
-                  height: 48.00000.h,
+                  height: 48.00000,
                   width: double.infinity,
                   fullWidth: true,
-                  fontFamily: 'Karla',
+                  fontFamily: 'Chirp',
                   fontSize: 18,
                   fontWeight: FontWeight.w500,
                   letterSpacing: -0.8,
                 ),
-                SizedBox(height: 8.h),
+                SizedBox(height: 8),
 
                 // Skip button
                 TextButton(
@@ -273,8 +273,8 @@ class _MainViewState extends ConsumerState<MainView> {
                   child: Text(
                     'Skip for now',
                     style: AppTypography.bodyMedium.copyWith(
-                      fontFamily: 'Karla',
-                      fontSize: 16.sp,
+                      fontFamily: 'Chirp',
+                      fontSize: 16,
                       letterSpacing: -0.8,
                       fontWeight: FontWeight.w500,
                       color: Theme.of(context).textTheme.bodyLarge!.color,
@@ -332,10 +332,10 @@ class _MainViewState extends ConsumerState<MainView> {
           ),
         ),
         bottomNavigationBar: Container(
-          padding: EdgeInsets.fromLTRB(24.w, 4.h, 24.w, 4.h), // float up a bit
+          padding: EdgeInsets.fromLTRB(24, 4, 24, 4), // float up a bit
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
-            // borderRadius: BorderRadius.circular(100.r),
+            // borderRadius: BorderRadius.circular(100),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.1),
@@ -345,7 +345,7 @@ class _MainViewState extends ConsumerState<MainView> {
             ],
           ),
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 0.w, vertical: 0.h),
+            padding: EdgeInsets.symmetric(horizontal: 0, vertical: 0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -405,25 +405,25 @@ class _MainViewState extends ConsumerState<MainView> {
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 50),
-        height: 80.h,
-        padding: EdgeInsets.all(8.w),
+        height: 80,
+        padding: EdgeInsets.all(8),
         decoration: BoxDecoration(
           // color: isSelected ? AppColors.purple500ForTheme(context) : Colors.transparent,
-          borderRadius: BorderRadius.circular(50.r),
+          borderRadius: BorderRadius.circular(50),
         ),
         child: Opacity(
           opacity: isSelected ? 1 : 0.25,
           child: Column(
             children: [
               isPNG
-                  ? Image.asset(icon, height: 40.sp)
+                  ? Image.asset(icon, height: 40)
                   : SvgPicture.asset(
                     icon,
-                    height: 40.sp,
+                    height: 40,
                     // color: index == 1 ? Color(0xFF5F2EA1) : null,
                   ),
 
-              SizedBox(height: 4.h),
+              SizedBox(height: 4),
               Text(
                 index == 0
                     ? '    Home    '
@@ -433,8 +433,8 @@ class _MainViewState extends ConsumerState<MainView> {
                     ? ' Recipients '
                     : '   Profile   ',
                 style: AppTypography.bodySmall.copyWith(
-                  fontFamily: 'Karla',
-                  fontSize: 12.sp,
+                  fontFamily: 'Chirp',
+                  fontSize: 12,
                   fontWeight: FontWeight.w500,
                   color: Theme.of(context).colorScheme.onSurface,
                 ),
@@ -470,12 +470,12 @@ class _MainViewState extends ConsumerState<MainView> {
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(16.r),
-          topRight: Radius.circular(16.r),
+          topLeft: Radius.circular(16),
+          topRight: Radius.circular(16),
         ),
       ),
       child: Padding(
-        padding: EdgeInsets.fromLTRB(18.w, 18.h, 18.w, 40.h),
+        padding: EdgeInsets.fromLTRB(18, 18, 18, 40),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -492,17 +492,17 @@ class _MainViewState extends ConsumerState<MainView> {
                     children: [
                       SvgPicture.asset(
                         "assets/icons/svgs/notificationn.svg",
-                        height: 40.sp,
+                        height: 40,
                         color: Theme.of(context).colorScheme.surface,
                       ),
                       SizedBox(
-                        height: 40.sp,
-                        width: 40.sp,
+                        height: 40,
+                        width: 40,
                         child: Center(
                           child: Image.asset(
                             "assets/icons/pngs/cancelicon.png",
-                            height: 20.h,
-                            width: 20.w,
+                            height: 20,
+                            width: 20,
                             color: Theme.of(context).textTheme.bodyLarge!.color,
                           ),
                         ),
@@ -513,14 +513,14 @@ class _MainViewState extends ConsumerState<MainView> {
               ],
             ),
 
-            SizedBox(height: 32.h),
+            SizedBox(height: 32),
 
             // Title
             Text(
               'Welcome to Dayfi App',
               style: AppTypography.headlineLarge.copyWith(
-                fontSize: 18.sp,
-                fontFamily: 'Boldonse',
+                fontSize: 18,
+                fontFamily: 'FunnelDisplay',
                 // letterSpacing: -.5,
                 fontWeight: FontWeight.w500,
                 color: Theme.of(context).colorScheme.onSurface,
@@ -529,7 +529,7 @@ class _MainViewState extends ConsumerState<MainView> {
               textAlign: TextAlign.center,
             ),
 
-            SizedBox(height: 40.h),
+            SizedBox(height: 32),
 
             // Features list
             _buildFeatureItem(
@@ -539,7 +539,7 @@ class _MainViewState extends ConsumerState<MainView> {
                   'Top up your wallet and send money globally with ease.',
             ),
 
-            SizedBox(height: 24.h),
+            SizedBox(height: 24),
 
             _buildFeatureItem(
               icon: _buildSoftPOSIcon(),
@@ -548,7 +548,7 @@ class _MainViewState extends ConsumerState<MainView> {
                   'Track all your payment history and transaction details.',
             ),
 
-            SizedBox(height: 24.h),
+            SizedBox(height: 24),
 
             _buildFeatureItem(
               icon: _buildRecipientsIcon(),
@@ -556,7 +556,7 @@ class _MainViewState extends ConsumerState<MainView> {
               description:
                   'Manage your saved beneficiaries for quick transfers.',
             ),
-            SizedBox(height: 24.h),
+            SizedBox(height: 24),
 
             _buildFeatureItem(
               icon: _buildProfileIcon(),
@@ -573,11 +573,11 @@ class _MainViewState extends ConsumerState<MainView> {
               onPressed: () => _dismissWelcomeBottomSheet(context),
               backgroundColor: AppColors.purple500,
               textColor: AppColors.neutral0,
-              borderRadius: 40.r,
-              height: 48.00000.h,
+              borderRadius: 40,
+              height: 48.00000,
               width: double.infinity,
               fullWidth: true,
-              fontFamily: 'Karla',
+              fontFamily: 'Chirp',
               fontSize: 18,
               fontWeight: FontWeight.w600,
               letterSpacing: -0.5,
@@ -598,7 +598,7 @@ class _MainViewState extends ConsumerState<MainView> {
       children: [
         // Icon
         Center(child: icon),
-        SizedBox(width: 16.w),
+        SizedBox(width: 16),
 
         // Text content
         Expanded(
@@ -608,23 +608,23 @@ class _MainViewState extends ConsumerState<MainView> {
               Text(
                 title,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  fontFamily: 'Karla',
-                  fontSize: 18.sp,
-                  letterSpacing: -.6,
+                  fontFamily: 'Chirp',
+                  fontSize: 18,
+                  letterSpacing: -.25,
                   fontWeight: FontWeight.w500,
                   color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
 
-              SizedBox(height: 4.h),
+              SizedBox(height: 4),
 
               Text(
                 description,
                 style: AppTypography.bodyMedium.copyWith(
-                  fontFamily: 'Karla',
+                  fontFamily: 'Chirp',
                   fontSize: 14.5,
                   fontWeight: FontWeight.w500,
-                  letterSpacing: -.6,
+                  letterSpacing: -.25,
                   height: 1.450,
                   color: Theme.of(
                     context,
@@ -639,22 +639,22 @@ class _MainViewState extends ConsumerState<MainView> {
   }
 
   Widget _buildTransactionsIcon() {
-    return SvgPicture.asset("assets/icons/svgs/swap.svg", height: 40.h);
+    return SvgPicture.asset("assets/icons/svgs/swap.svg", height: 40);
   }
 
   Widget _buildSoftPOSIcon() {
     return SvgPicture.asset(
       "assets/icons/svgs/transactions.svg",
-      height: 40.h,
+      height: 40,
       // color: Color(0xFF5F2EA1),
     );
   }
 
   Widget _buildProfileIcon() {
-    return Image.asset("assets/icons/pngs/account.png", height: 40.h);
+    return Image.asset("assets/icons/pngs/account.png", height: 40);
   }
 
   Widget _buildRecipientsIcon() {
-    return SvgPicture.asset("assets/icons/svgs/recipients.svg", height: 40.h);
+    return SvgPicture.asset("assets/icons/svgs/recipients.svg", height: 40);
   }
 }

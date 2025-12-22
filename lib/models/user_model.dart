@@ -33,7 +33,7 @@ class User {
   final String? transactionPin; // Added from JSON
   final bool isIdVerified; // Added from JSON
   final bool isBiometricsSetup; // Added from JSON
-  final String? dayfiId; // DayFi Tag for receiving payments
+  final String? dayfiId; // Dayfi Tag for receiving payments
 
   User({
     required this.userId,

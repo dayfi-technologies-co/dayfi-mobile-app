@@ -141,18 +141,18 @@ class _SendFetchCryptoChannelsViewState
     final enabled = channel['enabled'] ?? false;
 
     return ListTile(
-      contentPadding: EdgeInsets.symmetric(vertical: 6.h, horizontal: 18.w),
+      contentPadding: EdgeInsets.symmetric(vertical: 6, horizontal: 18),
       onTap: () {
         _showCryptoNetworksSheet(channel);
       },
       title: Row(
         children: [
           Container(
-            height: 32.0.h,
-            width: 32.0.w,
+            height: 32.0,
+            width: 32.0,
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
-              borderRadius: BorderRadius.circular(12.r),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Center(
               child:
@@ -160,23 +160,23 @@ class _SendFetchCryptoChannelsViewState
                       ? code.toUpperCase() == 'CUSD'
                           ? Image.asset(
                             _getCryptoIconPath(code)!,
-                            height: 32.0.h,
-                            width: 32.0.w,
+                            height: 32.0,
+                            width: 32.0,
                             fit: BoxFit.contain,
                           )
                           : SvgPicture.asset(
                             _getCryptoIconPath(code)!,
-                            height: 32.0.h,
-                            width: 32.0.w,
+                            height: 32.0,
+                            width: 32.0,
                             fit: BoxFit.contain,
                             colorFilter: null,
                           )
                       : Text(
                         code,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontFamily: 'Karla',
-                          fontSize: 18.sp,
-                          letterSpacing: -.6,
+                          fontFamily: 'Chirp',
+                          fontSize: 18,
+                          letterSpacing: -.25,
                           fontWeight: FontWeight.w500,
                           color:
                               enabled
@@ -186,12 +186,12 @@ class _SendFetchCryptoChannelsViewState
                       ),
             ),
           ),
-          SizedBox(width: 12.w),
+          SizedBox(width: 12),
           Text(
             name,
             style: AppTypography.bodyLarge.copyWith(
-              fontFamily: 'Karla',
-              fontSize: 16.sp,
+              fontFamily: 'Chirp',
+              fontSize: 16,
               letterSpacing: -.4,
               fontWeight: FontWeight.w500,
             ),
@@ -201,8 +201,8 @@ class _SendFetchCryptoChannelsViewState
       trailing: Text(
         code,
         style: AppTypography.bodyLarge.copyWith(
-          fontFamily: 'Karla',
-          fontSize: 14.sp,
+          fontFamily: 'Chirp',
+          fontSize: 14,
           letterSpacing: -.4,
           fontWeight: FontWeight.w500,
         ),
@@ -215,10 +215,10 @@ class _SendFetchCryptoChannelsViewState
     return _isLoading
         ? Center(
           child: Padding(
-            padding: EdgeInsets.only(bottom: 60.h),
+            padding: EdgeInsets.only(bottom: 60),
             child: LoadingAnimationWidget.waveDots(
               color: AppColors.purple500ForTheme(context),
-              size: 24.sp,
+              size: 24,
             ),
           ),
         )
@@ -238,7 +238,7 @@ class _SendFetchCryptoChannelsViewState
           onRefresh: _fetchCryptoChannels,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.only(top: 12.h),
+            padding: EdgeInsets.only(top: 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -246,7 +246,7 @@ class _SendFetchCryptoChannelsViewState
                 ..._cryptoChannels.map((channel) {
                   return _buildCryptoChannelCard(channel);
                 }),
-                SizedBox(height: 40.h),
+                SizedBox(height: 32),
               ],
             ),
           ),

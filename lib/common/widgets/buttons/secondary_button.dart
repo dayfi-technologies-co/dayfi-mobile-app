@@ -138,13 +138,13 @@ class SecondaryButton extends StatelessWidget {
       backgroundColor: backgroundColor ?? Colors.transparent,
       textColor: textColor ?? AppColors.primary400,
       borderColor: borderColor ?? AppColors.primary400,
-      width: width ?? 343.w,
-      height: height ?? 56.h,
-      horizontalPadding: 10.w,
-      verticalPadding: 8.h,
-      borderRadius: 10.r,
+      width: width ?? 343,
+      height: height ?? 56,
+      horizontalPadding: 10,
+      verticalPadding: 8,
+      borderRadius: 10,
       borderWidth: 1,
-      fontSize: 18.sp,
+      fontSize: 18,
       fontWeight: AppTypography.bold,
       letterSpacing: 0.18,
       lineHeight: 1.78,
@@ -173,21 +173,18 @@ class SecondaryButton extends StatelessWidget {
             : borderColor ?? AppColors.primary400;
 
     return Container(
-      width: fullWidth ? double.infinity : width,
-      height: height,
+      width: MediaQuery.of(context).size.width > 600 ? 300 : 400,
+      height: 48,
       // padding: EdgeInsets.symmetric(
-      //   horizontal: horizontalPadding ?? 10.w,
-      //   vertical: verticalPadding ?? 8.h,
+      //   horizontal: horizontalPadding ?? 10,
+      //   vertical: verticalPadding ?? 8,
       // ),
       clipBehavior: Clip.antiAlias,
       decoration: ShapeDecoration(
         color: effectiveBackgroundColor,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(borderRadius ?? 10.r),
-          side: BorderSide(
-            color: effectiveBorderColor,
-            width:  1,
-          ),
+          borderRadius: BorderRadius.circular(borderRadius ?? 10),
+          side: BorderSide(color: effectiveBorderColor, width: 1),
         ),
         shadows:
             elevation != null && elevation! > 0
@@ -208,16 +205,18 @@ class SecondaryButton extends StatelessWidget {
         child: Material(
           color: Colors.transparent,
           child: InkWell(
+            splashColor: Colors.transparent,
+            // highlightColor: Colors.transparent,
             onTap:
                 isDisabled
                     ? null
                     : () {
-                      HapticHelper.mediumImpact();
+                      // HapticHelper.mediumImpact();
                       onPressed?.call();
                     },
-            borderRadius: BorderRadius.circular(borderRadius ?? 10.r),
+            borderRadius: BorderRadius.circular(borderRadius ?? 10),
             child: SizedBox(
-              width: double.infinity,
+              width: 400,
               height: double.infinity,
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -226,30 +225,29 @@ class SecondaryButton extends StatelessWidget {
                 children: [
                   if (isLoading && showLoadingIndicator) ...[
                     SizedBox(
-                      width: loadingIndicatorSize ?? 20.w,
-                      height: loadingIndicatorSize ?? 20.w,
+                      width: loadingIndicatorSize ?? 20,
+                      height: loadingIndicatorSize ?? 20,
                       child: LoadingAnimationWidget.horizontalRotatingDots(
                         color: loadingIndicatorColor ?? effectiveTextColor,
                         size: loadingIndicatorSize ?? 20,
                       ),
                     ),
-                    SizedBox(width: 8.w),
+                    SizedBox(width: 8),
                   ],
                   if (child != null)
                     child!
                   else
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 4.w),
+                      padding: EdgeInsets.symmetric(horizontal: 4),
                       child: Text(
                         text,
                         style: TextStyle(
                           color: effectiveTextColor,
-                          fontSize: fontSize ?? 18,
-                          fontFamily:
-                              fontFamily ?? AppTypography.secondaryFontFamily,
-                          fontWeight: fontWeight ?? AppTypography.medium,
-                          height: lineHeight ?? 1.78,
-                          letterSpacing: -1,
+                          fontSize: 16,
+                          fontFamily: AppTypography.secondaryFontFamily,
+                          fontWeight: AppTypography.bold,
+                          height: 1,
+                          letterSpacing: -.4,
                         ),
                         textAlign: TextAlign.center,
                       ),

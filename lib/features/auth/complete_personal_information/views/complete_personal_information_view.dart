@@ -168,30 +168,30 @@ class _CompletePersonalInformationViewState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(height: 8.h),
+        SizedBox(height: 8),
         Padding(
-          padding: EdgeInsets.only(left: 18.w, right: 54.w),
+          padding: EdgeInsets.only(left: 18, right: 72.0),
           child: Text(
-            "Create Your DayFi Tag",
+            "Create your Dayfi Tag",
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontFamily: 'Boldonse',
-              fontSize: 18.sp,
-              height: 2,
-              fontWeight: FontWeight.w500,
+              fontFamily: 'FunnelDisplay',
+              fontSize: MediaQuery.of(context).size.width > 600 ? 28 : 24,
+              height: 1.000,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ),
-        SizedBox(height: 12.h),
+        SizedBox(height: 12),
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 18.w),
+          padding: EdgeInsets.symmetric(horizontal: 18),
           child: Text(
-            "Pick a username that's easy to remember. Must be at least 3 characters. ",
+            "Create a unique Dayfi Tag — this is how others can find and pay you.",
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontSize: 16.sp,
+              fontSize: 16,
               fontWeight: FontWeight.w500,
-              fontFamily: 'Karla',
-              letterSpacing: -.6,
-              height: 1.4,
+              fontFamily: 'Chirp',
+              letterSpacing: -.25,
+              height: 1.2,
               color: Theme.of(
                 context,
               ).textTheme.bodyMedium!.color!.withOpacity(0.65),
@@ -200,24 +200,24 @@ class _CompletePersonalInformationViewState
           ),
         ),
         Padding(
-          padding: EdgeInsets.symmetric(vertical: 24.h, horizontal: 18.0),
+          padding: EdgeInsets.symmetric(vertical: 24, horizontal: 18.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               CustomTextField(
-                label: "DayFi Tag",
+                label: "Dayfi Tag",
                 hintText: "username",
                 controller: _usernameController,
                 isDayfiId: true,
                 keyboardType: TextInputType.text,
                 textCapitalization: TextCapitalization.none,
                 prefix: Padding(
-                  padding: EdgeInsets.only(left: 12.w, right: 0.w),
+                  padding: EdgeInsets.only(left: 0, right: 2),
                   child: Text(
                     '@',
                     style: TextStyle(
-                      fontSize: 16.sp,
-                      fontFamily: 'Karla',
+                      fontSize: 16,
+                      fontFamily: 'Chirp',
                       fontWeight: FontWeight.w600,
                       color: AppColors.purple500ForTheme(context),
                     ),
@@ -229,7 +229,7 @@ class _CompletePersonalInformationViewState
                 suffixIcon:
                     state.isValidating
                         ? Padding(
-                          padding: EdgeInsets.all(12.w),
+                          padding: EdgeInsets.all(12),
                           child: LoadingAnimationWidget.horizontalRotatingDots(
                             color: AppColors.purple500ForTheme(context),
                             size: 20,
@@ -256,10 +256,10 @@ class _CompletePersonalInformationViewState
                     style: const TextStyle(
                       color: Colors.red,
                       fontSize: 13,
-                      fontFamily: 'Karla',
-                      letterSpacing: -.6,
+                      fontFamily: 'Chirp',
+                      letterSpacing: -.25,
                       fontWeight: FontWeight.w500,
-                      height: 1.4,
+                      height: 1.2,
                     ),
                   ),
                 )
@@ -269,7 +269,7 @@ class _CompletePersonalInformationViewState
           ),
         ),
 
-        SizedBox(height: 40.h),
+        SizedBox(height: 32),
       ],
     );
   }
@@ -282,30 +282,30 @@ class _CompletePersonalInformationViewState
       crossAxisAlignment: CrossAxisAlignment.start,
 
       children: [
-        SizedBox(height: 8.h),
+        SizedBox(height: 8),
         Padding(
-          padding: EdgeInsets.only(left: 18.w, right: 54.w),
+          padding: EdgeInsets.only(left: 18, right: 72.0),
           child: Text(
-            "What's your date of birth?",
+            "Date of birth",
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontFamily: 'Boldonse',
-              fontSize: 18.sp,
-              height: 2,
-              fontWeight: FontWeight.w500,
+              fontFamily: 'FunnelDisplay',
+              fontSize: MediaQuery.of(context).size.width > 600 ? 28 : 24,
+              height: 1.000,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ),
-        SizedBox(height: 12.h),
+        SizedBox(height: 12),
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 18.w),
+          padding: EdgeInsets.symmetric(horizontal: 18),
           child: Text(
-            "Selecting your date of birth helps us provide age-appropriate features and ensures compliance with legal requirements.",
+            "Required for identity verification and compliance.",
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontSize: 16.sp,
+              fontSize: 16,
               fontWeight: FontWeight.w500,
-              fontFamily: 'Karla',
-              letterSpacing: -.6,
-              height: 1.4,
+              fontFamily: 'Chirp',
+              letterSpacing: -.25,
+              height: 1.2,
               color: Theme.of(
                 context,
               ).textTheme.bodyMedium!.color!.withOpacity(0.65),
@@ -314,7 +314,7 @@ class _CompletePersonalInformationViewState
           ),
         ),
         Padding(
-          padding: EdgeInsets.symmetric(vertical: 24.h, horizontal: 18.0),
+          padding: EdgeInsets.symmetric(vertical: 24, horizontal: 18.0),
           child: CustomTextField(
             label: "Date of Birth",
             hintText: "Select your date of birth",
@@ -323,7 +323,7 @@ class _CompletePersonalInformationViewState
             ),
             onChanged: notifier.setDateOfBirth,
             suffixIcon: Container(
-              width: 40.w,
+              width: 40,
               alignment: Alignment.centerRight,
               constraints: BoxConstraints.tightForFinite(),
               child: Stack(
@@ -351,10 +351,10 @@ class _CompletePersonalInformationViewState
         //       style: const TextStyle(
         //         color: Colors.red,
         //         fontSize: 13,
-        //         fontFamily: 'Karla',
-        //         letterSpacing: -.6,
+        //         fontFamily: 'Chirp',
+        //         letterSpacing: -.25,
         //         fontWeight: FontWeight.w500,
-        //         height: 1.4,
+        //         height: 1.2,
         //       ),
         //     ),
         //   )
@@ -371,30 +371,30 @@ class _CompletePersonalInformationViewState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(height: 8.h),
+        SizedBox(height: 8),
         Padding(
-          padding: EdgeInsets.only(left: 18.w, right: 54.w),
+          padding: EdgeInsets.only(left: 18, right: 72.0),
           child: Text(
-            "What country are you from?",
+            "Country of residence",
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontFamily: 'Boldonse',
-              fontSize: 18.sp,
-              height: 2,
-              fontWeight: FontWeight.w500,
+              fontFamily: 'FunnelDisplay',
+              fontSize: MediaQuery.of(context).size.width > 600 ? 28 : 24,
+              height: 1.000,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ),
-        SizedBox(height: 12.h),
+        SizedBox(height: 12),
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 18.w),
+          padding: EdgeInsets.symmetric(horizontal: 18),
           child: Text(
-            "Tell us your country of residence to help us customize your experience.",
+            "Select where you currently reside.",
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontSize: 16.sp,
+              fontSize: 16,
               fontWeight: FontWeight.w500,
-              fontFamily: 'Karla',
-              letterSpacing: -.6,
-              height: 1.4,
+              fontFamily: 'Chirp',
+              letterSpacing: -.25,
+              height: 1.2,
               color: Theme.of(
                 context,
               ).textTheme.bodyMedium!.color!.withOpacity(0.65),
@@ -403,7 +403,7 @@ class _CompletePersonalInformationViewState
           ),
         ),
         Padding(
-          padding: EdgeInsets.symmetric(vertical: 24.h, horizontal: 18.0),
+          padding: EdgeInsets.symmetric(vertical: 24, horizontal: 18.0),
           child: CustomTextField(
             label: "Country",
             hintText: "Select your country",
@@ -412,7 +412,7 @@ class _CompletePersonalInformationViewState
             suffixIcon: Icon(
               Icons.keyboard_arrow_down,
               color: AppColors.neutral400,
-              size: 20.sp,
+              size: 20,
             ),
             shouldReadOnly: true,
             onTap: () => _showCountryBottomSheet(notifier),
@@ -427,10 +427,10 @@ class _CompletePersonalInformationViewState
         //       style: const TextStyle(
         //         color: Colors.red,
         //         fontSize: 13,
-        //         fontFamily: 'Karla',
-        //         letterSpacing: -.6,
+        //         fontFamily: 'Chirp',
+        //         letterSpacing: -.25,
         //         fontWeight: FontWeight.w500,
-        //         height: 1.4,
+        //         height: 1.2,
         //       ),
         //     ),
         //   )
@@ -672,30 +672,30 @@ class _CompletePersonalInformationViewState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(height: 8.h),
+        SizedBox(height: 8),
         Padding(
-          padding: EdgeInsets.only(left: 18.w, right: 54.w),
+          padding: EdgeInsets.only(left: 18, right: 72.0),
           child: Text(
-            "What ${divisionLabel.toLowerCase()} are you from?",
+            "Select your ${divisionLabel.toLowerCase()}",
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontFamily: 'Boldonse',
-              fontSize: 18.sp,
-              height: 2,
-              fontWeight: FontWeight.w500,
+              fontFamily: 'FunnelDisplay',
+              fontSize: MediaQuery.of(context).size.width > 600 ? 28 : 24,
+              height: 1.000,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ),
-        SizedBox(height: 12.h),
+        SizedBox(height: 12),
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 18.w),
+          padding: EdgeInsets.symmetric(horizontal: 18),
           child: Text(
-            divisionDesc,
+            "Choose your ${divisionLabel.toLowerCase()} for accurate service.",
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontSize: 16.sp,
+              fontSize: 16,
               fontWeight: FontWeight.w500,
-              fontFamily: 'Karla',
-              letterSpacing: -.6,
-              height: 1.4,
+              fontFamily: 'Chirp',
+              letterSpacing: -.25,
+              height: 1.2,
               color: Theme.of(
                 context,
               ).textTheme.bodyMedium!.color!.withOpacity(0.65),
@@ -704,7 +704,7 @@ class _CompletePersonalInformationViewState
           ),
         ),
         Padding(
-          padding: EdgeInsets.symmetric(vertical: 24.h, horizontal: 18.0),
+          padding: EdgeInsets.symmetric(vertical: 24, horizontal: 18.0),
           child:
               cities.isNotEmpty
                   ? CustomTextField(
@@ -722,7 +722,7 @@ class _CompletePersonalInformationViewState
                             ? Icon(
                               Icons.keyboard_arrow_down,
                               color: AppColors.neutral400,
-                              size: 20.sp,
+                              size: 20,
                             )
                             : null,
                     onTap:
@@ -746,10 +746,10 @@ class _CompletePersonalInformationViewState
         //       style: const TextStyle(
         //         color: Colors.red,
         //         fontSize: 13,
-        //         fontFamily: 'Karla',
-        //         letterSpacing: -.6,
+        //         fontFamily: 'Chirp',
+        //         letterSpacing: -.25,
         //         fontWeight: FontWeight.w500,
-        //         height: 1.4,
+        //         height: 1.2,
         //       ),
         //     ),
         //   )
@@ -951,30 +951,30 @@ class _CompletePersonalInformationViewState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(height: 8.h),
+        SizedBox(height: 8),
         Padding(
-          padding: EdgeInsets.only(left: 18.w, right: 54.w),
+          padding: EdgeInsets.only(left: 18, right: 72.0),
           child: Text(
-            "What's your phone number",
+            "Phone number",
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontFamily: 'Boldonse',
-              fontSize: 18.sp,
-              height: 2,
-              fontWeight: FontWeight.w500,
+              fontFamily: 'FunnelDisplay',
+              fontSize: MediaQuery.of(context).size.width > 600 ? 28 : 24,
+              height: 1.000,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ),
-        SizedBox(height: 12.h),
+        SizedBox(height: 12),
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 18.w),
+          padding: EdgeInsets.symmetric(horizontal: 18),
           child: Text(
-            "Enter your phone number to help us secure your account.",
+            "For account security and transaction alerts.",
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontSize: 16.sp,
+              fontSize: 16,
               fontWeight: FontWeight.w500,
-              fontFamily: 'Karla',
-              letterSpacing: -.6,
-              height: 1.4,
+              fontFamily: 'Chirp',
+              letterSpacing: -.25,
+              height: 1.2,
               color: Theme.of(
                 context,
               ).textTheme.bodyMedium!.color!.withOpacity(0.65),
@@ -983,25 +983,25 @@ class _CompletePersonalInformationViewState
           ),
         ),
         Padding(
-          padding: EdgeInsets.symmetric(vertical: 24.h, horizontal: 18.0),
+          padding: EdgeInsets.symmetric(vertical: 24, horizontal: 18.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               CustomTextField(
                 label: "Phone Number",
-                hintText: "e.g. ${countryCode}...",
+                hintText: "(801) 234-5678",
                 controller: _phoneNumberController,
                 maxLength: maxLength,
                 keyboardType: TextInputType.number,
                 prefix:
                     countryCode.isNotEmpty
                         ? Padding(
-                          padding: EdgeInsets.only(right: 8.0),
+                          padding: EdgeInsets.only(right: 4.0),
                           child: Text(
                             countryCode,
                             style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16.sp,
+                              fontWeight: FontWeight.normal,
+                              fontSize: 15,
                             ),
                           ),
                         )
@@ -1028,10 +1028,10 @@ class _CompletePersonalInformationViewState
                     style: const TextStyle(
                       color: Colors.red,
                       fontSize: 13,
-                      fontFamily: 'Karla',
-                      letterSpacing: -.6,
+                      fontFamily: 'Chirp',
+                      letterSpacing: -.25,
                       fontWeight: FontWeight.w500,
-                      height: 1.4,
+                      height: 1.2,
                     ),
                   ),
                 )
@@ -1071,30 +1071,30 @@ class _CompletePersonalInformationViewState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(height: 8.h),
+          SizedBox(height: 8),
           Padding(
-            padding: EdgeInsets.only(left: 18.w, right: 54.w),
+            padding: EdgeInsets.only(left: 18, right: 72.0),
             child: Text(
-              "Tell us what you do",
+              "Occupation",
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontFamily: 'Boldonse',
-                fontSize: 18.sp,
-                height: 2,
-                fontWeight: FontWeight.w500,
+                fontFamily: 'FunnelDisplay',
+                fontSize: MediaQuery.of(context).size.width > 600 ? 28 : 24,
+                height: 1.000,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: 12),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 18.w),
+            padding: EdgeInsets.symmetric(horizontal: 18),
             child: Text(
-              "Tell us about your occupation (optional).",
+              "Tell us what you do — this is optional.",
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontSize: 16.sp,
+                fontSize: 16,
                 fontWeight: FontWeight.w500,
-                fontFamily: 'Karla',
-                letterSpacing: -.6,
-                height: 1.4,
+                fontFamily: 'Chirp',
+                letterSpacing: -.25,
+                height: 1.2,
                 color: Theme.of(
                   context,
                 ).textTheme.bodyMedium!.color!.withOpacity(0.65),
@@ -1103,7 +1103,7 @@ class _CompletePersonalInformationViewState
             ),
           ),
           Container(
-            margin: EdgeInsets.symmetric(vertical: 24.h),
+            margin: EdgeInsets.symmetric(vertical: 24),
             padding: EdgeInsets.all(18),
             decoration: BoxDecoration(
               border: Border(
@@ -1119,7 +1119,7 @@ class _CompletePersonalInformationViewState
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               crossAxisCount: 2,
-              padding: EdgeInsets.symmetric(vertical: 14.h),
+              padding: EdgeInsets.symmetric(vertical: 14),
               mainAxisSpacing: 8,
               crossAxisSpacing: 8,
               childAspectRatio: 2.5,
@@ -1160,14 +1160,14 @@ class _CompletePersonalInformationViewState
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                SizedBox(width: 16.sp, height: 16.sp),
+                                SizedBox(width: 16, height: 16),
                                 isSelected
                                     ? SvgPicture.asset(
                                       "assets/icons/svgs/circle-check.svg",
-                                      height: 16.sp,
+                                      height: 16,
                                       color: AppColors.neutral0,
                                     )
-                                    : SizedBox(width: 16.sp, height: 16.sp),
+                                    : SizedBox(width: 16, height: 16),
                               ],
                             ),
                             Align(
@@ -1177,16 +1177,16 @@ class _CompletePersonalInformationViewState
                                 style: Theme.of(
                                   context,
                                 ).textTheme.bodyMedium?.copyWith(
-                                  fontSize: 16.sp,
+                                  fontSize: 16,
                                   fontWeight: FontWeight.bold,
-                                  fontFamily: 'Karla',
+                                  fontFamily: 'Chirp',
                                   color:
                                       isSelected
                                           ? AppColors.neutral0
                                           : Theme.of(
                                             context,
                                           ).textTheme.bodyMedium!.color,
-                                  letterSpacing: -.8,
+                                  letterSpacing: -.40,
                                   height: 1,
                                 ),
                               ),
@@ -1209,30 +1209,30 @@ class _CompletePersonalInformationViewState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(height: 8.h),
+          SizedBox(height: 8),
           Padding(
-            padding: EdgeInsets.only(left: 18.w, right: 54.w),
+            padding: EdgeInsets.only(left: 18, right: 72.0),
             child: Text(
-              "What do you want to use Dayfi for?",
+              "How will you use dayfi?",
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontFamily: 'Boldonse',
-                fontSize: 18.sp,
-                height: 2,
-                fontWeight: FontWeight.w500,
+                fontFamily: 'FunnelDisplay',
+                fontSize: MediaQuery.of(context).size.width > 600 ? 28 : 24,
+                height: 1.000,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: 12),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 18.w),
+            padding: EdgeInsets.symmetric(horizontal: 18),
             child: Text(
-              "Select up to 5 things you plan to use DayFi for",
+              "Select up to 5 ways you plan to use DayFi.",
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontSize: 16.sp,
+                fontSize: 16,
                 fontWeight: FontWeight.w500,
-                fontFamily: 'Karla',
-                letterSpacing: -.6,
-                height: 1.4,
+                fontFamily: 'Chirp',
+                letterSpacing: -.25,
+                height: 1.2,
                 color: Theme.of(
                   context,
                 ).textTheme.bodyMedium!.color!.withOpacity(0.65),
@@ -1241,7 +1241,7 @@ class _CompletePersonalInformationViewState
             ),
           ),
           Container(
-            margin: EdgeInsets.symmetric(vertical: 24.h),
+            margin: EdgeInsets.symmetric(vertical: 24),
             padding: EdgeInsets.all(18),
             decoration: BoxDecoration(
               border: Border(
@@ -1257,7 +1257,7 @@ class _CompletePersonalInformationViewState
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               crossAxisCount: 2,
-              padding: EdgeInsets.symmetric(vertical: 14.h),
+              padding: EdgeInsets.symmetric(vertical: 14),
               mainAxisSpacing: 8,
               crossAxisSpacing: 8,
               childAspectRatio: 2.5,
@@ -1302,14 +1302,14 @@ class _CompletePersonalInformationViewState
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                SizedBox(width: 16.sp, height: 16.sp),
+                                SizedBox(width: 16, height: 0),
                                 isSelected
                                     ? SvgPicture.asset(
                                       "assets/icons/svgs/circle-check.svg",
-                                      height: 16.sp,
+                                      height: 16,
                                       color: AppColors.neutral0,
                                     )
-                                    : SizedBox(width: 16.sp, height: 16.sp),
+                                    : SizedBox(width: 16, height: 0),
                               ],
                             ),
                             Align(
@@ -1319,16 +1319,16 @@ class _CompletePersonalInformationViewState
                                 style: Theme.of(
                                   context,
                                 ).textTheme.bodyMedium?.copyWith(
-                                  fontSize: 16.sp,
+                                  fontSize: 16,
                                   fontWeight: FontWeight.bold,
-                                  fontFamily: 'Karla',
+                                  fontFamily: 'Chirp',
                                   color:
                                       isSelected
                                           ? AppColors.neutral0
                                           : Theme.of(
                                             context,
                                           ).textTheme.bodyMedium!.color,
-                                  letterSpacing: -.8,
+                                  letterSpacing: -.40,
                                   height: 1,
                                 ),
                               ),
@@ -1369,15 +1369,17 @@ class _CompletePersonalInformationViewState
     );
     _updateControllers(personalInfoState);
 
-    // Step indices: 0-Username (required), 1-DOB (optional), 2-Country (required), 3-State (optional), 4-Address (optional), 5-Phone (required), 6-Occupation (optional), 7-Use Case (required)
-    final compulsorySteps = <int>{0, 2, 6, 8};
-    final optionalSteps = <int>{1, 3, 4, 5, 7};
+    // Step indices: 0-Username, 1-DOB, 2-Country, 3-State, 4-City, 5-Address, 6-Phone, 7-Occupation, 8-Use Case
+    // REQUIRED for fintech KYC: Username (0), DOB (1), Country (2), Phone (6)
+    // OPTIONAL (improves UX): State (3), City (4), Address (5), Occupation (7), Use Case (8)
+    final compulsorySteps = <int>{0, 1, 2, 6};
+    final optionalSteps = <int>{3, 4, 5, 7, 8};
     final isCurrentStepOptional = optionalSteps.contains(_currentStep);
 
     // Only enable button if current step is valid (if compulsory), or always if optional
     bool isButtonEnabled;
     if (_currentStep == 0) {
-      // Username step: only enable if DayFi Tag is valid
+      // Username step: only enable if Dayfi Tag is valid
       isButtonEnabled =
           personalInfoState.isDayfiIdValid && !personalInfoState.isBusy;
     } else if (_currentStep == 1) {
@@ -1392,23 +1394,14 @@ class _CompletePersonalInformationViewState
           personalInfoState.countryError.isEmpty &&
           !personalInfoState.isBusy;
     } else if (_currentStep == 3) {
-      // Country step: only enable if country is not empty and has no error
-      isButtonEnabled =
-          personalInfoState.state.isNotEmpty &&
-          personalInfoState.stateError.isEmpty &&
-          !personalInfoState.isBusy;
+      // State step: optional - always allow continue
+      isButtonEnabled = !personalInfoState.isBusy;
     } else if (_currentStep == 4) {
-      // Country step: only enable if country is not empty and has no error
-      isButtonEnabled =
-          personalInfoState.city.isNotEmpty &&
-          personalInfoState.cityError.isEmpty &&
-          !personalInfoState.isBusy;
+      // City step: optional - always allow continue
+      isButtonEnabled = !personalInfoState.isBusy;
     } else if (_currentStep == 5) {
-      // Country step: only enable if country is not empty and has no error
-      isButtonEnabled =
-          personalInfoState.address.length > 8 &&
-          personalInfoState.addressError.isEmpty &&
-          !personalInfoState.isBusy;
+      // Address step: optional - always allow continue
+      isButtonEnabled = !personalInfoState.isBusy;
     } else if (_currentStep == 6) {
       final country = personalInfoState.country;
 
@@ -1462,13 +1455,11 @@ class _CompletePersonalInformationViewState
       isButtonEnabled =
           phone.isNotEmpty && errorMsg == "" && !personalInfoState.isBusy;
     } else if (_currentStep == 7) {
-      // Country step: only enable if country is not empty and has no error
-      isButtonEnabled =
-          _selectedOccupation.isNotEmpty && !personalInfoState.isBusy;
+      // Occupation step: optional - always allow continue
+      isButtonEnabled = !personalInfoState.isBusy;
     } else if (_currentStep == 8) {
-      // Country step: only enable if country is not empty and has no error
-      isButtonEnabled =
-          _selectedUseCases.isNotEmpty && !personalInfoState.isBusy;
+      // Use Case step: optional - always allow continue
+      isButtonEnabled = !personalInfoState.isBusy;
     } else if (compulsorySteps.contains(_currentStep)) {
       isButtonEnabled =
           personalInfoState.isFormValid &&
@@ -1481,198 +1472,283 @@ class _CompletePersonalInformationViewState
 
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-      child: Scaffold(
-        appBar: AppBar(
-          elevation: 0,
-          leadingWidth: 72,
-          scrolledUnderElevation: .5,
-          foregroundColor: Theme.of(context).scaffoldBackgroundColor,
-          shadowColor: Theme.of(context).scaffoldBackgroundColor,
-          surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          leading:
-              _currentStep == 0
-                  ? null
-                  : InkWell(
-                    splashColor: Colors.transparent,
-                    highlightColor: Colors.transparent,
-                    onTap: () => _goToStep(_currentStep - 1),
-                    child: Stack(
-                      alignment: AlignmentGeometry.center,
-                      children: [
-                        SvgPicture.asset(
-                          "assets/icons/svgs/notificationn.svg",
-                          height: 40.sp,
-                          color: Theme.of(context).colorScheme.surface,
-                        ),
-                        SizedBox(
-                          height: 40.sp,
-                          width: 40.sp,
-                          child: Center(
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 8.0),
-                              child: Icon(
-                                Icons.arrow_back_ios,
-                                size: 20.sp,
-                                color:
-                                    Theme.of(
-                                      context,
-                                    ).textTheme.bodyLarge!.color,
+      child: WillPopScope(
+        onWillPop: () async => false,
+        child: Stack(
+          children: [
+            Scaffold(
+              appBar: AppBar(
+                elevation: 0,
+                leadingWidth: 72,
+                scrolledUnderElevation: .5,
+                foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+                shadowColor: Theme.of(context).scaffoldBackgroundColor,
+                surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                leading:
+                    _currentStep == 0
+                        ? null
+                        : InkWell(
+                          splashColor: Colors.transparent,
+                          highlightColor: Colors.transparent,
+                          onTap: () => _goToStep(_currentStep - 1),
+                          child: Stack(
+                            alignment: AlignmentGeometry.center,
+                            children: [
+                              SvgPicture.asset(
+                                "assets/icons/svgs/notificationn.svg",
+                                height: 40,
+                                color: Theme.of(context).colorScheme.surface,
                               ),
+                              SizedBox(
+                                height: 40,
+                                width: 40,
+                                child: Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(left: 8.0),
+                                    child: Icon(
+                                      Icons.arrow_back_ios,
+                                      size: 20,
+                                      color:
+                                          Theme.of(
+                                            context,
+                                          ).textTheme.bodyLarge!.color,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                title: Image.asset('assets/images/logo_splash.png', height: 24),
+                centerTitle: true,
+                actions: [
+                  StepIndicator(currentStep: _currentStep, steps: _steps),
+                ],
+              ),
+              body: LayoutBuilder(
+                builder: (context, constraints) {
+                  final bool isWide = constraints.maxWidth > 600;
+                  return Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: isWide ? 500 : double.infinity,
+                      ),
+                      child: SafeArea(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // StepIndicator(currentStep: _currentStep, steps: _steps),
+                            Expanded(
+                              child: PageView(
+                                controller: _pageController,
+                                physics: const NeverScrollableScrollPhysics(),
+                                children: [
+                                  // _buildAvatarStep(Theme.of(context)),
+                                  _buildUsernameStep(), // Username
+                                  _buildDobStep(
+                                    Theme.of(context),
+                                  ), // Date of Birth
+                                  _buildCountryStep(), // Country
+                                  _buildStateField(
+                                    personalInfoState,
+                                    personalInfoNotifier,
+                                  ), // State
+                                  _buildCityField(
+                                    personalInfoState,
+                                    personalInfoNotifier,
+                                  ),
+                                  _buildAddressField(
+                                    personalInfoState,
+                                    personalInfoNotifier,
+                                  ), // Address
+                                  _buildPhoneStep(), // Phone
+                                  _buildOccupationStep(), // Occupation
+                                  _buildUseCaseStep(), // Use Case
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+              bottomNavigationBar: SafeArea(
+                child: AnimatedContainer(
+                  decoration: BoxDecoration(
+                    border: Border(
+                      top: BorderSide(
+                        color: Theme.of(context).dividerColor.withOpacity(.2),
+                        width: 1,
+                      ),
+                    ),
+                  ),
+                  duration: const Duration(milliseconds: 10),
+                  padding: EdgeInsets.only(
+                    left: 18,
+                    right: 18,
+                    top: 8,
+                    bottom:
+                        MediaQuery.of(context).viewInsets.bottom > 0
+                            ? MediaQuery.of(context).viewInsets.bottom + 8
+                            : 8,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 300,
+                            child: PrimaryButton(
+                                  borderRadius: 38,
+                                  text:
+                                      _currentStep == _steps.length - 1
+                                          ? 'Complete'
+                                          : 'Continue',
+                                  onPressed:
+                                      isButtonEnabled
+                                          ? () async {
+                                            if (_currentStep == 6) {
+                                              FocusManager.instance.primaryFocus
+                                                  ?.unfocus();
+                                            }
+                                            if (_currentStep == 0) {
+                                              // Username step: only go next if validated
+                                              if (personalInfoState
+                                                      .dayfiId
+                                                      .isNotEmpty &&
+                                                  personalInfoState
+                                                      .dayfiIdError
+                                                      .isEmpty &&
+                                                  personalInfoState
+                                                      .isDayfiIdValid) {
+                                                _goToStep(_currentStep + 1);
+                                              }
+                                            } else if (_currentStep <
+                                                _steps.length - 1) {
+                                              _goToStep(_currentStep + 1);
+                                            } else {
+                                              // log('Submitting personal info...');
+                                              // Show loading indicator and call endpoint
+                                              if (compulsorySteps.every(
+                                                (i) => _isStepValid(i),
+                                              )) {
+                                                log(
+                                                  'All compulsory steps valid. Proceeding to submit...',
+                                                );
+                                                setState(
+                                                  () {},
+                                                ); // trigger loading state
+                                                await personalInfoNotifier
+                                                    .submitPersonalInfo(
+                                                      context,
+                                                    );
+                                              }
+                                            }
+                                          }
+                                          : null,
+                                  enabled: isButtonEnabled,
+                                  isLoading: personalInfoState.isBusy,
+                                  backgroundColor:
+                                      isButtonEnabled
+                                          ? AppColors.purple500ForTheme(context)
+                                          : AppColors.purple500ForTheme(
+                                            context,
+                                          ).withOpacity(.15),
+                                  height: 48.00000,
+                                  textColor:
+                                      isButtonEnabled
+                                          ? AppColors.neutral0
+                                          : AppColors.neutral0.withOpacity(.20),
+                                  fontFamily: 'Chirp',
+                                  letterSpacing: -.70,
+                                  fontSize: 18,
+                                  fullWidth: true,
+                                )
+                                .animate()
+                                .fadeIn(
+                                  delay: 500.ms,
+                                  duration: 300.ms,
+                                  curve: Curves.easeOutCubic,
+                                )
+                                .slideY(
+                                  begin: 0.2,
+                                  end: 0,
+                                  delay: 500.ms,
+                                  duration: 300.ms,
+                                  curve: Curves.easeOutCubic,
+                                )
+                                .scale(
+                                  begin: const Offset(0.95, 0.95),
+                                  end: const Offset(1.0, 1.0),
+                                  delay: 500.ms,
+                                  duration: 300.ms,
+                                  curve: Curves.easeOutCubic,
+                                ),
+                          ),
+                        ],
+                      ),
+                      if (isCurrentStepOptional) SizedBox(height: 12),
+                      if (isCurrentStepOptional)
+                        TextButton(
+                          style: TextButton.styleFrom(
+                            // padding: EdgeInsets.zero,
+                            // minimumSize: Size(50, 30),
+                            splashFactory: NoSplash.splashFactory,
+                            backgroundColor: Colors.transparent,
+                            foregroundColor: Colors.transparent,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            alignment: Alignment.center,
+                          ),
+                          onPressed:
+                              () =>
+                                  isCurrentStepOptional
+                                      ? _goToStep(_currentStep + 1)
+                                      : null,
+                          child: Text(
+                            _currentStep == 8 && _selectedUseCases.isNotEmpty
+                                ? '${_selectedUseCases.length} of 5 selected! 🎉'
+                                : (isCurrentStepOptional
+                                    ? 'Skip for now'
+                                    : ' '),
+                            style: TextStyle(
+                              fontFamily: 'Chirp',
+                              color:
+                                  Theme.of(context).textTheme.bodyLarge!.color,
+                              fontSize: _currentStep == 8 ? 16 : 18,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: -.40,
+                              decoration:
+                                  _currentStep == 8
+                                      ? TextDecoration.none
+                                      : TextDecoration.underline,
                             ),
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-          // title: StepIndicator(currentStep: _currentStep, steps: _steps),
-          actions: [StepIndicator(currentStep: _currentStep, steps: _steps)],
-        ),
-        body: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // StepIndicator(currentStep: _currentStep, steps: _steps),
-              Expanded(
-                child: PageView(
-                  controller: _pageController,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: [
-                    // _buildAvatarStep(Theme.of(context)),
-                    _buildUsernameStep(), // Username
-                    _buildDobStep(Theme.of(context)), // Date of Birth
-                    _buildCountryStep(), // Country
-                    _buildStateField(
-                      personalInfoState,
-                      personalInfoNotifier,
-                    ), // State
-                    _buildCityField(personalInfoState, personalInfoNotifier),
-                    _buildAddressField(
-                      personalInfoState,
-                      personalInfoNotifier,
-                    ), // Address
-                    _buildPhoneStep(), // Phone
-                    _buildOccupationStep(), // Occupation
-                    _buildUseCaseStep(), // Use Case
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        bottomNavigationBar: Padding(
-          padding: const EdgeInsets.fromLTRB(18.0, 12, 18.0, 40.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              PrimaryButton(
-                    borderRadius: 38,
-                    text:
-                        _currentStep == _steps.length - 1 ? 'Complete' : 'Next',
-                    onPressed:
-                        isButtonEnabled
-                            ? () async {
-                              if (_currentStep == 0) {
-                                // Username step: only go next if validated
-                                if (personalInfoState.dayfiId.isNotEmpty &&
-                                    personalInfoState.dayfiIdError.isEmpty &&
-                                    personalInfoState.isDayfiIdValid) {
-                                  _goToStep(_currentStep + 1);
-                                }
-                              } else if (_currentStep < _steps.length - 1) {
-                                _goToStep(_currentStep + 1);
-                              } else {
-                                // log('Submitting personal info...');
-                                // Show loading indicator and call endpoint
-                                if (compulsorySteps.every(
-                                  (i) => _isStepValid(i),
-                                )) {
-                                  log(
-                                    'All compulsory steps valid. Proceeding to submit...',
-                                  );
-                                  setState(() {}); // trigger loading state
-                                  await personalInfoNotifier.submitPersonalInfo(
-                                    context,
-                                  );
-                                }
-                              }
-                            }
-                            : null,
-                    enabled: isButtonEnabled,
-                    isLoading: personalInfoState.isBusy,
-                    backgroundColor:
-                        isButtonEnabled
-                            ? AppColors.purple500ForTheme(context)
-                            : AppColors.purple500ForTheme(
-                              context,
-                            ).withOpacity(.15),
-                    height: 48.00000.h,
-                    textColor:
-                        isButtonEnabled
-                            ? AppColors.neutral0
-                            : AppColors.neutral0.withOpacity(.35),
-                    fontFamily: 'Karla',
-                    letterSpacing: -.70,
-                    fontSize: 18,
-                    width: 375.w,
-                    fullWidth: true,
-                  )
-                  .animate()
-                  .fadeIn(
-                    delay: 500.ms,
-                    duration: 300.ms,
-                    curve: Curves.easeOutCubic,
-                  )
-                  .slideY(
-                    begin: 0.2,
-                    end: 0,
-                    delay: 500.ms,
-                    duration: 300.ms,
-                    curve: Curves.easeOutCubic,
-                  )
-                  .scale(
-                    begin: const Offset(0.95, 0.95),
-                    end: const Offset(1.0, 1.0),
-                    delay: 500.ms,
-                    duration: 300.ms,
-                    curve: Curves.easeOutCubic,
-                  ),
-              SizedBox(height: 12.h),
-              // if (isCurrentStepOptional)
-              TextButton(
-                style: TextButton.styleFrom(
-                  // padding: EdgeInsets.zero,
-                  // minimumSize: Size(50.w, 30.h),
-                  splashFactory: NoSplash.splashFactory,
-                  backgroundColor: Colors.transparent,
-                  foregroundColor: Colors.transparent,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  alignment: Alignment.center,
-                ),
-                onPressed:
-                    () =>
-                        isCurrentStepOptional
-                            ? _goToStep(_currentStep + 1)
-                            : null,
-                child: Text(
-                  _currentStep == 8 && _selectedUseCases.isNotEmpty
-                      ? '${_selectedUseCases.length} of 5 selected! 🎉'
-                      : (isCurrentStepOptional ? 'Skip for now' : ' '),
-                  style: TextStyle(
-                    fontFamily: 'Karla',
-                    color: Theme.of(context).textTheme.bodyLarge!.color,
-                    fontSize: _currentStep == 8 ? 16 : 18,
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: -.8,
-                    decoration:
-                        _currentStep == 8
-                            ? TextDecoration.none
-                            : TextDecoration.underline,
+                    ],
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+
+            if (personalInfoState.isBusy)
+              Scaffold(
+                backgroundColor: Colors.transparent,
+                resizeToAvoidBottomInset: true,
+                body: Opacity(
+                  opacity: 0.5,
+                  child: Container(
+                    width: double.infinity,
+                    height: double.infinity,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
@@ -1764,30 +1840,30 @@ class _CompletePersonalInformationViewState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(height: 8.h),
+        SizedBox(height: 8),
         Padding(
-          padding: EdgeInsets.only(left: 18.w, right: 54.w),
+          padding: EdgeInsets.only(left: 18, right: 72.0),
           child: Text(
-            "What's your address?",
+            "Street address",
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontFamily: 'Boldonse',
-              fontSize: 18.sp,
-              height: 2,
-              fontWeight: FontWeight.w500,
+              fontFamily: 'FunnelDisplay',
+              fontSize: MediaQuery.of(context).size.width > 600 ? 28 : 24,
+              height: 1.000,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ),
-        SizedBox(height: 12.h),
+        SizedBox(height: 12),
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 18.w),
+          padding: EdgeInsets.symmetric(horizontal: 18),
           child: Text(
-            "Please enter your complete address, including the street name and number.",
+            "Enter your residential address.",
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontSize: 16.sp,
+              fontSize: 16,
               fontWeight: FontWeight.w500,
-              fontFamily: 'Karla',
-              letterSpacing: -.6,
-              height: 1.4,
+              fontFamily: 'Chirp',
+              letterSpacing: -.25,
+              height: 1.2,
               color: Theme.of(
                 context,
               ).textTheme.bodyMedium!.color!.withOpacity(0.65),
@@ -1796,7 +1872,7 @@ class _CompletePersonalInformationViewState
           ),
         ),
         Padding(
-          padding: EdgeInsets.symmetric(vertical: 24.h, horizontal: 18.0),
+          padding: EdgeInsets.symmetric(vertical: 24, horizontal: 18.0),
           child: CustomTextField(
             label: "Address",
             hintText: "Enter your address",
@@ -1815,10 +1891,10 @@ class _CompletePersonalInformationViewState
         //       style: const TextStyle(
         //         color: Colors.red,
         //         fontSize: 13,
-        //         fontFamily: 'Karla',
-        //         letterSpacing: -.6,
+        //         fontFamily: 'Chirp',
+        //         letterSpacing: -.25,
         //         fontWeight: FontWeight.w500,
-        //         height: 1.4,
+        //         height: 1.2,
         //       ),
         //     ),
         //   )
@@ -1914,30 +1990,30 @@ class _CompletePersonalInformationViewState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(height: 8.h),
+        SizedBox(height: 8),
         Padding(
-          padding: EdgeInsets.only(left: 18.w, right: 54.w),
+          padding: EdgeInsets.only(left: 18, right: 72.0),
           child: Text(
-            "What ${divisionLabel.toLowerCase()} are you from?",
+            "Select your ${divisionLabel.toLowerCase()}",
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontFamily: 'Boldonse',
-              fontSize: 18.sp,
-              height: 2,
-              fontWeight: FontWeight.w500,
+              fontFamily: 'FunnelDisplay',
+              fontSize: MediaQuery.of(context).size.width > 600 ? 28 : 24,
+              height: 1.000,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ),
-        SizedBox(height: 12.h),
+        SizedBox(height: 12),
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 18.w),
+          padding: EdgeInsets.symmetric(horizontal: 18),
           child: Text(
-            divisionDesc,
+            "Choose your ${divisionLabel.toLowerCase()} for accurate service.",
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontSize: 16.sp,
+              fontSize: 16,
               fontWeight: FontWeight.w500,
-              fontFamily: 'Karla',
-              letterSpacing: -.6,
-              height: 1.4,
+              fontFamily: 'Chirp',
+              letterSpacing: -.25,
+              height: 1.2,
               color: Theme.of(
                 context,
               ).textTheme.bodyMedium!.color!.withOpacity(0.65),
@@ -1946,7 +2022,7 @@ class _CompletePersonalInformationViewState
           ),
         ),
         Padding(
-          padding: EdgeInsets.symmetric(vertical: 24.h, horizontal: 18.0),
+          padding: EdgeInsets.symmetric(vertical: 24, horizontal: 18.0),
           child: CustomTextField(
             label: divisionLabel,
             hintText: "Select your ${divisionLabel.toLowerCase()}",
@@ -1955,7 +2031,7 @@ class _CompletePersonalInformationViewState
             suffixIcon: Icon(
               Icons.keyboard_arrow_down,
               color: AppColors.neutral400,
-              size: 20.sp,
+              size: 20,
             ),
             shouldReadOnly: true,
             onTap: () => _showStatePicker(notifier),
@@ -1969,10 +2045,10 @@ class _CompletePersonalInformationViewState
         //       style: const TextStyle(
         //         color: Colors.red,
         //         fontSize: 13,
-        //         fontFamily: 'Karla',
-        //         letterSpacing: -.6,
+        //         fontFamily: 'Chirp',
+        //         letterSpacing: -.25,
         //         fontWeight: FontWeight.w500,
-        //         height: 1.4,
+        //         height: 1.2,
         //       ),
         //     ),
         //   )
@@ -2375,9 +2451,9 @@ class _CompletePersonalInformationViewState
                     Text(
                       'Select State',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontFamily: 'Karla',
-                        fontSize: 16.sp,
-                        letterSpacing: -.6,
+                        fontFamily: 'Chirp',
+                        fontSize: 16,
+                        letterSpacing: -.25,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -2387,8 +2463,8 @@ class _CompletePersonalInformationViewState
                       },
                       child: Image.asset(
                         "assets/icons/pngs/cancelicon.png",
-                        height: 24.h,
-                        width: 24.w,
+                        height: 24,
+                        width: 24,
                         color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
@@ -2418,9 +2494,9 @@ class _CompletePersonalInformationViewState
                       title: Text(
                         stateName,
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontFamily: 'Karla',
-                          fontSize: 18.sp,
-                          letterSpacing: -.6,
+                          fontFamily: 'Chirp',
+                          fontSize: 18,
+                          letterSpacing: -.25,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -2589,23 +2665,23 @@ class _CountryBottomSheetState extends State<_CountryBottomSheet> {
       height: MediaQuery.of(context).size.height * 0.92,
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
         children: [
-          SizedBox(height: 18.h),
+          SizedBox(height: 18),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 18.w),
+            padding: EdgeInsets.symmetric(horizontal: 18),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                SizedBox(height: 24.h, width: 24.w),
+                SizedBox(height: 24, width: 24),
                 Text(
                   'Select Country',
                   style: AppTypography.titleLarge.copyWith(
-                    fontFamily: 'Karla',
-                    fontSize: 16.sp,
-                    letterSpacing: -.6,
+                    fontFamily: 'Chirp',
+                    fontSize: 16,
+                    letterSpacing: -.25,
                     fontWeight: FontWeight.w500,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
@@ -2616,34 +2692,34 @@ class _CountryBottomSheetState extends State<_CountryBottomSheet> {
                   },
                   child: Image.asset(
                     "assets/icons/pngs/cancelicon.png",
-                    height: 24.h,
-                    width: 24.w,
+                    height: 24,
+                    width: 24,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ],
             ),
           ),
-          SizedBox(height: 16.h),
+          SizedBox(height: 16),
           Expanded(
             child: ListView.builder(
-              padding: EdgeInsets.symmetric(horizontal: 18.w),
+              padding: EdgeInsets.symmetric(horizontal: 18),
               itemCount: _countries.length,
               itemBuilder: (context, index) {
                 final country = _countries[index];
                 return ListTile(
-                  contentPadding: EdgeInsets.symmetric(vertical: 4.h),
+                  contentPadding: EdgeInsets.symmetric(vertical: 4),
                   onTap: () => widget.onCountrySelected(country['name']!),
                   title: Row(
                     children: [
-                      SvgPicture.asset(country['flag']!, height: 24.000.h),
-                      SizedBox(width: 12.w),
+                      SvgPicture.asset(country['flag']!, height: 24.000),
+                      SizedBox(width: 12),
                       Text(
                         country['name']!,
                         style: AppTypography.bodyLarge.copyWith(
-                          fontFamily: 'Karla',
-                          fontSize: 18.sp,
-                          letterSpacing: -.6,
+                          fontFamily: 'Chirp',
+                          fontSize: 18,
+                          letterSpacing: -.25,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -2652,9 +2728,9 @@ class _CountryBottomSheetState extends State<_CountryBottomSheet> {
                   trailing: Text(
                     country['code']!,
                     style: AppTypography.bodyLarge.copyWith(
-                      fontFamily: 'Karla',
-                      fontSize: 14.sp,
-                      letterSpacing: -.6,
+                      fontFamily: 'Chirp',
+                      fontSize: 14,
+                      letterSpacing: -.25,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -2739,22 +2815,22 @@ class _OccupationBottomSheetState extends State<_OccupationBottomSheet> {
       height: MediaQuery.of(context).size.height * 0.92,
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
         children: [
-          SizedBox(height: 18.h),
+          SizedBox(height: 18),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 18.w),
+            padding: EdgeInsets.symmetric(horizontal: 18),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                SizedBox(height: 24.h, width: 24.w),
+                SizedBox(height: 24, width: 24),
                 Text(
                   'Select Occupation',
                   style: AppTypography.titleLarge.copyWith(
                     fontFamily: 'FunnelDisplay',
-                    fontSize: 14.sp,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
@@ -2768,17 +2844,17 @@ class _OccupationBottomSheetState extends State<_OccupationBottomSheet> {
                     children: [
                       SvgPicture.asset(
                         "assets/icons/svgs/notificationn.svg",
-                        height: 40.sp,
+                        height: 40,
                         color: Theme.of(context).colorScheme.surface,
                       ),
                       SizedBox(
-                        height: 40.sp,
-                        width: 40.sp,
+                        height: 40,
+                        width: 40,
                         child: Center(
                           child: Image.asset(
                             "assets/icons/pngs/cancelicon.png",
-                            height: 20.h,
-                            width: 20.w,
+                            height: 20,
+                            width: 20,
                             color: Theme.of(context).textTheme.bodyLarge!.color,
                           ),
                         ),
@@ -2786,19 +2862,16 @@ class _OccupationBottomSheetState extends State<_OccupationBottomSheet> {
                     ],
                   ),
                 ),
-                SizedBox(height: 16.h),
+                SizedBox(height: 16),
                 // Search field
                 Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 18.w,
-                    vertical: 16.h,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 18, vertical: 16),
                   child: CustomTextField(
                     isSearch: true,
                     onChanged: (value) => _filterOccupations(value),
                     hintText: 'Search occupations...',
                     prefixIcon: Container(
-                      width: 40.w,
+                      width: 40,
                       alignment: Alignment.centerRight,
                       constraints: BoxConstraints.tightForFinite(),
                       child: Stack(
@@ -2830,8 +2903,8 @@ class _OccupationBottomSheetState extends State<_OccupationBottomSheet> {
                             child: Text(
                               'No occupations found',
                               style: AppTypography.bodyLarge.copyWith(
-                                fontFamily: 'Karla',
-                                fontSize: 16.sp,
+                                fontFamily: 'Chirp',
+                                fontSize: 16,
                                 fontWeight: FontWeight.w500,
                                 color: Theme.of(
                                   context,
@@ -2840,13 +2913,13 @@ class _OccupationBottomSheetState extends State<_OccupationBottomSheet> {
                             ),
                           )
                           : ListView.builder(
-                            padding: EdgeInsets.symmetric(horizontal: 18.w),
+                            padding: EdgeInsets.symmetric(horizontal: 18),
                             itemCount: _filteredOccupations.length,
                             itemBuilder: (context, index) {
                               final occupation = _filteredOccupations[index];
                               return ListTile(
                                 contentPadding: EdgeInsets.symmetric(
-                                  vertical: 4.h,
+                                  vertical: 4,
                                 ),
                                 onTap:
                                     () => widget.onOccupationSelected(
@@ -2856,15 +2929,15 @@ class _OccupationBottomSheetState extends State<_OccupationBottomSheet> {
                                   children: [
                                     Text(
                                       occupation['emoji']!,
-                                      style: TextStyle(fontSize: 24.sp),
+                                      style: TextStyle(fontSize: 24),
                                     ),
-                                    SizedBox(width: 12.w),
+                                    SizedBox(width: 12),
                                     Expanded(
                                       child: Text(
                                         occupation['name']!,
                                         style: AppTypography.bodyLarge.copyWith(
-                                          fontFamily: 'Karla',
-                                          fontSize: 16.sp,
+                                          fontFamily: 'Chirp',
+                                          fontSize: 16,
                                           fontWeight: FontWeight.w500,
                                         ),
                                       ),
@@ -2897,23 +2970,23 @@ class _CityBottomSheet extends StatelessWidget {
       height: MediaQuery.of(context).size.height * 0.92,
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
         children: [
-          SizedBox(height: 18.h),
+          SizedBox(height: 18),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 18.w),
+            padding: EdgeInsets.symmetric(horizontal: 18),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                SizedBox(height: 24.h, width: 24.w),
+                SizedBox(height: 24, width: 24),
                 Text(
                   'Select City',
                   style: AppTypography.titleLarge.copyWith(
-                    fontFamily: 'Karla',
-                    fontSize: 16.sp,
-                    letterSpacing: -.6,
+                    fontFamily: 'Chirp',
+                    fontSize: 16,
+                    letterSpacing: -.25,
                     fontWeight: FontWeight.w500,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
@@ -2924,30 +2997,30 @@ class _CityBottomSheet extends StatelessWidget {
                   },
                   child: Image.asset(
                     "assets/icons/pngs/cancelicon.png",
-                    height: 24.h,
-                    width: 24.w,
+                    height: 24,
+                    width: 24,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ],
             ),
           ),
-          SizedBox(height: 16.h),
+          SizedBox(height: 16),
           Expanded(
             child: ListView.builder(
-              padding: EdgeInsets.symmetric(horizontal: 18.w),
+              padding: EdgeInsets.symmetric(horizontal: 18),
               itemCount: cities.length,
               itemBuilder: (context, index) {
                 final city = cities[index];
                 return ListTile(
-                  contentPadding: EdgeInsets.symmetric(vertical: 4.h),
+                  contentPadding: EdgeInsets.symmetric(vertical: 4),
                   onTap: () => onCitySelected(city),
                   title: Text(
                     city,
                     style: AppTypography.bodyLarge.copyWith(
-                      fontFamily: 'Karla',
-                      fontSize: 18.sp,
-                      letterSpacing: -.6,
+                      fontFamily: 'Chirp',
+                      fontSize: 18,
+                      letterSpacing: -.25,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -2979,11 +3052,11 @@ class StepIndicator extends StatelessWidget {
         child: Text(
           'Step ${currentStep + 1} of ${steps.length}',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            fontSize: 14.sp,
+            fontSize: 14,
             fontWeight: FontWeight.w500,
-            fontFamily: 'Karla',
-            letterSpacing: -.6,
-            height: 1.4,
+            fontFamily: 'Chirp',
+            letterSpacing: -.25,
+            height: 1.2,
             color: Theme.of(
               context,
             ).textTheme.bodyMedium!.color!.withOpacity(0.65),

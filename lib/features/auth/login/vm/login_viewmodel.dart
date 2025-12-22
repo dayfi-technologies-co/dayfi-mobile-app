@@ -162,8 +162,15 @@ class LoginNotifier extends StateNotifier<LoginState> {
         // Show success message
         // _showSnackBar(context, response.message, isError: false);
 
-        // Navigate to create passcode screen (for login flow)
-        appRouter.pushNamed(AppRoute.createPasscodeView, arguments: false);
+        // Check if user has completed profile (phone number)
+        final phoneNumber = response.data?.user?.phoneNumber;
+        if (phoneNumber == null || phoneNumber.isEmpty) {
+          // User hasn't completed profile, navigate to success signup to complete profile
+          appRouter.pushNamed(AppRoute.successSignupView);
+        } else {
+          // Navigate to create passcode screen (for login flow)
+          appRouter.pushNamed(AppRoute.createPasscodeView, arguments: false);
+        }
       } else {
         AppLogger.error('Login failed: ${response.message}');
         // Analytics: login failed
@@ -298,7 +305,7 @@ class LoginNotifier extends StateNotifier<LoginState> {
   }
 
   void navigateToForgotPassword() {
-    appRouter.pushNamed(AppRoute.forgotPasswordView);
+    appRouter.pushNamed(AppRoute.forgotPasswordView, arguments: state.email);
   }
 
   void navigateToSignup() {
@@ -308,6 +315,112 @@ class LoginNotifier extends StateNotifier<LoginState> {
   // Clear form
   void resetForm() {
     state = const LoginState();
+  }
+
+  /// Login with provided credentials (used after password reset)
+  /// This bypasses form validation since credentials come from reset flow
+  Future<bool> loginWithCredentials({
+    required String email,
+    required String password,
+    required BuildContext context,
+  }) async {
+    state = state.copyWith(isBusy: true);
+
+    try {
+      // Analytics: login started
+      analyticsService.logEvent(
+        name: AnalyticsEvents.loginStarted,
+        parameters: {'email': email, 'source': 'password_reset'},
+      );
+      AppLogger.info('Starting auto-login after password reset for: $email');
+
+      final response = await _authService.login(
+        email: email,
+        password: password,
+      );
+
+      AppLogger.info(
+        'Auto-login response - Status: ${response.statusCode}, Error: ${response.error}, Message: ${response.message}',
+      );
+
+      if (response.statusCode == 200) {
+        AppLogger.info('Auto-login successful: ${response.message}');
+        // Analytics: login completed
+        analyticsService.logEvent(
+          name: AnalyticsEvents.loginCompleted,
+          parameters: {'email': email, 'source': 'password_reset'},
+        );
+
+        // Save user token and data
+        await _secureStorage.write(
+          StorageKeys.token,
+          response.data?.token ?? '',
+        );
+        await _secureStorage.write(StorageKeys.isFirstTime, 'false');
+
+        // Save user data if available
+        if (response.data?.user != null) {
+          await _secureStorage.write(
+            StorageKeys.user,
+            json.encode(response.data!.user!.toJson()),
+          );
+        }
+
+        // Save login credentials for passcode verification flow
+        await _secureStorage.write(StorageKeys.email, email);
+        await _secureStorage.write(StorageKeys.password, password);
+
+        // Disable biometrics on backend for fresh login flow
+        await _disableBiometricsOnLogin(response.data?.user?.userId);
+
+        // Check if user has completed profile (phone number)
+        final phoneNumber = response.data?.user?.phoneNumber;
+        if (phoneNumber == null || phoneNumber.isEmpty) {
+          // User hasn't completed profile, navigate to success signup to complete profile
+          appRouter.pushNamed(AppRoute.successSignupView);
+        } else {
+          // Navigate to create passcode screen (for login flow)
+          appRouter.pushNamed(AppRoute.createPasscodeView, arguments: false);
+        }
+        return true;
+      } else {
+        AppLogger.error('Auto-login failed: ${response.message}');
+        // Analytics: login failed
+        analyticsService.logEvent(
+          name: AnalyticsEvents.loginFailed,
+          parameters: {'email': email, 'reason': response.message, 'source': 'password_reset'},
+        );
+
+        // Check if it's a 401 error with activation message
+        if (response.message.toLowerCase().contains('activate your account')) {
+          AppLogger.info(
+            'Account needs activation, navigating to verify email screen',
+          );
+          _navigateToVerifyEmailAndResendOTP(context, email);
+        } else {
+          TopSnackbar.show(context, message: response.message, isError: true);
+        }
+        return false;
+      }
+    } catch (e) {
+      if (e.toString().toLowerCase().contains('activate your account')) {
+        AppLogger.info(
+          'Account needs activation, navigating to verify email screen',
+        );
+        _navigateToVerifyEmailAndResendOTP(context, email);
+      } else {
+        AppLogger.error('Auto-login error: $e');
+        final errorMessage = await ConnectivityUtils.getErrorMessage(e);
+        analyticsService.logEvent(
+          name: AnalyticsEvents.loginFailed,
+          parameters: {'email': email, 'reason': errorMessage, 'source': 'password_reset'},
+        );
+        TopSnackbar.show(context, message: errorMessage, isError: true);
+      }
+      return false;
+    } finally {
+      state = state.copyWith(isBusy: false);
+    }
   }
 }
 

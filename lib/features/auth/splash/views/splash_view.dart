@@ -96,11 +96,11 @@ class _SplashViewState extends ConsumerState<SplashView> {
         children: [
           // Main content centered
           Center(
-            child: Image.asset('assets/images/logo_splash.png', width: 88.w),
+            child: Image.asset('assets/images/logo_splash.png', width: 88),
           ),
           // Powered by section at bottom
           // Positioned(
-          //   bottom: 60.h,
+          //   bottom: 60,
           //   left: 0,
           //   right: 0,
           //   child: Column(
@@ -109,19 +109,19 @@ class _SplashViewState extends ConsumerState<SplashView> {
           //         'Powered by',
           //         style: Theme.of(context).textTheme.bodySmall?.copyWith(
           //           color: AppColors.neutral900.withOpacity(.75),
-          //           fontSize: 14.sp,
+          //           fontSize: 14,
           //           fontWeight: FontWeight.w500,
-          //           fontFamily: 'Karla',
+          //           fontFamily: 'Chirp',
           //         ),
           //       ),
-          //       SizedBox(height: 4.h),
+          //       SizedBox(height: 4),
           //       // Dayfi logo placeholder
           //       Center(
           //         child: Text(
           //           'dayfi',
           //           style: TextStyle(
-          //             fontFamily: 'Boldonse',
-          //             fontSize: 12.sp,
+          //             fontFamily: 'FunnenDiDplayDplaysplay',
+          //             fontSize: 12,
           //             fontWeight: FontWeight.w500,
           //             color: AppColors.neutral900,
           //             height: 1.3,

@@ -8,6 +8,7 @@ import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/common/widgets/text_fields/pin_text_field.dart';
 import 'package:dayfi/features/auth/verify_email/vm/verify_email_viewmodel.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:open_mail_app/open_mail_app.dart';
 
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
@@ -65,373 +66,439 @@ class VerifyEmailView extends ConsumerWidget {
         FocusManager.instance.primaryFocus?.unfocus();
       },
       behavior: HitTestBehavior.opaque,
-      child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        resizeToAvoidBottomInset: false,
-
-        bottomNavigationBar: Padding(
-          padding: const EdgeInsets.fromLTRB(18.0, 12, 18.0, 40.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              PrimaryButton(
-                    borderRadius: 38,
-                    text: isSignUp ? "Verify Account" : "Reset Password",
-                    onPressed:
-                        verifyState.isFormValid && !verifyState.isVerifying
-                            ? () =>
-                                isSignUp
-                                    ? verifyNotifier.verifySignup(
-                                      context,
-                                      email,
-                                      password,
-                                    )
-                                    : verifyNotifier.verifyForgotPassword(
-                                      context,
-                                      email,
-                                    )
-                            : null,
-                    enabled:
-                        verifyState.isFormValid && !verifyState.isVerifying,
-                    isLoading: verifyState.isVerifying,
-                    backgroundColor:
-                        verifyState.isFormValid
-                            ? AppColors.purple500ForTheme(context)
-                            : AppColors.purple500ForTheme(
-                              context,
-                            ).withOpacity(.25),
-                    height: 48.000.h,
-                    textColor:
-                        verifyState.isFormValid
-                            ? AppColors.neutral0
-                            : AppColors.neutral0.withOpacity(.65),
-                    fontFamily: 'Karla',
-                    letterSpacing: -.8,
-                    fontSize: 18,
-                    width: 375.w,
-                    fullWidth: true,
-                  )
-                  .animate()
-                  .fadeIn(
-                    delay: 500.ms,
-                    duration: 300.ms,
-                    curve: Curves.easeOutCubic,
-                  )
-                  .slideY(
-                    begin: 0.2,
-                    end: 0,
-                    delay: 500.ms,
-                    duration: 300.ms,
-                    curve: Curves.easeOutCubic,
-                  )
-                  .scale(
-                    begin: const Offset(0.95, 0.95),
-                    end: const Offset(1.0, 1.0),
-                    delay: 500.ms,
-                    duration: 300.ms,
-                    curve: Curves.easeOutCubic,
-                  ),
-              SizedBox(height: 12.h),
-
-              TextButton(
-                    style: TextButton.styleFrom(
-                      // padding: EdgeInsets.zero,
-                      // minimumSize: Size(50.w, 30.h),
-                      splashFactory: NoSplash.splashFactory,
-                      backgroundColor: Colors.transparent,
-                      foregroundColor: Colors.transparent,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      alignment: Alignment.center,
-                    ),
-                    onPressed: null,
-                    child: Text(
-                      "Open email app",
-                      style: TextStyle(
-                        fontFamily: 'Karla',
-                        color: Theme.of(context).textTheme.bodyLarge!.color,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: -.8,
-                        decoration: TextDecoration.underline,
-                      ),
-                    ),
-                  )
-                  .animate()
-                  .fadeIn(delay: 200.ms, duration: 600.ms)
-                  .slideY(begin: 0.3, end: 0, delay: 200.ms, duration: 600.ms)
-                  .shimmer(
-                    delay: 1000.ms,
-                    duration: 1500.ms,
-                    color: Theme.of(
-                      context,
-                    ).scaffoldBackgroundColor.withOpacity(0.4),
-                    angle: 45,
-                  ),
-            ],
-          ),
-        ),
-
-        appBar: AppBar(
-          scrolledUnderElevation: .5,
-          foregroundColor: Theme.of(context).scaffoldBackgroundColor,
-          shadowColor: Theme.of(context).scaffoldBackgroundColor,
-          surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          elevation: 0,
-          leadingWidth: 72,
-          leading: InkWell(
-            splashColor: Colors.transparent,
-            highlightColor: Colors.transparent,
-            onTap:
-                () => {
-                  verifyNotifier.resetForm(),
-                  Navigator.pop(context),
-                  FocusScope.of(context).unfocus(),
-                },
-            child: Stack(
-              alignment: AlignmentGeometry.center,
-              children: [
-                SvgPicture.asset(
-                  "assets/icons/svgs/notificationn.svg",
-                  height: 40.sp,
-                  color: Theme.of(context).colorScheme.surface,
-                ),
-                SizedBox(
-                  height: 40.sp,
-                  width: 40.sp,
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 8.0),
-                      child: Icon(
-                        Icons.arrow_back_ios,
-                        size: 20.sp,
-                        color: Theme.of(context).textTheme.bodyLarge!.color,
-                        // size: 20.sp,
-                      ),
+      child: Stack(
+        children: [
+          Scaffold(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            resizeToAvoidBottomInset: false,
+            bottomNavigationBar: SafeArea(
+              child: AnimatedContainer(
+                decoration: BoxDecoration(
+                  border: Border(
+                    top: BorderSide(
+                      color: Theme.of(context).dividerColor.withOpacity(.2),
+                      width: 1,
                     ),
                   ),
                 ),
-              ],
-            ),
-          ),
-        ),
-
-        body: GestureDetector(
-          onTap: () {
-            FocusManager.instance.primaryFocus?.unfocus();
-          },
-          child: SafeArea(
-            bottom: false,
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 18),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                duration: const Duration(milliseconds: 10),
+                padding: EdgeInsets.only(
+                  left: 18,
+                  right: 18,
+                  top: 8,
+                  bottom:
+                      MediaQuery.of(context).viewInsets.bottom > 0
+                          ? MediaQuery.of(context).viewInsets.bottom + 8
+                          : 8,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        SizedBox(height: 8.h),
-                        Text(
-                          "Verify email",
-                          style: Theme.of(
+                        SizedBox(
+                          width: 300,
+                          child: PrimaryButton(
+                                borderRadius: 38,
+                                text:
+                                    isSignUp
+                                        ? "Verify Account"
+                                        : "Reset Password",
+                                onPressed:
+                                    verifyState.isFormValid &&
+                                            !verifyState.isVerifying
+                                        ? () =>
+                                            isSignUp
+                                                ? verifyNotifier.verifySignup(
+                                                  context,
+                                                  email,
+                                                  password,
+                                                )
+                                                : verifyNotifier
+                                                    .verifyForgotPassword(
+                                                      context,
+                                                      email,
+                                                    )
+                                        : null,
+                                enabled:
+                                    verifyState.isFormValid &&
+                                    !verifyState.isVerifying,
+                                isLoading: verifyState.isVerifying,
+                                backgroundColor:
+                                    verifyState.isFormValid
+                                        ? AppColors.purple500ForTheme(context)
+                                        : AppColors.purple500ForTheme(
+                                          context,
+                                        ).withOpacity(.25),
+                                textColor:
+                                    verifyState.isFormValid
+                                      ? AppColors.neutral0
+                                          : AppColors.neutral0.withOpacity(.20),
+                                fontFamily: 'Chirp',
+                                letterSpacing: -.40,
+                                fontSize: 18,
+                                fullWidth: true,
+                              )
+                              .animate()
+                              .fadeIn(
+                                delay: 500.ms,
+                                duration: 300.ms,
+                                curve: Curves.easeOutCubic,
+                              )
+                              .slideY(
+                                begin: 0.2,
+                                end: 0,
+                                delay: 500.ms,
+                                duration: 300.ms,
+                                curve: Curves.easeOutCubic,
+                              )
+                              .scale(
+                                begin: const Offset(0.95, 0.95),
+                                end: const Offset(1.0, 1.0),
+                                delay: 500.ms,
+                                duration: 300.ms,
+                                curve: Curves.easeOutCubic,
+                              ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 12),
+
+                    TextButton(
+                          style: TextButton.styleFrom(
+                            splashFactory: NoSplash.splashFactory,
+                            backgroundColor: Colors.transparent,
+                            foregroundColor: Colors.transparent,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            alignment: Alignment.center,
+                          ),
+                          onPressed: () async {
+                            var result = await OpenMailApp.openMailApp();
+
+                            // If no mail apps found, show error
+                            if (!result.didOpen && !result.canOpen) {
+                              showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return AlertDialog(
+                                    title: Text("No Mail Apps Found"),
+                                    content: Text(
+                                      "No mail apps are installed on your device.",
+                                    ),
+                                    actions: <Widget>[
+                                      TextButton(
+                                        child: Text("OK"),
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                        },
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            } else if (!result.didOpen && result.canOpen) {
+                              // iOS: multiple mail apps available, show picker
+                              showDialog(
+                                context: context,
+                                builder: (_) {
+                                  return MailAppPickerDialog(
+                                    mailApps: result.options,
+                                  );
+                                },
+                              );
+                            }
+                          },
+                          child: Text(
+                            "Open email app",
+                            style: TextStyle(
+                              fontFamily: 'Chirp',
+                              color:
+                                  Theme.of(context).textTheme.bodyLarge!.color,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: -.40,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        )
+                        .animate()
+                        .fadeIn(delay: 200.ms, duration: 600.ms)
+                        .slideY(
+                          begin: 0.3,
+                          end: 0,
+                          delay: 200.ms,
+                          duration: 600.ms,
+                        )
+                        .shimmer(
+                          delay: 1000.ms,
+                          duration: 1500.ms,
+                          color: Theme.of(
                             context,
-                          ).textTheme.headlineMedium?.copyWith(
-                            fontSize: 18.sp,
-                            fontFamily: 'Boldonse',
-                            letterSpacing: -.5,
-                            fontWeight: FontWeight.w500,
+                          ).scaffoldBackgroundColor.withOpacity(0.4),
+                          angle: 45,
+                        ),
+                  ],
+                ),
+              ),
+            ),
+
+            appBar: AppBar(
+              scrolledUnderElevation: .5,
+              foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+              shadowColor: Theme.of(context).scaffoldBackgroundColor,
+              surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+              elevation: 0,
+              leadingWidth: 72,
+              leading: InkWell(
+                splashColor: Colors.transparent,
+                highlightColor: Colors.transparent,
+                onTap:
+                    () => {
+                      verifyNotifier.resetForm(),
+                      Navigator.pop(context),
+                      FocusScope.of(context).unfocus(),
+                    },
+                child: Stack(
+                  alignment: AlignmentGeometry.center,
+                  children: [
+                    SvgPicture.asset(
+                      "assets/icons/svgs/notificationn.svg",
+                      height: 40,
+                      color: Theme.of(context).colorScheme.surface,
+                    ),
+                    SizedBox(
+                      height: 40,
+                      width: 40,
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: Icon(
+                            Icons.arrow_back_ios,
+                            size: 20,
+                            color: Theme.of(context).textTheme.bodyLarge!.color,
+                            // size: 20,
                           ),
                         ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
 
-                        SizedBox(height: 12.h),
-
-                        // Subtitle
-                        Text(
-                              isSignUp
-                                  ? "We've sent a verification code to ${maskEmail(email)}.\nCheck your email inbox and enter the 6-digit code below to complete your account setup."
-                                  : "We've sent a reset code to ${maskEmail(email)}.\nCheck your email inbox and enter the 6-digit code below to reset your password.",
-                              style: Theme.of(
-                                context,
-                              ).textTheme.bodyMedium?.copyWith(
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.w500,
-                                fontFamily: 'Karla',
-                                letterSpacing: -.6,
-                                height: 1.4,
-                              ),
-                              textAlign: TextAlign.start,
-                            )
-                            .animate()
-                            .fadeIn(
-                              delay: 100.ms,
-                              duration: 300.ms,
-                              curve: Curves.easeOutCubic,
-                            )
-                            .slideY(
-                              begin: 0.2,
-                              end: 0,
-                              delay: 100.ms,
-                              duration: 300.ms,
-                              curve: Curves.easeOutCubic,
+            body: GestureDetector(
+              onTap: () {
+                FocusManager.instance.primaryFocus?.unfocus();
+              },
+              child: SafeArea(
+                bottom: false,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final bool isWide = constraints.maxWidth > 600;
+                    return SingleChildScrollView(
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 420),
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isWide ? 32 : 18,
                             ),
-
-                        SizedBox(height: 32.h),
-
-                        // PIN field
-                        PinTextField(
-                              length: 6,
-                              onTextChanged: verifyNotifier.setOtpCode,
-                              // validator: (value) {
-                              //   if (value == null || value.isEmpty) {
-                              //     return 'Please enter OTP';
-                              //   }
-                              //   if (value.length != 6) {
-                              //     return 'OTP must be 6 digits';
-                              //   }
-                              //   return null;
-                              // },
-                            )
-                            .animate()
-                            .fadeIn(
-                              delay: 200.ms,
-                              duration: 300.ms,
-                              curve: Curves.easeOutCubic,
-                            )
-                            .slideY(
-                              begin: 0.3,
-                              end: 0,
-                              delay: 200.ms,
-                              duration: 300.ms,
-                              curve: Curves.easeOutCubic,
-                            )
-                            .scale(
-                              begin: const Offset(0.98, 0.98),
-                              end: const Offset(1.0, 1.0),
-                              delay: 200.ms,
-                              duration: 300.ms,
-                              curve: Curves.easeOutCubic,
-                            ),
-
-                        // // Error message
-                        // if (verifyState.errorMessage.isNotEmpty)
-                        //   Padding(
-                        //     padding: EdgeInsets.only(top: 12.h),
-                        //     child: Text(
-                        //       verifyState.errorMessage ==
-                        //                   "OTP verified successfully" ||
-                        //               verifyState.errorMessage ==
-                        //                   "Password reset successfully"
-                        //           ? ""
-                        //           : verifyState.errorMessage,
-                        //       style: Theme.of(
-                        //         context,
-                        //       ).textTheme.bodySmall?.copyWith(
-                        //         color: Colors.red,
-                        //         fontSize: 13.sp,
-                        //         fontFamily: 'Karla',
-                        //         fontWeight: FontWeight.w500,
-                        //       ),
-                        //     ),
-                        //   )
-                        // else
-                        //   const SizedBox.shrink(),
-
-                        SizedBox(height: 24.h),
-
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            if (!verifyState.canResend) ...[
-                              Icon(
-                                Icons.timer_outlined,
-                                color: AppColors.neutral400,
-                                size: 16.r,
-                              ),
-                              SizedBox(width: 8.w),
-                              Text(
-                                verifyState.timerText,
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.bodyMedium?.copyWith(
-                                  fontSize: 16.sp,
-                                  fontWeight: FontWeight.w500,
-                                  fontFamily: 'Karla',
-                                  color: AppColors.neutral400,
-                                ),
-                              ),
-                            ] else ...[
-                              GestureDetector(
-                                onTap:
-                                    verifyState.isResending
-                                        ? null
-                                        : () => verifyNotifier.resendOTP(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                SizedBox(height: 8),
+                                Text(
+                                  "Verify email",
+                                  textAlign: TextAlign.center,
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.displayLarge?.copyWith(
+                                    color:
+                                        Theme.of(
                                           context,
-                                          email,
-                                        ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    if (verifyState.isResending) ...[
-                                      SizedBox(
-                                        width: 20.r,
-                                        height: 20.r,
-                                        child:
-                                            LoadingAnimationWidget.horizontalRotatingDots(
-                                              color:
-                                                  Theme.of(
-                                                    context,
-                                                  ).colorScheme.onSurface,
-                                              size: 20,
-                                            ),
-                                      ),
-                                      SizedBox(width: 8.w),
-                                    ],
-                                    Text(
-                                      verifyState.isResending
-                                          ? "..."
-                                          : "Send new code",
+                                        ).textTheme.headlineLarge?.color,
+                                    fontSize: isWide ? 32 : 28,
+                                    letterSpacing: -.250,
+                                    fontWeight: FontWeight.w900,
+                                    fontFamily: 'FunnelDisplay',
+                                    height: 1,
+                                  ),
+                                ),
+
+                                SizedBox(height: 12),
+
+                                // Subtitle
+                                Text(
+                                      isSignUp
+                                          ? "We've sent a verification code to ${maskEmail(email)}.\nCheck your email inbox and enter the 6-digit code below to complete your account setup."
+                                          : "We've sent a reset code to ${maskEmail(email)}.\nCheck your email inbox and enter the 6-digit code below to reset your password.",
                                       style: Theme.of(
                                         context,
                                       ).textTheme.bodyMedium?.copyWith(
-                                        fontFamily: 'Karla',
-                                        color:
-                                            verifyState.isResending
-                                                ? Theme.of(
-                                                  context,
-                                                ).colorScheme.onSurface
-                                                : AppColors.purple500ForTheme(
-                                                  context,
-                                                ),
-                                        fontSize:
-                                            verifyState.isResending
-                                                ? 14.sp
-                                                : 16.sp,
-
-                                        decoration:   verifyState.isResending 
-                                            ? TextDecoration.none
-                                            : TextDecoration.underline,
-                                        letterSpacing: -.6,
-                                        fontWeight: FontWeight.w600,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                        fontFamily: 'Chirp',
+                                        letterSpacing: -.25,
+                                        height: 1.2,
                                       ),
                                       textAlign: TextAlign.center,
+                                    )
+                                    .animate()
+                                    .fadeIn(
+                                      delay: 100.ms,
+                                      duration: 300.ms,
+                                      curve: Curves.easeOutCubic,
+                                    )
+                                    .slideY(
+                                      begin: 0.2,
+                                      end: 0,
+                                      delay: 100.ms,
+                                      duration: 300.ms,
+                                      curve: Curves.easeOutCubic,
                                     ),
+
+                                SizedBox(height: 32),
+
+                                // PIN field
+                                PinTextField(
+                                      length: 6,
+                                      onTextChanged: verifyNotifier.setOtpCode,
+                                    )
+                                    .animate()
+                                    .fadeIn(
+                                      delay: 200.ms,
+                                      duration: 300.ms,
+                                      curve: Curves.easeOutCubic,
+                                    )
+                                    .slideY(
+                                      begin: 0.3,
+                                      end: 0,
+                                      delay: 200.ms,
+                                      duration: 300.ms,
+                                      curve: Curves.easeOutCubic,
+                                    )
+                                    .scale(
+                                      begin: const Offset(0.98, 0.98),
+                                      end: const Offset(1.0, 1.0),
+                                      delay: 200.ms,
+                                      duration: 300.ms,
+                                      curve: Curves.easeOutCubic,
+                                    ),
+
+                                SizedBox(height: 24),
+
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    if (!verifyState.canResend) ...[
+                                      Icon(
+                                        Icons.timer_outlined,
+                                        color: AppColors.neutral400,
+                                        size: 16,
+                                      ),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        verifyState.timerText,
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodyMedium?.copyWith(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                          fontFamily: 'Chirp',
+                                          color: AppColors.neutral400,
+                                        ),
+                                      ),
+                                    ] else ...[
+                                      GestureDetector(
+                                        onTap:
+                                            verifyState.isResending
+                                                ? null
+                                                : () => verifyNotifier
+                                                    .resendOTP(context, email),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            if (verifyState.isResending) ...[
+                                              SizedBox(
+                                                width: 20,
+                                                height: 20,
+                                                child:
+                                                    LoadingAnimationWidget.horizontalRotatingDots(
+                                                      color:
+                                                          Theme.of(context)
+                                                              .colorScheme
+                                                              .onSurface,
+                                                      size: 20,
+                                                    ),
+                                              ),
+                                              SizedBox(width: 8),
+                                            ],
+                                            Text(
+                                              verifyState.isResending
+                                                  ? "..."
+                                                  : "Send new code",
+                                              style: Theme.of(
+                                                context,
+                                              ).textTheme.bodyMedium?.copyWith(
+                                                fontFamily: 'Chirp',
+                                                color:
+                                                    verifyState.isResending
+                                                        ? Theme.of(
+                                                          context,
+                                                        ).colorScheme.onSurface
+                                                        : AppColors.purple500ForTheme(
+                                                          context,
+                                                        ),
+                                                fontSize:
+                                                    verifyState.isResending
+                                                        ? 14
+                                                        : 16,
+
+                                                decoration:
+                                                    verifyState.isResending
+                                                        ? TextDecoration.none
+                                                        : TextDecoration
+                                                            .underline,
+                                                letterSpacing: -.25,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
                                   ],
                                 ),
-                              ),
-                            ],
-                          ],
-                        ),
 
-                        SizedBox(height: 300.h),
-                      ],
-                    ),
-                  ),
-                ],
+                                SizedBox(height: 24),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
           ),
-        ),
+          if (verifyState.isBusy)
+            Scaffold(
+              backgroundColor: Colors.transparent,
+              resizeToAvoidBottomInset: true,
+              body: Opacity(
+                opacity: 0.5,
+                child: Container(
+                  width: double.infinity,
+                  height: double.infinity,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

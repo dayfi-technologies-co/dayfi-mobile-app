@@ -13,52 +13,52 @@ class UIHelpers {
 
 /// Creates vertical spacing with consistent sizing
 Widget verticalSpace(double height) {
-  return SizedBox(height: height.h);
+  return SizedBox(height: height);
 }
 
 /// Creates horizontal spacing with consistent sizing
 Widget horizontalSpace(double width) {
-  return SizedBox(width: width.w);
+  return SizedBox(width: width);
 }
 
-/// Creates small vertical spacing (4.h)
+/// Creates small vertical spacing (4)
 Widget verticalSpaceSmall() {
-  return SizedBox(height: 4.h);
+  return SizedBox(height: 4);
 }
 
-/// Creates medium vertical spacing (8.h)
+/// Creates medium vertical spacing (8)
 Widget verticalSpaceMedium() {
-  return SizedBox(height: 8.h);
+  return SizedBox(height: 8);
 }
 
-/// Creates large vertical spacing (16.h)
+/// Creates large vertical spacing (16)
 Widget verticalSpaceLarge() {
-  return SizedBox(height: 16.h);
+  return SizedBox(height: 16);
 }
 
-/// Creates extra large vertical spacing (24.h)
+/// Creates extra large vertical spacing (24)
 Widget verticalSpaceXLarge() {
-  return SizedBox(height: 24.h);
+  return SizedBox(height: 24);
 }
 
-/// Creates small horizontal spacing (4.w)
+/// Creates small horizontal spacing (4)
 Widget horizontalSpaceSmall() {
-  return SizedBox(width: 4.w);
+  return SizedBox(width: 4);
 }
 
-/// Creates medium horizontal spacing (8.w)
+/// Creates medium horizontal spacing (8)
 Widget horizontalSpaceMedium() {
-  return SizedBox(width: 8.w);
+  return SizedBox(width: 8);
 }
 
-/// Creates large horizontal spacing (16.w)
+/// Creates large horizontal spacing (16)
 Widget horizontalSpaceLarge() {
-  return SizedBox(width: 16.w);
+  return SizedBox(width: 16);
 }
 
-/// Creates extra large horizontal spacing (24.w)
+/// Creates extra large horizontal spacing (24)
 Widget horizontalSpaceXLarge() {
-  return SizedBox(width: 24.w);
+  return SizedBox(width: 24);
 }
 
 /// Shows a dialog with consistent dark barrier color

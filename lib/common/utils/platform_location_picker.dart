@@ -78,32 +78,32 @@ class PlatformLocationPicker {
           decoration: BoxDecoration(
             color: material.Theme.of(context).scaffoldBackgroundColor,
             borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(20.r),
-              topRight: Radius.circular(20.r),
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
             ),
           ),
           child: Column(
             children: [
               // Handle bar
               Container(
-                margin: EdgeInsets.only(top: 8.h),
-                width: 40.w,
-                height: 4.h,
+                margin: EdgeInsets.only(top: 8),
+                width: 40,
+                height: 4,
                 decoration: BoxDecoration(
                   color: material.Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2.r),
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
               
               // Title
               if (title != null) ...[
                 Padding(
-                  padding: EdgeInsets.all(16.w),
+                  padding: EdgeInsets.all(16),
                   child: Text(
                     title,
                     style: material.Theme.of(context).textTheme.titleLarge?.copyWith(
                    fontFamily: 'FunnelDisplay',
-                      fontSize: 24.sp,
+                      fontSize: 24,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -113,7 +113,7 @@ class PlatformLocationPicker {
               // State picker
               Expanded(
                 child: CupertinoPicker(
-                  itemExtent: 40.h,
+                  itemExtent: 40,
                   onSelectedItemChanged: (int index) {
                     selectedIndex = index;
                   },
@@ -122,9 +122,9 @@ class PlatformLocationPicker {
                       child: Text(
                         state,
                         style: TextStyle(
-                          fontSize: 18.sp,
+                          fontSize: 18,
                           fontWeight: FontWeight.w500,
-                          fontFamily: 'Karla',
+                          fontFamily: 'Chirp',
                         ),
                       ),
                     ),
@@ -134,7 +134,7 @@ class PlatformLocationPicker {
               
               // Action buttons
               Padding(
-                padding: EdgeInsets.all(16.w),
+                padding: EdgeInsets.all(16),
                 child: Row(
                   children: [
                     Expanded(
@@ -144,13 +144,13 @@ class PlatformLocationPicker {
                           'Cancel',
                           style: TextStyle(
                             color: material.Colors.grey[600],
-                            fontSize: 16.sp,
+                            fontSize: 16,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
                     ),
-                    SizedBox(width: 16.w),
+                    SizedBox(width: 16),
                     Expanded(
                       child: CupertinoButton(
                         onPressed: () {
@@ -160,7 +160,7 @@ class PlatformLocationPicker {
                           'Done',
                           style: TextStyle(
                             color: AppColors.purple500,
-                            fontSize: 16.sp,
+                            fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -198,32 +198,32 @@ class PlatformLocationPicker {
           decoration: BoxDecoration(
             color: material.Theme.of(context).scaffoldBackgroundColor,
             borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(20.r),
-              topRight: Radius.circular(20.r),
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
             ),
           ),
           child: Column(
             children: [
               // Handle bar
               Container(
-                margin: EdgeInsets.only(top: 8.h),
-                width: 40.w,
-                height: 4.h,
+                margin: EdgeInsets.only(top: 8),
+                width: 40,
+                height: 4,
                 decoration: BoxDecoration(
                   color: material.Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2.r),
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
               
               // Title
               if (title != null) ...[
                 Padding(
-                  padding: EdgeInsets.all(16.w),
+                  padding: EdgeInsets.all(16),
                   child: Text(
                     title,
                     style: material.Theme.of(context).textTheme.titleLarge?.copyWith(
                    fontFamily: 'FunnelDisplay',
-                      fontSize: 24.sp,
+                      fontSize: 24,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -233,7 +233,7 @@ class PlatformLocationPicker {
               // City picker
               Expanded(
                 child: CupertinoPicker(
-                  itemExtent: 40.h,
+                  itemExtent: 40,
                   onSelectedItemChanged: (int index) {
                     selectedIndex = index;
                   },
@@ -242,9 +242,9 @@ class PlatformLocationPicker {
                       child: Text(
                         city,
                         style: TextStyle(
-                          fontSize: 18.sp,
+                          fontSize: 18,
                           fontWeight: FontWeight.w500,
-                          fontFamily: 'Karla',
+                          fontFamily: 'Chirp',
                         ),
                       ),
                     ),
@@ -254,7 +254,7 @@ class PlatformLocationPicker {
               
               // Action buttons
               Padding(
-                padding: EdgeInsets.all(16.w),
+                padding: EdgeInsets.all(16),
                 child: Row(
                   children: [
                     Expanded(
@@ -264,13 +264,13 @@ class PlatformLocationPicker {
                           'Cancel',
                           style: TextStyle(
                             color: material.Colors.grey[600],
-                            fontSize: 16.sp,
+                            fontSize: 16,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
                     ),
-                    SizedBox(width: 16.w),
+                    SizedBox(width: 16),
                     Expanded(
                       child: CupertinoButton(
                         onPressed: () {
@@ -280,7 +280,7 @@ class PlatformLocationPicker {
                           'Done',
                           style: TextStyle(
                             color: AppColors.purple500,
-                            fontSize: 16.sp,
+                            fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -312,31 +312,31 @@ class PlatformLocationPicker {
           decoration: BoxDecoration(
             color: material.Theme.of(context).scaffoldBackgroundColor,
             borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(20.r),
-              topRight: Radius.circular(20.r),
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
             ),
           ),
           child: Column(
             children: [
               // Handle bar
               Container(
-                margin: EdgeInsets.only(top: 8.h),
-                width: 40.w,
-                height: 4.h,
+                margin: EdgeInsets.only(top: 8),
+                width: 40,
+                height: 4,
                 decoration: BoxDecoration(
                   color: material.Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2.r),
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
               
               // Title
               Padding(
-                padding: EdgeInsets.all(16.w),
+                padding: EdgeInsets.all(16),
                 child: Text(
                   title ?? 'Select State',
                   style: material.Theme.of(context).textTheme.titleLarge?.copyWith(
                  fontFamily: 'FunnelDisplay',
-                    fontSize: 24.sp,
+                    fontSize: 24,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -344,13 +344,13 @@ class PlatformLocationPicker {
               
               // Search field
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                padding: EdgeInsets.symmetric(horizontal: 16),
                 child: material.TextField(
                   decoration: material.InputDecoration(
                     hintText: 'Search states...',
                     prefixIcon: material.Icon(material.Icons.search),
                     border: material.OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12.r),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   onChanged: (query) {
@@ -360,7 +360,7 @@ class PlatformLocationPicker {
                 ),
               ),
               
-              SizedBox(height: 16.h),
+              SizedBox(height: 16),
               
               // States list
               Expanded(
@@ -417,31 +417,31 @@ class PlatformLocationPicker {
           decoration: BoxDecoration(
             color: material.Theme.of(context).scaffoldBackgroundColor,
             borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(20.r),
-              topRight: Radius.circular(20.r),
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
             ),
           ),
           child: Column(
             children: [
               // Handle bar
               Container(
-                margin: EdgeInsets.only(top: 8.h),
-                width: 40.w,
-                height: 4.h,
+                margin: EdgeInsets.only(top: 8),
+                width: 40,
+                height: 4,
                 decoration: BoxDecoration(
                   color: material.Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2.r),
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
               
               // Title
               Padding(
-                padding: EdgeInsets.all(16.w),
+                padding: EdgeInsets.all(16),
                 child: Text(
                   title ?? 'Select City in $state',
                   style: material.Theme.of(context).textTheme.titleLarge?.copyWith(
                  fontFamily: 'FunnelDisplay',
-                    fontSize: 24.sp,
+                    fontSize: 24,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -449,13 +449,13 @@ class PlatformLocationPicker {
               
               // Search field
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                padding: EdgeInsets.symmetric(horizontal: 16),
                 child: material.TextField(
                   decoration: material.InputDecoration(
                     hintText: 'Search cities...',
                     prefixIcon: material.Icon(material.Icons.search),
                     border: material.OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12.r),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   onChanged: (query) {
@@ -465,7 +465,7 @@ class PlatformLocationPicker {
                 ),
               ),
               
-              SizedBox(height: 16.h),
+              SizedBox(height: 16),
               
               // Cities list
               Expanded(

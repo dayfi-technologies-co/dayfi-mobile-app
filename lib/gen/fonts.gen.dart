@@ -11,14 +11,14 @@
 class FontFamily {
   FontFamily._();
 
-  /// Font family: Boldonse
-  static const String boldonse = 'Boldonse';
+  /// Font family: FunnelDisplay
+  static const String FunnelDisplay = 'FunnelDisplay';
 
-  /// Font family: Boldonse
-  static const String Boldonse = 'Boldonse';
+  /// Font family: FunnelDisplay
+  // static const String FunnelDisplay = 'FunnelDisplay';
 
-  /// Font family: Karla
-  static const String karla = 'Karla';
+  /// Font family: Chirp
+  static const String Chirp = 'Chirp';
 
   /// Font family: Readex Pro
   static const String readexPro = 'Readex Pro';

@@ -75,7 +75,7 @@ class _AddWalletAddressViewState extends ConsumerState<AddWalletAddressView> {
             },
             child: Icon(
               Icons.arrow_back_ios,
-              size: 20.sp,
+              size: 20,
               color: Theme.of(context).textTheme.bodyLarge!.color,
             ),
           ),
@@ -83,79 +83,93 @@ class _AddWalletAddressViewState extends ConsumerState<AddWalletAddressView> {
             'Add Wallet Address',
             style: Theme.of(context).textTheme.headlineLarge?.copyWith(
               fontFamily: 'FunnelDisplay',
-              fontSize: 24.sp,
+              fontSize: 24,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           centerTitle: true,
         ),
-        body: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: Text(
-                    "Enter the recipient's wallet address for ${widget.networkName}.",
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w500,
-                      fontFamily: 'Karla',
-                      letterSpacing: -.6,
-                      height: 1.5,
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final bool isWide = constraints.maxWidth > 600;
+            return Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: isWide ? 500 : double.infinity,
+                ),
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.symmetric(horizontal: isWide ? 24 : 18, vertical: 8),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                          child: Text(
+                            "Enter the recipient's wallet address for ${widget.networkName}.",
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Chirp',
+                              letterSpacing: -.25,
+                              height: 1.5,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        SizedBox(height: 32),
+                        CustomTextField(
+                          controller: _walletAddressController,
+                          label: 'Wallet Address',
+                          hintText: 'Enter wallet address',
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Wallet address is required';
+                            }
+                            return null;
+                          },
+                        ),
+                        if (widget.requiresMemo) ...[
+                          SizedBox(height: 24),
+                          CustomTextField(
+                            controller: _memoController,
+                            label: 'Memo',
+                            hintText: 'Enter memo',
+                            validator: (value) {
+                              if (widget.requiresMemo && (value == null || value.trim().isEmpty)) {
+                                return 'Memo is required for this network';
+                              }
+                              return null;
+                            },
+                          ),
+                        ],
+                        SizedBox(height: 32),
+                        PrimaryButton(
+                          text: 'Continue',
+                          onPressed: _onContinue,
+                          enabled: true,
+                          height: 48.0,
+                          backgroundColor: AppColors.purple500,
+                          textColor: AppColors.neutral0,
+                          fontFamily: 'Chirp',
+                          letterSpacing: -.70,
+                          fontSize: 18,
+                          width: double.infinity,
+                          fullWidth: true,
+                          borderRadius: 40,
+                        ),
+                        SizedBox(height: 20),
+                      ],
                     ),
-                    textAlign: TextAlign.center,
                   ),
                 ),
-                SizedBox(height: 32.h),
-                CustomTextField(
-                  controller: _walletAddressController,
-                  label: 'Wallet Address',
-                  hintText: 'Enter wallet address',
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Wallet address is required';
-                    }
-                    return null;
-                  },
-                ),
-                if (widget.requiresMemo) ...[
-                  SizedBox(height: 24.h),
-                  CustomTextField(
-                    controller: _memoController,
-                    label: 'Memo',
-                    hintText: 'Enter memo',
-                    validator: (value) {
-                      if (widget.requiresMemo && (value == null || value.trim().isEmpty)) {
-                        return 'Memo is required for this network';
-                      }
-                      return null;
-                    },
-                  ),
-                ],
-                SizedBox(height: 40.h),
-                PrimaryButton(
-                  text: 'Continue',
-                  onPressed: _onContinue,
-                  enabled: true,
-                  height: 48.0.h,
-                  backgroundColor: AppColors.purple500,
-                  textColor: AppColors.neutral0,
-                  fontFamily: 'Karla',
-                  letterSpacing: -.70,
-                  fontSize: 18,
-                  width: double.infinity,
-                  fullWidth: true,
-                  borderRadius: 40.r,
-                ),
-                SizedBox(height: 20.h),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ),
     );

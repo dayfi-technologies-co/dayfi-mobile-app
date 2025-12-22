@@ -24,26 +24,26 @@ class DeliveryMethodSelectionBottomSheet extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFFF8F6F0), // Light beige background
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20.r),
-          topRight: Radius.circular(20.r),
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
         ),
       ),
       child: Column(
         children: [
           // Handle bar
           Container(
-            margin: EdgeInsets.only(top: 12.h),
-            width: 40.w,
-            height: 4.h,
+            margin: EdgeInsets.only(top: 12),
+            width: 40,
+            height: 4,
             decoration: BoxDecoration(
               color: AppColors.neutral400,
-              borderRadius: BorderRadius.circular(2.r),
+              borderRadius: BorderRadius.circular(2),
             ),
           ),
           
           // Header
           Padding(
-            padding: EdgeInsets.fromLTRB(24.w, 24.h, 16.w, 20.h),
+            padding: EdgeInsets.fromLTRB(24, 24, 16, 20),
             child: Row(
               children: [
                 Expanded(
@@ -52,7 +52,7 @@ class DeliveryMethodSelectionBottomSheet extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: AppTypography.titleLarge.copyWith(
                       fontFamily: 'FunnelDisplay',
-                      fontSize: 14.sp,
+                      fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
@@ -63,7 +63,7 @@ class DeliveryMethodSelectionBottomSheet extends StatelessWidget {
                   icon: Icon(
                     Icons.close,
                     color: AppColors.neutral600,
-                    size: 24.sp,
+                    size: 24,
                   ),
                 ),
               ],
@@ -79,37 +79,37 @@ class DeliveryMethodSelectionBottomSheet extends StatelessWidget {
                       children: [
                         Icon(
                           Icons.inbox_outlined,
-                          size: 56.sp,
+                          size: 56,
                           color: AppColors.neutral400,
                         ),
-                        SizedBox(height: 16.h),
+                        SizedBox(height: 16),
                         Text(
                           'No delivery methods available',
                           style: AppTypography.bodyMedium.copyWith(
                             color: AppColors.neutral600,
-                            fontSize: 14.sp,
+                            fontSize: 14,
                           ),
                         ),
-                        SizedBox(height: 8.h),
+                        SizedBox(height: 8),
                         Text(
                           'Please select a different country',
                           style: AppTypography.bodySmall.copyWith(
                             color: AppColors.neutral400,
-                            fontSize: 12.sp,
+                            fontSize: 12,
                           ),
                         ),
                       ],
                     ),
                   )
                 : ListView.builder(
-                    padding: EdgeInsets.symmetric(horizontal: 18.w),
+                    padding: EdgeInsets.symmetric(horizontal: 18),
                     itemCount: deliveryMethods.length,
                     itemBuilder: (context, index) {
                       final method = deliveryMethods[index];
                       final isSelected = method.id == selectedDeliveryMethodId;
                       
                       return Container(
-                        margin: EdgeInsets.only(bottom: 12.h),
+                        margin: EdgeInsets.only(bottom: 12),
                         child: Material(
                           color: Colors.transparent,
                           child: InkWell(
@@ -117,14 +117,14 @@ class DeliveryMethodSelectionBottomSheet extends StatelessWidget {
                               onDeliveryMethodSelected(method.id ?? '');
                               Navigator.pop(context);
                             },
-                            borderRadius: BorderRadius.circular(12.r),
+                            borderRadius: BorderRadius.circular(12),
                             child: Container(
-                              padding: EdgeInsets.all(16.w),
+                              padding: EdgeInsets.all(16),
                               decoration: BoxDecoration(
                                 color: isSelected 
                                     ? Theme.of(context).colorScheme.primaryContainer 
                                     : AppColors.neutral0,
-                                borderRadius: BorderRadius.circular(12.r),
+                                borderRadius: BorderRadius.circular(12),
                                 border: isSelected 
                                     ? Border.all(color: Theme.of(context).colorScheme.primary, width: 1.5)
                                     : Border.all(color: AppColors.neutral200),
@@ -149,23 +149,23 @@ class DeliveryMethodSelectionBottomSheet extends StatelessWidget {
                                     children: [
                                       // Channel type icon
                                       Container(
-                                        padding: EdgeInsets.all(8.w),
+                                        padding: EdgeInsets.all(8),
                                         decoration: BoxDecoration(
                                           color: isSelected 
                                               ? AppColors.primary100 
                                               : AppColors.neutral100,
-                                          borderRadius: BorderRadius.circular(12.r),
+                                          borderRadius: BorderRadius.circular(12),
                                         ),
                                         child: Icon(
                                           _getChannelTypeIcon(method.channelType),
                                           color: isSelected 
                                               ? AppColors.primary600 
                                               : AppColors.neutral600,
-                                          size: 20.sp,
+                                          size: 20,
                                         ),
                                       ),
                                       
-                                      SizedBox(width: 12.w),
+                                      SizedBox(width: 12),
                                       
                                       // Channel type and status
                                       Expanded(
@@ -175,33 +175,33 @@ class DeliveryMethodSelectionBottomSheet extends StatelessWidget {
                                             Text(
                                               _getChannelTypeName(method.channelType),
                                               style: AppTypography.bodyMedium.copyWith(
-                                                fontFamily: 'Karla',
-                                                fontSize: 14.sp,
+                                                fontFamily: 'Chirp',
+                                                fontSize: 14,
                                                 fontWeight: FontWeight.w600,
                                                 color: isSelected 
                                                     ? AppColors.primary700 
                                                     : Theme.of(context).colorScheme.onSurface,
                                               ),
                                             ),
-                                            SizedBox(height: 2.h),
+                                            SizedBox(height: 2),
                                             Row(
                                               children: [
                                                 Container(
                                                   padding: EdgeInsets.symmetric(
-                                                    horizontal: 6.w,
-                                                    vertical: 2.h,
+                                                    horizontal: 6,
+                                                    vertical: 2,
                                                   ),
                                                   decoration: BoxDecoration(
                                                     color: method.status == 'active' 
                                                         ? AppColors.success100 
                                                         : AppColors.error100,
-                                                    borderRadius: BorderRadius.circular(4.r),
+                                                    borderRadius: BorderRadius.circular(4),
                                                   ),
                                                   child: Text(
                                                     method.status?.toUpperCase() ?? 'UNKNOWN',
                                                     style: AppTypography.bodySmall.copyWith(
-                                                      fontFamily: 'Karla',
-                                                      fontSize: 10.sp,
+                                                      fontFamily: 'Chirp',
+                                                      fontSize: 10,
                                                       fontWeight: FontWeight.w600,
                                                       color: method.status == 'active' 
                                                           ? AppColors.success700 
@@ -209,20 +209,20 @@ class DeliveryMethodSelectionBottomSheet extends StatelessWidget {
                                                     ),
                                                   ),
                                                 ),
-                                                SizedBox(width: 8.w),
+                                                SizedBox(width: 8),
                                                 Text(
                                                   '•',
                                                   style: TextStyle(
                                                     color: AppColors.neutral400,
-                                                    fontSize: 12.sp,
+                                                    fontSize: 12,
                                                   ),
                                                 ),
-                                                SizedBox(width: 8.w),
+                                                SizedBox(width: 8),
                                                 Text(
                                                   method.rampType?.toUpperCase() ?? '',
                                                   style: AppTypography.bodySmall.copyWith(
-                                                    fontFamily: 'Karla',
-                                                    fontSize: 10.sp,
+                                                    fontFamily: 'Chirp',
+                                                    fontSize: 10,
                                                     color: AppColors.neutral600,
                                                   ),
                                                 ),
@@ -238,14 +238,14 @@ class DeliveryMethodSelectionBottomSheet extends StatelessWidget {
                                       SvgPicture.asset(
                 'assets/icons/svgs/circle-check.svg',
                 color: AppColors.purple500ForTheme(context),
-                height: 24.sp,
-                width: 24.sp,
+                height: 24,
+                width: 24,
               ),
                                         
                                     ],
                                   ),
                                   
-                                  SizedBox(height: 12.h),
+                                  SizedBox(height: 12),
                                   
                                   // Additional details
                                   Row(
@@ -258,7 +258,7 @@ class DeliveryMethodSelectionBottomSheet extends StatelessWidget {
                                           context: context,
                                         ),
                                       ),
-                                      SizedBox(width: 16.w),
+                                      SizedBox(width: 16),
                                       Expanded(
                                         child: _buildDetailItem(
                                           'Max Amount',
@@ -271,7 +271,7 @@ class DeliveryMethodSelectionBottomSheet extends StatelessWidget {
                                   ),
                                   
                                   if (method.feeLocal != null && method.feeLocal! > 0) ...[
-                                    SizedBox(height: 8.h),
+                                    SizedBox(height: 8),
                                     _buildDetailItem( 
                                       'Fee',
                                       '${method.currency} ${method.feeLocal!.toStringAsFixed(2)}',
@@ -281,7 +281,7 @@ class DeliveryMethodSelectionBottomSheet extends StatelessWidget {
                                   ],
                                   
                                   if (method.estimatedSettlementTime != null) ...[
-                                    SizedBox(height: 8.h),
+                                    SizedBox(height: 8),
                                     _buildDetailItem(
                                       'Settlement Time',
                                       '${method.estimatedSettlementTime} minutes',
@@ -310,20 +310,20 @@ class DeliveryMethodSelectionBottomSheet extends StatelessWidget {
         Text(
           label,
           style: AppTypography.bodySmall.copyWith(
-            fontFamily: 'Karla',
-            fontSize: 10.sp,
+            fontFamily: 'Chirp',
+            fontSize: 10,
             color: isSelected 
                 ? AppColors.primary600 
                 : AppColors.neutral400,
             fontWeight: FontWeight.w500,
           ),
         ),
-        SizedBox(height: 2.h),
+        SizedBox(height: 2),
         Text(
           value,
           style: AppTypography.bodySmall.copyWith(
-            fontFamily: 'Karla',
-            fontSize: 12.sp,
+            fontFamily: 'Chirp',
+            fontSize: 12,
             color: isSelected 
                 ? AppColors.primary700 
                 : Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(.85),

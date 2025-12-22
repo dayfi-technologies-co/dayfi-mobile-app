@@ -65,7 +65,7 @@ class _AccountLimitsViewState extends ConsumerState<AccountLimitsView> {
           onPressed: () => appRouter.pop(),
           icon: Icon(
             Icons.arrow_back_ios,
-            size: 20.sp,
+            size: 20,
             color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
@@ -73,45 +73,54 @@ class _AccountLimitsViewState extends ConsumerState<AccountLimitsView> {
           "Account Limits",
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
             fontFamily: 'FunnelDisplay',
-            fontSize: 24.sp,
+            fontSize: 24,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
       ),
-      body: SafeArea(
-        bottom: false,
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 16.h),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Tier 1 Card
-              _buildTierCard(
-                tier: KycTier.tier1,
-                isCurrentTier: userTier == KycTier.tier1,
-                isCompleted: true, // Tier 1 is always completed
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final bool isWide = constraints.maxWidth > 600;
+          return Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: isWide ? 500 : double.infinity,
               ),
-              SizedBox(height: 20.h),
+              child: SafeArea(
+                bottom: false,
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isWide ? 24 : 18,
+                    vertical: 16,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Tier 1 Card
+                      _buildTierCard(
+                        tier: KycTier.tier1,
+                        isCurrentTier: userTier == KycTier.tier1,
+                        isCompleted: true, // Tier 1 is always completed
+                      ),
+                      SizedBox(height: 20),
 
-              // Tier 2 Card
-              _buildTierCard(
-                tier: KycTier.tier2,
-                isCurrentTier: userTier == KycTier.tier2,
-                isCompleted: (userTier.level) >= 2,
+                      // Tier 2 Card
+                      _buildTierCard(
+                        tier: KycTier.tier2,
+                        isCurrentTier: userTier == KycTier.tier2,
+                        isCompleted: (userTier.level) >= 2,
+                      ),
+                      SizedBox(height: 20),
+
+                      SizedBox(height: 50),
+                    ],
+                  ),
+                ),
               ),
-              SizedBox(height: 20.h),
-
-              // Tier 3 Card (optional, uncomment if needed)
-              // _buildTierCard(
-              //   tier: KycTier.tier3,
-              //   isCurrentTier: userTier == KycTier.tier3,
-              //   isCompleted: (userTier.level) >= 3,
-              // ),
-              SizedBox(height: 50.h),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -127,10 +136,10 @@ class _AccountLimitsViewState extends ConsumerState<AccountLimitsView> {
 
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
             color: AppColors.neutral500.withOpacity(0.065),
@@ -146,8 +155,8 @@ class _AccountLimitsViewState extends ConsumerState<AccountLimitsView> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Image.asset(tierInfo.icon, height: 40.h),
-              SizedBox(width: 12.w),
+              Image.asset(tierInfo.icon, height: 40),
+              SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -159,7 +168,7 @@ class _AccountLimitsViewState extends ConsumerState<AccountLimitsView> {
                           tierInfo.title,
                           style: AppTypography.titleMedium.copyWith(
                             fontFamily: 'FunnelDisplay',
-                            fontSize: 14.sp,
+                            fontSize: 14,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -170,16 +179,18 @@ class _AccountLimitsViewState extends ConsumerState<AccountLimitsView> {
                           ),
                       ],
                     ),
-                    SizedBox(height: 8.h),
+                    SizedBox(height: 8),
                     Text(
                       tierInfo.description,
                       style: AppTypography.bodyMedium.copyWith(
-                        fontFamily: 'Karla',
-                        letterSpacing: -.6,
-                        fontSize: 14.sp,
-                        height: 1.4,
+                        fontFamily: 'Chirp',
+                        letterSpacing: -.25,
+                        fontSize: 14,
+                        height: 1.2,
                         fontWeight: FontWeight.w500,
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.6),
                       ),
                     ),
                     // Show Increase limit button for Tier 1 if it's the current tier
@@ -192,13 +203,13 @@ class _AccountLimitsViewState extends ConsumerState<AccountLimitsView> {
                           );
                         },
                         child: Container(
-                          padding: EdgeInsets.only(top: 10.h),
+                          padding: EdgeInsets.only(top: 10),
                           child: Text(
                             "Increase limit",
                             style: AppTypography.bodyMedium.copyWith(
-                              fontFamily: 'Karla',
-                              fontSize: 16.sp,
-                              letterSpacing: -.6,
+                              fontFamily: 'Chirp',
+                              fontSize: 16,
+                              letterSpacing: -.25,
                               fontWeight: FontWeight.w600,
                               color: AppColors.purple500ForTheme(context),
                             ),

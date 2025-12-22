@@ -178,7 +178,7 @@ class WalletService {
     }
   }
 
-  /// Get unique DayFi IDs from transaction history
+  /// Get unique Dayfi Tags from transaction history
   Future<List<String>> getUniqueDayfiIds() async {
     try {
       final response = await getWalletTransactions(
@@ -206,7 +206,7 @@ class WalletService {
 
       return uniqueDayfiIds.toList();
     } catch (e) {
-      throw Exception('Failed to fetch DayFi IDs: $e');
+      throw Exception('Failed to fetch Dayfi Tags: $e');
     }
   }
 }

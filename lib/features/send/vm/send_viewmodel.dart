@@ -44,6 +44,7 @@ class SendState {
   final Map<String, dynamic>? receiveCurrencyRates;
   final bool isRatesLoading;
   final bool showRatesLoading;
+  final bool hasValidRates;
   final FeesData? feesData;
 
   const SendState({
@@ -70,6 +71,7 @@ class SendState {
     this.receiveCurrencyRates,
     this.isRatesLoading = false,
     this.showRatesLoading = false,
+    this.hasValidRates = true,
     this.feesData,
   });
 
@@ -97,6 +99,7 @@ class SendState {
     Map<String, dynamic>? receiveCurrencyRates,
     bool? isRatesLoading,
     bool? showRatesLoading,
+    bool? hasValidRates,
     FeesData? feesData,
   }) {
     return SendState(
@@ -127,6 +130,7 @@ class SendState {
       receiveCurrencyRates: receiveCurrencyRates ?? this.receiveCurrencyRates,
       isRatesLoading: isRatesLoading ?? this.isRatesLoading,
       showRatesLoading: showRatesLoading ?? this.showRatesLoading,
+      hasValidRates: hasValidRates ?? this.hasValidRates,
       feesData: feesData ?? this.feesData,
     );
   }
@@ -141,6 +145,11 @@ class SendViewModel extends StateNotifier<SendState> {
   static DateTime? _channelsCacheTime;
   static DateTime? _networksCacheTime;
   static const Duration _cacheValidityDuration = Duration(minutes: 5);
+
+  // Rate caching to minimize API calls
+  static final Map<String, Map<String, dynamic>> _cachedRates = {};
+  static final Map<String, DateTime> _ratesCacheTime = {};
+  static const Duration _ratesCacheValidityDuration = Duration(minutes: 2);
 
   // Debouncing mechanism for loading states
   Timer? _loadingDebounceTimer;
@@ -180,9 +189,24 @@ class SendViewModel extends StateNotifier<SendState> {
     final hasExistingAmounts =
         existingSendAmount.isNotEmpty || existingReceiveAmount.isNotEmpty;
 
+    // Preserve existing receiver country/currency during initialization
+    final existingReceiverCountry = state.receiverCountry;
+    final existingReceiverCurrency = state.receiverCurrency;
+    final existingDeliveryMethod = state.selectedDeliveryMethod;
+    final hasExistingReceiver =
+        existingReceiverCountry.isNotEmpty &&
+        existingReceiverCountry != 'NG' &&
+        existingReceiverCurrency.isNotEmpty &&
+        existingReceiverCurrency != 'NGN';
+
     AppLogger.debug(
       '💰 Preserving amounts: send=$existingSendAmount, receive=$existingReceiveAmount',
     );
+    if (hasExistingReceiver) {
+      AppLogger.debug(
+        '🌍 Preserving receiver: country=$existingReceiverCountry, currency=$existingReceiverCurrency, method=$existingDeliveryMethod',
+      );
+    }
 
     // Initialize any required data
     state = state.copyWith(isLoading: true);
@@ -207,6 +231,18 @@ class SendViewModel extends StateNotifier<SendState> {
         state = state.copyWith(
           sendAmount: existingSendAmount,
           receiverAmount: existingReceiveAmount,
+        );
+      }
+
+      // Restore receiver country/currency after initialization if they existed
+      if (hasExistingReceiver) {
+        AppLogger.debug(
+          '♻️ Restoring preserved receiver: country=$existingReceiverCountry, currency=$existingReceiverCurrency, method=$existingDeliveryMethod',
+        );
+        state = state.copyWith(
+          receiverCountry: existingReceiverCountry,
+          receiverCurrency: existingReceiverCurrency,
+          selectedDeliveryMethod: existingDeliveryMethod,
         );
       }
 
@@ -270,8 +306,21 @@ class SendViewModel extends StateNotifier<SendState> {
     // Set default send currency to NGN
     await _setDefaultSendCurrency('NG', 'NGN');
 
-    // Set default receive currency to NG-NGN
-    await _setDefaultReceiveCurrency('NG', 'NGN');
+    // Only set default receive currency if not already set (preserve explicitly set values)
+    final hasExistingReceiver =
+        state.receiverCountry.isNotEmpty &&
+        state.receiverCountry != 'NG' &&
+        state.receiverCurrency.isNotEmpty &&
+        state.receiverCurrency != 'NGN';
+
+    if (!hasExistingReceiver) {
+      // Set default receive currency to NG-NGN only if no receiver is set
+      await _setDefaultReceiveCurrency('NG', 'NGN');
+    } else {
+      AppLogger.debug(
+        'Preserving existing receiver: ${state.receiverCountry} - ${state.receiverCurrency}',
+      );
+    }
 
     // Set default sender channel ID
     _setDefaultSenderChannelId();
@@ -352,20 +401,20 @@ class SendViewModel extends StateNotifier<SendState> {
               .toSet()
               .toList();
 
-    // For NGN to NGN transfers, always prioritize DayFi Tag
-    final isNgnToNgn = state.sendCurrency == 'NGN' && currency == 'NGN';
-    if (isNgnToNgn) {
-      // Only set to DayFi Tag if no delivery method is selected yet
-      if (state.selectedDeliveryMethod.isEmpty) {
-        firstDeliveryMethod = 'dayfi_tag';
+      // For NGN to NGN transfers, always prioritize Dayfi Tag
+      final isNgnToNgn = state.sendCurrency == 'NGN' && currency == 'NGN';
+      if (isNgnToNgn) {
+        // Only set to Dayfi Tag if no delivery method is selected yet
+        if (state.selectedDeliveryMethod.isEmpty) {
+          firstDeliveryMethod = 'dayfi_tag';
+        }
+      } else {
+        // Otherwise, sort alphabetically and use first
+        channelTypes.sort();
+        firstDeliveryMethod = channelTypes.first;
       }
     } else {
-      // Otherwise, sort alphabetically and use first
-      channelTypes.sort();
-      firstDeliveryMethod = channelTypes.first;
-    }
-    } else {
-      // Even if no channels available, for NGN to NGN, default to DayFi Tag only if not already selected
+      // Even if no channels available, for NGN to NGN, default to Dayfi Tag only if not already selected
       final isNgnToNgn = state.sendCurrency == 'NGN' && currency == 'NGN';
       if (isNgnToNgn && state.selectedDeliveryMethod.isEmpty) {
         firstDeliveryMethod = 'dayfi_tag';
@@ -623,35 +672,29 @@ class SendViewModel extends StateNotifier<SendState> {
     AppLogger.debug(
       '🔄 _calculateFee called, feesData is null: ${state.feesData == null}',
     );
-    if (state.feesData == null) {
-      AppLogger.debug('No fees data available, keeping default fee');
-      return;
-    }
 
     String fee = '0.00';
 
-    // Determine fee based on delivery method and recipient country
-    final isDayfiTag =
-        state.selectedDeliveryMethod.toLowerCase() == 'dayfi_tag';
-    final isNigerianRecipient = state.receiverCountry.toUpperCase() == 'NG';
+    // Determine fee based on delivery method
+    final deliveryMethod = state.selectedDeliveryMethod.toLowerCase();
+    final isDayfiTagOrId =
+        deliveryMethod == 'dayfi_tag' ||
+        deliveryMethod == 'dayfi_id' ||
+        deliveryMethod == 'dayfi' ||
+        deliveryMethod.contains('dayfi');
+
     AppLogger.debug(
-      'Calculating fee for delivery method: "${state.selectedDeliveryMethod}", recipient country: "${state.receiverCountry}", isDayfiTag: $isDayfiTag, isNigerian: $isNigerianRecipient',
+      'Calculating fee for delivery method: "${state.selectedDeliveryMethod}", isDayfiTagOrId: $isDayfiTagOrId',
     );
 
-
-
-    if (isDayfiTag) {
-      // DayFi Tag transfers use transfer.dayfi_to_dayfi
-      fee = state.feesData!.transfer.dayfiToDayfi.toString();
-      AppLogger.debug('DayFi Tag transfer - fee: ₦$fee');
-    } else if (isNigerianRecipient) {
-      // Nigerian recipient (bank transfer) - use transfer.dayfi_to_bank
-      fee = state.feesData!.transfer.dayfiToBank.toString();
-      AppLogger.debug('Nigerian recipient - fee: ₦$fee');
+    if (isDayfiTagOrId) {
+      // Dayfi Tag/ID transfers are FREE (0 naira)
+      fee = '0.00';
+      AppLogger.debug('Dayfi Tag/ID transfer - fee: ₦$fee (FREE)');
     } else {
-      // International recipient - use withdrawal.international
-      fee = state.feesData!.withdrawal.international.toString();
-      AppLogger.debug('International recipient - fee: ₦$fee');
+      // All other delivery methods (bank transfer, mobile money, etc.) - 25 naira
+      fee = '25.00';
+      AppLogger.debug('Other delivery method - fee: ₦$fee');
     }
 
     state = state.copyWith(fee: fee);
@@ -672,7 +715,7 @@ class SendViewModel extends StateNotifier<SendState> {
             .toList()
           ..sort();
 
-    // Add synthetic DayFi Tag channel for NGN
+    // Add synthetic Dayfi Tag channel for NGN
     final hasDayfiTag = channels.any(
       (c) => c.channelType?.toLowerCase() == 'dayfi_tag',
     );
@@ -754,14 +797,17 @@ class SendViewModel extends StateNotifier<SendState> {
     }
 
     // Check if we need to update recipient delivery method for NGN to NGN
+    // Only set default if no delivery method is already selected
     String? updatedRecipientDeliveryMethod;
     final isNgnToNgn = currency == 'NGN' && state.receiverCurrency == 'NGN';
 
-    if (isNgnToNgn && state.receiverCountry.isNotEmpty) {
-      // Always set DayFi Tag for NGN to NGN transfers
+    if (isNgnToNgn &&
+        state.receiverCountry.isNotEmpty &&
+        state.selectedDeliveryMethod.isEmpty) {
+      // Only set Dayfi Tag for NGN to NGN transfers if no method is already selected
       updatedRecipientDeliveryMethod = 'dayfi_tag';
       AppLogger.debug(
-        '🔄 NGN to NGN detected in updateSendCountry, setting DayFi Tag',
+        '🔄 NGN to NGN detected in updateSendCountry, setting Dayfi Tag (no method selected)',
       );
     }
 
@@ -825,25 +871,28 @@ class SendViewModel extends StateNotifier<SendState> {
               .toList();
 
       if (channelTypes.isNotEmpty) {
-        // For NGN to NGN transfers, always prioritize DayFi Tag
+        // For NGN to NGN transfers, prioritize Dayfi Tag only if no method selected
         final isNgnToNgn = state.sendCurrency == 'NGN' && currency == 'NGN';
-        if (isNgnToNgn) {
-          // Always select DayFi Tag for NGN to NGN, even if not in API channels
+        if (isNgnToNgn && state.selectedDeliveryMethod.isEmpty) {
+          // Only select Dayfi Tag for NGN to NGN if no method is already selected
           firstDeliveryMethod = 'dayfi_tag';
-          AppLogger.debug('🔄 NGN to NGN detected, selecting DayFi Tag');
-        } else {
-          // Otherwise, sort alphabetically and use first
+          AppLogger.debug(
+            '🔄 NGN to NGN detected, selecting Dayfi Tag (no method selected)',
+          );
+        } else if (!isNgnToNgn) {
+          // For non-NGN to NGN, sort alphabetically and use first
           channelTypes.sort();
           firstDeliveryMethod = channelTypes.first;
         }
+        // If isNgnToNgn and a method is already selected, don't override it
       }
     } else {
-      // Even if no channels available, for NGN to NGN, default to DayFi Tag
+      // Even if no channels available, for NGN to NGN, default to Dayfi Tag only if not selected
       final isNgnToNgn = state.sendCurrency == 'NGN' && currency == 'NGN';
-      if (isNgnToNgn) {
+      if (isNgnToNgn && state.selectedDeliveryMethod.isEmpty) {
         firstDeliveryMethod = 'dayfi_tag';
         AppLogger.debug(
-          '🔄 NGN to NGN detected, no channels but selecting DayFi Tag',
+          '🔄 NGN to NGN detected, no channels but selecting Dayfi Tag (no method selected)',
         );
       }
     }
@@ -851,7 +900,8 @@ class SendViewModel extends StateNotifier<SendState> {
     state = state.copyWith(
       receiverCountry: normalizedCountry,
       receiverCurrency: currency,
-      selectedDeliveryMethod: firstDeliveryMethod ?? '',
+      selectedDeliveryMethod:
+          firstDeliveryMethod ?? state.selectedDeliveryMethod,
     );
 
     // Recalculate fee based on new delivery method
@@ -1069,7 +1119,7 @@ class SendViewModel extends StateNotifier<SendState> {
     const hardMaximumLimit = 5000000.0;
 
     if (state.selectedDeliveryMethod.toLowerCase() == 'dayfi_tag') {
-      // Dayfi tag has a hard minimum of 1000 NGN
+      // Dayfi Tag has a hard minimum of 1000 NGN
       const dayfiTagMinimum = 1000.0;
       if (sendAmount < dayfiTagMinimum || sendAmount > hardMaximumLimit) {
         return false;
@@ -1201,10 +1251,13 @@ class SendViewModel extends StateNotifier<SendState> {
 
       AppLogger.warning('❌ Rates not available: $displayText');
 
-      if (state.exchangeRate != displayText) {
-        state = state.copyWith(exchangeRate: displayText);
-        // Don't update amounts when rates aren't available
-        state = state.copyWith(receiverAmount: '');
+      if (state.exchangeRate != displayText || state.hasValidRates) {
+        state = state.copyWith(
+          exchangeRate: displayText,
+          hasValidRates: false,
+          // Don't update amounts when rates aren't available
+          receiverAmount: '',
+        );
       }
       return;
     }
@@ -1242,8 +1295,8 @@ class SendViewModel extends StateNotifier<SendState> {
       AppLogger.debug('📊 Exchange rate display: $displayText');
 
       // Only update if the exchange rate has actually changed
-      if (state.exchangeRate != displayText) {
-        state = state.copyWith(exchangeRate: displayText);
+      if (state.exchangeRate != displayText || !state.hasValidRates) {
+        state = state.copyWith(exchangeRate: displayText, hasValidRates: true);
         // Update amounts when exchange rate changes
         _updateReceiveAmountFromSend();
       }
@@ -1256,10 +1309,13 @@ class SendViewModel extends StateNotifier<SendState> {
           state.receiveCurrencyRates?['code'] ?? state.receiverCurrency;
       final displayText = 'Not available for $sendCode to $receiveCode';
 
-      if (state.exchangeRate != displayText) {
-        state = state.copyWith(exchangeRate: displayText);
-        // Don't update amounts when rates aren't available
-        state = state.copyWith(receiverAmount: '');
+      if (state.exchangeRate != displayText || state.hasValidRates) {
+        state = state.copyWith(
+          exchangeRate: displayText,
+          hasValidRates: false,
+          // Don't update amounts when rates aren't available
+          receiverAmount: '',
+        );
       }
     }
   }
@@ -1296,6 +1352,22 @@ class SendViewModel extends StateNotifier<SendState> {
     try {
       AppLogger.debug('Fetching rates for currency: $currency');
 
+      // Check cache first
+      if (_cachedRates.containsKey(currency) &&
+          _ratesCacheTime.containsKey(currency) &&
+          DateTime.now().difference(_ratesCacheTime[currency]!) <
+              _ratesCacheValidityDuration) {
+        AppLogger.debug('Using cached rates for $currency');
+        final cachedRateData = _cachedRates[currency]!;
+
+        if (currency == state.sendCurrency) {
+          state = state.copyWith(sendCurrencyRates: cachedRateData);
+        } else if (currency == state.receiverCurrency) {
+          state = state.copyWith(receiveCurrencyRates: cachedRateData);
+        }
+        return;
+      }
+
       final response = await _paymentService.fetchRates(currency: currency);
 
       AppLogger.debug('Rates response status: ${response.statusCode}');
@@ -1322,6 +1394,10 @@ class SendViewModel extends StateNotifier<SendState> {
                 hasValidRates, // Flag to indicate if rates are valid
           };
 
+          // Cache the rate data
+          _cachedRates[currency] = rateData;
+          _ratesCacheTime[currency] = DateTime.now();
+
           AppLogger.debug(
             'Updated rate data for $currency - hasValidRates: $hasValidRates',
           );
@@ -1345,6 +1421,10 @@ class SendViewModel extends StateNotifier<SendState> {
             'updatedAt': '',
             'hasValidRates': false,
           };
+
+          // Cache even empty rates to prevent repeated failed calls
+          _cachedRates[currency] = rateData;
+          _ratesCacheTime[currency] = DateTime.now();
 
           if (currency == state.sendCurrency) {
             state = state.copyWith(sendCurrencyRates: rateData);

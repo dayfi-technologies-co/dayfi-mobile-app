@@ -15,27 +15,28 @@ class NotificationsView extends ConsumerStatefulWidget {
 }
 
 class _NotificationsViewState extends ConsumerState<NotificationsView> {
-    /// Format currency amount with commas
-    String _formatAmount(String message) {
-      final regex = RegExp(r'(NGN|USD|EUR|GBP)\s*(\d+)');
-      return message.replaceAllMapped(regex, (match) {
-        final currency = match.group(1);
-        final amount = match.group(2);
-        if (amount == null) return match.group(0) ?? '';
-        final formatted = _addCommas(amount);
-        return '$currency $formatted';
-      });
-    }
+  /// Format currency amount with commas
+  String _formatAmount(String message) {
+    final regex = RegExp(r'(NGN|USD|EUR|GBP)\s*(\d+)');
+    return message.replaceAllMapped(regex, (match) {
+      final currency = match.group(1);
+      final amount = match.group(2);
+      if (amount == null) return match.group(0) ?? '';
+      final formatted = _addCommas(amount);
+      return '$currency $formatted';
+    });
+  }
 
-    String _addCommas(String amount) {
-      if (amount.isEmpty) return amount;
-      final numValue = int.tryParse(amount);
-      if (numValue == null) return amount;
-      return numValue.toString().replaceAllMapped(
-        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-        (Match m) => '${m[1]},',
-      );
-    }
+  String _addCommas(String amount) {
+    if (amount.isEmpty) return amount;
+    final numValue = int.tryParse(amount);
+    if (numValue == null) return amount;
+    return numValue.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match m) => '${m[1]},',
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -142,20 +143,20 @@ class _NotificationsViewState extends ConsumerState<NotificationsView> {
             children: [
               SvgPicture.asset(
                 "assets/icons/svgs/notificationn.svg",
-                height: 40.sp,
+                height: 40,
                 color: Theme.of(context).colorScheme.surface,
               ),
               SizedBox(
-                height: 40.sp,
-                width: 40.sp,
+                height: 40,
+                width: 40,
                 child: Center(
                   child: Padding(
                     padding: const EdgeInsets.only(left: 8.0),
                     child: Icon(
                       Icons.arrow_back_ios,
-                      size: 20.sp,
+                      size: 20,
                       color: Theme.of(context).textTheme.bodyLarge!.color,
-                      // size: 20.sp,
+                      // size: 20,
                     ),
                   ),
                 ),
@@ -167,7 +168,7 @@ class _NotificationsViewState extends ConsumerState<NotificationsView> {
           "Notifications",
           style: Theme.of(context).textTheme.headlineLarge?.copyWith(
             fontFamily: 'FunnelDisplay',
-            fontSize: 24.sp,
+            fontSize: 24,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,
           ),
@@ -176,7 +177,7 @@ class _NotificationsViewState extends ConsumerState<NotificationsView> {
         // actions: [
         //   if (notifications.any((n) => !n.isRead))
         //     Padding(
-        //       padding: EdgeInsets.only(right: 16.w),
+        //       padding: EdgeInsets.only(right: 16),
         //       child: HelpButton(
         //         onTap: _markAllAsRead,
         //         text: "Read All",
@@ -186,30 +187,59 @@ class _NotificationsViewState extends ConsumerState<NotificationsView> {
         // ],
       ),
 
-      body:
-          isLoading
-              ? _buildLoadingState()
-              : errorMessage != null
-              ? _buildErrorState(errorMessage)
-              : notifications.isEmpty
-              ? _buildEmptyState()
-              : RefreshIndicator(
-                onRefresh: () async {
-                  await ref
-                      .read(notificationsProvider.notifier)
-                      .loadNotifications();
-                },
-                child: ListView.builder(
-                  padding: EdgeInsets.symmetric(horizontal: 18.w),
-                  itemCount: sortedDates.length,
-                  itemBuilder: (context, index) {
-                    final date = sortedDates[index];
-                    final notificationsForDate = groupedNotifications[date]!;
-
-                    return _buildNotificationGroup(date, notificationsForDate);
-                  },
-                ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final bool isWide = constraints.maxWidth > 600;
+          return Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: isWide ? 500 : double.infinity,
               ),
+              child:
+                  isLoading
+                      ? _buildLoadingState()
+                      : errorMessage != null
+                      ? _buildErrorState(errorMessage)
+                      : notifications.isEmpty
+                      ? _buildEmptyState()
+                      : CustomScrollView(
+                        physics: const BouncingScrollPhysics(
+                          parent: AlwaysScrollableScrollPhysics(),
+                        ),
+                        slivers: [
+                          CupertinoSliverRefreshControl(
+                            onRefresh: () async {
+                              await ref
+                                  .read(notificationsProvider.notifier)
+                                  .loadNotifications();
+                            },
+                          ),
+                          SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                final date = sortedDates[index];
+                                final notificationsForDate =
+                                    groupedNotifications[date]!;
+
+                                return Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: isWide ? 24 : 18,
+                                  ),
+                                  child: _buildNotificationGroup(
+                                    date,
+                                    notificationsForDate,
+                                  ),
+                                );
+                              },
+                              childCount: sortedDates.length,
+                            ),
+                          ),
+                        ],
+                      ),
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -222,14 +252,14 @@ class _NotificationsViewState extends ConsumerState<NotificationsView> {
       children: [
         // Date Header
         // Padding(
-        //   padding: EdgeInsets.only(bottom: 8.h, top: 16.h),
+        //   padding: EdgeInsets.only(bottom: 8, top: 16),
         //   child: Text(
         //     date,
         //     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-        //       fontFamily: 'Karla',
+        //       fontFamily: 'Chirp',
         //       fontSize: 14,
         //       fontWeight: FontWeight.w500,
-        //       letterSpacing: -.6,
+        //       letterSpacing: -.25,
         //       height: 1.450,
         //       color: Theme.of(
         //         context,
@@ -239,14 +269,14 @@ class _NotificationsViewState extends ConsumerState<NotificationsView> {
         // ),
 
         // to be removed: date header above
-        SizedBox(height: 8.h),
+        SizedBox(height: 8),
 
         // Notifications for this date
         Container(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(12.r),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
             children: [
@@ -269,25 +299,25 @@ class _NotificationsViewState extends ConsumerState<NotificationsView> {
         children: [
           Icon(
             Icons.notifications_none,
-            size: 80.sp,
+            size: 80,
             color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
           ),
-          SizedBox(height: 24.h),
+          SizedBox(height: 24),
           Text(
             'No notifications yet',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontFamily: 'FunnelDisplay',
-              fontSize: 20.sp,
+              fontSize: 20,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
             ),
           ),
-          SizedBox(height: 8.h),
+          SizedBox(height: 8),
           Text(
             'You\'ll see important updates here',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              fontFamily: 'Karla',
-              fontSize: 16.sp,
+              fontFamily: 'Chirp',
+              fontSize: 16,
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
             ),
           ),
@@ -307,30 +337,30 @@ class _NotificationsViewState extends ConsumerState<NotificationsView> {
         children: [
           Icon(
             Icons.error_outline,
-            size: 80.sp,
+            size: 80,
             color: Theme.of(context).colorScheme.error,
           ),
-          SizedBox(height: 24.h),
+          SizedBox(height: 24),
           Text(
             'Failed to load notifications',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontFamily: 'FunnelDisplay',
-              fontSize: 20.sp,
+              fontSize: 20,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
             ),
           ),
-          SizedBox(height: 8.h),
+          SizedBox(height: 8),
           Text(
             errorMessage,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              fontFamily: 'Karla',
-              fontSize: 16.sp,
+              fontFamily: 'Chirp',
+              fontSize: 16,
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
             ),
           ),
-          SizedBox(height: 24.h),
+          SizedBox(height: 24),
           ElevatedButton(
             onPressed: () {
               ref.read(notificationsProvider.notifier).loadNotifications();
@@ -346,8 +376,8 @@ class _NotificationsViewState extends ConsumerState<NotificationsView> {
     NotificationItem notification, {
     double bottomMargin = 24,
   }) {
-
-    final formattedMessage = '${_formatAmount(notification.message.replaceAll('.', ''))}.';
+    final formattedMessage =
+        '${_formatAmount(notification.message.replaceAll('.', ''))}.';
     return InkWell(
       onTap: () {
         if (!notification.isRead) {
@@ -356,29 +386,29 @@ class _NotificationsViewState extends ConsumerState<NotificationsView> {
         // Handle notification tap (e.g., navigate to relevant screen)
       },
       child: Container(
-        margin: EdgeInsets.only(bottom: bottomMargin.h, top: 8.h),
+        margin: EdgeInsets.only(bottom: bottomMargin, top: 8),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             // Notification Icon
             Container(
-              width: 40.w,
-              height: 40.w,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 color: _getNotificationColor(
                   notification.type,
                 ).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12.r),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
                 child: Text(
                   notification.type.emoji,
-                  style: TextStyle(fontSize: 24.sp),
+                  style: TextStyle(fontSize: 24),
                 ),
               ),
             ),
-            SizedBox(width: 16.w),
+            SizedBox(width: 16),
 
             // Notification Info
             Expanded(
@@ -389,21 +419,21 @@ class _NotificationsViewState extends ConsumerState<NotificationsView> {
                   Text(
                     notification.title,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontFamily: 'Karla',
-                      fontSize: 16.sp,
-                      letterSpacing: -.6,
+                      fontFamily: 'Chirp',
+                      fontSize: 16,
+                      letterSpacing: -.25,
                       fontWeight: FontWeight.w500,
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                  SizedBox(height: 6.h),
+                  SizedBox(height: 6),
                   Text(
                     formattedMessage,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontFamily: 'Karla',
+                      fontFamily: 'Chirp',
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      letterSpacing: -.6,
+                      letterSpacing: -.25,
                       height: 1.450,
                       color: Theme.of(
                         context,
@@ -412,15 +442,15 @@ class _NotificationsViewState extends ConsumerState<NotificationsView> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  // SizedBox(height: 4.h),
+                  // SizedBox(height: 4),
                   // Align(
                   //   alignment: Alignment.centerRight,
                   //   child: Text(
                   //     _formatTime(notification.timestamp),
                   //     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  //       fontFamily: 'Karla',
+                  //       fontFamily: 'Chirp',
                   //       fontWeight: FontWeight.w500,
-                  //       fontSize: 12.sp,
+                  //       fontSize: 12,
                   //     ),
                   //   ),
                   // ),
@@ -431,8 +461,8 @@ class _NotificationsViewState extends ConsumerState<NotificationsView> {
             // Read status indicator
             if (!notification.isRead)
               Container(
-                width: 8.w,
-                height: 8.w,
+                width: 8,
+                height: 8,
                 decoration: BoxDecoration(
                   color: AppColors.purple500ForTheme(context),
                   shape: BoxShape.circle,

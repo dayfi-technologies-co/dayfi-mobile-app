@@ -17,117 +17,141 @@ class DayfiTagExplanationView extends ConsumerWidget {
       child: Scaffold(
         backgroundColor: AppColors.purple500,
         body: SafeArea(
-            bottom: false,
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    SizedBox(height: 24.h, width: 24.w),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pop(context);
-                      },
-                      child: Image.asset(
-                        "assets/icons/pngs/cancelicon.png",
-                        height: 24.h,
-                        width: 24.w,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 40.h),
-
-                Stack(
-                  alignment: AlignmentDirectional.center,
-
-                  children: [
-                    SvgPicture.asset(
-                      'assets/icons/svgs/at.svg',
-                      height: MediaQuery.of(context).size.width * 0.5,
-                      width: MediaQuery.of(context).size.width * 0.5,
-                      color: AppColors.warning500,
-                    ),
-                    // Text(
-                    //   '@',
-                    //   style: TextStyle(
-                    //  fontFamily: 'FunnelDisplay',
-                    //     fontSize: MediaQuery.of(context).size.width * 0.3,
-                    //     fontWeight: FontWeight.w600,
-                    //     color: AppColors.error500,
-                    //   ),
-                    // ),
-                  ],
-                ),
-
-                Text(
-                  "Meet your DayFi Tag",
-                  style: AppTypography.headlineLarge.copyWith(
-                 fontFamily: 'FunnelDisplay',
-                    fontSize: 28.sp, height: 1.2,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.neutral0,
-                    // height: 1.2,
-                    letterSpacing: -0.4,
+          bottom: false,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final bool isWide = constraints.maxWidth > 600;
+              return Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: isWide ? 400 : double.infinity,
                   ),
-                  textAlign: TextAlign.center,
-                ),
-                Text(
-                  "Your unique username for instant money transfers. Share it with friends and family - no bank details needed.",
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'Karla',
-                    color: AppColors.neutral50,
-                    letterSpacing: -.6,
-                    height: 1.5,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isWide ? 24 : 18,
+                      vertical: 8,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            SizedBox(height: 24, width: 24),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.pop(context);
+                              },
+                              child: Image.asset(
+                                "assets/icons/pngs/cancelicon.png",
+                                height: 24,
+                                width: 24,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 32),
+
+                        Stack(
+                          alignment: AlignmentDirectional.center,
+
+                          children: [
+                            SvgPicture.asset(
+                              'assets/icons/svgs/at.svg',
+                              height:
+                                  isWide
+                                      ? 160
+                                      : MediaQuery.of(context).size.width * 0.5,
+                              width:
+                                  isWide
+                                      ? 160
+                                      : MediaQuery.of(context).size.width * 0.5,
+                              color: AppColors.warning500,
+                            ),
+                            // Text(
+                            //   '@',
+                            //   style: TextStyle(
+                            //  fontFamily: 'FunnelDisplay',
+                            //     fontSize: MediaQuery.of(context).size.width * 0.3,
+                            //     fontWeight: FontWeight.w600,
+                            //     color: AppColors.error500,
+                            //   ),
+                            // ),
+                          ],
+                        ),
+
+                        Text(
+                          "Meet your Dayfi Tag",
+                          style: AppTypography.headlineLarge.copyWith(
+                            fontFamily: 'FunnelDisplay',
+                            fontSize: isWide ? 32 : 28,
+                            height: 1.2,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.neutral0,
+                            // height: 1.2,
+                            letterSpacing: -0.4,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        Text(
+                          "Your unique username for instant money transfers. Share it with friends and family - no bank details needed.",
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodyMedium?.copyWith(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            fontFamily: 'Chirp',
+                            color: AppColors.neutral50,
+                            letterSpacing: -.25,
+                            height: 1.5,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        // SizedBox(height: 24),
+                        // Text(
+                        //   "Benefits:\n• Easy to share - just your unique tag\n• Instant transfers\n• No bank details needed\n• Free to use",
+                        //   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        //     fontSize: 14,
+                        //     fontWeight: FontWeight.w500,
+                        //     fontFamily: 'Chirp',
+                        //     color: AppColors.neutral50.withOpacity(0.9),
+                        //     letterSpacing: -.25,
+                        //     height: 1.5,
+                        //   ),
+                        //   textAlign: TextAlign.center,
+                        // ),
+                        SizedBox(height: 32),
+                        PrimaryButton(
+                          borderRadius: 38,
+                          text: "Create Dayfi Tag",
+                          onPressed: () async {
+                            final result = await Navigator.pushNamed(
+                              context,
+                              AppRoute.createDayfiTagView,
+                            );
+                            if (result != null && result is String) {
+                              Navigator.pop(context, result);
+                            }
+                          },
+                          backgroundColor: AppColors.neutral0,
+                          height: 48.00000,
+                          textColor: AppColors.purple500ForTheme(context),
+                          fontFamily: 'Chirp',
+                          letterSpacing: -.70,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 18,
+                          width: double.infinity,
+                          fullWidth: true,
+                        ),
+                        SizedBox(height: 50),
+                      ],
+                    ),
                   ),
-                  textAlign: TextAlign.center,
                 ),
-                // SizedBox(height: 24.h),
-                // Text(
-                //   "Benefits:\n• Easy to share - just your unique tag\n• Instant transfers\n• No bank details needed\n• Free to use",
-                //   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                //     fontSize: 14.sp,
-                //     fontWeight: FontWeight.w500,
-                //     fontFamily: 'Karla',
-                //     color: AppColors.neutral50.withOpacity(0.9),
-                //     letterSpacing: -.6,
-                //     height: 1.5,
-                //   ),
-                //   textAlign: TextAlign.center,
-                // ),
-                SizedBox(height: 40.h),
-                PrimaryButton(
-                  borderRadius: 38,
-                  text: "Create DayFi Tag",
-                  onPressed: () async {
-                    final result = await Navigator.pushNamed(
-                      context,
-                      AppRoute.createDayfiTagView,
-                    );
-                    if (result != null && result is String) {
-                      Navigator.pop(context, result);
-                    }
-                  },
-                  backgroundColor: AppColors.neutral0,
-                  height: 48.00000.h,
-                  textColor: AppColors.purple500ForTheme(context),
-                  fontFamily: 'Karla',
-                  letterSpacing: -.70,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 18,
-                  width: double.infinity,
-                  fullWidth: true,
-                ),
-                SizedBox(height: 50.h),
-              ],
-            ),
+              );
+            },
           ),
         ),
       ),

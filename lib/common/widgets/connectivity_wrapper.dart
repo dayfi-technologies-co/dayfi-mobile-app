@@ -109,7 +109,7 @@ class _ConnectivityWrapperState extends State<ConnectivityWrapper> {
       color: Colors.transparent,
       child: Container(
         width: double.infinity,
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         decoration: BoxDecoration(color: AppColors.error500),
         child: SafeArea(
           bottom: false,
@@ -118,10 +118,10 @@ class _ConnectivityWrapperState extends State<ConnectivityWrapper> {
               'No internet connection',
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 12.sp,
+                fontSize: 12,
                 letterSpacing: -.4,
                 fontWeight: FontWeight.w500,
-                fontFamily: 'Karla',
+                fontFamily: 'Chirp',
               ),
             ),
           ),
@@ -135,7 +135,7 @@ class _ConnectivityWrapperState extends State<ConnectivityWrapper> {
       color: Colors.transparent,
       child: Container(
         width: double.infinity,
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         decoration: BoxDecoration(color: AppColors.success500),
         child: SafeArea(
           bottom: false,
@@ -144,10 +144,10 @@ class _ConnectivityWrapperState extends State<ConnectivityWrapper> {
               'Connection restored',
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 12.sp,
+                fontSize: 12,
                 letterSpacing: -.4,
                 fontWeight: FontWeight.w500,
-                fontFamily: 'Karla',
+                fontFamily: 'Chirp',
               ),
             ),
           ),

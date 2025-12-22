@@ -129,11 +129,11 @@ class _SendCryptoNetworksViewState
                 );
               },
       child: Container(
-        margin: EdgeInsets.only(bottom: 16.h),
-        padding: EdgeInsets.all(16.w),
+        margin: EdgeInsets.only(bottom: 16),
+        padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(12.r),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color:
                 isSelected && enabled
@@ -153,10 +153,10 @@ class _SendCryptoNetworksViewState
         child: Row(
           children: [
             Container(
-              width: 32.w,
-              height: 32.w,
+              width: 32,
+              height: 32,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12.r),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
                 child:
@@ -164,19 +164,19 @@ class _SendCryptoNetworksViewState
                         ? _isPNGIcon(networkKey)
                             ? Image.asset(
                               _getNetworkIconPath(networkKey)!,
-                              width: 32.w,
-                              height: 32.w,
+                              width: 32,
+                              height: 32,
                               fit: BoxFit.contain,
                             )
                             : SvgPicture.asset(
                               _getNetworkIconPath(networkKey)!,
-                              width: 32.w,
-                              height: 32.w,
+                              width: 32,
+                              height: 32,
                               fit: BoxFit.contain,
                               colorFilter: null,
                             )
                         : Container(
-                          padding: EdgeInsets.all(8.w),
+                          padding: EdgeInsets.all(8),
                           decoration: BoxDecoration(
                             color:
                                 enabled
@@ -184,14 +184,14 @@ class _SendCryptoNetworksViewState
                                       networkKey,
                                     ).withOpacity(0.15)
                                     : AppColors.neutral400.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(12.r),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                           child: Center(
                             child: Text(
                               networkKey,
                               style: AppTypography.labelSmall.copyWith(
-                                fontFamily: 'Karla',
-                                fontSize: 8.sp,
+                                fontFamily: 'Chirp',
+                                fontSize: 8,
                                 fontWeight: FontWeight.w700,
                                 color:
                                     enabled
@@ -203,7 +203,7 @@ class _SendCryptoNetworksViewState
                         ),
               ),
             ),
-            SizedBox(width: 12.w),
+            SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -214,7 +214,7 @@ class _SendCryptoNetworksViewState
                         networkKey,
                         style: AppTypography.titleMedium.copyWith(
                           fontFamily: 'FunnelDisplay',
-                          fontSize: 12.sp,
+                          fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color:
                               enabled
@@ -228,9 +228,9 @@ class _SendCryptoNetworksViewState
                         " ($name)",
                         style: AppTypography.bodySmall.copyWith(
                           fontFamily: 'FunnelDisplay',
-                          fontSize: 12.sp,
+                          fontSize: 12,
                           fontWeight: FontWeight.w500,
-                          letterSpacing: -0.3,
+                          letterSpacing:-.250,
                           height: 1.5,
                           color: Theme.of(
                             context,
@@ -241,15 +241,15 @@ class _SendCryptoNetworksViewState
                       ),
 
                       if (requiresMemo) ...[
-                        SizedBox(width: 8.w),
+                        SizedBox(width: 8),
                         Container(
                           padding: EdgeInsets.symmetric(
-                            horizontal: 8.w,
-                            vertical: 3.h,
+                            horizontal: 8,
+                            vertical: 3,
                           ),
                           decoration: BoxDecoration(
                             color: AppColors.warning400.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(12.r),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -257,8 +257,8 @@ class _SendCryptoNetworksViewState
                               Text(
                                 'Memo',
                                 style: AppTypography.labelSmall.copyWith(
-                                  fontFamily: 'Karla',
-                                  fontSize: 10.sp,
+                                  fontFamily: 'Chirp',
+                                  fontSize: 10,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.warning600,
                                 ),
@@ -271,26 +271,26 @@ class _SendCryptoNetworksViewState
                   ),
 
                   // if (activities.isNotEmpty) ...[
-                  //   SizedBox(height: 4.h),
+                  //   SizedBox(height: 4),
                   //   Wrap(
-                  //     spacing: 6.w,
-                  //     runSpacing: 4.h,
+                  //     spacing: 6,
+                  //     runSpacing: 4,
                   //     children:
                   //         activities.map((activity) {
                   //           return Container(
                   //             padding: EdgeInsets.symmetric(
-                  //               horizontal: 8.w,
-                  //               vertical: 4.h,
+                  //               horizontal: 8,
+                  //               vertical: 4,
                   //             ),
                   //             decoration: BoxDecoration(
                   //               color: AppColors.purple500ForTheme(context).withOpacity(0.15),
-                  //               borderRadius: BorderRadius.circular(12.r),
+                  //               borderRadius: BorderRadius.circular(12),
                   //             ),
                   //             child: Text(
                   //               activity.toString().toUpperCase(),
                   //               style: AppTypography.labelSmall.copyWith(
-                  //                 fontFamily: 'Karla',
-                  //                 fontSize: 8.sp,
+                  //                 fontFamily: 'Chirp',
+                  //                 fontSize: 8,
                   //                 fontWeight: FontWeight.w600,
                   //                 color: AppColors.purple500ForTheme(context),
                   //               ),
@@ -302,20 +302,20 @@ class _SendCryptoNetworksViewState
                 ],
               ),
             ),
-            SizedBox(width: 12.w),
+            SizedBox(width: 12),
             if (isSelected && enabled)
               SvgPicture.asset(
                 'assets/icons/svgs/circle-check.svg',
                 color: Theme.of(context).colorScheme.primary,
-                height: 24.sp,
-                width: 24.sp,
+                height: 24,
+                width: 24,
               )
             else if (!enabled)
               Text(
                 'Unavailable',
                 style: AppTypography.labelSmall.copyWith(
-                  fontFamily: 'Karla',
-                  fontSize: 10.sp,
+                  fontFamily: 'Chirp',
+                  fontSize: 10,
                   fontWeight: FontWeight.w600,
                   color: AppColors.neutral400,
                 ),
@@ -525,7 +525,7 @@ class _SendCryptoNetworksViewState
         leading: IconButton(
           icon: Icon(
             Icons.arrow_back_ios,
-            size: 20.sp,
+            size: 20,
             color: Theme.of(context).colorScheme.onSurface,
           ),
           onPressed: () => Navigator.pop(context),
@@ -534,7 +534,7 @@ class _SendCryptoNetworksViewState
           'Select Network',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
             fontFamily: 'FunnelDisplay',
-            fontSize: 24.sp,
+            fontSize: 24,
             // height: 1.6,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,
@@ -542,17 +542,23 @@ class _SendCryptoNetworksViewState
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final bool isWide = constraints.maxWidth > 600;
+          return Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: isWide ? 500 : double.infinity),
+              child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(horizontal: isWide ? 24 : 18, vertical: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
             // Selected currency info
             // Container(
-            //   padding: EdgeInsets.all(16.w),
+            //   padding: EdgeInsets.all(16),
             //   decoration: BoxDecoration(
             //     color: Theme.of(context).colorScheme.surface,
-            //     borderRadius: BorderRadius.circular(12.r),
+            //     borderRadius: BorderRadius.circular(12),
             //     boxShadow: [
             //       BoxShadow(
             //         color: AppColors.neutral500.withOpacity(0.0375),
@@ -565,39 +571,39 @@ class _SendCryptoNetworksViewState
             //   child: Row(
             //     children: [
             //       Container(
-            //         width: 56.w,
-            //         height: 56.w,
+            //         width: 56,
+            //         height: 56,
             //         decoration: BoxDecoration(
             //           color: Theme.of(context).colorScheme.surface,
-            //           borderRadius: BorderRadius.circular(12.r),
+            //           borderRadius: BorderRadius.circular(12),
             //         ),
             //         child: Center(
             //           child: _getCryptoIconPath(channelCode) != null
             //               ? channelCode.toUpperCase() == 'CUSD'
             //                   ? Image.asset(
             //                       _getCryptoIconPath(channelCode)!,
-            //                       width: 56.w,
-            //                       height: 56.w,
+            //                       width: 56,
+            //                       height: 56,
             //                       fit: BoxFit.contain,
             //                     )
             //                   : SvgPicture.asset(
             //                       _getCryptoIconPath(channelCode)!,
-            //                       width: 56.w,
-            //                       height: 56.w,
+            //                       width: 56,
+            //                       height: 56,
             //                       fit: BoxFit.contain,
             //                     )
             //               : Text(
             //                   channelCode,
             //                   style: AppTypography.titleLarge.copyWith(
             //                  fontFamily: 'FunnelDisplay',
-            //                      fontSize: 20.sp, // height: 1.6,
+            //                      fontSize: 20, // height: 1.6,
             //                     fontWeight: FontWeight.w700,
             //                     color: AppColors.purple500ForTheme(context),
             //                   ),
             //                 ),
             //         ),
             //       ),
-            //       SizedBox(width: 16.w),
+            //       SizedBox(width: 16),
             //       Expanded(
             //         child: Column(
             //           crossAxisAlignment: CrossAxisAlignment.start,
@@ -606,7 +612,7 @@ class _SendCryptoNetworksViewState
             //               channelCode,
             //               style: AppTypography.titleLarge.copyWith(
             //              fontFamily: 'FunnelDisplay',
-            //                 fontSize: 14.sp,
+            //                 fontSize: 14,
             //                 fontWeight: FontWeight.w600,
             //                 color: Theme.of(context).colorScheme.onSurface,
             //               ),
@@ -614,8 +620,8 @@ class _SendCryptoNetworksViewState
             //             Text(
             //               channelName,
             //               style: AppTypography.bodySmall.copyWith(
-            //                 fontFamily: 'Karla',
-            //                 fontSize: 9.sp,
+            //                 fontFamily: 'Chirp',
+            //                 fontSize: 9,
             //                 fontWeight: FontWeight.w500,
             //                 color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
             //               ),
@@ -630,43 +636,43 @@ class _SendCryptoNetworksViewState
               'What network do you want to use for $channelCode?',
               style: AppTypography.titleLarge.copyWith(
                 fontFamily: 'FunnelDisplay',
-                fontSize: 12.sp,
+                fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: Theme.of(context).colorScheme.onSurface,
               ),
               textAlign: TextAlign.center,
             ),
 
-            SizedBox(height: 32.h),
+            SizedBox(height: 32),
 
             if (enabledNetworks.isEmpty)
               Center(
                 child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 56.h),
+                  padding: EdgeInsets.symmetric(vertical: 56),
                   child: Column(
                     children: [
                       Icon(
                         Icons.network_check_outlined,
-                        size: 64.sp,
+                        size: 64,
                         color: AppColors.neutral400,
                       ),
-                      SizedBox(height: 16.h),
+                      SizedBox(height: 16),
                       Text(
                         'No Networks Available',
                         style: AppTypography.titleLarge.copyWith(
                           fontFamily: 'FunnelDisplay',
-                          fontSize: 14.sp,
+                          fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
-                      SizedBox(height: 8.h),
+                      SizedBox(height: 8),
                       Text(
                         'No networks are currently enabled for this currency',
                         textAlign: TextAlign.center,
                         style: AppTypography.bodyMedium.copyWith(
-                          fontFamily: 'Karla',
-                          fontSize: 14.sp,
+                          fontFamily: 'Chirp',
+                          fontSize: 14,
                           color: Theme.of(
                             context,
                           ).colorScheme.onSurface.withOpacity(0.6),
@@ -681,12 +687,16 @@ class _SendCryptoNetworksViewState
                 return _buildNetworkCard(networkEntry);
               }),
 
-            SizedBox(height: 40.h),
+            SizedBox(height: 32),
           ],
         ),
       ),
+            ),
+          );
+        },
+      ),
       bottomNavigationBar: Container(
-        padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
+        padding: EdgeInsets.symmetric(horizontal: 18, vertical: 8),
         decoration: BoxDecoration(
           color: Theme.of(context).scaffoldBackgroundColor,
           boxShadow: [
@@ -719,14 +729,14 @@ class _SendCryptoNetworksViewState
             textColor:
                 _selectedNetwork != null && !_isLoading
                     ? AppColors.neutral0
-                    : AppColors.neutral0.withOpacity(.35),
-            height: 48.00000.h,
-            fontFamily: 'Karla',
+                    : AppColors.neutral0.withOpacity(.20),
+            height: 48.00000,
+            fontFamily: 'Chirp',
             letterSpacing: -.70,
             fontSize: 18,
             width: double.infinity,
             fullWidth: true,
-            borderRadius: 40.r,
+            borderRadius: 40,
           ),
         ),
       ),
@@ -779,8 +789,8 @@ class _SendCryptoNetworksViewState
           child: Text(
             label,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              letterSpacing: -.6,
-              fontSize: 14.sp,
+              letterSpacing: -.25,
+              fontSize: 14,
               fontWeight: FontWeight.w500,
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
             ),
@@ -795,7 +805,7 @@ class _SendCryptoNetworksViewState
                   value,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     fontFamily: 'FunnelDisplay',
-                    fontSize: 11.sp,
+                    fontSize: 11,
                     fontWeight: FontWeight.w600,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
@@ -805,7 +815,7 @@ class _SendCryptoNetworksViewState
                 ),
               ),
               if (showCopy) ...[
-                SizedBox(width: 8.w),
+                SizedBox(width: 8),
                 GestureDetector(
                   onTap: () {
                     HapticFeedback.lightImpact();
@@ -814,7 +824,7 @@ class _SendCryptoNetworksViewState
                   },
                   child: SvgPicture.asset(
                     "assets/icons/svgs/copy.svg",
-                    height: 20.w,
+                    height: 20,
                     color: Theme.of(
                       context,
                     ).colorScheme.onSurface.withOpacity(0.6),
@@ -868,25 +878,25 @@ class _SendCryptoNetworksViewState
             final networkName = selectedNetworkData['name'] ?? cryptoNetwork;
 
             return Container(
-              height: MediaQuery.of(context).size.height * 0.8,
+              height: MediaQuery.of(context).size.height * 0.74,
               decoration: BoxDecoration(
                 color: Theme.of(context).scaffoldBackgroundColor,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
               child: Column(
                 children: [
-                  SizedBox(height: 18.h),
+                  SizedBox(height: 18),
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 18.w),
+                    padding: EdgeInsets.symmetric(horizontal: 18),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        SizedBox(height: 24.h, width: 22.w),
+                        SizedBox(height: 24, width: 22),
                         Text(
                           'Crypto Wallet Details',
                           style: AppTypography.titleLarge.copyWith(
                             fontFamily: 'FunnelDisplay',
-                            fontSize: 14.sp,
+                            fontSize: 14,
                             fontWeight: FontWeight.w600,
                             color: Theme.of(context).colorScheme.onSurface,
                           ),
@@ -895,46 +905,46 @@ class _SendCryptoNetworksViewState
                           onTap: () => {Navigator.pop(context), FocusScope.of(context).unfocus()},
                           child: Image.asset(
                             "assets/icons/pngs/cancelicon.png",
-                            height: 24.h,
-                            width: 24.w,
+                            height: 24,
+                            width: 24,
                             color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: 16),
                   Expanded(
                     child: SingleChildScrollView(
-                      padding: EdgeInsets.symmetric(horizontal: 18.w),
+                      padding: EdgeInsets.symmetric(horizontal: 18),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Container(
-                            padding: EdgeInsets.all(12.w),
+                            padding: EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               color: Theme.of(
                                 context,
                               ).colorScheme.primaryContainer.withOpacity(0.25),
-                              borderRadius: BorderRadius.circular(4.r),
+                              borderRadius: BorderRadius.circular(4),
                             ),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                SizedBox(width: 4.w),
+                                SizedBox(width: 4),
                                 Image.asset(
                                   "assets/images/idea.png",
-                                  height: 20.h,
+                                  height: 20,
                                 ),
-                                SizedBox(width: 12.w),
+                                SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
                                     'Send the exact amount to the wallet address below. Ensure you use the correct network (${networkName.toUpperCase()}) to avoid loss of funds.',
                                     style: Theme.of(
                                       context,
                                     ).textTheme.bodySmall?.copyWith(
-                                      fontSize: 14.sp,
-                                      fontFamily: 'Karla',
+                                      fontSize: 14,
+                                      fontFamily: 'Chirp',
                                       fontWeight: FontWeight.w500,
                                       letterSpacing: -0.4,
                                       height: 1.5,
@@ -946,16 +956,16 @@ class _SendCryptoNetworksViewState
                               ],
                             ),
                           ),
-                          SizedBox(height: 12.h),
+                          SizedBox(height: 12),
                           Container(
                             width: double.infinity,
                             padding: EdgeInsets.symmetric(
-                              horizontal: 16.w,
-                              vertical: 24.h,
+                              horizontal: 16,
+                              vertical: 24,
                             ),
                             decoration: BoxDecoration(
                               color: Theme.of(context).colorScheme.surface,
-                              borderRadius: BorderRadius.circular(12.r),
+                              borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: Theme.of(
                                   context,
@@ -966,34 +976,34 @@ class _SendCryptoNetworksViewState
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                SizedBox(height: 8.h),
+                                SizedBox(height: 8),
                                 Text(
                                   'Transfer details:',
                                   style: Theme.of(
                                     context,
                                   ).textTheme.titleLarge?.copyWith(
                                     fontFamily: 'FunnelDisplay',
-                                    fontSize: 12.sp,
+                                    fontSize: 12,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                                SizedBox(height: 16.h),
+                                SizedBox(height: 16),
                                 _buildDetailRow(
                                   'Amount to send',
                                   '${sendState.receiverCurrency} ${_formatNumber(collectionData.convertedAmount ?? 0.0)}',
                                   showCopy: true,
                                 ),
-                                SizedBox(height: 12.h),
+                                SizedBox(height: 12),
                                 _buildDetailRow(
                                   'Cryptocurrency',
                                   cryptoCurrency.toUpperCase(),
                                 ),
-                                SizedBox(height: 12.h),
+                                SizedBox(height: 12),
                                 _buildDetailRow(
                                   'Network',
                                   networkName.toUpperCase(),
                                 ),
-                                SizedBox(height: 12.h),
+                                SizedBox(height: 12),
                                 _buildDetailRow(
                                   'Wallet Address',
                                   collectionData.fiatWallet ??
@@ -1003,7 +1013,7 @@ class _SendCryptoNetworksViewState
                                 ),
                                 if (selectedNetworkData['requiresMemo'] ==
                                     true) ...[
-                                  SizedBox(height: 12.h),
+                                  SizedBox(height: 12),
                                   _buildDetailRow(
                                     'Memo/Tag',
                                     collectionData.reference ??
@@ -1015,7 +1025,7 @@ class _SendCryptoNetworksViewState
                                   color: Theme.of(
                                     context,
                                   ).colorScheme.outline.withOpacity(0.2),
-                                  height: 56.h,
+                                  height: 56,
                                 ),
                                 Row(
                                   children: [
@@ -1025,10 +1035,10 @@ class _SendCryptoNetworksViewState
                                         style: Theme.of(
                                           context,
                                         ).textTheme.bodyMedium?.copyWith(
-                                          fontFamily: 'Karla',
+                                          fontFamily: 'Chirp',
                                           fontWeight: FontWeight.w500,
                                           letterSpacing: -0.4,
-                                          fontSize: 14.sp,
+                                          fontSize: 14,
                                           color:
                                               Theme.of(
                                                 context,
@@ -1038,17 +1048,17 @@ class _SendCryptoNetworksViewState
                                     ),
                                   ],
                                 ),
-                                SizedBox(height: 8.h),
+                                SizedBox(height: 8),
                               ],
                             ),
                           ),
-                          SizedBox(height: 24.h),
+                          SizedBox(height: 24),
                         ],
                       ),
                     ),
                   ),
                   Padding(
-                    padding: EdgeInsets.all(24.w),
+                    padding: EdgeInsets.all(24),
                     child: PrimaryButton(
                       text: 'I\'ve Sent the Payment',
                       onPressed: () {
@@ -1057,14 +1067,14 @@ class _SendCryptoNetworksViewState
                         Navigator.pop(context); // Close crypto network view
                       },
                       backgroundColor: AppColors.purple500,
-                      height: 48.00000.h,
+                      height: 48.00000,
                       textColor: AppColors.neutral0,
-                      fontFamily: 'Karla',
+                      fontFamily: 'Chirp',
                       letterSpacing: -.70,
                       fontSize: 18,
                       width: double.infinity,
                       fullWidth: true,
-                      borderRadius: 40.r,
+                      borderRadius: 40,
                     ),
                   ),
                 ],

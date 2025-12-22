@@ -18,38 +18,55 @@ class SuccessSignupView extends ConsumerWidget {
     // when user first lands on the home screen after signup
     // This ensures the notification is shown at the right time
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Stack(
-        children: [
-          // Confetti Lottie animation
-          Positioned.fill(
-            child: IgnorePointer(
-              child: Lottie.asset(
-                'assets/icons/svgs/confetti.json',
-                fit: BoxFit.cover,
-                repeat: false,
+    return WillPopScope(
+      onWillPop: () async => false,
+      child: Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: Stack(
+          children: [
+            // Confetti Lottie animation
+            Positioned.fill(
+              child: IgnorePointer(
+                child: Lottie.asset(
+                  'assets/icons/svgs/confetti.json',
+                  fit: BoxFit.cover,
+                  repeat: false,
+                ),
               ),
             ),
-          ),
-          // Main content
-          SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 18.w),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(height: 40.h),
-                  _buildContentCard(context),
-                  SizedBox(height: 40.h),
-                  _buildNextStepButton(context),
-                  SizedBox(height: 40.h),
-                ],
+            // Main content
+            SafeArea(
+              bottom: false,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final bool isWide = constraints.maxWidth > 600;
+                  return Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: isWide ? 400 : double.infinity,
+                      ),
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isWide ? 24 : 18,
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(height: 32),
+                            _buildContentCard(context, isWide),
+                            SizedBox(height: 32),
+                            _buildNextStepButton(context),
+                            SizedBox(height: 32),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -77,34 +94,34 @@ class SuccessSignupView extends ConsumerWidget {
         children: [
           // Floating circles
           Positioned(
-            top: 100.h,
-            left: -50.w,
+            top: 100,
+            left: -50,
             child: _buildFloatingCircle(
-              size: 120.w,
+              size: 120,
               color: AppColors.purple100.withOpacity(0.3),
             ),
           ),
           Positioned(
-            top: 200.h,
-            right: -30.w,
+            top: 200,
+            right: -30,
             child: _buildFloatingCircle(
-              size: 80.w,
+              size: 80,
               color: AppColors.purple300.withOpacity(0.2),
             ),
           ),
           Positioned(
-            bottom: 150.h,
-            left: -20.w,
+            bottom: 150,
+            left: -20,
             child: _buildFloatingCircle(
-              size: 100.w,
+              size: 100,
               color: AppColors.purple100.withOpacity(0.4),
             ),
           ),
           Positioned(
-            bottom: 250.h,
-            right: -40.w,
+            bottom: 250,
+            right: -40,
             child: _buildFloatingCircle(
-              size: 60.w,
+              size: 60,
               color: AppColors.purple100.withOpacity(0.3),
             ),
           ),
@@ -131,8 +148,8 @@ class SuccessSignupView extends ConsumerWidget {
 
   Widget _buildSuccessIcon(BuildContext context) {
     return Container(
-          width: 120.w,
-          height: 120.w,
+          width: 120,
+          height: 120,
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
@@ -152,11 +169,7 @@ class SuccessSignupView extends ConsumerWidget {
               ),
             ],
           ),
-          child: Icon(
-            Icons.check_rounded,
-            color: AppColors.neutral0,
-            size: 60.sp,
-          ),
+          child: Icon(Icons.check_rounded, color: AppColors.neutral0, size: 60),
         )
         .animate()
         .fadeIn(delay: 200.ms, duration: 600.ms, curve: Curves.easeOutCubic)
@@ -171,36 +184,33 @@ class SuccessSignupView extends ConsumerWidget {
         .shimmer(duration: 1000.ms, color: AppColors.neutral0.withOpacity(0.3));
   }
 
-  Widget _buildContentCard(BuildContext context) {
+  Widget _buildContentCard(BuildContext context, bool isWide) {
     return Column(
           children: [
             // Celebration emoji
-            // Text(
-            //   "🎉",
-            //   style: TextStyle(fontSize: 56.sp),
-            // )
-            //     .animate()
-            //     .fadeIn(
-            //       delay: 400.ms,
-            //       duration: 500.ms,
-            //       curve: Curves.easeOutCubic,
-            //     )
-            //     .scale(
-            //       begin: const Offset(0.5, 0.5),
-            //       end: const Offset(1.0, 1.0),
-            //       delay: 400.ms,
-            //       duration: 500.ms,
-            //       curve: Curves.elasticOut,
-            //     ),
+            Text("🎉", style: TextStyle(fontSize: 56))
+                .animate()
+                .fadeIn(
+                  delay: 400.ms,
+                  duration: 500.ms,
+                  curve: Curves.easeOutCubic,
+                )
+                .scale(
+                  begin: const Offset(0.5, 0.5),
+                  end: const Offset(1.0, 1.0),
+                  delay: 400.ms,
+                  duration: 500.ms,
+                  curve: Curves.elasticOut,
+                ),
 
-            // SizedBox(height: 24.h),
+            SizedBox(height: 24),
 
             // Title
             Text(
                   "Welcome onboard!",
                   style: AppTypography.headlineMedium.copyWith(
-                    fontFamily: 'Boldonse',
-                    fontSize: 20.sp,
+                    fontFamily: 'FunnelDisplay',
+                    fontSize: isWide ? 32 : 28,
                     height: 1.2,
                     fontWeight: FontWeight.w600,
                     color: Theme.of(context).colorScheme.onSurface,
@@ -223,18 +233,18 @@ class SuccessSignupView extends ConsumerWidget {
                   curve: Curves.easeOutCubic,
                 ),
 
-            SizedBox(height: 12.h),
+            SizedBox(height: 12),
 
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 40.w),
+              padding: EdgeInsets.symmetric(horizontal: 40),
               child: Text(
                     "Account created! Start sending money to your loved ones",
                     style: AppTypography.bodyLarge.copyWith(
-                      fontFamily: 'Karla',
-                      fontSize: 16.sp,
+                      fontFamily: 'Chirp',
+                      fontSize: 16,
                       fontWeight: FontWeight.w500,
                       color: AppColors.neutral600,
-                      height: 1.4,
+                      height: 1.2,
                     ),
                     textAlign: TextAlign.center,
                   )
@@ -253,7 +263,7 @@ class SuccessSignupView extends ConsumerWidget {
                   ),
             ),
 
-            // SizedBox(height: 32.h),
+            // SizedBox(height: 32),
 
             // // Features list
             // _buildFeaturesList(),
@@ -284,17 +294,17 @@ class SuccessSignupView extends ConsumerWidget {
             Map<String, String> feature = entry.value;
 
             return Padding(
-                  padding: EdgeInsets.only(bottom: 12.h),
+                  padding: EdgeInsets.only(bottom: 12),
                   child: Row(
                     children: [
-                      Text(feature["icon"]!, style: TextStyle(fontSize: 24.sp)),
-                      SizedBox(width: 12.w),
+                      Text(feature["icon"]!, style: TextStyle(fontSize: 24)),
+                      SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           feature["text"]!,
                           style: AppTypography.bodyMedium.copyWith(
-                            fontFamily: 'Karla',
-                            fontSize: 14.sp,
+                            fontFamily: 'Chirp',
+                            fontSize: 14,
                             fontWeight: FontWeight.w500,
                             color: Theme.of(
                               context,
@@ -329,9 +339,9 @@ class SuccessSignupView extends ConsumerWidget {
           onPressed:
               () => appRouter.pushNamed(AppRoute.completePersonalInfoView),
           backgroundColor: AppColors.purple500,
-          height: 48.00000.h,
+          height: 48.00000,
           textColor: AppColors.neutral0,
-          fontFamily: 'Karla',
+          fontFamily: 'Chirp',
           letterSpacing: -.70,
           fontSize: 18,
           width: double.infinity,

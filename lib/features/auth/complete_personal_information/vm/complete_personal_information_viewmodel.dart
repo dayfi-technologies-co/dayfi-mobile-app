@@ -148,7 +148,7 @@ class CompletePersonalInfoNotifier
   final SecureStorageService _secureStorage = locator<SecureStorageService>();
   Timer? _debounceTimer;
 
-  /// DayFi Tag rules:
+  /// Dayfi Tag rules:
   /// - Must start with @
   /// - Max 16 characters (including @)
   /// - No spaces
@@ -199,7 +199,7 @@ class CompletePersonalInfoNotifier
 
   String _validateDayfiId(String value) {
     value = value.trim();
-    if (value.isEmpty) return 'Please enter a DayFi Tag';
+    if (value.isEmpty) return 'Please enter a Dayfi Tag';
     if (!value.startsWith('@')) return 'Your tag should start with @';
     if (value.length < 3) return 'Your tag needs at least 3 characters';
     return '';
@@ -231,15 +231,15 @@ class CompletePersonalInfoNotifier
         // enable next button for tab
       }
     } catch (e) {
-      // Check if this is a 400 error with "Invalid dayfi ID" message - treat as success (tag available)
+      // Check if this is a 400 error with "Invalid Dayfi Tag" message - treat as success (tag available)
       if (e is ApiError) {
         if (e.errorType == 400) {
           final errorMessage =
               e.apiErrorModel?.message ?? e.errorDescription ?? '';
-          if (errorMessage.toLowerCase().contains('invalid dayfi id')) {
+          if (errorMessage.toLowerCase().contains('invalid Dayfi Tag')) {
             // Treat as success - tag is available
             AppLogger.info(
-              'Invalid dayfi ID (400) - treating as available tag',
+              'Invalid Dayfi Tag (400) - treating as available tag',
             );
             state = state.copyWith(
               dayfiIdResponse: 'User not found',
@@ -251,10 +251,10 @@ class CompletePersonalInfoNotifier
         }
       }
 
-      AppLogger.error('Error validating DayFi Tag: $e');
+      AppLogger.error('Error validating Dayfi Tag: $e');
       state = state.copyWith(
         dayfiIdResponse: 'User not found',
-        dayfiIdError: 'Error validating DayFi Tag',
+        dayfiIdError: 'Error validating Dayfi Tag',
         isValidating: false,
       );
     }
@@ -439,14 +439,14 @@ class CompletePersonalInfoNotifier
     state = state.copyWith(isBusy: true);
 
     try {
-      AppLogger.info('Creating DayFi Tag: ${state.dayfiId}');
+      AppLogger.info('Creating Dayfi Tag: ${state.dayfiId}');
 
       final response = await _authService.createDayfiId(dayfiId: state.dayfiId);
 
       if (response.error == false) {
-        AppLogger.info('DayFi Tag created successfully');
+        AppLogger.info('Dayfi Tag created successfully');
       } else {
-        AppLogger.error('DayFi Tag creation failed: ${response.message}');
+        AppLogger.error('Dayfi Tag creation failed: ${response.message}');
         TopSnackbar.show(
           // ignore: use_build_context_synchronously
           context,
@@ -458,7 +458,7 @@ class CompletePersonalInfoNotifier
         );
       }
     } catch (e) {
-      AppLogger.error('Error creating DayFi Tag: $e');
+      AppLogger.error('Error creating Dayfi Tag: $e');
       TopSnackbar.show(
         // ignore: use_build_context_synchronously
         context,

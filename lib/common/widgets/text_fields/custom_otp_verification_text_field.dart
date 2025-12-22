@@ -25,7 +25,7 @@ class OtpVerificationTextField extends StatelessWidget {
   Widget build(BuildContext context) {
     final defaultDecoration = BoxDecoration(
       // color: AppColors.transparent,
-      borderRadius: BorderRadius.circular(12.r),
+      borderRadius: BorderRadius.circular(12),
       border: Border.all(color: Colors.transparent, width: 1.5),
     );
 
@@ -41,18 +41,18 @@ class OtpVerificationTextField extends StatelessWidget {
 
     return Pinput(
       errorPinTheme: PinTheme(
-        width: 64.w,
-        height: 72.h,
+        width: 64,
+        height: 72,
         textStyle: AppTypography.displaySmall,
         decoration: submittedDecoration,
       ),
       errorTextStyle: const TextStyle(
         color: Colors.red,
         fontSize: 13,
-        fontFamily: 'Karla',
-        letterSpacing: -.6,
+        fontFamily: 'Chirp',
+        letterSpacing: -.25,
         fontWeight: FontWeight.w500,
-        height: 1.4,
+        height: 1.2,
       ),
       length: length,
       controller: controller,
@@ -61,24 +61,24 @@ class OtpVerificationTextField extends StatelessWidget {
       keyboardType: TextInputType.number,
       mainAxisAlignment: MainAxisAlignment.start,
       defaultPinTheme: PinTheme(
-        width: 64.w,
-        height: 72.h,
+        width: 64,
+        height: 72,
         textStyle: AppTypography.displaySmall,
         decoration: defaultDecoration,
       ),
       focusedPinTheme: PinTheme(
-        width: 64.w,
-        height: 72.h,
+        width: 64,
+        height: 72,
         textStyle: AppTypography.displaySmall,
         decoration: focusedDecoration,
       ),
       submittedPinTheme: PinTheme(
-        width: 64.w,
-        height: 72.h,
+        width: 64,
+        height: 72,
         textStyle: AppTypography.displaySmall,
         decoration: submittedDecoration,
       ),
-      separatorBuilder: (index) => SizedBox(width: 8.w),
+      separatorBuilder: (index) => SizedBox(width: 8),
       onChanged: onChanged,
       onCompleted: onCompleted,
     );

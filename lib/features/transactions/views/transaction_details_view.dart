@@ -64,19 +64,19 @@ class _TransactionDetailsViewState
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-           scrolledUnderElevation: .5,
-              foregroundColor: Theme.of(context).scaffoldBackgroundColor,
-              shadowColor: Theme.of(context).scaffoldBackgroundColor,
-              surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+        scrolledUnderElevation: .5,
+        foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+        shadowColor: Theme.of(context).scaffoldBackgroundColor,
+        surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
 
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
           icon: Icon(
             Icons.arrow_back_ios,
-            size: 20.sp,
+            size: 20,
             color: Theme.of(context).colorScheme.onSurface,
-            // size: 20.sp,
+            // size: 20,
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
@@ -84,7 +84,7 @@ class _TransactionDetailsViewState
           "Transaction Details",
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
             fontFamily: 'FunnelDisplay',
-            fontSize: 24.sp,
+            fontSize: 24,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,
           ),
@@ -92,77 +92,99 @@ class _TransactionDetailsViewState
         centerTitle: true,
         actions: [
           Padding(
-            padding: EdgeInsets.only(right: 16.w),
+            padding: EdgeInsets.only(right: 16),
             child: HelpButton(onTap: _navigateToContactUs),
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: 18.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(height: 16.h),
+      body: Align(
+        alignment: Alignment.topCenter,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final bool isWide = constraints.maxWidth > 600;
+            return ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: isWide ? 500 : double.infinity,
+              ),
+              child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(horizontal: isWide ? 24 : 18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    SizedBox(height: 16),
 
-            // Transaction Header
-            _buildTransactionHeader(),
+                    // Transaction Header
+                    _buildTransactionHeader(),
 
-            SizedBox(height: 24.h),
+                    SizedBox(height: 24),
 
-            // Status Timeline
-            _buildStatusTimeline(),
+                    // Status Timeline
+                    _buildStatusTimeline(),
 
-            SizedBox(height: 20.h),
+                    SizedBox(height: 20),
 
-            // Only show account details if it's a wallet top-up and fee is 0.00
-            if (_isWalletTopUp() && _isFeeZero()) ...[
-              _buildBankAccountDetails(),
-              SizedBox(height: 16.h),
-            ],
+                    // Only show account details if it's a wallet top-up and fee is 0.00
+                    if (_isWalletTopUp() && _isFeeZero()) ...[
+                      _buildBankAccountDetails(),
+                      SizedBox(height: 16),
+                    ],
 
-            // For collections, show sender details; for payments, show recipient details
-            if (!_isWalletTopUp()) ...[
-              // Account Details
-              if (!widget.transaction.status.toLowerCase().contains(
-                'collection',
-              ))
-                _buildAccountDetails(),
-              if (!widget.transaction.status.toLowerCase().contains(
-                'collection',
-              ))
-                SizedBox(height: 16.h),
+                    // For collections, show sender details; for payments, show recipient details
+                    if (!_isWalletTopUp()) ...[
+                      // Account Details
+                      if (!widget.transaction.status.toLowerCase().contains(
+                        'collection',
+                      ))
+                        _buildAccountDetails(),
+                      if (!widget.transaction.status.toLowerCase().contains(
+                        'collection',
+                      ))
+                        SizedBox(height: 16),
 
-              // Sender Details (for collections) or Recipient Details (for payments)
-              widget.transaction.status.toLowerCase().contains('collection')
-                  ? _buildSenderDetails()
-                  : _buildRecipientDetails(),
-              SizedBox(height: 16.h),
-            ],
+                      // Sender Details (for collections) or Recipient Details (for payments)
+                      widget.transaction.status.toLowerCase().contains(
+                            'collection',
+                          )
+                          ? _buildSenderDetails()
+                          : _buildRecipientDetails(),
+                      SizedBox(height: 16),
+                    ],
 
-            // Payment Summary
-            _buildPaymentSummary(),
+                    // Payment Summary
+                    _buildPaymentSummary(),
 
-            // Action Buttons (for failed transactions)
-            // if (_shouldShowActionButtons()) ...[
-            //   SizedBox(height: 32.h),
-            //   _buildActionButtons(),
-            // ],
-            SizedBox(height: 20.h),
-            PrimaryButton(
-              text: 'Share transaction',
-              onPressed: () => _shareTransactionReceipt(),
-              backgroundColor: Colors.transparent,
-              textColor: AppColors.purple500ForTheme(context),
-              height: 48.00000.h,
-              fontFamily: 'Karla',
-              letterSpacing: -.70,
-              fontSize: 18,
-              width: double.infinity,
-              fullWidth: true,
-              borderRadius: 40.r,
-            ),
-            SizedBox(height: 40.h),
-          ],
+                    SizedBox(height: 18),
+
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        // padding: EdgeInsets.zero,
+                        // minimumSize: Size(50, 30),
+                        splashFactory: NoSplash.splashFactory,
+                        backgroundColor: Colors.transparent,
+                        foregroundColor: Colors.transparent,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        alignment: Alignment.center,
+                      ),
+                      onPressed: () => _shareTransactionReceipt(),
+                      child: Text(
+                        'Share transaction',
+                        style: TextStyle(
+                          fontFamily: 'Chirp',
+                          color: AppColors.purple500ForTheme(context),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: -.40,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(height: 32),
+                  ],
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -185,45 +207,43 @@ class _TransactionDetailsViewState
 
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
             fontFamily: 'FunnelDisplay',
-            fontSize: 32.sp,
-            letterSpacing: -.6,
+            fontSize: 24,
+            letterSpacing: -.25,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
 
-        SizedBox(height: 8.h),
+        SizedBox(height: 8),
 
         // Recipient
         Row(
           children: [
             // Transaction Type Icon (Inflow/Outflow)
             SizedBox(
-              width: 40.w,
-              height: 40.w,
+              width: 40,
+              height: 40,
               child: Stack(
                 alignment: Alignment.center,
                 children: [
                   // Background circle
                   SvgPicture.asset(
                     'assets/icons/svgs/account.svg',
-                    height: 40.sp,
-                    color: _getTransactionTypeColor(
-                      widget.transaction.status,
-                    ),
+                    height: 40,
+                    color: _getTransactionTypeColor(widget.transaction.status),
                   ),
                   // Foreground icon
                   Center(
                     child: SvgPicture.asset(
                       _getTransactionTypeIcon(widget.transaction.status),
-                      height: 28.sp,
-                      color: Colors.white
+                      height: 28,
+                      color: Colors.white,
                     ),
                   ),
                 ],
               ),
             ),
-            SizedBox(width: 12.w),
+            SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -231,9 +251,9 @@ class _TransactionDetailsViewState
                   Text(
                     isCollection ? "Wallet Top Up" : recipientName,
                     style: AppTypography.bodyLarge.copyWith(
-                      fontFamily: 'Karla',
-                      fontSize: 16.sp,
-                      letterSpacing: -.6,
+                      fontFamily: 'Chirp',
+                      fontSize: 16,
+                      letterSpacing: -.25,
                       fontWeight: FontWeight.w500,
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
@@ -242,7 +262,7 @@ class _TransactionDetailsViewState
                   Text(
                     dateTime,
                     style: AppTypography.bodyMedium.copyWith(
-                      fontFamily: 'Karla',
+                      fontFamily: 'Chirp',
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                       letterSpacing: -.4,
@@ -255,12 +275,12 @@ class _TransactionDetailsViewState
                 ],
               ),
             ),
-            // SizedBox(width: 12.w),
+            // SizedBox(width: 12),
             // _buildStatusIcon(),
           ],
         ),
 
-        SizedBox(height: 4.h),
+        SizedBox(height: 4),
 
         // Date
       ],
@@ -271,17 +291,17 @@ class _TransactionDetailsViewState
     final status = widget.transaction.status.toLowerCase();
 
     return Container(
-      width: 56.w,
-      height: 56.w,
+      width: 56,
+      height: 56,
       decoration: BoxDecoration(
         color: _getStatusBackgroundColor(status),
-        borderRadius: BorderRadius.circular(20.r),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Center(
         child: SvgPicture.asset(
           _getStatusIcon(status),
-          height: 44.sp,
-          width: 44.sp,
+          height: 44,
+          width: 44,
           colorFilter: ColorFilter.mode(
             _getStatusColor(status),
             BlendMode.srcIn,
@@ -370,10 +390,10 @@ class _TransactionDetailsViewState
     final isPending = status.contains('pending');
 
     return Container(
-      padding: EdgeInsets.all(20.w),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         children: [
@@ -386,7 +406,7 @@ class _TransactionDetailsViewState
                 isSuccess && isCollection
                     ? "You received $sendAmount into your wallet"
                     : isSuccess && isPayment
-                    ? "You sent $sendAmount to ${recipientName.replaceAll("Sent to ","")}"
+                    ? "You sent $sendAmount to ${recipientName.replaceAll("Sent to ", "")}"
                     : isCollection
                     ? "You set up wallet funding of $sendAmount"
                     : "You've set up a $transferPhrase of $sendAmount to $recipientName",
@@ -396,7 +416,7 @@ class _TransactionDetailsViewState
 
           // Only show additional timeline items if transaction is not yet successful
           if (!isSuccess) ...[
-            SizedBox(height: 20.h),
+            SizedBox(height: 20),
 
             // Second item for collections: Waiting for transfer
             if (isCollection)
@@ -422,7 +442,7 @@ class _TransactionDetailsViewState
 
             // Third item for collections: Funds received into wallet
             if (isCollection && isPending) ...[
-              SizedBox(height: 20.h),
+              SizedBox(height: 20),
               _buildTimelineItem(
                 isCompleted: false,
                 isActive: false,
@@ -435,7 +455,7 @@ class _TransactionDetailsViewState
 
             // Third item for payments: Recipient receives funds (only for non-top-ups and pending)
             if (isPayment && !isTopUp && isPending) ...[
-              SizedBox(height: 20.h),
+              SizedBox(height: 20),
               _buildTimelineItem(
                 isCompleted: false,
                 isActive: false,
@@ -477,10 +497,10 @@ class _TransactionDetailsViewState
           children: [
             if (!isFirst)
               Container(
-                width: 2.w,
-                height: 24.h,
+                width: 2,
+                height: 24,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12.r),
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: statusColor.withOpacity(0.2),
                     width: 1,
@@ -508,8 +528,8 @@ class _TransactionDetailsViewState
                 ),
               ),
             Container(
-              width: 16.w,
-              height: 16.w,
+              width: 16,
+              height: 16,
               decoration: BoxDecoration(
                 color: statusColor,
                 shape: BoxShape.circle,
@@ -527,8 +547,8 @@ class _TransactionDetailsViewState
                         )
                         : isActive
                         ? Container(
-                          width: 6.w,
-                          height: 6.w,
+                          width: 6,
+                          height: 6,
                           decoration: BoxDecoration(
                             color: Colors.white,
                             shape: BoxShape.circle,
@@ -539,10 +559,10 @@ class _TransactionDetailsViewState
             ),
             if (!isLast)
               Container(
-                width: 2.w,
-                height: 24.h,
+                width: 2,
+                height: 24,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12.r),
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: statusColor.withOpacity(0.2),
                     width: 1,
@@ -572,15 +592,15 @@ class _TransactionDetailsViewState
           ],
         ),
 
-        SizedBox(width: 20.w),
+        SizedBox(width: 20),
 
         // Content
         Expanded(
           child: Container(
-            padding: EdgeInsets.symmetric(vertical: 12.h),
+            padding: EdgeInsets.symmetric(vertical: 12),
             // decoration: BoxDecoration(
             //   color: backgroundColor,
-            //   borderRadius: BorderRadius.circular(12.r),
+            //   borderRadius: BorderRadius.circular(12),
             //   border: Border.all(color: statusColor.withOpacity(0.2), width: 1),
             // ),
             child: Column(
@@ -589,22 +609,22 @@ class _TransactionDetailsViewState
                 Text(
                   date,
                   style: AppTypography.bodySmall.copyWith(
-                    fontFamily: 'Karla',
-                    fontSize: 12.sp,
-                    letterSpacing: -.6,
-                    height: 1.4,
+                    fontFamily: 'Chirp',
+                    fontSize: 12,
+                    letterSpacing: -.25,
+                    height: 1.2,
                     fontWeight: FontWeight.w600,
                     color: Theme.of(
                       context,
                     ).colorScheme.onSurface.withOpacity(0.5),
                   ),
                 ),
-                SizedBox(height: 6.h),
+                SizedBox(height: 6),
                 Text(
                   title,
                   style: AppTypography.bodyMedium.copyWith(
-                    fontFamily: 'Karla',
-                    fontSize: 14.sp,
+                    fontFamily: 'Chirp',
+                    fontSize: 14,
                     letterSpacing: -0.2,
                     fontWeight: FontWeight.w500,
                     color: Theme.of(context).colorScheme.onSurface,
@@ -625,10 +645,10 @@ class _TransactionDetailsViewState
         widget.transaction.beneficiary.accountType?.toLowerCase() == 'dayfi';
 
     return Container(
-      padding: EdgeInsets.all(20.w),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -636,18 +656,18 @@ class _TransactionDetailsViewState
           Text(
             "Transaction Details",
             style: AppTypography.bodySmall.copyWith(
-              fontFamily: 'Karla',
-              fontSize: 12.sp,
-              letterSpacing: -.6,
-              height: 1.4,
+              fontFamily: 'Chirp',
+              fontSize: 12,
+              letterSpacing: -.25,
+              height: 1.2,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
             ),
           ),
-          SizedBox(height: 16.h),
+          SizedBox(height: 16),
           if (isDayfiTransfer)
             _buildDetailRow(
-              "DayFi Tag",
+              "Dayfi Tag",
               widget.transaction.beneficiary.accountNumber != null &&
                       widget.transaction.beneficiary.accountNumber!.isNotEmpty
                   ? (widget.transaction.beneficiary.accountNumber!.startsWith(
@@ -665,9 +685,12 @@ class _TransactionDetailsViewState
           if (!isDayfiTransfer) _buildDetailRow("Bank", _getBankName()),
           _buildDetailRow(
             "Send type",
-            isDayfiTransfer
-                ? "DayFi Tag"
-                : _getChannelDisplayName(widget.transaction.sendChannel),
+            _getChannelDisplayName(
+              isDayfiTransfer
+                  ? 'p2p'
+                  : (widget.transaction.receiveChannel ??
+                      widget.transaction.sendChannel),
+            ),
           ),
           _buildDetailRow(
             "Transaction ID",
@@ -679,12 +702,12 @@ class _TransactionDetailsViewState
           ),
           if (widget.transaction.reason != null &&
               widget.transaction.reason!.isNotEmpty) ...[
-            SizedBox(height: 8.h),
+            SizedBox(height: 8),
             Divider(
-              height: 16.h,
+              height: 16,
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
             ),
-            SizedBox(height: 8.h),
+            SizedBox(height: 8),
 
             _buildDetailRow(
               "Description",
@@ -731,10 +754,10 @@ class _TransactionDetailsViewState
         widget.transaction.beneficiary.accountType?.toLowerCase() == 'dayfi';
 
     return Container(
-      padding: EdgeInsets.all(20.w),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -742,15 +765,15 @@ class _TransactionDetailsViewState
           Text(
             "Sender Details",
             style: AppTypography.bodySmall.copyWith(
-              fontFamily: 'Karla',
-              fontSize: 12.sp,
-              letterSpacing: -.6,
-              height: 1.4,
+              fontFamily: 'Chirp',
+              fontSize: 12,
+              letterSpacing: -.25,
+              height: 1.2,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
             ),
           ),
-          SizedBox(height: 16.h),
+          SizedBox(height: 16),
           _buildDetailRow(
             "Name",
             widget.transaction.beneficiary.name.isNotEmpty
@@ -761,7 +784,7 @@ class _TransactionDetailsViewState
               widget.transaction.beneficiary.accountNumber != null &&
               widget.transaction.beneficiary.accountNumber!.isNotEmpty)
             _buildDetailRow(
-              "DayFi Tag",
+              "Dayfi Tag",
               widget.transaction.beneficiary.accountNumber!.startsWith('@')
                   ? widget.transaction.beneficiary.accountNumber!
                   : '@${widget.transaction.beneficiary.accountNumber!}',
@@ -791,10 +814,10 @@ class _TransactionDetailsViewState
         widget.transaction.beneficiary.accountType?.toLowerCase() == 'dayfi';
 
     return Container(
-      padding: EdgeInsets.all(20.w),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -802,21 +825,21 @@ class _TransactionDetailsViewState
           Text(
             "Recipient Details",
             style: AppTypography.bodySmall.copyWith(
-              fontFamily: 'Karla',
-              fontSize: 12.sp,
-              letterSpacing: -.6,
-              height: 1.4,
+              fontFamily: 'Chirp',
+              fontSize: 12,
+              letterSpacing: -.25,
+              height: 1.2,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
             ),
           ),
-          SizedBox(height: 16.h),
+          SizedBox(height: 16),
           _buildDetailRow("Name", widget.transaction.beneficiary.name),
           if (isDayfiTransfer &&
               widget.transaction.beneficiary.accountNumber != null &&
               widget.transaction.beneficiary.accountNumber!.isNotEmpty)
             _buildDetailRow(
-              "DayFi Tag",
+              "Dayfi Tag",
               widget.transaction.beneficiary.accountNumber!.startsWith('@')
                   ? widget.transaction.beneficiary.accountNumber!
                   : '@${widget.transaction.beneficiary.accountNumber!}',
@@ -862,7 +885,7 @@ class _TransactionDetailsViewState
 
   Widget _buildDetailRow(String label, String value) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 12.h),
+      padding: EdgeInsets.only(bottom: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -872,8 +895,8 @@ class _TransactionDetailsViewState
             child: Text(
               label,
               style: AppTypography.bodyMedium.copyWith(
-                fontFamily: 'Karla',
-                fontSize: 14.sp,
+                fontFamily: 'Chirp',
+                fontSize: 14,
                 letterSpacing: -.4,
                 fontWeight: FontWeight.w500,
                 color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
@@ -887,8 +910,8 @@ class _TransactionDetailsViewState
               child: Text(
                 value,
                 style: AppTypography.bodyMedium.copyWith(
-                  fontFamily: 'Karla',
-                  fontSize: 16.sp,
+                  fontFamily: 'Chirp',
+                  fontSize: 16,
                   letterSpacing: -.4,
                   fontWeight: FontWeight.w500,
                   color: Theme.of(context).colorScheme.onSurface,
@@ -910,10 +933,10 @@ class _TransactionDetailsViewState
     final isTopUp = _isWalletTopUp();
 
     return Container(
-      padding: EdgeInsets.all(20.w),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -921,15 +944,15 @@ class _TransactionDetailsViewState
           Text(
             "Payment Summary",
             style: AppTypography.bodySmall.copyWith(
-              fontFamily: 'Karla',
-              fontSize: 12.sp,
-              letterSpacing: -.6,
-              height: 1.4,
+              fontFamily: 'Chirp',
+              fontSize: 12,
+              letterSpacing: -.25,
+              height: 1.2,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
             ),
           ),
-          SizedBox(height: 16.h),
+          SizedBox(height: 16),
           _buildSummaryRow(
             "Reference number",
             widget.transaction.id,
@@ -947,10 +970,10 @@ class _TransactionDetailsViewState
               isLoading: _isRatesLoading,
             ),
           ],
-          // Always show fee
+          // Always show fees
           _buildSummaryRow("Fee", fee),
           Divider(
-            height: 24.h,
+            height: 24,
             color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
           ),
           _buildSummaryRow("Total paid", total, isTotal: true),
@@ -968,7 +991,7 @@ class _TransactionDetailsViewState
     bool isDescription = false,
   }) {
     return Padding(
-      padding: EdgeInsets.only(bottom: isDescription ? 0 : 12.h),
+      padding: EdgeInsets.only(bottom: isDescription ? 0 : 12),
       child:
           isDescription
               ? Column(
@@ -977,8 +1000,8 @@ class _TransactionDetailsViewState
                   Text(
                     label,
                     style: AppTypography.bodyMedium.copyWith(
-                      fontFamily: 'Karla',
-                      fontSize: 14.sp,
+                      fontFamily: 'Chirp',
+                      fontSize: 14,
                       letterSpacing: -.4,
                       fontWeight: FontWeight.w600,
                       color: Theme.of(
@@ -986,18 +1009,18 @@ class _TransactionDetailsViewState
                       ).colorScheme.onSurface.withOpacity(0.7),
                     ),
                   ),
-                  SizedBox(height: 6.h),
+                  SizedBox(height: 6),
                   Text(
                     value,
                     style: AppTypography.bodyMedium.copyWith(
-                      fontFamily: 'Karla',
-                      fontSize: 16.sp,
+                      fontFamily: 'Chirp',
+                      fontSize: 16,
                       letterSpacing: -.2,
                       fontWeight: FontWeight.w500,
                       color: Theme.of(
                         context,
                       ).colorScheme.onSurface.withOpacity(0.8),
-                      height: 1.4,
+                      height: 1.2,
                     ),
                   ),
                 ],
@@ -1009,8 +1032,8 @@ class _TransactionDetailsViewState
                     child: Text(
                       label,
                       style: AppTypography.bodyMedium.copyWith(
-                        fontFamily: 'Karla',
-                        fontSize: 14.sp,
+                        fontFamily: 'Chirp',
+                        fontSize: 14,
                         letterSpacing: -.4,
                         fontWeight: FontWeight.w500,
                         color: Theme.of(
@@ -1019,7 +1042,7 @@ class _TransactionDetailsViewState
                       ),
                     ),
                   ),
-                  SizedBox(width: 24.w),
+                  SizedBox(width: 24),
                   Expanded(
                     flex: 3,
                     child: Row(
@@ -1031,19 +1054,22 @@ class _TransactionDetailsViewState
                             child:
                                 isLoading
                                     ? SizedBox(
-                                      width: 20.w,
-                                      height: 20.w,
+                                      width: 20,
+                                      height: 20,
                                       child:
                                           LoadingAnimationWidget.horizontalRotatingDots(
-                                            color: Theme.of(context).colorScheme.primary,
+                                            color:
+                                                Theme.of(
+                                                  context,
+                                                ).colorScheme.primary,
                                             size: 20,
                                           ),
                                     )
                                     : Text(
                                       value,
                                       style: AppTypography.bodyMedium.copyWith(
-                                        fontFamily: 'Karla',
-                                        fontSize: 16.sp,
+                                        fontFamily: 'Chirp',
+                                        fontSize: 16,
                                         letterSpacing: -.4,
                                         fontWeight:
                                             isTotal
@@ -1060,7 +1086,7 @@ class _TransactionDetailsViewState
                         ),
 
                         if (showCopy) ...[
-                          SizedBox(width: 8.w),
+                          SizedBox(width: 8),
                           Semantics(
                             button: true,
                             label: 'Copy reference number',
@@ -1076,7 +1102,7 @@ class _TransactionDetailsViewState
                               },
                               child: SvgPicture.asset(
                                 "assets/icons/svgs/copy.svg",
-                                height: 20.w,
+                                height: 20,
                                 color: Theme.of(
                                   context,
                                 ).colorScheme.onSurface.withOpacity(0.6),
@@ -1100,12 +1126,12 @@ class _TransactionDetailsViewState
           onPressed: () {
             _showPaymentConfirmationDialog();
           },
-          borderRadius: 56.r,
+          borderRadius: 56,
           backgroundColor: AppColors.success500,
           width: double.infinity,
-          height: 56.h,
+          height: 56,
         ),
-        SizedBox(height: 12.h),
+        SizedBox(height: 12),
         PrimaryButton(
           text: "I have not paid",
           onPressed: () {
@@ -1113,21 +1139,21 @@ class _TransactionDetailsViewState
             _showNotPaidDialog();
           },
           width: double.infinity,
-          height: 56.h,
-          borderRadius: 56.r,
+          height: 56,
+          borderRadius: 56,
           backgroundColor: Theme.of(context).colorScheme.surface,
           textColor: Theme.of(context).colorScheme.onSurface,
         ),
-        SizedBox(height: 12.h),
+        SizedBox(height: 12),
         PrimaryButton(
           text: "Cancel transfer",
           onPressed: () {
             // TODO: Implement cancel transfer
             _showCancelDialog();
           },
-          borderRadius: 56.r,
+          borderRadius: 56,
           width: double.infinity,
-          height: 56.h,
+          height: 56,
           backgroundColor: AppColors.error500,
           textColor: Colors.white,
         ),
@@ -1363,8 +1389,8 @@ class _TransactionDetailsViewState
   String _calculateTotal() {
     if (widget.transaction.sendAmount != null &&
         widget.transaction.sendAmount! > 0) {
-      // Fee is now 0, so total is just the send amount
-      final feeAmount = 0.0; // TODO: Get actual fee from transaction data
+      // Use actual fee from transaction data
+      final feeAmount = widget.transaction.fee ?? 0.0;
       final totalAmount = widget.transaction.sendAmount! + feeAmount;
       final formattedAmount = StringUtils.formatNumberWithCommas(
         totalAmount.toStringAsFixed(2),
@@ -1522,7 +1548,10 @@ class _TransactionDetailsViewState
             "${dateTime.day}${_getOrdinalSuffix(dateTime.day)} ${_getMonthName(dateTime.month)}";
       }
 
-      final hour = dateTime.hour > 12 ? dateTime.hour - 12 : (dateTime.hour == 0 ? 12 : dateTime.hour);
+      final hour =
+          dateTime.hour > 12
+              ? dateTime.hour - 12
+              : (dateTime.hour == 0 ? 12 : dateTime.hour);
       final period = dateTime.hour >= 12 ? 'PM' : 'AM';
       final timeStr =
           "${hour.toString()}:${dateTime.minute.toString().padLeft(2, '0')} $period";
@@ -1620,15 +1649,15 @@ class _TransactionDetailsViewState
   Widget _buildPaymentConfirmationDialog() {
     return Dialog(
       backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Container(
-        padding: EdgeInsets.all(28.w),
+        padding: EdgeInsets.all(28),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 64.w,
-              height: 64.w,
+              width: 64,
+              height: 64,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   begin: Alignment.topLeft,
@@ -1646,12 +1675,12 @@ class _TransactionDetailsViewState
                 ],
               ),
             ),
-            SizedBox(height: 24.h),
+            SizedBox(height: 24),
             Text(
               'Are you sure you have completed the payment?',
               style: TextStyle(
                 fontFamily: 'FunnelDisplay',
-                fontSize: 20.sp,
+                fontSize: 20,
                 // height: 1.6,
                 fontWeight: FontWeight.w500,
                 color: Theme.of(context).colorScheme.onSurface,
@@ -1659,7 +1688,7 @@ class _TransactionDetailsViewState
               ),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: 16),
             PrimaryButton(
               text: 'Yes, Confirm',
               onPressed: () {
@@ -1669,15 +1698,15 @@ class _TransactionDetailsViewState
               backgroundColor: AppColors.purple500,
               textColor: AppColors.neutral0,
               borderRadius: 56,
-              height: 56.h,
+              height: 56,
               width: double.infinity,
               fullWidth: true,
-              fontFamily: 'Karla',
+              fontFamily: 'Chirp',
               fontSize: 18,
               fontWeight: FontWeight.w500,
               letterSpacing: -0.8,
             ),
-            SizedBox(height: 12.h),
+            SizedBox(height: 12),
             SecondaryButton(
               text: 'Cancel',
               onPressed: () => Navigator.pop(context),
@@ -1685,9 +1714,9 @@ class _TransactionDetailsViewState
               textColor: AppColors.purple500ForTheme(context),
               width: double.infinity,
               fullWidth: true,
-              height: 56.h,
+              height: 56,
               borderRadius: 56,
-              fontFamily: 'Karla',
+              fontFamily: 'Chirp',
               fontSize: 18,
               fontWeight: FontWeight.w500,
               letterSpacing: -0.8,
@@ -1709,15 +1738,15 @@ class _TransactionDetailsViewState
   Widget _buildNotPaidDialog() {
     return Dialog(
       backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Container(
-        padding: EdgeInsets.all(28.w),
+        padding: EdgeInsets.all(28),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 64.w,
-              height: 64.w,
+              width: 64,
+              height: 64,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   begin: Alignment.topLeft,
@@ -1735,12 +1764,12 @@ class _TransactionDetailsViewState
                 ],
               ),
             ),
-            SizedBox(height: 24.h),
+            SizedBox(height: 24),
             Text(
               'Please complete your payment to proceed with the transfer.',
               style: TextStyle(
                 fontFamily: 'FunnelDisplay',
-                fontSize: 20.sp,
+                fontSize: 20,
                 // height: 1.6,
                 fontWeight: FontWeight.w500,
                 color: Theme.of(context).colorScheme.onSurface,
@@ -1748,17 +1777,17 @@ class _TransactionDetailsViewState
               ),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: 16),
             PrimaryButton(
               text: 'OK',
               onPressed: () => Navigator.pop(context),
               backgroundColor: AppColors.purple500,
               textColor: AppColors.neutral0,
               borderRadius: 56,
-              height: 56.h,
+              height: 56,
               width: double.infinity,
               fullWidth: true,
-              fontFamily: 'Karla',
+              fontFamily: 'Chirp',
               fontSize: 18,
               fontWeight: FontWeight.w500,
               letterSpacing: -0.8,
@@ -1780,15 +1809,15 @@ class _TransactionDetailsViewState
   Widget _buildCancelDialog() {
     return Dialog(
       backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Container(
-        padding: EdgeInsets.all(28.w),
+        padding: EdgeInsets.all(28),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 64.w,
-              height: 64.w,
+              width: 64,
+              height: 64,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   begin: Alignment.topLeft,
@@ -1806,12 +1835,12 @@ class _TransactionDetailsViewState
                 ],
               ),
             ),
-            SizedBox(height: 24.h),
+            SizedBox(height: 24),
             Text(
               'Are you sure you want to cancel this transfer?',
               style: TextStyle(
                 fontFamily: 'FunnelDisplay',
-                fontSize: 20.sp,
+                fontSize: 20,
                 // height: 1.6,
                 fontWeight: FontWeight.w500,
                 color: Theme.of(context).colorScheme.onSurface,
@@ -1819,7 +1848,7 @@ class _TransactionDetailsViewState
               ),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: 16),
             PrimaryButton(
               text: 'Yes, Cancel Transfer',
               onPressed: () {
@@ -1829,15 +1858,15 @@ class _TransactionDetailsViewState
               backgroundColor: AppColors.error500,
               textColor: Colors.white,
               borderRadius: 56,
-              height: 56.h,
+              height: 56,
               width: double.infinity,
               fullWidth: true,
-              fontFamily: 'Karla',
+              fontFamily: 'Chirp',
               fontSize: 18,
               fontWeight: FontWeight.w500,
               letterSpacing: -0.8,
             ),
-            SizedBox(height: 12.h),
+            SizedBox(height: 12),
             SecondaryButton(
               text: 'No, Keep Transfer',
               onPressed: () => Navigator.pop(context),
@@ -1845,9 +1874,9 @@ class _TransactionDetailsViewState
               textColor: AppColors.purple500ForTheme(context),
               width: double.infinity,
               fullWidth: true,
-              height: 56.h,
+              height: 56,
               borderRadius: 56,
-              fontFamily: 'Karla',
+              fontFamily: 'Chirp',
               fontSize: 18,
               fontWeight: FontWeight.w500,
               letterSpacing: -0.8,
@@ -1885,21 +1914,21 @@ class _TransactionDetailsViewState
               child: Material(
                 color: Colors.transparent,
                 child: Container(
-                  padding: EdgeInsets.all(24.w),
+                  padding: EdgeInsets.all(24),
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(12.r),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       CupertinoActivityIndicator(),
-                      SizedBox(height: 16.h),
+                      SizedBox(height: 16),
                       Text(
                         'Generating receipt...',
                         style: TextStyle(
-                          fontFamily: 'Karla',
-                          fontSize: 14.sp,
+                          fontFamily: 'Chirp',
+                          fontSize: 14,
                           color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
@@ -1985,31 +2014,94 @@ class _TransactionDetailsViewState
     }
   }
 
-  /// Get channel display name
+  /// Get channel display name - handles various payment channel types
   String _getChannelDisplayName(String? channel) {
     if (channel == null || channel.isEmpty) return 'N/A';
 
-    switch (channel.toLowerCase()) {
-      case 'dayfi':
-      case 'dayfi_tag':
-        return 'DayFi Tag';
-      case 'bank':
-      case 'bank_transfer':
-        return 'Bank Transfer';
-      case 'mobile_money':
-      case 'momo':
-        return 'Mobile Money';
-      case 'spenn':
-        return 'Spenn';
-      case 'cash_pickup':
-        return 'Cash Pickup';
-      case 'wallet':
-        return 'Digital Wallet';
-      case 'card':
-        return 'Card Payment';
-      default:
-        return channel;
+    final normalizedChannel = channel.toLowerCase().trim();
+
+    // Dayfi internal transfers
+    if (normalizedChannel == 'dayfi' ||
+        normalizedChannel == 'dayfi_tag' ||
+        normalizedChannel == 'dayfi-tag' ||
+        normalizedChannel == 'p2p' ||
+        normalizedChannel == 'peer_to_peer' ||
+        normalizedChannel == 'peer-to-peer') {
+      return 'P2P';
     }
+
+    // Bank transfers
+    if (normalizedChannel == 'bank' ||
+        normalizedChannel == 'bank_transfer' ||
+        normalizedChannel == 'bank-transfer' ||
+        normalizedChannel == 'banktransfer') {
+      return 'Bank Transfer';
+    }
+
+    // EFT (Electronic Funds Transfer)
+    if (normalizedChannel == 'eft' ||
+        normalizedChannel == 'electronic_funds_transfer' ||
+        normalizedChannel == 'electronic-funds-transfer') {
+      return 'EFT';
+    }
+
+    // Mobile Money
+    if (normalizedChannel == 'mobile_money' ||
+        normalizedChannel == 'mobile-money' ||
+        normalizedChannel == 'mobilemoney' ||
+        normalizedChannel == 'momo' ||
+        normalizedChannel == 'mobile') {
+      return 'Mobile Money';
+    }
+
+    // Spenn
+    if (normalizedChannel == 'spenn') {
+      return 'Spenn';
+    }
+
+    // Cash Pickup
+    if (normalizedChannel == 'cash_pickup' ||
+        normalizedChannel == 'cash-pickup' ||
+        normalizedChannel == 'cashpickup' ||
+        normalizedChannel == 'cash') {
+      return 'Cash Pickup';
+    }
+
+    // Digital Wallet
+    if (normalizedChannel == 'wallet' ||
+        normalizedChannel == 'digital_wallet' ||
+        normalizedChannel == 'digital-wallet') {
+      return 'Digital Wallet';
+    }
+
+    // Card Payment
+    if (normalizedChannel == 'card' ||
+        normalizedChannel == 'card_payment' ||
+        normalizedChannel == 'card-payment' ||
+        normalizedChannel == 'debit' ||
+        normalizedChannel == 'credit') {
+      return 'Card Payment';
+    }
+
+    // Airtime
+    if (normalizedChannel == 'airtime' ||
+        normalizedChannel == 'airtime_topup' ||
+        normalizedChannel == 'airtime-topup') {
+      return 'Airtime';
+    }
+
+    // Default: Format the channel name nicely (replace underscores/dashes, capitalize)
+    return channel
+        .replaceAll('_', ' ')
+        .replaceAll('-', ' ')
+        .split(' ')
+        .map(
+          (word) =>
+              word.isNotEmpty
+                  ? '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}'
+                  : '',
+        )
+        .join(' ');
   }
 
   /// Get country name from country code
@@ -2149,31 +2241,31 @@ class _TransactionDetailsViewState
         widget.transaction.beneficiary.accountType?.toLowerCase() == 'dayfi';
 
     return Container(
-      padding: EdgeInsets.all(20.w),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            isDayfiTransfer ? "DayFi Tag Details" : "Bank Account Details",
+            isDayfiTransfer ? "Dayfi Tag Details" : "Bank Account Details",
             style: AppTypography.bodySmall.copyWith(
-              fontFamily: 'Karla',
-              fontSize: 12.sp,
-              letterSpacing: -.6,
-              height: 1.4,
+              fontFamily: 'Chirp',
+              fontSize: 12,
+              letterSpacing: -.25,
+              height: 1.2,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
             ),
           ),
-          SizedBox(height: 16.h),
+          SizedBox(height: 16),
           if (isDayfiTransfer) ...[
             if (widget.transaction.beneficiary.accountNumber != null &&
                 widget.transaction.beneficiary.accountNumber!.isNotEmpty)
               _buildDetailRow(
-                "DayFi Tag",
+                "Dayfi Tag",
                 widget.transaction.beneficiary.accountNumber!.startsWith('@')
                     ? widget.transaction.beneficiary.accountNumber!
                     : '@${widget.transaction.beneficiary.accountNumber!}',
@@ -2202,7 +2294,7 @@ class _TransactionDetailsViewState
       'payment',
     );
 
-    // Check if this is a DayFi tag transfer
+    // Check if this is a Dayfi Tag transfer
     final isDayfiTransfer =
         widget.transaction.source.accountType?.toLowerCase() == 'dayfi' ||
         widget.transaction.beneficiary.accountType?.toLowerCase() == 'dayfi';

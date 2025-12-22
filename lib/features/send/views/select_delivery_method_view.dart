@@ -1,7 +1,5 @@
-import 'package:flutter/cupertino.dart' show CupertinoActivityIndicator;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
@@ -9,6 +7,7 @@ import 'package:dayfi/features/send/vm/send_viewmodel.dart';
 import 'package:dayfi/models/payment_response.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/app_locator.dart';
+import 'package:dayfi/common/widgets/shimmer_widgets.dart';
 
 class SelectDeliveryMethodView extends ConsumerStatefulWidget {
   const SelectDeliveryMethodView({super.key});
@@ -196,15 +195,21 @@ class _SelectDeliveryMethodViewState
     String baseName;
     switch (channelType.toLowerCase()) {
       case 'dayfi_tag':
-        baseName = 'DayFi Tag';
+        baseName = 'Dayfi Tag';
         break;
       case 'bank_transfer':
       case 'bank':
+        baseName = 'Bank Transfer';
+        break;
+
       case 'p2p':
       case 'peer_to_peer':
       case 'peer-to-peer':
+        baseName = 'Bank Transfer (P2P)';
+        break;
+
       case 'eft':
-        baseName = 'Bank Transfer';
+        baseName = 'Bank Transfer (EFT)';
         break;
       case 'mobile_money':
       case 'momo':
@@ -307,7 +312,7 @@ class _SelectDeliveryMethodViewState
     if (channelType == null) return 'zzz';
     final lower = channelType.toLowerCase();
 
-    // DayFi Tag should always be first
+    // Dayfi Tag should always be first
     if (lower == 'dayfi_tag') return '000_dayfi_tag';
     if (lower == 'bank_transfer' || lower == 'bank') return '001_bank_transfer';
     if (lower == 'mobile_money' || lower == 'momo' || lower == 'mobilemoney') {
@@ -342,14 +347,14 @@ class _SelectDeliveryMethodViewState
     final isNgnToNgn =
         sendState.sendCurrency == 'NGN' && _selectedCurrency == 'NGN';
 
-    // For NGN to NGN transfers, add DayFi Tag as an option if not already present
+    // For NGN to NGN transfers, add Dayfi Tag as an option if not already present
     if (isNgnToNgn) {
       final hasDayfiTag = filteredChannels.any(
         (channel) => channel.channelType?.toLowerCase() == 'dayfi_tag',
       );
 
       if (!hasDayfiTag) {
-        // Create a synthetic DayFi Tag channel
+        // Create a synthetic Dayfi Tag channel
         final dayfiTagChannel = Channel(
           channelType: 'dayfi_tag',
           country: _selectedCountry,
@@ -396,13 +401,12 @@ class _SelectDeliveryMethodViewState
         foregroundColor: Theme.of(context).scaffoldBackgroundColor,
         shadowColor: Theme.of(context).scaffoldBackgroundColor,
         surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
-
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
           icon: Icon(
             Icons.arrow_back_ios,
-            size: 20.sp,
+            size: 20,
             color: Theme.of(context).colorScheme.onSurface,
           ),
           onPressed: () => Navigator.pop(context),
@@ -411,7 +415,7 @@ class _SelectDeliveryMethodViewState
         title: Text(
           "Choose delivery method",
           style: AppTypography.titleLarge.copyWith(
-            fontSize: 20.sp,
+            fontSize: 20,
             // height: 1.6,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,
@@ -419,101 +423,120 @@ class _SelectDeliveryMethodViewState
         ),
         centerTitle: true,
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Selected Country Info
-          Center(
-            child: Container(
-              padding: EdgeInsets.symmetric(vertical: 3.h, horizontal: 6.w),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(1),
-                borderRadius: BorderRadius.circular(20.r),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final bool isWide = constraints.maxWidth > 600;
+          return Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: isWide ? 500 : double.infinity,
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    "Sending to ${_getCountryName(_selectedCountry)} (${_selectedCurrency ?? 'NGN'})",
-                    style: TextStyle(
-                      fontFamily: 'Karla',
-                      fontSize: 12.sp,
-                      color: const Color(0xff2A0079),
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: -.04,
-                      height: 1.450,
+                  // Selected Country Info
+                  Center(
+                    child: Container(
+                      padding: EdgeInsets.symmetric(vertical: 3, horizontal: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            "Sending to ${_getCountryName(_selectedCountry)} (${_selectedCurrency ?? 'NGN'})",
+                            style: TextStyle(
+                              fontFamily: 'Chirp',
+                              fontSize: 12,
+                              color: const Color(0xff2A0079),
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: -.04,
+                              height: 1.450,
+                            ),
+                          ),
+                          SizedBox(width: 4),
+                          SvgPicture.asset(
+                            _getFlagPath(_getCurrencyCountryCode(_selectedCurrency)),
+                            height: 18,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  SizedBox(width: 4.w),
-                  SvgPicture.asset(
-                    _getFlagPath(_getCurrencyCountryCode(_selectedCurrency)),
-                    height: 18.h,
+                  SizedBox(height: 32),
+                  // Section Header
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: isWide ? 24 : 18),
+                    child: Text(
+                      'Available delivery methods',
+                      style: TextStyle(
+                        fontFamily: 'Chirp',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                      ),
+                    ),
+                  ),
+
+                  // Delivery Methods List
+                  Expanded(
+                    child:
+                        sendState.isLoading
+                            ? ShimmerWidgets.deliveryMethodListShimmer(
+                                context,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: isWide ? 24 : 18,
+                                  vertical: 8,
+                                ),
+                              )
+                            : deliveryMethods.isEmpty
+                            ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.info_outline,
+                                    size: 64,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface.withOpacity(0.3),
+                                  ),
+                                  SizedBox(height: 16),
+                                  Text(
+                                    'No delivery methods available',
+                                    style: TextStyle(
+                                      fontFamily: 'Chirp',
+                                      fontSize: 16,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurface.withOpacity(0.6),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                            : ListView.separated(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: isWide ? 24 : 18,
+                                vertical: 8,
+                              ),
+                              itemCount: deliveryMethods.length,
+                              separatorBuilder:
+                                  (context, index) => SizedBox(height: 12),
+                              itemBuilder: (context, index) {
+                                final method = deliveryMethods[index];
+                                return _buildDeliveryMethodCard(method);
+                              },
+                            ),
                   ),
                 ],
               ),
             ),
-          ),
-          SizedBox(height: 32.h),
-          // Section Header
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 18.w),
-            child: Text(
-              'Available delivery methods',
-              style: TextStyle(
-                fontFamily: 'Karla',
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w500,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-              ),
-            ),
-          ),
-
-          // Delivery Methods List
-          Expanded(
-            child:
-                sendState.isLoading
-                    ? Center(child: CupertinoActivityIndicator())
-                    : deliveryMethods.isEmpty
-                    ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.info_outline,
-                            size: 64.sp,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurface.withOpacity(0.3),
-                          ),
-                          SizedBox(height: 16.h),
-                          Text(
-                            'No delivery methods available',
-                            style: TextStyle(
-                              fontFamily: 'Karla',
-                              fontSize: 16.sp,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurface.withOpacity(0.6),
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                    : ListView.separated(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 18.w,
-                        vertical: 8.h,
-                      ),
-                      itemCount: deliveryMethods.length,
-                      separatorBuilder:
-                          (context, index) => SizedBox(height: 12.h),
-                      itemBuilder: (context, index) {
-                        final method = deliveryMethods[index];
-                        return _buildDeliveryMethodCard(method);
-                      },
-                    ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -534,14 +557,14 @@ class _SelectDeliveryMethodViewState
       child: Container(
         width: double.infinity,
         padding: EdgeInsets.only(
-          left: 16.w,
-          top: 16.h,
-          bottom: 16.h,
-          right: 12.w,
+          left: 16,
+          top: 16,
+          bottom: 16,
+          right: 12,
         ),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(12.r),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: AppColors.purple500ForTheme(context).withOpacity(0),
             width: .75,
@@ -563,14 +586,14 @@ class _SelectDeliveryMethodViewState
                   Row(
                     children: [
                       Container(
-                        width: 32.w,
-                        height: 32.w,
+                        width: 32,
+                        height: 32,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(24.r),
+                          borderRadius: BorderRadius.circular(24),
                         ),
                         child: _getDeliveryMethodIcon(method.channelType),
                       ),
-                      SizedBox(width: 12.w),
+                      SizedBox(width: 12),
                       Expanded(
                         child: Row(
                           children: [
@@ -587,9 +610,9 @@ class _SelectDeliveryMethodViewState
                                         style: Theme.of(
                                           context,
                                         ).textTheme.titleLarge?.copyWith(
-                                          fontFamily: 'Karla',
-                                          fontSize: 18.sp,
-                                          letterSpacing: -.6,
+                                          fontFamily: 'Chirp',
+                                          fontSize: 18,
+                                          letterSpacing: -.25,
                                           fontWeight: FontWeight.w500,
                                           color:
                                               Theme.of(
@@ -597,18 +620,18 @@ class _SelectDeliveryMethodViewState
                                               ).colorScheme.onSurface,
                                         ),
                                       ),
-                                      SizedBox(width: 8.w),
+                                      SizedBox(width: 8),
                                       if (isDayfiTag)
                                         Container(
                                           padding: EdgeInsets.symmetric(
-                                            horizontal: 8.w,
-                                            vertical: 3.h,
+                                            horizontal: 8,
+                                            vertical: 3,
                                           ),
                                           decoration: BoxDecoration(
                                             color: AppColors.warning400
                                                 .withOpacity(0.15),
                                             borderRadius: BorderRadius.circular(
-                                              8.r,
+                                              8,
                                             ),
                                           ),
                                           child: Row(
@@ -618,8 +641,8 @@ class _SelectDeliveryMethodViewState
                                                 'Free',
                                                 style: AppTypography.labelSmall
                                                     .copyWith(
-                                                      fontFamily: 'Karla',
-                                                      fontSize: 10.sp,
+                                                      fontFamily: 'Chirp',
+                                                      fontSize: 10,
                                                       fontWeight:
                                                           FontWeight.w600,
                                                       color:
@@ -631,7 +654,7 @@ class _SelectDeliveryMethodViewState
                                         ),
                                     ],
                                   ),
-                                  SizedBox(height: 4.h),
+                                  SizedBox(height: 4),
                                   Text(
                                     _getDeliveryMethodDescription(
                                       method.channelType,
@@ -640,8 +663,8 @@ class _SelectDeliveryMethodViewState
                                     style: Theme.of(
                                       context,
                                     ).textTheme.bodyMedium?.copyWith(
-                                      fontSize: 13.sp,
-                                      fontFamily: 'Karla',
+                                      fontSize: 13,
+                                      fontFamily: 'Chirp',
                                       fontWeight: FontWeight.w500,
                                       letterSpacing: -0.4,
                                       height: 1.3,
@@ -661,8 +684,8 @@ class _SelectDeliveryMethodViewState
                 ],
               ),
             ),
-            SizedBox(width: 24.w),
-            SizedBox(width: 24.sp),
+            SizedBox(width: 24),
+            SizedBox(width: 24),
           ],
         ),
       ),
@@ -747,43 +770,43 @@ class _SelectDeliveryMethodViewState
       case 'spenn':
         return SvgPicture.asset(
           'assets/icons/svgs/wallett.svg',
-          height: 32.sp,
-          width: 32.sp,
+          height: 32,
+          width: 32,
         );
       case 'cash_pickup':
       case 'cash':
         return SvgPicture.asset(
           'assets/icons/svgs/paymentt.svg',
-          height: 32.sp,
-          width: 32.sp,
+          height: 32,
+          width: 32,
         );
       case 'wallet':
       case 'digital_wallet':
         return SvgPicture.asset(
           'assets/icons/svgs/wallett.svg',
-          height: 32.sp,
-          width: 32.sp,
+          height: 32,
+          width: 32,
         );
       case 'card':
       case 'card_payment':
         return SvgPicture.asset(
           'assets/icons/svgs/cardd.svg',
-          height: 32.sp,
-          width: 32.sp,
+          height: 32,
+          width: 32,
         );
       case 'crypto':
       case 'cryptocurrency':
         return SvgPicture.asset(
           'assets/icons/svgs/cryptoo.svg',
-          height: 32.sp,
-          width: 32.sp,
+          height: 32,
+          width: 32,
         );
       case 'digital_dollar':
       case 'stablecoins':
         return SvgPicture.asset(
           'assets/icons/svgs/cryptoo.svg',
-          height: 32.sp,
-          width: 32.sp,
+          height: 32,
+          width: 32,
         );
       default:
         // Default icon for unknown delivery methods

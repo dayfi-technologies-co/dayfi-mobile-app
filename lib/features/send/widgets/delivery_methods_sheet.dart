@@ -1,4 +1,3 @@
-import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/features/send/vm/send_viewmodel.dart';
@@ -6,7 +5,6 @@ import 'package:dayfi/models/payment_response.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 class DeliveryMethodsSheet extends ConsumerWidget {
@@ -22,65 +20,72 @@ class DeliveryMethodsSheet extends ConsumerWidget {
   String _getDeliveryMethodName(String? channelType) {
     if (channelType == null) return 'Unknown';
     String baseName;
+    String timing;
+    
     switch (channelType.toLowerCase()) {
       case 'dayfi_tag':
-        baseName = 'DayFi Tag';
+        baseName = 'Dayfi Tag';
+        timing = 'Instant transfer';
         break;
       case 'bank_transfer':
       case 'bank':
         baseName = 'Bank Transfer';
+        timing = '24-48 hours';
         break;
-
       case 'p2p':
       case 'peer_to_peer':
       case 'peer-to-peer':
         baseName = 'Bank Transfer (P2P)';
+        timing = 'Instant';
         break;
-
       case 'eft':
         baseName = 'Bank Transfer (EFT)';
+        timing = 'Instant';
         break;
       case 'mobile_money':
       case 'momo':
       case 'mobilemoney':
         baseName = 'Mobile Money';
+        timing = 'Instant';
         break;
       case 'spenn':
         baseName = 'Spenn';
+        timing = 'Instant';
         break;
       case 'cash_pickup':
       case 'cash':
         baseName = 'Cash Pickup';
+        timing = '1-24 hours';
         break;
       case 'wallet':
       case 'digital_wallet':
         baseName = 'Wallet';
+        timing = 'Instant';
         break;
       case 'card':
       case 'card_payment':
         baseName = 'Card';
+        timing = 'Instant';
         break;
       case 'crypto':
       case 'cryptocurrency':
         baseName = 'Crypto';
+        timing = '10-30 minutes';
         break;
       case 'digital_dollar':
       case 'stablecoins':
         baseName = 'Digital Dollar';
+        timing = 'Instant';
         break;
       default:
         baseName = channelType
             .split('_')
             .map((word) => word[0].toUpperCase() + word.substring(1))
             .join(' ');
+        timing = '1-24 hours';
     }
 
-    // Add timing information
-    if (channelType.toLowerCase() == 'dayfi_tag') {
-      return '$baseName - Instant transfer';
-    } else {
-      return '$baseName - Instant (5 minutes max)';
-    }
+    return '$baseName - $timing';
   }
 
   String _getCountryCurrency(String country) {
@@ -147,7 +152,7 @@ class DeliveryMethodsSheet extends ConsumerWidget {
           children: [
             SvgPicture.asset(
               'assets/icons/svgs/swap.svg',
-              height: 40.sp,
+              height: 40,
               color: Theme.of(context).textTheme.bodyLarge!.color,
             ),
             SvgPicture.asset(
@@ -167,7 +172,7 @@ class DeliveryMethodsSheet extends ConsumerWidget {
           children: [
             SvgPicture.asset(
               'assets/icons/svgs/swap.svg',
-              height: 40.sp,
+              height: 40,
               color: Theme.of(context).textTheme.bodyLarge!.color,
             ),
             SvgPicture.asset(
@@ -185,7 +190,7 @@ class DeliveryMethodsSheet extends ConsumerWidget {
           children: [
             SvgPicture.asset(
               'assets/icons/svgs/swap.svg',
-              height: 40.sp,
+              height: 40,
               color: Theme.of(context).textTheme.bodyLarge!.color,
             ),
             SvgPicture.asset(
@@ -198,36 +203,36 @@ class DeliveryMethodsSheet extends ConsumerWidget {
       case 'spenn':
         return SvgPicture.asset(
           'assets/icons/svgs/wallett.svg',
-          height: 32.sp,
-          width: 32.sp,
+          height: 32,
+          width: 32,
         );
       case 'cash_pickup':
       case 'cash':
         return SvgPicture.asset(
           'assets/icons/svgs/paymentt.svg',
-          height: 32.sp,
-          width: 32.sp,
+          height: 32,
+          width: 32,
         );
       case 'wallet':
       case 'digital_wallet':
         return SvgPicture.asset(
           'assets/icons/svgs/wallett.svg',
-          height: 32.sp,
-          width: 32.sp,
+          height: 32,
+          width: 32,
         );
       case 'card':
       case 'card_payment':
         return SvgPicture.asset(
           'assets/icons/svgs/cardd.svg',
-          height: 32.sp,
-          width: 32.sp,
+          height: 32,
+          width: 32,
         );
       case 'crypto':
       case 'cryptocurrency':
         return SvgPicture.asset(
           'assets/icons/svgs/cryptoo.svg',
-          height: 32.sp,
-          width: 32.sp,
+          height: 32,
+          width: 32,
         );
       default:
         return Stack(
@@ -235,7 +240,7 @@ class DeliveryMethodsSheet extends ConsumerWidget {
           children: [
             SvgPicture.asset(
               'assets/icons/svgs/swap.svg',
-              height: 40.sp,
+              height: 40,
               color: Theme.of(context).textTheme.bodyLarge!.color,
             ),
             SvgPicture.asset(
@@ -265,7 +270,7 @@ class DeliveryMethodsSheet extends ConsumerWidget {
                   channel.currency == selectedCurrency);
         }).toList();
 
-    // Add synthetic DayFi Tag for NGN->NGN
+    // Add synthetic Dayfi Tag for NGN->NGN
     final isNgnToNgn =
         sendState.sendCurrency == 'NGN' && selectedCurrency == 'NGN';
     if (isNgnToNgn) {
@@ -307,22 +312,22 @@ class DeliveryMethodsSheet extends ConsumerWidget {
       height: MediaQuery.of(context).size.height * 0.5,
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
         children: [
-          SizedBox(height: 18.h),
+          SizedBox(height: 18),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 18.w),
+            padding: EdgeInsets.symmetric(horizontal: 18),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                SizedBox(height: 40.h, width: 40.w),
+                SizedBox(height: 40, width: 40),
                 Text(
                   'Choose delivery method',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontFamily: 'FunnelDisplay',
-                    fontSize: 20.sp,
+                    fontSize: 20,
                     // height: 1.6,
                     fontWeight: FontWeight.w600,
                     color: Theme.of(context).colorScheme.onSurface,
@@ -342,17 +347,17 @@ class DeliveryMethodsSheet extends ConsumerWidget {
                     children: [
                       SvgPicture.asset(
                         "assets/icons/svgs/notificationn.svg",
-                        height: 40.sp,
+                        height: 40,
                         color: Theme.of(context).colorScheme.surface,
                       ),
                       SizedBox(
-                        height: 40.sp,
-                        width: 40.sp,
+                        height: 40,
+                        width: 40,
                         child: Center(
                           child: Image.asset(
                             "assets/icons/pngs/cancelicon.png",
-                            height: 20.h,
-                            width: 20.w,
+                            height: 20,
+                            width: 20,
                             color: Theme.of(context).textTheme.bodyLarge!.color,
                           ),
                         ),
@@ -363,7 +368,7 @@ class DeliveryMethodsSheet extends ConsumerWidget {
               ],
             ),
           ),
-          SizedBox(height: 8.h),
+          SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 40.0),
             child: Opacity(
@@ -371,17 +376,17 @@ class DeliveryMethodsSheet extends ConsumerWidget {
               child: Text(
                 'How would you like the recipient in $selectedCountry to receive the money?',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontSize: 16.sp,
+                  fontSize: 16,
                   fontWeight: FontWeight.w500,
-                  fontFamily: 'Karla',
-                  letterSpacing: -.6,
+                  fontFamily: 'Chirp',
+                  letterSpacing: -.25,
                   height: 1.5,
                 ),
                 textAlign: TextAlign.center,
               ),
             ),
           ),
-          SizedBox(height: 24.h),
+          SizedBox(height: 24),
 
           Expanded(
             child:
@@ -393,7 +398,7 @@ class DeliveryMethodsSheet extends ConsumerWidget {
                           context,
                         ).textTheme.headlineMedium?.copyWith(
                           fontFamily: 'FunnelDisplay',
-                          fontSize: 20.sp,
+                          fontSize: 20,
                           // height: 1.6,
                           fontWeight: FontWeight.w600,
                           color: Theme.of(context).colorScheme.onSurface,
@@ -402,11 +407,11 @@ class DeliveryMethodsSheet extends ConsumerWidget {
                     )
                     : ListView.separated(
                       padding: EdgeInsets.symmetric(
-                        horizontal: 18.w,
-                        vertical: 8.h,
+                        horizontal: 18,
+                        vertical: 8,
                       ),
                       itemCount: deliveryMethods.length,
-                      separatorBuilder: (_, __) => SizedBox(height: 12.h),
+                      separatorBuilder: (_, __) => SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         final method = deliveryMethods[index];
                         final isDayfi =
@@ -453,12 +458,12 @@ class DeliveryMethodsSheet extends ConsumerWidget {
 
                             // Navigator.pop(context);
 
-                            // Special handling for DayFi Tag (NGN to NGN only)
+                            // Special handling for Dayfi Tag (NGN to NGN only)
                             if (selectedCountry == 'NG' &&
                                 selectedCurrency == 'NGN' &&
                                 method.channelType?.toLowerCase() ==
                                     'dayfi_tag') {
-                              // Navigate to DayFi ID view for NGN-NGN DayFi Tag transfers
+                              // Navigate to Dayfi Tag view for NGN-NGN Dayfi Tag transfers
                               Navigator.pushNamed(
                                 context,
                                 AppRoute.sendDayfiIdView,
@@ -476,24 +481,24 @@ class DeliveryMethodsSheet extends ConsumerWidget {
                           child: Container(
                             width: double.infinity,
                             padding: EdgeInsets.symmetric(
-                              horizontal: 16.w,
-                              vertical: 16.h,
+                              horizontal: 16,
+                              vertical: 16,
                             ),
                             decoration: BoxDecoration(
                               color: Theme.of(context).colorScheme.surface,
-                              borderRadius: BorderRadius.circular(12.r),
+                              borderRadius: BorderRadius.circular(12),
                             ),
                             child: Row(
                               children: [
                                 SizedBox(
-                                  width: 40.w,
-                                  height: 40.w,
+                                  width: 40,
+                                  height: 40,
                                   child: _getDeliveryMethodIcon(
                                     method.channelType,
                                     context,
                                   ),
                                 ),
-                                SizedBox(width: 12.w),
+                                SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment:
@@ -508,9 +513,9 @@ class DeliveryMethodsSheet extends ConsumerWidget {
                                             style: Theme.of(
                                               context,
                                             ).textTheme.titleLarge?.copyWith(
-                                              fontFamily: 'Karla',
-                                              fontSize: 18.sp,
-                                              letterSpacing: -.6,
+                                              fontFamily: 'Chirp',
+                                              fontSize: 18,
+                                              letterSpacing: -.25,
                                               fontWeight: FontWeight.w500,
                                               color:
                                                   Theme.of(
@@ -518,25 +523,25 @@ class DeliveryMethodsSheet extends ConsumerWidget {
                                                   ).colorScheme.onSurface,
                                             ),
                                           ),
-                                          SizedBox(width: 12.w),
+                                          SizedBox(width: 12),
                                           if (isDayfi)
                                             Container(
                                               padding: EdgeInsets.symmetric(
-                                                horizontal: 10.w,
-                                                vertical: 4.h,
+                                                horizontal: 10,
+                                                vertical: 4,
                                               ),
                                               decoration: BoxDecoration(
                                                 color: AppColors.warning400
                                                     .withOpacity(0.15),
                                                 borderRadius:
-                                                    BorderRadius.circular(20.r),
+                                                    BorderRadius.circular(20),
                                               ),
                                               child: Text(
                                                 'FREE',
                                                 style: AppTypography.labelSmall
                                                     .copyWith(
-                                                      fontFamily: 'Karla',
-                                                      fontSize: 13.sp,
+                                                      fontFamily: 'Chirp',
+                                                      fontSize: 13,
                                                       fontWeight:
                                                           FontWeight.w500,
                                                       letterSpacing: .3,
@@ -548,7 +553,7 @@ class DeliveryMethodsSheet extends ConsumerWidget {
                                             ),
                                         ],
                                       ),
-                                      SizedBox(height: 4.h),
+                                      SizedBox(height: 4),
                                       Text(
                                         _getDeliveryMethodName(
                                           method.channelType,
@@ -556,20 +561,20 @@ class DeliveryMethodsSheet extends ConsumerWidget {
                                         textAlign: TextAlign.start,
                                         style: TextStyle(
                                           fontWeight: FontWeight.w500,
-                                          height: 1.4,
-                                          fontFamily: 'Karla',
-                                          letterSpacing: -.6,
+                                          height: 1.2,
+                                          fontFamily: 'Chirp',
+                                          letterSpacing: -.25,
                                           fontSize: 14,
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                                SizedBox(width: 32.w),
+                                SizedBox(width: 32),
                                 Icon(
                                   Icons.chevron_right,
                                   color: AppColors.neutral400,
-                                  size: 20.sp,
+                                  size: 20,
                                 ),
                               ],
                             ),

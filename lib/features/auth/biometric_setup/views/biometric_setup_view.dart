@@ -29,30 +29,50 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         bottom: false,
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 18.w),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SizedBox(height: 40.h),
-              _buildContentCard(context, biometricState),
-              SizedBox(height: 40.h),
-              _buildActionButtons(context, biometricState, biometricNotifier),
-              SizedBox(height: 40.h),
-            ],
-          ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final bool isWide = constraints.maxWidth > 600;
+            return Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: isWide ? 400 : double.infinity,
+                ),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: isWide ? 24 : 18),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(height: 32),
+                      _buildContentCard(context, biometricState, isWide),
+                      SizedBox(height: 32),
+                      _buildActionButtons(
+                        context,
+                        biometricState,
+                        biometricNotifier,
+                      ),
+                      SizedBox(height: 32),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _buildContentCard(BuildContext context, BiometricSetupState state) {
+  Widget _buildContentCard(
+    BuildContext context,
+    BiometricSetupState state,
+    bool isWide,
+  ) {
     return Column(
           children: [
             // Biometric icon
             // Container(
-            //   width: 80.w,
-            //   height: 80.w,
+            //   width: 80,
+            //   height: 80,
             //   decoration: BoxDecoration(
             //     gradient: LinearGradient(
             //       begin: Alignment.topLeft,
@@ -80,23 +100,23 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
             //           ? "assets/icons/svgs/face-id.svg"
             //           : "assets/icons/svgs/face-id..svg",
             //       color: Colors.white,
-            //       height: 24.w,
+            //       height: 24,
             //     ),
             //   ),
             // ),
 
-            // SizedBox(height: 24.h),
+            // SizedBox(height: 24),
 
             // Title
             Text(
                   "Enable ${state.biometricDescription}",
                   style: AppTypography.headlineMedium.copyWith(
                     fontFamily: 'FunnelDisplay',
-                    fontSize: 28.sp,
+                    fontSize: isWide ? 32 : 28,
                     fontWeight: FontWeight.w500,
                     color: Theme.of(context).colorScheme.onSurface,
                     // height: 1.2,
-                    letterSpacing: -.6,
+                    letterSpacing: -.25,
                   ),
                   textAlign: TextAlign.center,
                 )
@@ -114,7 +134,7 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
                   curve: Curves.easeOutCubic,
                 ),
 
-            SizedBox(height: 16.h),
+            SizedBox(height: 16),
 
             // Subtitle
             Text(
@@ -127,10 +147,10 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
                       : "Setting up biometric authentication...",
 
                   style: AppTypography.bodyLarge.copyWith(
-                    fontFamily: 'Karla',
-                    fontSize: 16.sp,
+                    fontFamily: 'Chirp',
+                    fontSize: 16,
                     fontWeight: FontWeight.w500,
-                    height: 1.4,
+                    height: 1.2,
                     color:
                         state.isAvailable && state.isEnrolled
                             ? Theme.of(
@@ -155,7 +175,7 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
                 ),
 
             if (state.isBusy) ...[
-              SizedBox(height: 24.h),
+              SizedBox(height: 24),
               LoadingAnimationWidget.horizontalRotatingDots(
                 color: AppColors.purple500ForTheme(context),
                 size: 20,
@@ -191,9 +211,11 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
                         ? null
                         : () => notifier.enableBiometrics(context),
                 backgroundColor: AppColors.purple500,
-                height: 48.00000.h,
-                textColor: AppColors.neutral0,
-                fontFamily: 'Karla',
+                height: 48.00000,
+                textColor: state.isBusy
+                    ? AppColors.neutral0.withOpacity(.20)
+                    : AppColors.neutral0,
+                fontFamily: 'Chirp',
                 letterSpacing: -.70,
                 fontSize: 18,
                 width: double.infinity,
@@ -221,7 +243,7 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
               ),
 
         if (state.isAvailable && state.isEnrolled && !state.isEnabled)
-          SizedBox(height: 12.h),
+          SizedBox(height: 12),
 
         // Skip button
         SecondaryButton(
@@ -242,9 +264,9 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
                 // }
               },
               borderColor: Colors.transparent,
-              height: 48.00000.h,
+              height: 48.00000,
               textColor: AppColors.purple500ForTheme(context),
-              fontFamily: 'Karla',
+              fontFamily: 'Chirp',
               letterSpacing: -.70,
               fontSize: 18,
               width: double.infinity,
@@ -274,18 +296,18 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
         // Retry button if there's an error
         if (!state.isAvailable || !state.isEnrolled)
           Padding(
-            padding: EdgeInsets.only(top: 12.h),
+            padding: EdgeInsets.only(top: 12),
             child: TextButton(
               onPressed: state.isBusy ? null : () => notifier.retrySetup(),
               child: Text(
                 'Retry',
                 style: TextStyle(
-                  fontFamily: 'Karla',
+                  fontFamily: 'Chirp',
                   color: AppColors.purple500ForTheme(context),
-                  fontSize: 16.sp,
+                  fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  letterSpacing: -.6,
-                  height: 1.4,
+                  letterSpacing: -.25,
+                  height: 1.2,
                 ),
               ),
             ),
@@ -311,16 +333,16 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
               return Dialog(
                 backgroundColor: Theme.of(context).colorScheme.surface,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24.r),
+                  borderRadius: BorderRadius.circular(24),
                 ),
                 child: Container(
-                  padding: EdgeInsets.all(28.w),
+                  padding: EdgeInsets.all(28),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                        width: 80.w,
-                        height: 80.w,
+                        width: 80,
+                        height: 80,
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.topLeft,
@@ -350,19 +372,19 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
                                 ? "assets/icons/svgs/face-id.svg"
                                 : "assets/icons/svgs/face-id..svg",
                             color: Colors.white,
-                            height: 24.w,
+                            height: 24,
                           ),
                         ),
                       ),
 
-                      SizedBox(height: 24.h),
+                      SizedBox(height: 24),
 
                       // Title with auth view styling
                       Text(
                         'Do you want to enable ${state.biometricDescription} later?',
                         style: TextStyle(
                           fontFamily: 'FunnelDisplay',
-                          fontSize: 24.sp, // height: 1.6,
+                          fontSize: 24, // height: 1.6,
                           fontWeight: FontWeight.w500,
                           color: Theme.of(context).colorScheme.onSurface,
                           letterSpacing: -0.5,
@@ -370,15 +392,15 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
                         textAlign: TextAlign.center,
                       ),
 
-                      SizedBox(height: 16.h),
+                      SizedBox(height: 16),
 
                       if (dialogLoading) ...[
-                        SizedBox(height: 8.h),
+                        SizedBox(height: 8),
                         LoadingAnimationWidget.horizontalRotatingDots(
                           color: AppColors.purple500ForTheme(context),
                           size: 22,
                         ),
-                        SizedBox(height: 16.h),
+                        SizedBox(height: 16),
                       ],
 
                       // Continue button with auth view styling
@@ -411,17 +433,19 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
                                   }
                                 },
                         backgroundColor: AppColors.purple500,
-                        textColor: AppColors.neutral0,
+                        textColor: dialogLoading
+                            ? AppColors.neutral0.withOpacity(.20)
+                            : AppColors.neutral0,
                         borderRadius: 38,
-                        height: 48.00000.h,
+                        height: 48.00000,
                         width: double.infinity,
                         fullWidth: true,
-                        fontFamily: 'Karla',
+                        fontFamily: 'Chirp',
                         fontSize: 18,
                         fontWeight: FontWeight.w500,
                         letterSpacing: -0.8,
                       ),
-                      SizedBox(height: 12.h),
+                      SizedBox(height: 12),
 
                       // Cancel button with auth view styling
                       SecondaryButton(
@@ -437,9 +461,9 @@ class _BiometricSetupViewState extends ConsumerState<BiometricSetupView> {
                         textColor: AppColors.purple500ForTheme(context),
                         width: double.infinity,
                         fullWidth: true,
-                        height: 48.00000.h,
+                        height: 48.00000,
                         borderRadius: 38,
-                        fontFamily: 'Karla',
+                        fontFamily: 'Chirp',
                         fontSize: 18,
                         fontWeight: FontWeight.w500,
                         letterSpacing: -0.8,

@@ -336,8 +336,8 @@ class _LoadingModalState extends State<_LoadingModalWidget>
       style: TextStyle(
         fontFamily: AppTypography.secondaryFontFamily,
         fontWeight: FontWeight.w600,
-        fontSize: 18.18.sp,
-        height: 32.32.sp / 18.18.sp,
+        fontSize: 18,
+        height: 32.32 / 18.18,
         letterSpacing: 0.18,
         color: AppColors.neutral950,
       ),
@@ -361,8 +361,8 @@ class _LoadingModalState extends State<_LoadingModalWidget>
             style: TextStyle(
               fontFamily: AppTypography.secondaryFontFamily,
               fontWeight: FontWeight.w500,
-              fontSize: 14.0.sp,
-              height: 20.0.sp / 14.0.sp,
+              fontSize: 14.0,
+              height: 20.0 / 14.0,
               letterSpacing: 0.14,
               color: AppColors.neutral400,
             ),
@@ -378,8 +378,8 @@ class _LoadingModalState extends State<_LoadingModalWidget>
           style: TextStyle(
             fontFamily: AppTypography.secondaryFontFamily,
             fontWeight: FontWeight.w500,
-            fontSize: 14.0.sp,
-            height: 20.0.sp / 14.0.sp,
+            fontSize: 14.0,
+            height: 20.0 / 14.0,
             letterSpacing: 0.14,
             color: AppColors.neutral400,
           ),
@@ -393,8 +393,8 @@ class _LoadingModalState extends State<_LoadingModalWidget>
           style: TextStyle(
             fontFamily: AppTypography.secondaryFontFamily,
             fontWeight: FontWeight.w500,
-            fontSize: 14.0.sp,
-            height: 20.0.sp / 14.0.sp,
+            fontSize: 14.0,
+            height: 20.0 / 14.0,
             letterSpacing: 0.14,
             color: AppColors.neutral400,
           ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 /// App Typography System
 ///
@@ -21,10 +22,10 @@ class AppTypography {
   // ============================================================================
 
   /// Primary font family - Readex Pro (for titles, body, micro)
-  static const String primaryFontFamily = 'Karla';
+  static const String primaryFontFamily = 'Chirp';
 
   /// Secondary font family - Youth (for display, headings, labels)
-  static const String secondaryFontFamily = 'Karla';
+  static const String secondaryFontFamily = 'Chirp';
 
   /// Monospace font family - For code and numbers
   static const String monospaceFontFamily = 'SF Mono';
@@ -102,7 +103,7 @@ class AppTypography {
   );
 
   /// Headings H2 - 24px, 32px line height, 0em letter spacing
-  static const TextStyle headlineMedium = TextStyle(
+  static TextStyle headlineMedium = TextStyle(
     fontSize: 24,
     height: 1.333, // 32px line height
     letterSpacing: 0,
@@ -111,7 +112,7 @@ class AppTypography {
   );
 
   /// Headings H3 - 20px, 26px line height, 0em letter spacing
-  static const TextStyle headlineSmall = TextStyle(
+  static TextStyle headlineSmall = TextStyle(
     fontSize: 24,
     height: 1.3, // 26px line height
     letterSpacing: 0,
@@ -120,7 +121,7 @@ class AppTypography {
   );
 
   /// Headings H4 - 18px, 24px line height, 0em letter spacing
-  static const TextStyle headlineH4 = TextStyle(
+  static TextStyle headlineH4 = TextStyle(
     fontSize: 18,
     height: 1.333, // 24px line height
     letterSpacing: 0,
@@ -242,7 +243,7 @@ class AppTypography {
   /// Label Small - 10px, 14px line height, 0em letter spacing
   static const TextStyle labelSmall = TextStyle(
     fontSize: 10,
-    height: 1.4, // 14px line height
+    height: 1.2, // 14px line height
     letterSpacing: 0,
     fontWeight: FontWeight.w500, // Regular weight (matches spec)
     fontFamily: secondaryFontFamily, // Youth
@@ -347,7 +348,7 @@ class AppTypography {
   );
 
   /// Number Medium - For displaying small numbers
-  static const TextStyle numberMedium = TextStyle(
+  static TextStyle numberMedium = TextStyle(
     fontSize: 18,
     height: 1.333, // 24px line height
     letterSpacing: 0,

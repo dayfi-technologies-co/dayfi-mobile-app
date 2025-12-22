@@ -23,7 +23,7 @@ class HelpButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return IntrinsicWidth(
       child: Padding(
-        padding: EdgeInsets.only(right: 0.w),
+        padding: EdgeInsets.only(right: 0),
         child: InkWell(
           splashColor: Colors.transparent,
           highlightColor: Colors.transparent,
@@ -33,7 +33,7 @@ class HelpButton extends StatelessWidget {
             children: [
               SvgPicture.asset(
                 "assets/icons/svgs/notificationn.svg",
-                height: 40.sp,
+                height: 40,
                 color: AppColors.neutral700.withOpacity(.35),
               ),
               Center(

@@ -45,14 +45,11 @@ class TransactionGroup {
   final String date;
   final List<WalletTransaction> transactions;
 
-  TransactionGroup({
-    required this.date,
-    required this.transactions,
-  });
+  TransactionGroup({required this.date, required this.transactions});
 }
 
 class TransactionsNotifier extends StateNotifier<TransactionsState> {
-    final LocalCache _localCache = locator<LocalCache>();
+  final LocalCache _localCache = locator<LocalCache>();
   final WalletService _walletService;
 
   TransactionsNotifier(this._walletService) : super(TransactionsState());
@@ -63,10 +60,17 @@ class TransactionsNotifier extends StateNotifier<TransactionsState> {
       final cached = _localCache.getFromLocalCache('transactions');
       if (cached != null) {
         try {
-          final List<dynamic> txJson = (cached is String) ? (walletTransactionsFromJson(cached)) : (cached as List<dynamic>);
+          final List<dynamic> txJson =
+              (cached is String)
+                  ? (walletTransactionsFromJson(cached))
+                  : (cached as List<dynamic>);
           final txs = txJson.map((e) => WalletTransaction.fromJson(e)).toList();
           final grouped = _groupTransactionsByDate(txs);
-          state = state.copyWith(transactions: txs, groupedTransactions: grouped, isLoading: false);
+          state = state.copyWith(
+            transactions: txs,
+            groupedTransactions: grouped,
+            isLoading: false,
+          );
         } catch (_) {}
       }
     }
@@ -75,13 +79,23 @@ class TransactionsNotifier extends StateNotifier<TransactionsState> {
     state = state.copyWith(isLoading: shouldShowLoading, errorMessage: null);
     try {
       // Fetch first page to get total pages count
-      final firstResponse = await _walletService.getWalletTransactions(limit: 100);
-      List<WalletTransaction> allTransactions = List.from(firstResponse.data.transactions);
+      final firstResponse = await _walletService.getWalletTransactions(
+        limit: 100,
+      );
+      List<WalletTransaction> allTransactions = List.from(
+        firstResponse.data.transactions,
+      );
       final totalPages = firstResponse.data.totalPages;
       if (totalPages > 1) {
-        final remainingPages = List.generate(totalPages - 1, (index) => index + 2);
+        final remainingPages = List.generate(
+          totalPages - 1,
+          (index) => index + 2,
+        );
         final remainingResponses = await Future.wait(
-          remainingPages.map((page) => _walletService.getWalletTransactions(page: page, limit: 100)),
+          remainingPages.map(
+            (page) =>
+                _walletService.getWalletTransactions(page: page, limit: 100),
+          ),
         );
         for (final response in remainingResponses) {
           allTransactions.addAll(response.data.transactions);
@@ -89,10 +103,24 @@ class TransactionsNotifier extends StateNotifier<TransactionsState> {
       }
       final groupedTransactions = _groupTransactionsByDate(allTransactions);
       // Cache transactions
-      await _localCache.saveToLocalCache(key: 'transactions', value: allTransactions.map((e) => e.toJson()).toList());
-      state = state.copyWith(transactions: allTransactions, groupedTransactions: groupedTransactions, isLoading: false);
+      await _localCache.saveToLocalCache(
+        key: 'transactions',
+        value: allTransactions.map((e) => e.toJson()).toList(),
+      );
+      state = state.copyWith(
+        transactions: allTransactions,
+        groupedTransactions: groupedTransactions,
+        isLoading: false,
+      );
+      // Reapply any existing search/filters
+      if (state.searchQuery.isNotEmpty || state.filters.hasActiveFilters) {
+        _applyFiltersAndSort();
+      }
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: 'Failed to load transactions. Please try again.');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Failed to load transactions. Please try again.',
+      );
     }
   }
 
@@ -112,56 +140,59 @@ class TransactionsNotifier extends StateNotifier<TransactionsState> {
     // Apply search query
     if (state.searchQuery.isNotEmpty) {
       final query = state.searchQuery.toLowerCase();
-      filtered = filtered.where((transaction) {
-        return transaction.beneficiary.name.toLowerCase().contains(query) ||
-               transaction.beneficiary.phone.contains(query) ||
-               transaction.beneficiary.email.toLowerCase().contains(query) ||
-               transaction.status.toLowerCase().contains(query);
-      }).toList();
+      filtered =
+          filtered.where((transaction) {
+            return transaction.beneficiary.name.toLowerCase().contains(query) ||
+                transaction.beneficiary.phone.contains(query) ||
+                transaction.beneficiary.email.toLowerCase().contains(query) ||
+                transaction.status.toLowerCase().contains(query);
+          }).toList();
     }
 
     // Apply status filter
     if (state.filters.status != TransactionStatus.all) {
       final statusString = _getStatusString(state.filters.status);
-      filtered = filtered.where((transaction) {
-        return transaction.status.toLowerCase().contains(statusString);
-      }).toList();
+      filtered =
+          filtered.where((transaction) {
+            return transaction.status.toLowerCase().contains(statusString);
+          }).toList();
     }
 
     // Apply date range filter
     if (state.filters.startDate != null || state.filters.endDate != null) {
-      filtered = filtered.where((transaction) {
-        try {
-          final transactionDate = DateTime.parse(transaction.timestamp);
-          final transactionDateOnly = DateTime(
-            transactionDate.year,
-            transactionDate.month,
-            transactionDate.day,
-          );
+      filtered =
+          filtered.where((transaction) {
+            try {
+              final transactionDate = DateTime.parse(transaction.timestamp);
+              final transactionDateOnly = DateTime(
+                transactionDate.year,
+                transactionDate.month,
+                transactionDate.day,
+              );
 
-          if (state.filters.startDate != null) {
-            final startDateOnly = DateTime(
-              state.filters.startDate!.year,
-              state.filters.startDate!.month,
-              state.filters.startDate!.day,
-            );
-            if (transactionDateOnly.isBefore(startDateOnly)) return false;
-          }
+              if (state.filters.startDate != null) {
+                final startDateOnly = DateTime(
+                  state.filters.startDate!.year,
+                  state.filters.startDate!.month,
+                  state.filters.startDate!.day,
+                );
+                if (transactionDateOnly.isBefore(startDateOnly)) return false;
+              }
 
-          if (state.filters.endDate != null) {
-            final endDateOnly = DateTime(
-              state.filters.endDate!.year,
-              state.filters.endDate!.month,
-              state.filters.endDate!.day,
-            );
-            if (transactionDateOnly.isAfter(endDateOnly)) return false;
-          }
+              if (state.filters.endDate != null) {
+                final endDateOnly = DateTime(
+                  state.filters.endDate!.year,
+                  state.filters.endDate!.month,
+                  state.filters.endDate!.day,
+                );
+                if (transactionDateOnly.isAfter(endDateOnly)) return false;
+              }
 
-          return true;
-        } catch (e) {
-          return false;
-        }
-      }).toList();
+              return true;
+            } catch (e) {
+              return false;
+            }
+          }).toList();
     }
 
     // Apply sorting
@@ -188,14 +219,18 @@ class TransactionsNotifier extends StateNotifier<TransactionsState> {
     }
   }
 
-  List<WalletTransaction> _sortTransactions(List<WalletTransaction> transactions) {
+  List<WalletTransaction> _sortTransactions(
+    List<WalletTransaction> transactions,
+  ) {
     final sorted = List<WalletTransaction>.from(transactions);
 
     switch (state.filters.sortBy) {
       case TransactionSortBy.newest:
         sorted.sort((a, b) {
           try {
-            return DateTime.parse(b.timestamp).compareTo(DateTime.parse(a.timestamp));
+            return DateTime.parse(
+              b.timestamp,
+            ).compareTo(DateTime.parse(a.timestamp));
           } catch (e) {
             return 0;
           }
@@ -204,7 +239,9 @@ class TransactionsNotifier extends StateNotifier<TransactionsState> {
       case TransactionSortBy.oldest:
         sorted.sort((a, b) {
           try {
-            return DateTime.parse(a.timestamp).compareTo(DateTime.parse(b.timestamp));
+            return DateTime.parse(
+              a.timestamp,
+            ).compareTo(DateTime.parse(b.timestamp));
           } catch (e) {
             return 0;
           }
@@ -229,14 +266,17 @@ class TransactionsNotifier extends StateNotifier<TransactionsState> {
     return sorted;
   }
 
-  List<TransactionGroup> _groupTransactionsByDate(List<WalletTransaction> transactions) {
+  List<TransactionGroup> _groupTransactionsByDate(
+    List<WalletTransaction> transactions,
+  ) {
     final Map<String, List<WalletTransaction>> grouped = {};
-    final Map<String, DateTime> dateMap = {}; // Store actual DateTime for sorting
-    
+    final Map<String, DateTime> dateMap =
+        {}; // Store actual DateTime for sorting
+
     for (final transaction in transactions) {
       final date = _formatDate(transaction.timestamp);
       final actualDate = _parseTransactionDate(transaction.timestamp);
-      
+
       if (!grouped.containsKey(date)) {
         grouped[date] = [];
         dateMap[date] = actualDate;
@@ -245,12 +285,14 @@ class TransactionsNotifier extends StateNotifier<TransactionsState> {
     }
 
     return grouped.entries
-        .map((entry) => TransactionGroup(
-              date: entry.key,
-              transactions: entry.value,
-            ))
+        .map(
+          (entry) =>
+              TransactionGroup(date: entry.key, transactions: entry.value),
+        )
         .toList()
-      ..sort((a, b) => dateMap[b.date]!.compareTo(dateMap[a.date]!)); // Sort by actual DateTime descending
+      ..sort(
+        (a, b) => dateMap[b.date]!.compareTo(dateMap[a.date]!),
+      ); // Sort by actual DateTime descending
   }
 
   DateTime _parseTransactionDate(String timestamp) {
@@ -275,8 +317,18 @@ class TransactionsNotifier extends StateNotifier<TransactionsState> {
         return 'Yesterday';
       } else {
         final months = [
-          'January', 'February', 'March', 'April', 'May', 'June',
-          'July', 'August', 'September', 'October', 'November', 'December'
+          'January',
+          'February',
+          'March',
+          'April',
+          'May',
+          'June',
+          'July',
+          'August',
+          'September',
+          'October',
+          'November',
+          'December',
         ];
         final day = date.day;
         final month = months[date.month - 1];
@@ -309,6 +361,7 @@ class TransactionsNotifier extends StateNotifier<TransactionsState> {
   }
 }
 
-final transactionsProvider = StateNotifierProvider<TransactionsNotifier, TransactionsState>((ref) {
-  return TransactionsNotifier(locator<WalletService>());
-});
+final transactionsProvider =
+    StateNotifierProvider<TransactionsNotifier, TransactionsState>((ref) {
+      return TransactionsNotifier(locator<WalletService>());
+    });

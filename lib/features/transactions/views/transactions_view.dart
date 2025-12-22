@@ -1,4 +1,5 @@
 import 'package:dayfi/core/theme/app_typography.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -8,7 +9,6 @@ import 'package:dayfi/common/widgets/shimmer_widgets.dart';
 import 'package:dayfi/common/widgets/error_state_widget.dart';
 import 'package:dayfi/common/widgets/empty_state_widget.dart';
 import 'package:dayfi/common/utils/haptic_helper.dart';
-import 'package:dayfi/common/utils/debouncer.dart';
 import 'package:dayfi/features/transactions/vm/transactions_viewmodel.dart';
 import 'package:dayfi/features/transactions/widgets/transaction_filter_bottom_sheet.dart';
 import 'package:dayfi/models/wallet_transaction.dart';
@@ -27,7 +27,6 @@ class TransactionsView extends ConsumerStatefulWidget {
 class _TransactionsViewState extends ConsumerState<TransactionsView>
     with WidgetsBindingObserver {
   final TextEditingController _searchController = TextEditingController();
-  final _searchDebouncer = SearchDebouncer(milliseconds: 300);
 
   @override
   void initState() {
@@ -45,7 +44,6 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _searchController.dispose();
-    _searchDebouncer.dispose();
     super.dispose();
   }
 
@@ -83,6 +81,19 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
   @override
   Widget build(BuildContext context) {
     final transactionsState = ref.watch(transactionsProvider);
+
+    // Sync search controller with state (for programmatic search from home view)
+    if (_searchController.text != transactionsState.searchQuery) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted &&
+            _searchController.text != transactionsState.searchQuery) {
+          _searchController.text = transactionsState.searchQuery;
+          _searchController.selection = TextSelection.fromPosition(
+            TextPosition(offset: _searchController.text.length),
+          );
+        }
+      });
+    }
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
@@ -122,11 +133,11 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
           //       ),
           //       if (transactionsState.filters.hasActiveFilters)
           //         Positioned(
-          //           right: 8.w,
-          //           top: 8.h,
+          //           right: 8,
+          //           top: 8,
           //           child: Container(
-          //             width: 18.w,
-          //             height: 18.w,
+          //             width: 18,
+          //             height: 18,
           //             decoration: BoxDecoration(
           //               color: AppColors.purple500,
           //               shape: BoxShape.circle,
@@ -145,233 +156,269 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
           //         ),
           //     ],
           //   ),
-          //   SizedBox(width: 8.w),
+          //   SizedBox(width: 8),
           // ],
         ),
-        body: RefreshIndicator(
-          onRefresh: () async {
-            _refreshTransactions();
-          },
-          child: Column(
-            children: [
-              // Active Filters Indicator
-              if (transactionsState.filters.hasActiveFilters)
-                Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 18.w,
-                    vertical: 8.h,
-                  ),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 16.w,
-                      vertical: 12.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.purple500ForTheme(
-                        context,
-                      ).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12.r),
-                      border: Border.all(
-                        color: AppColors.purple500ForTheme(
-                          context,
-                        ).withOpacity(0.3),
+        body: CustomScrollView(
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
+          ),
+          slivers: [
+            CupertinoSliverRefreshControl(
+              onRefresh: () async {
+                _refreshTransactions();
+              },
+            ),
+            SliverFillRemaining(
+              hasScrollBody: true,
+              child: Column(
+                children: [
+                  // Active Filters Indicator
+                  if (transactionsState.filters.hasActiveFilters)
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 8,
+                      ),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.purple500ForTheme(
+                            context,
+                          ).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12.r),
+                          border: Border.all(
+                            color: AppColors.purple500ForTheme(
+                              context,
+                            ).withOpacity(0.3),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.filter_alt,
+                              size: 18.sp,
+                              color: AppColors.purple500ForTheme(context),
+                            ),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _getFilterSummary(transactionsState.filters),
+                                style: AppTypography.bodySmall.copyWith(
+                                  fontFamily: 'Karla',
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.purple500ForTheme(context),
+                                ),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                HapticHelper.lightImpact();
+                                ref
+                                    .read(transactionsProvider.notifier)
+                                    .applyFilters(TransactionFilterOptions());
+                              },
+                              style: TextButton.styleFrom(
+                                padding: EdgeInsets.symmetric(horizontal: 8),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: Text(
+                                'Clear',
+                                style: AppTypography.bodySmall.copyWith(
+                                  fontFamily: 'Karla',
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.purple500ForTheme(context),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.filter_alt,
-                          size: 18.sp,
-                          color: AppColors.purple500ForTheme(context),
-                        ),
-                        SizedBox(width: 8.w),
-                        Expanded(
-                          child: Text(
-                            _getFilterSummary(transactionsState.filters),
-                            style: AppTypography.bodySmall.copyWith(
-                              fontFamily: 'Karla',
-                              fontSize: 13.sp,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.purple500ForTheme(context),
-                            ),
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            HapticHelper.lightImpact();
-                            ref
-                                .read(transactionsProvider.notifier)
-                                .applyFilters(TransactionFilterOptions());
-                          },
-                          style: TextButton.styleFrom(
-                            padding: EdgeInsets.symmetric(horizontal: 8.w),
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          child: Text(
-                            'Clear',
-                            style: AppTypography.bodySmall.copyWith(
-                              fontFamily: 'Karla',
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.purple500ForTheme(context),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
 
-              // Transactions List
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(bottom: 0.h),
-                  child:
-                      // If we have cached transactions (even if empty), show empty state immediately if not loading new data
-                      transactionsState.groupedTransactions.isEmpty
-                          ? (
-                              transactionsState.isLoading && transactionsState.transactions.isEmpty
+                  // Transactions List
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(bottom: 0),
+                      child:
+                          // If we have cached transactions (even if empty), show empty state immediately if not loading new data
+                          transactionsState.transactions.isEmpty
+                              ? (transactionsState.isLoading
                                   ? ShimmerWidgets.recipientListShimmer(
                                     context,
                                     itemCount: 8,
                                   )
                                   : transactionsState.errorMessage != null
-                                      ? ErrorStateWidget(
-                                          message: 'Failed to load transactions',
-                                          details: transactionsState.errorMessage,
-                                          onRetry: _refreshTransactions,
-                                        )
-                                      : transactionsState.searchQuery.isEmpty
-                                          ? EmptyStateWidget(
-                                              icon: Icons.receipt_long_outlined,
-                                              title: 'No transactions yet',
-                                              message: 'Your transaction history will appear here',
-                                              actionText: 'Send Money',
-                                              onAction: () {
-                                                Navigator.pushNamed(context, '/send');
-                                              },
-                                            )
-                                          : Container() // No search results handled below
-                            )
-                          : ListView(
-                            children: [
-                              // Search Bar
-                              Padding(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 18.w,
-                                  vertical: 8.h,
-                                ),
-                                child: CustomTextField(
-                                  isSearch: true,
-                                  controller: _searchController,
-                                  label: '',
-                                  hintText: 'Search transactions',
-                                  borderRadius: 40,
-                                  prefixIcon: Container(
-                                    width: 40.w,
-                                    alignment: Alignment.centerRight,
-                                    constraints:
-                                        BoxConstraints.tightForFinite(),
-                                    child: Center(
-                                      child: SvgPicture.asset(
-                                        'assets/icons/svgs/search-normal.svg',
-                                        height: 22.sp,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface
-                                            .withOpacity(0.6),
+                                  ? ErrorStateWidget(
+                                    message: 'Failed to load transactions',
+                                    details: transactionsState.errorMessage,
+                                    onRetry: _refreshTransactions,
+                                  )
+                                  : EmptyStateWidget(
+                                    icon: Icons.receipt_long_outlined,
+                                    title: 'No transactions yet',
+                                    message:
+                                        'Your transaction history will appear here',
+                                    actionText: 'Send Money',
+                                    onAction: () {
+                                      Navigator.pushNamed(context, '/send');
+                                    },
+                                  ))
+                              : ListView(
+                                shrinkWrap: true,
+                                // physics: NeverScrollableScrollPhysics(),
+                                children: [
+                                  // Search Bar - always visible when there are transactions
+                                  Padding(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 18,
+                                      vertical: 8,
+                                    ),
+                                    child: CustomTextField(
+                                      isSearch: true,
+                                      controller: _searchController,
+                                      label: '',
+                                      hintText: 'Search transactions',
+                                      borderRadius: 40,
+                                      prefixIcon: Container(
+                                        width: 40,
+                                        alignment: Alignment.centerRight,
+                                        constraints:
+                                            BoxConstraints.tightForFinite(),
+                                        child: Center(
+                                          child: SvgPicture.asset(
+                                            'assets/icons/svgs/search-normal.svg',
+                                            height: 22.sp,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSurface
+                                                .withOpacity(0.6),
+                                          ),
+                                        ),
                                       ),
+                                      suffixIcon:
+                                          _searchController.text.isNotEmpty
+                                              ? GestureDetector(
+                                                onTap: () {
+                                                  HapticHelper.lightImpact();
+                                                  _searchController.clear();
+                                                  ref
+                                                      .read(
+                                                        transactionsProvider
+                                                            .notifier,
+                                                      )
+                                                      .searchTransactions('');
+                                                },
+                                                child: Container(
+                                                  width: 40,
+                                                  alignment:
+                                                      Alignment.centerLeft,
+                                                  constraints:
+                                                      BoxConstraints.tightForFinite(),
+                                                  child: Center(
+                                                    child: SvgPicture.asset(
+                                                      'assets/icons/svgs/close-circle.svg',
+                                                      height: 20,
+                                                      color: Theme.of(context)
+                                                          .colorScheme
+                                                          .onSurface
+                                                          .withOpacity(0.6),
+                                                    ),
+                                                  ),
+                                                ),
+                                              )
+                                              : null,
+                                      onChanged: (value) {
+                                        ref
+                                            .read(transactionsProvider.notifier)
+                                            .searchTransactions(value);
+                                      },
                                     ),
                                   ),
-                                  onChanged: (value) {
-                                    _searchDebouncer.run(() {
-                                      ref
-                                          .read(transactionsProvider.notifier)
-                                          .searchTransactions(value);
-                                    });
-                                  },
-                                ),
-                              ),
-                              // Show no search results when searching but no transactions found
-                              if (transactionsState
-                                      .groupedTransactions
-                                      .isEmpty &&
-                                  transactionsState.searchQuery.isNotEmpty)
-                                Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      SizedBox(height: 16.h),
-                                      SvgPicture.asset(
-                                        'assets/icons/svgs/search-normal.svg',
-                                        height: 64.sp,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface
-                                            .withOpacity(0.6),
-                                      ),
-                                      SizedBox(height: 16.h),
-                                      Text(
-                                        'No transactions found',
-                                        style: TextStyle(
-                                          fontFamily: 'FunnelDisplay',
-                                          fontSize: 16.sp,
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurface
-                                              .withOpacity(0.6),
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                      SizedBox(height: 8.h),
-                                      Text(
-                                        'Try searching with different keywords',
-                                        style: AppTypography.bodyMedium
-                                            .copyWith(
-                                              fontFamily: 'Karla',
-                                              fontSize: 14.sp,
+                                  // Show no search results when searching but no transactions found
+                                  if (transactionsState
+                                          .groupedTransactions
+                                          .isEmpty &&
+                                      transactionsState.searchQuery.isNotEmpty)
+                                    Center(
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          SizedBox(height: 16),
+                                          SvgPicture.asset(
+                                            'assets/icons/svgs/search-normal.svg',
+                                            height: 64.sp,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSurface
+                                                .withOpacity(0.6),
+                                          ),
+                                          SizedBox(height: 16),
+                                          Text(
+                                            'No transactions found',
+                                            style: TextStyle(
+                                              fontFamily: 'FunnelDisplay',
+                                              fontSize: 16.sp,
                                               color: Theme.of(context)
                                                   .colorScheme
                                                   .onSurface
-                                                  .withOpacity(0.4),
+                                                  .withOpacity(0.6),
                                             ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                          SizedBox(height: 8),
+                                          Text(
+                                            'Try searching with different keywords',
+                                            style: AppTypography.bodyMedium
+                                                .copyWith(
+                                                  fontFamily: 'Karla',
+                                                  fontSize: 14.sp,
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .onSurface
+                                                      .withOpacity(0.4),
+                                                ),
 
-                                        textAlign: TextAlign.center,
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ],
                                       ),
-                                    ],
-                                  ),
-                                )
-                            
-                            
-                              else
-                                ListView.builder(
-                                  shrinkWrap: true,
-                                  physics: NeverScrollableScrollPhysics(),
-                                  padding: EdgeInsets.only(
-                                    left: 18.w,
-                                    right: 18.w,
-                                    bottom: 20.h,
-                                  ),
-                                  itemCount:
-                                      transactionsState
-                                          .groupedTransactions
-                                          .length,
-                                  itemBuilder: (context, index) {
-                                    final group =
-                                        transactionsState
-                                            .groupedTransactions[index];
-                                    return _buildTransactionGroup(group);
-                                  },
-                                ),
-
-                               
-                            ],
-                          ),
-                ),
+                                    )
+                                  else
+                                    ListView.builder(
+                                      shrinkWrap: true,
+                                      physics: NeverScrollableScrollPhysics(),
+                                      padding: EdgeInsets.only(
+                                        left: 18,
+                                        right: 18,
+                                        bottom: 20,
+                                      ),
+                                      itemCount:
+                                          transactionsState
+                                              .groupedTransactions
+                                              .length,
+                                      itemBuilder: (context, index) {
+                                        final group =
+                                            transactionsState
+                                                .groupedTransactions[index];
+                                        return _buildTransactionGroup(group);
+                                      },
+                                    ),
+                                ],
+                              ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -384,7 +431,7 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
       children: [
         // Date Header
         Padding(
-          padding: EdgeInsets.only(bottom: 8.h, top: 16.h),
+          padding: EdgeInsets.only(bottom: 8, top: 16),
           child: Text(
             group.date,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -402,7 +449,7 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
 
         // Transactions for this date
         Container(
-          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(12.r),
@@ -444,10 +491,10 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
         child: Container(
           key: ValueKey(transaction.id),
           margin: EdgeInsets.only(
-            bottom: bottomMargin.h,
-            top: 8.h,
-            left: 8.w,
-            right: 8.w,
+            bottom: bottomMargin,
+            top: 8,
+            left: 8,
+            right: 8,
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -455,13 +502,13 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
             children: [
               // Transaction Type Icon (Inflow/Outflow)
               SizedBox(
-                width: 40.w,
-                height: 40.w,
+                width: 40,
+                height: 40,
                 child: Stack(
                   children: [
                     SizedBox(
-                      width: 40.w,
-                      height: 40.w,
+                      width: 40,
+                      height: 40,
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
@@ -513,7 +560,7 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                   ],
                 ),
               ),
-              SizedBox(width: 10.w),
+              SizedBox(width: 10),
 
               // Transaction Info
               Expanded(
@@ -524,7 +571,7 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                     Row(
                       children: [
                         // _getAccountIcon(transaction.source, transaction.beneficiary),
-                        // SizedBox(width: 6.w),
+                        // SizedBox(width: 6),
                         Expanded(
                           child: Text(
                             _getBeneficiaryDisplayName(transaction),
@@ -543,11 +590,11 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                         ),
                       ],
                     ),
-                    SizedBox(height: 4.h),
+                    SizedBox(height: 4),
 
                     if (transaction.reason != null &&
                         transaction.reason!.isNotEmpty) ...[
-                      // SizedBox(height: 2.h),
+                      // SizedBox(height: 2),
                       Text(
                         _capitalizeWords(transaction.reason!),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -580,7 +627,7 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                   ],
                 ),
               ),
-              SizedBox(width: 12.w),
+              SizedBox(width: 12),
               // Amount and Time
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -594,7 +641,7 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                  SizedBox(height: 2.h),
+                  SizedBox(height: 2),
 
                   Text(
                     _getStatusText(transaction.status),
@@ -925,8 +972,8 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
     }
 
     return Container(
-      width: 32.w,
-      height: 32.w,
+      width: 32,
+      height: 32,
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(24.r)),
       child: Stack(
         alignment: AlignmentDirectional.center,

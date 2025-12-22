@@ -3,29 +3,26 @@ import 'onboarding_page.dart';
 class OnboardingData {
   static const List<OnboardingPage> pages = [
     OnboardingPage(
-      title: 'Send money\nto anyone',
-      subtitle:
-          'Send salaries, gig payouts, and remittances that update every second.',
+      title: 'Send money',
+      subtitle: 'Pay salaries, support family, and send remittances with ease.',
       description:
-          'Experience real-time financial flows powered by Stellar USDC and our instant streaming engine.',
+          'Move money across African countries.',
       illustrationPath: 'assets/icons/svgs/recipients.svg',
       decorativeElements: ['purple_starburst', 'green_starburst'],
     ),
     OnboardingPage(
-      title: 'Cross-border\nin real time',
-      subtitle:
-          'Send USD globally and settle instantly into NGN, ZAR, GHS, and more.',
+      title: 'Fast payments',
+      subtitle: 'Send instantly in NGN, GHS, ZAR, and more.',
       description:
-          'Your recipients get live-updating balances in their local currency—no delays, no friction.',
+          'No delays. Recipients receive money in their local currency.',
       illustrationPath: 'assets/icons/svgs/transactions.svg',
       decorativeElements: ['purple_starburst', 'green_starburst'],
     ),
     OnboardingPage(
-      title: 'Secure and\nprogrammable',
-      subtitle:
-          'Built with end-to-end encryption, KYC/KYB, and automated compliance rules.',
+      title: 'Safe & reliable',
+      subtitle: 'Protected with strong security and verified accounts.',
       description:
-          'Our programmable ledger gives you full transparency, audit trails, and enterprise-grade safety.',
+          'Every transaction is encrypted and transparent.',
       illustrationPath: 'assets/icons/pngs/account_4.png',
       decorativeElements: [
         'padlock',
@@ -35,11 +32,9 @@ class OnboardingData {
       ],
     ),
     OnboardingPage(
-      title: 'Instant cash-out\nwhen needed',
-      subtitle:
-          'Recipients withdraw in seconds to bank accounts and mobile wallets.',
-      description:
-          'We stream continuously, and settle instantly—so funds are available whenever they’re needed.',
+      title: 'Cash out',
+      subtitle: 'Withdraw instantly to banks and mobile wallets.',
+      description: 'Your money is always available when you need it.',
       illustrationPath: 'assets/icons/svgs/swap.svg',
       decorativeElements: ['hand_stopwatch'],
     ),

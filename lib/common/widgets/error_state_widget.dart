@@ -45,7 +45,7 @@ class ErrorStateWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: EdgeInsets.all(24.w),
+        padding: EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -53,17 +53,17 @@ class ErrorStateWidget extends StatelessWidget {
             // Error icon
             icon ?? Icon(
               Icons.error_outline,
-              size: 64.sp,
+              size: 64,
               color: Theme.of(context).colorScheme.error,
             ),
-            SizedBox(height: 24.h),
+            SizedBox(height: 24),
             
             // Error message
             Text(
               message,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
              fontFamily: 'FunnelDisplay',
-                fontSize: 18.sp,
+                fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: Theme.of(context).colorScheme.onSurface,
               ),
@@ -72,12 +72,12 @@ class ErrorStateWidget extends StatelessWidget {
             
             // Details if provided
             if (details != null) ...[
-              SizedBox(height: 12.h),
+              SizedBox(height: 12),
               Text(
                 details!,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontFamily: 'Karla',
-                  fontSize: 14.sp,
+                  fontFamily: 'Chirp',
+                  fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                 ),
@@ -87,12 +87,12 @@ class ErrorStateWidget extends StatelessWidget {
             
             // Retry button
             if (showRetryButton) ...[
-              SizedBox(height: 32.h),
+              SizedBox(height: 32),
               PrimaryButton.dayfi(
                 text: retryButtonText,
                 onPressed: onRetry,
-                width: 200.w,
-                height: 44.h,
+                width: 200,
+                height: 44,
               ),
             ],
           ],
@@ -118,10 +118,10 @@ class CompactErrorStateWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: Theme.of(context).colorScheme.error.withOpacity(0.3),
           width: 1,
@@ -131,28 +131,28 @@ class CompactErrorStateWidget extends StatelessWidget {
         children: [
           Icon(
             Icons.error_outline,
-            size: 24.sp,
+            size: 24,
             color: Theme.of(context).colorScheme.error,
           ),
-          SizedBox(width: 12.w),
+          SizedBox(width: 12),
           Expanded(
             child: Text(
               message,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontFamily: 'Karla',
-                fontSize: 14.sp,
+                fontFamily: 'Chirp',
+                fontSize: 14,
                 color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
           ),
-          // SizedBox(width: 12.w),
+          // SizedBox(width: 12),
           // TextButton(
           //   onPressed: onRetry,
           //   child: Text(
           //     retryButtonText,
           //     style: TextStyle(
           //    fontFamily: 'FunnelDisplay',
-          //       fontSize: 14.sp,
+          //       fontSize: 14,
           //       fontWeight: FontWeight.w600,
           //       color: AppColors.purple500ForTheme(context),
           //     ),

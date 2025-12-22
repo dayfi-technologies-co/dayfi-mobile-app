@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dayfi/common/app_constants.dart';
@@ -69,9 +71,15 @@ class _MyAppState extends ConsumerState<MyApp> {
       final String userPasscode = passcode;
       final String userJson = userData;
 
+      // Check if user data is actually valid (not empty, not "null" string, and valid JSON)
+      final bool hasValidUserData = userJson.isNotEmpty && 
+          userJson != 'null' && 
+          _isValidUserJson(userJson);
+
       // Validate data consistency - if we have a token but no user data, something is wrong
-      if (userToken.isNotEmpty && userJson.isEmpty) {
+      if (userToken.isNotEmpty && !hasValidUserData) {
         // Clear inconsistent data and redirect to login
+        AppLogger.warning('Inconsistent state: token exists but no valid user data');
         await _clearInconsistentData(secureStorage);
         _initialRoute = AppRoute.onboardingView;
       } else if (isFirstTimeUser && userToken.isEmpty) {
@@ -108,8 +116,26 @@ class _MyAppState extends ConsumerState<MyApp> {
       await secureStorage.delete(StorageKeys.password);
       await secureStorage.delete(StorageKeys.passcode);
       await secureStorage.delete(StorageKeys.user);
+      AppLogger.info('Cleared inconsistent data');
     } catch (e) {
       AppLogger.error('Error clearing inconsistent data: $e');
+    }
+  }
+
+  /// Check if the user JSON string is valid and contains required data
+  bool _isValidUserJson(String userJson) {
+    try {
+      final decoded = jsonDecode(userJson);
+      if (decoded == null || decoded is! Map<String, dynamic>) {
+        return false;
+      }
+      // Check for essential user fields
+      final userId = decoded['user_id'] as String?;
+      final email = decoded['email'] as String?;
+      return userId != null && userId.isNotEmpty && email != null && email.isNotEmpty;
+    } catch (e) {
+      AppLogger.error('Invalid user JSON: $e');
+      return false;
     }
   }
 

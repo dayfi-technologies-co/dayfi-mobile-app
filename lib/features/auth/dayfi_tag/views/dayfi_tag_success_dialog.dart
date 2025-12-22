@@ -39,7 +39,7 @@ class DayfiTagSuccessDialog extends StatelessWidget {
       if (snackbarContext != null) {
         TopSnackbar.show(
           snackbarContext,
-          message: 'Dayfi ID copied to clipboard',
+          message: 'Dayfi Tag copied to clipboard',
           isError: false,
         );
       }
@@ -66,12 +66,12 @@ class DayfiTagSuccessDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
+      padding: EdgeInsets.symmetric(horizontal: 18, vertical: 8),
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(28.r),
-          topRight: Radius.circular(28.r),
+          topLeft: Radius.circular(28),
+          topRight: Radius.circular(28),
         ),
       ),
       child: Column(
@@ -82,11 +82,11 @@ class DayfiTagSuccessDialog extends StatelessWidget {
           Align(
             alignment: Alignment.topCenter,
             child: Container(
-              width: 88.w,
-              height: 3.5.h,
-              margin: EdgeInsets.only(top: 8.h),
+              width: 88,
+              height: 3.5,
+              margin: EdgeInsets.only(top: 8),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(4.r),
+                borderRadius: BorderRadius.circular(4),
                 color: Theme.of(
                   context,
                 ).textTheme.bodyLarge!.color!.withOpacity(0.25),
@@ -102,8 +102,8 @@ class DayfiTagSuccessDialog extends StatelessWidget {
               onTap: () => _handleClose(context),
               child: Image.asset(
                 "assets/icons/pngs/cancelicon.png",
-                height: 24.h,
-                width: 24.w,
+                height: 24,
+                width: 24,
                 color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
@@ -117,35 +117,35 @@ class DayfiTagSuccessDialog extends StatelessWidget {
                 // Success icon
                 SvgPicture.asset(
                   "assets/icons/svgs/successs.svg",
-                  height: 88.h,
-                  width: 88.w,
+                  height: 88,
+                  width: 88,
                 ),
-                SizedBox(height: 24.h),
+                SizedBox(height: 24),
 
                 // Title
                 Text(
-                  "Your Dayfi ID is all set",
+                  "Your Dayfi Tag is all set",
                   style: AppTypography.titleLarge.copyWith(
                  fontFamily: 'FunnelDisplay',
-                     fontSize: 24.sp, // height: 1.6,
+                     fontSize: 24, // height: 1.6,
                     fontWeight: FontWeight.w500,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                SizedBox(height: 16.h),
+                SizedBox(height: 16),
 
                 // Subtitle
                 Text(
-                  "$dayfiId is your Dayfi id. It can be found on your profile page, and copied.",
+                  "$dayfiId is your Dayfi Tag. It can be found on your profile page, and copied.",
                   style: AppTypography.bodyMedium.copyWith(
-                    fontFamily: 'Karla',
-                    fontSize: 16.sp,
+                    fontFamily: 'Chirp',
+                    fontSize: 16,
                     fontWeight: FontWeight.w500,
                     color: Theme.of(
                       context,
                     ).colorScheme.onSurface.withOpacity(0.7),
-                    height: 1.4,
+                    height: 1.2,
                     letterSpacing: -.4,
                   ),
                   textAlign: TextAlign.center,
@@ -154,20 +154,20 @@ class DayfiTagSuccessDialog extends StatelessWidget {
 
                 // Copy button
                 PrimaryButton(
-                  text: 'Dayfi ID copied',
+                  text: 'Dayfi Tag copied',
                   onPressed: () => _copyDayfiId(context),
                   backgroundColor: AppColors.purple500,
                   textColor: AppColors.neutral0,
-                  borderRadius: 38.r,
-                  height: 48.00000.h,
+                  borderRadius: 38,
+                  height: 48.00000,
                   width: double.infinity,
                   fullWidth: true,
-                  fontFamily: 'Karla',
-                  fontSize: 18.sp,
+                  fontFamily: 'Chirp',
+                  fontSize: 18,
                   fontWeight: FontWeight.w500,
                   letterSpacing: -0.8,
                 ),
-                SizedBox(height: 20.h),
+                SizedBox(height: 20),
               ],
             ),
           ),

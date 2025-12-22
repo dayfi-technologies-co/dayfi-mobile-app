@@ -28,7 +28,8 @@ class RecipientsState {
   }) {
     return RecipientsState(
       beneficiaries: beneficiaries ?? this.beneficiaries,
-      filteredBeneficiaries: filteredBeneficiaries ?? this.filteredBeneficiaries,
+      filteredBeneficiaries:
+          filteredBeneficiaries ?? this.filteredBeneficiaries,
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage,
       searchQuery: searchQuery ?? this.searchQuery,
@@ -37,7 +38,7 @@ class RecipientsState {
 }
 
 class RecipientsNotifier extends StateNotifier<RecipientsState> {
-    final LocalCache _localCache = locator<LocalCache>();
+  final LocalCache _localCache = locator<LocalCache>();
   final WalletService _walletService;
 
   RecipientsNotifier(this._walletService) : super(RecipientsState());
@@ -48,9 +49,17 @@ class RecipientsNotifier extends StateNotifier<RecipientsState> {
       final cached = _localCache.getFromLocalCache('recipients');
       if (cached != null) {
         try {
-          final List<dynamic> benJson = (cached is String) ? (beneficiariesFromJson(cached)) : (cached as List<dynamic>);
-          final bens = benJson.map((e) => BeneficiaryWithSource.fromJson(e)).toList();
-          state = state.copyWith(beneficiaries: bens, filteredBeneficiaries: bens, isLoading: false);
+          final List<dynamic> benJson =
+              (cached is String)
+                  ? (beneficiariesFromJson(cached))
+                  : (cached as List<dynamic>);
+          final bens =
+              benJson.map((e) => BeneficiaryWithSource.fromJson(e)).toList();
+          state = state.copyWith(
+            beneficiaries: bens,
+            filteredBeneficiaries: bens,
+            isLoading: false,
+          );
         } catch (_) {}
       }
     }
@@ -58,13 +67,28 @@ class RecipientsNotifier extends StateNotifier<RecipientsState> {
     final shouldShowLoading = state.beneficiaries.isEmpty;
     state = state.copyWith(isLoading: shouldShowLoading, errorMessage: null);
     try {
-      final beneficiaries = await _walletService.getUniqueBeneficiariesWithSource();
+      final beneficiaries =
+          await _walletService.getUniqueBeneficiariesWithSource();
       final uniqueBeneficiaries = beneficiaries.toSet().toList();
       // Cache recipients
-      await _localCache.saveToLocalCache(key: 'recipients', value: uniqueBeneficiaries.map((e) => e.toJson()).toList());
-      state = state.copyWith(beneficiaries: uniqueBeneficiaries, filteredBeneficiaries: uniqueBeneficiaries, isLoading: false);
+      await _localCache.saveToLocalCache(
+        key: 'recipients',
+        value: uniqueBeneficiaries.map((e) => e.toJson()).toList(),
+      );
+      state = state.copyWith(
+        beneficiaries: uniqueBeneficiaries,
+        filteredBeneficiaries: uniqueBeneficiaries,
+        isLoading: false,
+      );
+      // Reapply any existing search filter
+      if (state.searchQuery.isNotEmpty) {
+        searchBeneficiaries(state.searchQuery);
+      }
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: 'Failed to load recipients. Please try again.');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Failed to load recipients. Please try again.',
+      );
     }
   }
 
@@ -77,17 +101,15 @@ class RecipientsNotifier extends StateNotifier<RecipientsState> {
       return;
     }
 
-    final filtered = state.beneficiaries.where((beneficiaryWithSource) {
-      final beneficiary = beneficiaryWithSource.beneficiary;
-      return beneficiary.name.toLowerCase().contains(query.toLowerCase()) ||
-             beneficiary.phone.contains(query) ||
-             beneficiary.email.toLowerCase().contains(query.toLowerCase());
-    }).toList();
+    final filtered =
+        state.beneficiaries.where((beneficiaryWithSource) {
+          final beneficiary = beneficiaryWithSource.beneficiary;
+          return beneficiary.name.toLowerCase().contains(query.toLowerCase()) ||
+              beneficiary.phone.contains(query) ||
+              beneficiary.email.toLowerCase().contains(query.toLowerCase());
+        }).toList();
 
-    state = state.copyWith(
-      searchQuery: query,
-      filteredBeneficiaries: filtered,
-    );
+    state = state.copyWith(searchQuery: query, filteredBeneficiaries: filtered);
   }
 
   void clearError() {
@@ -99,31 +121,35 @@ class RecipientsNotifier extends StateNotifier<RecipientsState> {
   bool validateNoDuplicates() {
     final beneficiaries = state.beneficiaries;
     final seen = <String>{};
-    
+
     for (final beneficiaryWithSource in beneficiaries) {
-      final key = '${beneficiaryWithSource.beneficiary.name}_${beneficiaryWithSource.source.accountNumber}_${beneficiaryWithSource.source.networkId}';
+      final key =
+          '${beneficiaryWithSource.beneficiary.name}_${beneficiaryWithSource.source.accountNumber}_${beneficiaryWithSource.source.networkId}';
       if (seen.contains(key)) {
         return false; // Duplicate found
       }
       seen.add(key);
     }
-    
+
     return true; // No duplicates found
   }
 
   /// Optimistically add a beneficiary to the list
   /// Returns the previous state for rollback if needed
-  RecipientsState addBeneficiaryOptimistically(BeneficiaryWithSource newBeneficiary) {
+  RecipientsState addBeneficiaryOptimistically(
+    BeneficiaryWithSource newBeneficiary,
+  ) {
     final previousState = state;
     final updatedBeneficiaries = [...state.beneficiaries, newBeneficiary];
-    
+
     state = state.copyWith(
       beneficiaries: updatedBeneficiaries,
-      filteredBeneficiaries: state.searchQuery.isEmpty 
-          ? updatedBeneficiaries 
-          : state.filteredBeneficiaries,
+      filteredBeneficiaries:
+          state.searchQuery.isEmpty
+              ? updatedBeneficiaries
+              : state.filteredBeneficiaries,
     );
-    
+
     return previousState;
   }
 
@@ -133,6 +159,7 @@ class RecipientsNotifier extends StateNotifier<RecipientsState> {
   }
 }
 
-final recipientsProvider = StateNotifierProvider<RecipientsNotifier, RecipientsState>((ref) {
-  return RecipientsNotifier(locator<WalletService>());
-});
+final recipientsProvider =
+    StateNotifierProvider<RecipientsNotifier, RecipientsState>((ref) {
+      return RecipientsNotifier(locator<WalletService>());
+    });

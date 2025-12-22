@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/features/send/vm/transaction_pin_viewmodel.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/services/local/secure_storage.dart';
 import 'package:dayfi/app_locator.dart';
-import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/services/remote/network/api_error.dart';
+import 'package:dayfi/common/utils/haptic_helper.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dio/dio.dart';
 
 class TransactionPinReenterView extends ConsumerStatefulWidget {
@@ -196,38 +196,50 @@ class _TransactionPinReenterViewState
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         resizeToAvoidBottomInset: false,
         appBar: AppBar(
-             scrolledUnderElevation: .5,
-              foregroundColor: Theme.of(context).scaffoldBackgroundColor,
-              shadowColor: Theme.of(context).scaffoldBackgroundColor,
-              surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
-
+          scrolledUnderElevation: .5,
+          foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+          shadowColor: Theme.of(context).scaffoldBackgroundColor,
+          surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
-          leading: IconButton(
-            onPressed: () {
+          leadingWidth: 72,
+          leading: InkWell(
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            onTap: () {
+              FocusScope.of(context).unfocus();
               pinNotifier.resetForm();
               setState(() {
                 _localPin = '';
                 _errorMessage = '';
               });
-              Navigator.pop(context);
+              Navigator.of(context).pop();
             },
-            icon: Icon(
-              Icons.arrow_back_ios,
-              size: 20.sp,
-              color: Theme.of(context).colorScheme.onSurface,
+            child: Stack(
+              alignment: AlignmentGeometry.center,
+              children: [
+                SvgPicture.asset(
+                  "assets/icons/svgs/notificationn.svg",
+                  height: 40,
+                  color: Theme.of(context).colorScheme.surface,
+                ),
+                SizedBox(
+                  height: 40,
+                  width: 40,
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: Icon(
+                        Icons.arrow_back_ios,
+                        size: 20,
+                        color: Theme.of(context).textTheme.bodyLarge!.color,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          title: Text(
-            "Re-enter Transaction PIN",
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontFamily: 'FunnelDisplay',
-              fontSize: 24.sp, // height: 1.6,
-              fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-          ),
-          centerTitle: true,
         ),
         body: GestureDetector(
           onTap: () {
@@ -235,108 +247,158 @@ class _TransactionPinReenterViewState
           },
           child: SafeArea(
             bottom: false,
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 18),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        SizedBox(height: 4.h),
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 18.w),
-                          child: Text(
-                            "Please re-enter your 4-digit transaction PIN to confirm. This PIN will be required for all wallet transfers.",
-                            style: Theme.of(
-                              context,
-                            ).textTheme.bodyMedium?.copyWith(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w500,
-                              fontFamily: 'Karla',
-                              letterSpacing: -.6,
-                              height: 1.4,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final bool isWide = constraints.maxWidth > 600;
+                  return SingleChildScrollView(
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: isWide ? 400 : double.infinity,
                         ),
-                        // SizedBox(height: 24.h),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 18.w),
-                    child: PasscodeWidget(
-                      passcodeLength: 4,
-                      currentPasscode: _localPin,
-                      onPasscodeChanged: (value) {
-                        _updateLocalPin(value);
-                        // Don't auto-submit - wait for button click
-                      },
-                    ),
-                  ),
-                  SizedBox(height: MediaQuery.of(context).size.width * 0.15),
-                  // Continue button - only show when PIN is complete
-                  if (_localPin.length == 4)
-                    Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 18.w),
-                          child: PrimaryButton(
-                            text: 'Create PIN',
-                            onPressed:
-                                _localPin.length == 4 &&
-                                        _errorMessage.isEmpty &&
-                                        !_isLoading
-                                    ? () => _verifyAndCreatePin(_localPin)
-                                    : null,
-                            isLoading: _isLoading,
-                            showLoadingIndicator: true,
-                            height: 48.00000.h,
-                            backgroundColor:
-                                _localPin.length == 4 &&
-                                        _errorMessage.isEmpty &&
-                                        !_isLoading
-                                    ? AppColors.purple500
-                                    : AppColors.purple500ForTheme(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: isWide ? 24 : 18,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  SizedBox(height: 24),
+
+                                  Text(
+                                    "Confirm transaction PIN",
+                                    textAlign: TextAlign.center,
+                                    style: Theme.of(
                                       context,
-                                    ).withOpacity(.15),
-                            textColor:
-                                _localPin.length == 4 &&
-                                        _errorMessage.isEmpty &&
-                                        !_isLoading
-                                    ? AppColors.neutral0
-                                    : AppColors.neutral0.withOpacity(0.5),
-                            fontFamily: 'Karla',
-                            letterSpacing: -.70,
-                            fontSize: 18,
-                            width: double.infinity,
-                            fullWidth: true,
-                            borderRadius: 40.r,
-                          ),
-                        )
-                        .animate()
-                        .fadeIn(duration: 200.ms)
-                        .slideY(begin: 0.2, end: 0, duration: 200.ms),
-                  SizedBox(height: 16.h),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 18.w),
-                    child: Text(
-                      _errorMessage.isNotEmpty
-                          ? _errorMessage
-                          : ref.watch(transactionPinProvider).errorMessage,
-                      style: TextStyle(
-                        fontFamily: 'Karla',
-                        fontSize: 13.sp,
-                        color: Colors.red.shade800,
-                        letterSpacing: -0.4,
-                        fontWeight: FontWeight.w500,
-                        height: 1.4,
+                                    ).textTheme.displayLarge?.copyWith(
+                                      color:
+                                          Theme.of(
+                                            context,
+                                          ).textTheme.headlineLarge?.color,
+                                      fontSize: isWide ? 32 : 28,
+                                      letterSpacing: -.250,
+                                      fontWeight: FontWeight.w900,
+                                      fontFamily: 'FunnelDisplay',
+                                      height: 1,
+                                    ),
+                                  ),
+
+                                  SizedBox(height: 24),
+
+                                  // Subtitle
+                                  Padding(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 18,
+                                        ),
+                                        child: Text(
+                                          "Please re-enter your 4-digit transaction PIN to confirm. This ensures you remember it correctly.",
+                                          style: Theme.of(
+                                            context,
+                                          ).textTheme.bodyMedium?.copyWith(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w500,
+                                            fontFamily: 'Chirp',
+                                            letterSpacing: -.25,
+                                            height: 1.2,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      )
+                                      .animate()
+                                      .fadeIn(
+                                        delay: 100.ms,
+                                        duration: 300.ms,
+                                        curve: Curves.easeOutCubic,
+                                      )
+                                      .slideY(
+                                        begin: 0.2,
+                                        end: 0,
+                                        delay: 100.ms,
+                                        duration: 300.ms,
+                                        curve: Curves.easeOutCubic,
+                                      ),
+
+                                  SizedBox(height: 24),
+                                ],
+                              ),
+                            ),
+
+                            // Passcode widget
+                            Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 18),
+                                  child: PasscodeWidget(
+                                    passcodeLength: 4,
+                                    currentPasscode: _localPin,
+                                    onPasscodeChanged: (value) {
+                                      _updateLocalPin(value);
+                                      // Auto-submit when PIN is complete
+                                      if (value.length == 4) {
+                                        _verifyAndCreatePin(value);
+                                      }
+                                    },
+                                  ),
+                                )
+                                .animate()
+                                .fadeIn(
+                                  delay: 200.ms,
+                                  duration: 300.ms,
+                                  curve: Curves.easeOutCubic,
+                                )
+                                .slideY(
+                                  begin: 0.3,
+                                  end: 0,
+                                  delay: 200.ms,
+                                  duration: 300.ms,
+                                  curve: Curves.easeOutCubic,
+                                )
+                                .scale(
+                                  begin: const Offset(0.98, 0.98),
+                                  end: const Offset(1.0, 1.0),
+                                  delay: 200.ms,
+                                  duration: 300.ms,
+                                  curve: Curves.easeOutCubic,
+                                ),
+
+                            // Error message
+                            if (_errorMessage.isNotEmpty ||
+                                ref
+                                    .watch(transactionPinProvider)
+                                    .errorMessage
+                                    .isNotEmpty) ...[
+                              SizedBox(height: 16),
+                              Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 18),
+                                child: Text(
+                                  _errorMessage.isNotEmpty
+                                      ? _errorMessage
+                                      : ref
+                                          .watch(transactionPinProvider)
+                                          .errorMessage,
+                                  style: TextStyle(
+                                    fontFamily: 'Chirp',
+                                    fontSize: 13,
+                                    color: Colors.red.shade800,
+                                    letterSpacing: -0.4,
+                                    fontWeight: FontWeight.w500,
+                                    height: 1.2,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ],
+
+                            SizedBox(height: 32),
+                          ],
+                        ),
                       ),
-                      textAlign: TextAlign.center,
                     ),
-                  ),
-                  SizedBox(height: 40.h),
-                ],
+                  );
+                },
               ),
             ),
           ),
@@ -363,30 +425,38 @@ class PasscodeWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        SizedBox(height: MediaQuery.of(context).size.width * 0.075),
+        SizedBox(height: 32),
+
+        // Passcode dots
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(
             passcodeLength,
             (index) => Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6.0),
-              child: Text(
-                index < currentPasscode.length ? '*' : '*',
-                style: TextStyle(
-                  fontSize: 88.sp,
-                  letterSpacing: -10,
-                  fontFamily: 'FunnelDisplay',
-                  fontWeight: FontWeight.w700,
+              child: Container(
+                width: 20,
+                height: 30,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
                   color:
                       index < currentPasscode.length
                           ? AppColors.purple500ForTheme(context)
-                          : AppColors.neutral400,
+                          : Colors.transparent,
+                  border: Border.all(
+                    color: AppColors.purple500ForTheme(context),
+                    width: 2,
+                  ),
                 ),
               ),
             ),
           ),
         ),
 
+        SizedBox(height: 32),
+        SizedBox(height: 32),
+
+        // Number pad
         GridView.count(
           crossAxisCount: 3,
           shrinkWrap: true,
@@ -399,11 +469,10 @@ class PasscodeWidget extends StatelessWidget {
               final number = (index + 1).toString();
               return _buildNumberButton(number);
             }),
-            const SizedBox.shrink(),
+            const SizedBox.shrink(), // Empty space
             _buildNumberButton('0'),
             _buildIconButton(
               icon: Icons.arrow_back_ios,
-
               onTap: () {
                 if (currentPasscode.isNotEmpty) {
                   onPasscodeChanged(
@@ -426,6 +495,7 @@ class PasscodeWidget extends StatelessWidget {
             highlightColor: Colors.transparent,
             borderRadius: BorderRadius.circular(100),
             onTap: () {
+              HapticHelper.lightImpact();
               if (currentPasscode.length < passcodeLength) {
                 onPasscodeChanged(currentPasscode + number);
               }
@@ -439,7 +509,7 @@ class PasscodeWidget extends StatelessWidget {
                 child: Text(
                   number,
                   style: TextStyle(
-                    fontSize: 32.sp,
+                    fontSize: 24,
                     fontFamily: 'FunnelDisplay',
                     fontWeight: FontWeight.w500,
                     color: Theme.of(context).colorScheme.onSurface,
@@ -458,7 +528,10 @@ class PasscodeWidget extends StatelessWidget {
     return Builder(
       builder:
           (context) => GestureDetector(
-            onTap: onTap,
+            onTap: () {
+              HapticHelper.lightImpact();
+              onTap();
+            },
             child: Container(
               decoration: const BoxDecoration(
                 shape: BoxShape.circle,
@@ -468,7 +541,7 @@ class PasscodeWidget extends StatelessWidget {
                 child: Icon(
                   icon,
                   color: AppColors.purple500ForTheme(context),
-                  size: 20.sp,
+                  size: 20,
                 ),
               ),
             ),

@@ -35,8 +35,7 @@ class SendPaymentSuccessView extends ConsumerStatefulWidget {
       _SendPaymentSuccessViewState();
 }
 
-class _SendPaymentSuccessViewState
-    extends ConsumerState<SendPaymentSuccessView>
+class _SendPaymentSuccessViewState extends ConsumerState<SendPaymentSuccessView>
     with TickerProviderStateMixin {
   bool _isLoading = true;
   WalletTransaction? _transaction;
@@ -57,37 +56,36 @@ class _SendPaymentSuccessViewState
     );
 
     // Create staggered animations for success view
-    _iconScaleAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _successAnimationController,
-      curve: const Interval(0.0, 0.6, curve: Curves.elasticOut),
-    ));
+    _iconScaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _successAnimationController,
+        curve: const Interval(0.0, 0.6, curve: Curves.elasticOut),
+      ),
+    );
 
-    _textFadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _successAnimationController,
-      curve: const Interval(0.2, 0.8, curve: Curves.easeOut),
-    ));
+    _textFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _successAnimationController,
+        curve: const Interval(0.2, 0.8, curve: Curves.easeOut),
+      ),
+    );
 
     _amountSlideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.3),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _successAnimationController,
-      curve: const Interval(0.4, 1.0, curve: Curves.easeOutCubic),
-    ));
+    ).animate(
+      CurvedAnimation(
+        parent: _successAnimationController,
+        curve: const Interval(0.4, 1.0, curve: Curves.easeOutCubic),
+      ),
+    );
 
-    _buttonsFadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _successAnimationController,
-      curve: const Interval(0.6, 1.0, curve: Curves.easeOut),
-    ));
+    _buttonsFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _successAnimationController,
+        curve: const Interval(0.6, 1.0, curve: Curves.easeOut),
+      ),
+    );
 
     // Show loading for 4 seconds, then fetch transaction and show success
     Future.delayed(const Duration(seconds: 4), () async {
@@ -142,7 +140,7 @@ class _SendPaymentSuccessViewState
     } else if (method == 'mobile_money' || method == 'momo') {
       return 'the mobile money provider';
     } else if (method == 'dayfi_tag') {
-      return 'DayFi';
+      return 'Dayfi';
     }
     return 'the provider';
   }
@@ -175,66 +173,130 @@ Date: $date
     );
   }
 
+  // Helper method to get currency symbol from currency code
+  String _getCurrencySymbol(String currencyCode) {
+    switch (currencyCode.toUpperCase()) {
+      case 'NGN':
+        return '₦';
+      case 'USD':
+        return '\$';
+      case 'EUR':
+        return '€';
+      case 'GBP':
+        return '£';
+      case 'RWF':
+        return 'RWF ';
+      case 'GHS':
+        return 'GH₵';
+      case 'KES':
+        return 'KSh';
+      case 'UGX':
+        return 'USh';
+      case 'TZS':
+        return 'TSh';
+      case 'ZAR':
+        return 'R';
+      default:
+        return '$currencyCode ';
+    }
+  }
+
+  // Helper method to format amount with commas
+  String _formatAmount(double amount) {
+    // Format with 2 decimal places and add thousand separators
+    final parts = amount.toStringAsFixed(2).split('.');
+    final integerPart = parts[0].replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match m) => '${m[1]},',
+    );
+    return '$integerPart.${parts[1]}';
+  }
   @override
   Widget build(BuildContext context) {
     final sendState = ref.watch(sendViewModelProvider);
     final amount = double.tryParse(sendState.sendAmount.toString()) ?? 0.0;
+    final receiveAmount = double.tryParse(sendState.receiverAmount.toString()) ?? 0.0;
     final currency = sendState.sendCurrency;
+    final receiveCurrency = sendState.receiverCurrency;
 
     return WillPopScope(
       onWillPop: () async => false,
       child: Scaffold(
-        backgroundColor: AppColors.purple500,
-        body: SafeArea(
-          bottom: false,
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 600),
-              switchInCurve: Curves.easeInOutCubic,
-              switchOutCurve: Curves.easeInOutCubic,
-              transitionBuilder: (Widget child, Animation<double> animation) {
-                final fadeAnimation = Tween<double>(
-                  begin: 0.0,
-                  end: 1.0,
-                ).animate(CurvedAnimation(
-                  parent: animation,
-                  curve: Curves.easeInOut,
-                ));
+        backgroundColor: AppColors.purple900,
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final bool isWide = constraints.maxWidth > 600;
+            return Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: isWide ? 500 : double.infinity,
+                ),
+                child: SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isWide ? 24 : 18,
+                      vertical: 8,
+                    ),
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 600),
+                      switchInCurve: Curves.easeInOutCubic,
+                      switchOutCurve: Curves.easeInOutCubic,
+                      transitionBuilder: (
+                        Widget child,
+                        Animation<double> animation,
+                      ) {
+                        final fadeAnimation = Tween<double>(
+                          begin: 0.0,
+                          end: 1.0,
+                        ).animate(
+                          CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeInOut,
+                          ),
+                        );
 
-                final slideAnimation = Tween<Offset>(
-                  begin: const Offset(0, 0.1),
-                  end: Offset.zero,
-                ).animate(CurvedAnimation(
-                  parent: animation,
-                  curve: Curves.easeOutCubic,
-                ));
+                        final slideAnimation = Tween<Offset>(
+                          begin: const Offset(0, 0.1),
+                          end: Offset.zero,
+                        ).animate(
+                          CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeOutCubic,
+                          ),
+                        );
 
-                final scaleAnimation = Tween<double>(
-                  begin: 0.95,
-                  end: 1.0,
-                ).animate(CurvedAnimation(
-                  parent: animation,
-                  curve: Curves.easeOutBack,
-                ));
+                        final scaleAnimation = Tween<double>(
+                          begin: 0.95,
+                          end: 1.0,
+                        ).animate(
+                          CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeOutBack,
+                          ),
+                        );
 
-                return FadeTransition(
-                  opacity: fadeAnimation,
-                  child: SlideTransition(
-                    position: slideAnimation,
-                    child: ScaleTransition(
-                      scale: scaleAnimation,
-                      child: child,
+                        return FadeTransition(
+                          opacity: fadeAnimation,
+                          child: SlideTransition(
+                            position: slideAnimation,
+                            child: ScaleTransition(
+                              scale: scaleAnimation,
+                              child: child,
+                            ),
+                          ),
+                        );
+                      },
+                      child:
+                          _isLoading
+                              ? _buildLoadingView()
+                              : _buildSuccessView(amount, currency, receiveAmount, receiveCurrency),
                     ),
                   ),
-                );
-              },
-              child:
-                  _isLoading
-                      ? _buildLoadingView()
-                      : _buildSuccessView(amount, currency),
-            ),
-          ),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -249,21 +311,21 @@ Date: $date
       children: [
         SizedBox(width: MediaQuery.of(context).size.width),
         SizedBox(
-          width: 32.w,
-          height: 32.w,
+          width: 32,
+          height: 32,
           child: LoadingAnimationWidget.horizontalRotatingDots(
             color: Colors.white,
             size: 32,
           ),
         ),
-        SizedBox(height: 18.h),
+        SizedBox(height: 18),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 40.0),
           child: Text(
-            'Processing your transfer...',
+            'Securely processing your transaction',
             style: AppTypography.bodyLarge.copyWith(
-              fontFamily: 'Karla',
-              fontSize: 16.sp,
+              fontFamily: 'Chirp',
+              fontSize: 16,
               color: AppColors.neutral0.withOpacity(0.8),
             ),
             textAlign: TextAlign.center,
@@ -273,30 +335,34 @@ Date: $date
     );
   }
 
-  Widget _buildSuccessView(double amount, String currency) {
+  Widget _buildSuccessView(double amount, String currency, double receiveAmount, String receiveCurrency) {
+    final sendSymbol = _getCurrencySymbol(currency);
+    final receiveSymbol = _getCurrencySymbol(receiveCurrency);
+    final isSameCurrency = currency == receiveCurrency;
+    
     return Column(
       key: const ValueKey('success'),
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
-        SizedBox(height: 12.h),
+        SizedBox(height: 12),
         Column(
           children: [
             ScaleTransition(
               scale: _iconScaleAnimation,
               child: SizedBox(
-                width: 132.w,
-                height: 132.w,
+                width: 132,
+                height: 132,
                 child: SvgPicture.asset('assets/icons/svgs/successs.svg'),
               ),
             ),
-            SizedBox(height: 32.h),
+            SizedBox(height: 32),
             FadeTransition(
               opacity: _textFadeAnimation,
               child: Text(
                 'Transfer Successful',
                 style: AppTypography.headlineLarge.copyWith(
                   fontFamily: 'FunnelDisplay',
-                  fontSize: 28.sp,
+                  fontSize: 28,
                   height: 1.2,
                   fontWeight: FontWeight.w500,
                   color: AppColors.neutral0,
@@ -305,34 +371,89 @@ Date: $date
                 textAlign: TextAlign.center,
               ),
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: 20),
             SlideTransition(
               position: _amountSlideAnimation,
               child: FadeTransition(
                 opacity: _textFadeAnimation,
-                child: Text(
-                  '₦${amount.toStringAsFixed(2)}',
-                  style: AppTypography.headlineLarge.copyWith(
-                    fontFamily: 'FunnelDisplay',
-                    fontSize: 36.sp,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.neutral0,
-                  ),
-                  textAlign: TextAlign.center,
+                child: Column(
+                  children: [
+                    // You sent
+                    Text(
+                      'You sent',
+                      style: AppTypography.bodyMedium.copyWith(
+                        fontFamily: 'Chirp',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.neutral0.withOpacity(0.7),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      '$sendSymbol${_formatAmount(amount)}',
+                      style: AppTypography.headlineLarge.copyWith(
+                        fontFamily: 'FunnelDisplay',
+                        fontSize: 36,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.neutral0,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    // Show recipient amount only if different currency
+                    if (!isSameCurrency && receiveAmount > 0) ...[
+                      SizedBox(height: 16),
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: AppColors.neutral0.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Column(
+                          children: [
+                            Text(
+                              'Recipient gets',
+                              style: AppTypography.bodyMedium.copyWith(
+                                fontFamily: 'Chirp',
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.neutral0.withOpacity(0.7),
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              '$receiveSymbol${_formatAmount(receiveAmount)}',
+                              style: AppTypography.headlineLarge.copyWith(
+                                fontFamily: 'FunnelDisplay',
+                                fontSize: 28,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.neutral0,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: 20),
             FadeTransition(
               opacity: _textFadeAnimation,
-              child: Text(
-                'The recipient account is expected to be credited within 5 minutes, subject to notification by ${_getNotificationProvider()}.',
-                style: AppTypography.bodyLarge.copyWith(
-                  fontFamily: 'Karla',
-                  fontSize: 16.sp,
-                  color: AppColors.neutral0.withOpacity(0.8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 18.0),
+                child: Text(
+                  'The recipient account is expected to be credited within 5 minutes, subject to notification by ${_getNotificationProvider()}',
+                  style: AppTypography.bodyLarge.copyWith(
+                    fontFamily: 'Chirp',
+                    fontSize: 16,
+                    color: AppColors.neutral0.withOpacity(0.8),
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
               ),
             ),
           ],
@@ -348,15 +469,15 @@ Date: $date
                 textColor: AppColors.purple500,
                 borderColor: AppColors.neutral0,
                 borderRadius: 38,
-                height: 48.00000.h,
+                height: 48.00000,
                 width: double.infinity,
                 fullWidth: true,
-                fontFamily: 'Karla',
+                fontFamily: 'Chirp',
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
                 letterSpacing: -0.8,
               ),
-              // SizedBox(height: 12.h),
+              // SizedBox(height: 12),
               // SecondaryButton(
               //   text: 'View Details',
               //   onPressed: _viewDetails,
@@ -364,15 +485,15 @@ Date: $date
               //   textColor: AppColors.neutral0,
               //   borderColor: AppColors.neutral0,
               //   borderRadius: 38,
-              //   height: 48.00000.h,
+              //   height: 48.00000,
               //   width: double.infinity,
               //   fullWidth: true,
-              //   fontFamily: 'Karla',
+              //   fontFamily: 'Chirp',
               //   fontSize: 18,
               //   fontWeight: FontWeight.w600,
               //   letterSpacing: -0.8,
               // ),
-              SizedBox(height: 12.h),
+              SizedBox(height: 12),
               SecondaryButton(
                 text: 'View Transactions',
                 onPressed: _done,
@@ -380,10 +501,10 @@ Date: $date
                 textColor: AppColors.neutral0,
                 borderColor: AppColors.neutral0,
                 borderRadius: 38,
-                height: 48.00000.h,
+                height: 48.00000,
                 width: double.infinity,
                 fullWidth: true,
-                fontFamily: 'Karla',
+                fontFamily: 'Chirp',
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
                 letterSpacing: -0.8,

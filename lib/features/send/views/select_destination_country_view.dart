@@ -1,8 +1,5 @@
-import 'package:dayfi/core/theme/app_colors.dart';
-import 'package:dayfi/features/send/views/send_fetch_crypto_channels.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/features/send/vm/send_viewmodel.dart';
@@ -268,20 +265,20 @@ class _SelectDestinationCountryViewState
             children: [
               SvgPicture.asset(
                 "assets/icons/svgs/notificationn.svg",
-                height: 40.sp,
+                height: 40,
                 color: Theme.of(context).colorScheme.surface,
               ),
               SizedBox(
-                height: 40.sp,
-                width: 40.sp,
+                height: 40,
+                width: 40,
                 child: Center(
                   child: Padding(
                     padding: const EdgeInsets.only(left: 8.0),
                     child: Icon(
                       Icons.arrow_back_ios,
-                      size: 20.sp,
+                      size: 20,
                       color: Theme.of(context).textTheme.bodyLarge!.color,
-                      // size: 20.sp,
+                      // size: 20,
                     ),
                   ),
                 ),
@@ -294,7 +291,7 @@ class _SelectDestinationCountryViewState
           "Send Money",
           style: AppTypography.titleLarge.copyWith(
             fontFamily: 'FunnelDisplay',
-            fontSize: 24.sp,
+            fontSize: 24,
             // height: 1.6,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,
@@ -303,29 +300,29 @@ class _SelectDestinationCountryViewState
         centerTitle: true,
 
         // bottom: PreferredSize(
-        //   preferredSize: Size.fromHeight(112.h),
+        //   preferredSize: Size.fromHeight(112),
         //   child: Column(
         //     mainAxisSize: MainAxisSize.min,
         //     children: [
         //       Column(
         //         children: [
-        //           SizedBox(height: 8.h),
+        //           SizedBox(height: 8),
         //           Text(
         //             "Select the country and currency or choose a stablecoin you want to send money to.",
         //             // 'What currency do you want to use as your payment method?',
         //             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-        //               fontSize: 16.sp,
+        //               fontSize: 16,
         //               fontWeight: FontWeight.w500,
-        //               fontFamily: 'Karla',
-        //               letterSpacing: -.6,
+        //               fontFamily: 'Chirp',
+        //               letterSpacing: -.25,
         //               height: 1.5,
         //             ),
         //             textAlign: TextAlign.center,
         //           ),
 
-        //           SizedBox(height: 8.h),
+        //           SizedBox(height: 8),
         //           SizedBox(
-        //             height: 48.h,
+        //             height: 48,
         //             child: TabBar(
         //               isScrollable: false,
         //               indicatorColor: AppColors.purple500,
@@ -335,11 +332,11 @@ class _SelectDestinationCountryViewState
         //                 context,
         //               ).colorScheme.onSurface.withOpacity(0.6),
         //               labelStyle: AppTypography.bodyLarge.copyWith(
-        //                 fontSize: 16.sp,
-        //                 fontFamily: 'Karla',
+        //                 fontSize: 16,
+        //                 fontFamily: 'Chirp',
         //                 fontWeight: FontWeight.w500,
         //                 letterSpacing: -0.8,
-        //                 height: 1.4,
+        //                 height: 1.2,
         //               ),
         //               tabs: const [
         //                 Tab(text: 'Via Fiat'),
@@ -353,203 +350,226 @@ class _SelectDestinationCountryViewState
         //   ),
         // ),
       ),
-      body:
-      // TabBarView(
-      //   children: [
-      Builder(
-        builder: (context) {
-          // Show shimmer while channels are being fetched
-          if (sendState.isLoading || sendState.channels.isEmpty) {
-            return ShimmerWidgets.countryListShimmer(context, itemCount: 10);
-          }
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final bool isWide = constraints.maxWidth > 600;
+          return Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: isWide ? 500 : double.infinity,
+              ),
+              child:
+              // TabBarView(
+              //   children: [
+              Builder(
+                builder: (context) {
+                  // Show shimmer while channels are being fetched
+                  if (sendState.isLoading || sendState.channels.isEmpty) {
+                    return ShimmerWidgets.recipientListShimmer(
+                      context,
+                      itemCount: 6,
+                    );
+                  }
 
-          // Get all channels
-          final allChannels =
-              finalWithdrawalChannels.isEmpty
-                  ? (() {
-                    final fallbackChannels =
-                        sendState.channels
-                            .where(
-                              (c) =>
-                                  c.status == 'active' &&
-                                  c.currency != null &&
-                                  c.country != null &&
-                                  (c.rampType == 'withdrawal' ||
-                                      c.rampType == 'withdraw' ||
-                                      c.rampType == 'payout' ||
-                                      c.rampType == 'deposit' ||
-                                      c.rampType == 'receive'),
-                            )
-                            .toList();
+                  // Get all channels
+                  final allChannels =
+                      finalWithdrawalChannels.isEmpty
+                          ? (() {
+                            final fallbackChannels =
+                                sendState.channels
+                                    .where(
+                                      (c) =>
+                                          c.status == 'active' &&
+                                          c.currency != null &&
+                                          c.country != null &&
+                                          (c.rampType == 'withdrawal' ||
+                                              c.rampType == 'withdraw' ||
+                                              c.rampType == 'payout' ||
+                                              c.rampType == 'deposit' ||
+                                              c.rampType == 'receive'),
+                                    )
+                                    .toList();
 
-                    // Deduplicate fallback channels
-                    final uniqueFallbackChannels = <String, Channel>{};
-                    for (final channel in fallbackChannels) {
-                      final key = '${channel.country} - ${channel.currency}';
-                      if (!uniqueFallbackChannels.containsKey(key) ||
-                          (channel.max ?? 0) >
-                              (uniqueFallbackChannels[key]?.max ?? 0)) {
-                        uniqueFallbackChannels[key] = channel;
-                      }
+                            // Deduplicate fallback channels
+                            final uniqueFallbackChannels = <String, Channel>{};
+                            for (final channel in fallbackChannels) {
+                              final key =
+                                  '${channel.country} - ${channel.currency}';
+                              if (!uniqueFallbackChannels.containsKey(key) ||
+                                  (channel.max ?? 0) >
+                                      (uniqueFallbackChannels[key]?.max ?? 0)) {
+                                uniqueFallbackChannels[key] = channel;
+                              }
+                            }
+
+                            return uniqueFallbackChannels.values.toList();
+                          })()
+                          : finalWithdrawalChannels;
+
+                  // Additional deduplication to ensure no duplicates
+                  final uniqueChannels = <String, Channel>{};
+                  for (final channel in allChannels) {
+                    final key = '${channel.country} - ${channel.currency}';
+                    if (!uniqueChannels.containsKey(key)) {
+                      uniqueChannels[key] = channel;
                     }
+                  }
+                  final deduplicatedChannels = uniqueChannels.values.toList();
 
-                    return uniqueFallbackChannels.values.toList();
-                  })()
-                  : finalWithdrawalChannels;
+                  // Sort alphabetically by country name
+                  deduplicatedChannels.sort((a, b) {
+                    final countryA = _getCountryName(a.country);
+                    final countryB = _getCountryName(b.country);
+                    return countryA.compareTo(countryB);
+                  });
 
-          // Additional deduplication to ensure no duplicates
-          final uniqueChannels = <String, Channel>{};
-          for (final channel in allChannels) {
-            final key = '${channel.country} - ${channel.currency}';
-            if (!uniqueChannels.containsKey(key)) {
-              uniqueChannels[key] = channel;
-            }
-          }
-          final deduplicatedChannels = uniqueChannels.values.toList();
+                  // Filter based on search
+                  final searchQuery = _searchController.text.toLowerCase();
+                  final filteredChannels =
+                      deduplicatedChannels.where((channel) {
+                        if (searchQuery.isEmpty) return true;
 
-          // Sort alphabetically by country name
-          deduplicatedChannels.sort((a, b) {
-            final countryA = _getCountryName(a.country);
-            final countryB = _getCountryName(b.country);
-            return countryA.compareTo(countryB);
-          });
+                        final countryName =
+                            _getCountryName(channel.country).toLowerCase();
+                        final currency = channel.currency?.toLowerCase() ?? '';
+                        final countryCode =
+                            channel.country?.toLowerCase() ?? '';
 
-          // Filter based on search
-          final searchQuery = _searchController.text.toLowerCase();
-          final filteredChannels =
-              deduplicatedChannels.where((channel) {
-                if (searchQuery.isEmpty) return true;
+                        return countryName.contains(searchQuery) ||
+                            currency.contains(searchQuery) ||
+                            countryCode.contains(searchQuery);
+                      }).toList();
 
-                final countryName =
-                    _getCountryName(channel.country).toLowerCase();
-                final currency = channel.currency?.toLowerCase() ?? '';
-                final countryCode = channel.country?.toLowerCase() ?? '';
-
-                return countryName.contains(searchQuery) ||
-                    currency.contains(searchQuery) ||
-                    countryCode.contains(searchQuery);
-              }).toList();
-
-          return ListView.builder(
-            padding: EdgeInsets.only(top: 12.h),
-            itemCount: filteredChannels.length + 2,
-            itemBuilder: (context, index) {
-              if (index == 0) {
-                // Search Bar
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 18.w),
-                      child: SizedBox(
-                        child: CustomTextField(
-                          isSearch: true,
-                          controller: _searchController,
-                          label: '',
-                          hintText: 'Search countries',
-                          borderRadius: 40,
-                          prefixIcon: Container(
-                            width: 40.w,
-                            alignment: Alignment.centerRight,
-                            constraints: BoxConstraints.tightForFinite(),
-                            child: Center(
-                              child: SvgPicture.asset(
-                                'assets/icons/svgs/search-normal.svg',
-                                height: 22.sp,
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurface.withOpacity(0.6),
+                  return ListView.builder(
+                    padding: EdgeInsets.only(top: 12),
+                    itemCount: filteredChannels.length + 2,
+                    itemBuilder: (context, index) {
+                      if (index == 0) {
+                        // Search Bar
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: isWide ? 24 : 18,
+                              ),
+                              child: SizedBox(
+                                child: CustomTextField(
+                                  isSearch: true,
+                                  controller: _searchController,
+                                  label: '',
+                                  hintText: 'Search for a country',
+                                  borderRadius: 40,
+                                  prefixIcon: Container(
+                                    width: 40,
+                                    alignment: Alignment.centerRight,
+                                    constraints:
+                                        BoxConstraints.tightForFinite(),
+                                    child: Center(
+                                      child: SvgPicture.asset(
+                                        'assets/icons/svgs/search-normal.svg',
+                                        height: 22,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface
+                                            .withOpacity(0.6),
+                                      ),
+                                    ),
+                                  ),
+                                  onChanged: (value) {
+                                    setState(() {});
+                                  },
+                                ),
                               ),
                             ),
+                            SizedBox(height: 18),
+                            Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: isWide ? 24 : 18,
+                              ),
+                              child: Text(
+                                "Select a country and currency to\nsend money to",
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.bodyMedium?.copyWith(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  fontFamily: 'Chirp',
+                                  letterSpacing: -.25,
+                                  height: 1.5,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ],
+                        );
+                      } else if (index == 1) {
+                        // Spacing below search bar
+                        return SizedBox(height: 18);
+                      }
+                      final channel = filteredChannels[index - 2];
+                      return ListTile(
+                        contentPadding: EdgeInsets.symmetric(
+                          vertical: 4,
+                          horizontal: isWide ? 24 : 18,
+                        ),
+                        splashColor: Colors.transparent,
+                        // color: Colors.transparent,
+                        onTap: () {
+                          showModalBottomSheet(
+                            barrierColor: Colors.black.withOpacity(0.85),
+                            context: context,
+                            isScrollControlled: true,
+                            backgroundColor:
+                                Theme.of(context).colorScheme.surface,
+                            builder: (BuildContext ctx) {
+                              return DeliveryMethodsSheet(
+                                selectedCountry: channel.country ?? 'NG',
+                                selectedCurrency: channel.currency ?? 'NGN',
+                              );
+                            },
+                          );
+                        },
+                        title: Row(
+                          children: [
+                            SvgPicture.asset(
+                              _getFlagPath(channel.country),
+                              height: 32.0,
+                            ),
+                            SizedBox(width: 12),
+                            Text(
+                              _getCountryName(channel.country),
+                              style: AppTypography.bodyLarge.copyWith(
+                                fontFamily: 'Chirp',
+                                fontSize: 16,
+                                letterSpacing: -.4,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                        trailing: Text(
+                          '${channel.currency}',
+                          style: AppTypography.bodyLarge.copyWith(
+                            fontFamily: 'Chirp',
+                            fontSize: 14,
+                            letterSpacing: -.4,
+                            fontWeight: FontWeight.w500,
                           ),
-                          onChanged: (value) {
-                            setState(() {});
-                          },
                         ),
-                      ),
-                    ),
-                    SizedBox(height: 18.h),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 18.0,
-                      ),
-                      child: Text(
-                        "Select a country and currency to\nsend money to",
-                        style: Theme.of(
-                          context,
-                        ).textTheme.bodyMedium?.copyWith(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w500,
-                          fontFamily: 'Karla',
-                          letterSpacing: -.6,
-                          height: 1.5,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ],
-                );
-              } else if (index == 1) {
-                // Spacing below search bar
-                return SizedBox(height: 18.h);
-              }
-              final channel = filteredChannels[index - 2];
-              return ListTile(
-                contentPadding: EdgeInsets.symmetric(
-                  vertical: 4.h,
-                  horizontal: 18.w,
-                ),
-                onTap: () {
-                  showModalBottomSheet(
-                    barrierColor: Colors.black.withOpacity(0.85),
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Theme.of(context).colorScheme.surface,
-                    builder: (BuildContext ctx) {
-                      return DeliveryMethodsSheet(
-                        selectedCountry: channel.country ?? 'NG',
-                        selectedCurrency: channel.currency ?? 'NGN',
                       );
                     },
                   );
                 },
-                title: Row(
-                  children: [
-                    SvgPicture.asset(
-                      _getFlagPath(channel.country),
-                      height: 32.0.h,
-                    ),
-                    SizedBox(width: 12.w),
-                    Text(
-                      _getCountryName(channel.country),
-                      style: AppTypography.bodyLarge.copyWith(
-                        fontFamily: 'Karla',
-                        fontSize: 16.sp,
-                        letterSpacing: -.4,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-                trailing: Text(
-                  '${channel.currency}',
-                  style: AppTypography.bodyLarge.copyWith(
-                    fontFamily: 'Karla',
-                    fontSize: 14.sp,
-                    letterSpacing: -.4,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              );
-            },
+              ),
+              // Tab 2: Crypto - empty scaffold
+              // SendFetchCryptoChannelsView(),
+              // ],
+              // ),
+            ),
           );
         },
       ),
-      // Tab 2: Crypto - empty scaffold
-      // SendFetchCryptoChannelsView(),
-      // ],
-      // ),
-      // ),
     );
   }
 }

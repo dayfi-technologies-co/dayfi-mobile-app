@@ -135,28 +135,28 @@ class ReenterPasscodeNotifier extends StateNotifier<ReenterPasscodeState> {
         return Dialog(
           backgroundColor: Theme.of(context).colorScheme.surface,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24.r),
+            borderRadius: BorderRadius.circular(24),
           ),
           child: Container(
-            padding: EdgeInsets.all(28.w),
+            padding: EdgeInsets.all(28),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 // Success icon with enhanced styling
                 SizedBox(
-                  width: 80.w,
-                  height: 80.w,
+                  width: 80,
+                  height: 80,
                   child: SvgPicture.asset('assets/icons/svgs/successs.svg'),
                 ),
 
-                SizedBox(height: 24.h),
+                SizedBox(height: 24),
 
                 // Title with auth view styling
                 Text(
                   'You have successfully created your passcode to access the app',
                   style: TextStyle(
-                    fontFamily: 'Karla',
-                    fontSize: 20.sp,
+                    fontFamily: 'Chirp',
+                    fontSize: 20,
                     fontWeight: FontWeight.w500,
                     color: Theme.of(context).colorScheme.onSurface,
                     letterSpacing: -0.8,
@@ -164,7 +164,7 @@ class ReenterPasscodeNotifier extends StateNotifier<ReenterPasscodeState> {
                   textAlign: TextAlign.center,
                 ),
 
-                SizedBox(height: 16.h),
+                SizedBox(height: 16),
 
                 // Continue button with auth view styling
                 PrimaryButton(
@@ -219,10 +219,10 @@ class ReenterPasscodeNotifier extends StateNotifier<ReenterPasscodeState> {
                   backgroundColor: AppColors.purple500,
                   textColor: AppColors.neutral0,
                   borderRadius: 38,
-                  height: 48.00000.h,
+                  height: 48.00000,
                   width: double.infinity,
                   fullWidth: true,
-                  fontFamily: 'Karla',
+                  fontFamily: 'Chirp',
                   fontSize: 18,
                   fontWeight: FontWeight.w500,
                   letterSpacing: -.70,

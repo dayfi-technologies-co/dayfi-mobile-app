@@ -132,166 +132,189 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
       onTap: () {
         FocusManager.instance.primaryFocus?.unfocus();
       },
-      child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        appBar: AppBar(
-          scrolledUnderElevation: .5,
-          foregroundColor: Theme.of(context).scaffoldBackgroundColor,
-          shadowColor: Theme.of(context).scaffoldBackgroundColor,
-          surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+      child: Stack(
+        children: [
+          Scaffold(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            appBar: AppBar(
+              scrolledUnderElevation: .5,
+              foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+              shadowColor: Theme.of(context).scaffoldBackgroundColor,
+              surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
 
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          elevation: 0,
-          leading: IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: Icon(
-              Icons.arrow_back_ios,
-              size: 20.sp,
-              color: Theme.of(context).colorScheme.onSurface,
-              // size: 20.sp,
-            ),
-          ),
-          title: Text(
-            "Edit Profile",
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontFamily: 'FunnelDisplay',
-              fontSize: 24.sp, // height: 1.6,
-              fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-          ),
-        ),
-        body: SafeArea(
-          bottom: false,
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            child: Form(
-              key: _formKey,
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // Subtitle
-                    Text(
-                      "Update your personal information below.",
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w500,
-                        fontFamily: 'Karla',
-                        letterSpacing: -.6,
-                        height: 1.4,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    SizedBox(height: 36.h),
-
-                    // First Name
-                    _buildFirstNameField(editProfileState, editProfileNotifier),
-                    SizedBox(height: 18.h),
-
-                    // Last Name
-                    _buildLastNameField(editProfileState, editProfileNotifier),
-                    SizedBox(height: 18.h),
-
-                    // Middle Name (Optional)
-                    _buildMiddleNameField(
-                      editProfileState,
-                      editProfileNotifier,
-                    ),
-                    SizedBox(height: 18.h),
-
-                    // Email
-                    _buildEmailField(editProfileState, editProfileNotifier),
-                    SizedBox(height: 18.h),
-
-                    // Phone Number
-                    _buildPhoneNumberField(
-                      editProfileState,
-                      editProfileNotifier,
-                    ),
-                    SizedBox(height: 18.h),
-
-                    // Date of Birth
-                    _buildDateOfBirthField(
-                      editProfileState,
-                      editProfileNotifier,
-                    ),
-                    SizedBox(height: 18.h),
-
-                    // Country
-                    _buildCountryField(editProfileState, editProfileNotifier),
-                    SizedBox(height: 18.h),
-
-                    // Address
-                    _buildAddressField(editProfileState, editProfileNotifier),
-                    SizedBox(height: 18.h),
-
-                    // Postal Code
-                    _buildPostalCodeField(
-                      editProfileState,
-                      editProfileNotifier,
-                    ),
-                    SizedBox(height: 18.h),
-
-                    // State
-                    _buildStateField(editProfileState, editProfileNotifier),
-                    SizedBox(height: 18.h),
-
-                    // City
-                    _buildCityField(editProfileState, editProfileNotifier),
-                    SizedBox(height: 18.h),
-
-                    // Gender
-                    _buildGenderField(editProfileState, editProfileNotifier),
-                    SizedBox(height: 40.h),
-
-                    // Action Buttons
-                    _buildActionButtons(editProfileState, editProfileNotifier),
-
-                    // SizedBox(height: 18.h),
-
-                    // Container(
-                    //   padding: EdgeInsets.all(10.0),
-                    //   decoration: BoxDecoration(
-                    //     color: Theme.of(
-                    //       context,
-                    //     ).colorScheme.primaryContainer.withOpacity(0.25),
-                    //     borderRadius: BorderRadius.circular(4.r),
-                    //     // border: Border.all(
-                    //     //   color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-                    //     //   width: 1.0,
-                    //     // ),
-                    //   ),
-                    //   child: Row(
-                    //     // crossAxisAlignment: CrossAxisAlignment.start,
-                    //     children: [
-                    //       SizedBox(width: 8),
-                    //       Image.asset("assets/images/idea.png", height: 20),
-                    //       SizedBox(width: 8),
-                    //       Expanded(
-                    //         child: Text(
-                    //           'To update your profile, kindly reach out to our support team at support@dayfi.co or click the "Do you need help" button above this.',
-                    //           style: TextStyle(
-                    //             fontSize: 14,
-                    //             fontFamily: 'Karla',
-                    //             fontWeight: FontWeight.w500,
-                    //             letterSpacing: -0.4,
-                    //             height: 1.5,
-                    //             color: Theme.of(context).colorScheme.primary,
-                    //           ),
-                    //         ),
-                    //       ),
-                    //     ],
-                    //   ),
-                    // ),
-                    SizedBox(height: 50.h),
-                  ],
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+              elevation: 0,
+              leading: IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: Icon(
+                  Icons.arrow_back_ios,
+                  size: 20,
+                  color: Theme.of(context).colorScheme.onSurface,
+                  // size: 20,
+                ),
+              ),
+              title: Text(
+                "Edit Profile",
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontFamily: 'FunnelDisplay',
+                  fontSize: 24, // height: 1.6,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             ),
+            body: SafeArea(
+              bottom: false,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final bool isWide = constraints.maxWidth > 600;
+                  return SingleChildScrollView(
+                    controller: _scrollController,
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 420),
+                        child: Form(
+                          key: _formKey,
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isWide ? 32 : 18,
+                              vertical: 8,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                // Subtitle
+                                Text(
+                                  "Update your personal information below.",
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.bodyMedium?.copyWith(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                    fontFamily: 'Chirp',
+                                    letterSpacing: -.25,
+                                    height: 1.2,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                SizedBox(height: 36),
+
+                                // First Name
+                                _buildFirstNameField(
+                                  editProfileState,
+                                  editProfileNotifier,
+                                ),
+                                SizedBox(height: 18),
+
+                                // Last Name
+                                _buildLastNameField(
+                                  editProfileState,
+                                  editProfileNotifier,
+                                ),
+                                SizedBox(height: 18),
+
+                                // Middle Name (Optional)
+                                _buildMiddleNameField(
+                                  editProfileState,
+                                  editProfileNotifier,
+                                ),
+                                SizedBox(height: 18),
+
+                                // Email
+                                _buildEmailField(
+                                  editProfileState,
+                                  editProfileNotifier,
+                                ),
+                                SizedBox(height: 18),
+
+                                // Phone Number
+                                _buildPhoneNumberField(
+                                  editProfileState,
+                                  editProfileNotifier,
+                                ),
+                                SizedBox(height: 18),
+
+                                // Date of Birth
+                                _buildDateOfBirthField(
+                                  editProfileState,
+                                  editProfileNotifier,
+                                ),
+                                SizedBox(height: 18),
+
+                                // Country
+                                _buildCountryField(
+                                  editProfileState,
+                                  editProfileNotifier,
+                                ),
+                                SizedBox(height: 18),
+
+                                // Address
+                                _buildAddressField(
+                                  editProfileState,
+                                  editProfileNotifier,
+                                ),
+                                SizedBox(height: 18),
+
+                                // Postal Code
+                                _buildPostalCodeField(
+                                  editProfileState,
+                                  editProfileNotifier,
+                                ),
+                                SizedBox(height: 18),
+
+                                // State
+                                _buildStateField(
+                                  editProfileState,
+                                  editProfileNotifier,
+                                ),
+                                SizedBox(height: 18),
+
+                                // City
+                                _buildCityField(
+                                  editProfileState,
+                                  editProfileNotifier,
+                                ),
+                                SizedBox(height: 18),
+
+                                // Gender
+                                _buildGenderField(
+                                  editProfileState,
+                                  editProfileNotifier,
+                                ),
+                                SizedBox(height: 32),
+
+                                // Action Buttons
+                                _buildActionButtons(
+                                  editProfileState,
+                                  editProfileNotifier,
+                                ),
+
+                                SizedBox(height: 50),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
           ),
-        ),
+          if (editProfileState.isLoading)
+            Scaffold(
+              backgroundColor: Colors.transparent,
+              resizeToAvoidBottomInset: true,
+              body: Opacity(
+                opacity: 0.5,
+                child: Container(
+                  width: double.infinity,
+                  height: double.infinity,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -324,10 +347,10 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
               style: const TextStyle(
                 color: Colors.red,
                 fontSize: 13,
-                fontFamily: 'Karla',
-                letterSpacing: -.6,
+                fontFamily: 'Chirp',
+                letterSpacing: -.25,
                 fontWeight: FontWeight.w500,
-                height: 1.4,
+                height: 1.2,
               ),
             ),
           )
@@ -365,10 +388,10 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
               style: const TextStyle(
                 color: Colors.red,
                 fontSize: 13,
-                fontFamily: 'Karla',
-                letterSpacing: -.6,
+                fontFamily: 'Chirp',
+                letterSpacing: -.25,
                 fontWeight: FontWeight.w500,
-                height: 1.4,
+                height: 1.2,
               ),
             ),
           )
@@ -419,10 +442,10 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
               style: const TextStyle(
                 color: Colors.red,
                 fontSize: 13,
-                fontFamily: 'Karla',
-                letterSpacing: -.6,
+                fontFamily: 'Chirp',
+                letterSpacing: -.25,
                 fontWeight: FontWeight.w500,
-                height: 1.4,
+                height: 1.2,
               ),
             ),
           )
@@ -463,10 +486,10 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
               style: const TextStyle(
                 color: Colors.red,
                 fontSize: 13,
-                fontFamily: 'Karla',
-                letterSpacing: -.6,
+                fontFamily: 'Chirp',
+                letterSpacing: -.25,
                 fontWeight: FontWeight.w500,
-                height: 1.4,
+                height: 1.2,
               ),
             ),
           )
@@ -494,18 +517,19 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
               state.isFormValid && state.isDirty
                   ? AppColors.purple500
                   : AppColors.purple500.withOpacity(.15),
-          height: 48.00000.h,
-          textColor:  state.isFormValid && state.isDirty
-             ? AppColors.neutral0
-                                : AppColors.neutral0.withOpacity(.35),
-          fontFamily: 'Karla',
+          height: 48.00000,
+          textColor:
+              state.isFormValid && state.isDirty
+                  ? AppColors.neutral0
+                  : AppColors.neutral0.withOpacity(.20),
+          fontFamily: 'Chirp',
           letterSpacing: -.70,
           fontSize: 18,
           width: double.infinity,
           fullWidth: true,
           isLoading: state.isLoading,
         ),
-        // SizedBox(height: 12.h),
+        // SizedBox(height: 12),
 
         // // Cancel Button
         // SecondaryButton(
@@ -515,9 +539,9 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
         //   textColor: AppColors.purple500ForTheme(context),
         //   width: double.infinity,
         //   fullWidth: true,
-        //   height: 48.00000.h,
+        //   height: 48.00000,
         //   borderRadius: 38,
-        //   fontFamily: 'Karla',
+        //   fontFamily: 'Chirp',
         //   fontSize: 18,
         //   fontWeight: FontWeight.w500,
         //   letterSpacing: -0.8,
@@ -546,7 +570,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
       controller: _dateOfBirthController,
       onChanged: notifier.setDateOfBirth,
       suffixIcon: Container(
-        width: 40.w,
+        width: 40,
         alignment: Alignment.centerRight,
         constraints: BoxConstraints.tightForFinite(),
         child: Stack(
@@ -554,7 +578,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
           children: [
             SvgPicture.asset(
               'assets/icons/svgs/swap.svg',
-              height: 34.sp,
+              height: 34,
               color: AppColors.neutral700.withOpacity(.35),
             ),
             Center(
@@ -584,7 +608,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
       suffixIcon: Icon(
         Icons.keyboard_arrow_down,
         color: AppColors.neutral400,
-        size: 20.sp,
+        size: 20,
       ),
       shouldReadOnly: true,
       onTap: () => _showCountryBottomSheet(notifier),
@@ -603,7 +627,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
       onChanged: notifier.setAddress,
       textCapitalization: TextCapitalization.words,
       // suffixIcon: Container(
-      //   width: 40.w,
+      //   width: 40,
       //   alignment: Alignment.centerRight,
       //   constraints: BoxConstraints.tightForFinite(),
       //   child: Stack(
@@ -611,7 +635,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
       //     children: [
       //       SvgPicture.asset(
       //         'assets/icons/svgs/swap.svg',
-      //         height: 34.sp,
+      //         height: 34,
       //         color: AppColors.neutral700.withOpacity(.35),
       //       ),
       //       Center(
@@ -653,7 +677,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
       suffixIcon: Icon(
         Icons.keyboard_arrow_down,
         color: AppColors.neutral400,
-        size: 20.sp,
+        size: 20,
       ),
       shouldReadOnly: true,
       onTap: () => _showStatePicker(notifier),
@@ -670,7 +694,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
       suffixIcon: Icon(
         Icons.keyboard_arrow_down,
         color: AppColors.neutral400,
-        size: 20.sp,
+        size: 20,
       ),
       shouldReadOnly: true,
       onTap: state.state.isNotEmpty ? () => _showCityPicker(notifier) : null,
@@ -689,7 +713,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
       suffixIcon: Icon(
         Icons.keyboard_arrow_down,
         color: AppColors.neutral400,
-        size: 20.sp,
+        size: 20,
       ),
       shouldReadOnly: true,
       onTap: () => _showGenderBottomSheet(notifier),
@@ -769,24 +793,26 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
               Text(
                 'Current $fieldName: $currentValue',
                 style: AppTypography.bodyMedium.copyWith(
-                  fontFamily: 'Karla',
+                  fontFamily: 'Chirp',
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              SizedBox(height: 16.h),
+              SizedBox(height: 16),
               Text(
                 'To change your $fieldName, you\'ll need to:',
-                style: AppTypography.bodyMedium.copyWith(fontFamily: 'Karla'),
+                style: AppTypography.bodyMedium.copyWith(
+                  fontFamily: 'Chirp',
+                ),
               ),
-              SizedBox(height: 12.h),
+              SizedBox(height: 12),
               _buildRequirementItem('1. Upload a valid ID document'),
               _buildRequirementItem('2. Provide a reason for the change'),
               _buildRequirementItem('3. Wait for manual verification'),
-              SizedBox(height: 16.h),
+              SizedBox(height: 16),
               Text(
                 'This process may take 1-3 business days. Your account will be temporarily restricted during verification.',
                 style: AppTypography.bodySmall.copyWith(
-                  fontFamily: 'Karla',
+                  fontFamily: 'Chirp',
                   color: AppColors.neutral600,
                 ),
               ),
@@ -799,7 +825,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
                 'Cancel',
                 style: AppTypography.bodyMedium.copyWith(
                   color: AppColors.neutral600,
-                  fontFamily: 'Karla',
+                  fontFamily: 'Chirp',
                 ),
               ),
             ),
@@ -811,7 +837,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.purple500,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.r),
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
               child: Text(
@@ -822,7 +848,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
                     : 'Name'}',
                 style: AppTypography.bodyMedium.copyWith(
                   color: Colors.white,
-                  fontFamily: 'Karla',
+                  fontFamily: 'Chirp',
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -852,24 +878,26 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
               Text(
                 'Current Phone: $currentPhone',
                 style: AppTypography.bodyMedium.copyWith(
-                  fontFamily: 'Karla',
+                  fontFamily: 'Chirp',
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              SizedBox(height: 16.h),
+              SizedBox(height: 16),
               Text(
                 'To change your phone number, you\'ll need to:',
-                style: AppTypography.bodyMedium.copyWith(fontFamily: 'Karla'),
+                style: AppTypography.bodyMedium.copyWith(
+                  fontFamily: 'Chirp',
+                ),
               ),
-              SizedBox(height: 12.h),
+              SizedBox(height: 12),
               _buildRequirementItem('1. Enter your new phone number'),
               _buildRequirementItem('2. Verify via SMS code'),
               _buildRequirementItem('3. Confirm the change'),
-              SizedBox(height: 16.h),
+              SizedBox(height: 16),
               Text(
                 'A verification code will be sent to your new number.',
                 style: AppTypography.bodySmall.copyWith(
-                  fontFamily: 'Karla',
+                  fontFamily: 'Chirp',
                   color: AppColors.neutral600,
                 ),
               ),
@@ -882,7 +910,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
                 'Cancel',
                 style: AppTypography.bodyMedium.copyWith(
                   color: AppColors.neutral600,
-                  fontFamily: 'Karla',
+                  fontFamily: 'Chirp',
                 ),
               ),
             ),
@@ -894,14 +922,14 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.purple500,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.r),
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
               child: Text(
                 'Edit Phone Number',
                 style: AppTypography.bodyMedium.copyWith(
                   color: Colors.white,
-                  fontFamily: 'Karla',
+                  fontFamily: 'Chirp',
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -914,22 +942,22 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
 
   Widget _buildRequirementItem(String text) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 8.h),
+      padding: EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
           Container(
-            width: 6.w,
-            height: 6.h,
+            width: 6,
+            height: 6,
             decoration: BoxDecoration(
               color: AppColors.purple500ForTheme(context),
               shape: BoxShape.circle,
             ),
           ),
-          SizedBox(width: 12.w),
+          SizedBox(width: 12),
           Expanded(
             child: Text(
               text,
-              style: AppTypography.bodySmall.copyWith(fontFamily: 'Karla'),
+              style: AppTypography.bodySmall.copyWith(fontFamily: 'Chirp'),
             ),
           ),
         ],
@@ -1015,22 +1043,22 @@ class _CountryBottomSheetState extends State<_CountryBottomSheet> {
       height: MediaQuery.of(context).size.height * 0.92,
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
         children: [
-          SizedBox(height: 18.h),
+          SizedBox(height: 18),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 18.w),
+            padding: EdgeInsets.symmetric(horizontal: 18),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                SizedBox(height: 24.h, width: 22.w),
+                SizedBox(height: 24, width: 22),
                 Text(
                   'Select Country',
                   style: AppTypography.titleLarge.copyWith(
                     fontFamily: 'FunnelDisplay',
-                    fontSize: 14.sp,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
@@ -1041,33 +1069,33 @@ class _CountryBottomSheetState extends State<_CountryBottomSheet> {
                   },
                   child: Image.asset(
                     "assets/icons/pngs/cancelicon.png",
-                    height: 24.h,
-                    width: 24.w,
+                    height: 24,
+                    width: 24,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ],
             ),
           ),
-          SizedBox(height: 16.h),
+          SizedBox(height: 16),
           Expanded(
             child: ListView.builder(
-              padding: EdgeInsets.symmetric(horizontal: 18.w),
+              padding: EdgeInsets.symmetric(horizontal: 18),
               itemCount: _countries.length,
               itemBuilder: (context, index) {
                 final country = _countries[index];
                 return ListTile(
-                  contentPadding: EdgeInsets.symmetric(vertical: 4.h),
+                  contentPadding: EdgeInsets.symmetric(vertical: 4),
                   onTap: () => widget.onCountrySelected(country['name']!),
                   title: Row(
                     children: [
-                      SvgPicture.asset(country['flag']!, height: 24.000.h),
-                      SizedBox(width: 12.w),
+                      SvgPicture.asset(country['flag']!, height: 24.000),
+                      SizedBox(width: 12),
                       Text(
                         country['name']!,
                         style: AppTypography.bodyLarge.copyWith(
-                          fontFamily: 'Karla',
-                          fontSize: 16.sp,
+                          fontFamily: 'Chirp',
+                          fontSize: 16,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -1076,8 +1104,8 @@ class _CountryBottomSheetState extends State<_CountryBottomSheet> {
                   trailing: Text(
                     country['code']!,
                     style: AppTypography.bodyLarge.copyWith(
-                      fontFamily: 'Karla',
-                      fontSize: 14.sp,
+                      fontFamily: 'Chirp',
+                      fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -1110,22 +1138,22 @@ class _GenderBottomSheetState extends State<_GenderBottomSheet> {
       height: MediaQuery.of(context).size.height * 0.92,
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
         children: [
-          SizedBox(height: 18.h),
+          SizedBox(height: 18),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 18.w),
+            padding: EdgeInsets.symmetric(horizontal: 18),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                SizedBox(height: 24.h, width: 22.w),
+                SizedBox(height: 24, width: 22),
                 Text(
                   'Select Gender',
                   style: AppTypography.titleLarge.copyWith(
                     fontFamily: 'FunnelDisplay',
-                    fontSize: 14.sp,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
@@ -1136,28 +1164,28 @@ class _GenderBottomSheetState extends State<_GenderBottomSheet> {
                   },
                   child: Image.asset(
                     "assets/icons/pngs/cancelicon.png",
-                    height: 24.h,
-                    width: 24.w,
+                    height: 24,
+                    width: 24,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ],
             ),
           ),
-          SizedBox(height: 16.h),
+          SizedBox(height: 16),
           Expanded(
             child: ListView.builder(
-              padding: EdgeInsets.symmetric(horizontal: 18.w),
+              padding: EdgeInsets.symmetric(horizontal: 18),
               itemCount: _genders.length,
               itemBuilder: (context, index) {
                 final gender = _genders[index];
                 return ListTile(
-                  contentPadding: EdgeInsets.symmetric(vertical: 4.h),
+                  contentPadding: EdgeInsets.symmetric(vertical: 4),
                   title: Text(
                     gender,
                     style: AppTypography.bodyLarge.copyWith(
-                      fontFamily: 'Karla',
-                      fontSize: 16.sp,
+                      fontFamily: 'Chirp',
+                      fontSize: 16,
                       fontWeight: FontWeight.w500,
                     ),
                   ),

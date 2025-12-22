@@ -215,7 +215,7 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
     // Reset processing state
     _isProcessingPinNotifier.value = false;
 
-        showModalBottomSheet(
+    showModalBottomSheet(
       barrierColor: Colors.black.withOpacity(0.85),
       context: context,
       isScrollControlled: true,
@@ -338,10 +338,10 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
-             scrolledUnderElevation: .5,
-              foregroundColor: Theme.of(context).scaffoldBackgroundColor,
-              shadowColor: Theme.of(context).scaffoldBackgroundColor,
-              surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+          scrolledUnderElevation: .5,
+          foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+          shadowColor: Theme.of(context).scaffoldBackgroundColor,
+          surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
 
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
@@ -359,20 +359,20 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
               children: [
                 SvgPicture.asset(
                   "assets/icons/svgs/notificationn.svg",
-                  height: 40.sp,
+                  height: 40,
                   color: Theme.of(context).colorScheme.surface,
                 ),
                 SizedBox(
-                  height: 40.sp,
-                  width: 40.sp,
+                  height: 40,
+                  width: 40,
                   child: Center(
                     child: Padding(
                       padding: const EdgeInsets.only(left: 8.0),
                       child: Icon(
                         Icons.arrow_back_ios,
-                        size: 20.sp,
+                        size: 20,
                         color: Theme.of(context).textTheme.bodyLarge!.color,
-                        // size: 20.sp,
+                        // size: 20,
                       ),
                     ),
                   ),
@@ -385,74 +385,92 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
             'Review Transfer',
             style: Theme.of(context).textTheme.headlineLarge?.copyWith(
               fontFamily: 'FunnelDisplay',
-              fontSize: 20.sp, // height: 1.6,
+              fontSize: 20, // height: 1.6,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           centerTitle: true,
         ),
-        body: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 18.w),
-                child: Text(
-                  "Confirm the details of your transfer before sending",
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'Karla',
-                    letterSpacing: -.6,
-                    height: 1.5,
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final bool isWide = constraints.maxWidth > 600;
+            return Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: isWide ? 500 : double.infinity,
+                ),
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isWide ? 24 : 18,
+                    vertical: 8,
                   ),
-                  textAlign: TextAlign.center,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isWide ? 24 : 18,
+                        ),
+                        child: Text(
+                          "Confirm the details of your transfer before sending",
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodyMedium?.copyWith(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            fontFamily: 'Chirp',
+                            letterSpacing: -.25,
+                            height: 1.5,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      SizedBox(height: 32),
+
+                      // Reason Selection
+                      _buildReasonSelection(),
+
+                      SizedBox(height: 24),
+
+                      // Transfer Details
+                      _buildTransferDetails(sendAmount),
+
+                      SizedBox(height: 32),
+
+                      // Continue Button
+                      PrimaryButton(
+                        text: 'Confirm Payment',
+                        onPressed:
+                            _selectedReason.isNotEmpty
+                                ? _proceedToPayment
+                                : null,
+                        isLoading: _isLoading,
+                        height: 48.00000,
+                        backgroundColor:
+                            _selectedReason.isNotEmpty
+                                ? AppColors.purple500
+                                : AppColors.purple500.withOpacity(0.12),
+                        textColor:
+                            _selectedReason.isNotEmpty
+                                ? AppColors.neutral0
+                                : AppColors.neutral0.withOpacity(.20),
+                        fontFamily: 'Chirp',
+                        letterSpacing: -.70,
+                        fontSize: 18,
+                        width: double.infinity,
+                        fullWidth: true,
+                        borderRadius: 40,
+                      ),
+
+                      SizedBox(height: 32),
+                    ],
+                  ),
                 ),
               ),
-              SizedBox(height: 32.h),
-
-              // Reason Selection
-              _buildReasonSelection(),
-
-              SizedBox(height: 24.h),
-
-              // Transfer Details
-              _buildTransferDetails(sendAmount),
-
-              // SizedBox(height: 32.h),
-
-              // // Description
-              // _buildDescriptionSection(),
-              SizedBox(height: 40.h),
-
-              // Continue Button
-              PrimaryButton(
-                text: 'Confirm Payment',
-                onPressed:
-                    _selectedReason.isNotEmpty ? _proceedToPayment : null,
-                isLoading: _isLoading,
-                height: 48.00000.h,
-                backgroundColor:
-                    _selectedReason.isNotEmpty
-                        ? AppColors.purple500
-                        : AppColors.purple500.withOpacity(0.12),
-                textColor:
-                    _selectedReason.isNotEmpty
-                        ? AppColors.neutral0
-                        : AppColors.neutral0.withOpacity(.35),
-                fontFamily: 'Karla',
-                letterSpacing: -.70,
-                fontSize: 18,
-                width: double.infinity,
-                fullWidth: true,
-                borderRadius: 40.r,
-              ),
-
-              SizedBox(height: 40.h),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
@@ -480,10 +498,10 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
   Widget _buildTransferDetails(double sendAmount) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 24.h),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
           width: 1.0,
@@ -495,20 +513,20 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
           Text(
             'Transfer Details',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontFamily: 'Karla',
-              fontSize: 16.sp,
+              fontFamily: 'Chirp',
+              fontSize: 16,
               fontWeight: FontWeight.w600,
             ),
           ),
 
-          SizedBox(height: 20.h),
+          SizedBox(height: 20),
 
           _buildDetailRow('Transfer Amount', '₦${_formatNumber(sendAmount)}'),
           _buildDetailRow('Recipient', '@${widget.dayfiId}'),
-          _buildDetailRow('Delivery Method', 'Dayfi ID Transfer'),
+          _buildDetailRow('Delivery Method', 'Dayfi Tag Transfer'),
           Divider(
             color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-            height: 24.h,
+            height: 24,
           ),
           _buildDetailRow(
             'Total',
@@ -549,7 +567,7 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
     double bottomPadding = 12,
   }) {
     return Padding(
-      padding: EdgeInsets.only(bottom: bottomPadding.h),
+      padding: EdgeInsets.only(bottom: bottomPadding),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -557,13 +575,13 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
           Row(
             children: [
               _getDetailIcon(label),
-              SizedBox(width: 8.w),
+              SizedBox(width: 8),
               Text(
                 label,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  fontFamily: 'Karla',
-                  letterSpacing: -.6,
-                  fontSize: 14.sp,
+                  fontFamily: 'Chirp',
+                  letterSpacing: -.25,
+                  fontSize: 14,
                   fontWeight: isTotal ? FontWeight.w600 : FontWeight.w500,
                   color: Theme.of(
                     context,
@@ -572,13 +590,13 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
               ),
             ],
           ),
-          SizedBox(width: 16.w),
+          SizedBox(width: 16),
           Expanded(
             child: Text(
               value,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                fontFamily: 'Karla',
-                fontSize: isTotal ? 16.sp : 13.sp,
+                fontFamily: 'Chirp',
+                fontSize: isTotal ? 16 : 13,
                 fontWeight: isTotal ? FontWeight.w700 : FontWeight.w600,
                 color: Theme.of(context).colorScheme.onSurface,
               ),
@@ -597,13 +615,13 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
         Text(
           'Additional Information (Optional)',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontFamily: 'Karla',
-            fontSize: 16.sp,
+            fontFamily: 'Chirp',
+            fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
         ),
 
-        SizedBox(height: 16.h),
+        SizedBox(height: 16),
 
         CustomTextField(
           controller: _descriptionController,
@@ -616,7 +634,7 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
   }
 
   void _showReasonBottomSheet() {
-        showModalBottomSheet(
+    showModalBottomSheet(
       barrierColor: Colors.black.withOpacity(0.85),
       context: context,
       isScrollControlled: true,
@@ -627,22 +645,22 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
 
             decoration: BoxDecoration(
               color: Theme.of(context).scaffoldBackgroundColor,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
             child: Column(
               children: [
-                SizedBox(height: 18.h),
+                SizedBox(height: 18),
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 18.w),
+                  padding: EdgeInsets.symmetric(horizontal: 18),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      SizedBox(height: 40.h, width: 40.w),
+                      SizedBox(height: 40, width: 40),
                       Text(
                         'Transfer reason',
                         style: AppTypography.titleLarge.copyWith(
                           fontFamily: 'FunnelDisplay',
-                          fontSize: 20.sp,
+                          fontSize: 20,
                           // height: 1.6,
                           fontWeight: FontWeight.w600,
                           color: Theme.of(context).colorScheme.onSurface,
@@ -661,17 +679,17 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
                           children: [
                             SvgPicture.asset(
                               "assets/icons/svgs/notificationn.svg",
-                              height: 40.sp,
+                              height: 40,
                               color: Theme.of(context).colorScheme.surface,
                             ),
                             SizedBox(
-                              height: 40.sp,
-                              width: 40.sp,
+                              height: 40,
+                              width: 40,
                               child: Center(
                                 child: Image.asset(
                                   "assets/icons/pngs/cancelicon.png",
-                                  height: 20.h,
-                                  width: 20.w,
+                                  height: 20,
+                                  width: 20,
                                   color:
                                       Theme.of(
                                         context,
@@ -685,32 +703,32 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
                     ],
                   ),
                 ),
-                SizedBox(height: 16.h),
+                SizedBox(height: 16),
                 Expanded(
                   child: ListView.builder(
-                    padding: EdgeInsets.symmetric(horizontal: 18.w),
+                    padding: EdgeInsets.symmetric(horizontal: 18),
                     itemCount: _reasons.length,
                     itemBuilder: (context, index) {
                       final reason = _reasons[index];
                       final isSelected = _selectedReason == reason['name'];
                       return ListTile(
-                        contentPadding: EdgeInsets.symmetric(vertical: 4.h),
+                        contentPadding: EdgeInsets.symmetric(vertical: 4),
                         leading: Container(
-                          padding: EdgeInsets.all(6.r),
+                          padding: EdgeInsets.all(6),
                           decoration: BoxDecoration(
                             color: AppColors.neutral0,
                             shape: BoxShape.circle,
                           ),
                           child: Text(
                             reason['emoji']!,
-                            style: TextStyle(fontSize: 24.sp),
+                            style: TextStyle(fontSize: 24),
                           ),
                         ),
                         title: Text(
                           reason['name']!,
                           style: AppTypography.bodyLarge.copyWith(
-                            fontFamily: 'Karla',
-                            fontSize: 16.sp,
+                            fontFamily: 'Chirp',
+                            fontSize: 16,
                             letterSpacing: -.4,
                             fontWeight: FontWeight.w500,
                           ),
@@ -773,159 +791,200 @@ class _TransactionPinBottomSheetState
     final pinState = ref.watch(transactionPinProvider);
     final pinNotifier = ref.read(transactionPinProvider.notifier);
 
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.78,
-
-      decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-      ),
-      child: Column(
-        children: [
-          SizedBox(height: 18.h),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 18.w),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                SizedBox(height: 24.h, width: 22.w),
-                Text(
-                  'Enter Transaction PIN',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontFamily: 'Karla',
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () {
-                    pinNotifier.resetForm();
-                    Navigator.pop(context);
-                  },
-                  child: Image.asset(
-                    "assets/icons/pngs/cancelicon.png",
-                    height: 24.h,
-                    width: 24.w,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-              ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isWide = constraints.maxWidth > 600;
+        return Align(
+          alignment: isWide ? Alignment.center : Alignment.bottomCenter,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: isWide ? 500 : double.infinity,
             ),
-          ),
-          SizedBox(height: MediaQuery.of(context).size.width * 0.15),
+            child: Container(
+              height:
+                  isWide
+                      ? MediaQuery.of(context).size.height * 0.50
+                      : MediaQuery.of(context).size.height * 0.74,
 
-          // PIN dots
-          Stack(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                  4,
-                  (index) => Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                    child: Text(
-                      index < pinState.pin.length ? '*' : '*',
-                      style: TextStyle(
-                        fontSize: 88.sp,
-                        letterSpacing: -25,
-                        fontFamily: 'FunnelDisplay',
-                        fontWeight: FontWeight.w700,
-                        color:
-                            index < pinState.pin.length
-                                ? AppColors.purple500ForTheme(context)
-                                : AppColors.neutral300,
-                      ),
-                    ),
-                  ),
-                ),
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                borderRadius:
+                    isWide
+                        ? BorderRadius.circular(20)
+                        : BorderRadius.vertical(top: Radius.circular(20)),
               ),
-
-              // SizedBox(height: MediaQuery.of(context).size.width * 0.075),
-
-              // Loading indicator section
-              if (widget.isProcessing)
-                Positioned(
-                  top: 50,
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: LoadingAnimationWidget.horizontalRotatingDots(
-                      color: AppColors.purple100,
-                      size: 32.0.w,
+              child: Column(
+                children: [
+                  SizedBox(height: 18),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: isWide ? 24 : 18),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        SizedBox(height: 24, width: 22),
+                        Text(
+                          'Enter Transaction PIN',
+                          style: Theme.of(
+                            context,
+                          ).textTheme.titleLarge?.copyWith(
+                            fontFamily: 'Chirp',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            pinNotifier.resetForm();
+                            Navigator.pop(context);
+                          },
+                          child: Image.asset(
+                            "assets/icons/pngs/cancelicon.png",
+                            height: 24,
+                            width: 24,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-            ],
-          ),
-
-          // Number pad - disabled when processing
-          Expanded(
-            child: Stack(
-              children: [
-                GridView.count(
-                  crossAxisCount: 3,
-                  shrinkWrap: true,
-                  childAspectRatio: 1.5,
-                  mainAxisSpacing: 16,
-                  crossAxisSpacing: 16,
-                  padding: EdgeInsets.symmetric(horizontal: 18.w),
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: [
-                    ...List.generate(9, (index) {
-                      final number = (index + 1).toString();
-                      return _buildNumberButton(number, () {
-                        if (pinState.pin.length < 4 && !widget.isProcessing) {
-                          final newPin = pinState.pin + number;
-                          pinNotifier.updatePin(newPin);
-                          if (newPin.length == 4) {
-                            Future.delayed(Duration(milliseconds: 300), () {
-                              widget.onPinEntered(newPin);
-                            });
-                          }
-                        }
-                      });
-                    }),
-                    const SizedBox.shrink(),
-                    _buildNumberButton('0', () {
-                      if (pinState.pin.length < 4 && !widget.isProcessing) {
-                        final newPin = '${pinState.pin}0';
-                        pinNotifier.updatePin(newPin);
-                        if (newPin.length == 4) {
-                          Future.delayed(Duration(milliseconds: 300), () {
-                            widget.onPinEntered(newPin);
-                          });
-                        }
-                      }
-                    }),
-                    _buildIconButton(
-                      icon: Icons.arrow_back_ios,
-
-                      onTap: () {
-                        if (pinState.pin.isNotEmpty && !widget.isProcessing) {
-                          pinNotifier.updatePin(
-                            pinState.pin.substring(0, pinState.pin.length - 1),
-                          );
-                        }
-                      },
-                    ),
-                  ],
-                ),
-                // Overlay when processing
-                if (widget.isProcessing)
-                  Container(
-                    color: Theme.of(
-                      context,
-                    ).scaffoldBackgroundColor.withOpacity(0.7),
+                  SizedBox(
+                    height:
+                        isWide ? 60 : MediaQuery.of(context).size.width * 0.15,
                   ),
-              ],
+
+                  // PIN dots
+                  Stack(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(
+                          4,
+                          (index) => Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12.0,
+                            ),
+                            child: Text(
+                              index < pinState.pin.length ? '*' : '*',
+                              style: TextStyle(
+                                fontSize: 60,
+                                letterSpacing: -25,
+                                fontFamily: 'FunnelDisplay',
+                                fontWeight: FontWeight.w700,
+                                color:
+                                    index < pinState.pin.length
+                                        ? AppColors.purple500ForTheme(context)
+                                        : AppColors.neutral300,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // SizedBox(height: MediaQuery.of(context).size.width * 0.075),
+
+                      // Loading indicator section
+                      if (widget.isProcessing)
+                        Positioned(
+                          top: 50,
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          child: Center(
+                            child:
+                                LoadingAnimationWidget.horizontalRotatingDots(
+                                  color: AppColors.purple100,
+                                  size: 32.0,
+                                ),
+                          ),
+                        ),
+                    ],
+                  ),
+
+                  // Number pad - disabled when processing
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        GridView.count(
+                          crossAxisCount: 3,
+                          shrinkWrap: true,
+                          childAspectRatio: 1.5,
+                          mainAxisSpacing: 16,
+                          crossAxisSpacing: 16,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isWide ? 24 : 18,
+                          ),
+                          physics: const NeverScrollableScrollPhysics(),
+                          children: [
+                            ...List.generate(9, (index) {
+                              final number = (index + 1).toString();
+                              return _buildNumberButton(number, () {
+                                if (pinState.pin.length < 4 &&
+                                    !widget.isProcessing) {
+                                  final newPin = pinState.pin + number;
+                                  pinNotifier.updatePin(newPin);
+                                  if (newPin.length == 4) {
+                                    Future.delayed(
+                                      Duration(milliseconds: 300),
+                                      () {
+                                        widget.onPinEntered(newPin);
+                                      },
+                                    );
+                                  }
+                                }
+                              });
+                            }),
+                            const SizedBox.shrink(),
+                            _buildNumberButton('0', () {
+                              if (pinState.pin.length < 4 &&
+                                  !widget.isProcessing) {
+                                final newPin = '${pinState.pin}0';
+                                pinNotifier.updatePin(newPin);
+                                if (newPin.length == 4) {
+                                  Future.delayed(
+                                    Duration(milliseconds: 300),
+                                    () {
+                                      widget.onPinEntered(newPin);
+                                    },
+                                  );
+                                }
+                              }
+                            }),
+                            _buildIconButton(
+                              icon: Icons.arrow_back_ios,
+
+                              onTap: () {
+                                if (pinState.pin.isNotEmpty &&
+                                    !widget.isProcessing) {
+                                  pinNotifier.updatePin(
+                                    pinState.pin.substring(
+                                      0,
+                                      pinState.pin.length - 1,
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                        // Overlay when processing
+                        if (widget.isProcessing)
+                          Container(
+                            color: Theme.of(
+                              context,
+                            ).scaffoldBackgroundColor.withOpacity(0.7),
+                          ),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(height: 24),
+                ],
+              ),
             ),
           ),
-
-          SizedBox(height: 24.h),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -952,7 +1011,7 @@ class _TransactionPinBottomSheetState
                 child: Text(
                   number,
                   style: TextStyle(
-                    fontSize: 32.sp,
+                    fontSize: 24,
                     fontFamily: 'FunnelDisplay',
                     fontWeight: FontWeight.w500,
                     color: Theme.of(context).colorScheme.onSurface,
@@ -985,7 +1044,7 @@ class _TransactionPinBottomSheetState
           child: Icon(
             icon,
             color: AppColors.purple500ForTheme(context),
-            size: 20.sp,
+            size: 20,
           ),
         ),
       ),

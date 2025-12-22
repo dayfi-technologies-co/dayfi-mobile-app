@@ -12,7 +12,7 @@ import 'package:dayfi/core/theme/app_typography.dart';
 /// ```dart
 /// EmptyStateWidget(
 ///   title: 'No transactions yet',
-///   message: 'Your transactions will appear here',
+///   message: 'your transactions will appear here',
 ///   actionText: 'Send Money',
 ///   onAction: () => navigateToSend(),
 /// )
@@ -65,7 +65,7 @@ class EmptyStateWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: EdgeInsets.all(18.w),
+        padding: EdgeInsets.all(18),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -76,16 +76,16 @@ class EmptyStateWidget extends StatelessWidget {
             // else if (icon != null)
             //   Icon(
             //     icon,
-            //     size: 80.sp,
+            //     size: 80,
             //     color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
             //   ),
-            // SizedBox(height: 24.h),
+            // SizedBox(height: 24),
             SvgPicture.asset(
               'assets/icons/svgs/search-normal.svg',
-              height: 64.sp,
+              height: 64,
               color: Theme.of(context).colorScheme.error,
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: 16),
             // Title
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 18.0),
@@ -93,7 +93,7 @@ class EmptyStateWidget extends StatelessWidget {
                 title,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontFamily: 'FunnelDisplay',
-                  fontSize: 16.sp,
+                  fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: Theme.of(
                     context,
@@ -104,14 +104,14 @@ class EmptyStateWidget extends StatelessWidget {
             ),
             // Message
             if (message != null) ...[
-              SizedBox(height: 8.h),
+              SizedBox(height: 8),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
                 child: Text(
                   message!,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontFamily: 'Karla',
-                    fontSize: 14.sp,
+                    fontFamily: 'Chirp',
+                    fontSize: 14,
                     fontWeight: FontWeight.w500,
                     color: Theme.of(
                       context,
@@ -124,10 +124,10 @@ class EmptyStateWidget extends StatelessWidget {
 
             // Custom button (e.g., for recipients "Send Money" button)
             // if (customButton != null) ...[
-            //   SizedBox(height: 24.h),
+            //   SizedBox(height: 24),
             //   customButton!,
             // ],
-            SizedBox(height: 96.h),
+            SizedBox(height: 96),
           ],
         ),
       ),
@@ -151,10 +151,10 @@ class CompactEmptyStateWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(24.w),
+      padding: EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -164,15 +164,15 @@ class CompactEmptyStateWidget extends StatelessWidget {
           else if (icon != null)
             Icon(
               icon,
-              size: 40.sp,
+              size: 40,
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
             ),
-          if (icon != null || customIcon != null) SizedBox(height: 12.h),
+          if (icon != null || customIcon != null) SizedBox(height: 12),
           Text(
             message,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontFamily: 'Karla',
-              fontSize: 14.sp,
+              fontFamily: 'Chirp',
+              fontSize: 14,
               fontWeight: FontWeight.w500,
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
             ),

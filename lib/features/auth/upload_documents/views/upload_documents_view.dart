@@ -2,7 +2,6 @@ import 'package:dayfi/common/widgets/buttons/secondary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
@@ -53,135 +52,159 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
               ),
             SafeArea(
               bottom: false,
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    //  SizedBox(height: 18.h),
-                    if (widget.showBackButton)
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          SizedBox(height: 24.h, width: 24.w),
-                          InkWell(
-                            splashColor: Colors.transparent,
-                            highlightColor: Colors.transparent,
-                            onTap: () => Navigator.pop(context),
-                            child: Stack(
-                              alignment: AlignmentGeometry.center,
-                              children: [
-                                SvgPicture.asset(
-                                  "assets/icons/svgs/notificationn.svg",
-                                  height: 40.sp,
-                                  color: Theme.of(context).colorScheme.surface,
-                                ),
-                                SizedBox(
-                                  height: 40.sp,
-                                  width: 40.sp,
-                                  child: Center(
-                                    child: Image.asset(
-                                      "assets/icons/pngs/cancelicon.png",
-                                      height: 20.h,
-                                      width: 20.w,
-                                      color:
-                                          Theme.of(
-                                            context,
-                                          ).textTheme.bodyLarge!.color,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final bool isWide = constraints.maxWidth > 600;
+                  return Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: isWide ? 400 : double.infinity,
+                      ),
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isWide ? 24 : 18,
+                          vertical: 8,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            //  SizedBox(height: 18),
+                            if (widget.showBackButton)
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  SizedBox(height: 24, width: 24),
+                                  InkWell(
+                                    splashColor: Colors.transparent,
+                                    highlightColor: Colors.transparent,
+                                    onTap: () => Navigator.pop(context),
+                                    child: Stack(
+                                      alignment: AlignmentGeometry.center,
+                                      children: [
+                                        SvgPicture.asset(
+                                          "assets/icons/svgs/notificationn.svg",
+                                          height: 40,
+                                          color:
+                                              Theme.of(
+                                                context,
+                                              ).colorScheme.surface,
+                                        ),
+                                        SizedBox(
+                                          height: 40,
+                                          width: 40,
+                                          child: Center(
+                                            child: Image.asset(
+                                              "assets/icons/pngs/cancelicon.png",
+                                              height: 20,
+                                              width: 20,
+                                              color:
+                                                  Theme.of(
+                                                    context,
+                                                  ).textTheme.bodyLarge!.color,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
+                                ],
+                              ),
+                            if (!widget.showBackButton) SizedBox(height: 12),
+                            Padding(
+                              padding: EdgeInsets.only(left: 28),
+                              child: Image.asset(
+                                'assets/images/upload_doc.png',
+                                width:
+                                    isWide
+                                        ? 180
+                                        : MediaQuery.of(context).size.width *
+                                            0.5,
+                              ),
+                            ),
+
+                            // Title
+                            Column(
+                              children: [
+                                Text(
+                                      "Upgrade account limits",
+                                      style: AppTypography.headlineMedium
+                                          .copyWith(
+                                            fontFamily: 'FunnelDisplay',
+                                            fontSize: isWide ? 32 : 28,
+                                            height: 1.2,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.neutral0,
+                                            // height: 1.2,
+                                            // letterSpacing: -.4,
+                                          ),
+                                      textAlign: TextAlign.center,
+                                    )
+                                    .animate()
+                                    .fadeIn(
+                                      delay: 500.ms,
+                                      duration: 400.ms,
+                                      curve: Curves.easeOutCubic,
+                                    )
+                                    .slideY(
+                                      begin: 0.3,
+                                      end: 0,
+                                      delay: 500.ms,
+                                      duration: 400.ms,
+                                      curve: Curves.easeOutCubic,
+                                    ),
+
+                                SizedBox(height: 18),
+                                Text(
+                                  widget.showBackButton
+                                      ? "Just one step left.\nupgrade your account to complete this transaction.\nIt only takes about 30 seconds, promise."
+                                      : "Your account is ready! You can now transfer up to 1,000 USD per month and 10,000 USD per year. Submit additional documents to increase your limit to 20,000 USD per month and 100,000 USD",
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.bodyMedium?.copyWith(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                    fontFamily: 'Chirp',
+                                    color: AppColors.neutral100,
+                                    letterSpacing: -.25,
+                                    height: 1.2,
+                                  ),
+                                  textAlign: TextAlign.center,
                                 ),
                               ],
                             ),
-                          ),
-                        ],
-                      ),
-                    if (!widget.showBackButton) SizedBox(height: 12.h),
-                    Padding(
-                      padding: EdgeInsets.only(left: 28.w),
-                      child: Image.asset(
-                        'assets/images/upload_doc.png',
-                        width: MediaQuery.of(context).size.width * 0.5,
-                      ),
-                    ),
+                            // SizedBox(height: 36),
 
-                    // Title
-                    Column(
-                      children: [
-                        Text(
-                              "Upgrade account limits",
-                              style: AppTypography.headlineMedium.copyWith(
-                                fontFamily: 'Boldonse',
-                                fontSize: 20.sp,
-                                height: 1.2,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.neutral0,
-                                // height: 1.2,
-                                // letterSpacing: -.4,
-                              ),
-                              textAlign: TextAlign.center,
-                            )
-                            .animate()
-                            .fadeIn(
-                              delay: 500.ms,
-                              duration: 400.ms,
-                              curve: Curves.easeOutCubic,
-                            )
-                            .slideY(
-                              begin: 0.3,
-                              end: 0,
-                              delay: 500.ms,
-                              duration: 400.ms,
-                              curve: Curves.easeOutCubic,
+                            // // KYC Tier Information Card
+                            // _buildKycTierCard(),
+                            // SizedBox(height: 32),
+
+                            // // Current Tier Status
+                            // _buildCurrentTierStatus(),
+                            // SizedBox(height: 32),
+
+                            // // Upload Documents Section
+                            // _buildUploadDocumentsSection(uploadDocsNotifier),
+                            // SizedBox(height: 32),
+
+                            // // Benefits of Tier 2
+                            // _buildTier2Benefits(),
+                            // SizedBox(height: 40),
+
+                            // Action Buttons
+                            _buildActionButtons(
+                              context,
+                              uploadDocsState,
+                              uploadDocsNotifier,
                             ),
-
-                        SizedBox(height: 18.h),
-                        Text(
-                          widget.showBackButton
-                              ? "Just one step left.\nupgrade your account to complete this transaction.\nIt only takes about 30 seconds, promise."
-                              : "Your account is ready! You can now transfer up to 1,000 USD per month and 10,000 USD per year. Submit additional documents to increase your limit to 20,000 USD per month and 100,000 USD",
-                          style: Theme.of(
-                            context,
-                          ).textTheme.bodyMedium?.copyWith(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w500,
-                            fontFamily: 'Karla',
-                            color: AppColors.neutral100,
-                            letterSpacing: -.6,
-                            height: 1.4,
-                          ),
-                          textAlign: TextAlign.center,
+                            // SizedBox(height: 50),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
-                    // SizedBox(height: 36.h),
-
-                    // // KYC Tier Information Card
-                    // _buildKycTierCard(),
-                    // SizedBox(height: 32.h),
-
-                    // // Current Tier Status
-                    // _buildCurrentTierStatus(),
-                    // SizedBox(height: 32.h),
-
-                    // // Upload Documents Section
-                    // _buildUploadDocumentsSection(uploadDocsNotifier),
-                    // SizedBox(height: 32.h),
-
-                    // // Benefits of Tier 2
-                    // _buildTier2Benefits(),
-                    // SizedBox(height: 40.h),
-
-                    // Action Buttons
-                    _buildActionButtons(
-                      context,
-                      uploadDocsState,
-                      uploadDocsNotifier,
-                    ),
-                    // SizedBox(height: 50.h),
-                  ],
-                ),
+                  );
+                },
               ),
             ),
           ],
@@ -207,9 +230,9 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
                     showBackButton: widget.showBackButton,
                   ),
               backgroundColor: Colors.white,
-              height: 48.00000.h,
+              height: 48.00000,
               textColor: AppColors.purple500ForTheme(context),
-              fontFamily: 'Karla',
+              fontFamily: 'Chirp',
               letterSpacing: -.70,
               fontSize: 18,
               width: double.infinity,
@@ -237,7 +260,7 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
               curve: Curves.easeOutCubic,
             ),
 
-        SizedBox(height: 12.h),
+        SizedBox(height: 12),
 
         // Skip button
         SecondaryButton(
@@ -248,9 +271,9 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
                       ? null
                       : () => _showSkipDialog(context, state, notifier),
               borderColor: Colors.transparent,
-              height: 48.00000.h,
+              height: 48.00000,
               textColor: AppColors.neutral0,
-              fontFamily: 'Karla',
+              fontFamily: 'Chirp',
               letterSpacing: -.70,
               fontSize: 18,
               width: double.infinity,
@@ -277,22 +300,22 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
               curve: Curves.easeOutCubic,
             ),
 
-        SizedBox(height: 24.h),
+        SizedBox(height: 24),
 
         // Padding(
-        //   padding: EdgeInsets.only(top: 12.h),
+        //   padding: EdgeInsets.only(top: 12),
         //   child: TextButton(
         //     onPressed:
         //         state.isBusy ? null : () => notifier.skipForLater(context),
         //     child: Text(
         //       'Retry',
         //       style: TextStyle(
-        //         fontFamily: 'Karla',
+        //         fontFamily: 'Chirp',
         //         color: AppColors.purple500ForTheme(context),
-        //         fontSize: 16.sp,
+        //         fontSize: 16,
         //         fontWeight: FontWeight.w600,
-        //         letterSpacing: -.6,
-        //         height: 1.4,
+        //         letterSpacing: -.25,
+        //         height: 1.2,
         //       ),
         //     ),
         //   ),
@@ -313,17 +336,17 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
           (BuildContext context) => Dialog(
             backgroundColor: Theme.of(context).colorScheme.surface,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24.r),
+              borderRadius: BorderRadius.circular(24),
             ),
             child: Container(
-              padding: EdgeInsets.all(28.w),
+              padding: EdgeInsets.all(28),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   // Success icon with enhanced styling
                   // Container(
-                  //   width: 80.w,
-                  //   height: 80.w,
+                  //   width: 80,
+                  //   height: 80,
                   //   decoration: BoxDecoration(
                   //     gradient: LinearGradient(
                   //       begin: Alignment.topLeft,
@@ -345,18 +368,18 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
                   //   child: Icon(
                   //     Icons.security,
                   //     color: Colors.white,
-                  //     size: 40.w,
+                  //     size: 40,
                   //   ),
                   // ),
 
-                  // SizedBox(height: 24.h),
+                  // SizedBox(height: 24),
 
                   // Title with auth view styling
                   Text(
                     'Skipping verification means lower transfer limits. Do you want to proceed?',
                     style: TextStyle(
-                      fontFamily: 'Karla',
-                      fontSize: 20.sp,
+                      fontFamily: 'Chirp',
+                      fontSize: 20,
                       fontWeight: FontWeight.w500,
                       color: Theme.of(context).colorScheme.onSurface,
                       letterSpacing: -0.8,
@@ -364,7 +387,7 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
                     textAlign: TextAlign.center,
                   ),
 
-                  SizedBox(height: 24.h),
+                  SizedBox(height: 24),
 
                   // Continue button with auth view styling
                   PrimaryButton(
@@ -379,15 +402,15 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
                     backgroundColor: AppColors.purple500,
                     textColor: AppColors.neutral0,
                     borderRadius: 38,
-                    height: 48.00000.h,
+                    height: 48.00000,
                     width: double.infinity,
                     fullWidth: true,
-                    fontFamily: 'Karla',
+                    fontFamily: 'Chirp',
                     fontSize: 18,
                     fontWeight: FontWeight.w500,
                     letterSpacing: -0.8,
                   ),
-                  SizedBox(height: 12.h),
+                  SizedBox(height: 12),
 
                   // Cancel button with auth view styling
                   SecondaryButton(
@@ -400,9 +423,9 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
                     textColor: Theme.of(context).textTheme.bodyLarge!.color!,
                     width: double.infinity,
                     fullWidth: true,
-                    height: 48.00000.h,
+                    height: 48.00000,
                     borderRadius: 38,
-                    fontFamily: 'Karla',
+                    fontFamily: 'Chirp',
                     fontSize: 18,
                     fontWeight: FontWeight.w500,
                     letterSpacing: -0.8,

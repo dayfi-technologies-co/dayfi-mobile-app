@@ -1,5 +1,8 @@
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/common/utils/haptic_helper.dart';
+import 'package:dayfi/common/utils/available_balance_calculator.dart';
+import 'package:dayfi/features/main/views/main_view.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:dayfi/common/utils/tier_utils.dart';
 import 'package:dayfi/common/widgets/empty_state_widget.dart';
 import 'package:dayfi/common/widgets/shimmer_widgets.dart';
@@ -22,7 +25,6 @@ import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:dayfi/features/auth/upload_documents/views/upload_documents_view.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:intercom_flutter/intercom_flutter.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
@@ -52,6 +54,7 @@ class _HomeViewState extends ConsumerState<HomeView>
   String? _dayfiId;
   bool _isLoadingDayfiId = true;
   bool _isBalanceVisible = true;
+  bool _isRefreshing = false;
   final SecureStorageService _secureStorage = locator<SecureStorageService>();
 
   @override
@@ -127,7 +130,7 @@ class _HomeViewState extends ConsumerState<HomeView>
   }
 
   Future<void> _loadDayfiId() async {
-    // Load cached DayFi ID from storage first
+    // Load cached dayfi tag from storage first
     final cachedDayfiId = localCache.getFromLocalCache('dayfi_id') as String?;
     if (cachedDayfiId != null &&
         cachedDayfiId.isNotEmpty &&
@@ -147,7 +150,7 @@ class _HomeViewState extends ConsumerState<HomeView>
       final walletService = locator<WalletService>();
       final walletResponse = await walletService.fetchWalletDetails();
 
-      // Find the first wallet with a non-empty Dayfi ID
+      // Find the first wallet with a non-empty dayfi tag
       if (walletResponse.wallets.isNotEmpty) {
         final walletWithDayfiId = walletResponse.wallets.firstWhere(
           (wallet) => wallet.dayfiId.isNotEmpty && wallet.dayfiId != 'null',
@@ -156,7 +159,7 @@ class _HomeViewState extends ConsumerState<HomeView>
 
         if (walletWithDayfiId.dayfiId.isNotEmpty &&
             walletWithDayfiId.dayfiId != 'null') {
-          // Cache the DayFi ID for next time
+          // Cache the dayfi tag for next time
           await localCache.saveToLocalCache(
             key: 'dayfi_id',
             value: walletWithDayfiId.dayfiId,
@@ -167,7 +170,7 @@ class _HomeViewState extends ConsumerState<HomeView>
             _isLoadingDayfiId = false;
           });
         } else {
-          // No valid DayFi ID found, clear any cached value
+          // No valid dayfi tag found, clear any cached value
           await localCache.removeFromLocalCache('dayfi_id');
           setState(() {
             _dayfiId = null;
@@ -183,7 +186,7 @@ class _HomeViewState extends ConsumerState<HomeView>
       setState(() {
         _isLoadingDayfiId = false;
       });
-      // Don't show error to user, just don't display Dayfi ID
+      // Don't show error to user, just don't display dayfi tag
     }
   }
 
@@ -242,7 +245,7 @@ class _HomeViewState extends ConsumerState<HomeView>
                   'Home',
                   style: AppTypography.titleMedium.copyWith(
                     fontFamily: 'FunnelDisplay',
-                    fontSize: 24.sp,
+                    fontSize: 24,
                     fontWeight: FontWeight.w600,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
@@ -257,7 +260,7 @@ class _HomeViewState extends ConsumerState<HomeView>
         centerTitle: true,
         actions: [
           Padding(
-            padding: EdgeInsets.only(right: 8.w),
+            padding: EdgeInsets.only(right: 8),
             child: InkWell(
               splashColor: Colors.transparent,
               highlightColor: Colors.transparent,
@@ -267,7 +270,7 @@ class _HomeViewState extends ConsumerState<HomeView>
                 children: [
                   SvgPicture.asset(
                     "assets/icons/svgs/notificationn.svg",
-                    height: 40.sp,
+                    height: 40,
                     color: Theme.of(context).colorScheme.surface,
                   ),
                   Center(
@@ -282,7 +285,7 @@ class _HomeViewState extends ConsumerState<HomeView>
             ),
           ),
           Padding(
-            padding: EdgeInsets.only(right: 18.w),
+            padding: EdgeInsets.only(right: 18),
             child: InkWell(
               splashColor: Colors.transparent,
               highlightColor: Colors.transparent,
@@ -297,7 +300,7 @@ class _HomeViewState extends ConsumerState<HomeView>
                 children: [
                   SvgPicture.asset(
                     "assets/icons/svgs/notificationn.svg",
-                    height: 40.sp,
+                    height: 40,
                     color: Theme.of(context).colorScheme.surface,
                   ),
                   Center(
@@ -313,199 +316,253 @@ class _HomeViewState extends ConsumerState<HomeView>
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          // Haptic feedback for pull-to-refresh
-          HapticHelper.lightImpact();
-
-          // Dismiss keyboard when refreshing
-          FocusScope.of(context).unfocus();
-
-          // Refresh wallet data and transactions
-          try {
-            await ref
-                .read(homeViewModelProvider.notifier)
-                .refreshWalletDetails();
-            await ref.read(transactionsProvider.notifier).loadTransactions();
-
-            // Success haptic
-            HapticHelper.success();
-          } catch (e) {
-            // Error haptic
-            HapticHelper.error();
-            // Log error but don't crash the app
-            // print('Error refreshing HomeView: $e');
-          }
-        },
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.symmetric(vertical: 8.0.h),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 18.w),
-                child: _buildUpgradeCard(),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final bool isWide = constraints.maxWidth > 600;
+          return Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: isWide ? 500 : double.infinity,
               ),
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height,
+                child: CustomScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  slivers: [
+                    CupertinoSliverRefreshControl(
+                      onRefresh: () async {
+                        // Haptic feedback for pull-to-refresh
+                        HapticHelper.lightImpact();
 
-              SizedBox(height: 12.h),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 18.w),
-                child: _buildWalletBalanceCard(),
-              ),
+                        // Dismiss keyboard when refreshing
+                        FocusScope.of(context).unfocus();
 
-              SizedBox(height: 12.h),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 18.w),
-                child: _buildHomeActionButtons(context),
-              ),
+                        // Refresh wallet data and transactions
+                        try {
+                          await ref
+                              .read(homeViewModelProvider.notifier)
+                              .refreshWalletDetails();
+                          await ref
+                              .read(transactionsProvider.notifier)
+                              .loadTransactions();
 
-              SizedBox(height: 12.h),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 18.w),
-                child: _infoCard(),
-              ),
-
-              SizedBox(height: 32.h),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 18.w),
-                child: Text(
-                  'Quick Send',
-                  style: AppTypography.titleMedium.copyWith(
-                    fontFamily: 'Karla',
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: -.2,
-                    height: 1.450,
-                    color: Theme.of(
-                      context,
-                    ).textTheme.bodyLarge!.color!.withOpacity(.75),
-                  ),
-                  textAlign: TextAlign.start,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              SizedBox(
-                height: 72.h,
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  scrollDirection: Axis.horizontal,
-                  padding: EdgeInsets.symmetric(horizontal: 12.w),
-                  itemCount: topAfricanCountries.length,
-                  // separatorBuilder: (context, idx) => SizedBox(width: 8.w),
-                  itemBuilder: (context, idx) {
-                    final country = topAfricanCountries[idx];
-                    // Only show chip if channel exists for this country/currency
-                    final hasChannel = sendState.channels.any(
-                      (c) =>
-                          c.country?.toUpperCase() == country['code'] &&
-                          c.currency?.toUpperCase() == country['currency'] &&
-                          c.status == 'active',
-                    );
-                    if (!hasChannel) return const SizedBox.shrink();
-                    return GestureDetector(
-                      onTap: () {
-                        sendViewModel.updateReceiveCountry(
-                          country['code']!,
-                          country['currency']!,
-                        );
-
-                        showModalBottomSheet(
-                          barrierColor: Colors.black.withOpacity(0.85),
-                          context: context,
-                          isScrollControlled: true,
-                          backgroundColor:
-                              Theme.of(context).scaffoldBackgroundColor,
-                          builder: (BuildContext ctx) {
-                            return DeliveryMethodsSheet(
-                              selectedCountry: country['code']!,
-                              selectedCurrency: country['currency']!,
-                            );
-                          },
-                        );
+                          // Success haptic
+                          HapticHelper.success();
+                        } catch (e) {
+                          // Error haptic
+                          HapticHelper.error();
+                          // Log error but don't crash the app
+                          // print('Error refreshing HomeView: $e');
+                        }
                       },
-                      child: Padding(
-                        padding: const EdgeInsets.all(6.0),
-                        child: Chip(
-                          padding: EdgeInsets.all(4),
-                          backgroundColor:
-                              Theme.of(context).colorScheme.surface,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12.r),
-                            side: BorderSide(color: Colors.transparent),
+                    ),
+                    SliverPadding(
+                      padding: EdgeInsets.symmetric(vertical: 8.0),
+                      sliver: SliverList(
+                        delegate: SliverChildListDelegate([
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isWide ? 24 : 18,
+                            ),
+                            child: _buildUpgradeCard(),
                           ),
-                          labelPadding: EdgeInsets.symmetric(
-                            horizontal: 8.w,
-                            vertical: 5.h,
-                          ),
-                          avatar: SvgPicture.asset(
-                            _getFlagPath(country['code']),
-                            height: 32.h,
-                          ),
-                          label: Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
 
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                country['name']!,
-                                style: AppTypography.bodyLarge.copyWith(
-                                  fontWeight: AppTypography.medium,
-                                  height: 1.5,
-                                  fontFamily: 'Karla',
-                                  letterSpacing: -.7,
-                                  fontSize: 18,
-                                  color:
-                                      Theme.of(
-                                        context,
-                                      ).textTheme.bodyLarge!.color,
-                                ),
-                              ),
-                              SizedBox(height: 2.h),
-                              Text(
-                                country['currency']!,
-                                style: AppTypography.bodyLarge.copyWith(
-                                  fontFamily: 'Karla',
-                                  fontSize: 12.sp,
-                                  fontWeight: FontWeight.w500,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                              ),
-                            ],
+                          SizedBox(height: 8),
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isWide ? 24 : 18,
+                            ),
+                            child: _buildWalletBalanceCard(),
                           ),
-                        ),
+
+                          SizedBox(height: 12),
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isWide ? 24 : 18,
+                            ),
+                            child: _buildHomeActionButtons(context),
+                          ),
+
+                          SizedBox(height: 12),
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isWide ? 24 : 18,
+                            ),
+                            child: _infoCard(),
+                          ),
+
+                          SizedBox(height: 32),
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isWide ? 24 : 18,
+                            ),
+                            child: Text(
+                              'Quick Send',
+                              style: AppTypography.titleMedium.copyWith(
+                                fontFamily: 'Chirp',
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: -.2,
+                                height: 1.450,
+                                color: Theme.of(
+                                  context,
+                                ).textTheme.bodyLarge!.color!.withOpacity(.75),
+                              ),
+                              textAlign: TextAlign.start,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          // Show shimmer while channels are loading
+                          if (sendState.isLoading || sendState.channels.isEmpty)
+                            ShimmerWidgets.quickSendListShimmer(context)
+                          else
+                            SizedBox(
+                              height: 72,
+                              child: ListView.builder(
+                                shrinkWrap: true,
+                                scrollDirection: Axis.horizontal,
+                                padding: EdgeInsets.symmetric(horizontal: 12),
+                                itemCount: topAfricanCountries.length,
+                                // separatorBuilder: (context, idx) => SizedBox(width: 8),
+                                itemBuilder: (context, idx) {
+                                  final country = topAfricanCountries[idx];
+                                  // Only show chip if channel exists for this country/currency
+                                  final hasChannel = sendState.channels.any(
+                                    (c) =>
+                                        c.country?.toUpperCase() ==
+                                            country['code'] &&
+                                        c.currency?.toUpperCase() ==
+                                            country['currency'] &&
+                                        c.status == 'active',
+                                  );
+                                  if (!hasChannel) {
+                                    return const SizedBox.shrink();
+                                  }
+                                  return GestureDetector(
+                                    onTap: () {
+                                      sendViewModel.updateReceiveCountry(
+                                        country['code']!,
+                                        country['currency']!,
+                                      );
+
+                                      showModalBottomSheet(
+                                        barrierColor: Colors.black.withOpacity(
+                                          0.85,
+                                        ),
+                                        context: context,
+                                        isScrollControlled: true,
+                                        backgroundColor:
+                                            Theme.of(
+                                              context,
+                                            ).scaffoldBackgroundColor,
+                                        builder: (BuildContext ctx) {
+                                          return DeliveryMethodsSheet(
+                                            selectedCountry: country['code']!,
+                                            selectedCurrency:
+                                                country['currency']!,
+                                          );
+                                        },
+                                      );
+                                    },
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(6.0),
+                                      child: Chip(
+                                        backgroundColor:
+                                            Theme.of(
+                                              context,
+                                            ).colorScheme.surface,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          side: BorderSide(
+                                            color: Colors.transparent,
+                                          ),
+                                        ),
+                                        labelPadding: const EdgeInsets.fromLTRB(
+                                          8.0,
+                                          2.0,
+                                          0,
+                                          2.0,
+                                        ),
+                                        avatar: SvgPicture.asset(
+                                          _getFlagPath(country['code']),
+                                          height: 32,
+                                        ),
+                                        label: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              country['name']!,
+                                              style: AppTypography.bodyLarge
+                                                  .copyWith(
+                                                    fontWeight:
+                                                        AppTypography.medium,
+                                                    height: 1.5,
+                                                    fontFamily: 'Chirp',
+                                                    letterSpacing: -.250,
+                                                    fontSize: 18,
+                                                    color:
+                                                        Theme.of(context)
+                                                            .textTheme
+                                                            .bodyLarge!
+                                                            .color,
+                                                  ),
+                                            ),
+                                            SizedBox(width: 6),
+                                            Text(
+                                              country['currency']!,
+                                              style: AppTypography.bodyLarge
+                                                  .copyWith(
+                                                    fontFamily: 'Chirp',
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w500,
+                                                    color:
+                                                        Theme.of(
+                                                          context,
+                                                        ).colorScheme.primary,
+                                                  ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+
+                          // SizedBox(height: 18),
+
+                          // Padding(
+                          //   padding: EdgeInsets.symmetric(horizontal: 18),
+                          //   child: Text(
+                          //     'Quick Send',
+                          //     style: AppTypography.titleMedium.copyWith(
+                          //       fontFamily: 'Chirp',
+                          //       fontSize: 14,
+                          //       fontWeight: FontWeight.w500,
+                          //       letterSpacing: -.2,
+                          //       height: 1.450,
+                          //       color: Theme.of(
+                          //         context,
+                          //       ).textTheme.bodyLarge!.color!.withOpacity(.75),
+                          //     ),
+                          //     textAlign: TextAlign.start,
+                          //     overflow: TextOverflow.ellipsis,
+                          //   ),
+                          // ),
+                          // _buildRecentTransactions(),
+                          SizedBox(height: 112),
+                        ]),
                       ),
-                    );
-                  },
+                    ),
+                  ],
                 ),
               ),
-
-
-              // SizedBox(height: 18.h),
-
-              // Padding(
-              //   padding: EdgeInsets.symmetric(horizontal: 18.w),
-              //   child: Text(
-              //     'Quick Send',
-              //     style: AppTypography.titleMedium.copyWith(
-              //       fontFamily: 'Karla',
-              //       fontSize: 14,
-              //       fontWeight: FontWeight.w500,
-              //       letterSpacing: -.2,
-              //       height: 1.450,
-              //       color: Theme.of(
-              //         context,
-              //       ).textTheme.bodyLarge!.color!.withOpacity(.75),
-              //     ),
-              //     textAlign: TextAlign.start,
-              //     overflow: TextOverflow.ellipsis,
-              //   ),
-              // ),
-              // _buildRecentTransactions(),
-              SizedBox(height: 112.h),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -527,10 +584,10 @@ class _HomeViewState extends ConsumerState<HomeView>
         ? const SizedBox()
         : Container(
           width: double.infinity,
-          padding: EdgeInsets.all(16.w),
+          padding: EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(12.r),
+            borderRadius: BorderRadius.circular(12),
             // border: Border.all(color: AppColors.warning400.withOpacity(0.5)),
             boxShadow: [
               BoxShadow(
@@ -543,8 +600,8 @@ class _HomeViewState extends ConsumerState<HomeView>
           ),
           child: Row(
             children: [
-              Image.asset("assets/icons/pngs/account_4.png", height: 40.sp),
-              SizedBox(width: 12.w),
+              Image.asset("assets/icons/pngs/account_4.png", height: 40),
+              SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -557,17 +614,17 @@ class _HomeViewState extends ConsumerState<HomeView>
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    SizedBox(height: 4.h),
+                    SizedBox(height: 4),
                     RichText(
                       text: TextSpan(
                         text: "$tierDescription ",
                         style: TextStyle(
                           color: Theme.of(context).colorScheme.onSurface,
-                          fontSize: 12.sp,
+                          fontSize: 12,
                           fontWeight: FontWeight.w500,
-                          fontFamily: 'Karla',
-                          letterSpacing: -.3,
-                          height: 1.4,
+                          fontFamily: 'Chirp',
+                          letterSpacing: -.250,
+                          height: 1.2,
                         ),
                         children: [
                           WidgetSpan(
@@ -593,9 +650,9 @@ class _HomeViewState extends ConsumerState<HomeView>
                                 nextTierInfo,
                                 style: TextStyle(
                                   color: Theme.of(context).colorScheme.primary,
-                                  fontSize: 13.sp,
+                                  fontSize: 13,
                                   fontWeight: FontWeight.w600,
-                                  fontFamily: 'Karla',
+                                  fontFamily: 'Chirp',
                                   letterSpacing: -.4,
                                   height: 1.2,
                                   // decoration: TextDecoration.underline,
@@ -616,13 +673,32 @@ class _HomeViewState extends ConsumerState<HomeView>
 
   Widget _buildWalletBalanceCard() {
     final homeState = ref.watch(homeViewModelProvider);
+    final transactionsState = ref.watch(transactionsProvider);
     final isLoading = homeState.isLoading;
     final balance = homeState.balance;
     final hasBalance = balance != '0.00' && balance.isNotEmpty;
 
+    // Calculate pending amounts
+    final pendingAmount = AvailableBalanceCalculator.calculatePendingAmount(
+      transactionsState.transactions,
+      currency: homeState.currency,
+    );
+    final pendingCount = AvailableBalanceCalculator.getPendingTransactionCount(
+      transactionsState.transactions,
+    );
+    final hasPendingTransactions = pendingCount > 0;
+
+    // Calculate available balance
+    final availableBalance =
+        AvailableBalanceCalculator.calculateAvailableBalance(
+          balance,
+          transactionsState.transactions,
+          currency: homeState.currency,
+        );
+
     return Container(
       width: MediaQuery.of(context).size.width,
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(18.r)),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(18)),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(0, 24, 0, 16),
         child: Column(
@@ -634,9 +710,11 @@ class _HomeViewState extends ConsumerState<HomeView>
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  "Your balance   ",
+                  hasPendingTransactions
+                      ? "Available balance   "
+                      : "Your balance   ",
                   style: TextStyle(
-                    fontFamily: 'Karla',
+                    fontFamily: 'Chirp',
                     fontSize: 12,
                     color: Theme.of(
                       context,
@@ -656,7 +734,7 @@ class _HomeViewState extends ConsumerState<HomeView>
                     children: [
                       SvgPicture.asset(
                         "assets/icons/svgs/notificationn.svg",
-                        height: 20.sp,
+                        height: 20,
                         color: Theme.of(context).textTheme.bodyLarge!.color,
                       ),
                       Center(
@@ -673,12 +751,12 @@ class _HomeViewState extends ConsumerState<HomeView>
                 ),
               ],
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: 16),
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
+              padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(40.r),
+                borderRadius: BorderRadius.circular(40),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -687,14 +765,14 @@ class _HomeViewState extends ConsumerState<HomeView>
                     _getFlagPath(
                       _getCountryCodeFromCurrency(homeState.currency),
                     ),
-                    height: 24.0.h,
+                    height: 24.0,
                   ),
-                  SizedBox(width: 8.h),
+                  SizedBox(width: 8),
                   Text(
                     "${homeState.currency} ",
                     style: AppTypography.labelMedium.copyWith(
                       color: AppColors.success600,
-                      fontSize: 16.sp,
+                      fontSize: 16,
                       fontFamily: AppTypography.secondaryFontFamily,
                       fontWeight: AppTypography.regular,
                       height: 1,
@@ -705,48 +783,104 @@ class _HomeViewState extends ConsumerState<HomeView>
               ),
             ),
 
-            SizedBox(height: 6.h),
+            SizedBox(height: 6),
 
             if (isLoading && !hasBalance)
               Padding(
                 padding: const EdgeInsets.only(top: 16.0, bottom: 5),
                 child: LoadingAnimationWidget.horizontalRotatingDots(
                   color: Theme.of(context).colorScheme.primary,
-                  size: 24.sp,
+                  size: 24,
                 ),
               )
             else
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              Column(
                 children: [
-                  Text(
-                    _isBalanceVisible
-                        ? _formatNumber(
-                          double.tryParse(
-                                balance.replaceAll(RegExp(r'[^\d.]'), ''),
-                              ) ??
-                              0.0,
-                        )
-                        : '*****',
-                    style: TextStyle(
-                      fontSize: _isBalanceVisible ? 40.sp : 40.sp,
-                      height: 1.2,
-                      fontFamily: 'Karla',
-                      fontWeight: FontWeight.w700,
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withOpacity(1),
-                      letterSpacing: -.8,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        _isBalanceVisible
+                            ? _formatNumber(
+                              hasPendingTransactions
+                                  ? availableBalance
+                                  : (double.tryParse(
+                                        balance.replaceAll(
+                                          RegExp(r'[^\d.]'),
+                                          '',
+                                        ),
+                                      ) ??
+                                      0.0),
+                            )
+                            : '*****',
+                        style: TextStyle(
+                          fontSize: _isBalanceVisible ? 40 : 40,
+                          height: 1.2,
+                          fontFamily: 'Chirp',
+                          fontWeight: FontWeight.w700,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(1),
+                          letterSpacing: -.40,
+                        ),
+                      ),
+                    ],
                   ),
-                  // Image.asset(
-                  //   'assets/icons/pngs/logoo.png',
-                  //   height: 28,
-                  // ),
+                  // Show pending info if there are pending transactions
+                  if (hasPendingTransactions && _isBalanceVisible) ...[
+                    SizedBox(height: 8),
+                    InkWell(
+                      splashColor: Colors.transparent,
+                      highlightColor: Colors.transparent,
+                      onTap: () {
+                        // Navigate to transactions tab and search for "pending"
+                        HapticHelper.lightImpact();
+                        // Switch to transactions tab (index 1)
+                        mainViewKey.currentState?.changeTab(1);
+                        // Search for pending transactions
+                        ref
+                            .read(transactionsProvider.notifier)
+                            .searchTransactions('pending');
+                      },
+
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.warning100.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.schedule,
+                              size: 14,
+                              color: AppColors.warning600,
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              '${homeState.currencySymbol}${_formatNumber(pendingAmount)} pending across '
+                              '$pendingCount transaction${pendingCount > 1 ? 's' : ''}',
+                              style: TextStyle(
+                                fontFamily: 'Chirp',
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.warning600,
+                                letterSpacing: -0.2,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
 
-            SizedBox(height: 18.h),
+            SizedBox(height: 18),
           ],
         ),
       ),
@@ -755,23 +889,23 @@ class _HomeViewState extends ConsumerState<HomeView>
 
   Widget _infoCard() {
     return Container(
-      padding: EdgeInsets.all(12.w),
+      padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.25),
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          SizedBox(width: 4.w),
-          Image.asset("assets/images/idea.png", height: 20.h),
-          SizedBox(width: 12.w),
+          SizedBox(width: 4),
+          Image.asset("assets/images/idea.png", height: 20),
+          SizedBox(width: 12),
           Expanded(
             child: Text(
               'Send money via bank transfers, mobile money and more globally',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                fontSize: 14.sp,
-                fontFamily: 'Karla',
+                fontSize: 14,
+                fontFamily: 'Chirp',
                 fontWeight: FontWeight.w500,
                 letterSpacing: -0.4,
                 height: 1.5,
@@ -811,7 +945,7 @@ class _HomeViewState extends ConsumerState<HomeView>
           //   color: Theme.of(context).colorScheme.outline.withOpacity(.15),
           //   width: .5,
           // ),
-          borderRadius: BorderRadius.circular(12.r),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.end,
@@ -820,15 +954,15 @@ class _HomeViewState extends ConsumerState<HomeView>
             Stack(
               children: [
                 SizedBox(
-                  width: 40.w,
-                  height: 40.w,
+                  width: 40,
+                  height: 40,
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
                       // Background circle
                       SvgPicture.asset(
                         iconAsset,
-                        height: 40.sp,
+                        height: 40,
                         color: AppColors.purple400,
                       ),
 
@@ -840,7 +974,7 @@ class _HomeViewState extends ConsumerState<HomeView>
                             label == "Send Money"
                                 ? Icons.arrow_forward
                                 : Icons.add,
-                            size: label == "Send Money" ? 26.sp : 28.sp,
+                            size: label == "Send Money" ? 26 : 28,
                             color: Colors.white,
                           ),
                         ),
@@ -857,8 +991,8 @@ class _HomeViewState extends ConsumerState<HomeView>
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 height: 1.5,
-                fontFamily: 'Karla',
-                letterSpacing: -.7,
+                fontFamily: 'Chirp',
+                letterSpacing: -.250,
 
                 fontSize: 18,
               ),
@@ -871,9 +1005,9 @@ class _HomeViewState extends ConsumerState<HomeView>
                 textAlign: TextAlign.start,
                 style: TextStyle(
                   fontWeight: FontWeight.w500,
-                  height: 1.4,
-                  fontFamily: 'Karla',
-                  letterSpacing: -.6,
+                  height: 1.2,
+                  fontFamily: 'Chirp',
+                  letterSpacing: -.25,
                   fontSize: 14,
                 ),
               ),
@@ -1024,11 +1158,11 @@ class _HomeViewState extends ConsumerState<HomeView>
             }
           }
 
-          // Create a unique key combining source account number and beneficiary account number (DayFi tag)
+          // Create a unique key combining source account number and beneficiary account number (dayfi tag)
           final sourceAccountNumber = source.accountNumber ?? '';
           final beneficiaryAccountNumber = beneficiary.accountNumber ?? '';
 
-          // For DayFi tags, use the beneficiary's account number as the unique identifier
+          // For dayfi tags, use the beneficiary's account number as the unique identifier
           final uniqueKey =
               source.accountType?.toLowerCase() == 'dayfi'
                   ? 'dayfi_${beneficiaryAccountNumber.toLowerCase()}'
@@ -1050,7 +1184,7 @@ class _HomeViewState extends ConsumerState<HomeView>
           transactionsState.transactions.isEmpty) {
         // Only show shimmer if there is truly no cached data at all
         return Padding(
-          padding: EdgeInsets.only(top: 16.h),
+          padding: EdgeInsets.only(top: 16),
           child: ShimmerWidgets.transactionListShimmer(context, itemCount: 5),
         );
       } else {
@@ -1061,7 +1195,7 @@ class _HomeViewState extends ConsumerState<HomeView>
             icon: Icons.receipt_long_outlined,
             title: 'No transactions yet',
             message:
-                'Your transactions will appear here once you start sending or receiving money',
+                'your transactions will appear here once you start sending or receiving money',
             actionText: 'Send Money',
             onAction: () {
               Navigator.pushNamed(context, '/send');
@@ -1075,11 +1209,11 @@ class _HomeViewState extends ConsumerState<HomeView>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 18.w),
+          padding: EdgeInsets.symmetric(horizontal: 18),
           child: Text(
             'Send Again',
             style: AppTypography.titleMedium.copyWith(
-              fontFamily: 'Karla',
+              fontFamily: 'Chirp',
               fontSize: 14,
               fontWeight: FontWeight.w500,
               letterSpacing: -.2,
@@ -1092,12 +1226,12 @@ class _HomeViewState extends ConsumerState<HomeView>
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        SizedBox(height: 8.h),
+        SizedBox(height: 8),
         SizedBox(
-          height: 72.h,
+          height: 72,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.symmetric(horizontal: 12.w),
+            padding: EdgeInsets.symmetric(horizontal: 12),
             itemCount: recentTransactions.length,
             itemBuilder: (context, i) {
               final tx = recentTransactions[i];
@@ -1123,12 +1257,12 @@ class _HomeViewState extends ConsumerState<HomeView>
                     padding: EdgeInsets.all(4),
                     backgroundColor: Theme.of(context).colorScheme.surface,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.r),
+                      borderRadius: BorderRadius.circular(12),
                       side: BorderSide(color: Colors.transparent),
                     ),
                     labelPadding: EdgeInsets.symmetric(
-                      horizontal: 8.w,
-                      vertical: 5.h,
+                      horizontal: 8,
+                      vertical: 5,
                     ),
                     avatar: Stack(
                       alignment: Alignment.bottomRight,
@@ -1138,21 +1272,21 @@ class _HomeViewState extends ConsumerState<HomeView>
                           children: [
                             SvgPicture.asset(
                               "assets/icons/svgs/recipients.svg",
-                              width: 40.w,
-                              height: 40.w,
+                              width: 40,
+                              height: 40,
                               color: AppColors.purple500ForTheme(context),
                             ),
                             SizedBox(
-                              width: 40.w,
-                              height: 40.w,
+                              width: 40,
+                              height: 40,
                               child: Center(
                                 child: Text(
                                   _getInitials(beneficiary.name),
                                   style: TextStyle(
                                     color: AppColors.neutral0,
-                                    fontFamily: 'Karla',
-                                    fontSize: 16.sp,
-                                    letterSpacing: -.6,
+                                    fontFamily: 'Chirp',
+                                    fontSize: 16,
+                                    letterSpacing: -.25,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
@@ -1163,8 +1297,8 @@ class _HomeViewState extends ConsumerState<HomeView>
                         Align(
                           alignment: Alignment.bottomRight,
                           child: Container(
-                            width: 16.w,
-                            height: 16.w,
+                            width: 16,
+                            height: 16,
                             decoration: BoxDecoration(
                               color: AppColors.neutral0,
                               shape: BoxShape.circle,
@@ -1177,8 +1311,8 @@ class _HomeViewState extends ConsumerState<HomeView>
                               child: SvgPicture.asset(
                                 _getFlagPath(beneficiary.country),
                                 fit: BoxFit.cover,
-                                width: 24.w,
-                                height: 24.w,
+                                width: 24,
+                                height: 24,
                               ),
                             ),
                           ),
@@ -1194,20 +1328,20 @@ class _HomeViewState extends ConsumerState<HomeView>
                           style: Theme.of(
                             context,
                           ).textTheme.bodyLarge?.copyWith(
-                            fontFamily: 'Karla',
-                            fontSize: 16.sp,
+                            fontFamily: 'Chirp',
+                            fontSize: 16,
                             fontWeight: FontWeight.w500,
                             color: Theme.of(context).colorScheme.onSurface,
                           ),
                           overflow: TextOverflow.ellipsis,
                           maxLines: 1,
                         ),
-                        SizedBox(height: 2.h),
+                        SizedBox(height: 2),
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             _getAccountIcon(source, beneficiary),
-                            SizedBox(width: 4.w),
+                            SizedBox(width: 4),
                             Flexible(
                               child:
                                   source.accountType?.toLowerCase() == 'dayfi'
@@ -1222,10 +1356,10 @@ class _HomeViewState extends ConsumerState<HomeView>
                                             style: Theme.of(
                                               context,
                                             ).textTheme.bodyMedium?.copyWith(
-                                              fontFamily: 'Karla',
-                                              fontSize: 13.sp,
+                                              fontFamily: 'Chirp',
+                                              fontSize: 13,
                                               fontWeight: FontWeight.w500,
-                                              letterSpacing: -.6,
+                                              letterSpacing: -.25,
                                               height: 1.450,
                                               color: Theme.of(context)
                                                   .colorScheme
@@ -1234,23 +1368,23 @@ class _HomeViewState extends ConsumerState<HomeView>
                                             ),
                                             overflow: TextOverflow.ellipsis,
                                           ),
-                                          SizedBox(width: 8.w),
+                                          SizedBox(width: 8),
                                           Container(
                                             padding: EdgeInsets.symmetric(
-                                              vertical: 3.h,
-                                              horizontal: 8.w,
+                                              vertical: 3,
+                                              horizontal: 8,
                                             ),
                                             decoration: BoxDecoration(
                                               color: AppColors.warning400
                                                   .withOpacity(0.15),
                                               borderRadius:
-                                                  BorderRadius.circular(12.r),
+                                                  BorderRadius.circular(12),
                                             ),
                                             child: Text(
-                                              "Dayfi Tag",
+                                              "dayfi tag",
                                               style: TextStyle(
-                                                fontFamily: 'Karla',
-                                                fontSize: 10.sp,
+                                                fontFamily: 'Chirp',
+                                                fontSize: 10,
                                                 color: AppColors.warning600,
                                                 fontWeight: FontWeight.w600,
                                                 height: 1.2,
@@ -1264,8 +1398,8 @@ class _HomeViewState extends ConsumerState<HomeView>
                                         style: Theme.of(
                                           context,
                                         ).textTheme.bodyMedium?.copyWith(
-                                          fontFamily: 'Karla',
-                                          fontSize: 13.sp,
+                                          fontFamily: 'Chirp',
+                                          fontSize: 13,
                                           fontWeight: FontWeight.w500,
                                           letterSpacing: -.4,
                                           height: 1.450,
@@ -1303,22 +1437,22 @@ class _HomeViewState extends ConsumerState<HomeView>
         );
       },
       child: Container(
-        margin: EdgeInsets.only(bottom: isLast ? 12.h : 24.h, top: 8.h),
+        margin: EdgeInsets.only(bottom: isLast ? 12 : 24, top: 8),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             // Transaction Type Icon (Inflow/Outflow)
             SizedBox(
-              width: 40.w,
-              height: 40.w,
+              width: 40,
+              height: 40,
               child: Stack(
                 alignment: Alignment.center,
                 children: [
                   // Background circle
                   SvgPicture.asset(
                     'assets/icons/svgs/account.svg',
-                    height: 40.sp,
+                    height: 40,
                     color: _getTransactionTypeColorForTransaction(
                       transaction,
                     ).withOpacity(0.35),
@@ -1327,7 +1461,7 @@ class _HomeViewState extends ConsumerState<HomeView>
                   Center(
                     child: SvgPicture.asset(
                       _getTransactionTypeIconForTransaction(transaction),
-                      height: 20.sp,
+                      height: 20,
                       color: _getTransactionTypeColorForTransaction(
                         transaction,
                       ),
@@ -1336,7 +1470,7 @@ class _HomeViewState extends ConsumerState<HomeView>
                 ],
               ),
             ),
-            SizedBox(width: 12.w),
+            SizedBox(width: 12),
 
             // Transaction Info
             Expanded(
@@ -1347,9 +1481,9 @@ class _HomeViewState extends ConsumerState<HomeView>
                   Text(
                     _getBeneficiaryDisplayName(transaction),
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontFamily: 'Karla',
-                      fontSize: 16.sp,
-                      letterSpacing: -.7,
+                      fontFamily: 'Chirp',
+                      fontSize: 16,
+                      letterSpacing: -.250,
                       fontWeight: FontWeight.w500,
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
@@ -1357,17 +1491,17 @@ class _HomeViewState extends ConsumerState<HomeView>
                     overflow: TextOverflow.ellipsis,
                   ),
 
-                  SizedBox(height: 4.h),
+                  SizedBox(height: 4),
                   if (transaction.reason != null &&
                       transaction.reason!.isNotEmpty) ...[
                     Text(
                       _capitalizeWords(transaction.reason!),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontFamily: 'Karla',
+                        fontFamily: 'Chirp',
                         fontWeight: FontWeight.w500,
                         letterSpacing: -.1,
                         height: 1.5,
-                        fontSize: 12.sp,
+                        fontSize: 12,
                         color: Theme.of(
                           context,
                         ).colorScheme.onSurface.withOpacity(.65),
@@ -1379,8 +1513,8 @@ class _HomeViewState extends ConsumerState<HomeView>
                   Text(
                     _formatTransactionTime(transaction.timestamp),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontFamily: 'Karla',
-                      fontSize: 13.sp,
+                      fontFamily: 'Chirp',
+                      fontSize: 13,
                       fontWeight: FontWeight.w500,
                       letterSpacing: -.2,
                       color: Theme.of(
@@ -1391,7 +1525,7 @@ class _HomeViewState extends ConsumerState<HomeView>
                 ],
               ),
             ),
-            SizedBox(width: 12.w),
+            SizedBox(width: 12),
             // Amount
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -1399,20 +1533,20 @@ class _HomeViewState extends ConsumerState<HomeView>
                 Text(
                   _getTransactionAmount(transaction),
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    fontFamily: 'Karla',
-                    fontSize: 16.sp,
+                    fontFamily: 'Chirp',
+                    fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
-                SizedBox(height: 2.h),
+                SizedBox(height: 2),
                 Text(
                   _getStatusText(transaction.status),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontFamily: 'Karla',
-                    fontSize: 12.sp,
+                    fontFamily: 'Chirp',
+                    fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    letterSpacing: -.6,
+                    letterSpacing: -.25,
                     height: 1.450,
                     color: _getStatusColor(transaction.status),
                   ),
@@ -1470,7 +1604,7 @@ class _HomeViewState extends ConsumerState<HomeView>
     );
     final isPayment = transaction.status.toLowerCase().contains('payment');
 
-    // Check if this is a DayFi tag transfer
+    // Check if this is a dayfi tag transfer
     final isDayfiTransfer =
         transaction.source.accountType?.toLowerCase() == 'dayfi' ||
         transaction.beneficiary.accountType?.toLowerCase() == 'dayfi';
@@ -1718,7 +1852,7 @@ class _HomeViewState extends ConsumerState<HomeView>
   }
 
   String _getAccountNumber(Source source, Beneficiary beneficiary) {
-    // For DayFi transfers, use beneficiary.accountNumber (the DayFi tag)
+    // For DayFi transfers, use beneficiary.accountNumber (the dayfi tag)
     if (source.accountType?.toLowerCase() == 'dayfi' &&
         beneficiary.accountNumber != null &&
         beneficiary.accountNumber!.isNotEmpty) {
@@ -1735,7 +1869,7 @@ class _HomeViewState extends ConsumerState<HomeView>
 
   String _getNetworkName(Source source) {
     if (source.accountType?.toLowerCase() == 'dayfi') {
-      return 'DayFi Tag';
+      return 'dayfi tag';
     }
 
     final sendState = ref.watch(sendViewModelProvider);
@@ -1780,9 +1914,9 @@ class _HomeViewState extends ConsumerState<HomeView>
     }
 
     return Container(
-      width: 32.w,
-      height: 32.w,
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(24.r)),
+      width: 32,
+      height: 32,
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(24)),
       child: Stack(
         alignment: AlignmentDirectional.center,
         children: [

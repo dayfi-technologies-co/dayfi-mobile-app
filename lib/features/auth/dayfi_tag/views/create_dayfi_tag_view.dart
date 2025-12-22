@@ -58,135 +58,167 @@ class _CreateDayfiTagViewState extends ConsumerState<CreateDayfiTagView> {
         onTap: () {
           FocusManager.instance.primaryFocus?.unfocus();
         },
-        child: Scaffold(
-          appBar: AppBar(
-               scrolledUnderElevation: .5,
-              foregroundColor: Theme.of(context).scaffoldBackgroundColor,
-              shadowColor: Theme.of(context).scaffoldBackgroundColor,
-              surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
-
-            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-            elevation: 0,
-            leading: IconButton(
-              icon: Icon(
-                Icons.arrow_back_ios,
-            size: 20.sp,
-                color: Theme.of(context).colorScheme.onSurface,
-                // size: 20.sp,
-              ),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            title: Text(
-              "Create Your DayFi Tag",
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-             fontFamily: 'FunnelDisplay',
-                 fontSize: 24.sp, // height: 1.6,
-                fontWeight: FontWeight.w600,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-            ),
-          ),
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          body: SafeArea(
-            bottom: false,
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 18.w,
-                      vertical: 4.h,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        // Subtitle
-                        Text(
-                          "Pick a username that's easy to remember. Must start with @ and be at least 3 characters.",
-                          style: Theme.of(
-                            context,
-                          ).textTheme.bodyMedium?.copyWith(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w500,
-                            fontFamily: 'Karla',
-                            letterSpacing: -.6,
-                            height: 1.5,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        SizedBox(height: 36.h),
-
-                        // DayFi Tag field
-                        _buildDayfiTagField(tagState, tagNotifier),
-
-                        // Show validation response
-                        if (tagState.dayfiIdResponse != null)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8.0, left: 14),
-                            child: Text(
-                              tagState.dayfiIdResponse!.contains(
-                                    'User not found',
-                                  )
-                                  ? 'Perfect! This tag is available'
-                                  : tagState.dayfiIdResponse!,
-                              style: TextStyle(
-                                color:
-                                    tagState.dayfiIdResponse!.contains(
-                                          'User not found',
-                                        )
-                                        ? AppColors.success400
-                                        : tagState.dayfiIdResponse!.contains(
-                                          'belongs to',
-                                        )
-                                        ? AppColors.error400
-                                        : AppColors.error400,
-                                fontSize: 13.sp,
-                                fontFamily: 'Karla',
-                                letterSpacing: -.6,
-                                fontWeight: FontWeight.w500,
-                                height: 1.4,
-                              ),
-                            ),
-                          ),
-
-                        SizedBox(height: 40.h),
-
-                        // Submit Button
-                        PrimaryButton(
-                          borderRadius: 38,
-                          text: "Create Tag",
-                          onPressed:
-                              tagState.isFormValid && !tagState.isBusy
-                                  ? () => tagNotifier.createDayfiId(context)
-                                  : null,
-
-                          backgroundColor:
-                              tagState.isFormValid
-                                  ? AppColors.purple500ForTheme(context)
-                                  : AppColors.purple500ForTheme(
-                                    context,
-                                  ).withOpacity(.15),
-                          height: 48.00000.h,
-                          textColor:
-                              tagState.isFormValid
-                                  ? AppColors.neutral0
-                                  : AppColors.neutral0.withOpacity(.35),
-                          fontFamily: 'Karla',
-                          letterSpacing: -.70,
-                          fontSize: 18,
-                          width: double.infinity,
-                          fullWidth: true,
-                          isLoading: tagState.isBusy,
-                        ),
-                        SizedBox(height: 50.h),
-                      ],
-                    ),
+        child: Stack(
+          children: [
+            Scaffold(
+              appBar: AppBar(
+                scrolledUnderElevation: .5,
+                foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+                shadowColor: Theme.of(context).scaffoldBackgroundColor,
+                surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                elevation: 0,
+                leading: IconButton(
+                  icon: Icon(
+                    Icons.arrow_back_ios,
+                    size: 20,
+                    color: Theme.of(context).colorScheme.onSurface,
+                    // size: 20,
                   ),
-                ],
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+                title: Text(
+                  "Create Your Dayfi Tag",
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontFamily: 'FunnelDisplay',
+                    fontSize: 24, // height: 1.6,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+              ),
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+              body: SafeArea(
+                bottom: false,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final bool isWide = constraints.maxWidth > 600;
+                    return SingleChildScrollView(
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: isWide ? 400 : double.infinity,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: isWide ? 24 : 18,
+                                  vertical: 4,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    // Subtitle
+                                    Text(
+                                      "Pick a username that's easy to remember. Must start with @ and be at least 3 characters.",
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodyMedium?.copyWith(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                        fontFamily: 'Chirp',
+                                        letterSpacing: -.25,
+                                        height: 1.5,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    SizedBox(height: 36),
+            
+                                    // Dayfi Tag field
+                                    _buildDayfiTagField(tagState, tagNotifier),
+            
+                                    // Show validation response
+                                    if (tagState.dayfiIdResponse != null)
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          top: 8.0,
+                                          left: 14,
+                                        ),
+                                        child: Text(
+                                          tagState.dayfiIdResponse!.contains(
+                                                'User not found',
+                                              )
+                                              ? 'Perfect! This tag is available'
+                                              : tagState.dayfiIdResponse!,
+                                          style: TextStyle(
+                                            color:
+                                                tagState.dayfiIdResponse!.contains(
+                                                      'User not found',
+                                                    )
+                                                    ? AppColors.success400
+                                                    : tagState.dayfiIdResponse!
+                                                        .contains('belongs to')
+                                                    ? AppColors.error400
+                                                    : AppColors.error400,
+                                            fontSize: 13,
+                                            fontFamily: 'Chirp',
+                                            letterSpacing: -.25,
+                                            fontWeight: FontWeight.w500,
+                                            height: 1.2,
+                                          ),
+                                        ),
+                                      ),
+            
+                                    SizedBox(height: 32),
+            
+                                    // Submit Button
+                                    PrimaryButton(
+                                      borderRadius: 38,
+                                      text: "Create Tag",
+                                      onPressed:
+                                          tagState.isFormValid && !tagState.isBusy
+                                              ? () =>
+                                                  tagNotifier.createDayfiId(context)
+                                              : null,
+            
+                                      backgroundColor:
+                                          tagState.isFormValid
+                                              ? AppColors.purple500ForTheme(context)
+                                              : AppColors.purple500ForTheme(
+                                                context,
+                                              ).withOpacity(.15),
+                                      height: 48.00000,
+                                      textColor:
+                                          tagState.isFormValid
+                                             ? AppColors.neutral0
+                                          : AppColors.neutral0.withOpacity(.20),
+                                      fontFamily: 'Chirp',
+                                      letterSpacing: -.70,
+                                      fontSize: 18,
+                                      width: double.infinity,
+                                      fullWidth: true,
+                                      isLoading: tagState.isBusy,
+                                    ),
+                                    SizedBox(height: 50),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
-          ),
+
+             if (tagState.isBusy)
+              Scaffold(
+                backgroundColor: Colors.transparent,
+                resizeToAvoidBottomInset: true,
+                body: Opacity(
+                  opacity: 0.5,
+                  child: Container(
+                    width: double.infinity,
+                    height: double.infinity,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
@@ -197,7 +229,7 @@ class _CreateDayfiTagViewState extends ConsumerState<CreateDayfiTagView> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         CustomTextField(
-          label: "DayFi Tag",
+          label: "Dayfi Tag",
           hintText: "@username",
           controller: _dayfiIdController,
           isDayfiId: true,
@@ -214,7 +246,10 @@ class _CreateDayfiTagViewState extends ConsumerState<CreateDayfiTagView> {
 
             // Limit the length to 15 characters (including '@')
             if (_dayfiIdController.text.length > 15) {
-              _dayfiIdController.text = _dayfiIdController.text.substring(0, 15);
+              _dayfiIdController.text = _dayfiIdController.text.substring(
+                0,
+                15,
+              );
               _dayfiIdController.selection = TextSelection.fromPosition(
                 TextPosition(offset: _dayfiIdController.text.length),
               );
@@ -222,15 +257,16 @@ class _CreateDayfiTagViewState extends ConsumerState<CreateDayfiTagView> {
 
             notifier.setDayfiId(_dayfiIdController.text);
           },
-          suffixIcon: state.isValidating
-              ? Padding(
-                  padding: EdgeInsets.all(12.w),
-                  child: LoadingAnimationWidget.horizontalRotatingDots(
-                    color: AppColors.purple500ForTheme(context),
-                    size: 20,
-                  ),
-                )
-              : null,
+          suffixIcon:
+              state.isValidating
+                  ? Padding(
+                    padding: EdgeInsets.all(12),
+                    child: LoadingAnimationWidget.horizontalRotatingDots(
+                      color: AppColors.purple500ForTheme(context),
+                      size: 20,
+                    ),
+                  )
+                  : null,
         ),
         if (state.dayfiIdError.isNotEmpty)
           Padding(
@@ -239,11 +275,11 @@ class _CreateDayfiTagViewState extends ConsumerState<CreateDayfiTagView> {
               state.dayfiIdError,
               style: TextStyle(
                 color: AppColors.error400,
-                fontSize: 13.sp,
-                fontFamily: 'Karla',
-                letterSpacing: -.6,
+                fontSize: 13,
+                fontFamily: 'Chirp',
+                letterSpacing: -.25,
                 fontWeight: FontWeight.w500,
-                height: 1.4,
+                height: 1.2,
               ),
             ),
           )

@@ -4,13 +4,13 @@ description: "Dayfi - Your digital financial companion"
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-
-version: 1.0.0+1
+version: 1.0.0+2
 
 environment:
   sdk: ^3.7.2
 
 dependencies:
+  sign_in_with_apple: ^5.0.0
   flutter:
     sdk: flutter
 
@@ -55,6 +55,7 @@ dependencies:
   google_sign_in: ^6.2.1
   lottie: 
   firebase_storage: ^13.0.4
+  open_mail_app: ^0.4.5
 
 dev_dependencies:
   flutter_test:
@@ -188,6 +189,33 @@ flutter:
     - family: Boldonse
       fonts:
         - asset: assets/fonts/boldonse.otf
+
+    - family: SF Pro Display
+      fonts:
+        - asset: assets/fonts/sf-pro-display/SFPRODISPLAYBLACKITALIC.OTF
+        - asset: assets/fonts/sf-pro-display/SFPRODISPLAYBOLD.OTF
+        - asset: assets/fonts/sf-pro-display/SFPRODISPLAYHEAVYITALIC.OTF
+        - asset: assets/fonts/sf-pro-display/SFPRODISPLAYLIGHTITALIC.OTF
+        - asset: assets/fonts/sf-pro-display/SFPRODISPLAYMEDIUM.OTF
+        - asset: assets/fonts/sf-pro-display/SFPRODISPLAYREGULAR.OTF
+        - asset: assets/fonts/sf-pro-display/SFPRODISPLAYSEMIBOLDITALIC.OTF
+        - asset: assets/fonts/sf-pro-display/SFPRODISPLAYTHINITALIC.OTF
+        - asset: assets/fonts/sf-pro-display/SFPRODISPLAYULTRALIGHTITALIC.OTF
+  
+    - family: Chirp
+      fonts:
+        - asset: assets/fonts/chirp/Chirp Regular.otf
+        - asset: assets/fonts/chirp/Chirp Regular.ttf
+        - asset: assets/fonts/chirp/Chirp Regular.woff
+        - asset: assets/fonts/chirp/Chirp Medium.otf
+        - asset: assets/fonts/chirp/Chirp Medium.ttf
+        - asset: assets/fonts/chirp/Chirp Medium.woff
+        - asset: assets/fonts/chirp/Chirp Bold.otf
+        - asset: assets/fonts/chirp/Chirp Bold.ttf
+        - asset: assets/fonts/chirp/Chirp Bold.woff
+        - asset: assets/fonts/chirp/Chirp Heavy.otf
+        - asset: assets/fonts/chirp/Chirp Heavy.ttf
+        - asset: assets/fonts/chirp/Chirp Heavy.woff
 
 
 flutter_icons:

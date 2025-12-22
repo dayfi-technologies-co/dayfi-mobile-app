@@ -142,13 +142,13 @@ class CustomBottomSheet extends StatelessWidget {
     return Container(
       constraints: BoxConstraints(
         maxHeight: maxHeight ?? MediaQuery.of(context).size.height * 0.9,
-        minHeight: minHeight ?? 200.h,
+        minHeight: minHeight ?? 200,
       ),
       decoration: BoxDecoration(
         color: backgroundColor ?? colorScheme.surface,
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(borderRadius ?? 24.r),
-          topRight: Radius.circular(borderRadius ?? 24.r),
+          topLeft: Radius.circular(borderRadius ?? 24),
+          topRight: Radius.circular(borderRadius ?? 24),
         ),
         boxShadow:
             elevation != null && elevation! > 0
@@ -176,7 +176,7 @@ class CustomBottomSheet extends StatelessWidget {
             child: Container(
               width: double.infinity,
               height: fixedHeight,
-              padding: contentPadding ?? EdgeInsets.all(24.w),
+              padding: contentPadding ?? EdgeInsets.all(24),
               child:
                   useSafeArea ? SafeArea(bottom: false, child: child) : child,
             ),
@@ -191,7 +191,7 @@ class CustomBottomSheet extends StatelessWidget {
 
   Widget _buildHeader(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 24.h),
+      padding: EdgeInsets.symmetric(horizontal: 18, vertical: 24),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -218,11 +218,11 @@ class CustomBottomSheet extends StatelessWidget {
     if (customHandle != null) return customHandle!;
 
     return Container(
-      width: 40.w,
-      height: 4.h,
+      width: 40,
+      height: 4,
       decoration: BoxDecoration(
         color: AppColors.neutral400,
-        borderRadius: BorderRadius.circular(2.r),
+        borderRadius: BorderRadius.circular(2),
       ),
     );
   }
@@ -237,8 +237,8 @@ class CustomBottomSheet extends StatelessWidget {
       },
       child: Center(
         child: Assets.icons.pngs.closeiconblack.image(
-          width: 18.w,
-          height: 18.h,
+          width: 18,
+          height: 18,
         ),
       ),
     );
@@ -246,7 +246,7 @@ class CustomBottomSheet extends StatelessWidget {
 
   Widget _buildTitleSection(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
+      padding: EdgeInsets.symmetric(horizontal: 18, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -259,7 +259,7 @@ class CustomBottomSheet extends StatelessWidget {
               ),
             ),
           if (subtitle != null) ...[
-            SizedBox(height: 8.h),
+            SizedBox(height: 8),
             Text(
               subtitle!,
               style: AppTypography.bodyMedium.copyWith(
@@ -277,7 +277,7 @@ class CustomBottomSheet extends StatelessWidget {
       return Container(
         padding:
             continueButtonPadding ??
-            EdgeInsets.only(left: 18.w, right: 18.w, bottom: 50.h),
+            EdgeInsets.only(left: 18, right: 18, bottom: 50),
         child: customContinueButton!,
       );
     }
@@ -285,7 +285,7 @@ class CustomBottomSheet extends StatelessWidget {
     return Container(
       padding:
           continueButtonPadding ??
-          EdgeInsets.only(left: 18.w, right: 18.w, bottom: 50.h),
+          EdgeInsets.only(left: 18, right: 18, bottom: 50),
       child: PrimaryButton.dayfi(
         text: continueButtonText ?? 'CONTINUE',
         onPressed: continueButtonEnabled ? onContinue : null,

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/common/utils/haptic_helper.dart';
 import 'package:dayfi/features/auth/reenter_passcode/vm/reenter_passcode_viewmodel.dart';
+import 'package:dayfi/features/auth/create_passcode/vm/create_passcode_viewmodel.dart';
+import 'package:flutter_svg/svg.dart';
 
 class ReenterPasscodeView extends ConsumerStatefulWidget {
   final bool isFromSignup;
@@ -46,143 +47,199 @@ class _ReenterPasscodeViewState extends ConsumerState<ReenterPasscodeView> {
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         resizeToAvoidBottomInset: false,
+
+        appBar: AppBar(
+          scrolledUnderElevation: .5,
+          foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+          shadowColor: Theme.of(context).scaffoldBackgroundColor,
+          surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          elevation: 0,
+          leadingWidth: 72,
+          leading: InkWell(
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            onTap: () {
+              FocusScope.of(context).unfocus();
+              reenterPasscodeNotifier.resetForm();
+              ref.read(createPasscodeProvider(widget.isFromSignup).notifier).resetForm();
+              Navigator.of(context).pop();
+            },
+            child: Stack(
+              alignment: AlignmentGeometry.center,
+              children: [
+                SvgPicture.asset(
+                  "assets/icons/svgs/notificationn.svg",
+                  height: 40,
+                  color: Theme.of(context).colorScheme.surface,
+                ),
+                SizedBox(
+                  height: 40,
+                  width: 40,
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: Icon(
+                        Icons.arrow_back_ios,
+                        size: 20,
+                        color: Theme.of(context).textTheme.bodyLarge!.color,
+                        // size: 20,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // title: Image.asset('assets/images/logo_splash.png', height: 24),
+          // centerTitle: true,
+        ),
+
         body: GestureDetector(
           onTap: () {
             FocusManager.instance.primaryFocus?.unfocus();
           },
           child: SafeArea(
             bottom: false,
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  AppBar(
-                    scrolledUnderElevation: .5,
-                    foregroundColor: Theme.of(context).scaffoldBackgroundColor,
-                    shadowColor: Theme.of(context).scaffoldBackgroundColor,
-                    surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
-
-                    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                    elevation: 0,
-                    leading: IconButton(
-                      onPressed: () {
-                        reenterPasscodeNotifier.resetForm();
-                        Navigator.pop(context);
-                      },
-                      icon: const Icon(Icons.arrow_back_ios_new),
-                    ),
-                    title: Text(
-                      "Confirm Passcode",
-                      style: Theme.of(
-                        context,
-                      ).textTheme.headlineMedium?.copyWith(
-                        fontFamily: 'Boldonse',
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w500,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final bool isWide = constraints.maxWidth > 600;
+                return SingleChildScrollView(
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: isWide ? 400 : double.infinity,
                       ),
-                    ),
-                  ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                       SizedBox(height: 24),
 
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 18),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        SizedBox(height: 12.h),
+                                Text(
+                                  "Confirm passcode",
+                                  textAlign: TextAlign.center,
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.displayLarge?.copyWith(
+                                    color:
+                                        Theme.of(
+                                          context,
+                                        ).textTheme.headlineLarge?.color,
+                                    fontSize: isWide ? 32 : 28,
+                                    letterSpacing: -.250,
+                                    fontWeight: FontWeight.w900,
+                                    fontFamily: 'FunnelDisplay',
+                                    height: 1,
+                                  ),
+                                ),
 
-                        // Subtitle
-                        Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 18.w),
+                                SizedBox(height: 24),     Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isWide ? 24 : 18,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                SizedBox(height: 12),
+
+                                // Subtitle
+                                Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 18,
+                                      ),
+                                      child: Text(
+                                        "Please enter your 4-digit passcode again to confirm. This ensures you remember it correctly.",
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodyMedium?.copyWith(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                          fontFamily: 'Chirp',
+                                          letterSpacing: -.25,
+                                          height: 1.2,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    )
+                                    .animate()
+                                    .fadeIn(
+                                      delay: 100.ms,
+                                      duration: 300.ms,
+                                      curve: Curves.easeOutCubic,
+                                    )
+                                    .slideY(
+                                      begin: 0.2,
+                                      end: 0,
+                                      delay: 100.ms,
+                                      duration: 300.ms,
+                                      curve: Curves.easeOutCubic,
+                                    ),
+
+                                SizedBox(height: 24),
+                              ],
+                            ),
+                          ),
+
+                          // Passcode widget
+                          Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 18),
+                                child: PasscodeWidget(
+                                  passcodeLength: 4,
+                                  currentPasscode:
+                                      reenterPasscodeState.passcode,
+                                  onPasscodeChanged:
+                                      (value) => reenterPasscodeNotifier
+                                          .updatePasscode(value, context),
+                                ),
+                              )
+                              .animate()
+                              .fadeIn(
+                                delay: 200.ms,
+                                duration: 300.ms,
+                                curve: Curves.easeOutCubic,
+                              )
+                              .slideY(
+                                begin: 0.3,
+                                end: 0,
+                                delay: 200.ms,
+                                duration: 300.ms,
+                                curve: Curves.easeOutCubic,
+                              )
+                              .scale(
+                                begin: const Offset(0.98, 0.98),
+                                end: const Offset(1.0, 1.0),
+                                delay: 200.ms,
+                                duration: 300.ms,
+                                curve: Curves.easeOutCubic,
+                              ),
+
+                          // Error message
+                          if (reenterPasscodeState.errorMessage.isNotEmpty) ...[
+                            SizedBox(height: 16),
+                            Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 18),
                               child: Text(
-                                "Please enter your 4-digit passcode again to confirm. This ensures you remember it correctly.",
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.bodyMedium?.copyWith(
-                                  fontSize: 16.sp,
+                                reenterPasscodeState.errorMessage,
+                                style: TextStyle(
+                                  fontFamily: 'Chirp',
+                                  fontSize: 13,
+                                  color: Colors.red.shade800,
+                                  letterSpacing: -0.4,
                                   fontWeight: FontWeight.w500,
-                                  fontFamily: 'Karla',
-                                  letterSpacing: -.6,
-                                  height: 1.4,
+                                  height: 1.2,
                                 ),
                                 textAlign: TextAlign.center,
                               ),
-                            )
-                            .animate()
-                            .fadeIn(
-                              delay: 100.ms,
-                              duration: 300.ms,
-                              curve: Curves.easeOutCubic,
-                            )
-                            .slideY(
-                              begin: 0.2,
-                              end: 0,
-                              delay: 100.ms,
-                              duration: 300.ms,
-                              curve: Curves.easeOutCubic,
                             ),
+                          ],
 
-                        SizedBox(height: 40.h),
-                      ],
+                          SizedBox(height: 32),
+                        ],
+                      ),
                     ),
                   ),
-
-                  // Passcode widget
-                  Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 18.w),
-                        child: PasscodeWidget(
-                          passcodeLength: 4,
-                          currentPasscode: reenterPasscodeState.passcode,
-                          onPasscodeChanged:
-                              (value) => reenterPasscodeNotifier.updatePasscode(
-                                value,
-                                context,
-                              ),
-                        ),
-                      )
-                      .animate()
-                      .fadeIn(
-                        delay: 200.ms,
-                        duration: 300.ms,
-                        curve: Curves.easeOutCubic,
-                      )
-                      .slideY(
-                        begin: 0.3,
-                        end: 0,
-                        delay: 200.ms,
-                        duration: 300.ms,
-                        curve: Curves.easeOutCubic,
-                      )
-                      .scale(
-                        begin: const Offset(0.98, 0.98),
-                        end: const Offset(1.0, 1.0),
-                        delay: 200.ms,
-                        duration: 300.ms,
-                        curve: Curves.easeOutCubic,
-                      ),
-
-                  // Error message
-                  if (reenterPasscodeState.errorMessage.isNotEmpty) ...[
-                    SizedBox(height: 16.h),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 18.w),
-                      child: Text(
-                        reenterPasscodeState.errorMessage,
-                        style: TextStyle(
-                          fontFamily: 'Karla',
-                          fontSize: 13.sp,
-                          color: Colors.red.shade800,
-                          letterSpacing: -0.4,
-                          fontWeight: FontWeight.w500,
-                          height: 1.4,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ],
-
-                  SizedBox(height: 40.h),
-                ],
-              ),
+                );
+              },
             ),
           ),
         ),
@@ -207,7 +264,8 @@ class PasscodeWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        SizedBox(height: MediaQuery.of(context).size.width * 0.2),
+           SizedBox(height: 32),
+
         // Passcode dots
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -216,8 +274,8 @@ class PasscodeWidget extends StatelessWidget {
             (index) => Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6.0),
               child: Container(
-                width: 24,
-                height: 24,
+                width: 20,
+                height: 30,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color:
@@ -234,8 +292,8 @@ class PasscodeWidget extends StatelessWidget {
           ),
         ),
 
-        SizedBox(height: 32.h),
-        SizedBox(height: 32.h),
+        SizedBox(height: 32),
+        SizedBox(height: 32),
 
         // Number pad
         GridView.count(
@@ -290,7 +348,7 @@ class PasscodeWidget extends StatelessWidget {
                 child: Text(
                   number,
                   style: TextStyle(
-                    fontSize: 32.sp,
+                    fontSize: 24,
                     fontFamily: 'FunnelDisplay',
                     fontWeight: FontWeight.w500,
                     color: Theme.of(context).colorScheme.onSurface,
@@ -319,7 +377,11 @@ class PasscodeWidget extends StatelessWidget {
                 color: Colors.transparent,
               ),
               child: Center(
-                child: Icon(icon, color: AppColors.purple500ForTheme(context)),
+                child: Icon(
+                  icon,
+                  color: AppColors.purple500ForTheme(context),
+                  size: 20,
+                ),
               ),
             ),
           ),

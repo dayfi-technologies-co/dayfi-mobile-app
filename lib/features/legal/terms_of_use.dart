@@ -27,22 +27,28 @@ class TermsOfUseView extends StatelessWidget {
           "Terms of Use",
           style: Theme.of(context).textTheme.headlineLarge?.copyWith(
             fontFamily: 'FunnelDisplay',
-            fontSize: 24.sp, // height: 1.6,
+            fontSize: 24, // height: 1.6,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(24.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final bool isWide = constraints.maxWidth > 600;
+          return Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: isWide ? 500 : double.infinity),
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(isWide ? 32 : 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
             // _buildSectionTitle("📄 DayFi Terms of Use"),
-            // SizedBox(height: 8.h),
+            // SizedBox(height: 8),
             _buildEffectiveDate(context, "Effective Date: December 19, 2024"),
-            SizedBox(height: 24.h),
+            SizedBox(height: 24),
 
             _buildSection(context, "1. Introduction", [
               "Welcome to DayFi Technologies Inc. (\"DayFi,\" \"we,\" \"our,\" or \"us\"). These Terms of Use (\"Terms\") govern your access to and use of our products and services, including the DayFi website, mobile application, APIs, and related tools (collectively, the \"Services\").",
@@ -108,7 +114,7 @@ class TermsOfUseView extends StatelessWidget {
             ]),
 
             _buildSection(context, "10. Intellectual Property", [
-              "All content, trademarks, and technology used in the Services are owned by DayFi or our licensors. You are granted a limited, non-exclusive license to use the Services for lawful purposes.",
+              "All content, trademarks, and technology used in the Services are owned by Dayfi or our licensors. You are granted a limited, non-exclusive license to use the Services for lawful purposes.",
             ]),
 
             _buildSection(context, "11. Termination", [
@@ -140,9 +146,13 @@ class TermsOfUseView extends StatelessWidget {
               "📧 support@dayfi.com",
             ]),
 
-            SizedBox(height: 40.h),
+            SizedBox(height: 32),
           ],
         ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -151,8 +161,8 @@ class TermsOfUseView extends StatelessWidget {
     return Text(
       date,
       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-        fontFamily: 'Karla',
-        fontSize: 16.sp,
+        fontFamily: 'Chirp',
+        fontSize: 16,
         fontWeight: FontWeight.w500,
         fontStyle: FontStyle.italic,
         letterSpacing: -0.8,
@@ -173,20 +183,20 @@ class TermsOfUseView extends StatelessWidget {
           title,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
             fontFamily: 'FunnelDisplay',
-            fontSize: 24.sp, // height: 1.6,
+            fontSize: 24, // height: 1.6,
             fontWeight: FontWeight.w600,
             letterSpacing: -0.8,
           ),
         ),
-        SizedBox(height: 12.h),
+        SizedBox(height: 12),
         ...content.map(
           (paragraph) => Padding(
-            padding: EdgeInsets.only(bottom: 8.h),
+            padding: EdgeInsets.only(bottom: 8),
             child: Text(
               paragraph,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontFamily: 'Karla',
-                fontSize: 16.sp,
+                fontFamily: 'Chirp',
+                fontSize: 16,
                 fontWeight: FontWeight.w500,
                 height: 1.5,
                 letterSpacing: -0.8,
@@ -194,7 +204,7 @@ class TermsOfUseView extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(height: 20.h),
+        SizedBox(height: 20),
       ],
     );
   }

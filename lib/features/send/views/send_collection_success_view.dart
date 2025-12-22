@@ -84,80 +84,100 @@ class _SendCollectionSuccessViewState
       onWillPop: () async => false, // Disable device back button
       child: Scaffold(
         backgroundColor: AppColors.purple500,
-        body: SafeArea(
-          bottom: false,
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                SizedBox(height: 12.h),
-
-                Column(
-                  children: [
-                    SizedBox(
-                      width: 132.w,
-                      height: 132.w,
-                      child: SvgPicture.asset('assets/icons/svgs/successs.svg'),
-                    ),
-
-                    SizedBox(height: 32.h),
-
-                    Text(
-                      'We\'re processing your transfer. You\'ll receive a confirmation once your payment is verified.',
-                      style: AppTypography.headlineLarge.copyWith(
-                        fontFamily: 'FunnelDisplay',
-                        fontSize: 28.sp,
-                        height: 1.2,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.neutral0,
-
-                        letterSpacing: -0.6,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final bool isWide = constraints.maxWidth > 600;
+            return Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: isWide ? 500 : double.infinity,
                 ),
-
-                Column(
-                  children: [
-                    SecondaryButton(
-                      text: 'View Transactions',
-                      onPressed: () async {
-                        // Refresh transactions and beneficiaries data
-                        try {
-                          // Refresh transactions
-                          ref
-                              .read(transactionsProvider.notifier)
-                              .loadTransactions();
-                          // Refresh recipients
-                          ref
-                              .read(recipientsProvider.notifier)
-                              .loadBeneficiaries();
-                        } catch (e) {
-                          AppLogger.error('Failed to refresh data: $e');
-                        }
-
-                        // Navigate to main view with clean stack (Transactions tab)
-                        _navigateToMainViewWithCleanStack(context, tabIndex: 1);
-                      },
-                      backgroundColor: Colors.white,
-                      textColor: AppColors.purple500,
-                      borderColor: AppColors.neutral0,
-                      borderRadius: 38,
-                      height: 48.00000.h,
-                      width: double.infinity,
-                      fullWidth: true,
-                      fontFamily: 'Karla',
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: -.70,
+                child: SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isWide ? 24 : 18,
+                      vertical: 8,
                     ),
-                  ],
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        SizedBox(height: 12),
+
+                        Column(
+                          children: [
+                            SizedBox(
+                              width: 132,
+                              height: 132,
+                              child: SvgPicture.asset(
+                                'assets/icons/svgs/successs.svg',
+                              ),
+                            ),
+
+                            SizedBox(height: 32),
+
+                            Text(
+                              'We\'re processing your transfer. You\'ll receive a confirmation once your payment is verified.',
+                              style: AppTypography.headlineLarge.copyWith(
+                                fontFamily: 'FunnelDisplay',
+                                fontSize: 28,
+                                height: 1.2,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.neutral0,
+
+                                letterSpacing: -0.6,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+
+                        Column(
+                          children: [
+                            SecondaryButton(
+                              text: 'View Transactions',
+                              onPressed: () async {
+                                // Refresh transactions and beneficiaries data
+                                try {
+                                  // Refresh transactions
+                                  ref
+                                      .read(transactionsProvider.notifier)
+                                      .loadTransactions();
+                                  // Refresh recipients
+                                  ref
+                                      .read(recipientsProvider.notifier)
+                                      .loadBeneficiaries();
+                                } catch (e) {
+                                  AppLogger.error('Failed to refresh data: $e');
+                                }
+
+                                // Navigate to main view with clean stack (Transactions tab)
+                                _navigateToMainViewWithCleanStack(
+                                  context,
+                                  tabIndex: 1,
+                                );
+                              },
+                              backgroundColor: Colors.white,
+                              textColor: AppColors.purple500,
+                              borderColor: AppColors.neutral0,
+                              borderRadius: 38,
+                              height: 48.00000,
+                              width: double.infinity,
+                              fullWidth: true,
+                              fontFamily: 'Chirp',
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: -.70,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ),
     );

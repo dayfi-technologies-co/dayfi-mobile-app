@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/services/remote/auth_service.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
-import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/common/constants/analytics_events.dart';
 import 'package:dayfi/common/utils/connectivity_utils.dart';
+import 'package:dayfi/features/auth/login/vm/login_viewmodel.dart';
 
 class ResetPasswordState {
   final String password;
@@ -55,8 +55,9 @@ class ResetPasswordState {
 
 class ResetPasswordViewModel extends StateNotifier<ResetPasswordState> {
   final AuthService _authService = locator<AuthService>();
+  final StateNotifierProviderRef<ResetPasswordViewModel, ResetPasswordState> _ref;
 
-  ResetPasswordViewModel() : super(const ResetPasswordState());
+  ResetPasswordViewModel(this._ref) : super(const ResetPasswordState());
 
   void setConfirmPassword(String value) {
     state = state.copyWith(
@@ -122,11 +123,11 @@ class ResetPasswordViewModel extends StateNotifier<ResetPasswordState> {
 
         await Future.delayed(const Duration(milliseconds: 500));
 
-        // Navigate to login view
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          AppRoute.loginView,
-          (route) => false,
+        // Auto-login user with new password
+        await _ref.read(loginProvider.notifier).loginWithCredentials(
+          email: email,
+          password: state.password,
+          context: context,
         );
       } else {
         analyticsService.logEvent(
@@ -171,5 +172,5 @@ class ResetPasswordViewModel extends StateNotifier<ResetPasswordState> {
 }
 
 final resetPasswordProvider = StateNotifierProvider<ResetPasswordViewModel, ResetPasswordState>(
-  (ref) => ResetPasswordViewModel(),
+  (ref) => ResetPasswordViewModel(ref),
 );

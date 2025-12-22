@@ -26,26 +26,26 @@ class CountrySelectionBottomSheet extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFFF8F6F0), // Light beige background
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20.r),
-          topRight: Radius.circular(20.r),
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
         ),
       ),
       child: Column(
         children: [
           // Handle bar
           Container(
-            margin: EdgeInsets.only(top: 12.h),
-            width: 40.w,
-            height: 4.h,
+            margin: EdgeInsets.only(top: 12),
+            width: 40,
+            height: 4,
             decoration: BoxDecoration(
               color: AppColors.neutral400,
-              borderRadius: BorderRadius.circular(2.r),
+              borderRadius: BorderRadius.circular(2),
             ),
           ),
 
           // Header
           Padding(
-            padding: EdgeInsets.fromLTRB(24.w, 24.h, 16.w, 20.h),
+            padding: EdgeInsets.fromLTRB(24, 24, 16, 20),
             child: Row(
               children: [
                 Expanded(
@@ -54,7 +54,7 @@ class CountrySelectionBottomSheet extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: AppTypography.titleLarge.copyWith(
                    fontFamily: 'FunnelDisplay',
-                      fontSize: 14.sp,
+                      fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: AppColors.neutral800,
                     ),
@@ -65,14 +65,14 @@ class CountrySelectionBottomSheet extends StatelessWidget {
                   icon: Icon(
                     Icons.close,
                     color: AppColors.neutral600,
-                    size: 24.sp,
+                    size: 24,
                   ),
                 ),
               ],
             ),
           ),
 
-          SizedBox(height: 20.h),
+          SizedBox(height: 20),
 
           // Countries list with search bar
           Expanded(
@@ -80,12 +80,12 @@ class CountrySelectionBottomSheet extends StatelessWidget {
               children: [
                 // Search bar
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 18.w),
+                  padding: EdgeInsets.symmetric(horizontal: 18),
                   child: Container(
-                    height: 40.h,
+                    height: 40,
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(12.r),
+                      borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: AppColors.neutral200),
                     ),
                     child: TextField(
@@ -93,17 +93,17 @@ class CountrySelectionBottomSheet extends StatelessWidget {
                         hintText: 'Search currency here...',
                         hintStyle: AppTypography.bodyMedium.copyWith(
                           color: AppColors.neutral400,
-                          fontSize: 14.sp,
-                          fontFamily: 'Karla',
+                          fontSize: 14,
+                          fontFamily: 'Chirp',
                         ),
                         prefixIcon: Container(
-                          width: 40.w,
+                          width: 40,
                           alignment: Alignment.centerRight,
                           constraints: BoxConstraints.tightForFinite(),
                           child: Center(
                             child: SvgPicture.asset(
                               'assets/icons/svgs/search-normal.svg',
-                              height: 22.sp,
+                              height: 22,
                               color: Theme.of(
                                 context,
                               ).colorScheme.onSurface.withOpacity(0.6),
@@ -112,27 +112,27 @@ class CountrySelectionBottomSheet extends StatelessWidget {
                         ),
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.symmetric(
-                          horizontal: 16.w,
-                          vertical: 16.h,
+                          horizontal: 16,
+                          vertical: 16,
                         ),
                       ),
                     ),
                   ),
                 ),
 
-                SizedBox(height: 20.h),
+                SizedBox(height: 20),
 
                 // Countries list
                 ListView.builder(
                   shrinkWrap: true,
                   physics: NeverScrollableScrollPhysics(),
-                  padding: EdgeInsets.symmetric(horizontal: 18.w),
+                  padding: EdgeInsets.symmetric(horizontal: 18),
                   itemCount: countries.length,
                   itemBuilder: (context, index) {
                     final country = countries[index];
 
                     return Container(
-                      margin: EdgeInsets.only(bottom: 4.h),
+                      margin: EdgeInsets.only(bottom: 4),
                       child: Material(
                         color: Colors.transparent,
                         child: InkWell(
@@ -140,22 +140,22 @@ class CountrySelectionBottomSheet extends StatelessWidget {
                             onCountrySelected(country.code);
                             Navigator.pop(context);
                           },
-                          borderRadius: BorderRadius.circular(12.r),
+                          borderRadius: BorderRadius.circular(12),
                           child: Container(
                             padding: EdgeInsets.symmetric(
-                              horizontal: 16.w,
-                              vertical: 16.h,
+                              horizontal: 16,
+                              vertical: 16,
                             ),
                             decoration: BoxDecoration(
                               color: Colors.transparent,
-                              borderRadius: BorderRadius.circular(12.r),
+                              borderRadius: BorderRadius.circular(12),
                             ),
                             child: Row(
                               children: [
                                 // Flag - circular container
                                 Container(
-                                  width: 32.w,
-                                  height: 32.w,
+                                  width: 32,
+                                  height: 32,
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
                                     border: Border.all(
@@ -166,20 +166,20 @@ class CountrySelectionBottomSheet extends StatelessWidget {
                                   child: Center(
                                     child: Text(
                                       country.flag,
-                                      style: TextStyle(fontSize: 16.55.sp),
+                                      style: TextStyle(fontSize: 16.55),
                                     ),
                                   ),
                                 ),
 
-                                SizedBox(width: 16.w),
+                                SizedBox(width: 16),
 
                                 // Country name
                                 Expanded(
                                   child: Text(
                                     country.name,
                                     style: AppTypography.bodyMedium.copyWith(
-                                      fontFamily: 'Karla',
-                                      fontSize: 16.sp,
+                                      fontFamily: 'Chirp',
+                                      fontSize: 16,
                                       fontWeight: FontWeight.w500,
                                       color: AppColors.neutral800,
                                     ),
@@ -190,8 +190,8 @@ class CountrySelectionBottomSheet extends StatelessWidget {
                                 Text(
                                   country.currency,
                                   style: AppTypography.bodyMedium.copyWith(
-                                    fontFamily: 'Karla',
-                                    fontSize: 16.sp,
+                                    fontFamily: 'Chirp',
+                                    fontSize: 16,
                                     fontWeight: FontWeight.w500,
                                     color: AppColors.neutral800,
                                   ),

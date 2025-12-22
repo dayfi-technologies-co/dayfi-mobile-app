@@ -36,19 +36,19 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return Dialog(
-              backgroundColor: Theme.of(context).colorScheme.surface,
+          backgroundColor: Theme.of(context).colorScheme.surface,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24.r),
+            borderRadius: BorderRadius.circular(24),
           ),
           child: Container(
-            padding: EdgeInsets.all(28.w),
+            padding: EdgeInsets.all(28),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 // Security icon with enhanced styling
                 Container(
-                  width: 80.w,
-                  height: 80.w,
+                  width: 80,
+                  height: 80,
                   decoration: BoxDecoration(
                     // gradient: LinearGradient(
                     //   begin: Alignment.topLeft,
@@ -71,27 +71,27 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
                   // child: Icon(
                   //   Icons.security_rounded,
                   //   color: AppColors.purple500ForTheme(context),
-                  //   size: 40.w,
+                  //   size: 40,
                   // ),
                   child: SvgPicture.asset('assets/icons/svgs/cautionn.svg'),
                 ),
 
-                SizedBox(height: 24.h),
+                SizedBox(height: 24),
 
                 // Title with auth view styling
                 Text(
                   'For your security, please avoid easy-to-guess passcodes. e.g. 1234, 2222',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontFamily: 'Karla',
+                    fontFamily: 'Chirp',
 
-                    fontSize: 20.sp, // height: 1.6,
+                    fontSize: 20, // height: 1.6,
                     fontWeight: FontWeight.w500,
                     letterSpacing: -0.8,
                   ),
                   textAlign: TextAlign.center,
                 ),
 
-                SizedBox(height: 16.h),
+                SizedBox(height: 16),
 
                 // Continue button with auth view styling
                 PrimaryButton(
@@ -102,10 +102,10 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
                   backgroundColor: AppColors.purple500,
                   textColor: AppColors.neutral0,
                   borderRadius: 38,
-                  height: 48.00000.h,
+                  height: 48.00000,
                   width: double.infinity,
                   fullWidth: true,
-                  fontFamily: 'Karla',
+                  fontFamily: 'Chirp',
                   fontSize: 18,
                   fontWeight: FontWeight.w500,
                   letterSpacing: -.70,
@@ -136,134 +136,190 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         resizeToAvoidBottomInset: false,
+        appBar: AppBar(
+          scrolledUnderElevation: .5,
+          foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+          shadowColor: Theme.of(context).scaffoldBackgroundColor,
+          surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          elevation: 0,
+          leadingWidth: 72,
+          leading: InkWell(
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            onTap: () {
+              FocusScope.of(context).unfocus();
+              createPasscodeNotifier.resetForm();
+              Navigator.of(context).pop();
+            },
+            child: Stack(
+              alignment: AlignmentGeometry.center,
+              children: [
+                SvgPicture.asset(
+                  "assets/icons/svgs/notificationn.svg",
+                  height: 40,
+                  color: Theme.of(context).colorScheme.surface,
+                ),
+                SizedBox(
+                  height: 40,
+                  width: 40,
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: Icon(
+                        Icons.arrow_back_ios,
+                        size: 20,
+                        color: Theme.of(context).textTheme.bodyLarge!.color,
+                        // size: 20,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // title: Image.asset('assets/images/logo_splash.png', height: 24),
+          // centerTitle: true,
+        ),
+
         body: GestureDetector(
           onTap: () {
             FocusManager.instance.primaryFocus?.unfocus();
           },
           child: SafeArea(
             bottom: false,
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  AppBar(
-                    scrolledUnderElevation: .5,
-                    foregroundColor: Theme.of(context).scaffoldBackgroundColor,
-                    shadowColor: Theme.of(context).scaffoldBackgroundColor,
-                    surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
-                    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                    elevation: 0,
-                    leading: IconButton(
-                      onPressed: () {
-                        createPasscodeNotifier.resetForm();
-                        Navigator.pop(context);
-                      },
-                      icon: const Icon(Icons.arrow_back_ios_new),
-                    ),
-                    title: Text(
-                      "Create Passcode",
-                      style: Theme.of(
-                        context,
-                      ).textTheme.headlineMedium?.copyWith(
-                        fontFamily: 'Boldonse',
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w500,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final bool isWide = constraints.maxWidth > 600;
+                return SingleChildScrollView(
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: isWide ? 400 : double.infinity,
                       ),
-                    ),
-                  ),
-
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 18),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        SizedBox(height: 12.h),
-
-                        // Subtitle
-                        Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 18.w),
-                              child: Text(
-                                "Please create a 4-digit passcode for your account. This will be used to quickly access your account.",
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.bodyMedium?.copyWith(
-                                  fontSize: 16.sp,
-                                  fontWeight: FontWeight.w500,
-                                  fontFamily: 'Karla',
-                                  letterSpacing: -.6,
-                                  height: 1.4,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            )
-                            .animate()
-                            .fadeIn(
-                              delay: 100.ms,
-                              duration: 300.ms,
-                              curve: Curves.easeOutCubic,
-                            )
-                            .slideY(
-                              begin: 0.2,
-                              end: 0,
-                              delay: 100.ms,
-                              duration: 300.ms,
-                              curve: Curves.easeOutCubic,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isWide ? 24 : 18,
                             ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                SizedBox(height: 24),
 
-                        SizedBox(height: 40.h),
-                      ],
+                                Text(
+                                  "Create passcode",
+                                  textAlign: TextAlign.center,
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.displayLarge?.copyWith(
+                                    color:
+                                        Theme.of(
+                                          context,
+                                        ).textTheme.headlineLarge?.color,
+                                    fontSize: isWide ? 32 : 28,
+                                    letterSpacing: -.250,
+                                    fontWeight: FontWeight.w900,
+                                    fontFamily: 'FunnelDisplay',
+                                    height: 1,
+                                  ),
+                                ),
+
+                                SizedBox(height: 24),
+
+                                // Subtitle
+                                Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 18,
+                                      ),
+                                      child: Text(
+                                        "Please create a 4-digit passcode for your account. This will be used to quickly access your account.",
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodyMedium?.copyWith(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                          fontFamily: 'Chirp',
+                                          letterSpacing: -.25,
+                                          height: 1.2,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    )
+                                    .animate()
+                                    .fadeIn(
+                                      delay: 100.ms,
+                                      duration: 300.ms,
+                                      curve: Curves.easeOutCubic,
+                                    )
+                                    .slideY(
+                                      begin: 0.2,
+                                      end: 0,
+                                      delay: 100.ms,
+                                      duration: 300.ms,
+                                      curve: Curves.easeOutCubic,
+                                    ),
+
+                                SizedBox(height: 24),
+                              ],
+                            ),
+                          ),
+
+                          // Passcode widget
+                          Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 18),
+                                child: PasscodeWidget(
+                                  passcodeLength: 4,
+                                  currentPasscode: createPasscodeState.passcode,
+                                  onPasscodeChanged:
+                                      createPasscodeNotifier.updatePasscode,
+                                ),
+                              )
+                              .animate()
+                              .fadeIn(
+                                delay: 200.ms,
+                                duration: 300.ms,
+                                curve: Curves.easeOutCubic,
+                              )
+                              .slideY(
+                                begin: 0.3,
+                                end: 0,
+                                delay: 200.ms,
+                                duration: 300.ms,
+                                curve: Curves.easeOutCubic,
+                              )
+                              .scale(
+                                begin: const Offset(0.98, 0.98),
+                                end: const Offset(1.0, 1.0),
+                                delay: 200.ms,
+                                duration: 300.ms,
+                                curve: Curves.easeOutCubic,
+                              ),
+                          SizedBox(height: 16),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 18),
+                            child: Text(
+                              " ",
+                              style: TextStyle(
+                                fontFamily: 'Chirp',
+                                fontSize: 13,
+                                color: Colors.red.shade800,
+                                letterSpacing: -0.4,
+                                fontWeight: FontWeight.w500,
+                                height: 1.2,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                          SizedBox(height: 32),
+                        ],
+                      ),
                     ),
                   ),
-
-                  // Passcode widget
-                  Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 18.w),
-                        child: PasscodeWidget(
-                          passcodeLength: 4,
-                          currentPasscode: createPasscodeState.passcode,
-                          onPasscodeChanged:
-                              createPasscodeNotifier.updatePasscode,
-                        ),
-                      )
-                      .animate()
-                      .fadeIn(
-                        delay: 200.ms,
-                        duration: 300.ms,
-                        curve: Curves.easeOutCubic,
-                      )
-                      .slideY(
-                        begin: 0.3,
-                        end: 0,
-                        delay: 200.ms,
-                        duration: 300.ms,
-                        curve: Curves.easeOutCubic,
-                      )
-                      .scale(
-                        begin: const Offset(0.98, 0.98),
-                        end: const Offset(1.0, 1.0),
-                        delay: 200.ms,
-                        duration: 300.ms,
-                        curve: Curves.easeOutCubic,
-                      ),
-                  SizedBox(height: 16.h),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 18.w),
-                    child: Text(
-                      " ",
-                      style: TextStyle(
-                        fontFamily: 'Karla',
-                        fontSize: 13.sp,
-                        color: Colors.red.shade800,
-                        letterSpacing: -0.4,
-                        fontWeight: FontWeight.w500,
-                        height: 1.4,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  SizedBox(height: 40.h),
-                ],
-              ),
+                );
+              },
             ),
           ),
         ),
@@ -288,7 +344,7 @@ class PasscodeWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        SizedBox(height: MediaQuery.of(context).size.width * 0.2),
+           SizedBox(height: 32),
 
         // Passcode dots
         Row(
@@ -316,8 +372,8 @@ class PasscodeWidget extends StatelessWidget {
           ),
         ),
 
-        SizedBox(height: 32.h),
-        SizedBox(height: 32.h),
+        SizedBox(height: 32),
+        SizedBox(height: 32),
 
         // Number pad
         GridView.count(
@@ -372,7 +428,7 @@ class PasscodeWidget extends StatelessWidget {
                 child: Text(
                   number,
                   style: TextStyle(
-                    fontSize: 32.sp,
+                    fontSize: 24,
                     fontFamily: 'FunnelDisplay',
                     fontWeight: FontWeight.w500,
                     color: Theme.of(context).colorScheme.onSurface,
@@ -404,7 +460,7 @@ class PasscodeWidget extends StatelessWidget {
                 child: Icon(
                   icon,
                   color: AppColors.purple500ForTheme(context),
-                  size: 20.sp,
+                  size: 20,
                 ),
               ),
             ),

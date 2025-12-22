@@ -130,6 +130,22 @@ class PaymentData {
     this.rates,
   });
 
+  /// Helper method to parse rates from API response
+  /// Handles both old format (rates as List) and new format (single rate object with buyRate/sellRate)
+  static List<Rate>? _parseRates(Map<String, dynamic> data) {
+    // Old format: rates is a List
+    if (data['rates'] != null && data['rates'] is List) {
+      return (data['rates'] as List).map((e) => Rate.fromJson(e)).toList();
+    }
+    
+    // New format: data itself contains buyRate/sellRate (single rate object)
+    if (data['buyRate'] != null || data['sellRate'] != null) {
+      return [Rate.fromJson(data)];
+    }
+    
+    return null;
+  }
+
   factory PaymentData.fromJson(Map<String, dynamic> data) {
     return PaymentData(
       accountNumber: data['accountNumber'],
@@ -178,9 +194,8 @@ class PaymentData {
       networks: data['networks'] != null 
           ? (data['networks'] as List).map((e) => Network.fromJson(e)).toList()
           : null,
-      rates: data['rates'] != null 
-          ? (data['rates'] as List).map((e) => Rate.fromJson(e)).toList()
-          : null,
+      // Handle both old format (rates as List) and new format (single rate object with buyRate/sellRate)
+      rates: _parseRates(data),
     );
   }
 
@@ -522,12 +537,24 @@ class Rate {
   });
 
   factory Rate.fromJson(Map<String, dynamic> data) {
+    // Handle both old format (buy/sell) and new format (buyRate/sellRate)
+    double? buyRate = data['buy']?.toDouble();
+    double? sellRate = data['sell']?.toDouble();
+    
+    // If old format fields are null, try new format
+    if (buyRate == null && data['buyRate'] != null) {
+      buyRate = double.tryParse(data['buyRate'].toString());
+    }
+    if (sellRate == null && data['sellRate'] != null) {
+      sellRate = double.tryParse(data['sellRate'].toString());
+    }
+    
     return Rate(
-      buy: data['buy']?.toDouble(),
-      sell: data['sell']?.toDouble(),
+      buy: buyRate,
+      sell: sellRate,
       locale: data['locale'],
       rateId: data['rateId'],
-      code: data['code'],
+      code: data['code'] ?? data['currency'],
       updatedAt: data['updatedAt'],
     );
   }

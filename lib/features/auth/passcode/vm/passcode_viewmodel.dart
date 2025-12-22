@@ -78,10 +78,15 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
       }
 
       final userJson = await _secureStorage.read(StorageKeys.user);
-      if (userJson.isNotEmpty) {
-        final user = User.fromJson(json.decode(userJson));
-        state = state.copyWith(user: user);
-        AppLogger.info('User data loaded successfully: ${user.firstName}');
+      if (userJson.isNotEmpty && userJson != 'null') {
+        final decoded = json.decode(userJson);
+        if (decoded != null && decoded is Map<String, dynamic>) {
+          final user = User.fromJson(decoded);
+          state = state.copyWith(user: user);
+          AppLogger.info('User data loaded successfully: ${user.firstName}');
+        } else {
+          AppLogger.warning('User data is null or invalid format');
+        }
       } else {
         AppLogger.warning('No user data found in storage');
         // If we have a token but no user data, this might be an inconsistent state

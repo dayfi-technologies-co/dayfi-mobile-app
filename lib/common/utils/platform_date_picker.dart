@@ -68,34 +68,34 @@ class PlatformDatePicker {
           decoration: BoxDecoration(
             color: material.Theme.of(context).scaffoldBackgroundColor,
             borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(20.r),
-              topRight: Radius.circular(20.r),
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
             ),
           ),
           child: Column(
             children: [
               // Handle bar
               Container(
-                margin: EdgeInsets.only(top: 8.h),
-                width: 40.w,
-                height: 4.h,
+                margin: EdgeInsets.only(top: 8),
+                width: 40,
+                height: 4,
                 decoration: BoxDecoration(
                   color: material.Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2.r),
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
 
               // Title
               if (title != null) ...[
                 Padding(
-                  padding: EdgeInsets.all(16.w),
+                  padding: EdgeInsets.all(16),
                   child: Text(
                     title,
                     style: material.Theme.of(
                       context,
                     ).textTheme.titleLarge?.copyWith(
                       fontFamily: 'FunnelDisplay',
-                      fontSize: 24.sp,
+                      fontSize: 24,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -117,7 +117,7 @@ class PlatformDatePicker {
 
               // Action buttons
               Padding(
-                padding: EdgeInsets.all(16.w),
+                padding: EdgeInsets.all(16),
                 child: Row(
                   children: [
                     Expanded(
@@ -127,13 +127,13 @@ class PlatformDatePicker {
                           'Cancel',
                           style: TextStyle(
                             color: material.Colors.grey[600],
-                            fontSize: 16.sp,
+                            fontSize: 16,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
                     ),
-                    SizedBox(width: 16.w),
+                    SizedBox(width: 16),
                     Expanded(
                       child: CupertinoButton(
                         onPressed: () {
@@ -144,7 +144,7 @@ class PlatformDatePicker {
                           'Done',
                           style: TextStyle(
                             color: AppColors.purple500,
-                            fontSize: 16.sp,
+                            fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),
                         ),

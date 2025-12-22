@@ -1,4 +1,4 @@
-// import 'package:dayfi/common/utils/ui_helpers.dart';
+// import 'package:streampay_2026/common/utils/ui_helpers.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -108,6 +108,7 @@ class CustomTextField extends StatelessWidget {
   final TextStyle? textStyle;
   final bool shouldFaintFillColor;
   final bool isSearch;
+  final double? width;
 
   const CustomTextField({
     super.key,
@@ -141,6 +142,7 @@ class CustomTextField extends StatelessWidget {
     this.textStyle,
     this.shouldFaintFillColor = false,
     this.isSearch = false,
+    this.width,
   });
 
   @override
@@ -152,10 +154,10 @@ class CustomTextField extends StatelessWidget {
             ? Text(
               label!,
               style: TextStyle(
-                fontFamily: 'Karla',
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                letterSpacing: -.6,
+                fontFamily: 'Chirp',
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                // letterspacing: 0,
                 height: 1.450,
                 color:
                     label == "hidden"
@@ -171,11 +173,12 @@ class CustomTextField extends StatelessWidget {
             : const SizedBox(),
         SizedBox(height: (label == null || label == "") ? 0 : 4),
         Container(
-          height: isSearch ? 40.h : null,
+          height: isSearch ? 40 : null,
+          width: width ?? 420,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(borderRadius.r),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              width: 1.w,
+              width: 1,
               color:
                   errorText.toString() != "null"
                       ? isDayfiId
@@ -183,8 +186,8 @@ class CustomTextField extends StatelessWidget {
                           : Colors.red.withOpacity(0.3)
                       : Theme.of(
                             context,
-                          ).textTheme.bodyLarge?.color?.withOpacity(0.1) ??
-                          Colors.black.withOpacity(0.1),
+                          ).textTheme.bodyLarge?.color?.withOpacity(0) ??
+                          Colors.black.withOpacity(0),
             ),
           ),
           child: Semantics(
@@ -203,12 +206,12 @@ class CustomTextField extends StatelessWidget {
               autovalidateMode: AutovalidateMode.onUserInteraction,
               maxLength: obscureText ? null : maxLength,
               controller: controller,
-              cursorColor: AppColors.purple500ForTheme(context),
+              cursorColor: AppColors.purple400,
               textInputAction: textInputAction,
               keyboardType: keyboardType,
               readOnly: shouldReadOnly,
               obscureText: obscureText,
-              cursorHeight: 18.h,
+              cursorHeight: 18,
               onChanged: onChanged,
               validator: validator,
               // Custom context menu to prevent iOS paste permission duplicate dialogs
@@ -231,16 +234,16 @@ class CustomTextField extends StatelessWidget {
               style:
                   textStyle ??
                   Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    fontFamily: 'Karla',
-                    fontSize: 16,
-                    letterSpacing: -.6,
+                    fontFamily: 'Chirp',
+                    fontSize: 15,
+                    letterSpacing: -.25,
                     color:
                         shouldFaintFillColor && shouldReadOnly
                             ? Theme.of(
                               context,
                             ).colorScheme.onSurface.withOpacity(.85)
                             : Theme.of(context).colorScheme.onSurface,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w400,
                     height: 1.450,
                   ),
               decoration: InputDecoration(
@@ -248,15 +251,15 @@ class CustomTextField extends StatelessWidget {
                 errorText: errorText,
                 hintText: hintText,
                 hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  fontFamily: 'Karla',
-                  fontSize: 16,
-                  letterSpacing: -.6,
-                  fontWeight: FontWeight.w500,
+                  fontFamily: 'Chirp',
+                  fontSize: 15,
+                  letterSpacing: -.25,
+                  fontWeight: FontWeight.w400,
                   height: 1.450,
                   overflow: TextOverflow.ellipsis,
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurfaceVariant.withOpacity(.35),
+                  color:
+                      Theme.of(context).colorScheme.onSurfaceVariant
+                        ..withOpacity(.7),
                 ),
                 filled: true,
                 fillColor:
@@ -271,41 +274,33 @@ class CustomTextField extends StatelessWidget {
                         : Theme.of(context).colorScheme.surface,
                 contentPadding:
                     contentPadding ??
-                    EdgeInsets.symmetric(vertical: 0.h, horizontal: 10.w),
+                    const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
                 errorStyle: TextStyle(
-                  fontFamily: 'Karla',
-                  fontSize: errorFontSize ?? 13.sp,
+                  fontFamily: 'Chirp',
+                  fontSize: errorFontSize ?? 13,
                   color: Colors.red.shade800,
-                  letterSpacing: -.6,
-                  fontWeight: FontWeight.w500,
-                  height: 1.4,
+                  // letterspacing: 0,
+                  fontWeight: FontWeight.w400,
+                  height: 1.2,
                 ),
                 prefixIcon: prefixIcon,
                 prefix: prefix,
                 suffixIcon: suffixIcon,
-                focusedBorder: OutlineInputBorder(
+                focusedBorder: const OutlineInputBorder(
                   borderSide: BorderSide.none,
-                  borderRadius: BorderRadius.all(
-                    Radius.circular(borderRadius.r),
-                  ),
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
                 ),
-                enabledBorder: OutlineInputBorder(
+                enabledBorder: const OutlineInputBorder(
                   borderSide: BorderSide.none,
-                  borderRadius: BorderRadius.all(
-                    Radius.circular(borderRadius.r),
-                  ),
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
                 ),
-                focusedErrorBorder: OutlineInputBorder(
+                focusedErrorBorder: const OutlineInputBorder(
                   borderSide: BorderSide.none,
-                  borderRadius: BorderRadius.all(
-                    Radius.circular(borderRadius.r),
-                  ),
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
                 ),
-                errorBorder: OutlineInputBorder(
+                errorBorder: const OutlineInputBorder(
                   borderSide: BorderSide.none,
-                  borderRadius: BorderRadius.all(
-                    Radius.circular(borderRadius.r),
-                  ),
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
                 ),
               ),
             ),
@@ -375,9 +370,9 @@ class ReadOnlyCustomTextField extends StatelessWidget {
             ? Text(
               label!,
               style: const TextStyle(
-                fontFamily: 'Karla',
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
+                fontFamily: 'Chirp',
+                fontSize: 15,
+                fontWeight: FontWeight.w400,
                 letterSpacing: -.1,
                 height: 1.450,
                 color: Color(0xFF302D53),
@@ -403,7 +398,7 @@ class ReadOnlyCustomTextField extends StatelessWidget {
             autovalidateMode: AutovalidateMode.onUserInteraction,
             maxLength: obscureText ? null : maxLength,
             controller: controller,
-            cursorColor: AppColors.purple500ForTheme(context), // innit
+            cursorColor: Theme.of(context).textTheme.bodyLarge!.color!, // innit
             textInputAction: textInputAction,
             keyboardType: keyboardType,
             readOnly: true,
@@ -421,9 +416,9 @@ class ReadOnlyCustomTextField extends StatelessWidget {
               formatter ?? FilteringTextInputFormatter.singleLineFormatter,
             ],
             style: TextStyle(
-              fontFamily: 'Karla',
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
+              fontFamily: 'Chirp',
+              fontSize: 15,
+              fontWeight: FontWeight.w400,
               height: 1.450,
               color: Theme.of(context).colorScheme.onSurface,
             ),
@@ -432,29 +427,30 @@ class ReadOnlyCustomTextField extends StatelessWidget {
               errorText: errorText,
               hintText: hintText,
               hintStyle: TextStyle(
-                fontFamily: 'Karla',
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
+                fontFamily: 'Chirp',
+                fontSize: 15,
+                fontWeight: FontWeight.w400,
                 height: 1.450,
                 color:
                     Theme.of(
-                      context,
-                    ).textTheme.bodyLarge?.color?.withOpacity(.35) ??
-                    Colors.black.withOpacity(.35),
+                            context,
+                          ).textTheme.bodyLarge?.color?.withOpacity(.35) ??
+                          Colors.black
+                      ..withOpacity(.7),
               ),
               filled: true,
               fillColor: Theme.of(
                 context,
               ).colorScheme.surfaceContainerHighest.withOpacity(.3),
-              contentPadding: EdgeInsets.symmetric(
-                vertical: 14.h,
-                horizontal: 14.w,
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 14,
+                horizontal: 14,
               ),
               errorStyle: TextStyle(
-                fontFamily: 'Karla',
+                fontFamily: 'Chirp',
                 fontSize: 12,
                 color: Colors.red.shade800,
-                letterSpacing: -.6,
+                // letterspacing: 0,
               ),
               prefixIcon: prefixIcon,
               prefix: prefix,
@@ -462,42 +458,44 @@ class ReadOnlyCustomTextField extends StatelessWidget {
               focusedBorder: UnderlineInputBorder(
                 borderSide: BorderSide(
                   // color: Color( 0xff5645F5), // innit
-                  color: AppColors.purple500ForTheme(context), // innit
-                  width: 1.w,
+                  color: Theme.of(context).textTheme.bodyLarge!.color!, // innit
+                  width: 1,
                 ),
                 borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(8.0.r),
-                  topRight: Radius.circular(8.0.r),
+                  topLeft: Radius.circular(8.0),
+                  topRight: Radius.circular(8.0),
                 ),
               ),
               enabledBorder: UnderlineInputBorder(
                 borderSide: BorderSide(
-                  color: AppColors.purple500ForTheme(context).withOpacity(.2),
-                  width: 1.w,
+                  color:
+                      Theme.of(context).textTheme.bodyLarge!.color!
+                        ..withOpacity(.7),
+                  width: 1,
                 ),
                 borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(8.0.r),
-                  topRight: Radius.circular(8.0.r),
+                  topLeft: Radius.circular(8.0),
+                  topRight: Radius.circular(8.0),
                 ),
               ),
               focusedErrorBorder: UnderlineInputBorder(
                 borderSide: BorderSide(
                   color: Colors.red.shade800.withOpacity(.85),
-                  width: 1.w,
+                  width: 1,
                 ),
                 borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(8.0.r),
-                  topRight: Radius.circular(8.0.r),
+                  topLeft: Radius.circular(8.0),
+                  topRight: Radius.circular(8.0),
                 ),
               ),
               errorBorder: UnderlineInputBorder(
                 borderSide: BorderSide(
                   color: Colors.red.shade800.withOpacity(.85),
-                  width: 1.w,
+                  width: 1,
                 ),
                 borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(8.0.r),
-                  topRight: Radius.circular(8.0.r),
+                  topLeft: Radius.circular(8.0),
+                  topRight: Radius.circular(8.0),
                 ),
               ),
             ),

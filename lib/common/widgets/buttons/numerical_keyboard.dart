@@ -53,7 +53,7 @@ class NumericalKeyboard extends StatelessWidget {
                 backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(.05),
                 child: InkWell(
                     onTap: () => onKeyPressed!(faceIDKey),
-                    child: Assets.icons.svgs.faceScan.svg(height: 34.h, width: 34.w)),
+                    child: Assets.icons.svgs.faceScan.svg(height: 34, width: 34)),
                 )
                   .marginOnly(top: 25)
                   .onTap(onTap: faceIDFunc, tooltip: "Face ID Func"),
@@ -76,7 +76,7 @@ class NumericalKeyboard extends StatelessWidget {
               '$n',
               style: AppTypography.bodyLarge.copyWith(
                 // color: ,
-                fontSize: 12.sp,
+                fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
             )),

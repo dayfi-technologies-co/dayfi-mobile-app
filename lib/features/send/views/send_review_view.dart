@@ -264,22 +264,51 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
     return network.name ?? 'Unknown Network';
   }
 
-  // Helper method to get display name for delivery method (convert P2P to Bank Transfer)
+  // Helper method to get display name for delivery method
   String _getDeliveryMethodDisplay(String? method) {
     if (method == null || method.isEmpty) {
       return 'Bank Transfer';
     }
 
-    final methodLower = method.toLowerCase();
-
-    // Convert P2P to Bank Transfer for display
-    if (methodLower == 'p2p' ||
-        methodLower == 'peer_to_peer' ||
-        methodLower == 'peer-to-peer') {
-      return 'Bank Transfer';
+    switch (method.toLowerCase()) {
+      case 'dayfi_tag':
+        return 'Dayfi Tag';
+      case 'bank_transfer':
+      case 'bank':
+        return 'Bank Transfer';
+      case 'p2p':
+      case 'peer_to_peer':
+      case 'peer-to-peer':
+        return 'Bank Transfer (P2P)';
+      case 'eft':
+        return 'Bank Transfer (EFT)';
+      case 'mobile_money':
+      case 'momo':
+      case 'mobilemoney':
+        return 'Mobile Money';
+      case 'spenn':
+        return 'Spenn';
+      case 'cash_pickup':
+      case 'cash':
+        return 'Cash Pickup';
+      case 'wallet':
+      case 'digital_wallet':
+        return 'Wallet';
+      case 'card':
+      case 'card_payment':
+        return 'Card';
+      case 'crypto':
+      case 'cryptocurrency':
+        return 'Crypto';
+      case 'digital_dollar':
+      case 'stablecoins':
+        return 'Digital Dollar';
+      default:
+        return method
+            .split('_')
+            .map((word) => word[0].toUpperCase() + word.substring(1))
+            .join(' ');
     }
-
-    return method;
   }
 
   // Convert country name to ISO alpha-2 code (best-effort)
@@ -354,20 +383,20 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
               children: [
                 SvgPicture.asset(
                   "assets/icons/svgs/notificationn.svg",
-                  height: 40.sp,
+                  height: 40,
                   color: Theme.of(context).colorScheme.surface,
                 ),
                 SizedBox(
-                  height: 40.sp,
-                  width: 40.sp,
+                  height: 40,
+                  width: 40,
                   child: Center(
                     child: Padding(
                       padding: const EdgeInsets.only(left: 8.0),
                       child: Icon(
                         Icons.arrow_back_ios,
-                        size: 20.sp,
+                        size: 20,
                         color: Theme.of(context).textTheme.bodyLarge!.color,
-                        // size: 20.sp,
+                        // size: 20,
                       ),
                     ),
                   ),
@@ -380,73 +409,95 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
             'Review Transfer',
             style: Theme.of(context).textTheme.headlineLarge?.copyWith(
               fontFamily: 'FunnelDisplay',
-              fontSize: 24.sp, // height: 1.6,
+              fontSize: 24, // height: 1.6,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           centerTitle: true,
         ),
-        body: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 18.w),
-                child: Text(
-                  "Confirm the details of your transfer before sending",
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'Karla',
-                    letterSpacing: -.6,
-                    height: 1.5,
-                  ),
-                  textAlign: TextAlign.center,
+        body: Align(
+          alignment: Alignment.topCenter,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final bool isWide = constraints.maxWidth > 600;
+              return ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: isWide ? 500 : double.infinity,
                 ),
-              ),
-              SizedBox(height: 32.h),
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isWide ? 24 : 18,
+                    vertical: 8,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isWide ? 24 : 18,
+                        ),
+                        child: Text(
+                          "Confirm the details of your transfer before sending",
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodyMedium?.copyWith(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            fontFamily: 'Chirp',
+                            letterSpacing: -.25,
+                            height: 1.5,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      SizedBox(height: 32),
 
-              // Reason Selection
-              _buildReasonSelection(),
+                      // Reason Selection
+                      _buildReasonSelection(),
 
-              SizedBox(height: 24.h),
+                      SizedBox(height: 24),
 
-              // Transfer Details
-              _buildTransferDetails(sendState),
+                      // Transfer Details
+                      _buildTransferDetails(sendState),
 
-              // SizedBox(height: 32.h),
+                      // SizedBox(height: 32),
 
-              // // Description
-              // _buildDescriptionSection(),
-              SizedBox(height: 40.h),
+                      // // Description
+                      // _buildDescriptionSection(),
+                      SizedBox(height: 32),
 
-              // Continue Button
-              PrimaryButton(
-                text: 'Confirm Payment',
-                onPressed:
-                    _selectedReason.isNotEmpty ? _proceedToPayment : null,
-                isLoading: _isLoading,
-                height: 48.00000.h,
-                backgroundColor:
-                    _selectedReason.isNotEmpty
-                        ? AppColors.purple500
-                        : AppColors.purple500.withOpacity(0.12),
-                textColor:
-                    _selectedReason.isNotEmpty
-                        ? AppColors.neutral0
-                        : AppColors.neutral0.withOpacity(.35),
-                fontFamily: 'Karla',
-                letterSpacing: -.70,
-                fontSize: 18,
-                width: double.infinity,
-                fullWidth: true,
-                borderRadius: 40.r,
-              ),
+                      // Continue Button
+                      PrimaryButton(
+                        text: 'Confirm Payment',
+                        onPressed:
+                            _selectedReason.isNotEmpty
+                                ? _proceedToPayment
+                                : null,
+                        isLoading: _isLoading,
+                        height: 48.00000,
+                        backgroundColor:
+                            _selectedReason.isNotEmpty
+                                ? AppColors.purple500
+                                : AppColors.purple500.withOpacity(0.12),
+                        textColor:
+                            _selectedReason.isNotEmpty
+                                ? AppColors.neutral0
+                                : AppColors.neutral0.withOpacity(.20),
+                        fontFamily: 'Chirp',
+                        letterSpacing: -.70,
+                        fontSize: 18,
+                        width: double.infinity,
+                        fullWidth: true,
+                        borderRadius: 40,
+                      ),
 
-              SizedBox(height: 36.h),
-            ],
+                      SizedBox(height: 36),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ),
@@ -475,10 +526,10 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
   Widget _buildTransferDetails(SendState sendState) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 24.h),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
           width: 1.0,
@@ -490,13 +541,13 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
           Text(
             'Transfer Details',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontFamily: 'Karla',
-              fontSize: 16.sp,
+              fontFamily: 'Chirp',
+              fontSize: 16,
               fontWeight: FontWeight.w600,
             ),
           ),
 
-          SizedBox(height: 20.h),
+          SizedBox(height: 20),
 
           _buildDetailRow(
             'Transfer Amount',
@@ -517,9 +568,9 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
           // _buildDetailRow('Transfer Taxes', '₦0.00'),
           Divider(
             color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-            height: 24.h,
+            height: 24,
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: 12),
 
           _buildDetailRow(
             'Total',
@@ -528,19 +579,25 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
           ),
 
           _buildDetailRow('Beneficiary ', widget.recipientData['name']),
-          SizedBox(height: 6.h),
+          SizedBox(height: 6),
 
           // Bank Name for Manual Input
-          if (widget.recipientData['bankName'] != null && widget.recipientData['bankName'].toString().isNotEmpty)
+          if (widget.recipientData['bankName'] != null &&
+              widget.recipientData['bankName'].toString().isNotEmpty)
             _buildDetailRow('Bank Name', widget.recipientData['bankName']),
 
           // Account Name for Manual Input
-          if (widget.recipientData['accountName'] != null && widget.recipientData['accountName'].toString().isNotEmpty)
-            _buildDetailRow('Account Name', widget.recipientData['accountName']),
+          if (widget.recipientData['accountName'] != null &&
+              widget.recipientData['accountName'].toString().isNotEmpty)
+            _buildDetailRow(
+              'Account Name',
+              widget.recipientData['accountName'],
+            ),
 
           // Account Number - show for both bank and mobile money
           _buildDetailRow(
-            widget.selectedData['recipientDeliveryMethod'] == 'bank' || widget.selectedData['recipientDeliveryMethod'] == 'eft' ||
+            widget.selectedData['recipientDeliveryMethod'] == 'bank' ||
+                    widget.selectedData['recipientDeliveryMethod'] == 'eft' ||
                     widget.selectedData['recipientDeliveryMethod'] == 'p2p'
                 ? 'Account Number'
                 : 'Mobile Money Number',
@@ -549,7 +606,8 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
 
           // Network/Provider - change title based on delivery method
           _buildDetailRow(
-            widget.selectedData['recipientDeliveryMethod'] == 'bank' || widget.selectedData['recipientDeliveryMethod'] == 'eft' ||
+            widget.selectedData['recipientDeliveryMethod'] == 'bank' ||
+                    widget.selectedData['recipientDeliveryMethod'] == 'eft' ||
                     widget.selectedData['recipientDeliveryMethod'] == 'p2p'
                 ? 'Bank'
                 : 'Mobile Money Provider',
@@ -575,24 +633,64 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
 
   String _getTransferTime(String? deliveryMethod) {
     if (deliveryMethod == null || deliveryMethod.isEmpty) {
-      return 'Within 5 minutes';
+      return '1-24 hours';
     }
 
     final methodLower = deliveryMethod.toLowerCase();
 
-    // Immediate transfer methods
-    if (methodLower == 'bank_transfer' ||
-        methodLower == 'bank' ||
-        methodLower == 'p2p' ||
+    // Dayfi Tag - instant internal transfers
+    if (methodLower == 'dayfi_tag' || methodLower == 'dayfi') {
+      return 'Instant';
+    }
+
+    // Bank transfers - manual processing, 24-48 hours
+    if (methodLower == 'bank_transfer' || methodLower == 'bank') {
+      return '24-48 hours';
+    }
+
+    // P2P and EFT - instant
+    if (methodLower == 'p2p' ||
         methodLower == 'peer_to_peer' ||
         methodLower == 'peer-to-peer' ||
         methodLower == 'eft' ||
         methodLower == 'electronic_funds_transfer') {
-      return 'Within 5 minutes';
+      return 'Instant';
     }
 
-    // Default for other methods
-    return 'Within 5 minutes';
+    // Mobile Money - instant settlement
+    if (methodLower == 'mobile_money' ||
+        methodLower == 'momo' ||
+        methodLower == 'mobilemoney' ||
+        methodLower == 'mobile') {
+      return 'Instant';
+    }
+
+    // Wallet/Digital transfers - instant
+    if (methodLower == 'wallet' ||
+        methodLower == 'digital_wallet' ||
+        methodLower == 'spenn' ||
+        methodLower == 'digital_dollar' ||
+        methodLower == 'stablecoins') {
+      return 'Instant';
+    }
+
+    // Card payments - instant
+    if (methodLower == 'card' || methodLower == 'card_payment') {
+      return 'Instant';
+    }
+
+    // Crypto - varies based on network
+    if (methodLower == 'crypto' || methodLower == 'cryptocurrency') {
+      return '10-30 minutes';
+    }
+
+    // Cash pickup - requires physical collection
+    if (methodLower == 'cash_pickup' || methodLower == 'cash') {
+      return '1-24 hours';
+    }
+
+    // Default for unknown methods
+    return '1-24 hours';
   }
 
   Widget _getDetailIcon(String label) {
@@ -641,7 +739,7 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
     double bottomPadding = 12,
   }) {
     return Padding(
-      padding: EdgeInsets.only(bottom: bottomPadding.h),
+      padding: EdgeInsets.only(bottom: bottomPadding),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -649,13 +747,13 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
           Row(
             children: [
               _getDetailIcon(label),
-              SizedBox(width: 8.w),
+              SizedBox(width: 8),
               Text(
                 label,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  fontFamily: 'Karla',
-                  letterSpacing: -.6,
-                  fontSize: 14.sp,
+                  fontFamily: 'Chirp',
+                  letterSpacing: -.25,
+                  fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: Theme.of(
                     context,
@@ -664,14 +762,14 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
               ),
             ],
           ),
-          SizedBox(width: 16.w),
+          SizedBox(width: 16),
           Expanded(
             child: Text(
               value,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                fontFamily: 'Karla',
-                fontSize: 14.sp,
-                 letterSpacing: -.6,
+                fontFamily: 'Chirp',
+                fontSize: 14,
+                letterSpacing: -.25,
                 fontWeight: FontWeight.w600,
                 color: Theme.of(context).colorScheme.onSurface,
               ),
@@ -690,13 +788,13 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
         Text(
           'Additional Information (Optional)',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontFamily: 'Karla',
-            fontSize: 16.sp,
+            fontFamily: 'Chirp',
+            fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
         ),
 
-        SizedBox(height: 16.h),
+        SizedBox(height: 16),
 
         CustomTextField(
           controller: _descriptionController,
@@ -719,22 +817,22 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
             height: MediaQuery.of(context).size.height * 0.92,
             decoration: BoxDecoration(
               color: Theme.of(context).scaffoldBackgroundColor,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
             child: Column(
               children: [
-                SizedBox(height: 18.h),
+                SizedBox(height: 18),
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 18.w),
+                  padding: EdgeInsets.symmetric(horizontal: 18),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      SizedBox(height: 40.h, width: 40.w),
+                      SizedBox(height: 40, width: 40),
                       Text(
                         'Transfer reason',
                         style: AppTypography.titleLarge.copyWith(
                           fontFamily: 'FunnelDisplay',
-                          fontSize: 20.sp,
+                          fontSize: 20,
                           // height: 1.6,
                           fontWeight: FontWeight.w600,
                           color: Theme.of(context).colorScheme.onSurface,
@@ -753,17 +851,17 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
                           children: [
                             SvgPicture.asset(
                               "assets/icons/svgs/notificationn.svg",
-                              height: 40.sp,
+                              height: 40,
                               color: Theme.of(context).colorScheme.surface,
                             ),
                             SizedBox(
-                              height: 40.sp,
-                              width: 40.sp,
+                              height: 40,
+                              width: 40,
                               child: Center(
                                 child: Image.asset(
                                   "assets/icons/pngs/cancelicon.png",
-                                  height: 20.h,
-                                  width: 20.w,
+                                  height: 20,
+                                  width: 20,
                                   color:
                                       Theme.of(
                                         context,
@@ -777,33 +875,33 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
                     ],
                   ),
                 ),
-                SizedBox(height: 16.h),
+                SizedBox(height: 16),
                 Expanded(
                   child: ListView.builder(
-                    padding: EdgeInsets.symmetric(horizontal: 18.w),
+                    padding: EdgeInsets.symmetric(horizontal: 18),
                     itemCount: _reasons.length,
                     itemBuilder: (context, index) {
                       final reason = _reasons[index];
                       final isSelected = _selectedReason == reason['name'];
                       return ListTile(
-                        contentPadding: EdgeInsets.symmetric(vertical: 4.h),
+                        contentPadding: EdgeInsets.symmetric(vertical: 4),
                         leading: Container(
-                          padding: EdgeInsets.all(6.r),
+                          padding: EdgeInsets.all(6),
                           decoration: BoxDecoration(
                             color: AppColors.neutral0,
-                            // borderRadius: BorderRadius.circular(12.r),
+                            // borderRadius: BorderRadius.circular(12),
                             shape: BoxShape.circle,
                           ),
                           child: Text(
                             reason['emoji']!,
-                            style: TextStyle(fontSize: 24.sp),
+                            style: TextStyle(fontSize: 24),
                           ),
                         ),
                         title: Text(
                           reason['name']!,
                           style: AppTypography.bodyLarge.copyWith(
-                            fontFamily: 'Karla',
-                            fontSize: 16.sp,
+                            fontFamily: 'Chirp',
+                            fontSize: 16,
                             letterSpacing: -.4,
                             fontWeight: FontWeight.w500,
                           ),
@@ -1047,16 +1145,38 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
     );
     AppLogger.info('   Total Channels Available: ${sendState.channels.length}');
 
+    // Handle multiple equivalent channel types for bank transfers
+    final deliveryMethod = sendState.selectedDeliveryMethod.toLowerCase();
+    final isBankType = [
+      'bank',
+      'bank_transfer',
+      'p2p',
+      'eft',
+    ].contains(deliveryMethod);
+
     final recipientChannels =
-        sendState.channels
-            .where(
-              (channel) =>
-                  channel.country == sendState.receiverCountry &&
-                  channel.currency == sendState.receiverCurrency &&
-                  channel.status == 'active' &&
-                  channel.channelType == sendState.selectedDeliveryMethod,
-            )
-            .toList();
+        sendState.channels.where((channel) {
+          final channelType = channel.channelType?.toLowerCase() ?? '';
+          final matchesCountryCurrency =
+              channel.country == sendState.receiverCountry &&
+              channel.currency == sendState.receiverCurrency &&
+              channel.status == 'active';
+
+          if (!matchesCountryCurrency) return false;
+
+          // For bank-type delivery methods, match any of the bank channel types
+          if (isBankType) {
+            return [
+              'bank',
+              'bank_transfer',
+              'p2p',
+              'eft',
+            ].contains(channelType);
+          }
+
+          // For other delivery methods, do exact match
+          return channelType == deliveryMethod;
+        }).toList();
 
     AppLogger.info(
       '   Matching Recipient Channels: ${recipientChannels.length}',
@@ -1211,8 +1331,10 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
       "accountName": accountName.toString().replaceAll(',', ""),
       "metadata": metadata,
       // Add bankName and accountName for Manual Input
-      if (widget.recipientData['bankName'] != null) "accountBank": widget.recipientData['bankName'],
-      if (widget.recipientData['accountName'] != null) "accountName": widget.recipientData['accountName'],
+      if (widget.recipientData['bankName'] != null)
+        "accountBank": widget.recipientData['bankName'],
+      if (widget.recipientData['accountName'] != null)
+        "accountName": widget.recipientData['accountName'],
       // "recipient": recipient,
       // "source": source,
     };
@@ -1253,179 +1375,220 @@ class _TransactionPinBottomSheetState
     final pinState = ref.watch(transactionPinProvider);
     final pinNotifier = ref.read(transactionPinProvider.notifier);
 
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.8,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isWide = constraints.maxWidth > 600;
+        return Align(
+          alignment: isWide ? Alignment.center : Alignment.bottomCenter,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: isWide ? 500 : double.infinity,
+            ),
+            child: Container(
+              height:
+                  isWide
+                      ? MediaQuery.of(context).size.height * 0.50
+                      : MediaQuery.of(context).size.height * 0.74,
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                borderRadius:
+                    isWide
+                        ? BorderRadius.circular(20)
+                        : BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              child: Column(
+                children: [
+                  SizedBox(height: 18),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: isWide ? 24 : 18),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        SizedBox(height: 40, width: 40),
+                        Text(
+                          'Enter Transaction PIN',
+                          style: Theme.of(
+                            context,
+                          ).textTheme.titleLarge?.copyWith(
+                            fontFamily: 'FunnelDisplay',
+                            fontSize: 20,
+                            // height: 1.6,
+                            fontWeight: FontWeight.w600,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
 
-      decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-      ),
-      child: Column(
-        children: [
-          SizedBox(height: 18.h),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 18.w),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                SizedBox(height: 40.h, width: 40.w),
-                Text(
-                  'Enter Transaction PIN',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontFamily: 'FunnelDisplay',
-                    fontSize: 20.sp,
-                    // height: 1.6,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.onSurface,
+                        InkWell(
+                          splashColor: Colors.transparent,
+                          highlightColor: Colors.transparent,
+                          onTap: () {
+                            pinNotifier.resetForm();
+                            Navigator.pop(context);
+                          },
+                          child: Stack(
+                            alignment: AlignmentGeometry.center,
+                            children: [
+                              SvgPicture.asset(
+                                "assets/icons/svgs/notificationn.svg",
+                                height: 40,
+                                color: Theme.of(context).colorScheme.surface,
+                              ),
+                              SizedBox(
+                                height: 40,
+                                width: 40,
+                                child: Center(
+                                  child: Image.asset(
+                                    "assets/icons/pngs/cancelicon.png",
+                                    height: 20,
+                                    width: 20,
+                                    color:
+                                        Theme.of(
+                                          context,
+                                        ).textTheme.bodyLarge!.color,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                  SizedBox(
+                    height:
+                        isWide ? 60 : MediaQuery.of(context).size.width * 0.15,
+                  ),
 
-                InkWell(
-                  splashColor: Colors.transparent,
-                  highlightColor: Colors.transparent,
-                  onTap: () {
-                    pinNotifier.resetForm();
-                    Navigator.pop(context);
-                  },
-                  child: Stack(
-                    alignment: AlignmentGeometry.center,
+                  // PIN dots
+                  Stack(
                     children: [
-                      SvgPicture.asset(
-                        "assets/icons/svgs/notificationn.svg",
-                        height: 40.sp,
-                        color: Theme.of(context).colorScheme.surface,
-                      ),
-                      SizedBox(
-                        height: 40.sp,
-                        width: 40.sp,
-                        child: Center(
-                          child: Image.asset(
-                            "assets/icons/pngs/cancelicon.png",
-                            height: 20.h,
-                            width: 20.w,
-                            color: Theme.of(context).textTheme.bodyLarge!.color,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(
+                          4,
+                          (index) => Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12.0,
+                            ),
+                            child: Text(
+                              index < pinState.pin.length ? '*' : '*',
+                              style: TextStyle(
+                                fontSize: 60,
+                                letterSpacing: -25,
+                                fontFamily: 'FunnelDisplay',
+                                fontWeight: FontWeight.w700,
+                                color:
+                                    index < pinState.pin.length
+                                        ? AppColors.purple500ForTheme(context)
+                                        : AppColors.neutral300,
+                              ),
+                            ),
                           ),
                         ),
                       ),
+
+                      // SizedBox(height: MediaQuery.of(context).size.width * 0.075),
+
+                      // Loading indicator section
+                      if (widget.isProcessing)
+                        Positioned(
+                          top: 50,
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          child: Center(
+                            child:
+                                LoadingAnimationWidget.horizontalRotatingDots(
+                                  color: AppColors.purple100,
+                                  size: 32.0,
+                                ),
+                          ),
+                        ),
                     ],
                   ),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: MediaQuery.of(context).size.width * 0.15),
 
-          // PIN dots
-          Stack(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                  4,
-                  (index) => Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                    child: Text(
-                      index < pinState.pin.length ? '*' : '*',
-                      style: TextStyle(
-                        fontSize: 88.sp,
-                        letterSpacing: -25,
-                        fontFamily: 'FunnelDisplay',
-                        fontWeight: FontWeight.w700,
-                        color:
-                            index < pinState.pin.length
-                                ? AppColors.purple500ForTheme(context)
-                                : AppColors.neutral300,
-                      ),
+                  // Number pad - disabled when processing
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        GridView.count(
+                          crossAxisCount: 3,
+                          shrinkWrap: true,
+                          childAspectRatio: 1.5,
+                          mainAxisSpacing: 16,
+                          crossAxisSpacing: 16,
+                          padding: EdgeInsets.symmetric(horizontal: 18),
+                          physics: const NeverScrollableScrollPhysics(),
+                          children: [
+                            ...List.generate(9, (index) {
+                              final number = (index + 1).toString();
+                              return _buildNumberButton(number, () {
+                                if (pinState.pin.length < 4 &&
+                                    !widget.isProcessing) {
+                                  final newPin = pinState.pin + number;
+                                  pinNotifier.updatePin(newPin);
+                                  if (newPin.length == 4) {
+                                    Future.delayed(
+                                      Duration(milliseconds: 300),
+                                      () {
+                                        widget.onPinEntered(newPin);
+                                      },
+                                    );
+                                  }
+                                }
+                              });
+                            }),
+                            const SizedBox.shrink(),
+                            _buildNumberButton('0', () {
+                              if (pinState.pin.length < 4 &&
+                                  !widget.isProcessing) {
+                                final newPin = '${pinState.pin}0';
+                                pinNotifier.updatePin(newPin);
+                                if (newPin.length == 4) {
+                                  Future.delayed(
+                                    Duration(milliseconds: 300),
+                                    () {
+                                      widget.onPinEntered(newPin);
+                                    },
+                                  );
+                                }
+                              }
+                            }),
+                            _buildIconButton(
+                              icon: Icons.arrow_back_ios,
+
+                              onTap: () {
+                                if (pinState.pin.isNotEmpty &&
+                                    !widget.isProcessing) {
+                                  pinNotifier.updatePin(
+                                    pinState.pin.substring(
+                                      0,
+                                      pinState.pin.length - 1,
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                        // Overlay when processing
+                        if (widget.isProcessing)
+                          Container(
+                            color: Theme.of(
+                              context,
+                            ).scaffoldBackgroundColor.withOpacity(0.7),
+                          ),
+                      ],
                     ),
                   ),
-                ),
+
+                  SizedBox(height: 24),
+                ],
               ),
-
-              // SizedBox(height: MediaQuery.of(context).size.width * 0.075),
-
-              // Loading indicator section
-              if (widget.isProcessing)
-                Positioned(
-                  top: 50,
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: LoadingAnimationWidget.horizontalRotatingDots(
-                      color: AppColors.purple100,
-                      size: 32.0.w,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-
-          // Number pad - disabled when processing
-          Expanded(
-            child: Stack(
-              children: [
-                GridView.count(
-                  crossAxisCount: 3,
-                  shrinkWrap: true,
-                  childAspectRatio: 1.5,
-                  mainAxisSpacing: 16,
-                  crossAxisSpacing: 16,
-                  padding: EdgeInsets.symmetric(horizontal: 18.w),
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: [
-                    ...List.generate(9, (index) {
-                      final number = (index + 1).toString();
-                      return _buildNumberButton(number, () {
-                        if (pinState.pin.length < 4 && !widget.isProcessing) {
-                          final newPin = pinState.pin + number;
-                          pinNotifier.updatePin(newPin);
-                          if (newPin.length == 4) {
-                            Future.delayed(Duration(milliseconds: 300), () {
-                              widget.onPinEntered(newPin);
-                            });
-                          }
-                        }
-                      });
-                    }),
-                    const SizedBox.shrink(),
-                    _buildNumberButton('0', () {
-                      if (pinState.pin.length < 4 && !widget.isProcessing) {
-                        final newPin = '${pinState.pin}0';
-                        pinNotifier.updatePin(newPin);
-                        if (newPin.length == 4) {
-                          Future.delayed(Duration(milliseconds: 300), () {
-                            widget.onPinEntered(newPin);
-                          });
-                        }
-                      }
-                    }),
-                    _buildIconButton(
-                      icon: Icons.arrow_back_ios,
-
-                      onTap: () {
-                        if (pinState.pin.isNotEmpty && !widget.isProcessing) {
-                          pinNotifier.updatePin(
-                            pinState.pin.substring(0, pinState.pin.length - 1),
-                          );
-                        }
-                      },
-                    ),
-                  ],
-                ),
-                // Overlay when processing
-                if (widget.isProcessing)
-                  Container(
-                    color: Theme.of(
-                      context,
-                    ).scaffoldBackgroundColor.withOpacity(0.7),
-                  ),
-              ],
             ),
           ),
-
-          SizedBox(height: 24.h),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -1452,7 +1615,7 @@ class _TransactionPinBottomSheetState
                 child: Text(
                   number,
                   style: TextStyle(
-                    fontSize: 32.sp,
+                    fontSize: 24,
                     fontFamily: 'FunnelDisplay',
                     fontWeight: FontWeight.w500,
                     color: Theme.of(context).colorScheme.onSurface,
@@ -1485,7 +1648,7 @@ class _TransactionPinBottomSheetState
           child: Icon(
             icon,
             color: AppColors.purple500ForTheme(context),
-            size: 20.sp,
+            size: 20,
           ),
         ),
       ),

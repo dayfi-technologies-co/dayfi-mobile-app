@@ -126,7 +126,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
   }
 
   Future<void> _loadDayfiId() async {
-    // Load cached DayFi ID from storage first
+    // Load cached Dayfi Tag from storage first
     final cachedDayfiId = localCache.getFromLocalCache('dayfi_id') as String?;
     if (cachedDayfiId != null &&
         cachedDayfiId.isNotEmpty &&
@@ -146,7 +146,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
       final walletService = locator<WalletService>();
       final walletResponse = await walletService.fetchWalletDetails();
 
-      // Find the first wallet with a non-empty Dayfi ID
+      // Find the first wallet with a non-empty Dayfi Tag
       if (walletResponse.wallets.isNotEmpty) {
         final walletWithDayfiId = walletResponse.wallets.firstWhere(
           (wallet) => wallet.dayfiId.isNotEmpty && wallet.dayfiId != 'null',
@@ -155,7 +155,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
 
         if (walletWithDayfiId.dayfiId.isNotEmpty &&
             walletWithDayfiId.dayfiId != 'null') {
-          // Cache the DayFi ID for next time
+          // Cache the Dayfi Tag for next time
           await localCache.saveToLocalCache(
             key: 'dayfi_id',
             value: walletWithDayfiId.dayfiId,
@@ -165,9 +165,9 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
             _dayfiId = walletWithDayfiId.dayfiId;
             _isLoadingDayfiId = false;
           });
-          AppLogger.info('Dayfi ID loaded: ${walletWithDayfiId.dayfiId}');
+          AppLogger.info('Dayfi Tag loaded: ${walletWithDayfiId.dayfiId}');
         } else {
-          // No valid DayFi ID found, clear any cached value
+          // No valid Dayfi Tag found, clear any cached value
           await localCache.removeFromLocalCache('dayfi_id');
           setState(() {
             _dayfiId = null;
@@ -180,11 +180,11 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
         });
       }
     } catch (e) {
-      AppLogger.error('Error loading Dayfi ID: $e');
+      AppLogger.error('Error loading Dayfi Tag: $e');
       setState(() {
         _isLoadingDayfiId = false;
       });
-      // Don't show error to user, just don't display Dayfi ID
+      // Don't show error to user, just don't display Dayfi Tag
     }
   }
 
@@ -353,7 +353,9 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
     }
   }
 
-  void _navigateToFAQs() {}
+  void _navigateToFAQs() {
+    appRouter.pushNamed(AppRoute.faqView);
+  }
 
   // Test notification method (temporary for testing)
   void _testNotification() async {
@@ -420,26 +422,38 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
           "Account",
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
             fontFamily: 'FunnelDisplay',
-            fontSize: 24.sp,
+            fontSize: 24,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
       ),
 
-      body: SingleChildScrollView(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            // Header Section
-            _buildHeaderSection(profileState),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final bool isWide = constraints.maxWidth > 600;
+          return Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: isWide ? 500 : double.infinity,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    // Header Section
+                    _buildHeaderSection(profileState),
 
-            SizedBox(height: 18.h),
+                    SizedBox(height: 18),
 
-            // Content
-            _buildContentSection(profileState),
-          ],
-        ),
+                    // Content
+                    _buildContentSection(profileState),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -449,16 +463,16 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(
-        24.w,
-        _ProfileConstants.headerPaddingTop.h,
-        24.w,
-        _ProfileConstants.headerPaddingBottom.h,
+        24,
+        _ProfileConstants.headerPaddingTop,
+        24,
+        _ProfileConstants.headerPaddingBottom,
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           _buildProfileImageWithTier(profileState),
-          SizedBox(height: 12.h),
+          SizedBox(height: 12),
           _buildUserName(profileState),
         ],
       ),
@@ -471,10 +485,10 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
       alignment: Alignment.center,
       children: [
         Padding(
-          padding: EdgeInsets.only(bottom: 32.h),
+          padding: EdgeInsets.only(bottom: 32),
           child: Image.asset(
             "assets/icons/pngs/account.png",
-            height: _ProfileConstants.profileImageHeight.h,
+            height: _ProfileConstants.profileImageHeight,
           ),
         ),
         if (!profileState.isLoading) _buildTierBadge(profileState),
@@ -504,25 +518,25 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
     return Positioned(
       bottom: 0,
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(
-            _ProfileConstants.tierContainerBorderRadius.r,
+            _ProfileConstants.tierContainerBorderRadius,
           ),
         ),
         child: Row(
           children: [
             Image.asset(
               tierIconPath,
-              height: _ProfileConstants.tierImageHeight.h,
+              height: _ProfileConstants.tierImageHeight,
             ),
-            SizedBox(width: 4.h),
+            SizedBox(width: 4),
             Text(
               tierDisplayName,
               style: AppTypography.labelMedium.copyWith(
                 color: tierColorValue,
-                fontSize: 16.sp,
+                fontSize: 16,
                 fontFamily: AppTypography.secondaryFontFamily,
                 fontWeight: AppTypography.regular,
                 height: 1,
@@ -537,7 +551,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
 
   // User Name Widget
   Widget _buildUserName(ProfileState profileState) {
-    // Check if DayFi Tag exists
+    // Check if Dayfi Tag exists
     // final hasDayfiTag = _dayfiId != null && _dayfiId!.isNotEmpty;
 
     return Column(
@@ -548,16 +562,21 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
           profileState.userName.isNotEmpty
               ? profileState.userName
                   .split(' ')
-                  .map((word) => word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : '')
+                  .map(
+                    (word) =>
+                        word.isNotEmpty
+                            ? word[0].toUpperCase() + word.substring(1)
+                            : '',
+                  )
                   .join(' ')
               : '',
           style: AppTypography.headlineSmall.copyWith(
             color: Theme.of(context).colorScheme.onSurface,
-            fontSize: 28.sp,
+            fontSize: 28,
             fontWeight: FontWeight.w600,
             fontFamily: 'FunnelDisplay',
             height: .95,
-            letterSpacing: -.6,
+            letterSpacing: -.25,
           ),
           textAlign: TextAlign.center,
         ),
@@ -569,18 +588,18 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
   Widget _buildContentSection(ProfileState profileState) {
     return Padding(
       padding: EdgeInsets.symmetric(
-        horizontal: _ProfileConstants.contentPadding.w,
+        horizontal: _ProfileConstants.contentPadding,
       ),
       child: Column(
         children: [
           _buildEditProfileButton(profileState),
-          SizedBox(height: 36.h),
+          SizedBox(height: 36),
           _buildSettingsSections(),
-          SizedBox(height: 28.h),
+          SizedBox(height: 28),
           _buildLogoutButton(),
-          SizedBox(height: 50.h),
+          SizedBox(height: 50),
           _buildPartnershipInfo(),
-          SizedBox(height: 112.h),
+          SizedBox(height: 112),
         ],
       ),
     );
@@ -598,24 +617,24 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
               profileState.isLoading
                   ? AppColors.purple500
                   : AppColors.purple500,
-          height: _ProfileConstants.buttonHeight.h,
+          height: _ProfileConstants.buttonHeight,
           textColor: AppColors.neutral0,
-          fontFamily: 'Karla',
+          fontFamily: 'Chirp',
           letterSpacing: -.70,
           fontSize: 18,
-          width: 375.w,
+          width: 375,
           fullWidth: true,
-        ), // DayFi Tag section
-        SizedBox(height: 24.h),
+        ), // Dayfi Tag section
+        SizedBox(height: 24),
         if (_isLoadingDayfiId) ...[
-          ShimmerWidgets.textShimmer(context, width: 200.w, height: 20.h),
+          ShimmerWidgets.textShimmer(context, width: 200, height: 20),
         ] else if (_dayfiId != null && _dayfiId!.isNotEmpty) ...[
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(
-                _ProfileConstants.containerBorderRadius.r,
+                _ProfileConstants.containerBorderRadius,
               ),
               boxShadow: [_buildShadow()],
             ),
@@ -630,7 +649,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                       style: TextStyle(
                         // fontFamily: 'FunnelDisplay',',
                         fontWeight: FontWeight.w600,
-                        fontSize: 14.sp,
+                        fontSize: 14,
                         letterSpacing: 0.00,
                         height: 1.450,
                         color: Theme.of(context).colorScheme.onSurface,
@@ -641,7 +660,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                       style: TextStyle(
                         // fontFamily: 'FunnelDisplay',',
                         fontWeight: FontWeight.w600,
-                        fontSize: 14.sp,
+                        fontSize: 14,
                         letterSpacing: 0.00,
                         height: 1.450,
                         color: Theme.of(context).colorScheme.onSurface,
@@ -649,20 +668,20 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                     ),
                   ],
                 ),
-                SizedBox(width: 12.w),
+                SizedBox(width: 12),
                 Row(
                   children: [
                     Semantics(
                       button: true,
-                      label: 'Copy DayFi Tag',
-                      hint: 'Double tap to copy your DayFi Tag to clipboard',
+                      label: 'Copy Dayfi Tag',
+                      hint: 'Double tap to copy your Dayfi Tag to clipboard',
                       child: GestureDetector(
                         onTap: () {
                           HapticHelper.lightImpact();
                           Clipboard.setData(ClipboardData(text: '@$_dayfiId'));
                           TopSnackbar.show(
                             context,
-                            message: 'DayFi Tag copied to clipboard',
+                            message: 'Dayfi Tag copied to clipboard',
                             isError: false,
                           );
                         },
@@ -671,36 +690,36 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                             Text(
                               "copy",
                               style: TextStyle(
-                                fontFamily: 'Karla',
+                                fontFamily: 'Chirp',
                                 fontWeight: FontWeight.w600,
-                                fontSize: 12.sp,
+                                fontSize: 12,
                                 letterSpacing: 0.00,
                                 height: 1.450,
                                 color: Theme.of(context).colorScheme.primary,
                               ),
                             ),
-                            SizedBox(width: 6.w),
+                            SizedBox(width: 6),
                             SvgPicture.asset(
                               "assets/icons/svgs/copy.svg",
                               color: Theme.of(context).colorScheme.primary,
-                              height: 16.sp,
+                              height: 16,
                             ),
                           ],
                         ),
                       ),
                     ),
-                    SizedBox(width: 16.w),
+                    SizedBox(width: 16),
                     Semantics(
                       button: true,
-                      label: 'Share DayFi Tag',
-                      hint: 'Double tap to share your DayFi Tag',
+                      label: 'Share Dayfi Tag',
+                      hint: 'Double tap to share your Dayfi Tag',
                       child: GestureDetector(
                         onTap: () async {
                           HapticHelper.lightImpact();
                           try {
                             await Share.share(
                               'Send me money on DayFi! My tag is @$_dayfiId\n\nDownload DayFi: https://dayfi.co',
-                              subject: 'My DayFi Tag',
+                              subject: 'My Dayfi Tag',
                             );
                           } catch (e) {
                             if (mounted) {
@@ -717,19 +736,19 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                             Text(
                               "share",
                               style: TextStyle(
-                                fontFamily: 'Karla',
+                                fontFamily: 'Chirp',
                                 fontWeight: FontWeight.w600,
-                                fontSize: 12.sp,
+                                fontSize: 12,
                                 letterSpacing: 0.00,
                                 height: 1.450,
                                 color: Theme.of(context).colorScheme.primary,
                               ),
                             ),
-                            SizedBox(width: 6.w),
+                            SizedBox(width: 6),
                             SvgPicture.asset(
                               "assets/icons/svgs/share.svg",
                               color: Theme.of(context).colorScheme.primary,
-                              height: 16.sp,
+                              height: 16,
                             ),
                           ],
                         ),
@@ -741,7 +760,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
             ),
           ),
         ] else ...[
-          SizedBox(height: 8.h),
+          SizedBox(height: 8),
           InkWell(
             splashColor: Colors.transparent,
             highlightColor: Colors.transparent,
@@ -751,13 +770,13 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                 context,
                 AppRoute.dayfiTagExplanationView,
               );
-              // Reload DayFi Tag if created
+              // Reload Dayfi Tag if created
               if (result != null && result is String && result.isNotEmpty) {
                 // Strip @ prefix if present, as we store it without @
                 final dayfiIdValue =
                     result.startsWith('@') ? result.substring(1) : result;
 
-                // Cache the new DayFi ID immediately
+                // Cache the new Dayfi Tag immediately
                 await localCache.saveToLocalCache(
                   key: 'dayfi_id',
                   value: dayfiIdValue,
@@ -775,16 +794,16 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
             },
 
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 0.h),
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 0),
               child: Text(
-                "Create your DayFi Tag",
+                "Create your Dayfi Tag",
                 style: TextStyle(
-                  fontFamily: 'Karla',
+                  fontFamily: 'Chirp',
                   color: AppColors.purple500ForTheme(context),
-                  fontSize: 16.sp,
+                  fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  letterSpacing: -.6,
-                  height: 1.4,
+                  letterSpacing: -.25,
+                  height: 1.2,
                 ),
               ),
             ),
@@ -814,7 +833,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                   )
                   .toList(),
         ),
-        SizedBox(height: _ProfileConstants.sectionSpacing.h),
+        SizedBox(height: _ProfileConstants.sectionSpacing),
         _buildSection(
           title: 'PROMOTIONS',
           children:
@@ -833,7 +852,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                   )
                   .toList(),
         ),
-        SizedBox(height: _ProfileConstants.sectionSpacing.h),
+        SizedBox(height: _ProfileConstants.sectionSpacing),
         _buildSection(
           title: 'SECURITY',
           children:
@@ -857,7 +876,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                   )
                   .toList(),
         ),
-        SizedBox(height: _ProfileConstants.sectionSpacing.h),
+        SizedBox(height: _ProfileConstants.sectionSpacing),
         _buildSection(
           title: 'HELP AND SUPPORT',
           children:
@@ -874,7 +893,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                   )
                   .toList(),
         ),
-        SizedBox(height: _ProfileConstants.sectionSpacing.h),
+        SizedBox(height: _ProfileConstants.sectionSpacing),
         _buildSection(
           title: 'ABOUT US',
           children:
@@ -898,11 +917,11 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
   // Logout Button
   Widget _buildLogoutButton() {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(
-          _ProfileConstants.containerBorderRadius.r,
+          _ProfileConstants.containerBorderRadius,
         ),
         boxShadow: [_buildShadow()],
       ),
@@ -941,7 +960,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle(title),
-        SizedBox(height: 8.h),
+        SizedBox(height: 8),
         _buildSectionContainer(children),
       ],
     );
@@ -953,10 +972,10 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
       title,
       style: AppTypography.labelLarge.copyWith(
         color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(.85),
-        fontSize: 11.sp,
+        fontSize: 11,
         fontWeight: FontWeight.w500,
-        fontFamily: 'Karla',
-        letterSpacing: -.6,
+        fontFamily: 'Chirp',
+        letterSpacing: -.25,
         height: 1.2,
       ),
     );
@@ -965,11 +984,11 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
   // Section Container
   Widget _buildSectionContainer(List<Widget> children) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(
-          _ProfileConstants.containerBorderRadius.r,
+          _ProfileConstants.containerBorderRadius,
         ),
         boxShadow: [_buildShadow()],
       ),
@@ -992,14 +1011,14 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
     return InkWell(
       onTap: isToggle ? null : onTap,
       borderRadius: BorderRadius.circular(
-        _ProfileConstants.containerBorderRadius.r,
+        _ProfileConstants.containerBorderRadius,
       ),
       child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 14.h),
+        padding: EdgeInsets.symmetric(vertical: 14),
         child: Row(
           children: [
             _buildIconContainer(iconColor, icon, icon2),
-            SizedBox(width: 16.w),
+            SizedBox(width: 16),
             Expanded(child: _buildItemText(title, iconColor)),
             isToggle
                 ? Switch(
@@ -1017,18 +1036,18 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
   // Icon Container
   Widget _buildIconContainer(Color iconColor, String icon, String icon2) {
     return SizedBox(
-      width: _ProfileConstants.iconContainerSize.w,
-      height: _ProfileConstants.iconContainerSize.w,
+      width: _ProfileConstants.iconContainerSize,
+      height: _ProfileConstants.iconContainerSize,
       // decoration: BoxDecoration(
       //   color: iconColor.withOpacity(1),
-      //   borderRadius: BorderRadius.circular(24.r),
+      //   borderRadius: BorderRadius.circular(24),
       // ),
       child: Stack(
         alignment: AlignmentGeometry.center,
         children: [
           SvgPicture.asset(
             icon,
-            height: 40.sp,
+            height: 40,
             color:
                 icon2 == "assets/icons/svgs/logout1.svg"
                     ? AppColors.error600
@@ -1054,14 +1073,14 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
     return Text(
       title,
       style: AppTypography.titleMedium.copyWith(
-        fontFamily: 'Karla',
+        fontFamily: 'Chirp',
         color:
             iconColor == AppColors.error500
                 ? AppColors.error500
                 : Theme.of(context).colorScheme.onSurface,
-        fontSize: 18.sp,
+        fontSize: 18,
         fontWeight: FontWeight.w500,
-        letterSpacing: -1,
+        letterSpacing: -.250,
         height: 1.2,
       ),
     );
@@ -1069,7 +1088,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
 
   // Chevron Icon
   Widget _buildChevronIcon() {
-    return Icon(Icons.chevron_right, color: AppColors.neutral400, size: 20.sp);
+    return Icon(Icons.chevron_right, color: AppColors.neutral400, size: 20);
   }
 
   // Promotion Item Widget
@@ -1085,13 +1104,13 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(24.r),
+      borderRadius: BorderRadius.circular(24),
       child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 14.h),
+        padding: EdgeInsets.symmetric(vertical: 14),
         child: Row(
           children: [
             _buildIconContainer(iconColor, icon, icon2),
-            SizedBox(width: 16.w),
+            SizedBox(width: 16),
             Expanded(
               child: _buildItemText(
                 title,
@@ -1099,7 +1118,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
               ),
             ),
             _buildActionBadge(actionText, actionColor),
-            SizedBox(width: 8.w),
+            SizedBox(width: 8),
             _buildChevronIcon(),
           ],
         ),
@@ -1110,19 +1129,19 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
   // Action Badge
   Widget _buildActionBadge(String actionText, Color actionColor) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
         color: actionColor,
-        borderRadius: BorderRadius.circular(20.r),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
         actionText,
         style: AppTypography.labelMedium.copyWith(
           color: Colors.white,
-          fontSize: 13.sp,
+          fontSize: 13,
           fontWeight: FontWeight.w500,
-          fontFamily: 'Karla',
-          letterSpacing: -.6,
+          fontFamily: 'Chirp',
+          letterSpacing: -.25,
           height: 1.2,
         ),
       ),
@@ -1142,16 +1161,16 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
   Widget _buildLogoutDialog() {
     return Dialog(
       backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Container(
-        padding: EdgeInsets.all(28.w),
+        padding: EdgeInsets.all(28),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             _buildDialogIcon(),
-            SizedBox(height: 24.h),
+            SizedBox(height: 24),
             _buildDialogTitle(),
-            SizedBox(height: 16.h),
+            SizedBox(height: 16),
             _buildDialogButtons(),
           ],
         ),
@@ -1162,8 +1181,8 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
   // Dialog Icon
   Widget _buildDialogIcon() {
     return Container(
-      width: _ProfileConstants.dialogIconSize.w,
-      height: _ProfileConstants.dialogIconSize.w,
+      width: _ProfileConstants.dialogIconSize,
+      height: _ProfileConstants.dialogIconSize,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
@@ -1189,7 +1208,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
       'Are you sure you want to logout? You will be asked to create a new passcode.',
       style: TextStyle(
         fontFamily: 'FunnelDisplay',
-        fontSize: 20.sp,
+        fontSize: 20,
 
         // height: 1.6,
         fontWeight: FontWeight.w500,
@@ -1205,7 +1224,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
     return Column(
       children: [
         _buildDialogLogoutButton(),
-        SizedBox(height: 12.h),
+        SizedBox(height: 12),
         _buildCancelButton(),
       ],
     );
@@ -1222,10 +1241,10 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
       backgroundColor: AppColors.purple500,
       textColor: AppColors.neutral0,
       borderRadius: _ProfileConstants.buttonBorderRadius,
-      height: _ProfileConstants.buttonHeight.h,
+      height: _ProfileConstants.buttonHeight,
       width: double.infinity,
       fullWidth: true,
-      fontFamily: 'Karla',
+      fontFamily: 'Chirp',
       fontSize: 18,
       fontWeight: FontWeight.w500,
       letterSpacing: -0.8,
@@ -1241,9 +1260,9 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
       textColor: AppColors.purple500ForTheme(context),
       width: double.infinity,
       fullWidth: true,
-      height: _ProfileConstants.buttonHeight.h,
+      height: _ProfileConstants.buttonHeight,
       borderRadius: _ProfileConstants.buttonBorderRadius,
-      fontFamily: 'Karla',
+      fontFamily: 'Chirp',
       fontSize: 18,
       fontWeight: FontWeight.w500,
       letterSpacing: -0.8,
@@ -1252,43 +1271,43 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
 
   Widget _buildPartnershipInfo() {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 32.w),
+      padding: EdgeInsets.symmetric(horizontal: 32),
       child: Column(
         children: [
           // Center(
           //   child: Text(
           //     'DayFi is powered by Yellow Card in partnership with Smile ID.',
           //     style: AppTypography.bodySmall.copyWith(
-          //       fontFamily: 'Karla',
+          //       fontFamily: 'Chirp',
           //       color: Theme.of(
           //         context,
           //       ).colorScheme.onSurface.withOpacity(0.75),
-          //       fontSize: 14.sp,
+          //       fontSize: 14,
           //       fontWeight: FontWeight.w500,
-          //       letterSpacing: -.6,
+          //       letterSpacing: -.25,
           //       height: 1.2,
           //     ),
           //     textAlign: TextAlign.center,
           //   ),
           // ),
-          // SizedBox(height: 14.h),
+          // SizedBox(height: 14),
           Center(
             child: Text(
               'Financial services are regulated by the relevant authorities in their operating regions.',
               style: AppTypography.bodySmall.copyWith(
-                fontFamily: 'Karla',
+                fontFamily: 'Chirp',
                 color: Theme.of(
                   context,
                 ).colorScheme.onSurface.withOpacity(0.75),
-                fontSize: 14.sp,
+                fontSize: 14,
                 fontWeight: FontWeight.w500,
-                letterSpacing: -.6,
+                letterSpacing: -.25,
                 height: 1.2,
               ),
               textAlign: TextAlign.center,
             ),
           ),
-          // SizedBox(height: 14.h),
+          // SizedBox(height: 14),
           // // Test notification button (temporary)
           // Center(
           //   child: TextButton(
@@ -1296,18 +1315,18 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
           //     child: Text('Test Notification'),
           //   ),
           // ),
-          SizedBox(height: 14.h),
+          SizedBox(height: 14),
           Center(
             child: Text(
               'Version 1.0.0',
               style: AppTypography.bodySmall.copyWith(
-                fontFamily: 'Karla',
+                fontFamily: 'Chirp',
                 color: Theme.of(
                   context,
                 ).colorScheme.onSurface.withOpacity(0.75),
-                fontSize: 14.sp,
+                fontSize: 14,
                 fontWeight: FontWeight.w500,
-                letterSpacing: -.6,
+                letterSpacing: -.25,
                 height: 1.2,
               ),
               textAlign: TextAlign.center,

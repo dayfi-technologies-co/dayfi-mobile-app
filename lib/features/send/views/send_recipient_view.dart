@@ -257,17 +257,17 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
-             scrolledUnderElevation: .5,
-              foregroundColor: Theme.of(context).scaffoldBackgroundColor,
-              shadowColor: Theme.of(context).scaffoldBackgroundColor,
-              surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+          scrolledUnderElevation: .5,
+          foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+          shadowColor: Theme.of(context).scaffoldBackgroundColor,
+          surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
 
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
           leading: IconButton(
             icon: Icon(
               Icons.arrow_back_ios,
-            size: 20.sp,
+              size: 20,
               color: Theme.of(context).colorScheme.onSurface,
             ),
             onPressed:
@@ -280,7 +280,7 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
             'Beneficiaries',
             style: AppTypography.titleLarge.copyWith(
               fontFamily: 'FunnelDisplay',
-              fontSize: 24.sp, // height: 1.6,
+              fontSize: 24, // height: 1.6,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface,
             ),
@@ -289,7 +289,7 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
           actions: [
             if (filteredBeneficiaries.isNotEmpty)
               Padding(
-                padding: EdgeInsets.only(right: 16.w),
+                padding: EdgeInsets.only(right: 16),
                 child: IconButton(
                   onPressed: () {
                     appRouter.pushNamed(
@@ -299,8 +299,8 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
                   },
                   icon: SvgPicture.asset(
                     "assets/icons/svgs/user-plus.svg",
-                    width: 24.w,
-                    height: 24.w,
+                    width: 24,
+                    height: 24,
                     color: Theme.of(context).colorScheme.onSurface,
                     colorFilter: ColorFilter.mode(
                       Theme.of(context).colorScheme.onSurface,
@@ -317,96 +317,115 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
               ),
           ],
         ),
-        body: RefreshIndicator(
-          onRefresh: () async {
-            _loadBeneficiaries();
-          },
-          child: Padding(
-            padding: EdgeInsetsGeometry.only(bottom: 0.h),
-            child:
-                recipientsState.isLoading && filteredBeneficiaries.isEmpty
-                    ? Padding(
-                      padding: EdgeInsets.all(16.w),
-                      child: ShimmerWidgets.recipientListShimmer(
-                        context,
-                        itemCount: 8,
-                        padding: EdgeInsets.zero,
-                      ),
-                    )
-                    : recipientsState.errorMessage != null &&
-                        filteredBeneficiaries.isEmpty
-                    ? ErrorStateWidget(
-                      message: 'Failed to load Beneficiaries',
-                      details: recipientsState.errorMessage,
-                      onRetry: _loadBeneficiaries,
-                    )
-                    : filteredBeneficiaries.isEmpty
-                    ? _buildEmptyState(
-                      targetCountry,
-                      targetCurrency,
-                      widget.selectedData['recipientDeliveryMethod'] ??
-                          'Bank Transfer',
-                    )
-                    : ListView(
-                      children: [
-                        // Search Bar
-                        Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 18.w,
-                            vertical: 8.h,
-                          ),
-                          child: CustomTextField(
-                            controller: _searchController,
-                            label: '',
-                            hintText: 'Search...',
-                            borderRadius: 40,
-                            prefixIcon: Container(
-                              width: 40.w,
-                              alignment: Alignment.centerRight,
-                              constraints: BoxConstraints.tightForFinite(),
-                              child: Center(
-                                child: SvgPicture.asset(
-                                  'assets/icons/svgs/search-normal.svg',
-                                  height: 22.sp,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurface.withOpacity(0.6),
-                                ),
+        body:Align(
+              alignment: Alignment.topCenter,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final bool isWide = constraints.maxWidth > 600;
+              return ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: isWide ? 500 : double.infinity,
+                ),
+                child: RefreshIndicator(
+                  onRefresh: () async {
+                    _loadBeneficiaries();
+                  },
+                  child: Padding(
+                    padding: EdgeInsetsGeometry.only(bottom: 0),
+                    child:
+                        recipientsState.isLoading &&
+                                filteredBeneficiaries.isEmpty
+                            ? Padding(
+                              padding: EdgeInsets.all(16),
+                              child: ShimmerWidgets.recipientListShimmer(
+                                context,
+                                itemCount: 8,
+                                padding: EdgeInsets.zero,
                               ),
+                            )
+                            : recipientsState.errorMessage != null &&
+                                filteredBeneficiaries.isEmpty
+                            ? ErrorStateWidget(
+                              message: 'Failed to load Beneficiaries',
+                              details: recipientsState.errorMessage,
+                              onRetry: _loadBeneficiaries,
+                            )
+                            : filteredBeneficiaries.isEmpty
+                            ? _buildEmptyState(
+                              targetCountry,
+                              targetCurrency,
+                              widget.selectedData['recipientDeliveryMethod'] ??
+                                  'Bank Transfer',
+                            )
+                            : ListView(
+                              children: [
+                                // Search Bar
+                                Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: isWide ? 24 : 18,
+                                    vertical: 8,
+                                  ),
+                                  child: CustomTextField(
+                                    controller: _searchController,
+                                    label: '',
+                                    hintText: 'Search...',
+                                    borderRadius: 40,
+                                    prefixIcon: Container(
+                                      width: 40,
+                                      alignment: Alignment.centerRight,
+                                      constraints:
+                                          BoxConstraints.tightForFinite(),
+                                      child: Center(
+                                        child: SvgPicture.asset(
+                                          'assets/icons/svgs/search-normal.svg',
+                                          height: 22,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface
+                                              .withOpacity(0.6),
+                                        ),
+                                      ),
+                                    ),
+                                    onChanged: (value) {
+                                      _searchDebouncer.run(() {
+                                        setState(
+                                          () {},
+                                        ); // Trigger rebuild to update filtered list
+                                      });
+                                    },
+                                  ),
+                                ),
+              
+                                // Beneficiaries List
+                                ListView.builder(
+                                  shrinkWrap: true,
+                                  physics: NeverScrollableScrollPhysics(),
+                                  padding: EdgeInsets.only(
+                                    left: isWide ? 24 : 18,
+                                    right: isWide ? 24 : 18,
+                                    bottom: 112,
+                                  ),
+                                  itemCount: filteredBeneficiaries.length,
+                                  itemBuilder: (context, index) {
+                                    final beneficiary =
+                                        filteredBeneficiaries[index];
+                                    return _buildRecipientCard(
+                                      beneficiary,
+                                      bottomMargin:
+                                          index ==
+                                                  filteredBeneficiaries.length -
+                                                      1
+                                              ? 8
+                                              : 24,
+                                    );
+                                  },
+                                ),
+                              ],
                             ),
-                            onChanged: (value) {
-                              _searchDebouncer.run(() {
-                                setState(
-                                  () {},
-                                ); // Trigger rebuild to update filtered list
-                              });
-                            },
-                          ),
-                        ),
-
-                        // Beneficiaries List
-                        ListView.builder(
-                          shrinkWrap: true,
-                          physics: NeverScrollableScrollPhysics(),
-                          padding: EdgeInsets.only(
-                            left: 18.w,
-                            right: 18.w,
-                            bottom: 112.h,
-                          ),
-                          itemCount: filteredBeneficiaries.length,
-                          itemBuilder: (context, index) {
-                            final beneficiary = filteredBeneficiaries[index];
-                            return _buildRecipientCard(
-                              beneficiary,
-                              bottomMargin:
-                                  index == filteredBeneficiaries.length - 1
-                                      ? 8
-                                      : 24,
-                            );
-                          },
-                        ),
-                      ],
-                    ),
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ),
@@ -420,20 +439,20 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
 
     return Center(
       child: Padding(
-        padding: EdgeInsets.all(24.w),
+        padding: EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SizedBox(height: 16.h),
+            SizedBox(height: 16),
 
             // Subtitle
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 56.w),
+              padding: EdgeInsets.symmetric(horizontal: 56),
               child: Text(
                 'You do not have any Beneficiaries yet for $countryName in $currency and $displayChannelType',
                 style: AppTypography.bodyLarge.copyWith(
                   fontFamily: 'FunnelDisplay',
-                  fontSize: 20.sp,
+                  fontSize: 20,
                   fontWeight: FontWeight.w600,
                   color: Theme.of(context).colorScheme.onSurface,
                 ),
@@ -442,7 +461,7 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
               ),
             ),
 
-            SizedBox(height: 40.h),
+            SizedBox(height: 32),
 
             // Create Beneficiaries Button
             PrimaryButton(
@@ -455,16 +474,16 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
                 );
               },
               backgroundColor: AppColors.purple500,
-              height: 48.00000.h,
+              height: 48.00000,
               textColor: AppColors.neutral0,
-              fontFamily: 'Karla',
+              fontFamily: 'Chirp',
               letterSpacing: -.70,
               fontSize: 18,
               width: double.infinity,
               fullWidth: true,
             ),
 
-            SizedBox(height: 40.h),
+            SizedBox(height: 32),
           ],
         ),
       ),
@@ -479,11 +498,11 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
     final source = beneficiaryWithSource.source;
 
     return Container(
-      margin: EdgeInsets.only(bottom: 8.h, top: 8.h),
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+      margin: EdgeInsets.only(bottom: 8, top: 8),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
             color: AppColors.neutral500.withOpacity(0.05),
@@ -505,21 +524,21 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
                 children: [
                   SvgPicture.asset(
                     "assets/icons/svgs/account.svg",
-                    width: 40.w,
-                    height: 40.w,
+                    width: 40,
+                    height: 40,
                     color: AppColors.purple500ForTheme(context),
                   ),
                   SizedBox(
-                    width: 40.w,
-                    height: 40.w,
+                    width: 40,
+                    height: 40,
                     child: Center(
                       child: Text(
                         _getInitials(beneficiary.name),
                         style: TextStyle(
                           color: AppColors.neutral0,
-                          fontFamily: 'Karla',
-                          fontSize: 16.sp,
-                          letterSpacing: -.6,
+                          fontFamily: 'Chirp',
+                          fontSize: 16,
+                          letterSpacing: -.25,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -530,8 +549,8 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
               Align(
                 alignment: Alignment.bottomRight,
                 child: Container(
-                  width: 16.w,
-                  height: 16.w,
+                  width: 16,
+                  height: 16,
                   decoration: BoxDecoration(
                     color: AppColors.neutral0,
                     shape: BoxShape.circle,
@@ -541,15 +560,15 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
                     child: SvgPicture.asset(
                       _getFlagPath(beneficiary.country),
                       fit: BoxFit.cover,
-                      width: 24.w,
-                      height: 24.w,
+                      width: 24,
+                      height: 24,
                     ),
                   ),
                 ),
               ),
             ],
           ),
-          SizedBox(width: 8.w),
+          SizedBox(width: 8),
 
           // Beneficiary Info
           Expanded(
@@ -559,8 +578,8 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
                 Text(
                   beneficiary.name.toUpperCase(),
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    fontFamily: 'Karla',
-                    fontSize: 16.sp,
+                    fontFamily: 'Chirp',
+                    fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
@@ -570,11 +589,11 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
                 Row(
                   children: [
                     // _getAccountIcon(source, beneficiary),
-                    // SizedBox(width: 2.w),
+                    // SizedBox(width: 2),
                     Expanded(
                       child:
                           _getChannelAndNetworkInfo(beneficiaryWithSource) ==
-                                  "DayFi Tag"
+                                  "Dayfi Tag"
                               ? Row(
                                 children: [
                                   Text(
@@ -585,10 +604,10 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
                                     style: Theme.of(
                                       context,
                                     ).textTheme.bodyMedium?.copyWith(
-                                      fontFamily: 'Karla',
-                                      fontSize: 13.sp,
+                                      fontFamily: 'Chirp',
+                                      fontSize: 13,
                                       fontWeight: FontWeight.w500,
-                                      letterSpacing: -.6,
+                                      letterSpacing: -.25,
                                       height: 1.450,
                                       color: Theme.of(
                                         context,
@@ -596,32 +615,32 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
                                     ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
-                                  SizedBox(width: 8.w),
+                                  SizedBox(width: 8),
                                   Container(
                                     padding: EdgeInsets.symmetric(
-                                      vertical: 3.h,
-                                      horizontal: 8.w,
+                                      vertical: 3,
+                                      horizontal: 8,
                                     ),
                                     decoration: BoxDecoration(
                                       color: AppColors.warning400.withOpacity(
                                         0.15,
                                       ),
-                                      borderRadius: BorderRadius.circular(12.r),
+                                      borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         // Icon(
                                         //   Icons.auto_awesome,
-                                        //   size: 10.sp,
+                                        //   size: 10,
                                         //   color: Color(0xFF1A1A1A),
                                         // ),
-                                        // SizedBox(width: 4.w),
+                                        // SizedBox(width: 4),
                                         Text(
                                           "Dayfi Tag",
                                           style: TextStyle(
-                                            fontFamily: 'Karla',
-                                            fontSize: 10.sp,
+                                            fontFamily: 'Chirp',
+                                            fontSize: 10,
                                             color: AppColors.warning600,
                                             fontWeight: FontWeight.w600,
                                             // letterSpacing: 0,
@@ -638,8 +657,8 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
                                 style: Theme.of(
                                   context,
                                 ).textTheme.bodyMedium?.copyWith(
-                                  fontFamily: 'Karla',
-                                  fontSize: 13.sp,
+                                  fontFamily: 'Chirp',
+                                  fontSize: 13,
                                   fontWeight: FontWeight.w500,
                                   letterSpacing: -.4,
                                   height: 1.450,
@@ -655,18 +674,18 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
               ],
             ),
           ),
-          SizedBox(width: 12.w),
+          SizedBox(width: 12),
           // Send Button
           PrimaryButton(
             text: 'Send',
             onPressed: () => _navigateToSend(beneficiaryWithSource),
-            height: 32.h,
-            width: 68.w,
+            height: 32,
+            width: 68,
             backgroundColor: AppColors.purple500,
             textColor: AppColors.neutral0,
-            fontFamily: 'Karla',
-            fontSize: 14.sp,
-            borderRadius: 20.r,
+            fontFamily: 'Chirp',
+            fontSize: 14,
+            borderRadius: 20,
             fontWeight: FontWeight.w500,
           ),
         ],
@@ -751,7 +770,7 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
   }
 
   String _getAccountNumber(payment.Source source, Beneficiary beneficiary) {
-    // For DayFi transfers, use beneficiary.accountNumber (the DayFi tag)
+    // For DayFi transfers, use beneficiary.accountNumber (the Dayfi Tag)
     if (source.accountType?.toLowerCase() == 'dayfi' &&
         beneficiary.accountNumber != null &&
         beneficiary.accountNumber!.isNotEmpty) {
@@ -766,7 +785,7 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
     return 'N/A';
   }
 
-  Widget  _getAccountIcon(payment.Source source, Beneficiary beneficiary) {
+  Widget _getAccountIcon(payment.Source source, Beneficiary beneficiary) {
     final accountType = source.accountType?.toLowerCase() ?? '';
     String overlayIcon;
     switch (accountType) {
@@ -793,9 +812,9 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
     }
 
     return Container(
-      width: 32.w,
-      height: 32.w,
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(24.r)),
+      width: 32,
+      height: 32,
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(24)),
       child: Stack(
         alignment: AlignmentDirectional.center,
         children: [

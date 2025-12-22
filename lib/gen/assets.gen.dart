@@ -71,8 +71,8 @@ class $AssetsFontsGen {
   /// File path: assets/fonts/Youth-ThinItalic.otf
   String get youthThinItalic => 'assets/fonts/Youth-ThinItalic.otf';
 
-  /// File path: assets/fonts/boldonse.otf
-  String get boldonse => 'assets/fonts/boldonse.otf';
+  /// File path: assets/fonts/FunnelDisplay.otf
+  String get FunnelDisplay => 'assets/fonts/FunnelDisplay.otf';
 
   /// File path: assets/fonts/fonnts.com-FatFrank_Heavy.otf
   String get fonntsComFatFrankHeavy =>
@@ -98,7 +98,7 @@ class $AssetsFontsGen {
     youthRegular,
     youthThin,
     youthThinItalic,
-    boldonse,
+    FunnelDisplay,
     fonntsComFatFrankHeavy,
   ];
 }

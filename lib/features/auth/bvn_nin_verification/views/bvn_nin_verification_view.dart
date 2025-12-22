@@ -67,156 +67,233 @@ class _BvnNinVerificationViewState
 
     // Get showBackButton from arguments if available
     final args = ModalRoute.of(context)?.settings.arguments;
-    final showBackButton = (args is Map && args['showBackButton'] == true) || widget.showBackButton;
+    final showBackButton =
+        (args is Map && args['showBackButton'] == true) ||
+        widget.showBackButton;
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        scrolledUnderElevation: .5,
-        foregroundColor: Theme.of(context).scaffoldBackgroundColor,
-        shadowColor: Theme.of(context).scaffoldBackgroundColor,
-        surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        leadingWidth: 72,
-        leading: showBackButton
-            ? InkWell(
-                onTap: () {
-                  verificationNotifier.resetForm();
-                  Navigator.pop(context);
-                  FocusScope.of(context).unfocus();
-                },
-                child: Stack(
-                  alignment: AlignmentGeometry.center,
-                  children: [
-                    SvgPicture.asset(
-                      "assets/icons/svgs/notificationn.svg",
-                      height: 40.sp,
-                      color: Theme.of(context).colorScheme.surface,
-                    ),
-                    SizedBox(
-                      height: 40.sp,
-                      width: 40.sp,
-                      child: Center(
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 8.0),
-                          child: Icon(
-                            Icons.arrow_back_ios,
-                            size: 20.sp,
-                            color: Theme.of(context).textTheme.bodyLarge!.color,
+    return Stack(
+      children: [
+        Scaffold(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          appBar: AppBar(
+            scrolledUnderElevation: .5,
+            foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+            shadowColor: Theme.of(context).scaffoldBackgroundColor,
+            surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            elevation: 0,
+            leadingWidth: 72,
+            leading:
+                showBackButton
+                    ? InkWell(
+                      onTap: () {
+                        verificationNotifier.resetForm();
+                        Navigator.pop(context);
+                        FocusScope.of(context).unfocus();
+                      },
+                      child: Stack(
+                        alignment: AlignmentGeometry.center,
+                        children: [
+                          SvgPicture.asset(
+                            "assets/icons/svgs/notificationn.svg",
+                            height: 40,
+                            color: Theme.of(context).colorScheme.surface,
                           ),
-                        ),
+                          SizedBox(
+                            height: 40,
+                            width: 40,
+                            child: Center(
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 8.0),
+                                child: Icon(
+                                  Icons.arrow_back_ios,
+                                  size: 20,
+                                  color:
+                                      Theme.of(
+                                        context,
+                                      ).textTheme.bodyLarge!.color,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
-              )
-            : null,
-        automaticallyImplyLeading: false,
-      ),
+                    )
+                    : null,
+            automaticallyImplyLeading: false,
+          ),
 
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.fromLTRB(18.0, 12, 18.0, 40.0),
-        child: // Submit Button
-            PrimaryButton(
-              borderRadius: 38,
-              text: "Verify",
-              onPressed:
-                  verificationState.isFormValid && !verificationState.isBusy
-                      ? () => verificationNotifier.submitVerification(context, widget.showBackButton)
-                      : null,
-              backgroundColor:
-                  verificationState.isFormValid
-                      ? AppColors.purple500ForTheme(context)
-                      : AppColors.purple500ForTheme(context).withOpacity(.15),
-              height: 48.00000.h,
-              textColor:
-                  verificationState.isFormValid
-                      ? AppColors.neutral0
-                      : AppColors.neutral0.withOpacity(.35),
-              fontFamily: 'Karla',
-              letterSpacing: -.70,
-              fontSize: 18,
-              width: double.infinity,
-              fullWidth: true,
-              isLoading: verificationState.isBusy,
-            )
-            .animate()
-            .fadeIn(delay: 500.ms, duration: 300.ms, curve: Curves.easeOutCubic)
-            .slideY(
-              begin: 0.2,
-              end: 0,
-              delay: 500.ms,
-              duration: 300.ms,
-              curve: Curves.easeOutCubic,
-            )
-            .scale(
-              begin: const Offset(0.95, 0.95),
-              end: const Offset(1.0, 1.0),
-              delay: 500.ms,
-              duration: 300.ms,
-              curve: Curves.easeOutCubic,
-            ),
-      ),
-      body: SafeArea(
-        bottom: false,
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(height: 8.h),
-                    Text(
-                      "KYC Level 2 Verification",
-                      style: Theme.of(
-                        context,
-                      ).textTheme.headlineMedium?.copyWith(
-                        fontSize: 18.sp,
-                        fontFamily: 'Boldonse',
-                        letterSpacing: -.5,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-
-                    SizedBox(height: 18.h),
-                    Padding(
-                      padding: EdgeInsets.only(
-                        right: MediaQuery.of(context).size.width * .2,
-                      ),
-                      child: Text(
-                        "Enter your BVN and NIN to complete your KYC Level 2 verification. This will only take about 30 seconds.",
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w500,
-                          fontFamily: 'Karla',
-                          letterSpacing: -.6,
-                          height: 1.4,
-                        ),
-                        textAlign: TextAlign.start,
-                      ),
-                    ),
-                    SizedBox(height: 32.h),
-
-                    // BVN field
-                    _buildBvnField(verificationState, verificationNotifier),
-                    SizedBox(height: 18.h),
-
-                    // NIN field
-                    _buildNinField(verificationState, verificationNotifier),
-                    SizedBox(height: 40.h),
-                  ],
+          bottomNavigationBar: SafeArea(
+            child: AnimatedContainer(
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(
+                    color: Theme.of(context).dividerColor.withOpacity(.2),
+                    width: 1,
+                  ),
                 ),
               ),
-            ],
+              duration: const Duration(milliseconds: 10),
+              padding: EdgeInsets.only(
+                left: 18,
+                right: 18,
+                top: 8,
+                bottom:
+                    MediaQuery.of(context).viewInsets.bottom > 0
+                        ? MediaQuery.of(context).viewInsets.bottom + 8
+                        : 8,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 300,
+                    child: // Submit Button
+                        PrimaryButton(
+                          borderRadius: 38,
+                          text: "Verify",
+                          onPressed:
+                              verificationState.isFormValid &&
+                                      !verificationState.isBusy
+                                  ? () =>
+                                      verificationNotifier.submitVerification(
+                                        context,
+                                        widget.showBackButton,
+                                      )
+                                  : null,
+                          backgroundColor:
+                              verificationState.isFormValid
+                                  ? AppColors.purple500ForTheme(context)
+                                  : AppColors.purple500ForTheme(
+                                    context,
+                                  ).withOpacity(.15),
+                          height: 48.00000,
+                          textColor:
+                              verificationState.isFormValid
+                                  ? AppColors.neutral0
+                                  : AppColors.neutral0.withOpacity(.20),
+                          fontFamily: 'Chirp',
+                          letterSpacing: -.70,
+                          fontSize: 18,
+                          fullWidth: true,
+                          isLoading: verificationState.isBusy,
+                        )
+                        .animate()
+                        .fadeIn(
+                          delay: 500.ms,
+                          duration: 300.ms,
+                          curve: Curves.easeOutCubic,
+                        )
+                        .slideY(
+                          begin: 0.2,
+                          end: 0,
+                          delay: 500.ms,
+                          duration: 300.ms,
+                          curve: Curves.easeOutCubic,
+                        )
+                        .scale(
+                          begin: const Offset(0.95, 0.95),
+                          end: const Offset(1.0, 1.0),
+                          delay: 500.ms,
+                          duration: 300.ms,
+                          curve: Curves.easeOutCubic,
+                        ),
+                  ),
+                ],
+              ),
+            ),
           ),
+          body: SafeArea(
+            bottom: false,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final bool isWide = constraints.maxWidth > 600;
+                return SingleChildScrollView(
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 420),
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isWide ? 32 : 18,
+                          vertical: 8,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            SizedBox(height: 8),
+                            Text(
+                              "KYC Level 2 Verification",
+                              textAlign: TextAlign.center,
+                              style: Theme.of(
+                                context,
+                              ).textTheme.displayLarge?.copyWith(
+                                color:
+                                    Theme.of(
+                                      context,
+                                    ).textTheme.headlineLarge?.color,
+                                fontSize: isWide ? 32 : 28,
+                                letterSpacing: -.250,
+                                fontWeight: FontWeight.w900,
+                                fontFamily: 'FunnelDisplay',
+                                height: 1,
+                              ),
+                            ),
+
+                            SizedBox(height: 18),
+                            Text(
+                              "Enter your BVN and NIN to complete your KYC Level 2 verification. This will only take about 30 seconds.",
+                              style: Theme.of(
+                                context,
+                              ).textTheme.bodyMedium?.copyWith(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'Chirp',
+                                letterSpacing: -.25,
+                                height: 1.2,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            SizedBox(height: 32),
+
+                            // BVN field
+                            _buildBvnField(
+                              verificationState,
+                              verificationNotifier,
+                            ),
+                            SizedBox(height: 18),
+
+                            // NIN field
+                            _buildNinField(
+                              verificationState,
+                              verificationNotifier,
+                            ),
+                            SizedBox(height: 24),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          // ),
+          // ),
         ),
-      ),
-      // ),
-      // ),
+        if (verificationState.isBusy)
+          Scaffold(
+            backgroundColor: Colors.transparent,
+            resizeToAvoidBottomInset: true,
+            body: Opacity(
+              opacity: 0.5,
+              child: Container(
+                width: double.infinity,
+                height: double.infinity,
+                color: Colors.black,
+              ),
+            ),
+          ),
+      ],
     );
   }
 
@@ -244,10 +321,10 @@ class _BvnNinVerificationViewState
               style: const TextStyle(
                 color: Colors.red,
                 fontSize: 13,
-                fontFamily: 'Karla',
-                letterSpacing: -.6,
+                fontFamily: 'Chirp',
+                letterSpacing: -.25,
                 fontWeight: FontWeight.w500,
-                height: 1.4,
+                height: 1.2,
               ),
             ),
           )
@@ -281,10 +358,10 @@ class _BvnNinVerificationViewState
               style: const TextStyle(
                 color: Colors.red,
                 fontSize: 13,
-                fontFamily: 'Karla',
-                letterSpacing: -.6,
+                fontFamily: 'Chirp',
+                letterSpacing: -.25,
                 fontWeight: FontWeight.w500,
-                height: 1.4,
+                height: 1.2,
               ),
             ),
           )
