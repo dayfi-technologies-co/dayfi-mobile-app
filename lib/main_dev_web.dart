@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:url_strategy/url_strategy.dart';
 import 'package:flutter/material.dart';
 import 'package:dayfi/app.dart';
 import 'package:dayfi/flavors.dart';
@@ -10,6 +11,9 @@ Future<void> main() async {
 
   // Set flavor
   F.appFlavor = Flavor.dev;
+
+  // Use path URL strategy (no # in URLs) on web
+  if (kIsWeb) setPathUrlStrategy();
 
   // Skip mobile-only initializations on web
   if (!kIsWeb) {
