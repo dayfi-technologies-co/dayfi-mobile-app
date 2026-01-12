@@ -1,0 +1,492 @@
+import 'dart:convert';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dayfi/app_locator.dart';
+import 'package:dayfi/models/user_model.dart';
+import 'package:dayfi/common/utils/app_logger.dart';
+import 'package:dayfi/services/notification_service.dart';
+import 'package:dayfi/services/data_clearing_service.dart';
+import 'package:dayfi/services/local/secure_storage.dart';
+import 'package:dayfi/services/remote/auth_service.dart';
+import 'package:dayfi/common/constants/storage_keys.dart';
+
+class ProfileState {
+  final User? user;
+  final bool isLoading;
+  final String? errorMessage;
+  final String? profileImageUrl;
+
+  const ProfileState({
+    this.user,
+    this.isLoading = false,
+    this.errorMessage,
+    this.profileImageUrl,
+  });
+
+  // Computed properties for easy access
+  String get userName {
+    if (user == null) return '...';
+
+    final firstName = user!.firstName.trim();
+    final middleName = user!.middleName?.trim();
+    final lastName = user!.lastName.trim();
+
+    // Build name parts, only including non-empty parts
+    final nameParts = <String>[];
+    if (firstName.isNotEmpty) nameParts.add(_capitalize(firstName));
+    // if (middleName != null && middleName.isNotEmpty) nameParts.add(_capitalize(middleName));
+    if (lastName.isNotEmpty) nameParts.add(_capitalize(lastName));
+
+    final fullName = nameParts.join(' ');
+    return fullName.isEmpty ? 'User' : fullName;
+  }
+
+  String _capitalize(String text) {
+    if (text.isEmpty) return text;
+    return text[0].toUpperCase() + text.substring(1).toLowerCase();
+  }
+
+  String get userEmail => user?.email ?? '...';
+  String get userPhone => user?.phoneNumber ?? 'Not provided';
+  String get tier {
+    if (user?.level == null || user!.level!.isEmpty) return 'Tier 1';
+    return user!.level!.replaceAll('level-', 'Tier ');
+  }
+
+  String get userStatus => user?.status ?? 'Unknown';
+
+  ProfileState copyWith({
+    User? user,
+    bool? isLoading,
+    String? errorMessage,
+    String? profileImageUrl,
+  }) {
+    return ProfileState(
+      user: user ?? this.user,
+      isLoading: isLoading ?? this.isLoading,
+      errorMessage: errorMessage ?? this.errorMessage,
+      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
+    );
+  }
+}
+
+class ProfileViewModel extends StateNotifier<ProfileState> {
+  ProfileViewModel() : super(const ProfileState());
+
+  Future<void> loadUserProfile({bool isInitialLoad = false}) async {
+    // Only show loading state if there's no existing data (initial load)
+    final shouldShowLoading = isInitialLoad || state.user == null;
+    state = state.copyWith(isLoading: shouldShowLoading, errorMessage: null);
+
+    try {
+      AppLogger.info('Loading user profile from storage...');
+
+      // Get user data from secure storage
+      final userData = await localCache.getUser();
+
+      if (userData.isNotEmpty) {
+        // Parse user data to User model
+        final user = User.fromJson(userData);
+        AppLogger.info(
+          'User profile loaded successfully: ${user.firstName} ${user.lastName}',
+        );
+
+        // Detect presence of BVN and NIN in stored user data.
+        // Check explicit keys in the raw stored map (case-insensitive),
+        // and also fall back to idType/idNumber fields on the parsed model.
+        bool hasBVN = false;
+        bool hasNIN = false;
+
+        // Inspect raw map for keys that include 'bvn' or 'nin'
+        for (final key in userData.keys) {
+          final lowerKey = key.toString().toLowerCase();
+          final value = userData[key];
+          if (value == null) continue;
+          final stringValue = value.toString().trim();
+          if (stringValue.isEmpty) continue;
+
+          if (lowerKey.contains('bvn')) {
+            hasBVN = true;
+          }
+          if (lowerKey.contains('nin')) {
+            hasNIN = true;
+          }
+        }
+
+        // Fallback: check parsed user.idType / idNumber
+        if (!hasBVN && user.idType != null && user.idNumber != null) {
+          if (user.idType!.toLowerCase() == 'bvn' &&
+              user.idNumber!.trim().isNotEmpty) {
+            hasBVN = true;
+          }
+        }
+        if (!hasNIN && user.idType != null && user.idNumber != null) {
+          if (user.idType!.toLowerCase() == 'nin' &&
+              user.idNumber!.trim().isNotEmpty) {
+            hasNIN = true;
+          }
+        }
+
+        // If both BVN and NIN exist, force Tier to level-2
+        User effectiveUser = user;
+        if (hasBVN && hasNIN) {
+          // Only modify if not already level-2 or higher
+          final currentLevel = (user.level ?? '').toLowerCase();
+          if (!currentLevel.contains('level-2') &&
+              !currentLevel.contains('level-3')) {
+            effectiveUser = User(
+              userId: user.userId,
+              email: user.email,
+              password: user.password,
+              userType: user.userType,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              middleName: user.middleName,
+              gender: user.gender,
+              dateOfBirth: user.dateOfBirth,
+              country: user.country,
+              state: user.state,
+              city: user.city,
+              street: user.street,
+              postalCode: user.postalCode,
+              address: user.address,
+              phoneNumber: user.phoneNumber,
+              idType: user.idType,
+              idNumber: user.idNumber,
+              status: user.status,
+              refreshToken: user.refreshToken,
+              isDeleted: user.isDeleted,
+              verificationToken: user.verificationToken,
+              verificationTokenExpiryTime: user.verificationTokenExpiryTime,
+              passwordResetToken: user.passwordResetToken,
+              passwordResetTokenExpiryTime: user.passwordResetTokenExpiryTime,
+              verificationEmail: user.verificationEmail,
+              createdAt: user.createdAt,
+              updatedAt: user.updatedAt,
+              token: user.token,
+              expires: user.expires,
+              level: 'level-2',
+              transactionPin: user.transactionPin,
+              isIdVerified: user.isIdVerified,
+              isBiometricsSetup: user.isBiometricsSetup,
+              dayfiId: user.dayfiId,
+            );
+
+            // Persist the adjusted level back to local storage so UI and future loads are consistent
+            try {
+              localCache.setUser = effectiveUser.toJson();
+            } catch (e) {
+              AppLogger.error('Failed to persist adjusted user level: $e');
+            }
+          }
+        }
+
+        state = state.copyWith(
+          user: effectiveUser,
+          isLoading: false,
+          errorMessage: null,
+        );
+      } else {
+        AppLogger.warning('No user data found in storage');
+        state = state.copyWith(
+          isLoading: false,
+          errorMessage: 'No user data found. Please login again.',
+        );
+      }
+    } catch (e) {
+      AppLogger.error('Error loading user profile: $e');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Failed to load profile. Please try again.',
+      );
+    }
+  }
+
+  Future<void> updateProfile({
+    String? firstName,
+    String? lastName,
+    String? middleName,
+    String? email,
+    String? phoneNumber,
+  }) async {
+    if (state.user == null) {
+      AppLogger.warning('Cannot update profile: No user data available');
+      return;
+    }
+
+    state = state.copyWith(isLoading: true, errorMessage: null);
+
+    try {
+      AppLogger.info('Updating user profile...');
+
+      // Create updated user object
+      final updatedUser = User(
+        userId: state.user!.userId,
+        email: email ?? state.user!.email,
+        password: state.user!.password, // Keep existing password
+        userType: state.user!.userType,
+        firstName: firstName ?? state.user!.firstName,
+        lastName: lastName ?? state.user!.lastName,
+        middleName: middleName ?? state.user!.middleName,
+        gender: state.user!.gender,
+        dateOfBirth: state.user!.dateOfBirth,
+        country: state.user!.country,
+        state: state.user!.state,
+        city: state.user!.city,
+        street: state.user!.street,
+        postalCode: state.user!.postalCode,
+        address: state.user!.address,
+        phoneNumber: phoneNumber ?? state.user!.phoneNumber,
+        idType: state.user!.idType,
+        idNumber: state.user!.idNumber,
+        status: state.user!.status,
+        refreshToken: state.user!.refreshToken,
+        isDeleted: state.user!.isDeleted,
+        verificationToken: state.user!.verificationToken,
+        verificationTokenExpiryTime: state.user!.verificationTokenExpiryTime,
+        passwordResetToken: state.user!.passwordResetToken,
+        passwordResetTokenExpiryTime: state.user!.passwordResetTokenExpiryTime,
+        verificationEmail: state.user!.verificationEmail,
+        createdAt: state.user!.createdAt,
+        updatedAt: DateTime.now().toIso8601String(), // Update timestamp
+        token: state.user!.token,
+        expires: state.user!.expires,
+        level: state.user!.level,
+        transactionPin: state.user!.transactionPin,
+        isIdVerified: state.user!.isIdVerified,
+        isBiometricsSetup: state.user!.isBiometricsSetup,
+        dayfiId: state.user!.dayfiId,
+      );
+
+      // Save updated user to storage
+      localCache.setUser = updatedUser.toJson();
+
+      AppLogger.info('User profile updated successfully');
+
+      state = state.copyWith(
+        user: updatedUser,
+        isLoading: false,
+        errorMessage: null,
+      );
+    } catch (e) {
+      AppLogger.error('Error updating profile: $e');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Failed to update profile. Please try again.',
+      );
+    }
+  }
+
+  Future<void> uploadProfileImage(String imagePath) async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+
+    try {
+      // TODO: Implement actual API call to upload image
+      await Future.delayed(const Duration(seconds: 2));
+
+      state = state.copyWith(
+        profileImageUrl: imagePath,
+        isLoading: false,
+        errorMessage: null,
+      );
+    } catch (e) {
+      AppLogger.error('Error uploading profile image: $e');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Failed to upload image. Please try again.',
+      );
+    }
+  }
+
+  Future<void> upgradeTier() async {
+    if (state.user == null) {
+      AppLogger.warning('Cannot upgrade tier: No user data available');
+      return;
+    }
+
+    state = state.copyWith(isLoading: true, errorMessage: null);
+
+    try {
+      AppLogger.info('Upgrading user tier...');
+
+      // TODO: Implement actual API call to upgrade tier
+      // This should call the backend API to upgrade the user's tier
+      // and return the updated user data
+
+      // For now, simulate tier upgrade and trigger notification
+      try {
+        await NotificationService().triggerTierUpgrade(
+          newTier: 'Tier 2',
+          newLimits: '20,000 USD/month and 100,000 USD/year',
+        );
+      } catch (e) {
+        // Handle error silently
+      }
+
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Tier upgrade feature is not yet implemented.',
+      );
+    } catch (e) {
+      AppLogger.error('Error upgrading tier: $e');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Failed to upgrade tier. Please try again.',
+      );
+    }
+  }
+
+  Future<void> logout(WidgetRef ref) async {
+    if (!mounted) return;
+    state = state.copyWith(isLoading: true);
+
+    try {
+      AppLogger.info('User logging out...');
+
+      // Disable biometrics on backend before logout for security
+      await _disableBiometricsBeforeLogout();
+
+      // Use comprehensive data clearing service
+      final dataClearingService = DataClearingService();
+      await dataClearingService.clearAllUserData(ref);
+
+      // Don't update state after clearing data as the provider will be invalidated
+      // Just navigate to login screen
+      appRouter.pushNamedAndRemoveAllBehind(
+        '/onboardingView',
+        arguments: false,
+      );
+
+      AppLogger.info('User logged out successfully');
+    } catch (e) {
+      AppLogger.error('Error during logout: $e');
+      if (mounted) {
+        state = state.copyWith(
+          isLoading: false,
+          errorMessage: 'Error during logout. Please try again.',
+        );
+      }
+    }
+  }
+
+  /// Disable biometrics on backend before logout for security
+  Future<void> _disableBiometricsBeforeLogout() async {
+    try {
+      AppLogger.info('Disabling biometrics before logout...');
+
+      final secureStorage = locator<SecureStorageService>();
+
+      // Check if biometrics are currently enabled
+      final biometricEnabled = await secureStorage.read('biometric_enabled');
+
+      if (biometricEnabled == 'true') {
+        // Get user ID from stored user data
+        final userJson = await secureStorage.read(StorageKeys.user);
+        if (userJson.isNotEmpty) {
+          final userMap = json.decode(userJson) as Map<String, dynamic>;
+
+          // Normalize user id lookup to support different key names from backend
+          String? userId;
+          if (userMap.containsKey('user_id') && userMap['user_id'] is String) {
+            userId = userMap['user_id'] as String;
+          } else if (userMap.containsKey('_id') && userMap['_id'] is String) {
+            userId = userMap['_id'] as String;
+          } else if (userMap.containsKey('id') && userMap['id'] is String) {
+            userId = userMap['id'] as String;
+          }
+
+          if (userId != null && userId.isNotEmpty) {
+            final authService = locator<AuthService>();
+            // Call backend API to disable biometrics
+            await authService.updateProfileBiometrics(isBiometricsSetup: false);
+            AppLogger.info('Biometrics disabled on backend before logout');
+          }
+        }
+      }
+    } catch (e) {
+      // Don't fail logout if biometric disable fails - just log it
+      AppLogger.warning('Failed to disable biometrics before logout: $e');
+    }
+  }
+
+  Future<void> deleteAccount() async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+
+    try {
+      AppLogger.info('Deleting user account...');
+
+      // TODO: Implement actual API call to delete account
+      // This should call the backend API to delete the user's account
+      // and handle the response appropriately
+
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Account deletion feature is not yet implemented.',
+      );
+    } catch (e) {
+      AppLogger.error('Error deleting account: $e');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Error deleting account. Please try again.',
+      );
+    }
+  }
+
+  Future<void> changePassword(
+    String currentPassword,
+    String newPassword,
+  ) async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+
+    try {
+      // TODO: Implement actual API call to change password
+      await Future.delayed(const Duration(seconds: 1));
+
+      state = state.copyWith(isLoading: false, errorMessage: null);
+    } catch (e) {
+      AppLogger.error('Error changing password: $e');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Failed to change password. Please try again.',
+      );
+    }
+  }
+
+  Future<void> enableTwoFactorAuth() async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+
+    try {
+      // TODO: Implement actual API call to enable 2FA
+      await Future.delayed(const Duration(seconds: 1));
+
+      state = state.copyWith(isLoading: false, errorMessage: null);
+    } catch (e) {
+      AppLogger.error('Error enabling 2FA: $e');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Failed to enable 2FA. Please try again.',
+      );
+    }
+  }
+
+  Future<void> disableTwoFactorAuth() async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+
+    try {
+      // TODO: Implement actual API call to disable 2FA
+      await Future.delayed(const Duration(seconds: 1));
+
+      state = state.copyWith(isLoading: false, errorMessage: null);
+    } catch (e) {
+      AppLogger.error('Error disabling 2FA: $e');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Failed to disable 2FA. Please try again.',
+      );
+    }
+  }
+}
+
+final profileViewModelProvider =
+    StateNotifierProvider<ProfileViewModel, ProfileState>((ref) {
+      return ProfileViewModel();
+    });

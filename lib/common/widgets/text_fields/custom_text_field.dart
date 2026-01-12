@@ -1,0 +1,507 @@
+// import 'package:streampay_2026/common/utils/ui_helpers.dart';
+import 'package:dayfi/core/theme/app_colors.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+
+class CapitalizeFirstLetterFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.text.isEmpty) {
+      return newValue;
+    }
+
+    // Capitalize the first letter
+    String capitalizedText = newValue.text;
+    if (capitalizedText.isNotEmpty) {
+      capitalizedText =
+          capitalizedText[0].toUpperCase() +
+          (capitalizedText.length > 1 ? capitalizedText.substring(1) : '');
+    }
+
+    return TextEditingValue(
+      text: capitalizedText,
+      selection: newValue.selection,
+    );
+  }
+}
+
+/// Capitalizes the first letter of each word while preserving the rest of the text.
+class WordCapitalizationFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.text.isEmpty) return newValue;
+
+    // Process each character while maintaining spaces
+    final StringBuffer buffer = StringBuffer();
+    bool capitalizeNext = true;
+
+    for (int i = 0; i < newValue.text.length; i++) {
+      final char = newValue.text[i];
+
+      if (char == ' ') {
+        // Preserve spaces as-is
+        buffer.write(char);
+        capitalizeNext = true;
+      } else if (capitalizeNext) {
+        // Capitalize first letter of word
+        buffer.write(char.toUpperCase());
+        capitalizeNext = false;
+      } else {
+        // Lowercase rest of word
+        buffer.write(char.toLowerCase());
+      }
+    }
+
+    final transformed = buffer.toString();
+
+    // Ensure cursor position is valid
+    final textLength = transformed.length;
+    final selectionStart = newValue.selection.start.clamp(0, textLength);
+    final selectionEnd = newValue.selection.end.clamp(0, textLength);
+
+    return TextEditingValue(
+      text: transformed,
+      selection: TextSelection(
+        baseOffset: selectionStart,
+        extentOffset: selectionEnd,
+      ),
+      composing: TextRange.empty,
+    );
+  }
+}
+
+class CustomTextField extends StatelessWidget {
+  final String? label;
+  final TextInputType? keyboardType;
+  final bool obscureText;
+  final String? hintText;
+  final TextInputFormatter? formatter;
+  final Function(String)? onChanged;
+  final Function()? onTap;
+  final int? maxLength;
+  final Widget? suffixIcon;
+  final Widget? prefixIcon;
+  final Color? borderColor;
+  final TextEditingController? controller;
+  final String? Function(String?)? validator;
+  final bool shouldReadOnly;
+  final bool enabled;
+  final TextCapitalization? textCapitalization;
+  final int? minLines;
+  final TextInputAction? textInputAction;
+  final bool autofocus;
+  final bool enableInteractiveSelection;
+  final Widget? prefix;
+  final String? errorText;
+  final double? errorFontSize;
+  final bool isDayfiId;
+  final bool capitalizeFirstLetter;
+  final double borderRadius;
+  final EdgeInsets? contentPadding;
+  final TextStyle? textStyle;
+  final bool shouldFaintFillColor;
+  final bool isSearch;
+  final double? width;
+
+  const CustomTextField({
+    super.key,
+    this.label,
+    this.keyboardType,
+    this.obscureText = false,
+    this.hintText,
+    this.formatter,
+    this.onChanged,
+    this.onTap,
+    this.maxLength,
+    this.suffixIcon,
+    this.prefixIcon,
+    this.borderColor,
+    this.controller,
+    this.validator,
+    this.shouldReadOnly = false,
+    this.enabled = true,
+    this.minLines,
+    this.textCapitalization,
+    this.textInputAction,
+    this.autofocus = true,
+    this.enableInteractiveSelection = true,
+    this.prefix,
+    this.errorText,
+    this.errorFontSize,
+    this.isDayfiId = false,
+    this.capitalizeFirstLetter = false,
+    this.borderRadius = 12,
+    this.contentPadding,
+    this.textStyle,
+    this.shouldFaintFillColor = false,
+    this.isSearch = false,
+    this.width,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        label != null && label != ""
+            ? Text(
+              label!,
+              style: TextStyle(
+                fontFamily: 'Chirp',
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                // letterspacing: 0,
+                height: 1.450,
+                color:
+                    label == "hidden"
+                        ? Colors.transparent
+                        : Theme.of(
+                              context,
+                            ).textTheme.bodyLarge?.color?.withOpacity(.75) ??
+                            Colors.black,
+              ),
+              textAlign: TextAlign.start,
+              overflow: TextOverflow.ellipsis,
+            )
+            : const SizedBox(),
+        SizedBox(height: (label == null || label == "") ? 0 : 4),
+        Container(
+          height: isSearch ? 40 : null,
+          width: width ?? 420,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              width: 1,
+              color:
+                  errorText.toString() != "null"
+                      ? isDayfiId
+                          ? Colors.green.withOpacity(0.3)
+                          : Colors.red.withOpacity(0.3)
+                      : Theme.of(
+                            context,
+                          ).textTheme.bodyLarge?.color?.withOpacity(0) ??
+                          Colors.black.withOpacity(0),
+            ),
+          ),
+          child: Semantics(
+            textField: true,
+            label: label ?? label,
+            hint: hintText,
+            enabled: !shouldReadOnly,
+            child: TextFormField(
+              // autofocus: autofocus,
+              maxLines: obscureText ? 1 : minLines,
+              maxLengthEnforcement: MaxLengthEnforcement.enforced,
+              onTap: onTap,
+              enableInteractiveSelection: enableInteractiveSelection,
+              textCapitalization:
+                  textCapitalization ?? TextCapitalization.sentences,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              maxLength: obscureText ? null : maxLength,
+              controller: controller,
+              cursorColor: AppColors.purple400,
+              textInputAction: textInputAction,
+              keyboardType: keyboardType,
+              readOnly: shouldReadOnly,
+              obscureText: obscureText,
+              cursorHeight: 18,
+              onChanged: onChanged,
+              validator: validator,
+              // Custom context menu to prevent iOS paste permission duplicate dialogs
+              contextMenuBuilder: (context, editableTextState) {
+                return AdaptiveTextSelectionToolbar.editableText(
+                  editableTextState: editableTextState,
+                );
+              },
+              inputFormatters: <TextInputFormatter>[
+                // If a specific formatter is provided, use it. Otherwise, automatically
+                // apply a word-capitalization formatter for fields that request
+                // `TextCapitalization.words` (e.g., names), otherwise use a default
+                // single-line filtering formatter.
+                formatter ??
+                    ((textCapitalization == TextCapitalization.words ||
+                            capitalizeFirstLetter)
+                        ? WordCapitalizationFormatter()
+                        : FilteringTextInputFormatter.singleLineFormatter),
+              ],
+              style:
+                  textStyle ??
+                  Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    fontFamily: 'Chirp',
+                    fontSize: 15,
+                    letterSpacing: -.25,
+                    color:
+                        shouldFaintFillColor && shouldReadOnly
+                            ? Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withOpacity(.85)
+                            : Theme.of(context).colorScheme.onSurface,
+                    fontWeight: FontWeight.w400,
+                    height: 1.450,
+                  ),
+              decoration: InputDecoration(
+                counterText: "",
+                errorText: errorText,
+                hintText: hintText,
+                hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  fontFamily: 'Chirp',
+                  fontSize: 15,
+                  letterSpacing: -.25,
+                  fontWeight: FontWeight.w400,
+                  height: 1.450,
+                  overflow: TextOverflow.ellipsis,
+                  color:
+                      Theme.of(context).colorScheme.onSurfaceVariant
+                        ..withOpacity(.7),
+                ),
+                filled: true,
+                fillColor:
+                    shouldFaintFillColor && shouldReadOnly
+                        ? Theme.of(
+                          context,
+                        ).colorScheme.surface.withOpacity(.075)
+                        : errorText.toString() != "null"
+                        ? isDayfiId
+                            ? Colors.greenAccent.withOpacity(.08)
+                            : const Color.fromARGB(255, 255, 217, 214)
+                        : Theme.of(context).colorScheme.surface,
+                contentPadding:
+                    contentPadding ??
+                    const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
+                errorStyle: TextStyle(
+                  fontFamily: 'Chirp',
+                  fontSize: errorFontSize ?? 13,
+                  color: Colors.red.shade800,
+                  // letterspacing: 0,
+                  fontWeight: FontWeight.w400,
+                  height: 1.2,
+                ),
+                prefixIcon: prefixIcon,
+                prefix: prefix,
+                suffixIcon: suffixIcon,
+                focusedBorder: const OutlineInputBorder(
+                  borderSide: BorderSide.none,
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                ),
+                enabledBorder: const OutlineInputBorder(
+                  borderSide: BorderSide.none,
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                ),
+                focusedErrorBorder: const OutlineInputBorder(
+                  borderSide: BorderSide.none,
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                ),
+                errorBorder: const OutlineInputBorder(
+                  borderSide: BorderSide.none,
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class ReadOnlyCustomTextField extends StatelessWidget {
+  final String? label;
+  final TextInputType? keyboardType;
+  final bool obscureText;
+  final String? hintText;
+  final TextInputFormatter? formatter;
+  final Function(String)? onChanged;
+  final Function()? onTap;
+  final int? maxLength;
+  final Widget? suffixIcon;
+  final Widget? prefixIcon;
+  final Color? borderColor;
+  final TextEditingController? controller;
+  final String? Function(String?)? validator;
+  final bool shouldReadOnly;
+  final bool enabled;
+  final TextCapitalization? textCapitalization;
+  final int? minLines;
+  final TextInputAction? textInputAction;
+  final bool autofocus;
+  final bool enableInteractiveSelection;
+  final Widget? prefix;
+  final String? errorText;
+
+  const ReadOnlyCustomTextField({
+    super.key,
+    this.label,
+    this.keyboardType,
+    this.obscureText = false,
+    this.hintText,
+    this.formatter,
+    this.onChanged,
+    this.onTap,
+    this.maxLength,
+    this.suffixIcon,
+    this.prefixIcon,
+    this.borderColor,
+    this.controller,
+    this.validator,
+    this.shouldReadOnly = false,
+    this.enabled = true,
+    this.minLines,
+    this.textCapitalization,
+    this.textInputAction,
+    this.autofocus = true,
+    this.enableInteractiveSelection = true,
+    this.prefix,
+    this.errorText,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        label != null
+            ? Text(
+              label!,
+              style: const TextStyle(
+                fontFamily: 'Chirp',
+                fontSize: 15,
+                fontWeight: FontWeight.w400,
+                letterSpacing: -.1,
+                height: 1.450,
+                color: Color(0xFF302D53),
+              ),
+              textAlign: TextAlign.start,
+              overflow: TextOverflow.ellipsis,
+            )
+            : const SizedBox(),
+        SizedBox(height: (label == null || label == "") ? 0 : 4),
+        Semantics(
+          textField: true,
+          label: label ?? hintText,
+          hint: hintText,
+          enabled: false,
+          child: TextFormField(
+            // autofocus: autofocus,
+            maxLines: obscureText ? 1 : minLines,
+            maxLengthEnforcement: MaxLengthEnforcement.enforced,
+            onTap: onTap,
+            enableInteractiveSelection: enableInteractiveSelection,
+            textCapitalization:
+                textCapitalization ?? TextCapitalization.sentences,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            maxLength: obscureText ? null : maxLength,
+            controller: controller,
+            cursorColor: Theme.of(context).textTheme.bodyLarge!.color!, // innit
+            textInputAction: textInputAction,
+            keyboardType: keyboardType,
+            readOnly: true,
+            obscureText: obscureText,
+            onChanged: onChanged,
+            validator: validator,
+            // Custom context menu to prevent iOS paste permission duplicate dialogs
+            contextMenuBuilder: (context, editableTextState) {
+              return AdaptiveTextSelectionToolbar.editableText(
+                editableTextState: editableTextState,
+              );
+            },
+            inputFormatters: [
+              // For read-only, still allow a formatter if provided; otherwise keep single-line.
+              formatter ?? FilteringTextInputFormatter.singleLineFormatter,
+            ],
+            style: TextStyle(
+              fontFamily: 'Chirp',
+              fontSize: 15,
+              fontWeight: FontWeight.w400,
+              height: 1.450,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+            decoration: InputDecoration(
+              counterText: "",
+              errorText: errorText,
+              hintText: hintText,
+              hintStyle: TextStyle(
+                fontFamily: 'Chirp',
+                fontSize: 15,
+                fontWeight: FontWeight.w400,
+                height: 1.450,
+                color:
+                    Theme.of(
+                            context,
+                          ).textTheme.bodyLarge?.color?.withOpacity(.35) ??
+                          Colors.black
+                      ..withOpacity(.7),
+              ),
+              filled: true,
+              fillColor: Theme.of(
+                context,
+              ).colorScheme.surfaceContainerHighest.withOpacity(.3),
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 14,
+                horizontal: 14,
+              ),
+              errorStyle: TextStyle(
+                fontFamily: 'Chirp',
+                fontSize: 12,
+                color: Colors.red.shade800,
+                // letterspacing: 0,
+              ),
+              prefixIcon: prefixIcon,
+              prefix: prefix,
+              suffixIcon: suffixIcon,
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(
+                  // color: Color( 0xff5645F5), // innit
+                  color: Theme.of(context).textTheme.bodyLarge!.color!, // innit
+                  width: 1,
+                ),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(8.0),
+                  topRight: Radius.circular(8.0),
+                ),
+              ),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(
+                  color:
+                      Theme.of(context).textTheme.bodyLarge!.color!
+                        ..withOpacity(.7),
+                  width: 1,
+                ),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(8.0),
+                  topRight: Radius.circular(8.0),
+                ),
+              ),
+              focusedErrorBorder: UnderlineInputBorder(
+                borderSide: BorderSide(
+                  color: Colors.red.shade800.withOpacity(.85),
+                  width: 1,
+                ),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(8.0),
+                  topRight: Radius.circular(8.0),
+                ),
+              ),
+              errorBorder: UnderlineInputBorder(
+                borderSide: BorderSide(
+                  color: Colors.red.shade800.withOpacity(.85),
+                  width: 1,
+                ),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(8.0),
+                  topRight: Radius.circular(8.0),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}

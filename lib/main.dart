@@ -1,132 +1,100 @@
-import 'dart:async';
-import 'package:flutter/cupertino.dart';
+import 'package:dayfi/services/local/analytics_service.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart' show ScreenUtilInit;
-import 'package:dayfi/app/app.bottomsheets.dart';
-import 'package:dayfi/app/app.dialogs.dart';
-import 'package:dayfi/app/app.locator.dart';
-import 'package:dayfi/app/app.router.dart';
-import 'package:dayfi/data/storage/secure_storage_service.dart';
-import 'package:dayfi/ui/common/app_scaffold.dart';
-import 'package:stacked_services/stacked_services.dart';
+import 'package:flutter/services.dart';
+import 'package:intercom_flutter/intercom_flutter.dart';
+// import 'package:smile_id/smile_id.dart';
 
-Future<void> main() async {
+import 'package:dayfi/app.dart';
+import 'package:dayfi/app_locator.dart';
+import 'package:dayfi/flavors.dart';
+import 'package:dayfi/firebase_options.dart';
+import 'package:dayfi/common/utils/app_logger.dart';
+import 'package:dayfi/services/notification_service.dart';
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await setupLocator();
-  setupDialogUi();
-  // setup();
-  setupBottomSheetUi();
-  runApp(MainApp());
-}
 
-class MainApp extends StatefulWidget {
-  const MainApp({super.key});
-
-  @override
-  State<MainApp> createState() => _MainAppState();
-}
-
-class _MainAppState extends State<MainApp> {
-  late Future<Map<String, dynamic>> _initFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _initFuture = _fetchKnownTokens();
+  // Initialize Smile ID SDK
+  try {
+    // SmileID.initialize(useSandbox: true, enableCrashReporting: true);
+    AppLogger.info('Smile ID initialized successfully');
+  } catch (e) {
+    AppLogger.error('Smile ID initialization error: $e');
   }
 
-  Future<Map<String, dynamic>> _fetchKnownTokens() async {
-    final secureStorage = locator<SecureStorageService>();
-    final firstTime = await secureStorage.read('first_time_user');
-    final token = await secureStorage.read('user_token');
-    final passcode = await secureStorage.read('user_passcode');
-
-    return {
-      '_isFirstTimeUser': firstTime == null || firstTime == 'true',
-      '_userToken': token,
-      '_userPasscode': passcode,
-    };
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ScreenUtilInit(
-      designSize: const Size(374, 844),
-      child: FutureBuilder<Map<String, dynamic>>(
-        future: _initFuture,
-        builder: (context, snapshot) {
-          // Determine initial route based on snapshot data
-          String initialRoute = '/startup-view'; // Default to StartupView
-          if (snapshot.connectionState == ConnectionState.done &&
-              snapshot.hasData) {
-            final data = snapshot.data!;
-            final bool isFirstTimeUser = data['_isFirstTimeUser'] as bool;
-            final String? userToken = data['_userToken'] as String?;
-            final String? userPasscode = data['_userPasscode'] as String?;
-
-            print(
-                "Navigating with: $isFirstTimeUser, $userToken, $userPasscode");
-
-            if (isFirstTimeUser && userToken == null) {
-              initialRoute = '/startup-view'; // StartupView
-            } else if (userToken == null || userToken.isEmpty) {
-              initialRoute = '/login-view'; // LoginView
-            } else if (userPasscode == null || userPasscode.isEmpty) {
-              initialRoute = '/login-view'; // LoginView
-            } else {
-              initialRoute = '/passcode-view'; // PasscodeView
-            }
-          }
-
-          // Show loading screen while waiting
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const MaterialApp(
-              debugShowCheckedModeBanner: false,
-              home: AppScaffold(
-                backgroundColor: Color(0xffF6F5FE),
-                body: Center(child: CupertinoActivityIndicator()),
-              ),
-            );
-          }
-
-          // Show error screen if future fails
-          if (snapshot.hasError || !snapshot.hasData) {
-            return const MaterialApp(
-              debugShowCheckedModeBanner: false,
-              home: AppScaffold(
-                backgroundColor: Color(0xffF6F5FE),
-                body: Center(child: Text('Error loading user data')),
-              ),
-            );
-          }
-
-          // Main app with stacked router
-          return MaterialApp(
-            debugShowCheckedModeBanner: false,
-            navigatorKey: StackedService.navigatorKey,
-            navigatorObservers: [StackedService.routeObserver],
-            title: 'Dayfi',
-            theme: ThemeData(
-              fontFamily: 'Karla',
-              useMaterial3: true,
-              primaryColor: Color(0xffF6F5FE),
-            ),
-            initialRoute: initialRoute,
-            onGenerateRoute:
-                StackedRouter().onGenerateRoute, // Use stacked router
-            onUnknownRoute: (settings) {
-              return MaterialPageRoute(
-                builder: (context) => AppScaffold(
-                  backgroundColor: Color(0xffF6F5FE),
-                  body: Center(
-                    child: Text('Route "${settings.name}" not found'),
-                  ),
-                ),
-              );
-            },
-          );
-        },
-      ),
+  try {
+    F.appFlavor = Flavor.values.firstWhere(
+      (element) => element.name == appFlavor,
     );
+    AppLogger.info('App flavor initialized: ${F.appFlavor.name}');
+  } catch (e) {
+    AppLogger.error('Error initializing app flavor: $e');
+    F.appFlavor = Flavor.values.first;
+  }
+
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
+    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterError;
+    await NotificationService().init();
+    AppLogger.info('Notification service initialized successfully');
+  } catch (e) {
+    AppLogger.error('Firebase initialization error: $e');
+  }
+
+  // Initialize Intercom
+  try {
+    const String intercomAppId = 'ihv28wow';
+    const String intercomAndroidKey =
+        'android_sdk-ca7182fe1675e2a978f6041b3c6d93e3672ca418';
+    const String intercomIOSKey =
+        'ios_sdk-b87b21cdfb0ee5f75291d95bd72845bb4a30e6f7';
+
+    await Intercom.instance.initialize(
+      intercomAppId,
+      iosApiKey: intercomIOSKey,
+      androidApiKey: intercomAndroidKey,
+    );
+    await Intercom.instance.setLauncherVisibility(IntercomVisibility.gone);
+    await Intercom.instance.loginUnidentifiedUser();
+    AppLogger.info('Intercom initialized successfully');
+  } catch (e) {
+    AppLogger.error('Intercom initialization error: $e');
+  }
+
+  try {
+    await setupLocator();
+    AppLogger.info('App locator setup completed');
+    try {
+      final analyticsService = locator<AnalyticsService>();
+      await Future.delayed(Duration(seconds: 2));
+      await analyticsService.logEvent(name: 'app_launched_test');
+      AppLogger.info('Analytics test event sent');
+    } catch (e) {
+      AppLogger.error('Analytics initialization error: $e');
+    }
+  } catch (e) {
+    AppLogger.error('Error setting up app locator: $e');
+  }
+
+  try {
+    await SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+  } catch (e) {
+    AppLogger.error('Error setting system chrome orientation: $e');
+  }
+
+  try {
+    runApp(const MyApp());
+    AppLogger.info('App started successfully');
+  } catch (e) {
+    AppLogger.error('Error starting app: $e');
+    rethrow;
   }
 }
