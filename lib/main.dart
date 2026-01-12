@@ -1,4 +1,6 @@
 import 'package:dayfi/services/local/analytics_service.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:url_strategy/url_strategy.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
@@ -33,6 +35,9 @@ void main() async {
     AppLogger.error('Error initializing app flavor: $e');
     F.appFlavor = Flavor.values.first;
   }
+
+  // Enable path URL strategy on web to remove '#' from URLs
+  if (kIsWeb) setPathUrlStrategy();
 
   try {
     await Firebase.initializeApp(
