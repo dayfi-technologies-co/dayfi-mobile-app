@@ -1,3 +1,4 @@
+import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/features/send/vm/send_viewmodel.dart';
@@ -21,7 +22,7 @@ class DeliveryMethodsSheet extends ConsumerWidget {
     if (channelType == null) return 'Unknown';
     String baseName;
     String timing;
-    
+
     switch (channelType.toLowerCase()) {
       case 'dayfi_tag':
         baseName = 'Dayfi Tag';
@@ -270,27 +271,23 @@ class DeliveryMethodsSheet extends ConsumerWidget {
                   channel.currency == selectedCurrency);
         }).toList();
 
-    // Add synthetic Dayfi Tag for NGN->NGN
-    final isNgnToNgn =
-        sendState.sendCurrency == 'NGN' && selectedCurrency == 'NGN';
-    if (isNgnToNgn) {
-      final hasDayfiTag = filteredChannels.any(
-        (c) => c.channelType?.toLowerCase() == 'dayfi_tag',
+    // Add synthetic Dayfi Tag for all countries
+    final hasDayfiTag = filteredChannels.any(
+      (c) => c.channelType?.toLowerCase() == 'dayfi_tag',
+    );
+    if (!hasDayfiTag) {
+      filteredChannels.add(
+        Channel(
+          channelType: 'dayfi_tag',
+          country: selectedCountry,
+          currency: selectedCurrency,
+          status: 'active',
+          rampType: 'withdrawal',
+          min: 0,
+          max: 999999999,
+          id: 'dayfi_tag_synthetic',
+        ),
       );
-      if (!hasDayfiTag) {
-        filteredChannels.add(
-          Channel(
-            channelType: 'dayfi_tag',
-            country: selectedCountry,
-            currency: selectedCurrency,
-            status: 'active',
-            rampType: 'withdrawal',
-            min: 0,
-            max: 999999999,
-            id: 'dayfi_tag_synthetic',
-          ),
-        );
-      }
     }
 
     // Deduplicate by canonical name
@@ -309,7 +306,7 @@ class DeliveryMethodsSheet extends ConsumerWidget {
         );
 
     return Container(
-      height: MediaQuery.of(context).size.height * 0.5,
+      height: MediaQuery.of(context).size.height * 0.55,
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -416,8 +413,7 @@ class DeliveryMethodsSheet extends ConsumerWidget {
                         final method = deliveryMethods[index];
                         final isDayfi =
                             method.channelType?.toLowerCase() == 'dayfi_tag';
-                        return 
-                        GestureDetector(
+                        return GestureDetector(
                           onTap: () {
                             // Update delivery method in the view model
                             ref
@@ -446,23 +442,21 @@ class DeliveryMethodsSheet extends ConsumerWidget {
                                   network.status == 'active' &&
                                   network.country == selectedCountry,
                             );
-                            // if (availableNetworks.isEmpty) {
-                            //   TopSnackbar.show(
-                            //     context,
-                            //     message:
-                            //         'No networks available for $selectedCountry',
-                            //     isError: true,
-                            //   );
-                            //   return;
-                            // }
+                            if (availableNetworks.isEmpty) {
+                              TopSnackbar.show(
+                                context,
+                                message:
+                                    'No networks available for $selectedCountry',
+                                isError: true,
+                              );
+                              return;
+                            }
 
                             // Navigator.pop(context);
 
                             // Special handling for Dayfi Tag (NGN to NGN only)
-                            if (selectedCountry == 'NG' &&
-                                selectedCurrency == 'NGN' &&
-                                method.channelType?.toLowerCase() ==
-                                    'dayfi_tag') {
+                            if (method.channelType?.toLowerCase() ==
+                                'dayfi_tag') {
                               // Navigate to Dayfi Tag view for NGN-NGN Dayfi Tag transfers
                               Navigator.pushNamed(
                                 context,

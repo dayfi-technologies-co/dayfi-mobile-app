@@ -7,7 +7,6 @@ import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
 import 'package:dayfi/features/recipients/vm/recipients_viewmodel.dart';
@@ -163,7 +162,6 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
     }
 
     // Filter out duplicates while showing all beneficiaries
-    // TODO: Re-enable self-name filtering if needed (currently commented to show all beneficiaries)
     // final visibleBeneficiaries =
     //     recipientsState.filteredBeneficiaries.where((beneficiary) {
     //       if (userNames.isEmpty) return true; // Show all if no user data
@@ -566,7 +564,7 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
       curve: Curves.easeOut,
       transform: Matrix4.diagonal3Values(1.0, 1.0, 1.0),
       child: Container(
-        margin: EdgeInsets.only(bottom: 4, top: 4),
+        margin: EdgeInsets.only(bottom: 6, top: 6),
         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,

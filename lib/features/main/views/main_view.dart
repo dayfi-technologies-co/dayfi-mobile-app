@@ -2,7 +2,7 @@ import 'package:dayfi/features/home/views/home_view.dart';
 import 'package:dayfi/features/transactions/views/transactions_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 // import 'package:dayfi/features/send/views/send_view.dart';
 import 'package:dayfi/features/recipients/views/recipients_view.dart';
 import 'package:dayfi/features/profile/views/profile_view.dart';
@@ -260,7 +260,7 @@ class _MainViewState extends ConsumerState<MainView> {
                   fontFamily: 'Chirp',
                   fontSize: 18,
                   fontWeight: FontWeight.w500,
-                  letterSpacing: -0.8,
+                  letterSpacing: -0.3,
                 ),
                 SizedBox(height: 8),
 
@@ -275,7 +275,7 @@ class _MainViewState extends ConsumerState<MainView> {
                     style: AppTypography.bodyMedium.copyWith(
                       fontFamily: 'Chirp',
                       fontSize: 16,
-                      letterSpacing: -0.8,
+                      letterSpacing: -0.3,
                       fontWeight: FontWeight.w500,
                       color: Theme.of(context).textTheme.bodyLarge!.color,
                       decoration: TextDecoration.underline,

@@ -6,7 +6,7 @@ import 'package:dayfi/features/recipients/vm/recipients_viewmodel.dart';
 import 'package:dayfi/models/beneficiary_with_source.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
@@ -624,7 +624,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                               curve: Curves.easeInOut,
                               height:
                                   (_selectedNetwork?.name == 'Manual Input')
-                                      ? 180.h
+                                      ? 180
                                       : 0,
                               child:
                                   (_selectedNetwork?.name == 'Manual Input')

@@ -1,14 +1,12 @@
-import 'package:dayfi/common/widgets/buttons/secondary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/common/widgets/text_fields/pin_text_field.dart';
 import 'package:dayfi/features/auth/verify_email/vm/verify_email_viewmodel.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:open_mail_app/open_mail_app.dart';
+// import 'package:open_mail_app_plus/open_mail_app_plus.dart';
 
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
@@ -163,81 +161,81 @@ class VerifyEmailView extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    SizedBox(height: 12),
+                    // SizedBox(height: 12),
 
-                    TextButton(
-                          style: TextButton.styleFrom(
-                            splashFactory: NoSplash.splashFactory,
-                            backgroundColor: Colors.transparent,
-                            foregroundColor: Colors.transparent,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            alignment: Alignment.center,
-                          ),
-                          onPressed: () async {
-                            var result = await OpenMailApp.openMailApp();
+                    // TextButton(
+                    //       style: TextButton.styleFrom(
+                    //         splashFactory: NoSplash.splashFactory,
+                    //         backgroundColor: Colors.transparent,
+                    //         foregroundColor: Colors.transparent,
+                    //         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    //         alignment: Alignment.center,
+                    //       ),
+                    //       onPressed: () async {
+                    //         var result = await OpenMailApp.openMailApp();
 
-                            // If no mail apps found, show error
-                            if (!result.didOpen && !result.canOpen) {
-                              showDialog(
-                                context: context,
-                                builder: (context) {
-                                  return AlertDialog(
-                                    title: Text("No Mail Apps Found"),
-                                    content: Text(
-                                      "No mail apps are installed on your device.",
-                                    ),
-                                    actions: <Widget>[
-                                      TextButton(
-                                        child: Text("OK"),
-                                        onPressed: () {
-                                          Navigator.pop(context);
-                                        },
-                                      ),
-                                    ],
-                                  );
-                                },
-                              );
-                            } else if (!result.didOpen && result.canOpen) {
-                              // iOS: multiple mail apps available, show picker
-                              showDialog(
-                                context: context,
-                                builder: (_) {
-                                  return MailAppPickerDialog(
-                                    mailApps: result.options,
-                                  );
-                                },
-                              );
-                            }
-                          },
-                          child: Text(
-                            "Open email app",
-                            style: TextStyle(
-                              fontFamily: 'Chirp',
-                              color:
-                                  Theme.of(context).textTheme.bodyLarge!.color,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              letterSpacing: -.40,
-                              decoration: TextDecoration.underline,
-                            ),
-                          ),
-                        )
-                        .animate()
-                        .fadeIn(delay: 200.ms, duration: 600.ms)
-                        .slideY(
-                          begin: 0.3,
-                          end: 0,
-                          delay: 200.ms,
-                          duration: 600.ms,
-                        )
-                        .shimmer(
-                          delay: 1000.ms,
-                          duration: 1500.ms,
-                          color: Theme.of(
-                            context,
-                          ).scaffoldBackgroundColor.withOpacity(0.4),
-                          angle: 45,
-                        ),
+                    //         // If no mail apps found, show error
+                    //         if (!result.didOpen && !result.canOpen) {
+                    //           showDialog(
+                    //             context: context,
+                    //             builder: (context) {
+                    //               return AlertDialog(
+                    //                 title: Text("No Mail Apps Found"),
+                    //                 content: Text(
+                    //                   "No mail apps are installed on your device.",
+                    //                 ),
+                    //                 actions: <Widget>[
+                    //                   TextButton(
+                    //                     child: Text("OK"),
+                    //                     onPressed: () {
+                    //                       Navigator.pop(context);
+                    //                     },
+                    //                   ),
+                    //                 ],
+                    //               );
+                    //             },
+                    //           );
+                    //         } else if (!result.didOpen && result.canOpen) {
+                    //           // iOS: multiple mail apps available, show picker
+                    //           showDialog(
+                    //             context: context,
+                    //             builder: (_) {
+                    //               return MailAppPickerDialog(
+                    //                 mailApps: result.options,
+                    //               );
+                    //             },
+                    //           );
+                    //         }
+                    //       },
+                    //       child: Text(
+                    //         "Open email app",
+                    //         style: TextStyle(
+                    //           fontFamily: 'Chirp',
+                    //           color:
+                    //               Theme.of(context).textTheme.bodyLarge!.color,
+                    //           fontSize: 16,
+                    //           fontWeight: FontWeight.w500,
+                    //           letterSpacing: -.40,
+                    //           decoration: TextDecoration.underline,
+                    //         ),
+                    //       ),
+                    //     )
+                    //     .animate()
+                    //     .fadeIn(delay: 200.ms, duration: 600.ms)
+                    //     .slideY(
+                    //       begin: 0.3,
+                    //       end: 0,
+                    //       delay: 200.ms,
+                    //       duration: 600.ms,
+                    //     )
+                    //     .shimmer(
+                    //       delay: 1000.ms,
+                    //       duration: 1500.ms,
+                    //       color: Theme.of(
+                    //         context,
+                    //       ).scaffoldBackgroundColor.withOpacity(0.4),
+                    //       angle: 45,
+                    //     ),
                   ],
                 ),
               ),

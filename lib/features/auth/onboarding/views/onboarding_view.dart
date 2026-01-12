@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'dart:io';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/common/widgets/widgets.dart';
@@ -13,6 +14,7 @@ import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter/foundation.dart';
 import '../models/onboarding_data.dart';
 import '../vm/onboarding_viewmodel.dart';
 import 'onboarding_page_widget.dart';
@@ -88,7 +90,7 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
           !onboardingState.isSuccess &&
           !onboardingState.isLoading) {
         // Only show error if not loading (i.e., not on field change)
-        // log(onboardingState.message!); // Removed for production
+        log(onboardingState.message!); // Removed for production
         TopSnackbar.show(
           context,
           message: onboardingState.message!,
@@ -299,7 +301,7 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       // Show Apple sign-in button only on iOS or macOS
-                                      if (Platform.isIOS || Platform.isMacOS)
+                                      if (!kIsWeb && (defaultTargetPlatform == TargetPlatform.iOS || defaultTargetPlatform == TargetPlatform.macOS))
                                         Column(
                                           children: [
                                             SecondaryButton(

@@ -9,17 +9,17 @@ android.apply {
         create("dev") {
             dimension = "flavor-type"
             applicationId = "com.dayfi.test"
-            resValue(type = "string", name = "app_name", value = "dayfi Test")
+            resValue(type = "string", name = "app_name", value = "Dayfi App")
         }
         create("pilot") {
             dimension = "flavor-type"
             applicationId = "com.dayfi.pilot"
-            resValue(type = "string", name = "app_name", value = "dayfi Pilot")
+            resValue(type = "string", name = "app_name", value = "Dayfi Pilot")
         }
         create("prod") {
             dimension = "flavor-type"
             applicationId = "com.dayfi.prod"
-            resValue(type = "string", name = "app_name", value = "dayfi")
+            resValue(type = "string", name = "app_name", value = "Dayfi")
         }
     }
 }

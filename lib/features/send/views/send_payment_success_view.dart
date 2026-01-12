@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:share_plus/Share_plus.dart';
@@ -475,7 +475,7 @@ Date: $date
                 fontFamily: 'Chirp',
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                letterSpacing: -0.8,
+                letterSpacing: -0.3,
               ),
               // SizedBox(height: 12),
               // SecondaryButton(
@@ -491,7 +491,7 @@ Date: $date
               //   fontFamily: 'Chirp',
               //   fontSize: 18,
               //   fontWeight: FontWeight.w600,
-              //   letterSpacing: -0.8,
+              //   letterSpacing: -0.3,
               // ),
               SizedBox(height: 12),
               SecondaryButton(
@@ -507,7 +507,7 @@ Date: $date
                 fontFamily: 'Chirp',
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                letterSpacing: -0.8,
+                letterSpacing: -0.3,
               ),
             ],
           ),

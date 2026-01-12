@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:another_flushbar/flushbar.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:flutter_svg/svg.dart';
 import 'package:dayfi/common/utils/haptic_helper.dart';
 
@@ -72,7 +72,7 @@ class TopSnackbar {
                     fontSize: 14,
                     fontFamily: 'Chirp',
                     fontWeight: FontWeight.w500,
-                    letterSpacing: -0.8,
+                    letterSpacing: -0.3,
                     height: 1.2,
                     color: textColor,
                   ),

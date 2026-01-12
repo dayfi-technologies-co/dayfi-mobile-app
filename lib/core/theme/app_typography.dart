@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 
 /// App Typography System
 ///
@@ -66,7 +66,7 @@ class AppTypography {
   static const TextStyle displayLarge = TextStyle(
     fontSize: 56,
     height: 1.167, // 56px line height
-    letterSpacing: -0.8,
+    letterSpacing: -0.3,
     fontWeight: FontWeight.w600, // Bold for maximum impact
     fontFamily: secondaryFontFamily, // Youth
   );
@@ -342,7 +342,7 @@ class AppTypography {
   static const TextStyle numberLarge = TextStyle(
     fontSize: 24,
     height: 1.167, // 28px line height
-    letterSpacing: -0.8,
+    letterSpacing: -0.3,
     fontWeight: FontWeight.w500,
     fontFamily: monospaceFontFamily,
   );

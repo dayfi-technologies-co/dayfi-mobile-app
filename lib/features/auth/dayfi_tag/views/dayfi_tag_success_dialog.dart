@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
@@ -165,7 +165,7 @@ class DayfiTagSuccessDialog extends StatelessWidget {
                   fontFamily: 'Chirp',
                   fontSize: 18,
                   fontWeight: FontWeight.w500,
-                  letterSpacing: -0.8,
+                  letterSpacing: -0.3,
                 ),
                 SizedBox(height: 20),
               ],

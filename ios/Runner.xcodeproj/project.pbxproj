@@ -661,8 +661,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 9C6B2A0349BBAD2D3D4BFB33 /* prodDebug.xcconfig */;
 			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
-				DEVELOPMENT_TEAM = 3MCYU3SVQP;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = "Debug-prod";
@@ -671,8 +669,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = A8AF95D4347CEDDFE00C6A85 /* devProfile.xcconfig */;
 			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
-				DEVELOPMENT_TEAM = 3MCYU3SVQP;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = "Profile-dev";
@@ -756,8 +752,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 65D9B96D84ECF867DD582B3F /* pilotProfile.xcconfig */;
 			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
-				DEVELOPMENT_TEAM = 3MCYU3SVQP;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = "Profile-pilot";
@@ -819,8 +813,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 76AA5515AF00EBFAD79BA127 /* prodRelease.xcconfig */;
 			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
-				DEVELOPMENT_TEAM = 3MCYU3SVQP;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = "Release-prod";
@@ -829,8 +821,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = D47035B242E26CD8EAAA61CD /* prodProfile.xcconfig */;
 			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
-				DEVELOPMENT_TEAM = 3MCYU3SVQP;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = "Profile-prod";
@@ -1286,8 +1276,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = D1A603F614A4F05C68C9190C /* devDebug.xcconfig */;
 			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
-				DEVELOPMENT_TEAM = 3MCYU3SVQP;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = "Debug-dev";
@@ -1296,8 +1284,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = DDF2EB98F0D9C4D744585B02 /* pilotDebug.xcconfig */;
 			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
-				DEVELOPMENT_TEAM = 3MCYU3SVQP;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = "Debug-pilot";
@@ -1306,8 +1292,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 23CBA521E4233AC8B4730F14 /* devRelease.xcconfig */;
 			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
-				DEVELOPMENT_TEAM = 3MCYU3SVQP;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = "Release-dev";
@@ -1391,8 +1375,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 1BBF2B55D77429A06AB4295C /* pilotRelease.xcconfig */;
 			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
-				DEVELOPMENT_TEAM = 3MCYU3SVQP;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = "Release-pilot";

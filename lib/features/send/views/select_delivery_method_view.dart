@@ -314,7 +314,7 @@ class _SelectDeliveryMethodViewState
 
     // Dayfi Tag should always be first
     if (lower == 'dayfi_tag') return '000_dayfi_tag';
-    if (lower == 'bank_transfer' || lower == 'bank') return '001_bank_transfer';
+    if (lower == 'bank_transfer' || lower == 'bank' || lower == 'p2p' || lower == 'peer_to_peer') return '001_bank_transfer';
     if (lower == 'mobile_money' || lower == 'momo' || lower == 'mobilemoney') {
       return '002_mobile_money';
     }
@@ -542,7 +542,9 @@ class _SelectDeliveryMethodViewState
   }
 
   Widget _buildDeliveryMethodCard(Channel method) {
+    final sendState = ref.watch(sendViewModelProvider);
     final isDayfiTag = method.channelType?.toLowerCase() == 'dayfi_tag';
+    final isSelected = sendState.selectedDeliveryMethod == method.channelType;
 
     return GestureDetector(
       onTap: () {
@@ -551,8 +553,18 @@ class _SelectDeliveryMethodViewState
             .read(sendViewModelProvider.notifier)
             .updateDeliveryMethod(method.channelType ?? '');
 
-        // Navigate to send view
-        Navigator.pushNamed(context, AppRoute.sendView);
+        // Navigate to send view with selected data
+        Navigator.pushNamed(
+          context,
+          AppRoute.sendView,
+          arguments: <String, dynamic>{
+            'selectedData': <String, dynamic>{
+              'receiveCountry': _selectedCountry,
+              'receiveCurrency': _selectedCurrency,
+              'recipientDeliveryMethod': method.channelType,
+            },
+          },
+        );
       },
       child: Container(
         width: double.infinity,
@@ -566,7 +578,9 @@ class _SelectDeliveryMethodViewState
           color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: AppColors.purple500ForTheme(context).withOpacity(0),
+            color: isSelected
+                ? AppColors.purple500ForTheme(context)
+                : AppColors.purple500ForTheme(context).withOpacity(0),
             width: .75,
           ),
           boxShadow: [

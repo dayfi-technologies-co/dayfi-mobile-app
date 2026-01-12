@@ -80,7 +80,7 @@ class _TransactionPinCreateViewState
                     fontFamily: 'Chirp',
                     fontSize: 20,
                     fontWeight: FontWeight.w500,
-                    letterSpacing: -0.8,
+                    letterSpacing: -0.3,
                   ),
                   textAlign: TextAlign.center,
                 ),

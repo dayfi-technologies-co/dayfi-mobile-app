@@ -597,4 +597,17 @@ class AuthService {
       rethrow;
     }
   }
+
+  Future<AuthResponse> deleteAccount() async {
+    try {
+      final response = await _networkService.call(
+        F.baseUrl + UrlConfig.deleteAccount,
+        RequestMethod.delete,
+      );
+
+      return AuthResponse.fromJson(response.data);
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

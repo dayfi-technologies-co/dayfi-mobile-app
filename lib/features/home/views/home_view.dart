@@ -705,26 +705,58 @@ class _HomeViewState extends ConsumerState<HomeView>
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
+            Text(
+              hasPendingTransactions
+                  ? "Available balance   "
+                  : "Your balance   ",
+              style: TextStyle(
+                fontFamily: 'Chirp',
+                fontSize: 12,
+                color: Theme.of(
+                  context,
+                ).textTheme.bodyLarge!.color!.withOpacity(.85),
+                fontWeight: FontWeight.w600,
+                letterSpacing: -.04,
+                height: 1.450,
+              ),
+            ),
+            SizedBox(height: 16),
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  hasPendingTransactions
-                      ? "Available balance   "
-                      : "Your balance   ",
-                  style: TextStyle(
-                    fontFamily: 'Chirp',
-                    fontSize: 12,
-                    color: Theme.of(
-                      context,
-                    ).textTheme.bodyLarge!.color!.withOpacity(.85),
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: -.04,
-                    height: 1.450,
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(40),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SvgPicture.asset(
+                        _getFlagPath(
+                          _getCountryCodeFromCurrency(homeState.currency),
+                        ),
+                        height: 20.0,
+                      ),
+                      SizedBox(width: 6),
+                      Text(
+                        "${homeState.currency} ",
+                        style: AppTypography.labelMedium.copyWith(
+                          color: AppColors.success600,
+                          fontSize: 14,
+                          fontFamily: AppTypography.secondaryFontFamily,
+                          fontWeight: AppTypography.regular,
+                          height: 1,
+                          letterSpacing: -.70,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
 
+                const SizedBox(width: 8),
                 InkWell(
                   splashColor: Colors.transparent,
                   highlightColor: Colors.transparent,
@@ -751,37 +783,6 @@ class _HomeViewState extends ConsumerState<HomeView>
                 ),
               ],
             ),
-            SizedBox(height: 16),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(40),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SvgPicture.asset(
-                    _getFlagPath(
-                      _getCountryCodeFromCurrency(homeState.currency),
-                    ),
-                    height: 24.0,
-                  ),
-                  SizedBox(width: 8),
-                  Text(
-                    "${homeState.currency} ",
-                    style: AppTypography.labelMedium.copyWith(
-                      color: AppColors.success600,
-                      fontSize: 16,
-                      fontFamily: AppTypography.secondaryFontFamily,
-                      fontWeight: AppTypography.regular,
-                      height: 1,
-                      letterSpacing: -.70,
-                    ),
-                  ),
-                ],
-              ),
-            ),
 
             SizedBox(height: 6),
 
@@ -796,36 +797,24 @@ class _HomeViewState extends ConsumerState<HomeView>
             else
               Column(
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        _isBalanceVisible
-                            ? _formatNumber(
-                              hasPendingTransactions
-                                  ? availableBalance
-                                  : (double.tryParse(
-                                        balance.replaceAll(
-                                          RegExp(r'[^\d.]'),
-                                          '',
-                                        ),
-                                      ) ??
-                                      0.0),
-                            )
-                            : '*****',
-                        style: TextStyle(
-                          fontSize: _isBalanceVisible ? 40 : 40,
-                          height: 1.2,
-                          fontFamily: 'Chirp',
-                          fontWeight: FontWeight.w700,
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withOpacity(1),
-                          letterSpacing: -.40,
-                        ),
-                      ),
-                    ],
+                  const SizedBox(height: 8),
+                  Text(
+                    _isBalanceVisible
+                        ? _formatNumber(availableBalance)
+                        : '*****',
+                    style: TextStyle(
+                      fontSize: 40,
+                      height: 1,
+                      fontFamily: 'Chirp',
+                      fontWeight: FontWeight.w700,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(1),
+                      letterSpacing: -.40,
+                    ),
                   ),
+
+                  const SizedBox(height: 8),
                   // Show pending info if there are pending transactions
                   if (hasPendingTransactions && _isBalanceVisible) ...[
                     SizedBox(height: 8),
@@ -849,7 +838,7 @@ class _HomeViewState extends ConsumerState<HomeView>
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.warning100.withOpacity(0.15),
+                          color: AppColors.warning100.withOpacity(0.08),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(

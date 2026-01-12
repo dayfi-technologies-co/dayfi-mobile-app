@@ -2,5 +2,5 @@
 #include "Generated.xcconfig"
 
 ASSET_PREFIX=dev
-BUNDLE_NAME=dayfi Test
-BUNDLE_DISPLAY_NAME=dayfi Test
+BUNDLE_NAME=Dayfi App
+BUNDLE_DISPLAY_NAME=Dayfi App

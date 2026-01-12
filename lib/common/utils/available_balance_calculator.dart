@@ -11,6 +11,9 @@ class AvailableBalanceCalculator {
   /// Only tracking pending-payment (outgoing money) - not pending-collection (incoming money)
   static const List<String> pendingStatuses = ['pending-payment'];
 
+  /// Duration after which a pending payment transaction is considered expired (12 hours)
+  static const Duration expiryDuration = Duration(hours: 12);
+
   /// Calculate the total amount held in pending transactions (amount + fees)
   ///
   /// [transactions] - List of all user transactions
@@ -51,6 +54,14 @@ class AvailableBalanceCalculator {
         continue;
       }
 
+      // Skip expired transactions - they no longer hold the balance
+      if (_isTransactionExpired(transaction)) {
+        print(
+          '   ⏰ EXPIRED TX SKIPPED: ${transaction.id.substring(0, 8)}... (pending >12 hours)',
+        );
+        continue;
+      }
+
       // Add send amount + fee for this pending transaction
       final sendAmount = transaction.sendAmount ?? 0.0;
       final fee = transaction.fee ?? 0.0;
@@ -69,6 +80,25 @@ class AvailableBalanceCalculator {
   static bool _isPendingStatus(String status) {
     final lowerStatus = status.toLowerCase();
     return pendingStatuses.any((s) => lowerStatus.contains(s));
+  }
+
+  /// Check if a pending payment transaction has expired (been pending for more than 12 hours)
+  static bool _isTransactionExpired(WalletTransaction transaction) {
+    if (!_isPendingStatus(transaction.status) || !transaction.status.toLowerCase().contains('payment')) {
+      return false;
+    }
+
+    try {
+      // Parse the timestamp
+      final transactionTime = DateTime.parse(transaction.timestamp);
+      final now = DateTime.now();
+      final difference = now.difference(transactionTime);
+      
+      return difference > expiryDuration;
+    } catch (e) {
+      // If we can't parse the timestamp, assume it's not expired
+      return false;
+    }
   }
 
   /// Calculate available balance by subtracting pending amounts from current balance
@@ -130,7 +160,7 @@ class AvailableBalanceCalculator {
   static int getPendingTransactionCount(List<WalletTransaction> transactions) {
     return transactions.where((t) {
       final status = t.status.toLowerCase();
-      return _isPendingStatus(status) && status.contains('payment');
+      return _isPendingStatus(status) && status.contains('payment') && !_isTransactionExpired(t);
     }).length;
   }
 
@@ -139,7 +169,13 @@ class AvailableBalanceCalculator {
     return balance.toStringAsFixed(2);
   }
 
-  /// Get a breakdown of pending transactions for display purposes
+  /// Get the effective status of a transaction (considering expiry for pending payments)
+  static String getEffectiveStatus(WalletTransaction transaction) {
+    if (_isTransactionExpired(transaction)) {
+      return 'expired-payment';
+    }
+    return transaction.status;
+  }
   static List<PendingTransactionInfo> getPendingTransactionsBreakdown(
     List<WalletTransaction> transactions,
   ) {
@@ -147,7 +183,7 @@ class AvailableBalanceCalculator {
 
     for (final transaction in transactions) {
       final status = transaction.status.toLowerCase();
-      if (_isPendingStatus(status) && status.contains('payment')) {
+      if (_isPendingStatus(status) && status.contains('payment') && !_isTransactionExpired(transaction)) {
         breakdown.add(
           PendingTransactionInfo(
             id: transaction.id,

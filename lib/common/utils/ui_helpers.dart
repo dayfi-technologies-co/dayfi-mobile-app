@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:dayfi/core/theme/app_colors.dart';
 
 /// UI Helper functions for consistent spacing and layout

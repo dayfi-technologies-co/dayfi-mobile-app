@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
@@ -515,7 +515,7 @@ class _TransactionFilterBottomSheetState
           fontFamily: 'Chirp',
           fontSize: 18,
           fontWeight: FontWeight.w500,
-          letterSpacing: -0.8,
+          letterSpacing: -0.3,
         ),
         SizedBox(height: 12),
         SecondaryButton(
@@ -532,7 +532,7 @@ class _TransactionFilterBottomSheetState
           fontFamily: 'Chirp',
           fontSize: 18,
           fontWeight: FontWeight.w500,
-          letterSpacing: -0.8,
+          letterSpacing: -0.3,
         ),
       ],
     );

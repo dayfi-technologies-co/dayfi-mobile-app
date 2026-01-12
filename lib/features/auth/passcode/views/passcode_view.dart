@@ -118,10 +118,12 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
                                       fontWeight: FontWeight.w900,
                                       // fontWeight: FontWeight.w100,
                                       fontFamily: 'FunnelDisplay',
+
                                       // letterspacing: 0,
-                                      height: 1,
+                                      // height: 1.2,
                                     ),
-                                    maxLines: 2,
+                                    maxLines: 3,
+                                    overflow: TextOverflow.ellipsis,
                                   )
                                   .animate()
                                   .fadeIn(duration: 600.ms)
@@ -459,7 +461,7 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
       fontFamily: 'Chirp',
       fontSize: 18,
       fontWeight: FontWeight.w500,
-      letterSpacing: -0.8,
+      letterSpacing: -0.3,
     );
   }
 
@@ -477,7 +479,7 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
       fontFamily: 'Chirp',
       fontSize: 18,
       fontWeight: FontWeight.w500,
-      letterSpacing: -0.8,
+      letterSpacing: -0.3,
     );
   }
 

@@ -15,6 +15,7 @@ class UrlConfig {
   static const String validateDayfiId = '/payments/validate-dayfi-id';
   static const String changeTransactionPin = '/auth/change-transaction-pin';
   static const String resetTransactionPin = '/auth/update-transaction-pin';
+  static const String deleteAccount = '/auth/delete-account';
 
   //Payment Endpoints
   static const String resolveBank = '/payments/resolve-bank';

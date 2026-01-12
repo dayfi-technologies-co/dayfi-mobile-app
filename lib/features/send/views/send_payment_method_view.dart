@@ -10,7 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:dayfi/common/utils/haptic_helper.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
@@ -365,7 +365,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
   }
 
   void _handleDayfiTagSelection() async {
-    // log('handleDayfiTagSelection');
+    log('handleDayfiTagSelection');
 
     // Fast path: Check cached wallet data first (no network call)
     final homeState = ref.read(homeViewModelProvider);
@@ -2158,7 +2158,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                   fontFamily: 'Chirp',
                   fontSize: 18,
                   fontWeight: FontWeight.w500,
-                  letterSpacing: -0.8,
+                  letterSpacing: -0.3,
                 ),
                 SizedBox(height: 12),
 
@@ -2174,7 +2174,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                     style: AppTypography.bodyMedium.copyWith(
                       fontFamily: 'Chirp',
                       fontSize: 16,
-                      letterSpacing: -0.8,
+                      letterSpacing: -0.3,
                       fontWeight: FontWeight.w500,
                       color: AppColors.neutral400,
                     ),

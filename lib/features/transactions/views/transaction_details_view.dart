@@ -4,7 +4,7 @@ import 'package:flutter/cupertino.dart' show CupertinoActivityIndicator;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/models/wallet_transaction.dart';
@@ -24,6 +24,7 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'dart:async';
 import 'package:dayfi/features/transactions/widgets/transaction_receipt_widget.dart';
+import 'package:dayfi/common/utils/available_balance_calculator.dart';
 
 class TransactionDetailsView extends ConsumerStatefulWidget {
   final WalletTransaction transaction;
@@ -49,6 +50,9 @@ class _TransactionDetailsViewState
 
   // Services
   final PaymentService _paymentService = locator<PaymentService>();
+
+  /// Get the effective status of the transaction (considering expiry)
+  String get _effectiveStatus => AvailableBalanceCalculator.getEffectiveStatus(widget.transaction);
 
   @override
   void initState() {
@@ -132,17 +136,17 @@ class _TransactionDetailsViewState
                     // For collections, show sender details; for payments, show recipient details
                     if (!_isWalletTopUp()) ...[
                       // Account Details
-                      if (!widget.transaction.status.toLowerCase().contains(
+                      if (!_effectiveStatus.toLowerCase().contains(
                         'collection',
                       ))
                         _buildAccountDetails(),
-                      if (!widget.transaction.status.toLowerCase().contains(
+                      if (!_effectiveStatus.toLowerCase().contains(
                         'collection',
                       ))
                         SizedBox(height: 16),
 
                       // Sender Details (for collections) or Recipient Details (for payments)
-                      widget.transaction.status.toLowerCase().contains(
+                      _effectiveStatus.toLowerCase().contains(
                             'collection',
                           )
                           ? _buildSenderDetails()
@@ -194,7 +198,7 @@ class _TransactionDetailsViewState
     final amount = _getTransactionAmount();
     final recipientName = _getRecipientDisplayName();
     final dateTime = _formatDateTime(widget.transaction.timestamp);
-    final isCollection = widget.transaction.status.toLowerCase().contains(
+    final isCollection = _effectiveStatus.toLowerCase().contains(
       'collection',
     );
 
@@ -288,7 +292,7 @@ class _TransactionDetailsViewState
   }
 
   Widget _buildStatusIcon() {
-    final status = widget.transaction.status.toLowerCase();
+    final status = _effectiveStatus.toLowerCase();
 
     return Container(
       width: 56,
@@ -321,6 +325,8 @@ class _TransactionDetailsViewState
       case 'pending-collection':
       case 'pending-payment':
         return "assets/icons/svgs/exclamation-circle.svg";
+      case 'expired-payment':
+        return "assets/icons/svgs/circle-x.svg";
       case 'failed':
       case 'failed-collection':
       case 'failed-payment':
@@ -335,6 +341,7 @@ class _TransactionDetailsViewState
       case 'failed':
       case 'failed-collection':
       case 'failed-payment':
+      case 'expired-payment':
         return AppColors.error500.withOpacity(0.1);
       case 'pending':
       case 'pending-collection':
@@ -362,6 +369,7 @@ class _TransactionDetailsViewState
       case 'failed':
       case 'failed-collection':
       case 'failed-payment':
+      case 'expired-payment':
         return AppColors.error500;
       default:
         return AppColors.neutral500;
@@ -369,7 +377,7 @@ class _TransactionDetailsViewState
   }
 
   Widget _buildStatusTimeline() {
-    final status = widget.transaction.status.toLowerCase();
+    final status = _effectiveStatus.toLowerCase();
     final sendAmount = _getTransactionAmount();
     final receiveAmount = _getReceiveAmount();
     final recipientDisplayName = _getRecipientDisplayName();
@@ -439,6 +447,31 @@ class _TransactionDetailsViewState
                 isFirst: false,
                 isLast: isTopUp, // Hide third item for wallet top-ups
               ),
+
+            // For failed or expired transactions, show failure/expiry and credit back for payments
+            if (!isPending && (status.contains('failed') || status.contains('expired'))) ...[
+              SizedBox(height: 20),
+              _buildTimelineItem(
+                isCompleted: false,
+                isActive: false,
+                date: dateTime.split(',')[0],
+                title: status.contains('expired') ? "Transaction expired" : "Transaction failed",
+                isFirst: false,
+                isLast: isPayment ? false : true, // Last item for collections, not for payments
+              ),
+              // Only show credited back message for payments
+              if (isPayment) ...[
+                SizedBox(height: 20),
+                _buildTimelineItem(
+                  isCompleted: false,
+                  isActive: false,
+                  date: dateTime.split(',')[0],
+                  title: "Your wallet has been credited back",
+                  isFirst: false,
+                  isLast: true,
+                ),
+              ],
+            ],
 
             // Third item for collections: Funds received into wallet
             if (isCollection && isPending) ...[
@@ -698,7 +731,7 @@ class _TransactionDetailsViewState
           ),
           _buildDetailRow(
             "Status",
-            _getStatusTextDisplay(widget.transaction.status),
+            _getStatusTextDisplay(_effectiveStatus),
           ),
           if (widget.transaction.reason != null &&
               widget.transaction.reason!.isNotEmpty) ...[
@@ -739,6 +772,8 @@ class _TransactionDetailsViewState
       case 'pending-payment':
       case 'pending':
         return 'Pending';
+      case 'expired-payment':
+        return 'Expired';
       case 'failed-collection':
       case 'failed-payment':
       case 'failed':
@@ -931,6 +966,19 @@ class _TransactionDetailsViewState
     final total = _calculateTotal();
     final exchangeRate = _getExchangeRate();
     final isTopUp = _isWalletTopUp();
+    final status = _effectiveStatus.toLowerCase();
+
+    // Determine the recipient amount label based on transaction status
+    String recipientLabel;
+    if (status.contains('success')) {
+      recipientLabel = "Recipient got";
+    } else if (status.contains('failed') || status.contains('expired')) {
+      recipientLabel = "Recipient would have got";
+    } else if (status.contains('pending')) {
+      recipientLabel = "Recipient will get";
+    } else {
+      recipientLabel = "Recipient got";
+    }
 
     return Container(
       padding: EdgeInsets.all(20),
@@ -965,7 +1013,7 @@ class _TransactionDetailsViewState
               isLoading: _isRatesLoading,
             ),
             _buildSummaryRow(
-              "Recipient got",
+              recipientLabel,
               receiveAmount,
               isLoading: _isRatesLoading,
             ),
@@ -1162,31 +1210,14 @@ class _TransactionDetailsViewState
   }
 
   bool _shouldShowActionButtons() {
-    final status = widget.transaction.status.toLowerCase();
-    return status == 'failed' || status == 'failed-collection';
+    final status = _effectiveStatus.toLowerCase();
+    return status == 'failed' || status == 'failed-collection' || status == 'expired-payment';
   }
 
   String _getTransactionAmount() {
-    if (widget.transaction.sendAmount != null &&
-        widget.transaction.sendAmount! > 0) {
-      final formattedAmount = StringUtils.formatNumberWithCommas(
-        widget.transaction.sendAmount!.toStringAsFixed(2),
-      );
-      return '₦$formattedAmount';
-    } else if (widget.transaction.receiveAmount != null &&
-        widget.transaction.receiveAmount! > 0) {
-      final formattedAmount = StringUtils.formatNumberWithCommas(
-        widget.transaction.receiveAmount!.toStringAsFixed(2),
-      );
-      return '₦$formattedAmount';
-    } else {
-      return 'N/A';
-    }
-  }
-
-  String _getReceiveAmount() {
-    // Use calculated amount from API if available
-    if (_calculatedReceiveAmount.isNotEmpty) {
+    // For pending transactions, use calculated amount from API if available
+    final isPending = _effectiveStatus.toLowerCase().contains('pending');
+    if (isPending && _calculatedReceiveAmount.isNotEmpty) {
       final currencyCode = _getCurrencyCodeFromCountry(
         widget.transaction.beneficiary.country,
       );
@@ -1197,7 +1228,7 @@ class _TransactionDetailsViewState
       return '$currencySymbol$formattedAmount';
     }
 
-    // Fallback to transaction data
+    // For completed/expired transactions, use the actual receive amount from transaction data
     if (widget.transaction.receiveAmount != null &&
         widget.transaction.receiveAmount! > 0) {
       final currencyCode = _getCurrencyCodeFromCountry(
@@ -1220,45 +1251,124 @@ class _TransactionDetailsViewState
     }
   }
 
+  String _getReceiveAmount() {
+    // Use calculated amount from API if available (for any transaction status)
+    if (_calculatedReceiveAmount.isNotEmpty) {
+      final currencyCode = _getCurrencyCodeFromCountry(
+        widget.transaction.beneficiary.country,
+      );
+      final currencySymbol = _getCurrencySymbolFromCode(currencyCode);
+      final formattedAmount = StringUtils.formatNumberWithCommas(
+        _calculatedReceiveAmount,
+      );
+      return '$currencySymbol$formattedAmount';
+    }
+
+    // For completed transactions, calculate receive amount if not stored
+    if (widget.transaction.receiveAmount != null &&
+        widget.transaction.receiveAmount! > 0) {
+      final currencyCode = _getCurrencyCodeFromCountry(
+        widget.transaction.beneficiary.country,
+      );
+      final currencySymbol = _getCurrencySymbolFromCode(currencyCode);
+      final formattedAmount = StringUtils.formatNumberWithCommas(
+        widget.transaction.receiveAmount!.toStringAsFixed(2),
+      );
+      return '$currencySymbol$formattedAmount';
+    } else if (widget.transaction.sendAmount != null &&
+        widget.transaction.sendAmount! > 0) {
+      // Calculate what the recipient should receive based on current exchange rates
+      final convertedAmount = _calculateReceiveAmountFromSend();
+      if (convertedAmount != null) {
+        final currencyCode = _getCurrencyCodeFromCountry(
+          widget.transaction.beneficiary.country,
+        );
+        final currencySymbol = _getCurrencySymbolFromCode(currencyCode);
+        final formattedAmount = StringUtils.formatNumberWithCommas(
+          convertedAmount.toStringAsFixed(2),
+        );
+        return '$currencySymbol$formattedAmount';
+      } else {
+        // Final fallback to send amount if receive amount is not available and calculation fails
+        final formattedAmount = StringUtils.formatNumberWithCommas(
+          widget.transaction.sendAmount!.toStringAsFixed(2),
+        );
+        return '₦$formattedAmount';
+      }
+    } else {
+      return 'N/A';
+    }
+  }
+
   /// Get currency code from country code
   String _getCurrencyCodeFromCountry(String country) {
-    switch (country.toUpperCase()) {
+    final upperCountry = country.toUpperCase();
+    switch (upperCountry) {
       case 'NG':
+      case 'NIGERIA':
         return 'NGN';
       case 'RW':
+      case 'RWANDA':
         return 'RWF';
       case 'GH':
+      case 'GHANA':
         return 'GHS';
       case 'KE':
+      case 'KENYA':
         return 'KES';
       case 'UG':
+      case 'UGANDA':
         return 'UGX';
       case 'TZ':
+      case 'TANZANIA':
         return 'TZS';
       case 'ZA':
+      case 'SOUTH AFRICA':
+      case 'SA':
         return 'ZAR';
       case 'BW':
+      case 'BOTSWANA':
         return 'BWP';
       case 'SN':
+      case 'SENEGAL':
       case 'CI':
+      case 'COTE D\'IVOIRE':
+      case 'IVORY COAST':
       case 'BF':
+      case 'BURKINA FASO':
       case 'ML':
+      case 'MALI':
       case 'NE':
+      case 'NIGER':
       case 'TD':
+      case 'CHAD':
       case 'CF':
+      case 'CENTRAL AFRICAN REPUBLIC':
         return 'XOF';
       case 'CM':
+      case 'CAMEROON':
       case 'GQ':
+      case 'EQUATORIAL GUINEA':
       case 'GA':
+      case 'GABON':
       case 'CG':
+      case 'CONGO':
       case 'CD':
+      case 'DEMOCRATIC REPUBLIC OF CONGO':
       case 'AO':
+      case 'ANGOLA':
         return 'XAF';
       case 'US':
+      case 'USA':
+      case 'UNITED STATES':
         return 'USD';
       case 'GB':
+      case 'UK':
+      case 'UNITED KINGDOM':
+      case 'ENGLAND':
         return 'GBP';
       case 'EU':
+      case 'EUROPE':
         return 'EUR';
       default:
         return 'NGN'; // Default to Naira
@@ -1501,6 +1611,31 @@ class _TransactionDetailsViewState
     });
   }
 
+  /// Calculate receive amount from send amount using current exchange rates
+  double? _calculateReceiveAmountFromSend() {
+    if (_sendCurrencyRates == null ||
+        _receiveCurrencyRates == null ||
+        widget.transaction.sendAmount == null) {
+      return null;
+    }
+
+    final sendSellRate = double.tryParse(
+      _sendCurrencyRates!['sell']?.toString() ?? '',
+    );
+    final receiveBuyRate = double.tryParse(
+      _receiveCurrencyRates!['buy']?.toString() ?? '',
+    );
+
+    if (sendSellRate == null || receiveBuyRate == null || receiveBuyRate == 0) {
+      return null;
+    }
+
+    // Calculate exchange rate and converted amount
+    final rate = receiveBuyRate / sendSellRate;
+    final sendAmount = widget.transaction.sendAmount!;
+    return sendAmount * rate;
+  }
+
   /// Format exchange rate for display
   String _formatExchangeRate(double rate) {
     final sendSymbol = '₦';
@@ -1704,7 +1839,7 @@ class _TransactionDetailsViewState
               fontFamily: 'Chirp',
               fontSize: 18,
               fontWeight: FontWeight.w500,
-              letterSpacing: -0.8,
+              letterSpacing: -0.3,
             ),
             SizedBox(height: 12),
             SecondaryButton(
@@ -1719,7 +1854,7 @@ class _TransactionDetailsViewState
               fontFamily: 'Chirp',
               fontSize: 18,
               fontWeight: FontWeight.w500,
-              letterSpacing: -0.8,
+              letterSpacing: -0.3,
             ),
           ],
         ),
@@ -1790,7 +1925,7 @@ class _TransactionDetailsViewState
               fontFamily: 'Chirp',
               fontSize: 18,
               fontWeight: FontWeight.w500,
-              letterSpacing: -0.8,
+              letterSpacing: -0.3,
             ),
           ],
         ),
@@ -1864,7 +1999,7 @@ class _TransactionDetailsViewState
               fontFamily: 'Chirp',
               fontSize: 18,
               fontWeight: FontWeight.w500,
-              letterSpacing: -0.8,
+              letterSpacing: -0.3,
             ),
             SizedBox(height: 12),
             SecondaryButton(
@@ -1879,7 +2014,7 @@ class _TransactionDetailsViewState
               fontFamily: 'Chirp',
               fontSize: 18,
               fontWeight: FontWeight.w500,
-              letterSpacing: -0.8,
+              letterSpacing: -0.3,
             ),
           ],
         ),
@@ -2287,10 +2422,10 @@ class _TransactionDetailsViewState
   }
 
   String _getRecipientDisplayName() {
-    final isCollection = widget.transaction.status.toLowerCase().contains(
+    final isCollection = _effectiveStatus.toLowerCase().contains(
       'collection',
     );
-    final isPayment = widget.transaction.status.toLowerCase().contains(
+    final isPayment = _effectiveStatus.toLowerCase().contains(
       'payment',
     );
 

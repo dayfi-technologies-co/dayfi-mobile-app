@@ -3,7 +3,7 @@ import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:dayfi/routes/route.dart';
 
 class SoftposView extends StatelessWidget {

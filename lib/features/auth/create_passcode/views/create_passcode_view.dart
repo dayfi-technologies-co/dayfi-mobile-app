@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/features/auth/create_passcode/vm/create_passcode_viewmodel.dart';
@@ -86,7 +86,7 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
 
                     fontSize: 20, // height: 1.6,
                     fontWeight: FontWeight.w500,
-                    letterSpacing: -0.8,
+                    letterSpacing: -0.3,
                   ),
                   textAlign: TextAlign.center,
                 ),

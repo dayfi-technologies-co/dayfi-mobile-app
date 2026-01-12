@@ -2,5 +2,5 @@
 #include "Generated.xcconfig"
 
 ASSET_PREFIX=pilot
-BUNDLE_NAME=dayfi Pilot
-BUNDLE_DISPLAY_NAME=dayfi Pilot
+BUNDLE_NAME=Dayfi Pilot
+BUNDLE_DISPLAY_NAME=Dayfi Pilot

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class TermsOfUseView extends StatelessWidget {
   const TermsOfUseView({super.key});
@@ -165,7 +164,7 @@ class TermsOfUseView extends StatelessWidget {
         fontSize: 16,
         fontWeight: FontWeight.w500,
         fontStyle: FontStyle.italic,
-        letterSpacing: -0.8,
+        letterSpacing: -0.3,
         color: Theme.of(context).colorScheme.onSurfaceVariant,
       ),
     );
@@ -185,7 +184,7 @@ class TermsOfUseView extends StatelessWidget {
             fontFamily: 'FunnelDisplay',
             fontSize: 24, // height: 1.6,
             fontWeight: FontWeight.w600,
-            letterSpacing: -0.8,
+            letterSpacing: -0.3,
           ),
         ),
         SizedBox(height: 12),
@@ -199,7 +198,7 @@ class TermsOfUseView extends StatelessWidget {
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
                 height: 1.5,
-                letterSpacing: -0.8,
+                letterSpacing: -0.3,
               ),
             ),
           ),

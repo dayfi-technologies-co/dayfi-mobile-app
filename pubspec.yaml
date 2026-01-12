@@ -4,13 +4,13 @@ description: "Dayfi - Your digital financial companion"
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-version: 1.0.0+2
+version: 1.0.0+4
 
 environment:
   sdk: ^3.7.2
 
 dependencies:
-  sign_in_with_apple: ^5.0.0
+  sign_in_with_apple: ^7.0.1
   flutter:
     sdk: flutter
 
@@ -55,7 +55,7 @@ dependencies:
   google_sign_in: ^6.2.1
   lottie: 
   firebase_storage: ^13.0.4
-  open_mail_app: ^0.4.5
+  # open_mail_app_plus: ^0.0.2
 
 dev_dependencies:
   flutter_test:
@@ -80,7 +80,7 @@ flavorizr:
   flavors:
     dev:
       app:
-        name: "Dayfi Test"
+        name: "Dayfi App"
       android:
         applicationId: "com.dayfi.test"
       ios:
@@ -89,7 +89,7 @@ flavorizr:
           config: "firebase/GoogleService-Info-dev.plist"
     pilot:
       app:
-        name: "Dayfi Pilot"
+        name: "Dayfi App"
       android:
         applicationId: "com.dayfi.pilot"
       ios:
@@ -98,7 +98,7 @@ flavorizr:
           config: "firebase/GoogleService-Info-pilot.plist"
     prod:
       app:
-        name: "Dayfi"
+        name: "Dayfi App"
       android:
         applicationId: "com.dayfi.prod"
       ios:

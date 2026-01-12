@@ -3,7 +3,7 @@ import 'package:dayfi/common/utils/haptic_helper.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
@@ -248,7 +248,7 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
       final paymentService = locator<PaymentService>();
       final amount =
           double.tryParse(
-            widget.selectedData['sendAmount']?.toString() ?? '0',
+            widget.selectedData['receiveAmount']?.toString() ?? '0',
           ) ??
           0;
 
@@ -329,8 +329,8 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
 
   @override
   Widget build(BuildContext context) {
-    final sendAmount =
-        double.tryParse(widget.selectedData['sendAmount']?.toString() ?? '0') ??
+    final receiveAmount =
+        double.tryParse(widget.selectedData['receiveAmount']?.toString() ?? '0') ??
         0;
 
     return GestureDetector(
@@ -435,7 +435,7 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
                       SizedBox(height: 24),
 
                       // Transfer Details
-                      _buildTransferDetails(sendAmount),
+                      _buildTransferDetails(receiveAmount),
 
                       SizedBox(height: 32),
 
@@ -495,7 +495,7 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
     );
   }
 
-  Widget _buildTransferDetails(double sendAmount) {
+  Widget _buildTransferDetails(double receiveAmount) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
@@ -521,7 +521,7 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
 
           SizedBox(height: 20),
 
-          _buildDetailRow('Transfer Amount', '₦${_formatNumber(sendAmount)}'),
+          _buildDetailRow('Transfer Amount', '${_getCurrencySymbol(widget.selectedData['receiveCurrency']?.toString() ?? 'NGN')}${_formatNumber(receiveAmount)}'),
           _buildDetailRow('Recipient', '@${widget.dayfiId}'),
           _buildDetailRow('Delivery Method', 'Dayfi Tag Transfer'),
           Divider(
@@ -530,7 +530,7 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
           ),
           _buildDetailRow(
             'Total',
-            '₦${_formatNumber(sendAmount)}',
+            '${_getCurrencySymbol(widget.selectedData['receiveCurrency']?.toString() ?? 'NGN')}${_formatNumber(receiveAmount)}',
             isTotal: true,
           ),
           _buildDetailRow('Transfer Time', 'Instant', bottomPadding: 0),

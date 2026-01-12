@@ -3,7 +3,7 @@ import 'dart:developer';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
@@ -1632,7 +1632,7 @@ class _CompletePersonalInformationViewState
                                                 _steps.length - 1) {
                                               _goToStep(_currentStep + 1);
                                             } else {
-                                              // log('Submitting personal info...');
+                                              log('Submitting personal info...');
                                               // Show loading indicator and call endpoint
                                               if (compulsorySteps.every(
                                                 (i) => _isStepValid(i),

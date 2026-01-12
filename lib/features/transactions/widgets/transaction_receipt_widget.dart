@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/models/wallet_transaction.dart';
 import 'package:dayfi/common/utils/string_utils.dart';
@@ -78,7 +78,7 @@ class TransactionReceiptWidget extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         // Logo
-        Image.asset('assets/icons/pngs/logoo.png', height: 32),
+        Image.asset('assets/images/logo_splash.png', height: 32),
         Text(
           'Transaction Receipt',
           style: TextStyle(
@@ -379,15 +379,20 @@ class TransactionReceiptWidget extends StatelessWidget {
 
   // Helper methods
   String _getTransactionAmount() {
-    if (transaction.sendAmount != null && transaction.sendAmount! > 0) {
-      final formattedAmount = StringUtils.formatNumberWithCommas(
-        transaction.sendAmount!.toStringAsFixed(2),
+    // Use receive amount with proper currency if available
+    if (transaction.receiveAmount != null && transaction.receiveAmount! > 0) {
+      final currencyCode = _getCurrencyCodeFromCountry(
+        transaction.beneficiary.country,
       );
-      return '₦$formattedAmount';
-    } else if (transaction.receiveAmount != null &&
-        transaction.receiveAmount! > 0) {
+      final currencySymbol = _getCurrencySymbolFromCode(currencyCode);
       final formattedAmount = StringUtils.formatNumberWithCommas(
         transaction.receiveAmount!.toStringAsFixed(2),
+      );
+      return '$currencySymbol$formattedAmount';
+    } else if (transaction.sendAmount != null && transaction.sendAmount! > 0) {
+      // Fallback to send amount if receive amount is not available
+      final formattedAmount = StringUtils.formatNumberWithCommas(
+        transaction.sendAmount!.toStringAsFixed(2),
       );
       return '₦$formattedAmount';
     } else {
@@ -516,6 +521,113 @@ class TransactionReceiptWidget extends StatelessWidget {
         return 'Card Payment';
       default:
         return channel;
+    }
+  }
+
+  String _getCurrencyCodeFromCountry(String country) {
+    final upperCountry = country.toUpperCase();
+    switch (upperCountry) {
+      case 'NG':
+      case 'NIGERIA':
+        return 'NGN';
+      case 'RW':
+      case 'RWANDA':
+        return 'RWF';
+      case 'GH':
+      case 'GHANA':
+        return 'GHS';
+      case 'KE':
+      case 'KENYA':
+        return 'KES';
+      case 'UG':
+      case 'UGANDA':
+        return 'UGX';
+      case 'TZ':
+      case 'TANZANIA':
+        return 'TZS';
+      case 'ZA':
+      case 'SOUTH AFRICA':
+      case 'SA':
+        return 'ZAR';
+      case 'BW':
+      case 'BOTSWANA':
+        return 'BWP';
+      case 'SN':
+      case 'SENEGAL':
+      case 'CI':
+      case 'COTE D\'IVOIRE':
+      case 'IVORY COAST':
+      case 'BF':
+      case 'BURKINA FASO':
+      case 'ML':
+      case 'MALI':
+      case 'NE':
+      case 'NIGER':
+      case 'TD':
+      case 'CHAD':
+      case 'CF':
+      case 'CENTRAL AFRICAN REPUBLIC':
+        return 'XOF';
+      case 'CM':
+      case 'CAMEROON':
+      case 'GQ':
+      case 'EQUATORIAL GUINEA':
+      case 'GA':
+      case 'GABON':
+      case 'CG':
+      case 'CONGO':
+      case 'CD':
+      case 'DEMOCRATIC REPUBLIC OF CONGO':
+      case 'AO':
+      case 'ANGOLA':
+        return 'XAF';
+      case 'US':
+      case 'USA':
+      case 'UNITED STATES':
+        return 'USD';
+      case 'GB':
+      case 'UK':
+      case 'UNITED KINGDOM':
+      case 'ENGLAND':
+        return 'GBP';
+      case 'EU':
+      case 'EUROPE':
+        return 'EUR';
+      default:
+        return 'NGN'; // Default to Naira
+    }
+  }
+
+  String _getCurrencySymbolFromCode(String currencyCode) {
+    switch (currencyCode.toUpperCase()) {
+      case 'NGN':
+        return '₦';
+      case 'USD':
+        return '\$';
+      case 'EUR':
+        return '€';
+      case 'GBP':
+        return '£';
+      case 'RWF':
+        return 'RWF ';
+      case 'GHS':
+        return 'GH₵';
+      case 'KES':
+        return 'KSh ';
+      case 'UGX':
+        return 'UGX ';
+      case 'TZS':
+        return 'TSh ';
+      case 'ZAR':
+        return 'R ';
+      case 'BWP':
+        return 'P ';
+      case 'XOF':
+        return 'CFA ';
+      case 'XAF':
+        return 'FCFA ';
+      default:
+        return '₦';
     }
   }
 }

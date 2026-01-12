@@ -9,7 +9,7 @@ class APIResponse<T> {
   APIResponse({this.data, this.error = false, this.message = ""});
 
   factory APIResponse.fromJson(Map<String, dynamic> data) {
-    // log("Response============> ${json.encode(data)}");
+    log("Response============> ${json.encode(data)}");
     
     // Handle status code - prioritize 'code' field, then 'status'
     int? statusCode;

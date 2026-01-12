@@ -11,7 +11,7 @@ class AuthResponse {
   AuthResponse({this.data, this.error = false, this.message = "", this.statusCode});
 
   factory AuthResponse.fromJson(Map<String, dynamic> data) {
-    // log("AuthResponse============> ${json.encode(data)}");
+    log("AuthResponse============> ${json.encode(data)}");
     
     // Handle status code - prioritize 'code' field, then 'status'
     int? statusCode;

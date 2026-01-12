@@ -551,7 +551,7 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
 
           _buildDetailRow(
             'Transfer Amount',
-            '₦${_formatNumber(double.tryParse(widget.selectedData['sendAmount']?.toString() ?? '0') ?? 0)}',
+            '${_getCurrencySymbol(sendState.sendCurrency)}${_formatNumber(double.tryParse(widget.selectedData['sendAmount']?.toString() ?? '0') ?? 0)}',
           ),
           _buildDetailRow(
             'Total to Beneficiary ',
@@ -1251,14 +1251,17 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
     final reason = _paymentData?['reason'] ?? 'other';
 
     // Get amount (convert to integer if needed)
+    // Use recipient amount in recipient currency for all payments
+    final amountString = sendState.receiverAmount;
     final amount =
         double.tryParse(
-          sendState.sendAmount.replaceAll(RegExp(r'[^\d.]'), ''),
+          amountString.replaceAll(RegExp(r'[^\d.]'), ''),
         )?.toInt() ??
         0;
 
     // Get currency
-    final currency = sendState.sendCurrency;
+    // Use recipient currency for all payments
+    final currency = sendState.receiverCurrency;
 
     // Get channel ID
     final channelId =
@@ -1387,7 +1390,7 @@ class _TransactionPinBottomSheetState
             child: Container(
               height:
                   isWide
-                      ? MediaQuery.of(context).size.height * 0.50
+                      ? MediaQuery.of(context).size.height * 0.74
                       : MediaQuery.of(context).size.height * 0.74,
               decoration: BoxDecoration(
                 color: Theme.of(context).scaffoldBackgroundColor,

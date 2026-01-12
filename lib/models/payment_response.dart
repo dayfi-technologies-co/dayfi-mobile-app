@@ -10,7 +10,7 @@ class PaymentResponse {
   PaymentResponse({this.data, this.error = false, this.message = "", this.statusCode});
 
   factory PaymentResponse.fromJson(Map<String, dynamic> data) {
-    // log("PaymentResponse============> ${json.encode(data)}");
+    log("PaymentResponse============> ${json.encode(data)}");
     
     // Handle status code - prioritize 'code' field, then 'status'
     int? statusCode;

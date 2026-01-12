@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 
 class PrivacyNoticeView extends StatelessWidget {
   const PrivacyNoticeView({super.key});
@@ -146,7 +146,7 @@ class PrivacyNoticeView extends StatelessWidget {
         fontSize: 16,
         fontWeight: FontWeight.w500,
         fontStyle: FontStyle.italic,
-        letterSpacing: -0.8,
+        letterSpacing: -0.3,
         color: Theme.of(context).colorScheme.onSurfaceVariant,
       ),
     );
@@ -166,7 +166,7 @@ class PrivacyNoticeView extends StatelessWidget {
             fontFamily: 'FunnelDisplay',
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            letterSpacing: -0.8,
+            letterSpacing: -0.3,
           ),
         ),
         SizedBox(height: 12),
@@ -180,7 +180,7 @@ class PrivacyNoticeView extends StatelessWidget {
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
                 height: 1.5,
-                letterSpacing: -0.8,
+                letterSpacing: -0.3,
               ),
             ),
           ),

@@ -8,11 +8,11 @@ class F {
   static String get title {
     switch (appFlavor) {
       case Flavor.dev:
-        return 'Dayfi Test';
+        return 'Dayfi App';
       case Flavor.pilot:
-        return 'Dayfi Pilot';
+        return 'Dayfi App';
       case Flavor.prod:
-        return 'Dayfi';
+        return 'Dayfi App';
     }
   }
 

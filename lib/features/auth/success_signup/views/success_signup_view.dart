@@ -3,7 +3,7 @@ import 'package:lottie/lottie.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

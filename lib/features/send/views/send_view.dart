@@ -7,7 +7,7 @@ import 'package:dayfi/common/widgets/buttons/secondary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/features/send/vm/send_viewmodel.dart';
@@ -581,7 +581,7 @@ class _SendViewState extends ConsumerState<SendView>
       fontFamily: 'Chirp',
       fontSize: 18,
       fontWeight: FontWeight.w500,
-      letterSpacing: -0.8,
+      letterSpacing: -0.3,
     );
   }
 
@@ -599,7 +599,7 @@ class _SendViewState extends ConsumerState<SendView>
       fontFamily: 'Chirp',
       fontSize: 18,
       fontWeight: FontWeight.w500,
-      letterSpacing: -0.8,
+      letterSpacing: -0.3,
     );
   }
 

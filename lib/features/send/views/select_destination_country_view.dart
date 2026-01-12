@@ -335,7 +335,7 @@ class _SelectDestinationCountryViewState
         //                 fontSize: 16,
         //                 fontFamily: 'Chirp',
         //                 fontWeight: FontWeight.w500,
-        //                 letterSpacing: -0.8,
+        //                 letterSpacing: -0.3,
         //                 height: 1.2,
         //               ),
         //               tabs: const [

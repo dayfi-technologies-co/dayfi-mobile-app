@@ -1,7 +1,6 @@
 import 'package:dayfi/common/utils/ui_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
@@ -172,12 +171,14 @@ class _SendDayfiIdViewState extends ConsumerState<SendDayfiIdView> {
 
       if (response.error == false) {
         // Extract recipient name from response if available
+
         String? recipientDisplayName;
+        String? recipientCurrency;
+        String? recipientCountry;
         try {
           if (response.data != null) {
             final data = response.data as Map<String, dynamic>;
-            if (data.containsKey('first_name') ||
-                data.containsKey('last_name')) {
+            if (data.containsKey('first_name') || data.containsKey('last_name')) {
               final firstName = data['first_name']?.toString() ?? '';
               final lastName = data['last_name']?.toString() ?? '';
               recipientDisplayName = '$firstName $lastName'.trim();
@@ -187,9 +188,63 @@ class _SendDayfiIdViewState extends ConsumerState<SendDayfiIdView> {
             } else if (data.containsKey('name')) {
               recipientDisplayName = data['name']?.toString();
             }
+            // Get recipient currency and country from API response
+            if (data.containsKey('currency')) {
+              recipientCurrency = data['currency']?.toString();
+            }
+            if (data.containsKey('country')) {
+              recipientCountry = data['country']?.toString();
+            }
           }
         } catch (e) {
-          AppLogger.debug('Could not extract recipient name: $e');
+          AppLogger.debug('Could not extract recipient name/currency/country: $e');
+        }
+
+        // Validate currency-country match
+        String? selectedCountry = widget.selectedData['country']?.toString();
+        String? expectedCurrency;
+        // Map country code to expected currency (expand as needed)
+        if (selectedCountry != null) {
+          switch (selectedCountry.toUpperCase()) {
+            case 'NG':
+              expectedCurrency = 'NGN';
+              break;
+            case 'GH':
+              expectedCurrency = 'GHS';
+              break;
+            case 'KE':
+              expectedCurrency = 'KES';
+              break;
+            case 'RW':
+              expectedCurrency = 'RWF';
+              break;
+            // Add more country-currency mappings as needed
+            default:
+              expectedCurrency = null;
+          }
+        }
+
+        // Error if recipient country from API does not match selected country
+        if (selectedCountry != null && recipientCountry != null && recipientCountry.toLowerCase() != selectedCountry.toLowerCase()) {
+          if (mounted) {
+            setState(() {
+              _validationError = 'Recipient country ($recipientCountry) does not match selected country ($selectedCountry)';
+              _validatedDayfiId = null;
+              _recipientName = null;
+            });
+          }
+          return;
+        }
+
+        if (expectedCurrency != null && recipientCurrency != null && recipientCurrency != expectedCurrency) {
+          if (mounted) {
+            setState(() {
+              _validationError = 'Recipient currency ($recipientCurrency) does not match selected country ($selectedCountry)';
+              _validatedDayfiId = null;
+              _recipientName = null;
+            });
+          }
+          return;
         }
 
         // Prevent sending to own Dayfi Tag
@@ -201,8 +256,7 @@ class _SendDayfiIdViewState extends ConsumerState<SendDayfiIdView> {
           if (userData.containsKey('dayfi_id')) {
             myDayfi = (userData['dayfi_id'] ?? '').toString().trim();
           }
-          if ((myDayfi == null || myDayfi.isEmpty) &&
-              userData.containsKey('dayfiId')) {
+          if ((myDayfi == null || myDayfi.isEmpty) && userData.containsKey('dayfiId')) {
             myDayfi = (userData['dayfiId'] ?? '').toString().trim();
           }
 
@@ -717,6 +771,7 @@ class _SendDayfiIdViewState extends ConsumerState<SendDayfiIdView> {
                               onPressed: () async {
                                 FocusScope.of(context).unfocus();
                                 // Show recent beneficiaries in a bottom sheet and allow selection
+                                final selectedCountry = widget.selectedData['country']?.toString()?.toLowerCase();
                                 final result = await showAppBottomSheet<
                                   BeneficiaryWithSource
                                 >(
@@ -761,7 +816,10 @@ class _SendDayfiIdViewState extends ConsumerState<SendDayfiIdView> {
                                                                 .accountNumber ??
                                                             '') !=
                                                         (_myDayfiId ?? '');
-                                                    return isDayFi && isNotOwn;
+                                                    // Filter by selected country (case-insensitive)
+                                                    final beneficiaryCountry = b.beneficiary.country?.toLowerCase();
+                                                    final matchesCountry = selectedCountry == null || beneficiaryCountry == selectedCountry;
+                                                    return isDayFi && isNotOwn && matchesCountry;
                                                   })
                                                   .fold<
                                                     Map<

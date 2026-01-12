@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/services/local/secure_storage.dart';
 import 'package:dayfi/routes/route.dart';
@@ -159,7 +159,7 @@ class ReenterPasscodeNotifier extends StateNotifier<ReenterPasscodeState> {
                     fontSize: 20,
                     fontWeight: FontWeight.w500,
                     color: Theme.of(context).colorScheme.onSurface,
-                    letterSpacing: -0.8,
+                    letterSpacing: -0.3,
                   ),
                   textAlign: TextAlign.center,
                 ),

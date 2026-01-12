@@ -2,5 +2,5 @@
 #include "Generated.xcconfig"
 
 ASSET_PREFIX=prod
-BUNDLE_NAME=dayfi
-BUNDLE_DISPLAY_NAME=dayfi
+BUNDLE_NAME=Dayfi
+BUNDLE_DISPLAY_NAME=Dayfi

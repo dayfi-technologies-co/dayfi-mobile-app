@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dayfi/common/app_constants.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:dayfi/core/navigation/navigator_key.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/core/theme/app_theme.dart';
@@ -11,6 +11,7 @@ import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/theme_provider.dart';
 import 'package:dayfi/core/theme/app_theme_extensions.dart';
 import 'package:dayfi/app_locator.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dayfi/services/transaction_monitor_service.dart';
 import 'package:dayfi/common/widgets/connectivity_wrapper.dart';

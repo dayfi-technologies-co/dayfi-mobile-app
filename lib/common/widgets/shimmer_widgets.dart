@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:shimmer/shimmer.dart';
 
 /// Shimmer loading widgets for different components
@@ -475,7 +475,8 @@ class ShimmerWidgets {
 
   // Quick Send list shimmer (horizontal)
   static Widget quickSendListShimmer(BuildContext context, {int itemCount = 5}) {
-    return SizedBox(
+    return Container(
+    //  padding:  EdgeInsets.symmetric(horizontal: 12),
       height: 72,
       child: ListView.builder(
         shrinkWrap: true,
