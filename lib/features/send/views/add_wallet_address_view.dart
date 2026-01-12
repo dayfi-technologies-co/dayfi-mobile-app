@@ -1,13 +1,10 @@
-import 'dart:developer';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
-import 'package:dayfi/core/theme/app_typography.dart';
 
 class AddWalletAddressView extends ConsumerStatefulWidget {
   final Map<String, dynamic> selectedData;
