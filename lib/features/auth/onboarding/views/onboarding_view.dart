@@ -127,7 +127,7 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
                     child: SizedBox(
                       height: constraints.maxHeight,
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 18.0),
+                        padding: const EdgeInsets.symmetric(vertical: 12.0),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.center,
@@ -141,7 +141,7 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
-                                  SizedBox(height: 88),
+                                  SizedBox(height: 40),
                                   SizedBox(
                                     height: 400,
                                     child: PageView.builder(
@@ -167,7 +167,7 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
                                     ),
                                   ),
 
-                                  const SizedBox(height: 24),
+                                  const SizedBox(height: 18),
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: List.generate(
@@ -282,7 +282,7 @@ class _OnboardingViewState extends ConsumerState<OnboardingView> {
                               Spacer(),
 
                             if (MediaQuery.of(context).size.width > 600)
-                              const SizedBox(height: 40),
+                              const SizedBox(height: 24),
 
                             Center(
                               child: SizedBox(
