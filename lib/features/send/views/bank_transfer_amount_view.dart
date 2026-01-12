@@ -99,10 +99,10 @@ class _BankTransferAmountViewState
         return;
       }
 
-      // Check minimum limit (1000 NGN)
-      const double minAmount = 1000;
+      // Check minimum limit (500 NGN)
+      const double minAmount = 500;
       if (amount < minAmount) {
-        _amountError = 'Amount must be at least 1000 NGN';
+        _amountError = 'Amount must be at least 500 NGN';
         return;
       }
 
@@ -140,8 +140,8 @@ class _BankTransferAmountViewState
 
     if (amount == null || amount <= 0) return false;
 
-    // Check minimum limit (1000 NGN)
-    const double minAmount = 1000;
+    // Check minimum limit (500 NGN)
+    const double minAmount = 500;
     if (amount < minAmount) return false;
 
     // Check maximum limit (5000000 NGN)
@@ -532,8 +532,9 @@ class _BankTransferAmountViewState
                   channelTypeLower == 'bank_transfer') &&
               bankChannel == null) {
             bankChannel = channel;
-          } else
+          } else {
             fallbackChannel ??= channel;
+          }
         }
       }
 
