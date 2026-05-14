@@ -166,9 +166,28 @@ class _OnboardingViewState extends ConsumerState<OnboardingView>
     });
   }
 
-  void _restartAutoScroll() {
-    _autoScrollTimer?.cancel();
-    _startAutoScroll();
+  /// After Apple/Google sign-in, [Navigator] can still be locked when the OS
+  /// sheet dismisses. Defer push until after the frame + a microtask.
+  void _scheduleSocialAuthNavigation(String? action) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      Future.microtask(() async {
+        if (!mounted) return;
+        try {
+          if (action == 'login') {
+            await appRouter.pushNamed(AppRoute.createPasscodeView);
+          } else {
+            await appRouter.pushNamed(AppRoute.successSignupView);
+          }
+        } finally {
+          if (mounted) {
+            ref
+                .read(onboardingViewModelProvider.notifier)
+                .consumeAuthSuccess();
+          }
+        }
+      });
+    });
   }
 
   @override
@@ -176,29 +195,24 @@ class _OnboardingViewState extends ConsumerState<OnboardingView>
     final onboardingState = ref.watch(onboardingViewModelProvider);
     final onboardingViewModel = ref.read(onboardingViewModelProvider.notifier);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (onboardingState.isSuccess) {
-        if (onboardingState.action == 'login') {
-          appRouter.pushNamed(AppRoute.createPasscodeView);
-        } else {
-          appRouter.pushNamed(AppRoute.successSignupView);
-        }
-        // Optionally, clear the success state after navigation
-        ref.read(onboardingViewModelProvider.notifier).goToPage(0);
-      } else if (onboardingState.message != null &&
-          onboardingState.message!.isNotEmpty &&
-          !onboardingState.isSuccess &&
-          !onboardingState.isLoading) {
-        // Only show error if not loading (i.e., not on field change)
-        log(onboardingState.message!); // Removed for production
-        TopSnackbar.show(
-          context,
-          message: onboardingState.message!,
-          isError: true,
-        );
-        // Clear the error message after showing it once
-        ref.read(onboardingViewModelProvider.notifier).clearMessage();
+    // Do not use addPostFrameCallback inside build (runs every frame and can
+    // call pushNamed while Navigator is locked after Apple/Google sheets).
+    ref.listen<OnboardingState>(onboardingViewModelProvider, (prev, next) {
+      if (next.isSuccess) {
+        if (prev?.isSuccess == true) return;
+        _scheduleSocialAuthNavigation(next.action);
+        return;
       }
+      final msg = next.message;
+      if (msg == null || msg.isEmpty || next.isLoading) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Future.microtask(() {
+          if (!context.mounted) return;
+          log(msg);
+          TopSnackbar.show(context, message: msg, isError: true);
+          ref.read(onboardingViewModelProvider.notifier).clearMessage();
+        });
+      });
     });
 
     // final currentPage = onboardingState.page;
@@ -798,7 +812,7 @@ class _TypewriterTextState extends State<TypewriterText> {
     return Align(
       alignment: Alignment.center,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(32.0, 0, 32.0, 204.0),
+        padding: const EdgeInsets.fromLTRB(32.0, 0, 32.0, 102.0),
         child: Text(
           _fullText,
           textAlign: TextAlign.center,
