@@ -333,19 +333,22 @@ class SuccessSignupView extends ConsumerWidget {
   }
 
   Widget _buildNextStepButton(BuildContext context) {
-    return PrimaryButton(
-          text: "Complete Profile",
-          borderRadius: 38,
-          onPressed:
-              () => appRouter.pushNamed(AppRoute.completePersonalInfoView),
-          backgroundColor: AppColors.purple500,
-          height: 48.00000,
-          textColor: AppColors.neutral0,
-          fontFamily: 'Chirp',
-          letterSpacing: -.70,
-          fontSize: 18,
-          width: double.infinity,
-          fullWidth: true,
+    return Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24),
+          child: PrimaryButton(
+            text: "Complete Profile",
+            borderRadius: 38,
+            onPressed:
+                () => appRouter.pushNamed(AppRoute.completePersonalInfoView),
+            backgroundColor: AppColors.purple500,
+            height: 48.00000,
+            textColor: AppColors.neutral0,
+            fontFamily: 'Chirp',
+            letterSpacing: -.70,
+            fontSize: 18,
+            width: double.infinity,
+            fullWidth: true,
+          ),
         )
         .animate()
         .fadeIn(delay: 1000.ms, duration: 500.ms, curve: Curves.easeOutCubic)

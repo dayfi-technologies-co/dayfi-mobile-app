@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/services/remote/auth_service.dart';
+import 'package:dayfi/services/remote/network/api_error.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/routes/route.dart';
@@ -84,33 +85,71 @@ class CheckEmailNotifier extends StateNotifier<CheckEmailState> {
       // await Future.delayed(const Duration(milliseconds: 1000));
 
       if (response.message.toLowerCase().contains('does not exist')) {
+        if (!context.mounted) return;
         appRouter.pushNamed(
           AppRoute.signupView,
           arguments: SignupViewArguments(email: state.email),
         );
       } else if (response.message.toLowerCase().contains('already exists')) {
+        if (!context.mounted) return;
         appRouter.pushNamed(
           AppRoute.loginView,
           arguments: LoginViewArguments(email: state.email),
         );
       }
     }
-    /// =======================
-    /// ✅ DIO ERROR HANDLING
-    /// =======================
+    /// Network layer wraps failures in [ApiError] (see [NetworkService.call]).
+    on ApiError catch (e) {
+      final backendMessage =
+          e.errorDescription ??
+          e.apiErrorModel?.message ??
+          'Something went wrong. Please try again.';
+
+      AppLogger.error('Email validation failed (ApiError): $backendMessage');
+
+      final lower = backendMessage.toLowerCase();
+      final duplicateEmail = e.errorType == 400 &&
+          (lower.contains('already exist') ||
+              lower.contains('already in use') ||
+              lower.contains('log in'));
+
+      await analyticsService.logEvent(
+        name: AnalyticsEvents.signupFailed,
+        parameters: {
+          'email': state.email,
+          'reason':
+              duplicateEmail ? 'existing_account' : backendMessage,
+        },
+      );
+
+      if (!context.mounted) return;
+
+      // Existing account: go to sign-in instead of only showing an error banner.
+      if (duplicateEmail) {
+        appRouter.pushNamed(
+          AppRoute.loginView,
+          arguments: LoginViewArguments(email: state.email),
+        );
+        return;
+      }
+
+      TopSnackbar.show(context, message: backendMessage, isError: true);
+    }
     on DioException catch (e) {
       final statusCode = e.response?.statusCode;
-      final backendMessage =
-          e.response?.data?['message'] ??
-          'Something went wrong. Please try again.';
+      final data = e.response?.data;
+      final backendMessage = data is Map && data['message'] != null
+          ? data['message'].toString()
+          : 'Something went wrong. Please try again.';
 
       AppLogger.error('Email validation failed [$statusCode]: $backendMessage');
 
-      analyticsService.logEvent(
+      await analyticsService.logEvent(
         name: AnalyticsEvents.signupFailed,
         parameters: {'email': state.email, 'reason': backendMessage},
       );
 
+      if (!context.mounted) return;
       TopSnackbar.show(context, message: backendMessage, isError: true);
     }
     /// =======================
@@ -121,11 +160,12 @@ class CheckEmailNotifier extends StateNotifier<CheckEmailState> {
 
       final errorMessage = await ConnectivityUtils.getErrorMessage(e);
 
-      analyticsService.logEvent(
+      await analyticsService.logEvent(
         name: AnalyticsEvents.signupFailed,
         parameters: {'email': state.email, 'reason': errorMessage},
       );
 
+      if (!context.mounted) return;
       TopSnackbar.show(context, message: errorMessage, isError: true);
     } finally {
       state = state.copyWith(isBusy: false);

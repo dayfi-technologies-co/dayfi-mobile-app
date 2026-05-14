@@ -53,29 +53,33 @@ class _CheckEmailViewState extends ConsumerState<CheckEmailView> {
                 backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 elevation: 0,
                 centerTitle: true,
-                leadingWidth: 72,
-                leading: InkWell(
-                  splashColor: Colors.transparent,
-                  highlightColor: Colors.transparent,
-                  onTap: () {
-                    FocusScope.of(context).unfocus();
-                    Navigator.pop(context);
-                  },
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      SvgPicture.asset(
-                        "assets/icons/svgs/notificationn.svg",
-                        height: 40,
-                        color: Theme.of(context).colorScheme.surface,
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.only(left: 8),
-                        child: Icon(Icons.arrow_back_ios, size: 20),
-                      ),
-                    ],
-                  ),
-                ),
+                automaticallyImplyLeading: false,
+                leadingWidth: widget.showBackButton ? 72 : 0,
+                leading:
+                    widget.showBackButton
+                        ? InkWell(
+                          splashColor: Colors.transparent,
+                          highlightColor: Colors.transparent,
+                          onTap: () {
+                            FocusScope.of(context).unfocus();
+                            Navigator.pop(context);
+                          },
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              SvgPicture.asset(
+                                "assets/icons/svgs/notificationn.svg",
+                                height: 40,
+                                color: Theme.of(context).colorScheme.surface,
+                              ),
+                              const Padding(
+                                padding: EdgeInsets.only(left: 8),
+                                child: Icon(Icons.arrow_back_ios, size: 20),
+                              ),
+                            ],
+                          ),
+                        )
+                        : null,
                 title: Image.asset('assets/images/logo_splash.png', height: 24),
               ),
               bottomNavigationBar: SafeArea(

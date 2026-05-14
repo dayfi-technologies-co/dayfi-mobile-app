@@ -1,4 +1,6 @@
 import 'dart:convert';
+
+import 'package:dio/dio.dart';
 import 'package:dayfi/flavors.dart';
 import 'package:dayfi/models/notification_item.dart';
 import 'package:dayfi/services/remote/network/network_service.dart';
@@ -40,6 +42,12 @@ class NotificationService {
       } else {
         throw Exception(responseData['message'] ?? 'Failed to fetch notifications');
       }
+    } on DioException catch (e) {
+      // Local/dev backends often omit this route — treat as no notifications instead of error UI.
+      if (e.response?.statusCode == 404) {
+        return [];
+      }
+      rethrow;
     } catch (e) {
       rethrow;
     }

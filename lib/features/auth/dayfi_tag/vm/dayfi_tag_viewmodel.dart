@@ -64,6 +64,16 @@ class DayfiTagNotifier extends StateNotifier<DayfiTagState> {
 
   DayfiTagNotifier() : super(const DayfiTagState());
 
+  static bool _apiErrorMeansTagAvailable(ApiError e) {
+    if (e.errorType != 400) return false;
+    final msg = (e.apiErrorModel?.message ?? e.errorDescription ?? '')
+        .toLowerCase();
+    if (!msg.contains('invalid')) return false;
+    return msg.contains('dayfi') ||
+        msg.contains('dayfi id') ||
+        msg.contains('dayfi tag');
+  }
+
   void setDayfiId(String value) {
     String newValue = value.trim();
     // Ensure single @ prefix and preserve character order
@@ -114,7 +124,12 @@ class DayfiTagNotifier extends StateNotifier<DayfiTagState> {
       final response = await _authService.validateDayfiId(dayfiId: dayfiId);
 
       if (response.error == false && response.data != null) {
-        final accountName = response.data['accountName'] ?? 'someone';
+        final data = response.data;
+        final map = data is Map<String, dynamic>
+            ? data
+            : (data is Map ? Map<String, dynamic>.from(data) : null);
+        final accountName =
+            map?['accountName'] ?? map?['account_name'] ?? 'someone';
         // Tag is taken
         state = state.copyWith(
           dayfiIdResponse: 'This tag belongs to $accountName',
@@ -130,29 +145,35 @@ class DayfiTagNotifier extends StateNotifier<DayfiTagState> {
         );
       }
     } catch (e) {
-      // Check if this is a 400 error with "Invalid Dayfi Tag" message - treat as success (tag available)
+      if (e is ApiError && _apiErrorMeansTagAvailable(e)) {
+        AppLogger.info(
+          'Invalid dayfi id (400) — treating as available tag',
+        );
+        state = state.copyWith(
+          dayfiIdResponse: 'User not found',
+          dayfiIdError: '',
+          isValidating: false,
+        );
+        return;
+      }
+
       if (e is ApiError) {
-        if (e.errorType == 400) {
-          final errorMessage =
-              e.apiErrorModel?.message ?? e.errorDescription ?? '';
-          if (errorMessage.toLowerCase().contains('invalid Dayfi Tag')) {
-            // Treat as success - tag is available
-            AppLogger.info(
-              'Invalid Dayfi Tag (400) - treating as available tag',
-            );
-            state = state.copyWith(
-              dayfiIdResponse: 'User not found',
-              dayfiIdError: '',
-              isValidating: false,
-            );
-            return;
-          }
-        }
+        final msg =
+            e.errorDescription ??
+            e.apiErrorModel?.message ??
+            'Could not verify this tag. Try again.';
+        AppLogger.error('Error validating Dayfi Tag: $e');
+        state = state.copyWith(
+          clearDayfiIdResponse: true,
+          dayfiIdError: msg,
+          isValidating: false,
+        );
+        return;
       }
 
       AppLogger.error('Error validating Dayfi Tag: $e');
       state = state.copyWith(
-        dayfiIdResponse: 'User not found',
+        clearDayfiIdResponse: true,
         dayfiIdError: 'Error validating Dayfi Tag',
         isValidating: false,
       );

@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'package:dayfi/flavors.dart';
+import 'package:dayfi/models/payment_capabilities.dart';
 import 'package:dayfi/models/payment_response.dart';
 import 'package:dayfi/models/fees_response.dart';
 import 'package:dayfi/services/remote/network/network_service.dart';
+import 'package:dayfi/services/remote/network/api_error.dart';
 import 'package:dayfi/services/remote/network/url_config.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
 
@@ -50,8 +52,6 @@ class PaymentService {
     }
   }
 
-  /// Fetch available payment channels
-  /// GET /api/v1/payments/channels
   Future<PaymentResponse> fetchChannels() async {
     try {
       final response = await _networkService.call(
@@ -81,6 +81,55 @@ class PaymentService {
       return paymentResponse;
     } catch (e) {
       rethrow;
+    }
+  }
+
+  /// GET /payments/capabilities — stablecoin / Yellow Card feature flags.
+  ///
+  /// Production uses the server value only. On **dev** and **pilot** flavors, if
+  /// the API says `stablecoinTopup: false` (YC keys / env not ready yet), we
+  /// still expose the Digital Dollar top-up path so QA can reach the intro +
+  /// channels flow (channels may be empty until the backend is configured).
+  /// Opt out: `--dart-define=DAYFI_FORCE_STABLECOIN_TOPUP=false`
+  Future<PaymentCapabilities> fetchPaymentCapabilities() async {
+    final fromApi = await _fetchPaymentCapabilitiesFromNetwork();
+    if (fromApi.stablecoinTopup) return fromApi;
+    if (F.appFlavor == Flavor.prod) return fromApi;
+
+    const String forceDefine = String.fromEnvironment(
+      'DAYFI_FORCE_STABLECOIN_TOPUP',
+    );
+    if (forceDefine == 'false') return fromApi;
+
+    return PaymentCapabilities(
+      stablecoinTopup: true,
+      yellowCardReady: fromApi.yellowCardReady,
+    );
+  }
+
+  Future<PaymentCapabilities> _fetchPaymentCapabilitiesFromNetwork() async {
+    try {
+      final response = await _networkService.call(
+        F.baseUrl + UrlConfig.paymentCapabilities,
+        RequestMethod.get,
+      );
+
+      Map<String, dynamic> responseData;
+      if (response.data is Map<String, dynamic>) {
+        responseData = response.data;
+      } else if (response.data is String) {
+        responseData = json.decode(response.data) as Map<String, dynamic>;
+      } else {
+        return PaymentCapabilities.empty;
+      }
+
+      final data = responseData['data'];
+      if (data is Map<String, dynamic>) {
+        return PaymentCapabilities.fromJson(data);
+      }
+      return PaymentCapabilities.empty;
+    } catch (_) {
+      return PaymentCapabilities.empty;
     }
   }
 
@@ -293,11 +342,10 @@ class PaymentService {
     }
   }
 
-  // {{BASE_URL}}/api/v1/payments/crypto-channels
   Future<PaymentResponse> fetchCryptoChannels() async {
     try {
       final response = await _networkService.call(
-        '${F.baseUrl}/payments/crypto-channels',
+        F.baseUrl + UrlConfig.cryptoChannels,
         RequestMethod.get,
       );
 
@@ -396,6 +444,20 @@ class PaymentService {
 
       return feesResponse;
     } catch (e) {
+      if (e is ApiError && (e.errorType == 404 || e.errorType == 501)) {
+        AppLogger.debug(
+          'PaymentService: fees endpoint not deployed (${e.errorType}), using defaults',
+        );
+        return FeesResponse(
+          success: false,
+          message: e.errorDescription ?? 'Fees not available',
+          code: e.errorType ?? 404,
+          data: FeesData(
+            transfer: TransferFees(dayfiToDayfi: 0, dayfiToBank: 0),
+            withdrawal: WithdrawalFees(local: 0, international: 0),
+          ),
+        );
+      }
       AppLogger.error('❌ PaymentService: Error in fetchFees: $e');
       rethrow;
     }

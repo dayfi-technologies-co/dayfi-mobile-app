@@ -363,8 +363,10 @@ class _SelectDestinationCountryViewState
               //   children: [
               Builder(
                 builder: (context) {
-                  // Show shimmer while channels are being fetched
-                  if (sendState.isLoading || sendState.channels.isEmpty) {
+                  // Shimmer only while the send flow is actively loading channels.
+                  // Do not use `channels.isEmpty` here: after a failed fetch the list
+                  // stays empty but `isLoading` is false, which would show skeletons forever.
+                  if (sendState.isLoading) {
                     return ShimmerWidgets.recipientListShimmer(
                       context,
                       itemCount: 6,

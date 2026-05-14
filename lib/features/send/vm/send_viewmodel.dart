@@ -915,6 +915,20 @@ class SendViewModel extends StateNotifier<SendState> {
     await _fetchRatesForBothCurrencies();
   }
 
+  /// Native-chain amount entry (e.g. XLM reserve). Pair with
+  /// [restoreSendCurrencyAfterStablecoinAmountStep] when popping the amount screen.
+  void setSendCurrencyForStablecoinAmountStep(String currencyCode) {
+    final code = currencyCode.trim().toUpperCase();
+    if (code.isEmpty) return;
+    state = state.copyWith(sendCurrency: code);
+  }
+
+  void restoreSendCurrencyAfterStablecoinAmountStep(String previousCode) {
+    final code = previousCode.trim();
+    if (code.isEmpty) return;
+    state = state.copyWith(sendCurrency: code);
+  }
+
   void updateSendAmount(String amount) {
     AppLogger.debug('updateSendAmount: $amount');
     // Clean the amount - remove commas and whitespace

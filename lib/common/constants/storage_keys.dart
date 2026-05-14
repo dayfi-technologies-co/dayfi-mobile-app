@@ -9,6 +9,8 @@ class StorageKeys {
   static const String faceIDTouchID = "faceIdTouchId";
   static const String fxInflowSheet = "fxInflowSheet";
   static const String facedIdToSharedPrefKey = "faceSharedKey";
+  /// BIP39 phrase from one-time provisioning response; Keychain/Keystore only.
+  static const String walletRecoveryPhrase = 'wallet_recovery_phrase';
 
   // Shared Preferences Keys (regular app data)
   static const String user = "currentUser";

@@ -1,7 +1,8 @@
+import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'theme_provider.dart';
-import 'app_colors.dart';
 
 /// Theme Toggle Widget
 ///
@@ -200,80 +201,254 @@ class ThemeToggleListTile extends ConsumerWidget {
         },
       ),
       onTap: () {
-        // Show theme selection dialog
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return const ThemeSelectionDialog();
-          },
-        );
+        showThemeSelectionSheet(context);
       },
     );
   }
 }
 
-/// Theme Selection Dialog
-///
-/// A dialog that allows users to select their preferred theme
-class ThemeSelectionDialog extends ConsumerWidget {
-  const ThemeSelectionDialog({super.key});
+/// Presents theme options in a modal bottom sheet (same shell as Send money).
+Future<void> showThemeSelectionSheet(BuildContext context) {
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    isDismissible: true,
+    enableDrag: true,
+    barrierColor: Colors.black.withValues(alpha: 0.85),
+    backgroundColor: Theme.of(context).colorScheme.surface,
+    builder: (ctx) => const _ThemeSelectionSheet(),
+  );
+}
+
+class _ThemeSelectionSheet extends ConsumerWidget {
+  const _ThemeSelectionSheet();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeProvider);
     final themeNotifier = ref.read(themeProvider.notifier);
+    final primary = Theme.of(context).colorScheme.primary;
+    final onSurface = Theme.of(context).colorScheme.onSurface;
 
-    return AlertDialog(
-      title: const Text('Select Theme'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
+    void pick(AppThemeMode mode) {
+      themeNotifier.setThemeMode(mode);
+      Navigator.of(context).pop();
+    }
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.55,
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
         children: [
-          RadioListTile<AppThemeMode>(
-            title: const Text('Light'),
-            subtitle: const Text('Always use light theme'),
-            value: AppThemeMode.light,
-            groupValue: themeMode,
-            onChanged: (AppThemeMode? value) {
-              if (value != null) {
-                themeNotifier.setThemeMode(value);
-                Navigator.of(context).pop();
-              }
-            },
+          const SizedBox(height: 18),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const SizedBox(height: 40, width: 40),
+                Text(
+                  'Select theme',
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontFamily: 'FunnelDisplay',
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: onSurface,
+                  ),
+                ),
+                InkWell(
+                  splashColor: Colors.transparent,
+                  highlightColor: Colors.transparent,
+                  onTap: () {
+                    Navigator.pop(context);
+                    FocusScope.of(context).unfocus();
+                  },
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      SvgPicture.asset(
+                        'assets/icons/svgs/notificationn.svg',
+                        height: 40,
+                        // ignore: deprecated_member_use
+                        color: Theme.of(context).colorScheme.surface,
+                      ),
+                      SizedBox(
+                        height: 40,
+                        width: 40,
+                        child: Center(
+                          child: Image.asset(
+                            'assets/icons/pngs/cancelicon.png',
+                            height: 20,
+                            width: 20,
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-          RadioListTile<AppThemeMode>(
-            title: const Text('Dark'),
-            subtitle: const Text('Always use dark theme'),
-            value: AppThemeMode.dark,
-            groupValue: themeMode,
-            onChanged: (AppThemeMode? value) {
-              if (value != null) {
-                themeNotifier.setThemeMode(value);
-                Navigator.of(context).pop();
-              }
-            },
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
+            child: Opacity(
+              opacity: 0.7,
+              child: Text(
+                'Choose how Dayfi should look.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  fontFamily: 'Chirp',
+                  letterSpacing: -0.25,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
           ),
-          RadioListTile<AppThemeMode>(
-            title: const Text('System'),
-            subtitle: const Text('Follow system theme'),
-            value: AppThemeMode.system,
-            groupValue: themeMode,
-            onChanged: (AppThemeMode? value) {
-              if (value != null) {
-                themeNotifier.setThemeMode(value);
-                Navigator.of(context).pop();
-              }
-            },
+          const SizedBox(height: 24),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+              children: [
+                _ThemeOptionTile(
+                  selected: themeMode == AppThemeMode.light,
+                  icon: Icons.light_mode,
+                  title: 'Light',
+                  subtitle: 'Always use light theme',
+                  primary: primary,
+                  onTap: () => pick(AppThemeMode.light),
+                ),
+                const SizedBox(height: 12),
+                _ThemeOptionTile(
+                  selected: themeMode == AppThemeMode.dark,
+                  icon: Icons.dark_mode,
+                  title: 'Dark',
+                  subtitle: 'Always use dark theme',
+                  primary: primary,
+                  onTap: () => pick(AppThemeMode.dark),
+                ),
+                const SizedBox(height: 12),
+                _ThemeOptionTile(
+                  selected: themeMode == AppThemeMode.system,
+                  icon: Icons.brightness_auto,
+                  title: 'System',
+                  subtitle: 'Follow system theme',
+                  primary: primary,
+                  onTap: () => pick(AppThemeMode.system),
+                ),
+              ],
+            ),
           ),
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-          child: const Text('Cancel'),
+    );
+  }
+}
+
+class _ThemeOptionTile extends StatelessWidget {
+  const _ThemeOptionTile({
+    required this.selected,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.primary,
+    required this.onTap,
+  });
+
+  final bool selected;
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color primary;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(12),
+          border:
+              selected
+                  ? Border.all(
+                    color: AppColors.purple500.withValues(alpha: 0.55),
+                    width: 1,
+                  )
+                  : null,
         ),
-      ],
+        child: Row(
+          children: [
+            SizedBox(
+              width: 40,
+              height: 40,
+              child: Icon(
+                icon,
+                size: 26,
+                color:
+                    selected
+                        ? AppColors.purple500
+                        : onSurface.withValues(alpha: 0.85),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontFamily: 'Chirp',
+                      fontSize: 18,
+                      letterSpacing: -0.25,
+                      fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                      color: selected ? AppColors.purple500 : onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    textAlign: TextAlign.start,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      height: 1.2,
+                      fontFamily: 'Chirp',
+                      letterSpacing: -0.25,
+                      fontSize: 14,
+                      color: onSurface.withValues(alpha: 0.75),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+
+            selected
+                ? SvgPicture.asset(
+                  "assets/icons/svgs/circle-check.svg",
+                  color: AppColors.purple500,
+                  height: 22,
+                  width: 22,
+                )
+                : Icon(
+                  Icons.chevron_right,
+                  color: AppColors.neutral400,
+                  size: 20,
+                ),
+          ],
+        ),
+      ),
     );
   }
 }

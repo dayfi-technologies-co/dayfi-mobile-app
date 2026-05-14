@@ -96,7 +96,42 @@ class AuthService {
       map['fcmToken'] = fcmToken ?? "";
 
       final response = await _networkService.call(
-        F.baseUrl + UrlConfig.checkEmail,
+        F.baseUrl + UrlConfig.googleAuth,
+        RequestMethod.post,
+        data: map,
+      );
+
+      return AuthResponse.fromJson(response.data);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Same contract as [googleAuth], plus optional [nonce] (raw string) so the
+  /// server can validate the `nonce` claim inside Apple's `identityToken` JWT.
+  Future<AuthResponse> appleAuth({
+    required String authToken,
+    String? nonce,
+  }) async {
+    try {
+      Map<String, dynamic> map = {};
+      map['authToken'] = authToken;
+      if (nonce != null && nonce.isNotEmpty) {
+        map['nonce'] = nonce;
+      }
+
+      String? fcmToken;
+      try {
+        final notificationService = NotificationService();
+        await notificationService.init();
+        fcmToken = notificationService.fcmToken;
+      } catch (e) {
+        fcmToken = null;
+      }
+      map['fcmToken'] = fcmToken ?? "";
+
+      final response = await _networkService.call(
+        F.baseUrl + UrlConfig.appleAuth,
         RequestMethod.post,
         data: map,
       );
@@ -450,8 +485,8 @@ class AuthService {
 
       final apiResponse = APIResponse.fromJson(response.data);
 
-      // Update user data if successful
-      if (!apiResponse.error && apiResponse.data != null) {
+      // Update user data on success (body `data` is often null; tag is still created).
+      if (!apiResponse.error) {
         final secureStorage = SecureStorageService();
         final userJson = await secureStorage.read(StorageKeys.user);
         if (userJson.isNotEmpty) {
@@ -469,16 +504,19 @@ class AuthService {
 
   Future<APIResponse> validateDayfiId({required String dayfiId}) async {
     try {
-      // Map<String, dynamic> map = {};
-      // map['dayfiId'] = dayfiId.replaceAll('@', ''); // Remove @ if present
-
       final response = await _networkService.call(
         '${F.baseUrl}${UrlConfig.validateDayfiId}/${dayfiId.replaceAll('@', '')}',
         RequestMethod.get,
-        // data: map,
       );
 
-      return APIResponse.fromJson(response.data);
+      final raw = response.data;
+      if (raw is! Map<String, dynamic>) {
+        if (raw is Map) {
+          return APIResponse.fromJson(Map<String, dynamic>.from(raw));
+        }
+        throw const FormatException('validateDayfiId: expected JSON object');
+      }
+      return APIResponse.fromJson(raw);
     } catch (e) {
       rethrow;
     }

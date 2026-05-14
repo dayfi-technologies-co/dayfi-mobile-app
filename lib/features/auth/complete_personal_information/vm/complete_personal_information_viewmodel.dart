@@ -18,9 +18,18 @@ class CompletePersonalInfoState {
   final String dayfiIdResponse;
   final bool isValidating;
   final bool clearDayfiIdResponse;
-  // Helper for validation
-  bool get isDayfiIdValid =>
+  /// True only after the server confirms this tag is free to claim (see [validateDayfiId]).
+  final bool dayfiIdAvailabilityConfirmed;
+
+  /// Local format rules only (does not mean the tag is free on the server).
+  bool get isDayfiIdFormatOk =>
       dayfiId.isNotEmpty && dayfiIdError.isEmpty && dayfiId.length > 3;
+
+  /// Ready for Continue: format OK, server confirmed available, not mid-request.
+  bool get isDayfiIdReadyToContinue =>
+      dayfiIdAvailabilityConfirmed &&
+      isDayfiIdFormatOk &&
+      !isValidating;
   final String dateOfBirth;
   final String country;
   final String phoneNumber;
@@ -47,6 +56,7 @@ class CompletePersonalInfoState {
     this.dayfiIdResponse = '',
     this.isValidating = false,
     this.clearDayfiIdResponse = false,
+    this.dayfiIdAvailabilityConfirmed = false,
     this.dateOfBirth = '',
     this.country = '',
     this.phoneNumber = '',
@@ -93,6 +103,7 @@ class CompletePersonalInfoState {
     String? dayfiIdResponse,
     bool? isValidating,
     bool? clearDayfiIdResponse,
+    bool? dayfiIdAvailabilityConfirmed,
     String? dateOfBirth,
     String? country,
     String? phoneNumber,
@@ -119,6 +130,8 @@ class CompletePersonalInfoState {
       dayfiIdResponse: dayfiIdResponse ?? this.dayfiIdResponse,
       isValidating: isValidating ?? this.isValidating,
       clearDayfiIdResponse: clearDayfiIdResponse ?? this.clearDayfiIdResponse,
+      dayfiIdAvailabilityConfirmed:
+          dayfiIdAvailabilityConfirmed ?? this.dayfiIdAvailabilityConfirmed,
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       country: country ?? this.country,
       phoneNumber: phoneNumber ?? this.phoneNumber,
@@ -183,6 +196,7 @@ class CompletePersonalInfoNotifier
         dayfiIdError: error,
         clearDayfiIdResponse: true,
         isValidating: false,
+        dayfiIdAvailabilityConfirmed: false,
       );
 
       // Cancel existing debounce timer
@@ -197,28 +211,43 @@ class CompletePersonalInfoNotifier
     }
   }
 
-  String _validateDayfiId(String value) {
-    value = value.trim();
-    if (value.isEmpty) return 'Please enter a Dayfi Tag';
-    if (!value.startsWith('@')) return 'Your tag should start with @';
-    if (value.length < 3) return 'Your tag needs at least 3 characters';
-    return '';
+  /// Backend returns 400 "Invalid dayfi ID" (and variants) when no wallet exists for that tag.
+  static bool _apiErrorMeansTagAvailable(ApiError e) {
+    if (e.errorType != 400) return false;
+    final msg = (e.apiErrorModel?.message ?? e.errorDescription ?? '')
+        .toLowerCase();
+    if (!msg.contains('invalid')) return false;
+    return msg.contains('dayfi') ||
+        msg.contains('dayfi id') ||
+        msg.contains('dayfi tag');
+  }
+
+  static Map<String, dynamic>? _walletDataAsMap(dynamic data) {
+    if (data is Map<String, dynamic>) return data;
+    if (data is Map) return Map<String, dynamic>.from(data);
+    return null;
   }
 
   Future<void> validateDayfiId(String dayfiId) async {
-    // Set validating state to true and clear previous response
-    state = state.copyWith(isValidating: true, clearDayfiIdResponse: true);
+    state = state.copyWith(
+      isValidating: true,
+      clearDayfiIdResponse: true,
+      dayfiIdAvailabilityConfirmed: false,
+    );
 
     try {
       final response = await _authService.validateDayfiId(dayfiId: dayfiId);
 
       if (response.error == false && response.data != null) {
-        final accountName = response.data['accountName'] ?? 'someone';
-        // Tag is taken
+        final map = _walletDataAsMap(response.data);
+        final accountName =
+            map?['accountName'] ?? map?['account_name'] ?? 'someone';
+        // Tag is taken (wallet exists)
         state = state.copyWith(
           dayfiIdResponse: 'This tag belongs to $accountName',
           dayfiIdError: 'This tag is already taken. Try something different.',
           isValidating: false,
+          dayfiIdAvailabilityConfirmed: false,
         );
       } else {
         // Tag is available for creation
@@ -226,36 +255,44 @@ class CompletePersonalInfoNotifier
           dayfiIdResponse: 'User not found',
           dayfiIdError: '',
           isValidating: false,
+          dayfiIdAvailabilityConfirmed: true,
         );
-
-        // enable next button for tab
       }
     } catch (e) {
-      // Check if this is a 400 error with "Invalid Dayfi Tag" message - treat as success (tag available)
+      if (e is ApiError && _apiErrorMeansTagAvailable(e)) {
+        AppLogger.info(
+          'Invalid dayfi id (400) — treating as available tag',
+        );
+        state = state.copyWith(
+          dayfiIdResponse: 'User not found',
+          dayfiIdError: '',
+          isValidating: false,
+          dayfiIdAvailabilityConfirmed: true,
+        );
+        return;
+      }
+
       if (e is ApiError) {
-        if (e.errorType == 400) {
-          final errorMessage =
-              e.apiErrorModel?.message ?? e.errorDescription ?? '';
-          if (errorMessage.toLowerCase().contains('invalid Dayfi Tag')) {
-            // Treat as success - tag is available
-            AppLogger.info(
-              'Invalid Dayfi Tag (400) - treating as available tag',
-            );
-            state = state.copyWith(
-              dayfiIdResponse: 'User not found',
-              dayfiIdError: '',
-              isValidating: false,
-            );
-            return;
-          }
-        }
+        final msg =
+            e.errorDescription ??
+            e.apiErrorModel?.message ??
+            'Could not verify this tag. Try again.';
+        AppLogger.error('Error validating Dayfi Tag: $e');
+        state = state.copyWith(
+          dayfiIdResponse: '',
+          dayfiIdError: msg,
+          isValidating: false,
+          dayfiIdAvailabilityConfirmed: false,
+        );
+        return;
       }
 
       AppLogger.error('Error validating Dayfi Tag: $e');
       state = state.copyWith(
-        dayfiIdResponse: 'User not found',
+        dayfiIdResponse: '',
         dayfiIdError: 'Error validating Dayfi Tag',
         isValidating: false,
+        dayfiIdAvailabilityConfirmed: false,
       );
     }
   }

@@ -321,16 +321,10 @@ class _MainViewState extends ConsumerState<MainView> {
       },
       child: Scaffold(
         extendBody: true, // 👈 makes nav bar float over body
-        body: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 200),
-          transitionBuilder: (Widget child, Animation<double> animation) {
-            return _buildPageTransition(child, animation);
-          },
-          child: Container(
-            key: ValueKey<int>(_currentIndex),
-            child: _screens[_currentIndex],
-          ),
-        ),
+        // IndexedStack (not AnimatedSwitcher) so off-stage tabs still receive
+        // stable layout constraints. AnimatedSwitcher was leaving Transactions /
+        // Recipients with a blank body until a hot reload repainted the sliver tree.
+        body: IndexedStack(index: _currentIndex, children: _screens),
         bottomNavigationBar: Container(
           padding: EdgeInsets.fromLTRB(24, 4, 24, 4), // float up a bit
           decoration: BoxDecoration(
@@ -376,16 +370,6 @@ class _MainViewState extends ConsumerState<MainView> {
         ),
       ),
     );
-  }
-
-  Widget _buildPageTransition(Widget child, Animation<double> animation) {
-    // Gentle fade animation
-    final fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOut));
-
-    return FadeTransition(opacity: fadeAnimation, child: child);
   }
 
   Widget _buildNavItem({
@@ -568,19 +552,22 @@ class _MainViewState extends ConsumerState<MainView> {
             Spacer(),
 
             // Okay button
-            PrimaryButton(
-              text: 'Okay',
-              onPressed: () => _dismissWelcomeBottomSheet(context),
-              backgroundColor: AppColors.purple500,
-              textColor: AppColors.neutral0,
-              borderRadius: 40,
-              height: 48.00000,
-              width: double.infinity,
-              fullWidth: true,
-              fontFamily: 'Chirp',
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              letterSpacing: -0.5,
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              child: PrimaryButton(
+                text: 'Okay',
+                onPressed: () => _dismissWelcomeBottomSheet(context),
+                backgroundColor: AppColors.purple500,
+                textColor: AppColors.neutral0,
+                borderRadius: 40,
+                height: 48.00000,
+                width: double.infinity,
+                fullWidth: true,
+                fontFamily: 'Chirp',
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                letterSpacing: -0.5,
+              ),
             ),
           ],
         ),

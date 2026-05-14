@@ -199,9 +199,10 @@ class SignupView extends ConsumerWidget {
                           padding: EdgeInsets.symmetric(
                             horizontal: isWide ? 24 : 18,
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
+                          child: AutofillGroup(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
                               SizedBox(height: 8),
                               Text(
                                 "Create your account",
@@ -286,6 +287,11 @@ class SignupView extends ConsumerWidget {
                                                     textCapitalization:
                                                         TextCapitalization
                                                             .words,
+                                                    autocorrect: false,
+                                                    enableSuggestions: false,
+                                                    autofillHints: const [
+                                                      AutofillHints.givenName,
+                                                    ],
                                                     maxLength: 50,
                                                     onChanged:
                                                         signupNotifier
@@ -306,6 +312,11 @@ class SignupView extends ConsumerWidget {
                                                     textCapitalization:
                                                         TextCapitalization
                                                             .words,
+                                                    autocorrect: false,
+                                                    enableSuggestions: false,
+                                                    autofillHints: const [
+                                                      AutofillHints.familyName,
+                                                    ],
                                                     maxLength: 50,
                                                     onChanged:
                                                         signupNotifier
@@ -357,6 +368,11 @@ class SignupView extends ConsumerWidget {
                                                 TextInputAction.next,
                                             textCapitalization:
                                                 TextCapitalization.words,
+                                            autocorrect: false,
+                                            enableSuggestions: false,
+                                            autofillHints: const [
+                                              AutofillHints.middleName,
+                                            ],
                                             maxLength: 50,
                                             onChanged:
                                                 signupNotifier.setMiddleName,
@@ -593,6 +609,7 @@ class SignupView extends ConsumerWidget {
                               SizedBox(height: 24),
                               // SizedBox(height: 300),
                             ],
+                          ),
                           ),
                         ),
                       ),

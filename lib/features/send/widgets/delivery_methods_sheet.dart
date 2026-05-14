@@ -305,7 +305,8 @@ class DeliveryMethodsSheet extends ConsumerWidget {
           (a, b) => (a.channelType ?? '').compareTo(b.channelType ?? ''),
         );
 
-    return Container(
+    return 
+    Container(
       height: MediaQuery.of(context).size.height * 0.55,
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
@@ -330,7 +331,6 @@ class DeliveryMethodsSheet extends ConsumerWidget {
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
-
                 InkWell(
                   splashColor: Colors.transparent,
                   highlightColor: Colors.transparent,

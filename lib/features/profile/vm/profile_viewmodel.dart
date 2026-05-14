@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dayfi/app_locator.dart';
+import 'package:dayfi/core/auth/logout_navigation_suppressor.dart';
 import 'package:dayfi/models/user_model.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/services/notification_service.dart';
@@ -169,6 +170,7 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
               isIdVerified: user.isIdVerified,
               isBiometricsSetup: user.isBiometricsSetup,
               dayfiId: user.dayfiId,
+              isWalletBackedUp: user.isWalletBackedUp,
             );
 
             // Persist the adjusted level back to local storage so UI and future loads are consistent
@@ -255,6 +257,7 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
         isIdVerified: state.user!.isIdVerified,
         isBiometricsSetup: state.user!.isBiometricsSetup,
         dayfiId: state.user!.dayfiId,
+        isWalletBackedUp: state.user!.isWalletBackedUp,
       );
 
       // Save updated user to storage
@@ -339,6 +342,7 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
     if (!mounted) return;
     state = state.copyWith(isLoading: true);
 
+    LogoutNavigationSuppressor.begin();
     try {
       AppLogger.info('User logging out...');
 
@@ -349,12 +353,8 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
       final dataClearingService = DataClearingService();
       await dataClearingService.clearAllUserData(ref);
 
-      // Don't update state after clearing data as the provider will be invalidated
-      // Just navigate to login screen
-      appRouter.pushNamedAndRemoveAllBehind(
-        '/onboardingView',
-        arguments: false,
-      );
+      // Single root route: check email (no back stack, no duplicate login from 401)
+      appRouter.pushCheckEmailAndClearStack(showBackButton: false);
 
       AppLogger.info('User logged out successfully');
     } catch (e) {
@@ -365,6 +365,8 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
           errorMessage: 'Error during logout. Please try again.',
         );
       }
+    } finally {
+      LogoutNavigationSuppressor.end();
     }
   }
 

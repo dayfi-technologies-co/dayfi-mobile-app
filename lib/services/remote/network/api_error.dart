@@ -16,6 +16,50 @@ class ApiError {
     _handleError(dioError);
   }
 
+  /// Ensures [response.data] is a JSON object before [APIResponse.fromJson].
+  /// Servers sometimes return HTML/plain text on 5xx, which Dio may expose as [String].
+  static void _normalizeErrorBody(Response<dynamic>? response, String fallbackMessage) {
+    final data = response?.data;
+    if (data is Map<String, dynamic>) return;
+    if (data is Map) {
+      response?.data = Map<String, dynamic>.from(data);
+      return;
+    }
+    response?.data = JsonUtils.formatErrorResponse(fallbackMessage);
+  }
+
+  /// Handles 4xx/5xx bodies for [DioExceptionType.badResponse]. Safe when [dioError.response] is null.
+  void _applyParsedErrorBody(DioException dioError, String fallbackMessage) {
+    final response = dioError.response;
+    if (response == null) {
+      final body = JsonUtils.formatErrorResponse(fallbackMessage);
+      apiErrorModel = APIResponse.fromJson(body);
+      errorDescription = fallbackMessage;
+      return;
+    }
+
+    if (response.data != null) {
+      if (JsonUtils.isValidJson(response.data.toString())) {
+        response.data = JsonUtils.formatErrorResponse(fallbackMessage);
+      }
+    } else {
+      response.data = JsonUtils.formatErrorResponse(fallbackMessage);
+    }
+
+    _normalizeErrorBody(response, fallbackMessage);
+
+    final raw = response.data;
+    final map = raw is Map<String, dynamic>
+        ? raw
+        : (raw is Map ? Map<String, dynamic>.from(raw) : JsonUtils.formatErrorResponse(fallbackMessage));
+
+    apiErrorModel = APIResponse.fromJson(map);
+    errorDescription = extractDescriptionFromResponse(response);
+    if ((errorDescription ?? '').isEmpty) {
+      errorDescription = map['message'] as String? ?? fallbackMessage;
+    }
+  }
+
   /// sets value of class properties from [error]
   void _handleError(Object error) {
     if (error is DioException) {
@@ -46,91 +90,32 @@ class ApiError {
           break;
         case DioExceptionType.badResponse:
           errorType = dioError.response?.statusCode;
-          if (dioError.response?.statusCode == 400) {
-            if (dioError.response != null && dioError.response!.data != null) {
-              if (JsonUtils.isValidJson(dioError.response!.data.toString())) {
-                dioError.response!.data = JsonUtils.formatErrorResponse(
-                  appStrings.localize.apiBadRequest,
-                );
-              }
-            } else {
-              dioError.response!.data = JsonUtils.formatErrorResponse(
-                appStrings.localize.apiBadRequest,
-              );
-            }
-            apiErrorModel = APIResponse.fromJson(dioError.response?.data);
-            errorDescription = extractDescriptionFromResponse(error.response);
-          } else if (dioError.response?.statusCode == 401) {
-            if (dioError.response != null && dioError.response!.data != null) {
-              if (JsonUtils.isValidJson(dioError.response!.data.toString())) {
-                dioError.response!.data = JsonUtils.formatErrorResponse(
-                  appStrings.localize.apiUnauthorized,
-                );
-              }
-            } else {
-              dioError.response!.data = JsonUtils.formatErrorResponse(
-                appStrings.localize.apiUnauthorized,
-              );
-            }
-            apiErrorModel = APIResponse.fromJson(dioError.response?.data);
-            errorDescription = extractDescriptionFromResponse(error.response);
-          } else if (dioError.response?.statusCode == 403) {
-            if (dioError.response != null && dioError.response!.data != null) {
-              if (JsonUtils.isValidJson(dioError.response!.data.toString())) {
-                dioError.response!.data = JsonUtils.formatErrorResponse(
-                  appStrings.localize.apiPermissionDenied,
-                );
-              }
-            } else {
-              dioError.response!.data = JsonUtils.formatErrorResponse(
-                appStrings.localize.apiPermissionDenied,
-              );
-            }
-            apiErrorModel = APIResponse.fromJson(dioError.response?.data);
-            errorDescription = extractDescriptionFromResponse(error.response);
-          } else if (dioError.response?.statusCode == 404) {
-            if (dioError.response != null && dioError.response!.data != null) {
-              if (JsonUtils.isValidJson(dioError.response!.data.toString())) {
-                dioError.response!.data = JsonUtils.formatErrorResponse(
-                  appStrings.localize.apiContentNotFound,
-                );
-              }
-            } else {
-              dioError.response!.data = JsonUtils.formatErrorResponse(
-                appStrings.localize.apiContentNotFound,
-              );
-            }
-            apiErrorModel = APIResponse.fromJson(dioError.response?.data);
-            errorDescription = extractDescriptionFromResponse(error.response);
-          } else if (dioError.response?.statusCode == 422) {
-            if (dioError.response != null && dioError.response!.data != null) {
-              if (JsonUtils.isValidJson(dioError.response!.data.toString())) {
-                dioError.response!.data = JsonUtils.formatErrorResponse(
-                  appStrings.localize.apiUnprocessableEntity,
-                );
-              }
-            } else {
-              dioError.response!.data = JsonUtils.formatErrorResponse(
-                appStrings.localize.apiUnprocessableEntity,
-              );
-            }
-            apiErrorModel = APIResponse.fromJson(dioError.response?.data);
-            errorDescription = extractDescriptionFromResponse(error.response);
-          } else if (dioError.response?.statusCode == 500) {
-            if (dioError.response != null && dioError.response!.data != null) {
-              if (JsonUtils.isValidJson(dioError.response!.data.toString())) {
-                dioError.response!.data = JsonUtils.formatErrorResponse(
-                  appStrings.localize.apiServerDowntime,
-                );
-              }
-            } else {
-              dioError.response!.data = JsonUtils.formatErrorResponse(
-                appStrings.localize.apiServerDowntime,
-              );
-            }
-            apiErrorModel = APIResponse.fromJson(dioError.response?.data);
-            errorDescription = extractDescriptionFromResponse(error.response);
-          } else if (dioError.response?.statusCode == 502) {
+          final statusCode = dioError.response?.statusCode;
+          if (statusCode == 400) {
+            _applyParsedErrorBody(dioError, appStrings.localize.apiBadRequest);
+          } else if (statusCode == 401) {
+            _applyParsedErrorBody(dioError, appStrings.localize.apiUnauthorized);
+          } else if (statusCode == 403) {
+            _applyParsedErrorBody(
+              dioError,
+              appStrings.localize.apiPermissionDenied,
+            );
+          } else if (statusCode == 404) {
+            _applyParsedErrorBody(
+              dioError,
+              appStrings.localize.apiContentNotFound,
+            );
+          } else if (statusCode == 422) {
+            _applyParsedErrorBody(
+              dioError,
+              appStrings.localize.apiUnprocessableEntity,
+            );
+          } else if (statusCode == 500) {
+            _applyParsedErrorBody(
+              dioError,
+              appStrings.localize.apiServerDowntime,
+            );
+          } else if (statusCode == 502) {
             errorDescription = appStrings.localize.apiInternalServerError;
           } else if (dioError.response?.statusCode == 503) {
             errorDescription = 'Service temporarily unavailable. Please try again later.';
@@ -150,21 +135,27 @@ class ApiError {
   String extractDescriptionFromResponse(Response<dynamic>? response) {
     String message = "";
     try {
-      if (response?.data != null) {
-        // Check if data is a Map (JSON response)
-        if (response!.data is Map<String, dynamic>) {
-          final dataMap = response.data as Map<String, dynamic>;
-          if (dataMap["message"] != null) {
-            message = dataMap["message"];
+      final r = response;
+      if (r == null) return '';
+
+      final data = r.data;
+      if (data != null) {
+        if (data is Map<String, dynamic>) {
+          final dataMap = data;
+          final m = dataMap["message"];
+          if (m != null) {
+            message = m.toString();
           } else {
-            message = response.statusMessage ?? '';
+            message = r.statusMessage ?? '';
           }
+        } else if (data is Map) {
+          final m = data["message"];
+          message = m != null ? m.toString() : (r.statusMessage ?? '');
         } else {
-          // Data is not a Map (probably HTML or string), use statusMessage
-          message = response.statusMessage ?? 'Server error';
+          message = r.statusMessage ?? 'Server error';
         }
       } else {
-        message = response?.statusMessage ?? '';
+        message = r.statusMessage ?? '';
       }
     } catch (error, _) {
       message = response?.statusMessage ?? error.toString();

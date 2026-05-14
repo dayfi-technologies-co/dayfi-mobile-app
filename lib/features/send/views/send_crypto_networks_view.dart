@@ -10,6 +10,8 @@ import 'package:dayfi/services/remote/payment_service.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/features/send/vm/send_viewmodel.dart';
 import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
+import 'package:dayfi/features/transactions/vm/transactions_viewmodel.dart';
+import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/models/payment_response.dart' as payment;
 import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/common/utils/error_handler.dart';
@@ -352,6 +354,26 @@ class _SendCryptoNetworksViewState
       final selectedNetworkData =
           networks[_selectedNetwork] as Map<String, dynamic>? ?? {};
 
+      final networkId =
+          (selectedNetworkData['networkId'] ??
+                  selectedNetworkData['id'] ??
+                  selectedNetworkData['uuid'] ??
+                  '')
+              .toString();
+      if (networkId.isEmpty) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+          TopSnackbar.show(
+            context,
+            message: 'This network is missing configuration. Try another.',
+            isError: true,
+          );
+        }
+        return;
+      }
+
       // Build collection request for crypto funding
       final requestData = _buildCryptoCollectionRequest(
         sendState: sendState,
@@ -451,13 +473,23 @@ class _SendCryptoNetworksViewState
     required Map<String, dynamic> selectedNetworkData,
   }) {
     final cryptoNetwork = _selectedNetwork ?? '';
-    final cryptoCurrency = widget.selectedChannel['code'] ?? '';
 
     // Get crypto channel ID
     final cryptoChannelId =
         widget.selectedChannel['id'] ??
         widget.selectedChannel['channelId'] ??
         cryptoNetwork;
+
+    final networkId =
+        (selectedNetworkData['networkId'] ??
+                selectedNetworkData['id'] ??
+                selectedNetworkData['uuid'] ??
+                '')
+            .toString();
+
+    final sendCountry =
+        (sendState.sendCountry.isNotEmpty ? sendState.sendCountry : 'NG')
+            .toString();
 
     return {
       "channelId": cryptoChannelId,
@@ -468,7 +500,7 @@ class _SendCryptoNetworksViewState
           0,
       "currency": sendState.sendCurrency,
       "channelName": widget.selectedChannel['name'] ?? "Digital Dollar",
-      "country": "NG",
+      "country": sendCountry,
       "receiveChannel": cryptoChannelId,
       "receiveNetwork": cryptoNetwork,
       "receiveAmount": double.tryParse(
@@ -479,20 +511,22 @@ class _SendCryptoNetworksViewState
             user != null ? '${user.firstName} ${user.lastName}'.trim() : 'User',
         "phone": user?.phoneNumber ?? '+2340000000000',
         "email": user?.email ?? 'user@example.com',
-        "country": user?.country ?? sendState.sendCountry,
+        "country": user?.country ?? sendCountry,
         "address": user?.address ?? 'Not provided',
         "dob": _formatDateOfBirthToISO(user?.dateOfBirth ?? '1990-01-01'),
         "idType": user?.idType ?? 'passport',
         "idNumber": user?.idNumber ?? 'A12345678',
       },
       "source": {
-        "accountNumber":
-            "1111111111",
-        "networkId": "995eb625-e23b-4d0b-bd90-18ce44cc17a3",
-        "accountType": "bank",
+        "accountType": "crypto",
+        "accountNumber": "",
+        "networkId": networkId,
       },
-
-      "metadata": {"customerId": 12345, "orderId": "COLL-17622499732600", "description":"" ,}
+      "metadata": {
+        "customerId": user?.userId ?? "",
+        "orderId": "COLL-${DateTime.now().millisecondsSinceEpoch}",
+        "description": "Stablecoin collection",
+      },
     };
   }
 
@@ -877,6 +911,15 @@ class _SendCryptoNetworksViewState
                 networks[_selectedNetwork] as Map<String, dynamic>? ?? {};
             final networkName = selectedNetworkData['name'] ?? cryptoNetwork;
 
+            final sendAmountRaw =
+                sendState.sendAmount.replaceAll(RegExp(r'[^\d.]'), '');
+            final sendAmountParsed = double.tryParse(sendAmountRaw);
+            final amountDisplayValue =
+                sendAmountParsed ??
+                (collectionData.convertedAmount ?? 0.0);
+            final amountToSendLabel =
+                '${sendState.sendCurrency} ${_formatNumber(amountDisplayValue)}';
+
             return Container(
               height: MediaQuery.of(context).size.height * 0.74,
               decoration: BoxDecoration(
@@ -990,7 +1033,7 @@ class _SendCryptoNetworksViewState
                                 SizedBox(height: 16),
                                 _buildDetailRow(
                                   'Amount to send',
-                                  '${sendState.receiverCurrency} ${_formatNumber(collectionData.convertedAmount ?? 0.0)}',
+                                  amountToSendLabel,
                                   showCopy: true,
                                 ),
                                 SizedBox(height: 12),
@@ -1062,9 +1105,38 @@ class _SendCryptoNetworksViewState
                     child: PrimaryButton(
                       text: 'I\'ve Sent the Payment',
                       onPressed: () {
+                        final collection = _currentPaymentData;
+                        final txnId =
+                            collection?.id ?? collection?.sequenceId;
+                        final profile = ref.read(profileViewModelProvider);
+                        final u = profile.user;
+                        final recipientName =
+                            u != null && '${u.firstName} ${u.lastName}'.trim().isNotEmpty
+                                ? '${u.firstName} ${u.lastName}'.trim()
+                                : 'Stablecoin payment';
                         Navigator.pop(context);
-                        // Navigate to success screen or main view
-                        Navigator.pop(context); // Close crypto network view
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (!mounted) return;
+                          try {
+                            ref
+                                .read(transactionsProvider.notifier)
+                                .loadTransactions();
+                          } catch (_) {}
+                          Navigator.pushNamedAndRemoveUntil(
+                            this.context,
+                            AppRoute.sendCollectionSuccessView,
+                            (Route route) => false,
+                            arguments: {
+                              'recipientData': <String, dynamic>{
+                                'name': recipientName,
+                              },
+                              'selectedData': <String, dynamic>{},
+                              'paymentData': <String, dynamic>{},
+                              'collectionData': collection,
+                              'transactionId': txnId,
+                            },
+                          );
+                        });
                       },
                       backgroundColor: AppColors.purple500,
                       height: 48.00000,

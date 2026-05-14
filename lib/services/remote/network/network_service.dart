@@ -6,6 +6,7 @@ import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/services/remote/network/api_error.dart';
 import 'package:dayfi/services/remote/network/app_interceptor.dart';
 import 'package:dayfi/flavors.dart';
+import 'package:dayfi/core/auth/logout_navigation_suppressor.dart';
 import 'package:dayfi/services/data_clearing_service.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -159,6 +160,8 @@ class NetworkService {
             path.contains('/auth/login') ||
             path.contains('/auth/signup') ||
             path.contains('/auth/validate-email') ||
+            path.contains('/auth/google-auth') ||
+            path.contains('/auth/apple-auth') ||
             path.contains('/auth/forgot-password') ||
             path.contains('/auth/reset-password') ||
             path.contains('/auth/verify');
@@ -174,6 +177,10 @@ class NetworkService {
 
   /// Handle unauthorized access (401) by clearing all user data and redirecting to login
   Future<void> _handleUnauthorized() async {
+    if (LogoutNavigationSuppressor.isActive) {
+      AppLogger.info('Skipping global 401 redirect during manual logout');
+      return;
+    }
     try {
       AppLogger.info('Unauthorized access detected, clearing all user data...');
 

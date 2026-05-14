@@ -109,7 +109,7 @@ abstract class AppLocalizations {
   /// No description provided for @apiConnectionTimeout.
   ///
   /// In en, this message translates to:
-  /// **'Connection timeout. Please check your internet connection and try again!!!'**
+  /// **'Connection timeout. Please check your internet connection and try again'**
   String get apiConnectionTimeout;
 
   /// No description provided for @apiBadCertificate.
@@ -121,7 +121,7 @@ abstract class AppLocalizations {
   /// No description provided for @apiConnectionError.
   ///
   /// In en, this message translates to:
-  /// **'Connection error. Please check your internet connection and try again!!!'**
+  /// **'Connection error. Please check your internet connection and try again'**
   String get apiConnectionError;
 
   /// No description provided for @apiUnknownConnection.
@@ -133,7 +133,7 @@ abstract class AppLocalizations {
   /// No description provided for @apiResponseTimeout.
   ///
   /// In en, this message translates to:
-  /// **'Ouch! Seems like you’re offline. Please check your internet connection and try again!!!'**
+  /// **'Ouch! Seems like you’re offline. Please check your internet connection and try again'**
   String get apiResponseTimeout;
 
   /// No description provided for @apiBadRequest.

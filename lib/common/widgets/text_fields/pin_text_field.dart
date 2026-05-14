@@ -1,5 +1,6 @@
 // import 'package:epass/ui/common/app_colors.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -37,11 +38,18 @@ class PinTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // pin_code_fields defaults to a Material paste confirmation; on iOS use Cupertino instead.
+    final DialogConfig? pasteDialogConfig =
+        !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS
+            ? DialogConfig(platform: PinCodePlatform.iOS)
+            : null;
+
     return PinCodeTextField(
       keyboardType: TextInputType.number,
       focusNode: focusNode,
       enablePinAutofill: true,
       controller: controller,
+      dialogConfig: pasteDialogConfig,
       autoDisposeControllers: false,
       blinkDuration: const Duration(milliseconds: 10),
       enabled: isEnabled,

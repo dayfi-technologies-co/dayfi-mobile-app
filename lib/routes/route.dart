@@ -46,6 +46,10 @@ import 'package:dayfi/features/send/views/send_collection_success_view.dart';
 import 'package:dayfi/features/send/views/transaction_pin_create_view.dart';
 import 'package:dayfi/features/send/views/transaction_pin_reenter_view.dart';
 import 'package:dayfi/features/send/views/send_payment_method_view.dart';
+import 'package:dayfi/features/send/views/stablecoin_topup_intro_view.dart';
+import 'package:dayfi/features/send/views/stablecoin_topup_amount_view.dart';
+import 'package:dayfi/screens/receive/receive_screen.dart';
+import 'package:dayfi/screens/send/send_screen.dart';
 import 'package:dayfi/features/profile/views/change_transaction_pin_old_view.dart';
 import 'package:dayfi/features/profile/views/change_transaction_pin_new_view.dart';
 import 'package:dayfi/features/profile/views/change_transaction_pin_confirm_view.dart';
@@ -58,6 +62,8 @@ import 'package:dayfi/features/send/views/send_view.dart';
 import 'package:dayfi/features/send/views/select_destination_country_view.dart';
 import 'package:dayfi/features/send/views/select_delivery_method_view.dart';
 import 'package:dayfi/features/send/views/add_wallet_address_view.dart';
+// import 'package:dayfi/features/profile/security/views/security_screen.dart';
+import 'package:dayfi/features/profile/views/recovery_phrase_view.dart';
 
 class VerifyEmailViewArguments {
   final bool isSignUp;
@@ -101,6 +107,10 @@ class AppRoute {
   static const String cryptoChannelsView = '/cryptoChannelsView';
   static const String cryptoNetworksView = '/cryptoNetworksView';
   static const String addRecipientsView = '/addRecipientsView';
+  static const String stablecoinTopupIntroView = '/stablecoinTopupIntroView';
+  static const String sendScreen = '/sendScreen';
+  static const String receiveScreen = '/receiveScreen';
+  static const String stablecoinTopupAmountView = '/stablecoinTopupAmountView';
   static const String dayfiTagExplanationView = '/dayfiTagExplanationView';
   static const String createDayfiTagView = '/createDayfiTagView';
   static const String sendDayfiIdView = '/sendDayfiIdView';
@@ -137,6 +147,8 @@ class AppRoute {
   static const String sendFetchCryptoChannelsView =
       '/sendFetchCryptoChannelsView';
   static const String sendCryptoNetworksView = '/sendCryptoNetworksView';
+  static const String securityScreen = '/securityScreen';
+  static const String recoveryPhraseView = '/recoveryPhraseView';
 
   static Route getRoute(RouteSettings routeSettings) {
     globalrouteSettings = routeSettings;
@@ -296,6 +308,27 @@ class AppRoute {
         );
       case dayfiTagExplanationView:
         return _getPageRoute(routeSettings, const DayfiTagExplanationView());
+      case stablecoinTopupIntroView:
+        final introArgs = routeSettings.arguments as Map<String, dynamic>? ?? {};
+        // Send: skip marketing intro — go straight to on-chain send details.
+        if (introArgs['forSend'] == true) {
+          return _getPageRoute(routeSettings, const SendScreen());
+        }
+        return _getPageRoute(
+          routeSettings,
+          StablecoinTopupIntroView(routeArgs: introArgs),
+        );
+      case sendScreen:
+        return _getPageRoute(routeSettings, const SendScreen());
+      case receiveScreen:
+        return _getPageRoute(routeSettings, const ReceiveScreen());
+      case stablecoinTopupAmountView:
+        final amountRouteArgs =
+            routeSettings.arguments as Map<String, dynamic>? ?? {};
+        return _getPageRoute(
+          routeSettings,
+          StablecoinTopupAmountView(routeArgs: amountRouteArgs),
+        );
       case createDayfiTagView:
         return _getPageRoute(routeSettings, const CreateDayfiTagView());
       case sendDayfiIdView:
@@ -456,6 +489,10 @@ class AppRoute {
           routeSettings,
           SendCryptoNetworksView(selectedChannel: channel),
         );
+      // case securityScreen:
+      //   return _getPageRoute(routeSettings, const SecurityScreen());
+      case recoveryPhraseView:
+        return _getPageRoute(routeSettings, const RecoveryPhraseView());
 
       default:
         return _getPageRoute(routeSettings, const LoginView());

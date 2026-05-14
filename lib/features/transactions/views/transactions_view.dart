@@ -1,3 +1,4 @@
+import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -10,11 +11,11 @@ import 'package:dayfi/common/widgets/empty_state_widget.dart';
 import 'package:dayfi/common/utils/haptic_helper.dart';
 import 'package:dayfi/features/transactions/vm/transactions_viewmodel.dart';
 import 'package:dayfi/features/transactions/widgets/transaction_filter_bottom_sheet.dart';
+import 'package:dayfi/features/send/widgets/send_money_entry_sheet.dart';
 import 'package:dayfi/models/wallet_transaction.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/routes/route.dart';
-import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
 import 'package:dayfi/common/utils/available_balance_calculator.dart';
 
 class TransactionsView extends ConsumerStatefulWidget {
@@ -67,12 +68,13 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => TransactionFilterBottomSheet(
-        currentFilters: transactionsState.filters,
-        onApply: (filters) {
-          ref.read(transactionsProvider.notifier).applyFilters(filters);
-        },
-      ),
+      builder:
+          (context) => TransactionFilterBottomSheet(
+            currentFilters: transactionsState.filters,
+            onApply: (filters) {
+              ref.read(transactionsProvider.notifier).applyFilters(filters);
+            },
+          ),
     );
   }
 
@@ -80,18 +82,19 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
   Widget build(BuildContext context) {
     final transactionsState = ref.watch(transactionsProvider);
 
-    // Sync search controller with state
-    if (_searchController.text != transactionsState.searchQuery) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted &&
-            _searchController.text != transactionsState.searchQuery) {
-          _searchController.text = transactionsState.searchQuery;
-          _searchController.selection = TextSelection.fromPosition(
-            TextPosition(offset: _searchController.text.length),
-          );
-        }
-      });
-    }
+    // Keep the search field in sync when the provider updates the query (e.g. clear filters).
+    // Never schedule post-frame work from build — that can queue unbounded callbacks and
+    // trigger scheduler assertions (`!semantics.parentDataDirty`) when the tree rebuilds often.
+    ref.listen<String>(
+      transactionsProvider.select((s) => s.searchQuery),
+      (previous, next) {
+        if (_searchController.text == next) return;
+        _searchController.value = TextEditingValue(
+          text: next,
+          selection: TextSelection.collapsed(offset: next.length),
+        );
+      },
+    );
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
@@ -121,6 +124,12 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
         body: LayoutBuilder(
           builder: (context, constraints) {
             final bool isWide = constraints.maxWidth > 600;
+            final listEmpty = transactionsState.transactions.isEmpty;
+            final bodyHeight =
+                constraints.maxHeight.isFinite && constraints.maxHeight > 0
+                    ? constraints.maxHeight
+                    : MediaQuery.sizeOf(context).height;
+
             return CustomScrollView(
               physics: const BouncingScrollPhysics(
                 parent: AlwaysScrollableScrollPhysics(),
@@ -131,107 +140,63 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                     _refreshTransactions();
                   },
                 ),
-                SliverToBoxAdapter(
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxWidth: isWide ? 500 : double.infinity,
-                      ),
-                      child: Column(
-                        children: [
-                          // Active Filters Indicator
-                          if (transactionsState.filters.hasActiveFilters)
-                            Padding(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: isWide ? 24 : 18,
-                                vertical: 8,
-                              ),
-                              child: Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 12,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.purple500ForTheme(context)
-                                      .withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: AppColors.purple500ForTheme(context)
-                                        .withOpacity(0.3),
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.filter_alt,
-                                      size: 18,
-                                      color:
-                                          AppColors.purple500ForTheme(context),
-                                    ),
-                                    SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        _getFilterSummary(
-                                          transactionsState.filters,
-                                        ),
-                                        style:
-                                            AppTypography.bodySmall.copyWith(
-                                              fontFamily: 'Karla',
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w500,
-                                              color: AppColors
-                                                  .purple500ForTheme(context),
-                                            ),
-                                      ),
-                                    ),
-                                    TextButton(
-                                      onPressed: () {
-                                        HapticHelper.lightImpact();
-                                        ref
-                                            .read(
-                                              transactionsProvider.notifier,
-                                            )
-                                            .applyFilters(
-                                              TransactionFilterOptions(),
-                                            );
-                                      },
-                                      style: TextButton.styleFrom(
-                                        padding:
-                                            EdgeInsets.symmetric(horizontal: 8),
-                                        minimumSize: Size.zero,
-                                        tapTargetSize:
-                                            MaterialTapTargetSize.shrinkWrap,
-                                      ),
-                                      child: Text(
-                                        'Clear',
-                                        style:
-                                            AppTypography.bodySmall.copyWith(
-                                              fontFamily: 'Karla',
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w600,
-                                              color: AppColors
-                                                  .purple500ForTheme(context),
-                                            ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-
-                          // Main Content
-                          Padding(
-                            padding: EdgeInsets.only(bottom: 0),
-                            child: _buildMainContent(
-                              transactionsState,
-                              isWide,
-                            ),
+                if (listEmpty) ...[
+                  if (transactionsState.filters.hasActiveFilters)
+                    SliverToBoxAdapter(
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: isWide ? 500 : double.infinity,
                           ),
-                        ],
+                          child: _buildActiveFiltersBanner(
+                            transactionsState,
+                            isWide,
+                          ),
+                        ),
+                      ),
+                    ),
+                  // Avoid SliverFillRemaining here: loading shimmer uses shrink-wrap ListView,
+                  // which cannot satisfy intrinsic sizing and breaks layout + semantics after reload.
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                      width: constraints.maxWidth,
+                      height: bodyHeight,
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: isWide ? 500 : double.infinity,
+                          ),
+                          child: _buildMainContent(transactionsState, isWide),
+                        ),
                       ),
                     ),
                   ),
-                ),
+                ] else
+                  SliverToBoxAdapter(
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: isWide ? 500 : double.infinity,
+                        ),
+                        child: Column(
+                          children: [
+                            if (transactionsState.filters.hasActiveFilters)
+                              _buildActiveFiltersBanner(
+                                transactionsState,
+                                isWide,
+                              ),
+                            Padding(
+                              padding: EdgeInsets.only(bottom: 0),
+                              child: _buildMainContent(
+                                transactionsState,
+                                isWide,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             );
           },
@@ -240,10 +205,69 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
     );
   }
 
-  Widget _buildMainContent(
+  Widget _buildActiveFiltersBanner(
     TransactionsState transactionsState,
     bool isWide,
   ) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: isWide ? 24 : 18, vertical: 8),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppColors.purple500ForTheme(context).withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppColors.purple500ForTheme(context).withOpacity(0.3),
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.filter_alt,
+              size: 18,
+              color: AppColors.purple500ForTheme(context),
+            ),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                _getFilterSummary(transactionsState.filters),
+                style: AppTypography.bodySmall.copyWith(
+                  fontFamily: 'Karla',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.purple500ForTheme(context),
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                HapticHelper.lightImpact();
+                ref
+                    .read(transactionsProvider.notifier)
+                    .applyFilters(TransactionFilterOptions());
+              },
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.symmetric(horizontal: 8),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text(
+                'Clear',
+                style: AppTypography.bodySmall.copyWith(
+                  fontFamily: 'Karla',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.purple500ForTheme(context),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMainContent(TransactionsState transactionsState, bool isWide) {
     if (transactionsState.transactions.isEmpty) {
       if (transactionsState.isLoading) {
         return ShimmerWidgets.recipientListShimmer(context, itemCount: 8);
@@ -258,10 +282,24 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
           icon: Icons.receipt_long_outlined,
           title: 'No transactions yet',
           message: 'Your transaction history will appear here',
-          actionText: 'Send Money',
-          onAction: () {
-            Navigator.pushNamed(context, '/send');
-          },
+          customButton: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            child: PrimaryButton(
+              borderRadius: 12,
+              text: 'Send money',
+              onPressed: () {
+                openSendMoneyEntry(context);
+              },
+              backgroundColor: AppColors.purple500,
+              height: 56,
+              textColor: AppColors.neutral0,
+              fontFamily: 'Chirp',
+              letterSpacing: -0.7,
+              fontSize: 18,
+              width: 375,
+              fullWidth: true,
+            ),
+          ),
         );
       }
     }
@@ -290,39 +328,38 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                 child: SvgPicture.asset(
                   'assets/icons/svgs/search-normal.svg',
                   height: 22,
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurface
-                      .withOpacity(0.6),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.6),
                 ),
               ),
             ),
-            suffixIcon: _searchController.text.isNotEmpty
-                ? GestureDetector(
-                    onTap: () {
-                      HapticHelper.lightImpact();
-                      _searchController.clear();
-                      ref
-                          .read(transactionsProvider.notifier)
-                          .searchTransactions('');
-                    },
-                    child: Container(
-                      width: 40,
-                      alignment: Alignment.centerLeft,
-                      constraints: BoxConstraints.tightForFinite(),
-                      child: Center(
-                        child: SvgPicture.asset(
-                          'assets/icons/svgs/close-circle.svg',
-                          height: 20,
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurface
-                              .withOpacity(0.6),
+            suffixIcon:
+                _searchController.text.isNotEmpty
+                    ? GestureDetector(
+                      onTap: () {
+                        HapticHelper.lightImpact();
+                        _searchController.clear();
+                        ref
+                            .read(transactionsProvider.notifier)
+                            .searchTransactions('');
+                      },
+                      child: Container(
+                        width: 40,
+                        alignment: Alignment.centerLeft,
+                        constraints: BoxConstraints.tightForFinite(),
+                        child: Center(
+                          child: SvgPicture.asset(
+                            'assets/icons/svgs/close-circle.svg',
+                            height: 20,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withOpacity(0.6),
+                          ),
                         ),
                       ),
-                    ),
-                  )
-                : null,
+                    )
+                    : null,
             onChanged: (value) {
               ref.read(transactionsProvider.notifier).searchTransactions(value);
             },
@@ -340,10 +377,9 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                 SvgPicture.asset(
                   'assets/icons/svgs/search-normal.svg',
                   height: 64,
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurface
-                      .withOpacity(0.6),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.6),
                 ),
                 SizedBox(height: 16),
                 Text(
@@ -351,10 +387,9 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                   style: TextStyle(
                     fontFamily: 'FunnelDisplay',
                     fontSize: 16,
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withOpacity(0.6),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.6),
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -364,10 +399,9 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                   style: AppTypography.bodyMedium.copyWith(
                     fontFamily: 'Karla',
                     fontSize: 14,
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withOpacity(0.4),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.4),
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -405,17 +439,15 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
           child: Text(
             group.date,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontFamily: 'Karla',
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: -.6,
-                  height: 1.450,
-                  color: Theme.of(context)
-                      .textTheme
-                      .bodyLarge!
-                      .color!
-                      .withOpacity(.75),
-                ),
+              fontFamily: 'Karla',
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              letterSpacing: -.6,
+              height: 1.450,
+              color: Theme.of(
+                context,
+              ).textTheme.bodyLarge!.color!.withOpacity(.75),
+            ),
           ),
         ),
 
@@ -518,16 +550,15 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                         Expanded(
                           child: Text(
                             _getBeneficiaryDisplayName(transaction),
-                            style:
-                                Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                      fontFamily: 'Karla',
-                                      fontSize: 16,
-                                      letterSpacing: -.7,
-                                      fontWeight: FontWeight.w500,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface,
-                                    ),
+                            style: Theme.of(
+                              context,
+                            ).textTheme.bodyLarge?.copyWith(
+                              fontFamily: 'Karla',
+                              fontSize: 16,
+                              letterSpacing: -.7,
+                              fontWeight: FontWeight.w500,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -540,16 +571,15 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                       Text(
                         _capitalizeWords(transaction.reason!),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              fontFamily: 'karla',
-                              fontWeight: FontWeight.w500,
-                              letterSpacing: -.1,
-                              height: 1.5,
-                              fontSize: 12,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurface
-                                  .withOpacity(.65),
-                            ),
+                          fontFamily: 'karla',
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: -.1,
+                          height: 1.5,
+                          fontSize: 12,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(.65),
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -557,15 +587,14 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                     Text(
                       _formatTransactionTime(transaction.timestamp),
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontFamily: 'Karla',
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: -.2,
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurface
-                                .withOpacity(0.6),
-                          ),
+                        fontFamily: 'Karla',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: -.2,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.6),
+                      ),
                     ),
                   ],
                 ),
@@ -579,25 +608,23 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                   Text(
                     _getTransactionAmount(transaction),
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontFamily: 'Karla',
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
+                      fontFamily: 'Karla',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
                   ),
                   SizedBox(height: 2),
                   Text(
                     _getStatusText(_getEffectiveStatus(transaction)),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontFamily: 'Karla',
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: -.6,
-                          height: 1.450,
-                          color: _getStatusColor(
-                            _getEffectiveStatus(transaction),
-                          ),
-                        ),
+                      fontFamily: 'Karla',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: -.6,
+                      height: 1.450,
+                      color: _getStatusColor(_getEffectiveStatus(transaction)),
+                    ),
                   ),
                 ],
               ),
@@ -708,7 +735,7 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
 
     final isDayfiTransfer =
         transaction.source.accountType?.toLowerCase() == 'dayfi' ||
-            transaction.beneficiary.accountType?.toLowerCase() == 'dayfi';
+        transaction.beneficiary.accountType?.toLowerCase() == 'dayfi';
 
     if (isCollection) {
       if (isDayfiTransfer &&

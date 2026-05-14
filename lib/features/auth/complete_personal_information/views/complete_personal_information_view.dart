@@ -185,7 +185,7 @@ class _CompletePersonalInformationViewState
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 18),
           child: Text(
-            "Create a unique Dayfi Tag — this is how others can find and pay you.",
+            "Create a unique Dayfi Tag — this is how others can find and pay you via username.",
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               fontSize: 16,
               fontWeight: FontWeight.w500,
@@ -235,9 +235,8 @@ class _CompletePersonalInformationViewState
                             size: 20,
                           ),
                         )
-                        : state.dayfiId.isNotEmpty &&
-                            state.dayfiIdError.isEmpty &&
-                            state.isDayfiIdValid
+                        : state.dayfiIdAvailabilityConfirmed &&
+                            state.isDayfiIdFormatOk
                         ? Padding(
                           padding: const EdgeInsets.all(12.0),
                           child: SvgPicture.asset(
@@ -1379,9 +1378,10 @@ class _CompletePersonalInformationViewState
     // Only enable button if current step is valid (if compulsory), or always if optional
     bool isButtonEnabled;
     if (_currentStep == 0) {
-      // Username step: only enable if Dayfi Tag is valid
+      // Username step: only after server confirms tag is free
       isButtonEnabled =
-          personalInfoState.isDayfiIdValid && !personalInfoState.isBusy;
+          personalInfoState.isDayfiIdReadyToContinue &&
+          !personalInfoState.isBusy;
     } else if (_currentStep == 1) {
       isButtonEnabled =
           personalInfoState.dateOfBirth.isNotEmpty &&
@@ -1625,7 +1625,7 @@ class _CompletePersonalInformationViewState
                                                       .dayfiIdError
                                                       .isEmpty &&
                                                   personalInfoState
-                                                      .isDayfiIdValid) {
+                                                      .isDayfiIdReadyToContinue) {
                                                 _goToStep(_currentStep + 1);
                                               }
                                             } else if (_currentStep <

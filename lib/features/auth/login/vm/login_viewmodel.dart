@@ -54,7 +54,7 @@ class LoginState {
 }
 
 class LoginNotifier extends StateNotifier<LoginState> {
-  /// Save user token, user data, and credentials after Google auth
+  /// Persists session after Google or Apple sign-in (password is empty for SSO).
   Future<void> saveGoogleAuthData({
     required String token,
     required Map<String, dynamic> userJson,

@@ -1,901 +1,792 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-
+import 'dart:ui';
 import 'app_colors.dart';
-import 'app_typography.dart';
 
-/// App Theme System
+/// App Theme Extensions
 ///
-/// This class defines the comprehensive theme system for Dayfi
-/// following Material Design 3 principles and industry standards.
+/// This file contains custom theme extensions for app-specific styling
+/// that extends beyond the standard Material Design 3 theme system.
 ///
-/// Features:
-/// - Light and Dark mode support
-/// - Material Design 3 color scheme
-/// - Custom typography system
-/// - Consistent component styling
-/// - Accessibility support
-class AppTheme {
-  // Private constructor to prevent instantiation
-  AppTheme._();
+/// Extensions include:
+/// - Custom color schemes for specific use cases
+/// - App-specific component styles
+/// - Custom spacing and sizing
+/// - Special effects and animations
+/// - Brand-specific styling
 
-  // ============================================================================
-  // LIGHT THEME
-  // ============================================================================
+/// App Color Scheme Extension
+///
+/// Extends the standard ColorScheme with app-specific colors
+@immutable
+class AppColorSchemeExtension extends ThemeExtension<AppColorSchemeExtension> {
+  const AppColorSchemeExtension({
+    required this.success,
+    required this.onSuccess,
+    required this.successContainer,
+    required this.onSuccessContainer,
+    required this.warning,
+    required this.onWarning,
+    required this.warningContainer,
+    required this.onWarningContainer,
+    required this.info,
+    required this.onInfo,
+    required this.infoContainer,
+    required this.onInfoContainer,
+    required this.surfaceContainer,
+    required this.onSurfaceContainer,
+    required this.surfaceContainerHigh,
+    required this.onSurfaceContainerHigh,
+    required this.surfaceContainerHighest,
+    required this.onSurfaceContainerHighest,
+    required this.surfaceVariant,
+    required this.onSurfaceVariant,
+    required this.surfaceDim,
+    required this.surfaceBright,
+    required this.outlineHigh,
+    required this.outlineMedium,
+    required this.outlineLow,
+  });
 
-  /// Light theme configuration
-  static ThemeData get lightTheme {
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.light,
+  final Color success;
+  final Color onSuccess;
+  final Color successContainer;
+  final Color onSuccessContainer;
+  final Color warning;
+  final Color onWarning;
+  final Color warningContainer;
+  final Color onWarningContainer;
+  final Color info;
+  final Color onInfo;
+  final Color infoContainer;
+  final Color onInfoContainer;
+  final Color surfaceContainer;
+  final Color onSurfaceContainer;
+  final Color surfaceContainerHigh;
+  final Color onSurfaceContainerHigh;
+  final Color surfaceContainerHighest;
+  final Color onSurfaceContainerHighest;
+  final Color surfaceVariant;
+  final Color onSurfaceVariant;
+  final Color surfaceDim;
+  final Color surfaceBright;
+  final Color outlineHigh;
+  final Color outlineMedium;
+  final Color outlineLow;
 
-      // Scaffold Background
-      scaffoldBackgroundColor: const Color(0xffFEF9F3),
-
-      // Color Scheme
-      colorScheme: _lightColorScheme,
-
-      // Typography
-      textTheme: _lightTextTheme,
-
-      // App Bar Theme
-      appBarTheme: _lightAppBarTheme,
-
-      // Card Theme
-      cardTheme: _lightCardTheme,
-
-      // Elevated Button Theme
-      elevatedButtonTheme: _lightElevatedButtonTheme,
-
-      // Outlined Button Theme
-      outlinedButtonTheme: _lightOutlinedButtonTheme,
-
-      // Text Button Theme
-      textButtonTheme: _lightTextButtonTheme,
-
-      // Input Decoration Theme
-      inputDecorationTheme: _lightInputDecorationTheme,
-
-      // Bottom Navigation Bar Theme
-      bottomNavigationBarTheme: _lightBottomNavigationBarTheme,
-
-      // Floating Action Button Theme
-      floatingActionButtonTheme: _lightFloatingActionButtonTheme,
-
-      // Dialog Theme
-      dialogTheme: _lightDialogTheme,
-
-      // Bottom Sheet Theme
-      bottomSheetTheme: _lightBottomSheetTheme,
-
-      // Snack Bar Theme
-      snackBarTheme: _lightSnackBarTheme,
-
-      // Divider Theme
-      dividerTheme: _lightDividerTheme,
-
-      // Icon Theme
-      iconTheme: _lightIconTheme,
-
-      // Primary Icon Theme
-      primaryIconTheme: _lightPrimaryIconTheme,
-
-      // Switch Theme
-      switchTheme: _lightSwitchTheme,
-
-      // Checkbox Theme
-      checkboxTheme: _lightCheckboxTheme,
-
-      // Radio Theme
-      radioTheme: _lightRadioTheme,
-
-      // Slider Theme
-      sliderTheme: _lightSliderTheme,
-
-      // Tab Bar Theme
-      tabBarTheme: _lightTabBarTheme,
-
-      // Chip Theme
-      chipTheme: _lightChipTheme,
-
-      // Progress Indicator Theme
-      progressIndicatorTheme: _lightProgressIndicatorTheme,
-
-      // Tooltip Theme
-      tooltipTheme: _lightTooltipTheme,
-
-      // Popup Menu Theme
-      popupMenuTheme: _lightPopupMenuTheme,
-
-      // List Tile Theme
-      listTileTheme: _lightListTileTheme,
-
-      // Drawer Theme
-      drawerTheme: _lightDrawerTheme,
-
-      // Navigation Bar Theme
-      navigationBarTheme: _lightNavigationBarTheme,
-
-      // Navigation Rail Theme
-      navigationRailTheme: _lightNavigationRailTheme,
-
-      // Badge Theme
-      badgeTheme: _lightBadgeTheme,
-
-      // Segmented Button Theme
-      segmentedButtonTheme: _lightSegmentedButtonTheme,
-
-      // Date Picker Theme
-      datePickerTheme: _lightDatePickerTheme,
-
-      // Time Picker Theme
-      timePickerTheme: _lightTimePickerTheme,
-
-      // Expansion Tile Theme
-      expansionTileTheme: _lightExpansionTileTheme,
-
-      // Data Table Theme
-      dataTableTheme: _lightDataTableTheme,
-
-      // Menu Bar Theme
-      menuBarTheme: _lightMenuBarTheme,
-
-      // Menu Button Theme
-      menuButtonTheme: _lightMenuButtonTheme,
-
-      // Menu Theme
-      menuTheme: _lightMenuTheme,
-
-      // Search Bar Theme
-      searchBarTheme: _lightSearchBarTheme,
-
-      // Search View Theme
-      searchViewTheme: _lightSearchViewTheme,
-
-      // Action Icon Theme
-      actionIconTheme: _lightActionIconTheme,
-
-      // Filled Button Theme
-      filledButtonTheme: _lightFilledButtonTheme,
-
-      // Icon Button Theme
-      iconButtonTheme: _lightIconButtonTheme,
-
-      // Toggle Buttons Theme
-      toggleButtonsTheme: _lightToggleButtonsTheme,
-
-      // Text Selection Theme
-      textSelectionTheme: _lightTextSelectionTheme,
-
-      // Scrollbar Theme
-      scrollbarTheme: _lightScrollbarTheme,
-
-      // Page Transitions Theme
-      pageTransitionsTheme: _lightPageTransitionsTheme,
-
-      // Visual Density
-      visualDensity: VisualDensity.adaptivePlatformDensity,
-
-      // Material Tap Target Size
-      materialTapTargetSize: MaterialTapTargetSize.padded,
-
-      // Splash Factory
-      splashFactory: InkRipple.splashFactory,
-
-      // Platform
-      platform: TargetPlatform.iOS,
+  @override
+  AppColorSchemeExtension copyWith({
+    Color? success,
+    Color? onSuccess,
+    Color? successContainer,
+    Color? onSuccessContainer,
+    Color? warning,
+    Color? onWarning,
+    Color? warningContainer,
+    Color? onWarningContainer,
+    Color? info,
+    Color? onInfo,
+    Color? infoContainer,
+    Color? onInfoContainer,
+    Color? surfaceContainer,
+    Color? onSurfaceContainer,
+    Color? surfaceContainerHigh,
+    Color? onSurfaceContainerHigh,
+    Color? surfaceContainerHighest,
+    Color? onSurfaceContainerHighest,
+    Color? surfaceVariant,
+    Color? onSurfaceVariant,
+    Color? surfaceDim,
+    Color? surfaceBright,
+    Color? outlineHigh,
+    Color? outlineMedium,
+    Color? outlineLow,
+  }) {
+    return AppColorSchemeExtension(
+      success: success ?? this.success,
+      onSuccess: onSuccess ?? this.onSuccess,
+      successContainer: successContainer ?? this.successContainer,
+      onSuccessContainer: onSuccessContainer ?? this.onSuccessContainer,
+      warning: warning ?? this.warning,
+      onWarning: onWarning ?? this.onWarning,
+      warningContainer: warningContainer ?? this.warningContainer,
+      onWarningContainer: onWarningContainer ?? this.onWarningContainer,
+      info: info ?? this.info,
+      onInfo: onInfo ?? this.onInfo,
+      infoContainer: infoContainer ?? this.infoContainer,
+      onInfoContainer: onInfoContainer ?? this.onInfoContainer,
+      surfaceContainer: surfaceContainer ?? this.surfaceContainer,
+      onSurfaceContainer: onSurfaceContainer ?? this.onSurfaceContainer,
+      surfaceContainerHigh: surfaceContainerHigh ?? this.surfaceContainerHigh,
+      onSurfaceContainerHigh:
+          onSurfaceContainerHigh ?? this.onSurfaceContainerHigh,
+      surfaceContainerHighest:
+          surfaceContainerHighest ?? this.surfaceContainerHighest,
+      onSurfaceContainerHighest:
+          onSurfaceContainerHighest ?? this.onSurfaceContainerHighest,
+      surfaceVariant: surfaceVariant ?? this.surfaceVariant,
+      onSurfaceVariant: onSurfaceVariant ?? this.onSurfaceVariant,
+      surfaceDim: surfaceDim ?? this.surfaceDim,
+      surfaceBright: surfaceBright ?? this.surfaceBright,
+      outlineHigh: outlineHigh ?? this.outlineHigh,
+      outlineMedium: outlineMedium ?? this.outlineMedium,
+      outlineLow: outlineLow ?? this.outlineLow,
     );
   }
 
-  // ============================================================================
-  // DARK THEME
-  // ============================================================================
+  @override
+  AppColorSchemeExtension lerp(
+    ThemeExtension<AppColorSchemeExtension>? other,
+    double t,
+  ) {
+    if (other is! AppColorSchemeExtension) {
+      return this;
+    }
 
-  /// Dark theme configuration
-  static ThemeData get darkTheme {
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.dark,
+    return AppColorSchemeExtension(
+      success: Color.lerp(success, other.success, t)!,
+      onSuccess: Color.lerp(onSuccess, other.onSuccess, t)!,
+      successContainer:
+          Color.lerp(successContainer, other.successContainer, t)!,
+      onSuccessContainer:
+          Color.lerp(onSuccessContainer, other.onSuccessContainer, t)!,
+      warning: Color.lerp(warning, other.warning, t)!,
+      onWarning: Color.lerp(onWarning, other.onWarning, t)!,
+      warningContainer:
+          Color.lerp(warningContainer, other.warningContainer, t)!,
+      onWarningContainer:
+          Color.lerp(onWarningContainer, other.onWarningContainer, t)!,
+      info: Color.lerp(info, other.info, t)!,
+      onInfo: Color.lerp(onInfo, other.onInfo, t)!,
+      infoContainer: Color.lerp(infoContainer, other.infoContainer, t)!,
+      onInfoContainer: Color.lerp(onInfoContainer, other.onInfoContainer, t)!,
+      surfaceContainer:
+          Color.lerp(surfaceContainer, other.surfaceContainer, t)!,
+      onSurfaceContainer:
+          Color.lerp(onSurfaceContainer, other.onSurfaceContainer, t)!,
+      surfaceContainerHigh:
+          Color.lerp(surfaceContainerHigh, other.surfaceContainerHigh, t)!,
+      onSurfaceContainerHigh:
+          Color.lerp(onSurfaceContainerHigh, other.onSurfaceContainerHigh, t)!,
+      surfaceContainerHighest:
+          Color.lerp(
+            surfaceContainerHighest,
+            other.surfaceContainerHighest,
+            t,
+          )!,
+      onSurfaceContainerHighest:
+          Color.lerp(
+            onSurfaceContainerHighest,
+            other.onSurfaceContainerHighest,
+            t,
+          )!,
+      surfaceVariant: Color.lerp(surfaceVariant, other.surfaceVariant, t)!,
+      onSurfaceVariant:
+          Color.lerp(onSurfaceVariant, other.onSurfaceVariant, t)!,
+      surfaceDim: Color.lerp(surfaceDim, other.surfaceDim, t)!,
+      surfaceBright: Color.lerp(surfaceBright, other.surfaceBright, t)!,
+      outlineHigh: Color.lerp(outlineHigh, other.outlineHigh, t)!,
+      outlineMedium: Color.lerp(outlineMedium, other.outlineMedium, t)!,
+      outlineLow: Color.lerp(outlineLow, other.outlineLow, t)!,
+    );
+  }
+}
 
-      // Scaffold Background
-      scaffoldBackgroundColor: AppColors.neutral950,
+/// App Spacing Extension
+///
+/// Defines consistent spacing values throughout the app
+@immutable
+class AppSpacingExtension extends ThemeExtension<AppSpacingExtension> {
+  const AppSpacingExtension({
+    required this.xs,
+    required this.sm,
+    required this.md,
+    required this.lg,
+    required this.xl,
+    required this.xxl,
+    required this.xxxl,
+  });
 
-      // Color Scheme
-      colorScheme: _darkColorScheme,
+  final double xs;
+  final double sm;
+  final double md;
+  final double lg;
+  final double xl;
+  final double xxl;
+  final double xxxl;
 
-      // Typography
-      textTheme: _darkTextTheme,
-
-      // App Bar Theme
-      appBarTheme: _darkAppBarTheme,
-
-      // Card Theme
-      cardTheme: _darkCardTheme,
-
-      // Elevated Button Theme
-      elevatedButtonTheme: _darkElevatedButtonTheme,
-
-      // Outlined Button Theme
-      outlinedButtonTheme: _darkOutlinedButtonTheme,
-
-      // Text Button Theme
-      textButtonTheme: _darkTextButtonTheme,
-
-      // Input Decoration Theme
-      inputDecorationTheme: _darkInputDecorationTheme,
-
-      // Bottom Navigation Bar Theme
-      bottomNavigationBarTheme: _darkBottomNavigationBarTheme,
-
-      // Floating Action Button Theme
-      floatingActionButtonTheme: _darkFloatingActionButtonTheme,
-
-      // Dialog Theme
-      dialogTheme: _darkDialogTheme,
-
-      // Bottom Sheet Theme
-      bottomSheetTheme: _darkBottomSheetTheme,
-
-      // Snack Bar Theme
-      snackBarTheme: _darkSnackBarTheme,
-
-      // Divider Theme
-      dividerTheme: _darkDividerTheme,
-
-      // Icon Theme
-      iconTheme: _darkIconTheme,
-
-      // Primary Icon Theme
-      primaryIconTheme: _darkPrimaryIconTheme,
-
-      // Switch Theme
-      switchTheme: _darkSwitchTheme,
-
-      // Checkbox Theme
-      checkboxTheme: _darkCheckboxTheme,
-
-      // Radio Theme
-      radioTheme: _darkRadioTheme,
-
-      // Slider Theme
-      sliderTheme: _darkSliderTheme,
-
-      // Tab Bar Theme
-      tabBarTheme: _darkTabBarTheme,
-
-      // Chip Theme
-      chipTheme: _darkChipTheme,
-
-      // Progress Indicator Theme
-      progressIndicatorTheme: _darkProgressIndicatorTheme,
-
-      // Tooltip Theme
-      tooltipTheme: _darkTooltipTheme,
-
-      // Popup Menu Theme
-      popupMenuTheme: _darkPopupMenuTheme,
-
-      // List Tile Theme
-      listTileTheme: _darkListTileTheme,
-
-      // Drawer Theme
-      drawerTheme: _darkDrawerTheme,
-
-      // Navigation Bar Theme
-      navigationBarTheme: _darkNavigationBarTheme,
-
-      // Navigation Rail Theme
-      navigationRailTheme: _darkNavigationRailTheme,
-
-      // Badge Theme
-      badgeTheme: _darkBadgeTheme,
-
-      // Segmented Button Theme
-      segmentedButtonTheme: _darkSegmentedButtonTheme,
-
-      // Date Picker Theme
-      datePickerTheme: _darkDatePickerTheme,
-
-      // Time Picker Theme
-      timePickerTheme: _darkTimePickerTheme,
-
-      // Expansion Tile Theme
-      expansionTileTheme: _darkExpansionTileTheme,
-
-      // Data Table Theme
-      dataTableTheme: _darkDataTableTheme,
-
-      // Menu Bar Theme
-      menuBarTheme: _darkMenuBarTheme,
-
-      // Menu Button Theme
-      menuButtonTheme: _darkMenuButtonTheme,
-
-      // Menu Theme
-      menuTheme: _darkMenuTheme,
-
-      // Search Bar Theme
-      searchBarTheme: _darkSearchBarTheme,
-
-      // Search View Theme
-      searchViewTheme: _darkSearchViewTheme,
-
-      // Action Icon Theme
-      actionIconTheme: _darkActionIconTheme,
-
-      // Filled Button Theme
-      filledButtonTheme: _darkFilledButtonTheme,
-
-      // Icon Button Theme
-      iconButtonTheme: _darkIconButtonTheme,
-
-      // Toggle Buttons Theme
-      toggleButtonsTheme: _darkToggleButtonsTheme,
-
-      // Text Selection Theme
-      textSelectionTheme: _darkTextSelectionTheme,
-
-      // Scrollbar Theme
-      scrollbarTheme: _darkScrollbarTheme,
-
-      // Page Transitions Theme
-      pageTransitionsTheme: _darkPageTransitionsTheme,
-
-      // Visual Density
-      visualDensity: VisualDensity.adaptivePlatformDensity,
-
-      // Material Tap Target Size
-      materialTapTargetSize: MaterialTapTargetSize.padded,
-
-      // Splash Factory
-      splashFactory: InkRipple.splashFactory,
-
-      // Platform
-      platform: TargetPlatform.iOS,
+  @override
+  AppSpacingExtension copyWith({
+    double? xs,
+    double? sm,
+    double? md,
+    double? lg,
+    double? xl,
+    double? xxl,
+    double? xxxl,
+  }) {
+    return AppSpacingExtension(
+      xs: xs ?? this.xs,
+      sm: sm ?? this.sm,
+      md: md ?? this.md,
+      lg: lg ?? this.lg,
+      xl: xl ?? this.xl,
+      xxl: xxl ?? this.xxl,
+      xxxl: xxxl ?? this.xxxl,
     );
   }
 
-  // ============================================================================
-  // COLOR SCHEMES
-  // ============================================================================
+  @override
+  AppSpacingExtension lerp(
+    ThemeExtension<AppSpacingExtension>? other,
+    double t,
+  ) {
+    if (other is! AppSpacingExtension) {
+      return this;
+    }
 
-  /// Light color scheme
-  static ColorScheme get _lightColorScheme {
-    return const ColorScheme.light(
-      // Primary colors (Dayfi Blue)
-      primary: AppColors.primary500,
-      onPrimary: AppColors.neutral0,
-      primaryContainer: AppColors.primary100,
-      onPrimaryContainer: AppColors.primary900,
+    return AppSpacingExtension(
+      xs: lerpDouble(xs, other.xs, t)!,
+      sm: lerpDouble(sm, other.sm, t)!,
+      md: lerpDouble(md, other.md, t)!,
+      lg: lerpDouble(lg, other.lg, t)!,
+      xl: lerpDouble(xl, other.xl, t)!,
+      xxl: lerpDouble(xxl, other.xxl, t)!,
+      xxxl: lerpDouble(xxxl, other.xxxl, t)!,
+    );
+  }
+}
 
-      onSecondary: AppColors.neutral0,
+/// App Border Radius Extension
+///
+/// Defines consistent border radius values throughout the app
+@immutable
+class AppBorderRadiusExtension
+    extends ThemeExtension<AppBorderRadiusExtension> {
+  const AppBorderRadiusExtension({
+    required this.xs,
+    required this.sm,
+    required this.md,
+    required this.lg,
+    required this.xl,
+    required this.xxl,
+    required this.circular,
+  });
 
-      // Tertiary colors (using teal as accent)
-      tertiary: AppColors.teal500,
-      onTertiary: AppColors.neutral0,
-      tertiaryContainer: AppColors.teal100,
-      onTertiaryContainer: AppColors.teal900,
+  final double xs;
+  final double sm;
+  final double md;
+  final double lg;
+  final double xl;
+  final double xxl;
+  final double circular;
 
-      // Error colors
-      error: AppColors.error500,
-      onError: AppColors.neutral0,
-      errorContainer: AppColors.error100,
-      onErrorContainer: AppColors.error900,
-
-      // Surface colors
-      surface: AppColors.surfaceLight,
-      onSurface: AppColors.neutral900,
-      surfaceContainerHighest: AppColors.surfaceContainerHighestLight,
-      onSurfaceVariant: AppColors.neutral700,
-
-      // Outline colors
-      outline: AppColors.outlineLight,
-      outlineVariant: AppColors.outlineVariantLight,
-
-      // Shadow
-      shadow: AppColors.neutral950,
-      scrim: AppColors.neutral950,
-
-      // Inverse colors
-      inverseSurface: AppColors.neutral100,
-      onInverseSurface: AppColors.neutral800,
-      inversePrimary: AppColors.primary200,
+  @override
+  AppBorderRadiusExtension copyWith({
+    double? xs,
+    double? sm,
+    double? md,
+    double? lg,
+    double? xl,
+    double? xxl,
+    double? circular,
+  }) {
+    return AppBorderRadiusExtension(
+      xs: xs ?? this.xs,
+      sm: sm ?? this.sm,
+      md: md ?? this.md,
+      lg: lg ?? this.lg,
+      xl: xl ?? this.xl,
+      xxl: xxl ?? this.xxl,
+      circular: circular ?? this.circular,
     );
   }
 
-  /// Dark color scheme
-  static ColorScheme get _darkColorScheme {
-    return const ColorScheme.dark(
-      // Primary colors (Dayfi Blue)
-      primary: AppColors.primary400,
-      onPrimary: AppColors.primary900,
-      primaryContainer: AppColors.primary800,
-      onPrimaryContainer: AppColors.primary100,
+  @override
+  AppBorderRadiusExtension lerp(
+    ThemeExtension<AppBorderRadiusExtension>? other,
+    double t,
+  ) {
+    if (other is! AppBorderRadiusExtension) {
+      return this;
+    }
 
-      // Tertiary colors (using teal as accent)
-      tertiary: AppColors.teal400,
-      onTertiary: AppColors.teal900,
-      tertiaryContainer: AppColors.teal800,
-      onTertiaryContainer: AppColors.teal100,
+    return AppBorderRadiusExtension(
+      xs: lerpDouble(xs, other.xs, t)!,
+      sm: lerpDouble(sm, other.sm, t)!,
+      md: lerpDouble(md, other.md, t)!,
+      lg: lerpDouble(lg, other.lg, t)!,
+      xl: lerpDouble(xl, other.xl, t)!,
+      xxl: lerpDouble(xxl, other.xxl, t)!,
+      circular: lerpDouble(circular, other.circular, t)!,
+    );
+  }
+}
 
-      // Error colors
-      error: AppColors.error400,
-      onError: AppColors.error900,
-      errorContainer: AppColors.error800,
-      onErrorContainer: AppColors.error100,
+/// App Elevation Extension
+///
+/// Defines consistent elevation values throughout the app
+@immutable
+class AppElevationExtension extends ThemeExtension<AppElevationExtension> {
+  const AppElevationExtension({
+    required this.none,
+    required this.xs,
+    required this.sm,
+    required this.md,
+    required this.lg,
+    required this.xl,
+    required this.xxl,
+  });
 
-      // Surface colors
-      surface: AppColors.surfaceDark,
-      onSurface: AppColors.neutral100,
-      surfaceContainerHighest: AppColors.surfaceContainerHighestDark,
-      onSurfaceVariant: AppColors.neutral400,
+  final double none;
+  final double xs;
+  final double sm;
+  final double md;
+  final double lg;
+  final double xl;
+  final double xxl;
 
-      // Outline colors
-      outline: AppColors.outlineDark,
-      outlineVariant: AppColors.outlineVariantDark,
-
-      // Shadow
-      shadow: AppColors.neutral0,
-      scrim: AppColors.neutral0,
-
-      // Inverse colors
-      inverseSurface: AppColors.neutral800,
-      onInverseSurface: AppColors.neutral200,
-      inversePrimary: AppColors.info500,
+  @override
+  AppElevationExtension copyWith({
+    double? none,
+    double? xs,
+    double? sm,
+    double? md,
+    double? lg,
+    double? xl,
+    double? xxl,
+  }) {
+    return AppElevationExtension(
+      none: none ?? this.none,
+      xs: xs ?? this.xs,
+      sm: sm ?? this.sm,
+      md: md ?? this.md,
+      lg: lg ?? this.lg,
+      xl: xl ?? this.xl,
+      xxl: xxl ?? this.xxl,
     );
   }
 
-  // ============================================================================
-  // TEXT THEMES
-  // ============================================================================
+  @override
+  AppElevationExtension lerp(
+    ThemeExtension<AppElevationExtension>? other,
+    double t,
+  ) {
+    if (other is! AppElevationExtension) {
+      return this;
+    }
 
-  /// Light text theme
-  static TextTheme get _lightTextTheme {
-    return TextTheme(
-      // Display styles
-      displayLarge: AppTypography.displayLarge.copyWith(
-        color: AppColors.neutral900,
-      ),
-      displayMedium: AppTypography.displayMedium.copyWith(
-        color: AppColors.neutral900,
-      ),
-      displaySmall: AppTypography.displaySmall.copyWith(
-        color: AppColors.neutral900,
-      ),
+    return AppElevationExtension(
+      none: lerpDouble(none, other.none, t)!,
+      xs: lerpDouble(xs, other.xs, t)!,
+      sm: lerpDouble(sm, other.sm, t)!,
+      md: lerpDouble(md, other.md, t)!,
+      lg: lerpDouble(lg, other.lg, t)!,
+      xl: lerpDouble(xl, other.xl, t)!,
+      xxl: lerpDouble(xxl, other.xxl, t)!,
+    );
+  }
+}
 
-      // Headline styles
-      headlineLarge: AppTypography.headlineLarge.copyWith(
-        color: AppColors.neutral900,
-      ),
-      headlineMedium: AppTypography.headlineMedium.copyWith(
-        color: AppColors.neutral900,
-      ),
-      headlineSmall: AppTypography.headlineSmall.copyWith(
-        color: AppColors.neutral900,
-      ),
+/// App Shadow Extension
+///
+/// Defines consistent shadow values throughout the app
+@immutable
+class AppShadowExtension extends ThemeExtension<AppShadowExtension> {
+  const AppShadowExtension({
+    required this.none,
+    required this.xs,
+    required this.sm,
+    required this.md,
+    required this.lg,
+    required this.xl,
+    required this.xxl,
+  });
 
-      // Title styles
-      titleLarge: AppTypography.titleLarge.copyWith(
-        color: AppColors.neutral900,
-      ),
-      titleMedium: AppTypography.titleMedium.copyWith(
-        color: AppColors.neutral900,
-      ),
-      titleSmall: AppTypography.titleSmall.copyWith(
-        color: AppColors.neutral800,
-      ),
+  final List<BoxShadow> none;
+  final List<BoxShadow> xs;
+  final List<BoxShadow> sm;
+  final List<BoxShadow> md;
+  final List<BoxShadow> lg;
+  final List<BoxShadow> xl;
+  final List<BoxShadow> xxl;
 
-      // Body styles
-      bodyLarge: AppTypography.bodyLarge.copyWith(color: AppColors.neutral800),
-      bodyMedium: AppTypography.bodyMedium.copyWith(
-        color: AppColors.neutral800,
-      ),
-      bodySmall: AppTypography.bodySmall.copyWith(color: AppColors.neutral700),
-
-      // Label styles
-      labelLarge: AppTypography.labelLarge.copyWith(
-        color: AppColors.neutral800,
-      ),
-      labelMedium: AppTypography.labelMedium.copyWith(
-        color: AppColors.neutral700,
-      ),
-      labelSmall: AppTypography.labelSmall.copyWith(
-        color: AppColors.neutral600,
-      ),
+  @override
+  AppShadowExtension copyWith({
+    List<BoxShadow>? none,
+    List<BoxShadow>? xs,
+    List<BoxShadow>? sm,
+    List<BoxShadow>? md,
+    List<BoxShadow>? lg,
+    List<BoxShadow>? xl,
+    List<BoxShadow>? xxl,
+  }) {
+    return AppShadowExtension(
+      none: none ?? this.none,
+      xs: xs ?? this.xs,
+      sm: sm ?? this.sm,
+      md: md ?? this.md,
+      lg: lg ?? this.lg,
+      xl: xl ?? this.xl,
+      xxl: xxl ?? this.xxl,
     );
   }
 
-  /// Dark text theme
-  static TextTheme get _darkTextTheme {
-    return TextTheme(
-      // Display styles
-      displayLarge: AppTypography.displayLarge.copyWith(
-        color: AppColors.neutral100,
-      ),
-      displayMedium: AppTypography.displayMedium.copyWith(
-        color: AppColors.neutral100,
-      ),
-      displaySmall: AppTypography.displaySmall.copyWith(
-        color: AppColors.neutral100,
-      ),
+  @override
+  AppShadowExtension lerp(ThemeExtension<AppShadowExtension>? other, double t) {
+    if (other is! AppShadowExtension) {
+      return this;
+    }
 
-      // Headline styles
-      headlineLarge: AppTypography.headlineLarge.copyWith(
-        color: AppColors.neutral100,
-      ),
-      headlineMedium: AppTypography.headlineMedium.copyWith(
-        color: AppColors.neutral100,
-      ),
-      headlineSmall: AppTypography.headlineSmall.copyWith(
-        color: AppColors.neutral100,
-      ),
-
-      // Title styles
-      titleLarge: AppTypography.titleLarge.copyWith(
-        color: AppColors.neutral100,
-      ),
-      titleMedium: AppTypography.titleMedium.copyWith(
-        color: AppColors.neutral100,
-      ),
-      titleSmall: AppTypography.titleSmall.copyWith(
-        color: AppColors.neutral200,
-      ),
-
-      // Body styles
-      bodyLarge: AppTypography.bodyLarge.copyWith(color: AppColors.neutral200),
-      bodyMedium: AppTypography.bodyMedium.copyWith(
-        color: AppColors.neutral200,
-      ),
-      bodySmall: AppTypography.bodySmall.copyWith(color: AppColors.neutral300),
-
-      // Label styles
-      labelLarge: AppTypography.labelLarge.copyWith(
-        color: AppColors.neutral200,
-      ),
-      labelMedium: AppTypography.labelMedium.copyWith(
-        color: AppColors.neutral400,
-      ),
-      labelSmall: AppTypography.labelSmall.copyWith(
-        color: AppColors.neutral400,
-      ),
+    return AppShadowExtension(
+      none: _lerpBoxShadowList(none, other.none, t),
+      xs: _lerpBoxShadowList(xs, other.xs, t),
+      sm: _lerpBoxShadowList(sm, other.sm, t),
+      md: _lerpBoxShadowList(md, other.md, t),
+      lg: _lerpBoxShadowList(lg, other.lg, t),
+      xl: _lerpBoxShadowList(xl, other.xl, t),
+      xxl: _lerpBoxShadowList(xxl, other.xxl, t),
     );
   }
 
-  // ============================================================================
-  // COMPONENT THEMES - LIGHT
-  // ============================================================================
+  List<BoxShadow> _lerpBoxShadowList(
+    List<BoxShadow> a,
+    List<BoxShadow> b,
+    double t,
+  ) {
+    if (a.length != b.length) {
+      return t < 0.5 ? a : b;
+    }
 
-  static AppBarTheme get _lightAppBarTheme {
-    return AppBarTheme(
-      backgroundColor: Color(0xffFEF9F3),
-      foregroundColor: AppColors.neutral900,
-      elevation: 0,
-      scrolledUnderElevation: 1,
-      centerTitle: true,
-      titleTextStyle: TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.w500,
-        color: AppColors.neutral900,
-      ),
-      systemOverlayStyle: SystemUiOverlayStyle.dark,
-    );
-  }
+    return List.generate(a.length, (index) {
+      final shadowA = a[index];
+      final shadowB = b[index];
 
-  static CardThemeData get _lightCardTheme {
-    return CardThemeData(
-      color: AppColors.surfaceLight,
-      shadowColor: AppColors.neutral950.withOpacity(0.1),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      margin: const EdgeInsets.all(8),
-    );
-  }
-
-  static ElevatedButtonThemeData get _lightElevatedButtonTheme {
-    return ElevatedButtonThemeData(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.primary500,
-        foregroundColor: AppColors.neutral0,
-        elevation: 2,
-        shadowColor: AppColors.primary500.withOpacity(0.3),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-        textStyle: AppTypography.buttonText,
-      ),
-    );
-  }
-
-  static OutlinedButtonThemeData get _lightOutlinedButtonTheme {
-    return OutlinedButtonThemeData(
-      style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.primary500,
-        side: const BorderSide(color: AppColors.primary500, width: 1),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-        textStyle: AppTypography.buttonText,
-      ),
-    );
-  }
-
-  static TextButtonThemeData get _lightTextButtonTheme {
-    return TextButtonThemeData(
-      style: TextButton.styleFrom(
-        foregroundColor: AppColors.primary500,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        textStyle: AppTypography.buttonText,
-      ),
-    );
-  }
-
-  static InputDecorationTheme get _lightInputDecorationTheme {
-    return InputDecorationTheme(
-      filled: true,
-      fillColor: AppColors.neutral50,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: AppColors.outlineLight),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: AppColors.outlineLight),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: AppColors.primary500, width: 2),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: AppColors.error500),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: AppColors.error500, width: 2),
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      labelStyle: AppTypography.bodyMedium.copyWith(
-        color: AppColors.neutral600,
-      ),
-      hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.neutral500),
-      errorStyle: AppTypography.bodySmall.copyWith(color: AppColors.error500),
-    );
-  }
-
-  // ============================================================================
-  // COMPONENT THEMES - DARK
-  // ============================================================================
-
-  static AppBarTheme get _darkAppBarTheme {
-    return AppBarTheme(
-      backgroundColor: AppColors.neutral950,
-      foregroundColor: AppColors.neutral100,
-      elevation: 0,
-      scrolledUnderElevation: 1,
-      centerTitle: true,
-      titleTextStyle: TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.w500,
-        color: AppColors.neutral100,
-      ),
-      systemOverlayStyle: SystemUiOverlayStyle.light,
-    );
-  }
-
-  static CardThemeData get _darkCardTheme {
-    return CardThemeData(
-      color: AppColors.surfaceDark,
-      shadowColor: AppColors.neutral0.withOpacity(0.1),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      margin: const EdgeInsets.all(8),
-    );
-  }
-
-  static ElevatedButtonThemeData get _darkElevatedButtonTheme {
-    return ElevatedButtonThemeData(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.primary400,
-        foregroundColor: AppColors.primary900,
-        elevation: 2,
-        shadowColor: AppColors.primary400.withOpacity(0.3),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-        textStyle: AppTypography.buttonText,
-      ),
-    );
-  }
-
-  static OutlinedButtonThemeData get _darkOutlinedButtonTheme {
-    return OutlinedButtonThemeData(
-      style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.primary400,
-        side: const BorderSide(color: AppColors.primary400, width: 1),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-        textStyle: AppTypography.buttonText,
-      ),
-    );
-  }
-
-  static TextButtonThemeData get _darkTextButtonTheme {
-    return TextButtonThemeData(
-      style: TextButton.styleFrom(
-        foregroundColor: AppColors.primary400,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        textStyle: AppTypography.buttonText,
-      ),
-    );
-  }
-
-  static InputDecorationTheme get _darkInputDecorationTheme {
-    return InputDecorationTheme(
-      filled: true,
-      fillColor: AppColors.neutral800,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: AppColors.outlineDark),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: AppColors.outlineDark),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: AppColors.primary400, width: 2),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: AppColors.error400),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: AppColors.error400, width: 2),
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      labelStyle: AppTypography.bodyMedium.copyWith(
-        color: AppColors.neutral400,
-      ),
-      hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.neutral500),
-      errorStyle: AppTypography.bodySmall.copyWith(color: AppColors.error400),
-    );
-  }
-
-  // ============================================================================
-  // ADDITIONAL COMPONENT THEMES (Simplified for brevity)
-  // ============================================================================
-
-  // Light theme components
-  static BottomNavigationBarThemeData get _lightBottomNavigationBarTheme =>
-      const BottomNavigationBarThemeData();
-  static FloatingActionButtonThemeData get _lightFloatingActionButtonTheme =>
-      const FloatingActionButtonThemeData();
-  static DialogThemeData get _lightDialogTheme => DialogThemeData(
-        backgroundColor: AppColors.neutral0,
+      return BoxShadow(
+        color: Color.lerp(shadowA.color, shadowB.color, t)!,
+        offset: Offset.lerp(shadowA.offset, shadowB.offset, t)!,
+        blurRadius: lerpDouble(shadowA.blurRadius, shadowB.blurRadius, t)!,
+        spreadRadius:
+            lerpDouble(shadowA.spreadRadius, shadowB.spreadRadius, t)!,
       );
-  static BottomSheetThemeData get _lightBottomSheetTheme =>
-      BottomSheetThemeData(
-        backgroundColor: AppColors.neutral0,
-      );
-  static SnackBarThemeData get _lightSnackBarTheme => const SnackBarThemeData();
-  static DividerThemeData get _lightDividerTheme => const DividerThemeData();
-  static IconThemeData get _lightIconTheme => const IconThemeData();
-  static IconThemeData get _lightPrimaryIconTheme => const IconThemeData();
-  static SwitchThemeData get _lightSwitchTheme => const SwitchThemeData();
-  static CheckboxThemeData get _lightCheckboxTheme => const CheckboxThemeData();
-  static RadioThemeData get _lightRadioTheme => const RadioThemeData();
-  static SliderThemeData get _lightSliderTheme => const SliderThemeData();
-  static TabBarThemeData get _lightTabBarTheme => const TabBarThemeData();
-  static ChipThemeData get _lightChipTheme => const ChipThemeData();
-  static ProgressIndicatorThemeData get _lightProgressIndicatorTheme =>
-      const ProgressIndicatorThemeData();
-  static TooltipThemeData get _lightTooltipTheme => const TooltipThemeData();
-  static PopupMenuThemeData get _lightPopupMenuTheme =>
-      const PopupMenuThemeData();
-  static ListTileThemeData get _lightListTileTheme => const ListTileThemeData();
-  static DrawerThemeData get _lightDrawerTheme => const DrawerThemeData();
-  static NavigationBarThemeData get _lightNavigationBarTheme =>
-      const NavigationBarThemeData();
-  static NavigationRailThemeData get _lightNavigationRailTheme =>
-      const NavigationRailThemeData();
-  static BadgeThemeData get _lightBadgeTheme => const BadgeThemeData();
-  static SegmentedButtonThemeData get _lightSegmentedButtonTheme =>
-      const SegmentedButtonThemeData();
-  static DatePickerThemeData get _lightDatePickerTheme =>
-      const DatePickerThemeData();
-  static TimePickerThemeData get _lightTimePickerTheme =>
-      const TimePickerThemeData();
-  static ExpansionTileThemeData get _lightExpansionTileTheme =>
-      const ExpansionTileThemeData();
-  static DataTableThemeData get _lightDataTableTheme =>
-      const DataTableThemeData();
-  static MenuBarThemeData get _lightMenuBarTheme => const MenuBarThemeData();
-  static MenuButtonThemeData get _lightMenuButtonTheme =>
-      const MenuButtonThemeData();
-  static MenuThemeData get _lightMenuTheme => const MenuThemeData();
-  static SearchBarThemeData get _lightSearchBarTheme =>
-      const SearchBarThemeData();
-  static SearchViewThemeData get _lightSearchViewTheme =>
-      const SearchViewThemeData();
-  static ActionIconThemeData get _lightActionIconTheme =>
-      const ActionIconThemeData();
-  static FilledButtonThemeData get _lightFilledButtonTheme =>
-      const FilledButtonThemeData();
-  static IconButtonThemeData get _lightIconButtonTheme =>
-      const IconButtonThemeData();
-  static ToggleButtonsThemeData get _lightToggleButtonsTheme =>
-      const ToggleButtonsThemeData();
-  static TextSelectionThemeData get _lightTextSelectionTheme =>
-      const TextSelectionThemeData();
-  static ScrollbarThemeData get _lightScrollbarTheme =>
-      const ScrollbarThemeData();
-  static PageTransitionsTheme get _lightPageTransitionsTheme =>
-      const PageTransitionsTheme();
+    });
+  }
+}
 
-  // Dark theme components
-  static BottomNavigationBarThemeData get _darkBottomNavigationBarTheme =>
-      const BottomNavigationBarThemeData();
-  static FloatingActionButtonThemeData get _darkFloatingActionButtonTheme =>
-      const FloatingActionButtonThemeData();
-  static DialogThemeData get _darkDialogTheme => DialogThemeData(
-        backgroundColor: AppColors.surfaceDark,
-      );
-  static BottomSheetThemeData get _darkBottomSheetTheme =>
-      BottomSheetThemeData(
-        backgroundColor: AppColors.surfaceDark,
-      );
-  static SnackBarThemeData get _darkSnackBarTheme => const SnackBarThemeData();
-  static DividerThemeData get _darkDividerTheme => const DividerThemeData();
-  static IconThemeData get _darkIconTheme => const IconThemeData();
-  static IconThemeData get _darkPrimaryIconTheme => const IconThemeData();
-  static SwitchThemeData get _darkSwitchTheme => const SwitchThemeData();
-  static CheckboxThemeData get _darkCheckboxTheme => const CheckboxThemeData();
-  static RadioThemeData get _darkRadioTheme => const RadioThemeData();
-  static SliderThemeData get _darkSliderTheme => const SliderThemeData();
-  static TabBarThemeData get _darkTabBarTheme => const TabBarThemeData();
-  static ChipThemeData get _darkChipTheme => const ChipThemeData();
-  static ProgressIndicatorThemeData get _darkProgressIndicatorTheme =>
-      const ProgressIndicatorThemeData();
-  static TooltipThemeData get _darkTooltipTheme => const TooltipThemeData();
-  static PopupMenuThemeData get _darkPopupMenuTheme =>
-      const PopupMenuThemeData();
-  static ListTileThemeData get _darkListTileTheme => const ListTileThemeData();
-  static DrawerThemeData get _darkDrawerTheme => const DrawerThemeData();
-  static NavigationBarThemeData get _darkNavigationBarTheme =>
-      const NavigationBarThemeData();
-  static NavigationRailThemeData get _darkNavigationRailTheme =>
-      const NavigationRailThemeData();
-  static BadgeThemeData get _darkBadgeTheme => const BadgeThemeData();
-  static SegmentedButtonThemeData get _darkSegmentedButtonTheme =>
-      const SegmentedButtonThemeData();
-  static DatePickerThemeData get _darkDatePickerTheme =>
-      const DatePickerThemeData();
-  static TimePickerThemeData get _darkTimePickerTheme =>
-      const TimePickerThemeData();
-  static ExpansionTileThemeData get _darkExpansionTileTheme =>
-      const ExpansionTileThemeData();
-  static DataTableThemeData get _darkDataTableTheme =>
-      const DataTableThemeData();
-  static MenuBarThemeData get _darkMenuBarTheme => const MenuBarThemeData();
-  static MenuButtonThemeData get _darkMenuButtonTheme =>
-      const MenuButtonThemeData();
-  static MenuThemeData get _darkMenuTheme => const MenuThemeData();
-  static SearchBarThemeData get _darkSearchBarTheme =>
-      const SearchBarThemeData();
-  static SearchViewThemeData get _darkSearchViewTheme =>
-      const SearchViewThemeData();
-  static ActionIconThemeData get _darkActionIconTheme =>
-      const ActionIconThemeData();
-  static FilledButtonThemeData get _darkFilledButtonTheme =>
-      const FilledButtonThemeData();
-  static IconButtonThemeData get _darkIconButtonTheme =>
-      const IconButtonThemeData();
-  static ToggleButtonsThemeData get _darkToggleButtonsTheme =>
-      const ToggleButtonsThemeData();
-  static TextSelectionThemeData get _darkTextSelectionTheme =>
-      const TextSelectionThemeData();
-  static ScrollbarThemeData get _darkScrollbarTheme =>
-      const ScrollbarThemeData();
-  static PageTransitionsTheme get _darkPageTransitionsTheme =>
-      const PageTransitionsTheme();
+/// App Animation Extension
+///
+/// Defines consistent animation durations and curves throughout the app
+@immutable
+class AppAnimationExtension extends ThemeExtension<AppAnimationExtension> {
+  const AppAnimationExtension({
+    required this.fast,
+    required this.normal,
+    required this.slow,
+    required this.verySlow,
+    required this.curve,
+    required this.curveFast,
+    required this.curveSlow,
+  });
+
+  final Duration fast;
+  final Duration normal;
+  final Duration slow;
+  final Duration verySlow;
+  final Curve curve;
+  final Curve curveFast;
+  final Curve curveSlow;
+
+  @override
+  AppAnimationExtension copyWith({
+    Duration? fast,
+    Duration? normal,
+    Duration? slow,
+    Duration? verySlow,
+    Curve? curve,
+    Curve? curveFast,
+    Curve? curveSlow,
+  }) {
+    return AppAnimationExtension(
+      fast: fast ?? this.fast,
+      normal: normal ?? this.normal,
+      slow: slow ?? this.slow,
+      verySlow: verySlow ?? this.verySlow,
+      curve: curve ?? this.curve,
+      curveFast: curveFast ?? this.curveFast,
+      curveSlow: curveSlow ?? this.curveSlow,
+    );
+  }
+
+  @override
+  AppAnimationExtension lerp(
+    ThemeExtension<AppAnimationExtension>? other,
+    double t,
+  ) {
+    if (other is! AppAnimationExtension) {
+      return this;
+    }
+
+    return AppAnimationExtension(
+      fast: Duration(
+        milliseconds:
+            (fast.inMilliseconds +
+                    (other.fast.inMilliseconds - fast.inMilliseconds) * t)
+                .round(),
+      ),
+      normal: Duration(
+        milliseconds:
+            (normal.inMilliseconds +
+                    (other.normal.inMilliseconds - normal.inMilliseconds) * t)
+                .round(),
+      ),
+      slow: Duration(
+        milliseconds:
+            (slow.inMilliseconds +
+                    (other.slow.inMilliseconds - slow.inMilliseconds) * t)
+                .round(),
+      ),
+      verySlow: Duration(
+        milliseconds:
+            (verySlow.inMilliseconds +
+                    (other.verySlow.inMilliseconds - verySlow.inMilliseconds) *
+                        t)
+                .round(),
+      ),
+      curve: t < 0.5 ? curve : other.curve,
+      curveFast: t < 0.5 ? curveFast : other.curveFast,
+      curveSlow: t < 0.5 ? curveSlow : other.curveSlow,
+    );
+  }
+}
+
+/// App Theme Extensions Factory
+///
+/// Factory class to create theme extensions for light and dark themes
+class AppThemeExtensionsFactory {
+  /// Create light theme extensions
+  static Map<Type, ThemeExtension> createLightExtensions() {
+    return {
+      AppColorSchemeExtension: const AppColorSchemeExtension(
+        success: AppColors.success500,
+        onSuccess: AppColors.neutral0,
+        successContainer: AppColors.success100,
+        onSuccessContainer: AppColors.success900,
+        warning: AppColors.warning500,
+        onWarning: AppColors.neutral0,
+        warningContainer: AppColors.warning100,
+        onWarningContainer: AppColors.warning900,
+        info: AppColors.info500,
+        onInfo: AppColors.neutral0,
+        infoContainer: AppColors.info100,
+        onInfoContainer: AppColors.info900,
+        surfaceContainer: AppColors.neutral50,
+        onSurfaceContainer: AppColors.neutral900,
+        surfaceContainerHigh: AppColors.neutral100,
+        onSurfaceContainerHigh: AppColors.neutral900,
+        surfaceContainerHighest: AppColors.neutral200,
+        onSurfaceContainerHighest: AppColors.neutral900,
+        surfaceVariant: AppColors.neutral100,
+        onSurfaceVariant: AppColors.neutral700,
+        surfaceDim: AppColors.neutral100,
+        surfaceBright: AppColors.neutral0,
+        outlineHigh: AppColors.neutral400,
+        outlineMedium: AppColors.neutral400,
+        outlineLow: AppColors.neutral200,
+      ),
+      AppSpacingExtension: const AppSpacingExtension(
+        xs: 4.0,
+        sm: 8.0,
+        md: 16.0,
+        lg: 24.0,
+        xl: 32.0,
+        xxl: 56.0,
+        xxxl: 64.0,
+      ),
+      AppBorderRadiusExtension: const AppBorderRadiusExtension(
+        xs: 4.0,
+        sm: 8.0,
+        md: 12.0,
+        lg: 16.0,
+        xl: 20.0,
+        xxl: 24.0,
+        circular: 50.0,
+      ),
+      AppElevationExtension: const AppElevationExtension(
+        none: 0.0,
+        xs: 1.0,
+        sm: 2.0,
+        md: 4.0,
+        lg: 8.0,
+        xl: 12.0,
+        xxl: 16.0,
+      ),
+      AppShadowExtension: AppShadowExtension(
+        none: [],
+        xs: [
+          BoxShadow(
+            color: AppColors.neutral950.withOpacity(0.05),
+            blurRadius: 1,
+            offset: const Offset(0, 1),
+          ),
+        ],
+        sm: [
+          BoxShadow(
+            color: AppColors.neutral950.withOpacity(0.1),
+            blurRadius: 2,
+            offset: const Offset(0, 1),
+          ),
+        ],
+        md: [
+          BoxShadow(
+            color: AppColors.neutral950.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        lg: [
+          BoxShadow(
+            color: AppColors.neutral950.withOpacity(0.15),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        xl: [
+          BoxShadow(
+            color: AppColors.neutral950.withOpacity(0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+        xxl: [
+          BoxShadow(
+            color: AppColors.neutral950.withOpacity(0.25),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      AppAnimationExtension: const AppAnimationExtension(
+        fast: Duration(milliseconds: 150),
+        normal: Duration(milliseconds: 300),
+        slow: Duration(milliseconds: 500),
+        verySlow: Duration(milliseconds: 1000),
+        curve: Curves.easeInOut,
+        curveFast: Curves.easeOut,
+        curveSlow: Curves.easeIn,
+      ),
+    };
+  }
+
+  /// Create dark theme extensions
+  static Map<Type, ThemeExtension> createDarkExtensions() {
+    return {
+      AppColorSchemeExtension: const AppColorSchemeExtension(
+        success: AppColors.success400,
+        onSuccess: AppColors.success900,
+        successContainer: AppColors.success800,
+        onSuccessContainer: AppColors.success100,
+        warning: AppColors.warning400,
+        onWarning: AppColors.warning900,
+        warningContainer: AppColors.warning800,
+        onWarningContainer: AppColors.warning100,
+        info: AppColors.info400,
+        onInfo: AppColors.info900,
+        infoContainer: AppColors.info800,
+        onInfoContainer: AppColors.info100,
+        surfaceContainer: AppColors.neutral800,
+        onSurfaceContainer: AppColors.neutral100,
+        surfaceContainerHigh: AppColors.neutral700,
+        onSurfaceContainerHigh: AppColors.neutral100,
+        surfaceContainerHighest: AppColors.neutral600,
+        onSurfaceContainerHighest: AppColors.neutral100,
+        surfaceVariant: AppColors.neutral800,
+        onSurfaceVariant: AppColors.neutral400,
+        surfaceDim: AppColors.neutral950,
+        surfaceBright: AppColors.neutral800,
+        outlineHigh: AppColors.neutral400,
+        outlineMedium: AppColors.neutral600,
+        outlineLow: AppColors.neutral700,
+      ),
+      AppSpacingExtension: const AppSpacingExtension(
+        xs: 4.0,
+        sm: 8.0,
+        md: 16.0,
+        lg: 24.0,
+        xl: 32.0,
+        xxl: 56.0,
+        xxxl: 64.0,
+      ),
+      AppBorderRadiusExtension: const AppBorderRadiusExtension(
+        xs: 4.0,
+        sm: 8.0,
+        md: 12.0,
+        lg: 16.0,
+        xl: 20.0,
+        xxl: 24.0,
+        circular: 50.0,
+      ),
+      AppElevationExtension: const AppElevationExtension(
+        none: 0.0,
+        xs: 1.0,
+        sm: 2.0,
+        md: 4.0,
+        lg: 8.0,
+        xl: 12.0,
+        xxl: 16.0,
+      ),
+      AppShadowExtension: AppShadowExtension(
+        none: [],
+        xs: [
+          BoxShadow(
+            color: AppColors.neutral0.withOpacity(0.05),
+            blurRadius: 1,
+            offset: const Offset(0, 1),
+          ),
+        ],
+        sm: [
+          BoxShadow(
+            color: AppColors.neutral0.withOpacity(0.1),
+            blurRadius: 2,
+            offset: const Offset(0, 1),
+          ),
+        ],
+        md: [
+          BoxShadow(
+            color: AppColors.neutral0.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        lg: [
+          BoxShadow(
+            color: AppColors.neutral0.withOpacity(0.15),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        xl: [
+          BoxShadow(
+            color: AppColors.neutral0.withOpacity(0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+        xxl: [
+          BoxShadow(
+            color: AppColors.neutral0.withOpacity(0.25),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      AppAnimationExtension: const AppAnimationExtension(
+        fast: Duration(milliseconds: 150),
+        normal: Duration(milliseconds: 300),
+        slow: Duration(milliseconds: 500),
+        verySlow: Duration(milliseconds: 1000),
+        curve: Curves.easeInOut,
+        curveFast: Curves.easeOut,
+        curveSlow: Curves.easeIn,
+      ),
+    };
+  }
 }

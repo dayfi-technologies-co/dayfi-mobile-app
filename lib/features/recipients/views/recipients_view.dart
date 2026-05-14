@@ -11,6 +11,7 @@ import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
 import 'package:dayfi/features/recipients/vm/recipients_viewmodel.dart';
 import 'package:dayfi/features/send/vm/send_viewmodel.dart';
+import 'package:dayfi/features/send/widgets/send_money_entry_sheet.dart';
 import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
 import 'package:dayfi/models/beneficiary_with_source.dart';
 import 'package:dayfi/models/wallet_transaction.dart' show Beneficiary;
@@ -18,7 +19,6 @@ import 'package:dayfi/models/payment_response.dart' as payment;
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
-import 'package:dayfi/app_locator.dart';
 
 class RecipientsView extends ConsumerStatefulWidget {
   final bool fromProfile;
@@ -118,17 +118,16 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
     final profileState = ref.watch(profileViewModelProvider);
     final user = profileState.user;
 
-    // Sync search controller with state (for retaining search when navigating back)
-    if (_searchController.text != recipientsState.searchQuery) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && _searchController.text != recipientsState.searchQuery) {
-          _searchController.text = recipientsState.searchQuery;
-          _searchController.selection = TextSelection.fromPosition(
-            TextPosition(offset: _searchController.text.length),
-          );
-        }
-      });
-    }
+    ref.listen<String>(
+      recipientsProvider.select((s) => s.searchQuery),
+      (previous, next) {
+        if (_searchController.text == next) return;
+        _searchController.value = TextEditingValue(
+          text: next,
+          selection: TextSelection.collapsed(offset: next.length),
+        );
+      },
+    );
 
     // Build multiple name variations for comparison
     Set<String> userNames = {};
@@ -327,6 +326,12 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
         body: LayoutBuilder(
           builder: (context, constraints) {
             final bool isWide = constraints.maxWidth > 600;
+            final beneficiariesEmpty = recipientsState.beneficiaries.isEmpty;
+            final bodyHeight =
+                constraints.maxHeight.isFinite && constraints.maxHeight > 0
+                    ? constraints.maxHeight
+                    : MediaQuery.sizeOf(context).height;
+
             return CustomScrollView(
               physics: const BouncingScrollPhysics(
                 parent: AlwaysScrollableScrollPhysics(),
@@ -337,23 +342,43 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
                     _refreshRecipients();
                   },
                 ),
-                SliverToBoxAdapter(
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxWidth: isWide ? 500 : double.infinity,
+                if (beneficiariesEmpty)
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                      width: constraints.maxWidth,
+                      height: bodyHeight,
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: isWide ? 500 : double.infinity,
+                          ),
+                          child: _buildMainContent(
+                            recipientsState,
+                            visibleBeneficiaries,
+                            isWide,
+                          ),
+                        ),
                       ),
-                      child: Padding(
-                        padding: EdgeInsets.only(bottom: 0),
-                        child: _buildMainContent(
-                          recipientsState,
-                          visibleBeneficiaries,
-                          isWide,
+                    ),
+                  )
+                else
+                  SliverToBoxAdapter(
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: isWide ? 500 : double.infinity,
+                        ),
+                        child: Padding(
+                          padding: EdgeInsets.only(bottom: 0),
+                          child: _buildMainContent(
+                            recipientsState,
+                            visibleBeneficiaries,
+                            isWide,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
               ],
             );
           },
@@ -401,15 +426,37 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
                     title: 'No beneficiaries yet',
                     message:
                         'Your beneficiaries will appear here. Start sending money quickly',
-                    customButton: _buildActionButtonWidget(
-                      context,
-                      'Send Money',
-                      'assets/icons/svgs/swap.svg',
-                      () {
-                        appRouter.pushNamed(
-                          AppRoute.selectDestinationCountryView,
-                        );
-                      },
+                    customButton: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                      child: PrimaryButton(
+                        borderRadius: 12,
+                        text: "Send Money",
+                        onPressed: () {
+                          openSendMoneyEntry(context);
+                        },
+                        backgroundColor: AppColors.purple500,
+                        height: 56,
+                        textColor: AppColors.neutral0,
+                        fontFamily: 'Chirp',
+                        letterSpacing: -0.7,
+                        fontSize: 18,
+                        width: 375,
+                        fullWidth: true,
+                      ),
+
+                      // _buildActionButtonWidget(
+                      //   context,
+                      //   'Send Money',
+                      //   'assets/icons/svgs/swap.svg',
+                      //   () {
+                      //     appRouter.pushNamed(
+                      //       AppRoute.selectDestinationCountryView,
+                      //     );
+                      //   },
+                      // ),
                     ),
                   ))
               : ListView(
@@ -917,11 +964,9 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
         return 'Bank Transfer';
       }
 
-      // If networks are empty, try to trigger a refresh
+      // Do not call initialize() from build: this ran every rebuild when networks were empty
+      // and flooded the send view model + layout pipeline.
       if (sendState.networks.isEmpty) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          ref.read(sendViewModelProvider.notifier).initialize();
-        });
         return 'Bank Transfer';
       }
 

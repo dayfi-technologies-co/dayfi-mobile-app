@@ -16,7 +16,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get apiConnectionTimeout =>
-      'Connection timeout. Please check your internet connection and try again!!!';
+      'Connection timeout. Please check your internet connection and try again';
 
   @override
   String get apiBadCertificate =>
@@ -24,7 +24,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get apiConnectionError =>
-      'Connection error. Please check your internet connection and try again!!!';
+      'Connection error. Please check your internet connection and try again';
 
   @override
   String get apiUnknownConnection =>
@@ -32,7 +32,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get apiResponseTimeout =>
-      'Ouch! Seems like you’re offline. Please check your internet connection and try again!!!';
+      'Ouch! Seems like you’re offline. Please check your internet connection and try again';
 
   @override
   String get apiBadRequest =>

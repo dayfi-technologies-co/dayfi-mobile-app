@@ -3,7 +3,8 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Flutter Dev",
+      // iOS Simulator / Android emulator on this Mac → API on localhost. DAYFI_API_PORT must match the port printed when you run `npm run dev` (3000 or 3001 if 3000 is in use).
+      "name": "Flutter Dev (simulator, local API)",
       "type": "dart",
       "request": "launch",
       "program": "lib/main.dart",
@@ -11,7 +12,41 @@
         "--flavor",
         "dev",
         "--dart-define",
-        "FLAVOR=dev"
+        "FLAVOR=dev",
+        "--dart-define",
+        "DAYFI_API_HOST=127.0.0.1",
+        "--dart-define",
+        "DAYFI_API_PORT=3001"
+      ]
+    },
+    {
+      // Uses HTTPS API on Railway (set dayfiRailwayApiUrl to your service URL + /api/v1). Phone and simulator both work.
+      "name": "Flutter Dev (Railway API)",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "args": [
+        "--flavor",
+        "dev",
+        "--dart-define",
+        "FLAVOR=dev",
+        "--dart-define=DAYFI_API_BASE_URL=${input:dayfiRailwayApiUrl}"
+      ]
+    },
+    {
+      // Physical phone: prompts for your Mac’s Wi‑Fi IP (not 192.168.x.1 — that is usually the router). Terminal: ipconfig getifaddr en0
+      "name": "Flutter Dev (physical phone, Wi‑Fi / LAN)",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "args": [
+        "--flavor",
+        "dev",
+        "--dart-define",
+        "FLAVOR=dev",
+        "--dart-define=DAYFI_API_HOST=${input:dayfiMacLanIp}",
+        "--dart-define",
+        "DAYFI_API_PORT=${input:dayfiApiPort}"
       ]
     },
     {
@@ -37,6 +72,26 @@
         "--dart-define",
         "FLAVOR=prod"
       ]
+    }
+  ],
+  "inputs": [
+    {
+      "id": "dayfiMacLanIp",
+      "type": "promptString",
+      "description": "Mac Wi‑Fi IP (same network as phone). Run: ipconfig getifaddr en0 — do NOT use x.x.x.1 (router).",
+      "default": ""
+    },
+    {
+      "id": "dayfiApiPort",
+      "type": "promptString",
+      "description": "Backend port (must match DAYFI_PORT in dayfi_backend .env, often 3000 or 3001).",
+      "default": "3001"
+    },
+    {
+      "id": "dayfiRailwayApiUrl",
+      "type": "promptString",
+      "description": "Railway public HTTPS root for API, ending with /api/v1 (e.g. https://dayfi-api-production-xxxx.up.railway.app/api/v1)",
+      "default": "https://dayfibackend-production.up.railway.app/api/v1"
     }
   ]
 }

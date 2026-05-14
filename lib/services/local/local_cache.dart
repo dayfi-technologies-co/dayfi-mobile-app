@@ -75,7 +75,8 @@ class LocalCache {
       await storage.delete(StorageKeys.password);
       await storage.delete(StorageKeys.isFirstTime);
       await storage.delete(StorageKeys.hasSeenWelcome);
-      
+      await storage.delete(StorageKeys.walletRecoveryPhrase);
+
       // Clear shared preferences data
       await sharedPreferences.remove(StorageKeys.userId);
       await sharedPreferences.remove(StorageKeys.userEmail);

@@ -15,6 +15,9 @@ class Wallet {
   final String provider;
   final String createdAt;
   final String updatedAt;
+  /// On-chain receive address when backend includes it (optional).
+  final String? stellarDepositAddress;
+  final String? ethereumDepositAddress;
 
   Wallet({
     required this.walletId,
@@ -30,6 +33,8 @@ class Wallet {
     required this.provider,
     required this.createdAt,
     required this.updatedAt,
+    this.stellarDepositAddress,
+    this.ethereumDepositAddress,
   });
 
   factory Wallet.fromJson(Map<String, dynamic> json) {
@@ -47,6 +52,15 @@ class Wallet {
       provider: json['provider']?.toString() ?? '',
       createdAt: json['created_at']?.toString() ?? '',
       updatedAt: json['updated_at']?.toString() ?? '',
+      stellarDepositAddress:
+          json['stellar_address']?.toString() ??
+          json['stellarAddress']?.toString() ??
+          json['stellar_deposit_address']?.toString(),
+      ethereumDepositAddress:
+          json['ethereum_address']?.toString() ??
+          json['evm_address']?.toString() ??
+          json['evmAddress']?.toString() ??
+          json['ethereum_deposit_address']?.toString(),
     );
   }
 
@@ -65,6 +79,10 @@ class Wallet {
       'provider': provider,
       'created_at': createdAt,
       'updated_at': updatedAt,
+      if (stellarDepositAddress != null)
+        'stellar_address': stellarDepositAddress,
+      if (ethereumDepositAddress != null)
+        'ethereum_address': ethereumDepositAddress,
     };
   }
 

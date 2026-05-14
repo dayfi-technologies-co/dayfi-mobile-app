@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
 import 'package:dayfi/common/utils/tier_utils.dart';
 import 'package:dayfi/common/utils/haptic_helper.dart';
@@ -43,6 +45,10 @@ class _SendViewState extends ConsumerState<SendView>
   final FocusNode _sendAmountFocus = FocusNode();
   final FocusNode _receiveAmountFocus = FocusNode();
   bool _isCheckingWallet = false;
+
+  /// Coalesces provider-driven controller work so it never runs synchronously during build.
+  SendState? _pendingSendListenPrevious;
+  bool _sendListenWorkScheduled = false;
 
   // Track last fetched country/currency to avoid duplicate rate API calls
   String? _lastFetchedSendCountry;
@@ -785,130 +791,95 @@ class _SendViewState extends ConsumerState<SendView>
     }
   }
 
+  void _scheduleSendProviderListenWork(SendState? previous) {
+    if (!_sendListenWorkScheduled) {
+      _pendingSendListenPrevious = previous;
+      _sendListenWorkScheduled = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _sendListenWorkScheduled = false;
+        if (!mounted) return;
+        final prev = _pendingSendListenPrevious;
+        _pendingSendListenPrevious = null;
+        final next = ref.read(sendViewModelProvider);
+        _applySendProviderListenWork(prev, next);
+      });
+    }
+    // If a frame callback is already queued, keep the earliest `previous` and apply against
+    // the latest state when the callback runs (avoids losing the first transition).
+  }
+
+  void _applySendProviderListenWork(SendState? previous, SendState next) {
+    // --- Detect delivery method change and trigger re-initialization ---
+    if (_lastDeliveryMethod != null &&
+        next.selectedDeliveryMethod != _lastDeliveryMethod) {
+      _lastDeliveryMethod = next.selectedDeliveryMethod;
+      unawaited(
+        ref.read(sendViewModelProvider.notifier).forceReinitialize().catchError(
+          (_) {},
+        ),
+      );
+    } else {
+      _lastDeliveryMethod = next.selectedDeliveryMethod;
+    }
+
+    // ---- Handle SEND amount ----
+    if (previous?.sendAmount != next.sendAmount && !_isUpdatingSendController) {
+      _isUpdatingSendController = true;
+
+      final hadSendFocus = _sendAmountFocus.hasFocus;
+      final hadReceiveFocus = _receiveAmountFocus.hasFocus;
+
+      final newSendText = StringUtils.formatNumberWithCommas(next.sendAmount);
+      if (_sendAmountController.text != newSendText) {
+        _sendAmountController.value = TextEditingValue(
+          text: newSendText,
+          selection: TextSelection.collapsed(offset: newSendText.length),
+        );
+      }
+
+      if (!hadSendFocus && !hadReceiveFocus) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) FocusScope.of(context).unfocus();
+        });
+      }
+
+      _isUpdatingSendController = false;
+    }
+
+    // ---- Handle RECEIVE amount ----
+    if (previous?.receiverAmount != next.receiverAmount &&
+        !_isUpdatingReceiveController) {
+      _isUpdatingReceiveController = true;
+
+      final hadSendFocus = _sendAmountFocus.hasFocus;
+      final hadReceiveFocus = _receiveAmountFocus.hasFocus;
+
+      final newReceiveText = StringUtils.formatNumberWithCommas(
+        next.receiverAmount,
+      );
+      if (_receiveAmountController.text != newReceiveText) {
+        _receiveAmountController.value = TextEditingValue(
+          text: newReceiveText,
+          selection: TextSelection.collapsed(offset: newReceiveText.length),
+        );
+      }
+
+      if (!hadSendFocus && !hadReceiveFocus) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) FocusScope.of(context).unfocus();
+        });
+      }
+
+      _isUpdatingReceiveController = false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final sendState = ref.watch(sendViewModelProvider);
 
-    // Listen to state changes and update controllers safely
-    ref.listen(sendViewModelProvider, (previous, next) async {
-      // --- Detect delivery method change and trigger re-initialization ---
-      if (_lastDeliveryMethod != null &&
-          next.selectedDeliveryMethod != _lastDeliveryMethod) {
-        // Only re-initialize if the delivery method actually changed
-        _lastDeliveryMethod = next.selectedDeliveryMethod;
-        try {
-          await ref.read(sendViewModelProvider.notifier).forceReinitialize();
-        } catch (e) {
-          // Log error but don't crash the app
-          // print('Error re-initializing on delivery method change: $e');
-        }
-      } else {
-        _lastDeliveryMethod = next.selectedDeliveryMethod;
-      }
-
-      // ---- Handle SEND amount ----
-      if (previous?.sendAmount != next.sendAmount &&
-          !_isUpdatingSendController) {
-        _isUpdatingSendController = true;
-
-        final hadSendFocus = _sendAmountFocus.hasFocus;
-        final hadReceiveFocus = _receiveAmountFocus.hasFocus;
-
-        final newSendText = StringUtils.formatNumberWithCommas(next.sendAmount);
-        if (_sendAmountController.text != newSendText) {
-          _sendAmountController.value = TextEditingValue(
-            text: newSendText,
-            selection: TextSelection.collapsed(offset: newSendText.length),
-          );
-        }
-
-        if (!hadSendFocus && !hadReceiveFocus) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) FocusScope.of(context).unfocus();
-          });
-        }
-
-        _isUpdatingSendController = false;
-      }
-
-      // ---- Handle RECEIVE amount ----
-      if (previous?.receiverAmount != next.receiverAmount &&
-          !_isUpdatingReceiveController) {
-        _isUpdatingReceiveController = true;
-
-        final hadSendFocus = _sendAmountFocus.hasFocus;
-        final hadReceiveFocus = _receiveAmountFocus.hasFocus;
-
-        final newReceiveText = StringUtils.formatNumberWithCommas(
-          next.receiverAmount,
-        );
-        if (_receiveAmountController.text != newReceiveText) {
-          _receiveAmountController.value = TextEditingValue(
-            text: newReceiveText,
-            selection: TextSelection.collapsed(offset: newReceiveText.length),
-          );
-        }
-
-        if (!hadSendFocus && !hadReceiveFocus) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) FocusScope.of(context).unfocus();
-          });
-        }
-
-        _isUpdatingReceiveController = false;
-      }
-    });
-
-    // Ensure keyboard is dismissed when building the widget
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted &&
-          !_sendAmountFocus.hasFocus &&
-          !_receiveAmountFocus.hasFocus) {
-        FocusScope.of(context).unfocus();
-      }
-
-      // Restore controller text when state has values but controller is empty
-      if (mounted && !_sendAmountFocus.hasFocus) {
-        if (sendState.sendAmount.isNotEmpty &&
-            _sendAmountController.text.isEmpty) {
-          _isUpdatingSendController = true;
-          final formattedSend = StringUtils.formatNumberWithCommas(
-            sendState.sendAmount,
-          );
-          _sendAmountController.value = TextEditingValue(
-            text: formattedSend,
-            selection: TextSelection.collapsed(offset: formattedSend.length),
-          );
-          _isUpdatingSendController = false;
-        } else if (sendState.sendAmount.isEmpty &&
-            _sendAmountController.text.isNotEmpty) {
-          // Clear stale controller text when state values are empty
-          _isUpdatingSendController = true;
-          _sendAmountController.clear();
-          _isUpdatingSendController = false;
-        }
-      }
-
-      if (mounted && !_receiveAmountFocus.hasFocus) {
-        if (sendState.receiverAmount.isNotEmpty &&
-            _receiveAmountController.text.isEmpty) {
-          _isUpdatingReceiveController = true;
-          final formattedReceive = StringUtils.formatNumberWithCommas(
-            sendState.receiverAmount,
-          );
-          _receiveAmountController.value = TextEditingValue(
-            text: formattedReceive,
-            selection: TextSelection.collapsed(offset: formattedReceive.length),
-          );
-          _isUpdatingReceiveController = false;
-        } else if (sendState.receiverAmount.isEmpty &&
-            _receiveAmountController.text.isNotEmpty) {
-          // Clear stale controller text when state values are empty
-          _isUpdatingReceiveController = true;
-          _receiveAmountController.clear();
-          _isUpdatingReceiveController = false;
-        }
-      }
+    ref.listen<SendState>(sendViewModelProvider, (previous, next) {
+      _scheduleSendProviderListenWork(previous);
     });
 
     return GestureDetector(

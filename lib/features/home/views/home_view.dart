@@ -14,6 +14,7 @@ import 'package:dayfi/features/notifications/views/notifications_view.dart';
 import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
 import 'package:dayfi/features/send/vm/send_viewmodel.dart';
 import 'package:dayfi/features/send/widgets/delivery_methods_sheet.dart';
+import 'package:dayfi/features/send/widgets/send_money_entry_sheet.dart';
 import 'package:dayfi/features/transactions/vm/transactions_viewmodel.dart';
 import 'package:dayfi/models/wallet_transaction.dart';
 import 'package:dayfi/models/payment_response.dart' as payment;
@@ -188,6 +189,10 @@ class _HomeViewState extends ConsumerState<HomeView>
       });
       // Don't show error to user, just don't display dayfi tag
     }
+  }
+
+  void _onSendMoneyTapped() {
+    openSendMoneyEntry(context);
   }
 
   @override
@@ -412,8 +417,8 @@ class _HomeViewState extends ConsumerState<HomeView>
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          // Show shimmer while channels are loading
-                          if (sendState.isLoading || sendState.channels.isEmpty)
+                          // Shimmer only while channels are loading (not when empty after load).
+                          if (sendState.isLoading)
                             ShimmerWidgets.quickSendListShimmer(context)
                           else
                             SizedBox(
@@ -1045,9 +1050,7 @@ class _HomeViewState extends ConsumerState<HomeView>
             'Send Money',
             'Transfer funds locally or across borders',
             'assets/icons/svgs/transactions.svg',
-            () {
-              appRouter.pushNamed(AppRoute.selectDestinationCountryView);
-            },
+            _onSendMoneyTapped,
           ),
         ),
         // const SizedBox(width: 12),
@@ -1155,6 +1158,7 @@ class _HomeViewState extends ConsumerState<HomeView>
           final uniqueKey =
               source.accountType?.toLowerCase() == 'dayfi'
                   ? 'dayfi_${beneficiaryAccountNumber.toLowerCase()}'
+                  // ignore: unnecessary_brace_in_string_interps
                   : 'other_${sourceAccountNumber}';
 
           if (seenAccountNumbers.contains(uniqueKey)) {

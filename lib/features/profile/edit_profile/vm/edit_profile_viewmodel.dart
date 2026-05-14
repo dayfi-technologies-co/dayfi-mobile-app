@@ -426,6 +426,8 @@ class EditProfileNotifier extends StateNotifier<EditProfileState> {
           transactionPin: response.data?.user?.transactionPin ?? state.user!.transactionPin,
           isIdVerified: response.data?.user?.isIdVerified ?? state.user!.isIdVerified,
           isBiometricsSetup: response.data?.user?.isBiometricsSetup ?? state.user!.isBiometricsSetup,
+          isWalletBackedUp:
+              response.data?.user?.isWalletBackedUp ?? state.user!.isWalletBackedUp,
         );
 
         // Save updated user to local storage

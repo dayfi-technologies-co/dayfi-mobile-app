@@ -39,15 +39,35 @@ class DayfiTagExplanationView extends ConsumerWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             SizedBox(height: 24, width: 24),
-                            GestureDetector(
-                              onTap: () {
-                                Navigator.pop(context);
-                              },
-                              child: Image.asset(
-                                "assets/icons/pngs/cancelicon.png",
-                                height: 24,
-                                width: 24,
-                                color: Colors.white,
+                            InkWell(
+                              splashColor: Colors.transparent,
+                              highlightColor: Colors.transparent,
+                              onTap: () => Navigator.pop(context),
+                              child: Stack(
+                                alignment: AlignmentGeometry.center,
+                                children: [
+                                  SvgPicture.asset(
+                                    "assets/icons/svgs/notificationn.svg",
+                                    height: 40,
+                                    color:
+                                        Theme.of(context).colorScheme.surface,
+                                  ),
+                                  SizedBox(
+                                    height: 40,
+                                    width: 40,
+                                    child: Center(
+                                      child: Image.asset(
+                                        "assets/icons/pngs/cancelicon.png",
+                                        height: 20,
+                                        width: 20,
+                                        color:
+                                            Theme.of(
+                                              context,
+                                            ).textTheme.bodyLarge!.color,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -82,33 +102,38 @@ class DayfiTagExplanationView extends ConsumerWidget {
                           ],
                         ),
 
-                        Text(
-                          "Meet your Dayfi Tag",
-                          style: AppTypography.headlineLarge.copyWith(
-                            fontFamily: 'FunnelDisplay',
-                            fontSize: isWide ? 32 : 28,
-                            height: 1.2,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.neutral0,
-                            // height: 1.2,
-                            letterSpacing: -0.4,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        Text(
-                          "Your unique username for instant money transfers. Share it with friends and family - no bank details needed.",
-                          style: Theme.of(
-                            context,
-                          ).textTheme.bodyMedium?.copyWith(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            fontFamily: 'Chirp',
-                            color: AppColors.neutral50,
-                            letterSpacing: -.25,
-                            height: 1.5,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
+                        Column(
+                          children: [
+                            Text(
+                              "Meet your Dayfi Tag",
+                              style: AppTypography.headlineLarge.copyWith(
+                                fontFamily: 'FunnelDisplay',
+                                fontSize: isWide ? 32 : 28,
+                                height: 1.2,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.neutral0,
+                                // height: 1.2,
+                                letterSpacing: -0.4,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              "Your unique username for instant money transfers. Share it with friends and family - no bank details needed.",
+                              style: Theme.of(
+                                context,
+                              ).textTheme.bodyMedium?.copyWith(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'Chirp',
+                                color: AppColors.neutral50,
+                                letterSpacing: -.25,
+                                height: 1.5,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ), 
                         // SizedBox(height: 24),
                         // Text(
                         //   "Benefits:\n• Easy to share - just your unique tag\n• Instant transfers\n• No bank details needed\n• Free to use",
@@ -123,27 +148,30 @@ class DayfiTagExplanationView extends ConsumerWidget {
                         //   textAlign: TextAlign.center,
                         // ),
                         SizedBox(height: 32),
-                        PrimaryButton(
-                          borderRadius: 38,
-                          text: "Create Dayfi Tag",
-                          onPressed: () async {
-                            final result = await Navigator.pushNamed(
-                              context,
-                              AppRoute.createDayfiTagView,
-                            );
-                            if (result != null && result is String) {
-                              Navigator.pop(context, result);
-                            }
-                          },
-                          backgroundColor: AppColors.neutral0,
-                          height: 48.00000,
-                          textColor: AppColors.purple500ForTheme(context),
-                          fontFamily: 'Chirp',
-                          letterSpacing: -.70,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 18,
-                          width: double.infinity,
-                          fullWidth: true,
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 24),
+                          child: PrimaryButton(
+                            borderRadius: 38,
+                            text: "Create Dayfi Tag",
+                            onPressed: () async {
+                              final result = await Navigator.pushNamed(
+                                context,
+                                AppRoute.createDayfiTagView,
+                              );
+                              if (result != null && result is String) {
+                                Navigator.pop(context, result);
+                              }
+                            },
+                            backgroundColor: AppColors.neutral0,
+                            height: 48.00000,
+                            textColor: AppColors.purple500ForTheme(context),
+                            fontFamily: 'Chirp',
+                            letterSpacing: -.70,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 18,
+                            width: double.infinity,
+                            fullWidth: true,
+                          ),
                         ),
                         SizedBox(height: 50),
                       ],

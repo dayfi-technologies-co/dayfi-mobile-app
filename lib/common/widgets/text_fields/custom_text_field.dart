@@ -109,6 +109,9 @@ class CustomTextField extends StatelessWidget {
   final bool shouldFaintFillColor;
   final bool isSearch;
   final double? width;
+  final bool autocorrect;
+  final bool enableSuggestions;
+  final Iterable<String>? autofillHints;
 
   const CustomTextField({
     super.key,
@@ -143,6 +146,9 @@ class CustomTextField extends StatelessWidget {
     this.shouldFaintFillColor = false,
     this.isSearch = false,
     this.width,
+    this.autocorrect = true,
+    this.enableSuggestions = true,
+    this.autofillHints,
   });
 
   @override
@@ -201,6 +207,9 @@ class CustomTextField extends StatelessWidget {
               maxLengthEnforcement: MaxLengthEnforcement.enforced,
               onTap: onTap,
               enableInteractiveSelection: enableInteractiveSelection,
+              autocorrect: autocorrect,
+              enableSuggestions: enableSuggestions,
+              autofillHints: autofillHints,
               textCapitalization:
                   textCapitalization ?? TextCapitalization.sentences,
               autovalidateMode: AutovalidateMode.onUserInteraction,

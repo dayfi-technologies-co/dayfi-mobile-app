@@ -16,14 +16,24 @@ class F {
     }
   }
 
+  /// Dev API:
+  /// - **Railway / HTTPS:** `--dart-define=DAYFI_API_BASE_URL=https://…up.railway.app/api/v1` (or use **pilot** / **prod** flavor — base URL is set in this file).
+  /// - **Local:** `--dart-define=DAYFI_API_HOST=127.0.0.1` and `DAYFI_API_PORT=3000` (phone on LAN: use Mac IP, not x.x.x.1).
   static String get baseUrl {
     switch (appFlavor) {
       case Flavor.dev:
-        return "https://dayfi-staging-4417d7a6dfe0.herokuapp.com/api/v1";
+        const remoteBase = String.fromEnvironment('DAYFI_API_BASE_URL', defaultValue: '');
+        if (remoteBase.isNotEmpty) {
+          final trimmed = remoteBase.replaceAll(RegExp(r'/+$'), '');
+          return trimmed.endsWith('/api/v1') ? trimmed : '$trimmed/api/v1';
+        }
+        const host = String.fromEnvironment('DAYFI_API_HOST', defaultValue: '127.0.0.1');
+        const port = String.fromEnvironment('DAYFI_API_PORT', defaultValue: '3000');
+        return 'http://$host:$port/api/v1';
       case Flavor.pilot:
-        return "https://dayfi-staging-4417d7a6dfe0.herokuapp.com/api/v1";
+        return "https://dayfibackend-production.up.railway.app/api/v1";
       case Flavor.prod:
-        return "https://dayfi-staging-4417d7a6dfe0.herokuapp.com/api/v1";
+        return "https://dayfibackend-production.up.railway.app/api/v1";
     }
   }
 

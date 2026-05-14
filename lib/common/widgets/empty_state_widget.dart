@@ -123,10 +123,10 @@ class EmptyStateWidget extends StatelessWidget {
             ],
 
             // Custom button (e.g., for recipients "Send Money" button)
-            // if (customButton != null) ...[
-            //   SizedBox(height: 24),
-            //   customButton!,
-            // ],
+            if (customButton != null) ...[
+              SizedBox(height: 24),
+              customButton!,
+            ],
             SizedBox(height: 96),
           ],
         ),

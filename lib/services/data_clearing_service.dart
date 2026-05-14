@@ -11,6 +11,7 @@ import 'package:dayfi/features/transactions/vm/transactions_viewmodel.dart';
 import 'package:dayfi/features/auth/passcode/vm/passcode_viewmodel.dart';
 import 'package:dayfi/features/profile/edit_profile/vm/edit_profile_viewmodel.dart';
 import 'package:dayfi/features/auth/complete_personal_information/vm/complete_personal_information_viewmodel.dart';
+import 'package:dayfi/features/auth/check_email/vm/check_email_viewmodel.dart';
 import 'package:dayfi/features/auth/login/vm/login_viewmodel.dart';
 import 'package:dayfi/features/auth/signup/vm/signup_viewmodel.dart';
 import 'package:dayfi/features/auth/reset_password/vm/reset_password_viewmodel.dart';
@@ -86,6 +87,7 @@ class DataClearingService {
       await secureStorage.delete(StorageKeys.email);
       await secureStorage.delete(StorageKeys.password);
       await secureStorage.delete(StorageKeys.passcode);
+      await secureStorage.delete(StorageKeys.walletRecoveryPhrase);
       await secureStorage.delete(StorageKeys.isFirstTime);
       await secureStorage.delete(StorageKeys.hasSeenWelcome);
       
@@ -119,7 +121,8 @@ class DataClearingService {
       ref.invalidate(biometricSetupProvider);
       ref.invalidate(verifyEmailProvider);
       ref.invalidate(uploadDocumentsProvider);
-      
+      ref.invalidate(checkEmailProvider);
+
       AppLogger.info('All providers reset successfully');
     } catch (e) {
       AppLogger.error('Error resetting providers: $e');
@@ -150,7 +153,8 @@ class DataClearingService {
       container.invalidate(biometricSetupProvider);
       container.invalidate(verifyEmailProvider);
       container.invalidate(uploadDocumentsProvider);
-      
+      container.invalidate(checkEmailProvider);
+
       AppLogger.info('All providers reset successfully');
     } catch (e) {
       AppLogger.error('Error resetting providers: $e');

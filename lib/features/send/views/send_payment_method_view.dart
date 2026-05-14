@@ -815,7 +815,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
         centerTitle: true,
       ),
       body: Align(
-              alignment: Alignment.topCenter,
+        alignment: Alignment.topCenter,
         child: LayoutBuilder(
           builder: (context, constraints) {
             final bool isWide = constraints.maxWidth > 600;
@@ -929,6 +929,11 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
       userCountryCode = userCountryName.toUpperCase();
     }
 
+    final capabilities =
+        await locator<PaymentService>().fetchPaymentCapabilities();
+    if (!context.mounted) return const SizedBox.shrink();
+    final stablecoinTopup = capabilities.stablecoinTopup;
+
     // Filter deposit channels for user's country
     final depositChannels =
         sendState.channels
@@ -1039,34 +1044,64 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
           );
         }).toList(),
 
-        // Optionally, add a disabled Digital Dollar card if needed
-        Opacity(
-          opacity: .4,
-          child: _buildPaymentMethodOption(
-            icon: Stack(
-              alignment: AlignmentDirectional.center,
-              children: [
-                SvgPicture.asset(
-                  'assets/icons/svgs/swap.svg',
-                  height: 40,
-                  color: Theme.of(context).textTheme.bodyLarge!.color,
+        stablecoinTopup
+            ? Opacity(
+              opacity: .4,
+              child:  _buildPaymentMethodOption(
+              icon: Stack(
+                alignment: AlignmentDirectional.center,
+                children: [
+                  SvgPicture.asset(
+                    'assets/icons/svgs/swap.svg',
+                    height: 40,
+                    color: Theme.of(context).textTheme.bodyLarge!.color,
+                  ),
+                  SvgPicture.asset(
+                    "assets/icons/svgs/currency-dollar.svg",
+                    height: 28,
+                    color: Theme.of(context).colorScheme.surface,
+                  ),
+                ],
+              ),
+              title: 'Via Digital Dollar',
+              description:
+                  'Pay with a digital dollar wallet via stable coin and wallet address. Cross-border made easy.',
+              iconColor: AppColors.success400,
+              isSelected: false,
+              isEnabled: false,
+              onTap: () async {
+                // if (!mounted) return;
+                // final nav = Navigator.of(context);
+                // await nav.pushNamed(AppRoute.receiveScreen);
+              },
+            ))
+            : Opacity(
+              opacity: .4,
+              child: _buildPaymentMethodOption(
+                icon: Stack(
+                  alignment: AlignmentDirectional.center,
+                  children: [
+                    SvgPicture.asset(
+                      'assets/icons/svgs/swap.svg',
+                      height: 40,
+                      color: Theme.of(context).textTheme.bodyLarge!.color,
+                    ),
+                    SvgPicture.asset(
+                      "assets/icons/svgs/currency-dollar.svg",
+                      height: 28,
+                      color: Theme.of(context).colorScheme.surface,
+                    ),
+                  ],
                 ),
-                SvgPicture.asset(
-                  "assets/icons/svgs/currency-dollar.svg",
-                  height: 28,
-                  color: Theme.of(context).colorScheme.surface,
-                ),
-              ],
+                title: 'Via Digital Dollar',
+                description:
+                    'Pay with a digital dollar wallet via stable coin and wallet address. Cross-border made easy.',
+                iconColor: AppColors.success400,
+                isSelected: false,
+                isEnabled: false,
+                onTap: null,
+              ),
             ),
-            title: 'Via Digital Dollar',
-            description:
-                'Pay with a digital dollar wallet via stable coin and wallet address. Cross-border made easy.',
-            iconColor: AppColors.success400,
-            isSelected: false,
-            isEnabled: false,
-            onTap: null, // Disabled
-          ),
-        ),
       ],
     );
   }

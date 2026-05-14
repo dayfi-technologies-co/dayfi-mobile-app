@@ -8,6 +8,7 @@ import 'package:dayfi/models/user_model.dart';
 import 'package:dayfi/common/constants/storage_keys.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/services/data_clearing_service.dart';
+import 'package:dayfi/core/auth/logout_navigation_suppressor.dart';
 
 class PasscodeState {
   final String passcode;
@@ -331,6 +332,7 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
   Future<void> logout(WidgetRef ref) async {
     if (!mounted) return;
     state = state.copyWith(isLoading: true);
+    LogoutNavigationSuppressor.begin();
     try {
       // Disable biometrics on backend before logout for security
       await _disableBiometricsBeforeLogout();
@@ -339,13 +341,13 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
       final dataClearingService = DataClearingService();
       await dataClearingService.clearAllUserData(ref);
 
-      // Navigate to login and clear stack (hide back button)
-      appRouter.pushOnboardingAndClearStack(arguments: false);
+      appRouter.pushCheckEmailAndClearStack(showBackButton: false);
     } catch (e) {
       if (mounted) {
         _showErrorSnackBar('Error during logout: ${e.toString()}');
       }
     } finally {
+      LogoutNavigationSuppressor.end();
       if (mounted) {
         state = state.copyWith(isLoading: false);
       }

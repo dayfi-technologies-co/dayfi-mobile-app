@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import 'package:dayfi/common/widgets/empty_state_widget.dart';
+import 'package:dayfi/common/widgets/error_state_widget.dart';
 import 'package:dayfi/models/notification_item.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -100,6 +102,10 @@ class _NotificationsViewState extends ConsumerState<NotificationsView> {
     ref.read(notificationsProvider.notifier).markAsRead(notification.id);
   }
 
+  void _refreshNotifications() {
+    ref.read(notificationsProvider.notifier).loadNotifications();
+  }
+
   @override
   Widget build(BuildContext context) {
     final notificationsState = ref.watch(notificationsProvider);
@@ -190,53 +196,67 @@ class _NotificationsViewState extends ConsumerState<NotificationsView> {
       body: LayoutBuilder(
         builder: (context, constraints) {
           final bool isWide = constraints.maxWidth > 600;
-          return Center(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: isWide ? 500 : double.infinity,
-              ),
-              child:
-                  isLoading
-                      ? _buildLoadingState()
-                      : errorMessage != null
-                      ? _buildErrorState(errorMessage)
-                      : notifications.isEmpty
-                      ? _buildEmptyState()
-                      : CustomScrollView(
-                        physics: const BouncingScrollPhysics(
-                          parent: AlwaysScrollableScrollPhysics(),
-                        ),
-                        slivers: [
-                          CupertinoSliverRefreshControl(
-                            onRefresh: () async {
-                              await ref
-                                  .read(notificationsProvider.notifier)
-                                  .loadNotifications();
-                            },
-                          ),
-                          SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              (context, index) {
-                                final date = sortedDates[index];
-                                final notificationsForDate =
-                                    groupedNotifications[date]!;
+          final hasData = notifications.isNotEmpty;
 
-                                return Padding(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: isWide ? 24 : 18,
-                                  ),
-                                  child: _buildNotificationGroup(
-                                    date,
-                                    notificationsForDate,
-                                  ),
-                                );
-                              },
-                              childCount: sortedDates.length,
-                            ),
-                          ),
-                        ],
-                      ),
+          return CustomScrollView(
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
             ),
+            slivers: [
+              CupertinoSliverRefreshControl(
+                onRefresh: () async {
+                  await ref
+                      .read(notificationsProvider.notifier)
+                      .loadNotifications();
+                },
+              ),
+              if (hasData)
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final date = sortedDates[index];
+                      final notificationsForDate =
+                          groupedNotifications[date]!;
+
+                      return Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isWide ? 24 : 18,
+                        ),
+                        child: _buildNotificationGroup(
+                          date,
+                          notificationsForDate,
+                        ),
+                      );
+                    },
+                    childCount: sortedDates.length,
+                  ),
+                )
+              else
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: isWide ? 500 : double.infinity,
+                      ),
+                      child: isLoading
+                          ? _buildLoadingState()
+                          : errorMessage != null
+                              ? ErrorStateWidget(
+                                  message: 'Failed to load notifications',
+                                  details: errorMessage,
+                                  onRetry: _refreshNotifications,
+                                )
+                              : EmptyStateWidget(
+                                  icon: Icons.notifications_none_outlined,
+                                  title: 'No notifications yet',
+                                  message:
+                                      "You'll see important updates here",
+                                ),
+                    ),
+                  ),
+                ),
+            ],
           );
         },
       ),
@@ -292,84 +312,8 @@ class _NotificationsViewState extends ConsumerState<NotificationsView> {
     );
   }
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.notifications_none,
-            size: 80,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
-          ),
-          SizedBox(height: 24),
-          Text(
-            'No notifications yet',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontFamily: 'FunnelDisplay',
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-            ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'You\'ll see important updates here',
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              fontFamily: 'Chirp',
-              fontSize: 16,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildLoadingState() {
-    return Center(child: CupertinoActivityIndicator());
-  }
-
-  Widget _buildErrorState(String errorMessage) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.error_outline,
-            size: 80,
-            color: Theme.of(context).colorScheme.error,
-          ),
-          SizedBox(height: 24),
-          Text(
-            'Failed to load notifications',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontFamily: 'FunnelDisplay',
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-            ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            errorMessage,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              fontFamily: 'Chirp',
-              fontSize: 16,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-            ),
-          ),
-          SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: () {
-              ref.read(notificationsProvider.notifier).loadNotifications();
-            },
-            child: const Text('Retry'),
-          ),
-        ],
-      ),
-    );
+    return const Center(child: CupertinoActivityIndicator());
   }
 
   Widget _buildNotificationCard(

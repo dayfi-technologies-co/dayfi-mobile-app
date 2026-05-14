@@ -34,6 +34,8 @@ class User {
   final bool isIdVerified; // Added from JSON
   final bool isBiometricsSetup; // Added from JSON
   final String? dayfiId; // Dayfi Tag for receiving payments
+  /// When false, prompt user to back up crypto wallet recovery phrase.
+  final bool isWalletBackedUp;
 
   User({
     required this.userId,
@@ -71,6 +73,7 @@ class User {
     required this.isIdVerified, // Added to constructor
     required this.isBiometricsSetup, // Added to constructor
     this.dayfiId, // Added to constructor
+    this.isWalletBackedUp = true,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -112,6 +115,11 @@ class User {
       isIdVerified: json['is_id_verified'] as bool? ?? false,
       isBiometricsSetup: json['is_biometrics_setup'] as bool? ?? false,
       dayfiId: json['dayfi_id'] as String? ?? json['dayfiId'] as String?,
+      isWalletBackedUp:
+          json['is_wallet_backed_up'] as bool? ??
+          json['isBackedUp'] as bool? ??
+          json['is_wallet_backup_complete'] as bool? ??
+          true,
     );
   }
 
@@ -152,6 +160,7 @@ class User {
       'is_id_verified': isIdVerified,
       'is_biometrics_setup': isBiometricsSetup,
       'dayfi_id': dayfiId,
+      'is_wallet_backed_up': isWalletBackedUp,
     };
   }
 }

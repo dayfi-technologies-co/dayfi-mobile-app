@@ -9,6 +9,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
+import 'package:dayfi/core/theme/theme_provider.dart';
+import 'package:dayfi/core/theme/theme_toggle_widget.dart';
 import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
 import 'package:dayfi/features/legal/terms_of_use.dart';
 import 'package:dayfi/features/legal/privacy_notice.dart';
@@ -54,11 +56,32 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
   bool _isLoadingDayfiId = true;
   bool _isBiometricEnabled = false;
 
+  /// Tag is shown without a leading `@` in the UI (the `@` is rendered separately).
+  static String? _normalizeStoredDayfiId(String? raw) {
+    if (raw == null) return null;
+    final t = raw.trim();
+    if (t.isEmpty || t.toLowerCase() == 'null') return null;
+    return t.startsWith('@') ? t.substring(1) : t;
+  }
+
+  Future<String?> _readDayfiIdFromStoredUser() async {
+    try {
+      final user = await localCache.getUser();
+      final raw = user['dayfi_id'] ?? user['dayfiId'];
+      return _normalizeStoredDayfiId(raw?.toString());
+    } catch (e) {
+      AppLogger.error('Error reading Dayfi Tag from stored user: $e');
+      return null;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(profileViewModelProvider.notifier).loadUserProfile(isInitialLoad: true);
+      ref
+          .read(profileViewModelProvider.notifier)
+          .loadUserProfile(isInitialLoad: true);
       _loadDayfiId();
       _loadBiometricStatus();
     });
@@ -78,31 +101,47 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
 
   Future<void> _handleBiometricToggle(bool value) async {
     if (value) {
-      await appRouter.pushNamed(AppRoute.biometricSetupView, arguments: {'fromProfile': true});
+      await appRouter.pushNamed(
+        AppRoute.biometricSetupView,
+        arguments: {'fromProfile': true},
+      );
       await _loadBiometricStatus();
     } else {
       try {
-        await localCache.saveToLocalCache(key: 'biometric_enabled', value: false);
+        await localCache.saveToLocalCache(
+          key: 'biometric_enabled',
+          value: false,
+        );
         final userData = await localCache.getUser();
         userData['biometric_enabled'] = false;
         await localCache.saveToLocalCache(key: 'user', value: userData);
         setState(() => _isBiometricEnabled = false);
 
         if (mounted) {
-          TopSnackbar.show(context, message: 'Biometric authentication disabled', isError: false);
+          TopSnackbar.show(
+            context,
+            message: 'Biometric authentication disabled',
+            isError: false,
+          );
         }
       } catch (e) {
         AppLogger.error('Error disabling biometrics: $e');
         if (mounted) {
-          TopSnackbar.show(context, message: 'Failed to disable biometrics', isError: true);
+          TopSnackbar.show(
+            context,
+            message: 'Failed to disable biometrics',
+            isError: true,
+          );
         }
       }
     }
   }
 
   Future<void> _loadDayfiId() async {
-    final cachedDayfiId = localCache.getFromLocalCache('dayfi_id') as String?;
-    if (cachedDayfiId != null && cachedDayfiId.isNotEmpty && cachedDayfiId != 'null') {
+    final cachedDayfiId = _normalizeStoredDayfiId(
+      localCache.getFromLocalCache('dayfi_id') as String?,
+    );
+    if (cachedDayfiId != null && cachedDayfiId.isNotEmpty) {
       setState(() {
         _dayfiId = cachedDayfiId;
         _isLoadingDayfiId = false;
@@ -121,26 +160,59 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
           orElse: () => walletResponse.wallets.first,
         );
 
-        if (walletWithDayfiId.dayfiId.isNotEmpty && walletWithDayfiId.dayfiId != 'null') {
-          await localCache.saveToLocalCache(key: 'dayfi_id', value: walletWithDayfiId.dayfiId);
+        final fromWallet = _normalizeStoredDayfiId(walletWithDayfiId.dayfiId);
+        if (fromWallet != null && fromWallet.isNotEmpty) {
+          await localCache.saveToLocalCache(key: 'dayfi_id', value: fromWallet);
           setState(() {
-            _dayfiId = walletWithDayfiId.dayfiId;
+            _dayfiId = fromWallet;
             _isLoadingDayfiId = false;
           });
-          AppLogger.info('Dayfi Tag loaded: ${walletWithDayfiId.dayfiId}');
+          AppLogger.info('Dayfi Tag loaded from wallet: $fromWallet');
         } else {
-          await localCache.removeFromLocalCache('dayfi_id');
-          setState(() {
-            _dayfiId = null;
-            _isLoadingDayfiId = false;
-          });
+          // Wallet payloads often omit `dayfi_id` until NGN wallet sync; user
+          // JSON is updated in [AuthService.createDayfiId] on success.
+          final fromUser = await _readDayfiIdFromStoredUser();
+          if (fromUser != null && fromUser.isNotEmpty) {
+            await localCache.saveToLocalCache(key: 'dayfi_id', value: fromUser);
+            setState(() {
+              _dayfiId = fromUser;
+              _isLoadingDayfiId = false;
+            });
+            AppLogger.info('Dayfi Tag loaded from stored user: $fromUser');
+          } else {
+            await localCache.removeFromLocalCache('dayfi_id');
+            setState(() {
+              _dayfiId = null;
+              _isLoadingDayfiId = false;
+            });
+          }
         }
       } else {
-        setState(() => _isLoadingDayfiId = false);
+        final fromUser = await _readDayfiIdFromStoredUser();
+        if (fromUser != null && fromUser.isNotEmpty) {
+          await localCache.saveToLocalCache(key: 'dayfi_id', value: fromUser);
+          setState(() {
+            _dayfiId = fromUser;
+            _isLoadingDayfiId = false;
+          });
+          AppLogger.info(
+            'Dayfi Tag loaded from stored user (no wallets): $fromUser',
+          );
+        } else {
+          setState(() => _isLoadingDayfiId = false);
+        }
       }
     } catch (e) {
       AppLogger.error('Error loading Dayfi Tag: $e');
-      setState(() => _isLoadingDayfiId = false);
+      final fromUser = await _readDayfiIdFromStoredUser();
+      if (fromUser != null && fromUser.isNotEmpty) {
+        setState(() {
+          _dayfiId = fromUser;
+          _isLoadingDayfiId = false;
+        });
+      } else {
+        setState(() => _isLoadingDayfiId = false);
+      }
     }
   }
 
@@ -174,7 +246,9 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
           final bool isWide = constraints.maxWidth > 600;
           return Center(
             child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: isWide ? 500 : double.infinity),
+              constraints: BoxConstraints(
+                maxWidth: isWide ? 500 : double.infinity,
+              ),
               child: SingleChildScrollView(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
@@ -195,7 +269,12 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
   Widget _buildHeaderSection(ProfileState profileState) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.fromLTRB(24, _ProfileConstants.headerPaddingTop, 24, _ProfileConstants.headerPaddingBottom),
+      padding: EdgeInsets.fromLTRB(
+        24,
+        _ProfileConstants.headerPaddingTop,
+        24,
+        _ProfileConstants.headerPaddingBottom,
+      ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -213,7 +292,10 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
       children: [
         Padding(
           padding: EdgeInsets.only(bottom: 32),
-          child: Image.asset("assets/icons/pngs/account.png", height: _ProfileConstants.profileImageHeight),
+          child: Image.asset(
+            "assets/icons/pngs/account.png",
+            height: _ProfileConstants.profileImageHeight,
+          ),
         ),
         if (!profileState.isLoading) _buildTierBadge(profileState),
       ],
@@ -227,9 +309,14 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
 
     Color tierColorValue;
     switch (tierColor) {
-      case 'success600': tierColorValue = AppColors.success600; break;
-      case 'warning600': tierColorValue = AppColors.warning600; break;
-      default: tierColorValue = AppColors.info600;
+      case 'success600':
+        tierColorValue = AppColors.success600;
+        break;
+      case 'warning600':
+        tierColorValue = AppColors.warning600;
+        break;
+      default:
+        tierColorValue = AppColors.info600;
     }
 
     return Positioned(
@@ -238,11 +325,16 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
         padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(_ProfileConstants.tierContainerBorderRadius),
+          borderRadius: BorderRadius.circular(
+            _ProfileConstants.tierContainerBorderRadius,
+          ),
         ),
         child: Row(
           children: [
-            Image.asset(tierIconPath, height: _ProfileConstants.tierImageHeight),
+            Image.asset(
+              tierIconPath,
+              height: _ProfileConstants.tierImageHeight,
+            ),
             SizedBox(width: 4),
             Text(
               tierDisplayName,
@@ -267,8 +359,15 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
       children: [
         Text(
           profileState.userName.isNotEmpty
-              ? profileState.userName.split(' ').map((word) =>
-                  word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : '').join(' ')
+              ? profileState.userName
+                  .split(' ')
+                  .map(
+                    (word) =>
+                        word.isNotEmpty
+                            ? word[0].toUpperCase() + word.substring(1)
+                            : '',
+                  )
+                  .join(' ')
               : '',
           style: AppTypography.headlineSmall.copyWith(
             color: Theme.of(context).colorScheme.onSurface,
@@ -286,7 +385,9 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
 
   Widget _buildContentSection(ProfileState profileState) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: _ProfileConstants.contentPadding),
+      padding: EdgeInsets.symmetric(
+        horizontal: _ProfileConstants.contentPadding,
+      ),
       child: Column(
         children: [
           _buildEditProfileButton(profileState),
@@ -307,18 +408,24 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
   Widget _buildEditProfileButton(ProfileState profileState) {
     return Column(
       children: [
-        PrimaryButton(
-          borderRadius: _ProfileConstants.buttonBorderRadius,
-          text: "Edit Profile",
-          onPressed: profileState.isLoading ? null : _navigateToEditProfile,
-          backgroundColor: profileState.isLoading ? AppColors.purple500 : AppColors.purple500,
-          height: _ProfileConstants.buttonHeight,
-          textColor: AppColors.neutral0,
-          fontFamily: 'Chirp',
-          letterSpacing: -0.7,
-          fontSize: 18,
-          width: 375,
-          fullWidth: true,
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24),
+          child: PrimaryButton(
+            borderRadius: _ProfileConstants.buttonBorderRadius,
+            text: "Edit Profile",
+            onPressed: profileState.isLoading ? null : _navigateToEditProfile,
+            backgroundColor:
+                profileState.isLoading
+                    ? AppColors.purple500
+                    : AppColors.purple500,
+            height: _ProfileConstants.buttonHeight,
+            textColor: AppColors.neutral0,
+            fontFamily: 'Chirp',
+            letterSpacing: -0.7,
+            fontSize: 18,
+            width: 375,
+            fullWidth: true,
+          ),
         ),
         SizedBox(height: 24),
         if (_isLoadingDayfiId) ...[
@@ -337,7 +444,9 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(_ProfileConstants.containerBorderRadius),
+        borderRadius: BorderRadius.circular(
+          _ProfileConstants.containerBorderRadius,
+        ),
         boxShadow: [_buildShadow()],
       ),
       child: Row(
@@ -346,8 +455,26 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
         children: [
           Row(
             children: [
-              Text('@', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, letterSpacing: 0.0, height: 1.45, color: Theme.of(context).colorScheme.onSurface)),
-              Text(_dayfiId!, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, letterSpacing: 0.0, height: 1.45, color: Theme.of(context).colorScheme.onSurface)),
+              Text(
+                '@',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  letterSpacing: 0.0,
+                  height: 1.45,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+              Text(
+                _dayfiId!,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  letterSpacing: 0.0,
+                  height: 1.45,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
             ],
           ),
           SizedBox(width: 12),
@@ -372,13 +499,31 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
         onTap: () {
           HapticHelper.lightImpact();
           Clipboard.setData(ClipboardData(text: '@$_dayfiId'));
-          TopSnackbar.show(context, message: 'Dayfi Tag copied to clipboard', isError: false);
+          TopSnackbar.show(
+            context,
+            message: 'Dayfi Tag copied to clipboard',
+            isError: false,
+          );
         },
         child: Row(
           children: [
-            Text("copy", style: TextStyle(fontFamily: 'Chirp', fontWeight: FontWeight.w600, fontSize: 12, letterSpacing: 0.0, height: 1.45, color: Theme.of(context).colorScheme.primary)),
+            Text(
+              "copy",
+              style: TextStyle(
+                fontFamily: 'Chirp',
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+                letterSpacing: 0.0,
+                height: 1.45,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
             SizedBox(width: 6),
-            SvgPicture.asset("assets/icons/svgs/copy.svg", color: Theme.of(context).colorScheme.primary, height: 16),
+            SvgPicture.asset(
+              "assets/icons/svgs/copy.svg",
+              color: Theme.of(context).colorScheme.primary,
+              height: 16,
+            ),
           ],
         ),
       ),
@@ -394,16 +539,39 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
         onTap: () async {
           HapticHelper.lightImpact();
           try {
-            await Share.share('Send me money on DayFi! My tag is @$_dayfiId\n\nDownload DayFi: https://dayfi.co', subject: 'My Dayfi Tag');
+            await Share.share(
+              'Send me money on DayFi! My tag is @$_dayfiId\n\nDownload DayFi: https://dayfi.co',
+              subject: 'My Dayfi Tag',
+            );
           } catch (e) {
-            if (mounted) TopSnackbar.show(context, message: 'Unable to share. Please try again.', isError: true);
+            if (mounted) {
+              TopSnackbar.show(
+                context,
+                message: 'Unable to share. Please try again.',
+                isError: true,
+              );
+            }
           }
         },
         child: Row(
           children: [
-            Text("share", style: TextStyle(fontFamily: 'Chirp', fontWeight: FontWeight.w600, fontSize: 12, letterSpacing: 0.0, height: 1.45, color: Theme.of(context).colorScheme.primary)),
+            Text(
+              "share",
+              style: TextStyle(
+                fontFamily: 'Chirp',
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+                letterSpacing: 0.0,
+                height: 1.45,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
             SizedBox(width: 6),
-            SvgPicture.asset("assets/icons/svgs/share.svg", color: Theme.of(context).colorScheme.primary, height: 16),
+            SvgPicture.asset(
+              "assets/icons/svgs/share.svg",
+              color: Theme.of(context).colorScheme.primary,
+              height: 16,
+            ),
           ],
         ),
       ),
@@ -416,10 +584,17 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
       highlightColor: Colors.transparent,
       hoverColor: Colors.transparent,
       onTap: () async {
-        final result = await Navigator.pushNamed(context, AppRoute.dayfiTagExplanationView);
+        final result = await Navigator.pushNamed(
+          context,
+          AppRoute.dayfiTagExplanationView,
+        );
         if (result != null && result is String && result.isNotEmpty) {
-          final dayfiIdValue = result.startsWith('@') ? result.substring(1) : result;
-          await localCache.saveToLocalCache(key: 'dayfi_id', value: dayfiIdValue);
+          final dayfiIdValue =
+              result.startsWith('@') ? result.substring(1) : result;
+          await localCache.saveToLocalCache(
+            key: 'dayfi_id',
+            value: dayfiIdValue,
+          );
           setState(() {
             _dayfiId = dayfiIdValue;
             _isLoadingDayfiId = false;
@@ -447,20 +622,43 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
   Widget _buildSettingsSections() {
     return Column(
       children: [
-        _buildSection(title: 'ACCOUNT SETTINGS', children: _accountSettings.map(_buildSettingsItem).toList()),
+        _buildSection(
+          title: 'ACCOUNT SETTINGS',
+          children: _accountSettings.map(_buildSettingsItem).toList(),
+        ),
         SizedBox(height: _ProfileConstants.sectionSpacing),
-        _buildSection(title: 'PROMOTIONS', children: _promotions.map(_buildPromotionItem).toList()),
+        _buildSection(
+          title: 'APPEARANCE',
+          children: [_buildThemeAppearanceRow()],
+        ),
         SizedBox(height: _ProfileConstants.sectionSpacing),
-        _buildSection(title: 'SECURITY', children: _securitySettings.map(_buildSettingsItem).toList()),
+        _buildSection(
+          title: 'PROMOTIONS',
+          children: _promotions.map(_buildPromotionItem).toList(),
+        ),
         SizedBox(height: _ProfileConstants.sectionSpacing),
-        _buildSection(title: 'HELP AND SUPPORT', children: _helpAndSupport.map(_buildSettingsItem).toList()),
+        _buildSection(
+          title: 'SECURITY',
+          children: _securitySettings.map(_buildSettingsItem).toList(),
+        ),
         SizedBox(height: _ProfileConstants.sectionSpacing),
-        _buildSection(title: 'ABOUT US', children: _aboutUs.map(_buildSettingsItem).toList()),
+        _buildSection(
+          title: 'HELP AND SUPPORT',
+          children: _helpAndSupport.map(_buildSettingsItem).toList(),
+        ),
+        SizedBox(height: _ProfileConstants.sectionSpacing),
+        _buildSection(
+          title: 'ABOUT US',
+          children: _aboutUs.map(_buildSettingsItem).toList(),
+        ),
       ],
     );
   }
 
-  Widget _buildSection({required String title, required List<Widget> children}) {
+  Widget _buildSection({
+    required String title,
+    required List<Widget> children,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -490,17 +688,112 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(_ProfileConstants.containerBorderRadius),
+        borderRadius: BorderRadius.circular(
+          _ProfileConstants.containerBorderRadius,
+        ),
         boxShadow: [_buildShadow()],
       ),
       child: Column(children: children),
     );
   }
 
+  Widget _buildThemeAppearanceRow() {
+    final themeMode = ref.watch(themeProvider);
+
+    late final String trailingLabel;
+    late final IconData modeIcon;
+    switch (themeMode) {
+      case AppThemeMode.light:
+        trailingLabel = 'Light';
+        modeIcon = Icons.light_mode;
+        break;
+      case AppThemeMode.dark:
+        trailingLabel = 'Dark';
+        modeIcon = Icons.dark_mode;
+        break;
+      case AppThemeMode.system:
+        trailingLabel = 'System';
+        modeIcon = Icons.brightness_auto;
+        break;
+    }
+
+    return InkWell(
+      onTap: () {
+        HapticHelper.lightImpact();
+        showThemeSelectionSheet(context);
+      },
+      borderRadius: BorderRadius.circular(
+        _ProfileConstants.containerBorderRadius,
+      ),
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 14),
+        child: Row(
+          children: [
+            Container(
+              width: _ProfileConstants.iconContainerSize,
+              height: _ProfileConstants.iconContainerSize,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Theme.of(context).scaffoldBackgroundColor,
+              ),
+              child: Icon(
+                modeIcon,
+                size: 24,
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.85),
+              ),
+            ),
+            SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                'Theme',
+                style: AppTypography.titleMedium.copyWith(
+                  fontFamily: 'Chirp',
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.8),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: -0.25,
+                  height: 1.2,
+                ),
+              ),
+            ),
+
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.neutral600,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                trailingLabel,
+                style: AppTypography.labelMedium.copyWith(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  fontFamily: 'Chirp',
+                  letterSpacing: -0.25,
+                  height: 1.2,
+                ),
+              ),
+            ),
+            SizedBox(width: 8),
+            _buildChevronIcon(),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildSettingsItem(Map<String, dynamic> item) {
     return InkWell(
       onTap: item['onTap'],
-      borderRadius: BorderRadius.circular(_ProfileConstants.containerBorderRadius),
+      borderRadius: BorderRadius.circular(
+        _ProfileConstants.containerBorderRadius,
+      ),
       child: Padding(
         padding: EdgeInsets.symmetric(vertical: 14),
         child: Row(
@@ -525,7 +818,12 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
           children: [
             _buildIconContainer(item['iconColor'], item['icon'], item['icon2']),
             SizedBox(width: 16),
-            Expanded(child: _buildItemText(item['title'], Theme.of(context).colorScheme.onSurface)),
+            Expanded(
+              child: _buildItemText(
+                item['title'],
+                Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
             _buildActionBadge(item['actionText'], item['actionColor']),
             SizedBox(width: 8),
             _buildChevronIcon(),
@@ -545,13 +843,21 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
           SvgPicture.asset(
             icon,
             height: 40,
-            color: icon2 == "assets/icons/svgs/delete.svg" ? AppColors.error600 : Theme.of(context).scaffoldBackgroundColor,
+            color:
+                icon2 == "assets/icons/svgs/delete.svg"
+                    ? AppColors.error600
+                    : Theme.of(context).scaffoldBackgroundColor,
           ),
           Center(
             child: SvgPicture.asset(
               icon2,
               height: 24,
-              color: icon2 == "assets/icons/svgs/delete.svg" ? Colors.white : Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+              color:
+                  icon2 == "assets/icons/svgs/delete.svg"
+                      ? Colors.white
+                      : Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.8),
             ),
           ),
         ],
@@ -564,7 +870,10 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
       title,
       style: AppTypography.titleMedium.copyWith(
         fontFamily: 'Chirp',
-        color: iconColor == AppColors.error500 ? AppColors.error500 : Theme.of(context).colorScheme.onSurface,
+        color:
+            iconColor == AppColors.error500
+                ? AppColors.error500
+                : Theme.of(context).colorScheme.onSurface,
         fontSize: 18,
         fontWeight: FontWeight.w500,
         letterSpacing: -0.25,
@@ -575,12 +884,15 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
 
   Widget _buildActionBadge(String actionText, Color actionColor) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: BoxDecoration(color: actionColor, borderRadius: BorderRadius.circular(20)),
+      padding: EdgeInsets.symmetric(horizontal: 0, vertical: 4),
+      // decoration: BoxDecoration(
+      //   color: actionColor,
+      //   borderRadius: BorderRadius.circular(20),
+      // ),
       child: Text(
         actionText,
         style: AppTypography.labelMedium.copyWith(
-          color: Colors.white,
+          color: actionColor,
           fontSize: 13,
           fontWeight: FontWeight.w500,
           fontFamily: 'Chirp',
@@ -597,7 +909,12 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
 
   BoxShadow _buildShadow() {
     return BoxShadow(
-      color: const Color.fromARGB(255, 123, 36, 211).withOpacity(_ProfileConstants.shadowOpacity),
+      color: const Color.fromARGB(
+        255,
+        123,
+        36,
+        211,
+      ).withOpacity(_ProfileConstants.shadowOpacity),
       blurRadius: _ProfileConstants.shadowBlur,
       offset: const Offset(0, _ProfileConstants.shadowOffset),
       spreadRadius: _ProfileConstants.shadowSpread,
@@ -609,7 +926,9 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(_ProfileConstants.containerBorderRadius),
+        borderRadius: BorderRadius.circular(
+          _ProfileConstants.containerBorderRadius,
+        ),
         boxShadow: [_buildShadow()],
       ),
       child: _buildSettingsItem({
@@ -628,7 +947,9 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(_ProfileConstants.containerBorderRadius),
+        borderRadius: BorderRadius.circular(
+          _ProfileConstants.containerBorderRadius,
+        ),
         boxShadow: [_buildShadow()],
       ),
       child: _buildSettingsItem({
@@ -652,7 +973,9 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
               'Financial services are regulated by the relevant authorities in their operating regions.',
               style: AppTypography.bodySmall.copyWith(
                 fontFamily: 'Chirp',
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.75),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withOpacity(0.75),
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 letterSpacing: -0.25,
@@ -667,7 +990,9 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
               'Version 1.0.0',
               style: AppTypography.bodySmall.copyWith(
                 fontFamily: 'Chirp',
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.75),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withOpacity(0.75),
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 letterSpacing: -0.25,
@@ -682,30 +1007,48 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
   }
 
   // Navigation methods
-  void _navigateToEditProfile() => Navigator.pushNamed(context, '/editProfileView');
+  void _navigateToEditProfile() =>
+      Navigator.pushNamed(context, '/editProfileView');
 
-  void _navigateToAccountLimits() => appRouter.pushNamed(AppRoute.accountLimitsView);
+  void _navigateToAccountLimits() =>
+      appRouter.pushNamed(AppRoute.accountLimitsView);
 
-  void _navigateToChangeTransactionPin() => appRouter.pushNamed(AppRoute.changeTransactionPinOldView);
+  void _navigateToSecurity() => appRouter.pushNamed(AppRoute.recoveryPhraseView);
 
-  void _navigateToResetTransactionPin() => appRouter.pushNamed(AppRoute.resetTransactionPinIntroView);
+  void _navigateToChangeTransactionPin() =>
+      appRouter.pushNamed(AppRoute.changeTransactionPinOldView);
+
+  void _navigateToResetTransactionPin() =>
+      appRouter.pushNamed(AppRoute.resetTransactionPinIntroView);
 
   void _navigateToContactUs() async {
     try {
       await Intercom.instance.displayMessenger();
     } catch (e) {
-      if (mounted) TopSnackbar.show(context, message: 'Unable to open support chat. Please try again later.', isError: true);
+      if (mounted) {
+        TopSnackbar.show(
+          context,
+          message: 'Unable to open support chat. Please try again later.',
+          isError: true,
+        );
+      }
     }
   }
 
   void _navigateToFAQs() => appRouter.pushNamed(AppRoute.faqView);
 
   void _navigateToTermsAndConditions() {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => const TermsOfUseView()));
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const TermsOfUseView()),
+    );
   }
 
   void _navigateToPrivacyNotice() {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => const PrivacyNoticeView()));
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const PrivacyNoticeView()),
+    );
   }
 
   // Dialog methods
@@ -735,7 +1078,9 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
           children: [
             _buildDialogIcon("assets/icons/svgs/logout1.svg"),
             SizedBox(height: 24),
-            _buildDialogTitle('Are you sure you want to logout? You will be asked to create a new passcode.'),
+            _buildDialogTitle(
+              'Are you sure you want to logout? You will be asked to create a new passcode.',
+            ),
             SizedBox(height: 16),
             _buildDialogButtons(_buildDialogLogoutButton, _buildCancelButton),
           ],
@@ -755,7 +1100,9 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
           children: [
             _buildDialogIcon("assets/icons/svgs/delete.svg"),
             SizedBox(height: 24),
-            _buildDialogDescription('Are you sure you want to delete your account?\nThis action cannot be undone.\n\nAll your data, including transaction history, will be permanently removed.'),
+            _buildDialogDescription(
+              'Are you sure you want to delete your account?\nThis action cannot be undone.\n\nAll your data, including transaction history, will be permanently removed.',
+            ),
             SizedBox(height: 32),
             _buildDialogButtons(_buildDeleteAccountButton, _buildCancelButton),
           ],
@@ -820,13 +1167,12 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
     );
   }
 
-  Widget _buildDialogButtons(Widget Function() primaryButton, Widget Function() secondaryButton) {
+  Widget _buildDialogButtons(
+    Widget Function() primaryButton,
+    Widget Function() secondaryButton,
+  ) {
     return Column(
-      children: [
-        primaryButton(),
-        SizedBox(height: 12),
-        secondaryButton(),
-      ],
+      children: [primaryButton(), SizedBox(height: 12), secondaryButton()],
     );
   }
 
@@ -889,7 +1235,13 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
 
   Future<void> _deleteAccount() async {
     try {
-      if (mounted) TopSnackbar.show(context, message: 'Deleting account...', isError: false);
+      if (mounted) {
+        TopSnackbar.show(
+          context,
+          message: 'Deleting account...',
+          isError: false,
+        );
+      }
 
       final authService = locator<AuthService>();
       final response = await authService.deleteAccount();
@@ -898,14 +1250,30 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
         await locator<DataClearingService>().clearAllUserData(ref);
         if (mounted) {
           appRouter.pushNamedAndRemoveAllBehind(AppRoute.loginView);
-          TopSnackbar.show(context, message: 'Account deleted successfully', isError: false);
+          TopSnackbar.show(
+            context,
+            message: 'Account deleted successfully',
+            isError: false,
+          );
         }
       } else {
-        if (mounted) TopSnackbar.show(context, message: response.message ?? 'Failed to delete account', isError: true);
+        if (mounted) {
+          TopSnackbar.show(
+            context,
+            message: response.message ?? 'Failed to delete account',
+            isError: true,
+          );
+        }
       }
     } catch (e) {
       AppLogger.error('Error deleting account: $e');
-      if (mounted) TopSnackbar.show(context, message: 'Failed to delete account. Please try again.', isError: true);
+      if (mounted) {
+        TopSnackbar.show(
+          context,
+          message: 'Failed to delete account. Please try again.',
+          isError: true,
+        );
+      }
     }
   }
 
@@ -935,6 +1303,14 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
   ];
 
   List<Map<String, dynamic>> get _securitySettings => [
+    // {
+    //   'icon': "assets/icons/svgs/account.svg",
+    //   'icon2': "assets/icons/svgs/security-safe.svg",
+    //   'iconColor': AppColors.neutral700.withOpacity(0.35),
+    //   'title': 'Recovery phrase',
+    //   'subtitle': '',
+    //   'onTap': _navigateToSecurity,
+    // },
     {
       'icon': "assets/icons/svgs/account.svg",
       'icon2': "assets/icons/svgs/security-safe.svg",

@@ -4,10 +4,17 @@ import 'package:dayfi/routes/route.dart';
 import 'navigator_key.dart';
 
 class AppRouter {
-  final NavigatorState _navigatorState =
-      NavigatorKey.appNavigatorKey.currentState!;
-
-  NavigatorState get navigatorState => _navigatorState;
+  /// Resolves the navigator on each use so we never hold a stale/null [NavigatorState]
+  /// from before the [MaterialApp] mounted.
+  NavigatorState get navigatorState {
+    final state = NavigatorKey.appNavigatorKey.currentState;
+    if (state == null) {
+      throw StateError(
+        'Navigator not mounted yet. Use navigatorKey on MaterialApp.',
+      );
+    }
+    return state;
+  }
 
   bool canPop() {
     return navigatorState.canPop();
@@ -56,8 +63,11 @@ class AppRouter {
   }
 
   static Future pushN(String route, {arguments}) {
-    return NavigatorKey.appNavigatorKey.currentState!
-        .pushNamed(route, arguments: arguments);
+    final nav = NavigatorKey.appNavigatorKey.currentState;
+    if (nav == null) {
+      throw StateError('Navigator not mounted');
+    }
+    return nav.pushNamed(route, arguments: arguments);
   }
 
   Future<T?> pushNamedAndRemoveUntil<T extends Object?>(
@@ -103,6 +113,18 @@ class AppRouter {
     return navigatorState.pushNamedAndRemoveUntil<T>(
       AppRoute.passcodeView,
       (Route route) => false,
+    );
+  }
+
+  /// Check email as the only route (e.g. after logout). [showBackButton] is
+  /// passed to [CheckEmailView] (`ModalRoute` arguments).
+  Future<T?> pushCheckEmailAndClearStack<T extends Object?>({
+    bool showBackButton = false,
+  }) {
+    return navigatorState.pushNamedAndRemoveUntil<T>(
+      AppRoute.checkEmailView,
+      (Route route) => false,
+      arguments: showBackButton,
     );
   }
 
@@ -154,12 +176,4 @@ class AppRouter {
       pushLoginAndClearStack(arguments: false);
     }
   }
-}
-
-class AppLevelRouter extends AppRouter {
-  AppLevelRouter();
-
-  @override
-  NavigatorState get navigatorState =>
-      NavigatorKey.appNavigatorKey.currentState!;
 }

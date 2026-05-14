@@ -271,7 +271,7 @@ class ShimmerWidgets {
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      padding: padding ?? EdgeInsets.only(left: 18, right: 18, bottom: 112),
+      padding: padding ?? EdgeInsets.only(left: 0, right: 0, bottom: 112),
       itemCount: itemCount,
       itemBuilder: (context, index) => recipientItemShimmer(context),
     );

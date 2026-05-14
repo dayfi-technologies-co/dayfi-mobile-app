@@ -221,23 +221,26 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
     return Column(
       children: [
         // Enable biometrics button
-        PrimaryButton(
-              text: "Increase limits",
-              borderRadius: 38,
-              onPressed:
-                  () => notifier.navigateToNINAndBVNVerification(
-                    context,
-                    showBackButton: widget.showBackButton,
-                  ),
-              backgroundColor: Colors.white,
-              height: 48.00000,
-              textColor: AppColors.purple500ForTheme(context),
-              fontFamily: 'Chirp',
-              letterSpacing: -.70,
-              fontSize: 18,
-              width: double.infinity,
-              fullWidth: true,
-              isLoading: state.isBusy,
+        Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24),
+              child: PrimaryButton(
+                text: "Increase limits",
+                borderRadius: 38,
+                onPressed:
+                    () => notifier.navigateToNINAndBVNVerification(
+                      context,
+                      showBackButton: widget.showBackButton,
+                    ),
+                backgroundColor: Colors.white,
+                height: 48.00000,
+                textColor: AppColors.purple500ForTheme(context),
+                fontFamily: 'Chirp',
+                letterSpacing: -.70,
+                fontSize: 18,
+                width: double.infinity,
+                fullWidth: true,
+                isLoading: state.isBusy,
+              ),
             )
             .animate()
             .fadeIn(
