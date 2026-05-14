@@ -187,6 +187,8 @@ class OnboardingViewModel extends StateNotifier<OnboardingState> {
       final response = await _authService.appleAuth(
         authToken: identityToken,
         nonce: rawNonce,
+        firstName: credential.givenName,
+        lastName: credential.familyName,
       );
 
       final fallbackEmail = credential.email ?? '';
@@ -240,6 +242,12 @@ class OnboardingViewModel extends StateNotifier<OnboardingState> {
     if (page >= 0 && page <= 3) {
       state = state.copyWith(page: page);
     }
+  }
+
+  /// Clears success flag and message after post-auth navigation (avoids
+  /// treating the success string as an error snackbar on the next frame).
+  void consumeAuthSuccess() {
+    state = state.copyWith(isSuccess: false, message: null, page: 0);
   }
 
   bool get isLastPage => state.page == 3;

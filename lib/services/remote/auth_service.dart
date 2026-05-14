@@ -109,15 +109,24 @@ class AuthService {
 
   /// Same contract as [googleAuth], plus optional [nonce] (raw string) so the
   /// server can validate the `nonce` claim inside Apple's `identityToken` JWT.
+  /// Optional [firstName] / [lastName] from Apple (only populated on first sign-in).
   Future<AuthResponse> appleAuth({
     required String authToken,
     String? nonce,
+    String? firstName,
+    String? lastName,
   }) async {
     try {
       Map<String, dynamic> map = {};
       map['authToken'] = authToken;
       if (nonce != null && nonce.isNotEmpty) {
         map['nonce'] = nonce;
+      }
+      if (firstName != null && firstName.trim().isNotEmpty) {
+        map['firstName'] = firstName.trim();
+      }
+      if (lastName != null && lastName.trim().isNotEmpty) {
+        map['lastName'] = lastName.trim();
       }
 
       String? fcmToken;
