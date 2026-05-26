@@ -4,7 +4,7 @@ description: "Dayfi - Your digital financial companion"
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-version: 1.0.0+4
+version: 1.0.0+5
 
 environment:
   sdk: ^3.7.2
@@ -226,7 +226,7 @@ flutter:
 flutter_icons:
   android: true
   ios: true
-  image_path: "assets/images/logo.png"
+  image_path: "assets/images/logo_splash.png"
   min_sdk_android: 26
 
   # Android adaptive icons
@@ -236,7 +236,7 @@ flutter_icons:
   # iOS options
   remove_alpha_ios: true
   background_color_ios: "#5645F5"
-  image_path_ios: "assets/images/logo.png"
+  image_path_ios: "assets/images/logo_splash.png"
 
 flutter_native_splash:
   color: "#FFFFFF"

@@ -5,6 +5,7 @@ import 'package:dayfi/features/auth/check_email/vm/check_email_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/features/auth/login/vm/login_viewmodel.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:flutter_svg/svg.dart';
@@ -22,6 +23,16 @@ class _LoginViewState extends ConsumerState<LoginView> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   bool _hasInitializedEmail = false;
+  bool _isLeavingToOnboarding = false;
+
+  /// Single-fire navigation back to Onboarding. Repeated taps / a queued system
+  /// pop while we're already navigating are ignored so we never push two
+  /// onboarding screens.
+  void _goToOnboarding() {
+    if (_isLeavingToOnboarding) return;
+    _isLeavingToOnboarding = true;
+    appRouter.pushOnboardingAndClearStack();
+  }
 
   @override
   void initState() {
@@ -62,9 +73,17 @@ class _LoginViewState extends ConsumerState<LoginView> {
     final loginState = ref.watch(loginProvider);
     final loginNotifier = ref.read(loginProvider.notifier);
 
+    // Back from login should ALWAYS land on Onboarding (clear stack), regardless of
+    // whether login was reached via signup, deep-link, or session expiry. We disable
+    // [PopScope.canPop] and route the redirect ourselves so a single tap can't queue
+    // multiple onboarding pushes.
     return PopScope(
-      canPop:
-          widget.showBackButton, // Only allow back if showBackButton is true
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        if (!widget.showBackButton) return;
+        _goToOnboarding();
+      },
       child: GestureDetector(
         onTap: () {
           // Dismiss keyboard and remove focus from all text fields
@@ -83,41 +102,46 @@ class _LoginViewState extends ConsumerState<LoginView> {
                 surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
                 backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 elevation: 0,
-                leadingWidth: 72,
-                leading: InkWell(
-                  splashColor: Colors.transparent,
-                  highlightColor: Colors.transparent,
-                  onTap: () {
-                    FocusScope.of(context).unfocus();
-                    Navigator.of(context).pop();
-                  },
-                  child: Stack(
-                    alignment: AlignmentGeometry.center,
-                    children: [
-                      SvgPicture.asset(
-                        "assets/icons/svgs/notificationn.svg",
-                        height: 40,
-                        color: Theme.of(context).colorScheme.surface,
-                      ),
-                      SizedBox(
-                        height: 40,
-                        width: 40,
-                        child: Center(
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 8.0),
-                            child: Icon(
-                              Icons.arrow_back_ios,
-                              size: 20,
-                              color:
-                                  Theme.of(context).textTheme.bodyLarge!.color,
-                              // size: 20,
-                            ),
+                leadingWidth: widget.showBackButton ? 72 : 0,
+                automaticallyImplyLeading: false,
+                leading:
+                    widget.showBackButton
+                        ? InkWell(
+                          splashColor: Colors.transparent,
+                          highlightColor: Colors.transparent,
+                          onTap: () {
+                            FocusScope.of(context).unfocus();
+                            _goToOnboarding();
+                          },
+                          child: Stack(
+                            alignment: AlignmentGeometry.center,
+                            children: [
+                              SvgPicture.asset(
+                                "assets/icons/svgs/notificationn.svg",
+                                height: 40,
+                                color: Theme.of(context).colorScheme.surface,
+                              ),
+                              SizedBox(
+                                height: 40,
+                                width: 40,
+                                child: Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(left: 8.0),
+                                    child: Icon(
+                                      Icons.arrow_back_ios,
+                                      size: 20,
+                                      color:
+                                          Theme.of(
+                                            context,
+                                          ).textTheme.bodyLarge!.color,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                        )
+                        : null,
                 title: Image.asset('assets/images/logo_splash.png', height: 24),
                 centerTitle: true,
               ),

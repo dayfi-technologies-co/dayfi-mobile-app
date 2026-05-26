@@ -224,6 +224,21 @@ class DayfiTagNotifier extends StateNotifier<DayfiTagState> {
           isError: true,
         );
       }
+    } on ApiError catch (e) {
+      final rawMsg = e.apiErrorModel?.message;
+      final fromModel = (rawMsg ?? '').trim();
+      final desc = (e.errorDescription ?? '').trim();
+      final msg = fromModel.isNotEmpty
+          ? fromModel
+          : (desc.isNotEmpty
+              ? desc
+              : 'Something went wrong. Please try again.');
+      AppLogger.error('Error creating Dayfi Tag: $e');
+      TopSnackbar.show(
+        context,
+        message: msg,
+        isError: true,
+      );
     } catch (e) {
       AppLogger.error('Error creating Dayfi Tag: $e');
       TopSnackbar.show(

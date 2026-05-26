@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,8 +28,6 @@ class _CompletePersonalInformationViewState
   late TextEditingController _phoneNumberController;
   late TextEditingController _addressController;
   late TextEditingController _postalCodeController;
-  late TextEditingController _stateController;
-  late TextEditingController _cityController;
   late TextEditingController _referralCodeController;
 
   final List<String> _steps = [
@@ -39,8 +35,6 @@ class _CompletePersonalInformationViewState
     'Username',
     'Date of Birth',
     'Country',
-    'State',
-    'city',
     'Address',
     'Phone Number',
     'Occupation',
@@ -56,12 +50,6 @@ class _CompletePersonalInformationViewState
     }
     if (_postalCodeController.text != state.postalCode) {
       _postalCodeController.text = state.postalCode;
-    }
-    if (_stateController.text != state.state) {
-      _stateController.text = state.state;
-    }
-    if (_cityController.text != state.city) {
-      _cityController.text = state.city;
     }
     if (_referralCodeController.text != state.referralCode) {
       _referralCodeController.text = state.referralCode;
@@ -138,8 +126,6 @@ class _CompletePersonalInformationViewState
     _phoneNumberController = TextEditingController();
     _addressController = TextEditingController();
     _postalCodeController = TextEditingController();
-    _stateController = TextEditingController();
-    _cityController = TextEditingController();
     _referralCodeController = TextEditingController();
     _usernameController = TextEditingController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -153,8 +139,6 @@ class _CompletePersonalInformationViewState
     _phoneNumberController.dispose();
     _addressController.dispose();
     _postalCodeController.dispose();
-    _stateController.dispose();
-    _cityController.dispose();
     _referralCodeController.dispose();
     _usernameController.dispose();
     super.dispose();
@@ -439,325 +423,6 @@ class _CompletePersonalInformationViewState
     );
   }
 
-  Widget _buildCityField(
-    CompletePersonalInfoState state,
-    CompletePersonalInfoNotifier notifier,
-  ) {
-    // Determine the correct label and description based on country
-    String divisionLabel = "City";
-    String divisionDesc =
-        "Select your city of residence to help us customize your experience.";
-    final country = state.country;
-    if (country == "Kenya") {
-      divisionLabel = "Town";
-      divisionDesc =
-          "Select your town of residence to help us customize your experience.";
-    } else if (country == "South Africa") {
-      divisionLabel = "Municipality";
-      divisionDesc =
-          "Select your municipality of residence to help us customize your experience.";
-    } else if (country == "Botswana") {
-      divisionLabel = "Village";
-      divisionDesc =
-          "Select your village of residence to help us customize your experience.";
-    } else if (country == "Zambia") {
-      divisionLabel = "Town";
-      divisionDesc =
-          "Select your town of residence to help us customize your experience.";
-    } else if (country == "Rwanda") {
-      divisionLabel = "Sector";
-      divisionDesc =
-          "Select your sector of residence to help us customize your experience.";
-    } else if (country == "Malawi") {
-      divisionLabel = "Town";
-      divisionDesc =
-          "Select your town of residence to help us customize your experience.";
-    } else if (country == "Tanzania") {
-      divisionLabel = "District";
-      divisionDesc =
-          "Select your district of residence to help us customize your experience.";
-    } else if (country == "Uganda") {
-      divisionLabel = "Town";
-      divisionDesc =
-          "Select your town of residence to help us customize your experience.";
-    } else if (country == "Cameroon") {
-      divisionLabel = "Commune";
-      divisionDesc =
-          "Select your commune of residence to help us customize your experience.";
-    } else if (country == "Benin") {
-      divisionLabel = "Commune";
-      divisionDesc =
-          "Select your commune of residence to help us customize your experience.";
-    } else if (country == "Côte d’Ivoire") {
-      divisionLabel = "Commune";
-      divisionDesc =
-          "Select your commune of residence to help us customize your experience.";
-    } else if (country == "Senegal") {
-      divisionLabel = "Commune";
-      divisionDesc =
-          "Select your commune of residence to help us customize your experience.";
-    } else if (country == "DR Congo") {
-      divisionLabel = "Territory";
-      divisionDesc =
-          "Select your territory of residence to help us customize your experience.";
-    } else if (country == "Republic of the Congo") {
-      divisionLabel = "Commune";
-      divisionDesc =
-          "Select your commune of residence to help us customize your experience.";
-    } else if (country == "Gabon") {
-      divisionLabel = "Commune";
-      divisionDesc =
-          "Select your commune of residence to help us customize your experience.";
-    } else if (country == "Togo") {
-      divisionLabel = "Commune";
-      divisionDesc =
-          "Select your commune of residence to help us customize your experience.";
-    } else if (country == "Mali") {
-      divisionLabel = "Commune";
-      divisionDesc =
-          "Select your commune of residence to help us customize your experience.";
-    } else if (country == "Burkina Faso") {
-      divisionLabel = "Commune";
-      divisionDesc =
-          "Select your commune of residence to help us customize your experience.";
-    }
-
-    // City lists for Nigeria and Kenya
-    List<String> cities = [];
-    final stateValue = state.state;
-    if (state.country == 'Nigeria') {
-      if (stateValue == 'Lagos') {
-        cities = [
-          'Agege',
-          'Ajeromi-Ifelodun',
-          'Alimosho',
-          'Amuwo-Odofin',
-          'Apapa',
-          'Badagry',
-          'Epe',
-          'Eti-Osa',
-          'Ibeju-Lekki',
-          'Ifako-Ijaiye',
-          'Ikeja',
-          'Ikorodu',
-          'Kosofe',
-          'Lagos Island',
-          'Lagos Mainland',
-          'Mushin',
-          'Ojo',
-          'Oshodi-Isolo',
-          'Shomolu',
-          'Surulere',
-        ];
-      } else if (stateValue == 'Abuja (FCT)') {
-        cities = [
-          'Abuja Municipal',
-          'Gwagwalada',
-          'Kuje',
-          'Bwari',
-          'Kwali',
-          'Abaji',
-        ];
-      } else if (stateValue == 'Oyo') {
-        cities = [
-          'Ibadan North',
-          'Ibadan South-West',
-          'Ibadan South-East',
-          'Ibadan North-East',
-          'Ibadan North-West',
-          'Ogbomosho',
-          'Oyo',
-          'Iseyin',
-          'Saki',
-          'Igboho',
-        ];
-      } else if (stateValue == 'Rivers') {
-        cities = [
-          'Port Harcourt',
-          'Obio-Akpor',
-          'Eleme',
-          'Ikwerre',
-          'Okrika',
-          'Bonny',
-          'Ahoada',
-        ];
-      } else if (stateValue == 'Ogun') {
-        cities = [
-          'Abeokuta North',
-          'Abeokuta South',
-          'Ijebu-Ode',
-          'Sagamu',
-          'Ilaro',
-          'Ota',
-        ];
-      } else if (stateValue == 'Delta') {
-        cities = ['Asaba', 'Warri', 'Ughelli', 'Sapele', 'Agbor', 'Ozoro'];
-      } else if (stateValue == 'Edo') {
-        cities = ['Benin City', 'Uromi', 'Auchi', 'Ekpoma', 'Igarra'];
-      } else if (stateValue == 'Anambra') {
-        cities = ['Awka', 'Onitsha', 'Nnewi', 'Ekwulobia', 'Ogidi'];
-      } else if (stateValue == 'Imo') {
-        cities = ['Owerri', 'Orlu', 'Okigwe', 'Mbaise'];
-      } else if (stateValue == 'Abia') {
-        cities = ['Umuahia', 'Aba', 'Ohafia', 'Bende'];
-      } else if (stateValue == 'Enugu') {
-        cities = ['Enugu', 'Nsukka', 'Agbani', 'Udi'];
-      } else if (stateValue == 'Akwa Ibom') {
-        cities = ['Uyo', 'Eket', 'Ikot Ekpene', 'Oron'];
-      } else if (stateValue == 'Cross River') {
-        cities = ['Calabar', 'Ikom', 'Ogoja', 'Obudu'];
-      } else if (stateValue == 'Kaduna') {
-        cities = ['Kaduna', 'Zaria', 'Kafanchan', 'Birnin Gwari'];
-      } else if (stateValue == 'Kano') {
-        cities = ['Kano', 'Wudil', 'Gaya', 'Bichi', 'Rano'];
-      } else if (stateValue == 'Plateau') {
-        cities = ['Jos', 'Bukuru', 'Pankshin', 'Shendam'];
-      } else if (stateValue == 'Benue') {
-        cities = ['Makurdi', 'Gboko', 'Otukpo', 'Katsina-Ala'];
-      } else if (stateValue == 'Niger') {
-        cities = ['Minna', 'Bida', 'Kontagora', 'Suleja'];
-      } else if (stateValue == 'Kwara') {
-        cities = ['Ilorin', 'Offa', 'Omu-Aran', 'Jebba'];
-      } else if (stateValue == 'Kogi') {
-        cities = ['Lokoja', 'Okene', 'Kabba', 'Idah'];
-      } else if (stateValue == 'Osun') {
-        cities = ['Osogbo', 'Ile-Ife', 'Ilesa', 'Ede'];
-      } else if (stateValue == 'Ondo') {
-        cities = ['Akure', 'Owo', 'Ondo', 'Ikare'];
-      } else if (stateValue == 'Ekiti') {
-        cities = ['Ado-Ekiti', 'Ikere', 'Ilawe', 'Omuo'];
-      } else if (stateValue == 'Bayelsa') {
-        cities = ['Yenagoa', 'Brass', 'Ogbia', 'Sagbama'];
-      } else if (stateValue == 'Sokoto') {
-        cities = ['Sokoto', 'Tambuwal', 'Gwadabawa', 'Illela'];
-      } else if (stateValue == 'Borno') {
-        cities = ['Maiduguri', 'Biu', 'Dikwa', 'Gwoza'];
-      } else if (stateValue == 'Yobe') {
-        cities = ['Damaturu', 'Potiskum', 'Gashua', 'Nguru'];
-      } else if (stateValue == 'Zamfara') {
-        cities = ['Gusau', 'Kaura Namoda', 'Anka', 'Talata Mafara'];
-      }
-    } else if (state.country == 'Kenya') {
-      if (stateValue == 'Nairobi') {
-        cities = [
-          'Westlands',
-          'Kilimani',
-          'Karen',
-          'Ruiru',
-          'Embakasi',
-          'Kasarani',
-        ];
-      } else if (stateValue == 'Mombasa') {
-        cities = ['Nyali', 'Kisauni', 'Likoni', 'Changamwe', 'Mvita'];
-      } else if (stateValue == 'Kiambu') {
-        cities = ['Thika', 'Ruiru', 'Kiambu', 'Limuru', 'Githurai'];
-      } else if (stateValue == 'Nakuru') {
-        cities = ['Nakuru Town', 'Naivasha', 'Gilgil', 'Molo'];
-      } else if (stateValue == 'Kisumu') {
-        cities = ['Kisumu City', 'Ahero', 'Maseno', 'Muhoroni'];
-      } else if (stateValue == 'Uasin Gishu') {
-        cities = ['Eldoret', 'Turbo', 'Burnt Forest'];
-      } else if (stateValue == 'Machakos') {
-        cities = ['Machakos', 'Athi River', 'Mavoko', 'Kangundo'];
-      } else if (stateValue == 'Kajiado') {
-        cities = ['Ngong', 'Kitengela', 'Kajiado Town', 'Namanga'];
-      } else if (stateValue == 'Meru') {
-        cities = ['Meru Town', 'Maua', 'Nkubu'];
-      } else if (stateValue == 'Kakamega') {
-        cities = ['Kakamega Town', 'Mumias', 'Butere'];
-      }
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(height: 8),
-        Padding(
-          padding: EdgeInsets.only(left: 18, right: 72.0),
-          child: Text(
-            "Select your ${divisionLabel.toLowerCase()}",
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontFamily: 'FunnelDisplay',
-              fontSize: MediaQuery.of(context).size.width > 600 ? 28 : 24,
-              height: 1.000,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        SizedBox(height: 12),
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 18),
-          child: Text(
-            "Choose your ${divisionLabel.toLowerCase()} for accurate service.",
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              fontFamily: 'Chirp',
-              letterSpacing: -.25,
-              height: 1.2,
-              color: Theme.of(
-                context,
-              ).textTheme.bodyMedium!.color!.withOpacity(0.65),
-            ),
-            textAlign: TextAlign.start,
-          ),
-        ),
-        Padding(
-          padding: EdgeInsets.symmetric(vertical: 24, horizontal: 18.0),
-          child:
-              cities.isNotEmpty
-                  ? CustomTextField(
-                    label: divisionLabel,
-                    hintText:
-                        cities.isNotEmpty
-                            ? "Select your ${divisionLabel.toLowerCase()}"
-                            : "Enter your ${divisionLabel.toLowerCase()}",
-                    controller: _cityController,
-                    onChanged: notifier.setCity,
-                    textCapitalization: TextCapitalization.words,
-                    shouldReadOnly: cities.isNotEmpty,
-                    suffixIcon:
-                        cities.isNotEmpty
-                            ? Icon(
-                              Icons.keyboard_arrow_down,
-                              color: AppColors.neutral400,
-                              size: 20,
-                            )
-                            : null,
-                    onTap:
-                        cities.isNotEmpty
-                            ? () => _showCityBottomSheet(cities, notifier)
-                            : null,
-                  )
-                  : CustomTextField(
-                    label: divisionLabel,
-                    hintText: "Enter your ${divisionLabel.toLowerCase()}",
-                    controller: _cityController,
-                    onChanged: notifier.setCity,
-                    textCapitalization: TextCapitalization.words,
-                  ),
-        ),
-        // if (state.cityError.isNotEmpty)
-        //   Padding(
-        //     padding: const EdgeInsets.only(top: 4.0, left: 14),
-        //     child: Text(
-        //       state.cityError,
-        //       style: const TextStyle(
-        //         color: Colors.red,
-        //         fontSize: 13,
-        //         fontFamily: 'Chirp',
-        //         letterSpacing: -.25,
-        //         fontWeight: FontWeight.w500,
-        //         height: 1.2,
-        //       ),
-        //     ),
-        //   )
-        // else
-        //   const SizedBox.shrink(),
-      ],
-    );
-  }
-  // Avatar/profile state
 
   // Phone Step
   Widget _buildPhoneStep() {
@@ -1043,26 +708,6 @@ class _CompletePersonalInformationViewState
     );
   }
 
-  void _showCityBottomSheet(
-    List<String> cities,
-    CompletePersonalInfoNotifier notifier,
-  ) {
-    showModalBottomSheet(
-      barrierColor: Colors.black.withOpacity(0.85),
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder:
-          (context) => _CityBottomSheet(
-            cities: cities,
-            onCitySelected: (city) {
-              notifier.setCity(city);
-              _cityController.text = city;
-              Navigator.pop(context);
-            },
-          ),
-    );
-  }
 
   // Occupation Step
   Widget _buildOccupationStep() {
@@ -1347,9 +992,9 @@ class _CompletePersonalInformationViewState
   bool _isStepValid(int step) {
     final state = ref.read(completePersonalInfoProvider);
     switch (step) {
-      case 1: // Username
+      case 0: // Username
         return _usernameController.text.isNotEmpty;
-      case 3: // Country
+      case 2: // Country
         return state.country.isNotEmpty && state.countryError.isEmpty;
       case 4: // Phone Number
         return state.phoneNumber.isNotEmpty && state.phoneNumberError.isEmpty;
@@ -1368,11 +1013,9 @@ class _CompletePersonalInformationViewState
     );
     _updateControllers(personalInfoState);
 
-    // Step indices: 0-Username, 1-DOB, 2-Country, 3-State, 4-City, 5-Address, 6-Phone, 7-Occupation, 8-Use Case
-    // REQUIRED for fintech KYC: Username (0), DOB (1), Country (2), Phone (6)
-    // OPTIONAL (improves UX): State (3), City (4), Address (5), Occupation (7), Use Case (8)
-    final compulsorySteps = <int>{0, 1, 2, 6};
-    final optionalSteps = <int>{3, 4, 5, 7, 8};
+    // 0 Username, 1 DOB, 2 Country, 3 Address, 4 Phone, 5 Occupation, 6 Use Case
+    final compulsorySteps = <int>{0, 1, 2, 4};
+    final optionalSteps = <int>{3, 5, 6};
     final isCurrentStepOptional = optionalSteps.contains(_currentStep);
 
     // Only enable button if current step is valid (if compulsory), or always if optional
@@ -1394,15 +1037,9 @@ class _CompletePersonalInformationViewState
           personalInfoState.countryError.isEmpty &&
           !personalInfoState.isBusy;
     } else if (_currentStep == 3) {
-      // State step: optional - always allow continue
+      // Address step: optional
       isButtonEnabled = !personalInfoState.isBusy;
     } else if (_currentStep == 4) {
-      // City step: optional - always allow continue
-      isButtonEnabled = !personalInfoState.isBusy;
-    } else if (_currentStep == 5) {
-      // Address step: optional - always allow continue
-      isButtonEnabled = !personalInfoState.isBusy;
-    } else if (_currentStep == 6) {
       final country = personalInfoState.country;
 
       // Updated & corrected phone rules
@@ -1454,11 +1091,9 @@ class _CompletePersonalInformationViewState
 
       isButtonEnabled =
           phone.isNotEmpty && errorMsg == "" && !personalInfoState.isBusy;
-    } else if (_currentStep == 7) {
-      // Occupation step: optional - always allow continue
+    } else if (_currentStep == 5) {
       isButtonEnabled = !personalInfoState.isBusy;
-    } else if (_currentStep == 8) {
-      // Use Case step: optional - always allow continue
+    } else if (_currentStep == 6) {
       isButtonEnabled = !personalInfoState.isBusy;
     } else if (compulsorySteps.contains(_currentStep)) {
       isButtonEnabled =
@@ -1550,14 +1185,6 @@ class _CompletePersonalInformationViewState
                                     Theme.of(context),
                                   ), // Date of Birth
                                   _buildCountryStep(), // Country
-                                  _buildStateField(
-                                    personalInfoState,
-                                    personalInfoNotifier,
-                                  ), // State
-                                  _buildCityField(
-                                    personalInfoState,
-                                    personalInfoNotifier,
-                                  ),
                                   _buildAddressField(
                                     personalInfoState,
                                     personalInfoNotifier,
@@ -1612,7 +1239,7 @@ class _CompletePersonalInformationViewState
                                   onPressed:
                                       isButtonEnabled
                                           ? () async {
-                                            if (_currentStep == 6) {
+                                            if (_currentStep == 4) {
                                               FocusManager.instance.primaryFocus
                                                   ?.unfocus();
                                             }
@@ -1632,17 +1259,9 @@ class _CompletePersonalInformationViewState
                                                 _steps.length - 1) {
                                               _goToStep(_currentStep + 1);
                                             } else {
-                                              log('Submitting personal info...');
-                                              // Show loading indicator and call endpoint
                                               if (compulsorySteps.every(
                                                 (i) => _isStepValid(i),
                                               )) {
-                                                log(
-                                                  'All compulsory steps valid. Proceeding to submit...',
-                                                );
-                                                setState(
-                                                  () {},
-                                                ); // trigger loading state
                                                 await personalInfoNotifier
                                                     .submitPersonalInfo(
                                                       context,
@@ -1710,7 +1329,7 @@ class _CompletePersonalInformationViewState
                                       ? _goToStep(_currentStep + 1)
                                       : null,
                           child: Text(
-                            _currentStep == 8 && _selectedUseCases.isNotEmpty
+                            _currentStep == 6 && _selectedUseCases.isNotEmpty
                                 ? '${_selectedUseCases.length} of 5 selected! 🎉'
                                 : (isCurrentStepOptional
                                     ? 'Skip for now'
@@ -1719,11 +1338,11 @@ class _CompletePersonalInformationViewState
                               fontFamily: 'Chirp',
                               color:
                                   Theme.of(context).textTheme.bodyLarge!.color,
-                              fontSize: _currentStep == 8 ? 16 : 18,
+                              fontSize: _currentStep == 6 ? 16 : 18,
                               fontWeight: FontWeight.w500,
                               letterSpacing: -.40,
                               decoration:
-                                  _currentStep == 8
+                                  _currentStep == 6
                                       ? TextDecoration.none
                                       : TextDecoration.underline,
                             ),
@@ -1904,159 +1523,6 @@ class _CompletePersonalInformationViewState
     );
   }
 
-  Widget _buildStateField(
-    CompletePersonalInfoState state,
-    CompletePersonalInfoNotifier notifier,
-  ) {
-    // Determine the correct label and description based on country
-    String divisionLabel = "State";
-    String divisionDesc =
-        "Select your state of residence to help us customize your experience.";
-    final country = state.country;
-    if (country == "Kenya") {
-      divisionLabel = "County";
-      divisionDesc =
-          "Select your county of residence to help us customize your experience.";
-    } else if (country == "South Africa") {
-      divisionLabel = "Province";
-      divisionDesc =
-          "Select your province of residence to help us customize your experience.";
-    } else if (country == "Botswana") {
-      divisionLabel = "District";
-      divisionDesc =
-          "Select your district of residence to help us customize your experience.";
-    } else if (country == "Zambia") {
-      divisionLabel = "Province";
-      divisionDesc =
-          "Select your province of residence to help us customize your experience.";
-    } else if (country == "Rwanda") {
-      divisionLabel = "Province";
-      divisionDesc =
-          "Select your province of residence to help us customize your experience.";
-    } else if (country == "Malawi") {
-      divisionLabel = "Region";
-      divisionDesc =
-          "Select your region of residence to help us customize your experience.";
-    } else if (country == "Tanzania") {
-      divisionLabel = "Region";
-      divisionDesc =
-          "Select your region of residence to help us customize your experience.";
-    } else if (country == "Uganda") {
-      divisionLabel = "Region";
-      divisionDesc =
-          "Select your region of residence to help us customize your experience.";
-    } else if (country == "Cameroon") {
-      divisionLabel = "Region";
-      divisionDesc =
-          "Select your region of residence to help us customize your experience.";
-    } else if (country == "Benin") {
-      divisionLabel = "Department";
-      divisionDesc =
-          "Select your department of residence to help us customize your experience.";
-    } else if (country == "Côte d’Ivoire") {
-      divisionLabel = "District";
-      divisionDesc =
-          "Select your district of residence to help us customize your experience.";
-    } else if (country == "Senegal") {
-      divisionLabel = "Region";
-      divisionDesc =
-          "Select your region of residence to help us customize your experience.";
-    } else if (country == "DR Congo") {
-      divisionLabel = "Province";
-      divisionDesc =
-          "Select your province of residence to help us customize your experience.";
-    } else if (country == "Republic of the Congo") {
-      divisionLabel = "Department";
-      divisionDesc =
-          "Select your department of residence to help us customize your experience.";
-    } else if (country == "Gabon") {
-      divisionLabel = "Province";
-      divisionDesc =
-          "Select your province of residence to help us customize your experience.";
-    } else if (country == "Togo") {
-      divisionLabel = "Region";
-      divisionDesc =
-          "Select your region of residence to help us customize your experience.";
-    } else if (country == "Mali") {
-      divisionLabel = "Region";
-      divisionDesc =
-          "Select your region of residence to help us customize your experience.";
-    } else if (country == "Burkina Faso") {
-      divisionLabel = "Region";
-      divisionDesc =
-          "Select your region of residence to help us customize your experience.";
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(height: 8),
-        Padding(
-          padding: EdgeInsets.only(left: 18, right: 72.0),
-          child: Text(
-            "Select your ${divisionLabel.toLowerCase()}",
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontFamily: 'FunnelDisplay',
-              fontSize: MediaQuery.of(context).size.width > 600 ? 28 : 24,
-              height: 1.000,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        SizedBox(height: 12),
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 18),
-          child: Text(
-            "Choose your ${divisionLabel.toLowerCase()} for accurate service.",
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              fontFamily: 'Chirp',
-              letterSpacing: -.25,
-              height: 1.2,
-              color: Theme.of(
-                context,
-              ).textTheme.bodyMedium!.color!.withOpacity(0.65),
-            ),
-            textAlign: TextAlign.start,
-          ),
-        ),
-        Padding(
-          padding: EdgeInsets.symmetric(vertical: 24, horizontal: 18.0),
-          child: CustomTextField(
-            label: divisionLabel,
-            hintText: "Select your ${divisionLabel.toLowerCase()}",
-            controller: _stateController,
-            onChanged: notifier.setState,
-            suffixIcon: Icon(
-              Icons.keyboard_arrow_down,
-              color: AppColors.neutral400,
-              size: 20,
-            ),
-            shouldReadOnly: true,
-            onTap: () => _showStatePicker(notifier),
-          ),
-        ),
-        // if (state.stateError.isNotEmpty)
-        //   Padding(
-        //     padding: const EdgeInsets.only(top: 4.0, left: 14),
-        //     child: Text(
-        //       state.stateError,
-        //       style: const TextStyle(
-        //         color: Colors.red,
-        //         fontSize: 13,
-        //         fontFamily: 'Chirp',
-        //         letterSpacing: -.25,
-        //         fontWeight: FontWeight.w500,
-        //         height: 1.2,
-        //       ),
-        //     ),
-        //   )
-        // else
-        //   const SizedBox.shrink(),
-      ],
-    );
-  }
 
   String _formatDateForDisplay(String isoDate) {
     if (isoDate.isEmpty) return '';
@@ -2096,11 +1562,9 @@ class _CompletePersonalInformationViewState
           (context) => _CountryBottomSheet(
             onCountrySelected: (country) {
               notifier.setCountry(country);
-              notifier.setState(""); // Clear state
-              notifier.setCity(""); // Clear city
-              notifier.setAddress(""); // Clear address
-              _stateController.clear();
-              _cityController.clear();
+              notifier.setState("");
+              notifier.setCity("");
+              notifier.setAddress("");
               _addressController.clear();
               Navigator.pop(context);
             },
@@ -2108,408 +1572,6 @@ class _CompletePersonalInformationViewState
     );
   }
 
-  void _showStatePicker(CompletePersonalInfoNotifier notifier) async {
-    final currentState = ref.read(completePersonalInfoProvider);
-    final country = currentState.country;
-    List<String> states = [];
-    if (country == 'Nigeria') {
-      states = [
-        'Abia',
-        'Adamawa',
-        'Akwa Ibom',
-        'Anambra',
-        'Bauchi',
-        'Bayelsa',
-        'Benue',
-        'Borno',
-        'Cross River',
-        'Delta',
-        'Ebonyi',
-        'Edo',
-        'Ekiti',
-        'Enugu',
-        'Gombe',
-        'Imo',
-        'Jigawa',
-        'Kaduna',
-        'Kano',
-        'Katsina',
-        'Kebbi',
-        'Kogi',
-        'Kwara',
-        'Lagos',
-        'Nasarawa',
-        'Niger',
-        'Ogun',
-        'Ondo',
-        'Osun',
-        'Oyo',
-        'Plateau',
-        'Rivers',
-        'Sokoto',
-        'Taraba',
-        'Yobe',
-        'Zamfara',
-        'Abuja (FCT)',
-      ];
-    } else if (country == 'Kenya') {
-      states = [
-        'Baringo',
-        'Bomet',
-        'Bungoma',
-        'Busia',
-        'Elgeyo-Marakwet',
-        'Embu',
-        'Garissa',
-        'Homa Bay',
-        'Isiolo',
-        'Kajiado',
-        'Kakamega',
-        'Kericho',
-        'Kiambu',
-        'Kilifi',
-        'Kirinyaga',
-        'Kisii',
-        'Kisumu',
-        'Kitui',
-        'Kwale',
-        'Laikipia',
-        'Lamu',
-        'Machakos',
-        'Makueni',
-        'Mandera',
-        'Marsabit',
-        'Meru',
-        'Migori',
-        'Mombasa',
-        'Murang’a',
-        'Nairobi',
-        'Nakuru',
-        'Nandi',
-        'Narok',
-        'Nyamira',
-        'Nyandarua',
-        'Nyeri',
-        'Samburu',
-        'Siaya',
-        'Taita-Taveta',
-        'Tana River',
-        'Tharaka-Nithi',
-        'Trans-Nzoia',
-        'Turkana',
-        'Uasin Gishu',
-        'Vihiga',
-        'Wajir',
-        'West Pokot',
-      ];
-    } else if (country == 'South Africa') {
-      states = [
-        'Eastern Cape',
-        'Free State',
-        'Gauteng',
-        'KwaZulu-Natal',
-        'Limpopo',
-        'Mpumalanga',
-        'Northern Cape',
-        'North West',
-        'Western Cape',
-      ];
-    } else if (country == 'Botswana') {
-      states = [
-        'Central',
-        'Chobe',
-        'Ghanzi',
-        'Kgalagadi',
-        'Kgatleng',
-        'Kweneng',
-        'North-East',
-        'North-West',
-        'South-East',
-        'Southern',
-      ];
-    } else if (country == 'Zambia') {
-      states = [
-        'Central',
-        'Copperbelt',
-        'Eastern',
-        'Luapula',
-        'Lusaka',
-        'Muchinga',
-        'Northern',
-        'North-Western',
-        'Southern',
-        'Western',
-      ];
-    } else if (country == 'Rwanda') {
-      states = ['Kigali', 'Eastern', 'Northern', 'Western', 'Southern'];
-    } else if (country == 'Malawi') {
-      states = ['Northern', 'Central', 'Southern'];
-    } else if (country == 'Tanzania') {
-      states = [
-        'Arusha',
-        'Dar es Salaam',
-        'Dodoma',
-        'Geita',
-        'Iringa',
-        'Kagera',
-        'Katavi',
-        'Kigoma',
-        'Kilimanjaro',
-        'Lindi',
-        'Manyara',
-        'Mara',
-        'Mbeya',
-        'Morogoro',
-        'Mtwara',
-        'Mwanza',
-        'Njombe',
-        'Pemba North',
-        'Pemba South',
-        'Pwani',
-        'Rukwa',
-        'Ruvuma',
-        'Shinyanga',
-        'Simiyu',
-        'Singida',
-        'Tabora',
-        'Tanga',
-        'Zanzibar North',
-        'Zanzibar South',
-        'Zanzibar Urban/West',
-      ];
-    } else if (country == 'Uganda') {
-      states = ['Central', 'Eastern', 'Northern', 'Western'];
-    } else if (country == 'Cameroon') {
-      states = [
-        'Adamawa',
-        'Centre',
-        'East',
-        'Far North',
-        'Littoral',
-        'North',
-        'North-West',
-        'West',
-        'South',
-        'South-West',
-      ];
-    } else if (country == 'Benin') {
-      states = [
-        'Alibori',
-        'Atakora',
-        'Atlantique',
-        'Borgou',
-        'Collines',
-        'Donga',
-        'Kouffo',
-        'Littoral',
-        'Mono',
-        'Ouémé',
-        'Plateau',
-        'Zou',
-      ];
-    } else if (country == 'Côte d’Ivoire') {
-      states = [
-        'Abidjan',
-        'Bas-Sassandra',
-        'Comoé',
-        'Denguélé',
-        'Gôh-Djiboua',
-        'Lacs',
-        'Lagunes',
-        'Montagnes',
-        'Savanes',
-        'Sassandra-Marahoué',
-        'Vallée du Bandama',
-        'Woroba',
-        'Yamoussoukro',
-        'Zanzan',
-      ];
-    } else if (country == 'Senegal') {
-      states = [
-        'Dakar',
-        'Diourbel',
-        'Fatick',
-        'Kaolack',
-        'Kédougou',
-        'Kolda',
-        'Louga',
-        'Matam',
-        'Saint-Louis',
-        'Sédhiou',
-        'Tambacounda',
-        'Thiès',
-        'Ziguinchor',
-      ];
-    } else if (country == 'DR Congo') {
-      states = [
-        'Bas-Uele',
-        'Haut-Uele',
-        'Ituri',
-        'Tshopo',
-        'Haut-Lomami',
-        'Haut-Katanga',
-        'Kasaï',
-        'Kasaï-Central',
-        'Kasaï-Oriental',
-        'Kwango',
-        'Kwilu',
-        'Mai-Ndombe',
-        'Maniema',
-        'Mongala',
-        'Nord-Kivu',
-        'Nord-Ubangi',
-        'Sud-Kivu',
-        'Sud-Ubangi',
-        'Tanganyika',
-        'Tshuapa',
-        'Équateur',
-      ];
-    } else if (country == 'Republic of the Congo') {
-      states = [
-        'Bouenza',
-        'Brazzaville',
-        'Cuvette',
-        'Cuvette-Ouest',
-        'Kouilou',
-        'Lekoumou',
-        'Likouala',
-        'Niari',
-        'Plateaux',
-        'Pointe-Noire',
-        'Sangha',
-        'Pool',
-      ];
-    } else if (country == 'Gabon') {
-      states = [
-        'Estuaire',
-        'Haut-Ogooué',
-        'Moyen-Ogooué',
-        'Ngounié',
-        'Nyanga',
-        'Ogooué-Ivindo',
-        'Ogooué-Lolo',
-        'Ogooué-Maritime',
-        'Woleu-Ntem',
-      ];
-    } else if (country == 'Togo') {
-      states = ['Centrale', 'Kara', 'Maritime', 'Plateaux', 'Savanes'];
-    } else if (country == 'Mali') {
-      states = [
-        'Bamako',
-        'Gao',
-        'Kayes',
-        'Kidal',
-        'Koulikoro',
-        'Mopti',
-        'Ségou',
-        'Sikasso',
-        'Tombouctou',
-        'Taoudénit',
-        'Ménaka',
-        'Kéniéba',
-      ];
-    } else if (country == 'Burkina Faso') {
-      states = [
-        'Boucle du Mouhoun',
-        'Cascades',
-        'Centre',
-        'Centre-Est',
-        'Centre-Nord',
-        'Centre-Ouest',
-        'Centre-Sud',
-        'Est',
-        'Hauts-Bassins',
-        'Nord',
-        'Plateau-Central',
-        'Sahel',
-        'Sud-Ouest',
-      ];
-    }
-    // Add more countries as needed
-
-    showModalBottomSheet(
-      barrierColor: Colors.black.withOpacity(0.85),
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return Container(
-          height: MediaQuery.of(context).size.height * 0.92,
-          decoration: BoxDecoration(
-            color: Theme.of(context).scaffoldBackgroundColor,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
-            children: [
-              SizedBox(height: 18),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 18),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    SizedBox(height: 24, width: 24),
-                    Text(
-                      'Select State',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontFamily: 'Chirp',
-                        fontSize: 16,
-                        letterSpacing: -.25,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pop(context);
-                      },
-                      child: Image.asset(
-                        "assets/icons/pngs/cancelicon.png",
-                        height: 24,
-                        width: 24,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 16),
-              Expanded(
-                child: ListView.builder(
-                  padding: EdgeInsets.symmetric(horizontal: 18),
-                  itemCount: states.length,
-                  itemBuilder: (context, index) {
-                    final stateName = states[index];
-                    return ListTile(
-                      contentPadding: EdgeInsets.symmetric(vertical: 4),
-                      onTap: () {
-                        notifier.setState(stateName);
-                        notifier.setCity(""); // Clear city when state changes
-                        notifier.setAddress(
-                          "",
-                        ); // Clear address when state changes
-                        _cityController.clear();
-                        _addressController.clear();
-                        Navigator.pop(context);
-                        _stateController.text = stateName;
-                      },
-                      title: Text(
-                        stateName,
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontFamily: 'Chirp',
-                          fontSize: 18,
-                          letterSpacing: -.25,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
 }
 
 // Country Bottom Sheet
@@ -2957,82 +2019,6 @@ class _OccupationBottomSheetState extends State<_OccupationBottomSheet> {
   }
 }
 
-// City Bottom Sheet
-class _CityBottomSheet extends StatelessWidget {
-  final List<String> cities;
-  final Function(String) onCitySelected;
-
-  const _CityBottomSheet({required this.cities, required this.onCitySelected});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.92,
-      decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Column(
-        children: [
-          SizedBox(height: 18),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 18),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                SizedBox(height: 24, width: 24),
-                Text(
-                  'Select City',
-                  style: AppTypography.titleLarge.copyWith(
-                    fontFamily: 'Chirp',
-                    fontSize: 16,
-                    letterSpacing: -.25,
-                    fontWeight: FontWeight.w500,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pop(context);
-                  },
-                  child: Image.asset(
-                    "assets/icons/pngs/cancelicon.png",
-                    height: 24,
-                    width: 24,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: 16),
-          Expanded(
-            child: ListView.builder(
-              padding: EdgeInsets.symmetric(horizontal: 18),
-              itemCount: cities.length,
-              itemBuilder: (context, index) {
-                final city = cities[index];
-                return ListTile(
-                  contentPadding: EdgeInsets.symmetric(vertical: 4),
-                  onTap: () => onCitySelected(city),
-                  title: Text(
-                    city,
-                    style: AppTypography.bodyLarge.copyWith(
-                      fontFamily: 'Chirp',
-                      fontSize: 18,
-                      letterSpacing: -.25,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 // Simple step indicator widget
 class StepIndicator extends StatelessWidget {

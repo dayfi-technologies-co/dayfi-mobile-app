@@ -41,17 +41,15 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
     final passcodeState = ref.watch(passcodeProvider);
     final passcodeNotifier = ref.read(passcodeProvider.notifier);
 
-    // Show error snackbar if there's an error message
-    if (passcodeState.errorMessage.isNotEmpty) {
+    ref.listen<PasscodeState>(passcodeProvider, (previous, next) {
+      final msg = next.errorMessage;
+      if (msg.isEmpty) return;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        TopSnackbar.show(
-          context,
-          message: passcodeState.errorMessage,
-          isError: true,
-        );
-        passcodeNotifier.clearError();
+        if (!context.mounted) return;
+        TopSnackbar.show(context, message: msg, isError: true);
+        ref.read(passcodeProvider.notifier).clearError();
       });
-    }
+    });
 
     return Stack(
       children: [
@@ -301,10 +299,9 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
                                   style: TextStyle(
                                     fontFamily: 'Chirp',
                                     color: Theme.of(context)
-                                        .textTheme
-                                        .bodyLarge!
-                                        .color!
-                                        .withOpacity(.85),
+                                        .colorScheme
+                                        .onSurface
+                                        .withValues(alpha: 0.85),
                                     fontSize: 16,
                                     fontWeight: FontWeight.w500,
                                     letterSpacing: -.25,

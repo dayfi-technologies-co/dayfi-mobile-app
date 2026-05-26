@@ -253,10 +253,14 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
           0;
 
       // Call initiateWalletTransfer API
+      final debit =
+          widget.selectedData['debitCurrency']?.toString().toUpperCase() ??
+          'USD';
       final response = await paymentService.initiateWalletTransfer(
         dayfiId: widget.dayfiId,
         amount: amount.toInt(),
         encryptedPin: encryptedPin,
+        debitCurrency: debit,
       );
 
       if (response.error == false) {

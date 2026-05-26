@@ -14,7 +14,8 @@ class TransactionMonitorService {
 
   /// Start monitoring pending transactions
   void startMonitoring() {
-    // print('🔄 Starting transaction monitoring...');
+    // Idempotent: [Consumer] rebuilds used to call this repeatedly and leaked timers.
+    stopMonitoring();
 
     // Check every 30 seconds
     _monitoringTimer = Timer.periodic(

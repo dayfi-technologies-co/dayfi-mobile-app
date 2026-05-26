@@ -455,7 +455,10 @@ class CompletePersonalInfoNotifier
         analyticsService.logEvent(name: 'complete_profile_completed');
         // Navigate to upload documents for KYC Tier 2 verification
 
-        await createDayfiId(context);
+        final tag = state.dayfiId.replaceAll('@', '').trim();
+        if (tag.isNotEmpty) {
+          await createDayfiId(context);
+        }
 
         appRouter.pushNamed(AppRoute.uploadDocumentsView);
       }
@@ -494,6 +497,22 @@ class CompletePersonalInfoNotifier
           isError: true,
         );
       }
+    } on ApiError catch (e) {
+      final rawMsg = e.apiErrorModel?.message;
+      final fromModel = (rawMsg ?? '').trim();
+      final desc = (e.errorDescription ?? '').trim();
+      final msg = fromModel.isNotEmpty
+          ? fromModel
+          : (desc.isNotEmpty
+              ? desc
+              : 'Something went wrong. Please try again.');
+      AppLogger.error('Error creating Dayfi Tag: $e');
+      TopSnackbar.show(
+        // ignore: use_build_context_synchronously
+        context,
+        message: msg,
+        isError: true,
+      );
     } catch (e) {
       AppLogger.error('Error creating Dayfi Tag: $e');
       TopSnackbar.show(

@@ -474,9 +474,12 @@ class ShimmerWidgets {
   }
 
   // Quick Send list shimmer (horizontal)
-  static Widget quickSendListShimmer(BuildContext context, {int itemCount = 5}) {
+  static Widget quickSendListShimmer(
+    BuildContext context, {
+    int itemCount = 5,
+  }) {
     return Container(
-    //  padding:  EdgeInsets.symmetric(horizontal: 12),
+      //  padding:  EdgeInsets.symmetric(horizontal: 12),
       height: 72,
       child: ListView.builder(
         shrinkWrap: true,
@@ -567,6 +570,54 @@ class ShimmerWidgets {
       itemCount: itemCount,
       separatorBuilder: (context, index) => SizedBox(height: 12),
       itemBuilder: (context, index) => deliveryMethodCardShimmer(context),
+    );
+  }
+
+  // Generic circle shimmer
+  static Widget circle({required double size, BuildContext? context}) {
+    return Builder(
+      builder: (ctx) {
+        final buildContext = context ?? ctx;
+        final shimmerColor =
+            Theme.of(buildContext).colorScheme.surfaceContainerHighest;
+        return shimmerEffect(
+          context: buildContext,
+          child: Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              color: shimmerColor,
+              shape: BoxShape.circle,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Generic line shimmer
+  static Widget line({
+    required double width,
+    required double height,
+    BuildContext? context,
+  }) {
+    return Builder(
+      builder: (ctx) {
+        final buildContext = context ?? ctx;
+        final shimmerColor =
+            Theme.of(buildContext).colorScheme.surfaceContainerHighest;
+        return shimmerEffect(
+          context: buildContext,
+          child: Container(
+            width: width,
+            height: height,
+            decoration: BoxDecoration(
+              color: shimmerColor,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+        );
+      },
     );
   }
 }

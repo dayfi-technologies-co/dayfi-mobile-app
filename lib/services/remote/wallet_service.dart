@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'package:dayfi/flavors.dart';
+import 'package:dayfi/models/wallet_hub.dart';
 import 'package:dayfi/models/wallet_transaction.dart';
 import 'package:dayfi/models/wallet.dart';
 import 'package:dayfi/models/beneficiary_with_source.dart';
 import 'package:dayfi/models/payment_response.dart' as payment;
 import 'package:dayfi/services/remote/network/network_service.dart';
+import 'package:dayfi/services/remote/network/url_config.dart';
 
 class WalletService {
   final NetworkService _networkService;
@@ -13,33 +15,18 @@ class WalletService {
 
   /// Fetch wallet details
   /// GET /api/v1/payments/wallet-details
+  Future<Map<String, dynamic>> _fetchWalletDetailsData() async {
+    final response = await _networkService.call(
+      '${F.baseUrl}${UrlConfig.walletDetails}',
+      RequestMethod.get,
+    );
+    return _parseEnvelope(response.data);
+  }
+
   Future<WalletDetailsResponse> fetchWalletDetails() async {
     try {
-      final response = await _networkService.call(
-        '${F.baseUrl}/payments/wallet-details',
-        RequestMethod.get,
-      );
-
-      // Convert response.data to Map<String, dynamic>
-      Map<String, dynamic> responseData;
-      
-      if (response.data is Map<String, dynamic>) {
-        responseData = response.data as Map<String, dynamic>;
-      } else if (response.data is String) {
-        try {
-          responseData = json.decode(response.data as String) as Map<String, dynamic>;
-        } catch (jsonError) {
-          throw Exception('Failed to parse JSON response: $jsonError');
-        }
-      } else {
-        throw Exception('Unexpected response type: ${response.data.runtimeType}');
-      }
-      
-      try {
-        return WalletDetailsResponse.fromJson(responseData);
-      } catch (parseError) {
-        throw Exception('Failed to parse wallet details response: $parseError');
-      }
+      final envelope = await _fetchWalletDetailsData();
+      return WalletDetailsResponse.fromJson(envelope);
     } catch (e) {
       throw Exception('Failed to fetch wallet details: $e');
     }
@@ -208,5 +195,145 @@ class WalletService {
     } catch (e) {
       throw Exception('Failed to fetch Dayfi Tags: $e');
     }
+  }
+
+  Future<Map<String, dynamic>> _parseEnvelope(dynamic raw) async {
+    if (raw is Map<String, dynamic>) return raw;
+    if (raw is String) {
+      return json.decode(raw) as Map<String, dynamic>;
+    }
+    throw Exception('Unexpected response type: ${raw.runtimeType}');
+  }
+
+  /// Full hub: ledger + Grey operating accounts for home / add / convert.
+  Future<WalletHubSnapshot> fetchWalletHub() async {
+    final envelope = await _fetchWalletDetailsData();
+    final data = envelope['data'];
+    final hub = WalletHubSnapshot.fromApiData(
+      data is Map<String, dynamic> ? data : null,
+    );
+    try {
+      final grey = await fetchGreyAccounts();
+      return WalletHubSnapshot(
+        totalAvailableBalance: hub.totalAvailableBalance,
+        ledgerWallets: hub.ledgerWallets,
+        greyAccounts: grey,
+        displayRows: hub.displayRows,
+      );
+    } catch (_) {
+      return hub;
+    }
+  }
+
+  /// GET /payments/grey/accounts
+  Future<List<GreyOperatingAccount>> fetchGreyAccounts() async {
+    final response = await _networkService.call(
+      '${F.baseUrl}${UrlConfig.greyAccounts}',
+      RequestMethod.get,
+    );
+    final envelope = await _parseEnvelope(response.data);
+    final data = envelope['data'];
+    if (data is! Map<String, dynamic>) return [];
+
+    final list = data['operatingAccounts'] ?? data['accounts'];
+    if (list is! List) return [];
+
+    return list
+        .whereType<Map<String, dynamic>>()
+        .map(GreyOperatingAccount.fromJson)
+        .toList();
+  }
+
+  /// GET /payments/crypto/balances — on-chain USDC/EURC/XLM/ETH balances.
+  Future<Map<String, dynamic>> fetchCryptoBalances() async {
+    final response = await _networkService.call(
+      '${F.baseUrl}${UrlConfig.cryptoBalances}',
+      RequestMethod.get,
+    );
+    final envelope = await _parseEnvelope(response.data);
+    final data = envelope['data'];
+    if (data is Map<String, dynamic>) return data;
+    return {};
+  }
+
+  /// GET /payments/receive/crypto
+  Future<Map<String, dynamic>> fetchReceiveCrypto() async {
+    final response = await _networkService.call(
+      '${F.baseUrl}${UrlConfig.receiveCrypto}',
+      RequestMethod.get,
+    );
+    final envelope = await _parseEnvelope(response.data);
+    final data = envelope['data'];
+    if (data is Map<String, dynamic>) return data;
+    return {};
+  }
+
+  /// GET /payments/exchange-rate?baseCurrency=&targetCurrency=
+  Future<double> fetchExchangeRate({
+    required String fromCurrency,
+    required String toCurrency,
+  }) async {
+    final response = await _networkService.call(
+      '${F.baseUrl}${UrlConfig.exchangeRate}',
+      RequestMethod.get,
+      queryParams: {
+        'baseCurrency': fromCurrency.toUpperCase(),
+        'targetCurrency': toCurrency.toUpperCase(),
+      },
+    );
+    final envelope = await _parseEnvelope(response.data);
+    final data = envelope['data'];
+    if (data is Map<String, dynamic> && data['rate'] != null) {
+      return double.tryParse(data['rate'].toString()) ?? 0;
+    }
+    if (data is num) return data.toDouble();
+    return double.tryParse(data?.toString() ?? '') ?? 0;
+  }
+
+  /// POST /payments/wallets/swap
+  Future<Map<String, dynamic>> provisionNgnFiatAccount() async {
+    final response = await _networkService.call(
+      '${F.baseUrl}${UrlConfig.provisionNgnFiat}',
+      RequestMethod.post,
+      data: {},
+    );
+    final envelope = await _parseEnvelope(response.data);
+    final data = envelope['data'];
+    if (data is Map<String, dynamic>) return data;
+    return envelope;
+  }
+
+  Future<Map<String, dynamic>> swapWallets({
+    required String fromCurrency,
+    required String toCurrency,
+    required double amount,
+    required String pin,
+  }) async {
+    final response = await _networkService.call(
+      '${F.baseUrl}${UrlConfig.walletSwap}',
+      RequestMethod.post,
+      data: {
+        'fromCurrency': fromCurrency.toUpperCase(),
+        'toCurrency': toCurrency.toUpperCase(),
+        'amount': amount,
+        'pin': pin,
+        'spendCurrency': fromCurrency.toUpperCase(),
+      },
+    );
+    final envelope = await _parseEnvelope(response.data);
+    final data = envelope['data'];
+    if (data is Map<String, dynamic>) return data;
+    return envelope;
+  }
+
+  /// POST /payments/wallets — create EUR/GBP ledger wallet when needed for swap.
+  Future<void> ensureLedgerWallet(String currency) async {
+    final c = currency.toUpperCase();
+    if (c == 'USD' || c == 'NGN') return;
+    await _networkService.call(
+      '${F.baseUrl}${UrlConfig.createWallet}',
+      RequestMethod.post,
+      data: {'currency': c},
+    );
   }
 }

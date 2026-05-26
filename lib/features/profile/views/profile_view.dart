@@ -375,7 +375,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
             fontWeight: FontWeight.w600,
             fontFamily: 'FunnelDisplay',
             height: 0.95,
-            letterSpacing: -0.25,
+            letterSpacing: -0.20,
           ),
           textAlign: TextAlign.center,
         ),
@@ -611,7 +611,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
             color: AppColors.purple500ForTheme(context),
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            letterSpacing: -0.25,
+            letterSpacing: -0.20,
             height: 1.2,
           ),
         ),
@@ -623,6 +623,11 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
     return Column(
       children: [
         _buildSection(
+          title: 'MY ACTIVITY',
+          children: _myActivity.map(_buildSettingsItem).toList(),
+        ),
+        SizedBox(height: _ProfileConstants.sectionSpacing),
+        _buildSection(
           title: 'ACCOUNT SETTINGS',
           children: _accountSettings.map(_buildSettingsItem).toList(),
         ),
@@ -631,11 +636,11 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
           title: 'APPEARANCE',
           children: [_buildThemeAppearanceRow()],
         ),
-        SizedBox(height: _ProfileConstants.sectionSpacing),
-        _buildSection(
-          title: 'PROMOTIONS',
-          children: _promotions.map(_buildPromotionItem).toList(),
-        ),
+        // SizedBox(height: _ProfileConstants.sectionSpacing),
+        // _buildSection(
+        //   title: 'PROMOTIONS',
+        //   children: _promotions.map(_buildPromotionItem).toList(),
+        // ),
         SizedBox(height: _ProfileConstants.sectionSpacing),
         _buildSection(
           title: 'SECURITY',
@@ -677,7 +682,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
         fontSize: 11,
         fontWeight: FontWeight.w500,
         fontFamily: 'Chirp',
-        letterSpacing: -0.25,
+        letterSpacing: -0.20,
         height: 1.2,
       ),
     );
@@ -701,19 +706,19 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
     final themeMode = ref.watch(themeProvider);
 
     late final String trailingLabel;
-    late final IconData modeIcon;
+    late final String modeIcon;
     switch (themeMode) {
       case AppThemeMode.light:
         trailingLabel = 'Light';
-        modeIcon = Icons.light_mode;
+        modeIcon = "assets/icons/svgs/sun.svg";
         break;
       case AppThemeMode.dark:
         trailingLabel = 'Dark';
-        modeIcon = Icons.dark_mode;
+        modeIcon = "assets/icons/svgs/moon.svg";
         break;
       case AppThemeMode.system:
         trailingLabel = 'System';
-        modeIcon = Icons.brightness_auto;
+        modeIcon = "assets/icons/svgs/sun.svg";
         break;
     }
 
@@ -737,12 +742,10 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                 shape: BoxShape.circle,
                 color: Theme.of(context).scaffoldBackgroundColor,
               ),
-              child: Icon(
-                modeIcon,
-                size: 24,
-                color: Theme.of(
-                  context,
-                ).colorScheme.onSurface.withValues(alpha: 0.85),
+              child: SvgPicture.asset(
+                "assets/icons/svgs/sun.svg",
+                height: 24,
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.85),
               ),
             ),
             SizedBox(width: 16),
@@ -756,28 +759,21 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                   ).colorScheme.onSurface.withValues(alpha: 0.8),
                   fontSize: 18,
                   fontWeight: FontWeight.w500,
-                  letterSpacing: -0.25,
+                  letterSpacing: -0.20,
                   height: 1.2,
                 ),
               ),
             ),
 
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.neutral600,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                trailingLabel,
-                style: AppTypography.labelMedium.copyWith(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  fontFamily: 'Chirp',
-                  letterSpacing: -0.25,
-                  height: 1.2,
-                ),
+            Text(
+              trailingLabel,
+              style: AppTypography.labelMedium.copyWith(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                fontFamily: 'Chirp',
+                letterSpacing: -0.20,
+                height: 1.2,
               ),
             ),
             SizedBox(width: 8),
@@ -876,7 +872,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                 : Theme.of(context).colorScheme.onSurface,
         fontSize: 18,
         fontWeight: FontWeight.w500,
-        letterSpacing: -0.25,
+        letterSpacing: -0.20,
         height: 1.2,
       ),
     );
@@ -896,7 +892,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
           fontSize: 13,
           fontWeight: FontWeight.w500,
           fontFamily: 'Chirp',
-          letterSpacing: -0.25,
+          letterSpacing: -0.20,
           height: 1.2,
         ),
       ),
@@ -978,7 +974,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                 ).colorScheme.onSurface.withOpacity(0.75),
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                letterSpacing: -0.25,
+                letterSpacing: -0.20,
                 height: 1.2,
               ),
               textAlign: TextAlign.center,
@@ -995,7 +991,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                 ).colorScheme.onSurface.withOpacity(0.75),
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                letterSpacing: -0.25,
+                letterSpacing: -0.20,
                 height: 1.2,
               ),
               textAlign: TextAlign.center,
@@ -1013,7 +1009,16 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
   void _navigateToAccountLimits() =>
       appRouter.pushNamed(AppRoute.accountLimitsView);
 
-  void _navigateToSecurity() => appRouter.pushNamed(AppRoute.recoveryPhraseView);
+  void _navigateToTransactions() =>
+      appRouter.pushNamed(AppRoute.transactionsView);
+
+  void _navigateToRecipients() => appRouter.pushNamed(
+    AppRoute.recipientsView,
+    arguments: {'fromProfile': true, 'fromSendView': false},
+  );
+
+  void _navigateToSecurity() =>
+      appRouter.pushNamed(AppRoute.recoveryPhraseView);
 
   void _navigateToChangeTransactionPin() =>
       appRouter.pushNamed(AppRoute.changeTransactionPinOldView);
@@ -1278,6 +1283,25 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
   }
 
   // Settings data
+  List<Map<String, dynamic>> get _myActivity => [
+    {
+      'icon': "assets/icons/svgs/account.svg",
+      'icon2': "assets/icons/svgs/transactionsss.svg",
+      'iconColor': AppColors.neutral700.withOpacity(0.35),
+      'title': 'Transactions',
+      'subtitle': 'View your full payment history',
+      'onTap': _navigateToTransactions,
+    },
+    {
+      'icon': "assets/icons/svgs/account.svg",
+      'icon2': "assets/icons/svgs/recipientsss.svg",
+      'iconColor': AppColors.neutral700.withOpacity(0.35),
+      'title': 'Recipients',
+      'subtitle': 'Saved beneficiaries for quick transfers',
+      'onTap': _navigateToRecipients,
+    },
+  ];
+
   List<Map<String, dynamic>> get _accountSettings => [
     {
       'icon': "assets/icons/svgs/account.svg",
@@ -1289,18 +1313,18 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
     },
   ];
 
-  List<Map<String, dynamic>> get _promotions => [
-    {
-      'icon': "assets/icons/svgs/account.svg",
-      'icon2': "assets/icons/svgs/gift.svg",
-      'iconColor': AppColors.neutral700.withOpacity(0.35),
-      'title': 'Referrals',
-      'subtitle': 'Invite friends and earn rewards',
-      'actionText': "Coming soon",
-      'actionColor': AppColors.neutral600,
-      'onTap': () {},
-    },
-  ];
+  // List<Map<String, dynamic>> get _promotions => [
+  //   {
+  //     'icon': "assets/icons/svgs/account.svg",
+  //     'icon2': "assets/icons/svgs/gift.svg",
+  //     'iconColor': AppColors.neutral700.withOpacity(0.35),
+  //     'title': 'Referrals',
+  //     'subtitle': 'Invite friends and earn rewards',
+  //     'actionText': "Coming soon",
+  //     'actionColor': AppColors.neutral600,
+  //     'onTap': () {},
+  //   },
+  // ];
 
   List<Map<String, dynamic>> get _securitySettings => [
     // {

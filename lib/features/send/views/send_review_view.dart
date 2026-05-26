@@ -9,6 +9,7 @@ import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
 import 'package:dayfi/features/send/vm/send_viewmodel.dart';
+import 'package:dayfi/features/wallet/providers/wallet_hub_provider.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/services/remote/payment_service.dart';
@@ -1042,6 +1043,69 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
       final sendState = ref.read(sendViewModelProvider);
       final paymentService = locator<PaymentService>();
 
+      final receiveCurrency =
+          widget.selectedData['receiveCurrency']?.toString().toUpperCase() ??
+          sendState.receiverCurrency.toUpperCase();
+      final isCryptoRecipient =
+          (widget.recipientData['accountType']?.toString().toLowerCase() ==
+                  'crypto') ||
+              widget.selectedData['cryptoCurrency'] != null;
+
+      // NGN bank → Flutterwave (debits NGN ledger wallet)
+      if (receiveCurrency == 'NGN' && !isCryptoRecipient) {
+        final amount = double.tryParse(
+              widget.selectedData['receiveAmount']?.toString() ??
+                  widget.selectedData['sendAmount']?.toString() ??
+                  '0',
+            ) ??
+            0;
+        final fee = double.tryParse(sendState.fee?.toString() ?? '0') ?? 0;
+        final bankCode =
+            widget.recipientData['bankCode']?.toString() ??
+            widget.recipientData['networkId']?.toString() ??
+            '';
+        if (bankCode.isEmpty) {
+          TopSnackbar.show(
+            context,
+            message: 'Bank code missing. Select a bank from the list.',
+            isError: true,
+          );
+          return;
+        }
+        final response = await paymentService.bankTransfer(
+          amount: amount,
+          accountNumber:
+              widget.recipientData['accountNumber']?.toString() ?? '',
+          bankCode: bankCode,
+          bankName: widget.recipientData['bankName']?.toString() ?? 'Bank',
+          accountName:
+              widget.recipientData['accountName']?.toString() ??
+              widget.recipientData['name']?.toString() ??
+              'Recipient',
+          fee: fee,
+          pin: encryptedPin,
+        );
+        if (response.error == false) {
+          Navigator.pop(context);
+          appRouter.pushNamedAndRemoveUntil(
+            AppRoute.sendPaymentSuccessView,
+            (route) => false,
+            arguments: {
+              'recipientData': widget.recipientData,
+              'selectedData': widget.selectedData,
+              'paymentData': _paymentData ?? {},
+              'transactionId': response.data?.sequenceId ?? response.data?.id,
+            },
+          );
+          return;
+        }
+        throw Exception(
+          response.message.isNotEmpty
+              ? response.message
+              : 'Bank transfer failed',
+        );
+      }
+
       // Resolve the best channel for this transaction
       final selectedChannel = _findSelectedChannel(sendState);
 
@@ -1328,6 +1392,8 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
       "country": country,
       "reason": reason.toString().toLowerCase(),
       "pin": pin,
+      "debitCurrency": ref.read(selectedDebitCurrencyProvider),
+      "spendCurrency": ref.read(selectedDebitCurrencyProvider),
       "fees": sendState.fee,
       "accountNumber": accountNumber,
       "networkId": networkId,

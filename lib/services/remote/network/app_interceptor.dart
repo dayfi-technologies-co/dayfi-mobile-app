@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/core/auth/logout_navigation_suppressor.dart';
+import 'package:dayfi/core/auth/unauthorized_navigation_guard.dart';
 import 'package:dayfi/services/data_clearing_service.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
 
@@ -36,33 +37,35 @@ class AppInterceptor extends Interceptor {
     return super.onResponse(response, handler);
   }
 
-  /// Handle token expiry by clearing all user data and redirecting to login
+  /// Handle token expiry by clearing all user data and redirecting to login.
+  ///
+  /// Guarded so a burst of 401s only triggers a single redirect.
   Future<void> _handleTokenExpiry() async {
     if (LogoutNavigationSuppressor.isActive) {
       return;
     }
+    if (!UnauthorizedNavigationGuard.tryBegin()) {
+      return;
+    }
     try {
       AppLogger.info('Token expired, clearing all user data...');
-      
-      // Create a temporary container for data clearing
+
       final container = ProviderContainer();
-      
-      // Use comprehensive data clearing service
       final dataClearingService = DataClearingService();
       await dataClearingService.clearAllUserDataWithContainer(container);
-      
-      // Navigate to login screen (hide back button)
-      appRouter.pushNamedAndRemoveAllBehind('/loginView', arguments: false);
-      
+
+      appRouter.pushLoginAndClearStack(arguments: false);
+
       AppLogger.info('Token expiry handled successfully');
     } catch (e) {
       AppLogger.error('Error handling token expiry: $e');
-      // Even if there's an error, try to navigate to login
       try {
-        appRouter.pushNamedAndRemoveAllBehind('/loginView', arguments: false);
+        appRouter.pushLoginAndClearStack(arguments: false);
       } catch (navError) {
         AppLogger.error('Error navigating to login after token expiry: $navError');
       }
+    } finally {
+      UnauthorizedNavigationGuard.scheduleEnd();
     }
   }
 }

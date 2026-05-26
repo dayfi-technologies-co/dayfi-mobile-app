@@ -23,7 +23,7 @@ import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/services/remote/wallet_service.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
-import 'package:dayfi/features/home/vm/home_viewmodel.dart';
+import 'package:dayfi/models/wallet.dart';
 import 'package:dayfi/features/send/views/send_payment_method_view.dart';
 import 'package:dayfi/models/beneficiary_with_source.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
@@ -56,6 +56,11 @@ class _SendViewState extends ConsumerState<SendView>
 
   // Track last wallet fetch to avoid duplicate API calls
   DateTime? _lastWalletFetchTime;
+
+  // Cached fiat wallet snapshot (NGN primary) for balance checks on this screen.
+  List<Wallet> _wallets = [];
+  String _walletBalance = '0.00';
+  String _walletCurrency = 'NGN';
 
   // Route argument helpers (populated when opened via named route)
   BeneficiaryWithSource? _initialBeneficiaryWithSource;
@@ -355,16 +360,40 @@ class _SendViewState extends ConsumerState<SendView>
       final now = DateTime.now();
       if (_lastWalletFetchTime == null ||
           now.difference(_lastWalletFetchTime!).inSeconds > 30) {
-        try {
-          await ref.read(homeViewModelProvider.notifier).fetchWalletDetails();
-          _lastWalletFetchTime = now;
-        } catch (e) {
-          AppLogger.error('Error fetching wallet balance: $e');
-        }
+        await _fetchWalletDetails();
+        _lastWalletFetchTime = now;
       }
 
       analyticsService.trackScreenView(screenName: 'SendView');
     });
+  }
+
+  Wallet? _resolvePrimaryWallet(List<Wallet> wallets) {
+    if (wallets.isEmpty) return null;
+    for (final wallet in wallets) {
+      if (wallet.currency.toUpperCase() == 'NGN') {
+        return wallet;
+      }
+    }
+    return wallets.first;
+  }
+
+  Future<void> _fetchWalletDetails() async {
+    try {
+      final walletService = locator<WalletService>();
+      final response = await walletService.fetchWalletDetails();
+      if (!mounted) return;
+
+      final wallets = response.wallets;
+      final primary = _resolvePrimaryWallet(wallets);
+      setState(() {
+        _wallets = wallets;
+        _walletBalance = primary?.balance ?? '0.00';
+        _walletCurrency = primary?.currency ?? 'NGN';
+      });
+    } catch (e) {
+      AppLogger.error('Error fetching wallet balance: $e');
+    }
   }
 
   Future<bool> _checkWalletBalanceAndNavigate(SendState state) async {
@@ -377,23 +406,18 @@ class _SendViewState extends ConsumerState<SendView>
       }
 
       // Fetch wallet details and transactions in parallel
-      final homeViewModel = ref.read(homeViewModelProvider.notifier);
       final transactionsNotifier = ref.read(transactionsProvider.notifier);
 
       await Future.wait([
-        homeViewModel.fetchWalletDetails(),
+        _fetchWalletDetails(),
         transactionsNotifier.loadTransactions(),
       ]);
 
-      // Check balance after a short delay to ensure state is updated
-      await Future.delayed(const Duration(milliseconds: 100));
-
       if (mounted) {
-        final homeState = ref.read(homeViewModelProvider);
         final transactionsState = ref.read(transactionsProvider);
 
         // Check if wallets list is empty
-        if (homeState.wallets.isEmpty) {
+        if (_wallets.isEmpty) {
           // Reset loading state before showing dialog
           setState(() {
             _isCheckingWallet = false;
@@ -404,14 +428,14 @@ class _SendViewState extends ConsumerState<SendView>
           return true;
         }
 
-        final balance = homeState.balance;
+        final balance = _walletBalance;
 
         // Calculate available balance (current balance - pending transactions)
         final availableBalance =
             AvailableBalanceCalculator.calculateAvailableBalance(
               balance,
               transactionsState.transactions,
-              currency: homeState.currency,
+              currency: _walletCurrency,
             );
 
         // Get send amount
@@ -706,7 +730,7 @@ class _SendViewState extends ConsumerState<SendView>
           final now = DateTime.now();
           if (_lastWalletFetchTime == null ||
               now.difference(_lastWalletFetchTime!).inSeconds > 30) {
-            ref.read(homeViewModelProvider.notifier).fetchWalletDetails();
+            unawaited(_fetchWalletDetails());
             _lastWalletFetchTime = now;
           }
         }
@@ -2505,9 +2529,8 @@ class _SendViewState extends ConsumerState<SendView>
       onPressed:
           isButtonEnabled
               ? () async {
-                // 1. Check for insufficient funds
-                final homeState = ref.read(homeViewModelProvider);
-                final balance = homeState.balance;
+                // 1. Check for insufficient funds (uses balance cached on init / resume)
+                final balance = _walletBalance;
                 final balanceValue =
                     double.tryParse(balance.replaceAll(',', '')) ?? 0.0;
                 if (balance.isEmpty ||

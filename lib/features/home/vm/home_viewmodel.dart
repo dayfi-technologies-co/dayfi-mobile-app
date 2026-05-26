@@ -2,81 +2,62 @@ import 'package:dayfi/services/local/local_cache.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/models/wallet.dart';
+import 'package:dayfi/models/wallet_hub.dart';
 import 'package:dayfi/services/remote/wallet_service.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
 
 class HomeState {
   final List<Wallet> wallets;
   final Wallet? primaryWallet;
+  final TotalAvailableBalance? totalAvailableBalance;
   final bool isLoading;
   final String? errorMessage;
 
   const HomeState({
     this.wallets = const [],
     this.primaryWallet,
+    this.totalAvailableBalance,
     this.isLoading = false,
     this.errorMessage,
   });
 
-  /// Get the primary wallet balance (first wallet or NGN wallet)
+  /// Hero balance — unified USD (Grey-style total available balance).
   String get balance {
+    if (totalAvailableBalance != null) {
+      return totalAvailableBalance!.amount.toStringAsFixed(2);
+    }
     if (primaryWallet != null) {
       return primaryWallet!.balance;
-    }
-    if (wallets.isNotEmpty) {
-      return wallets.first.balance;
     }
     return '0.00';
   }
 
-  /// Get the currency of the primary wallet
-  String get currency {
-    if (primaryWallet != null) {
-      return primaryWallet!.currency;
-    }
-    if (wallets.isNotEmpty) {
-      return wallets.first.currency;
-    }
-    return 'NGN';
-  }
+  String get currency => 'USD';
 
-  /// Get formatted balance with currency symbol
   String get formattedBalance {
+    if (totalAvailableBalance != null) {
+      return totalAvailableBalance!.formatted;
+    }
     if (primaryWallet != null) {
       return primaryWallet!.formattedBalance;
     }
-    if (wallets.isNotEmpty) {
-      return wallets.first.formattedBalance;
-    }
-    return '₦0.00';
+    return '\$0.00';
   }
 
-  /// Get currency symbol
-  String get currencySymbol {
-    final curr = currency.toUpperCase();
-    switch (curr) {
-      case 'NGN':
-        return '₦';
-      case 'USD':
-        return '\$';
-      case 'GBP':
-        return '£';
-      case 'EUR':
-        return '€';
-      default:
-        return curr;
-    }
-  }
+  String get currencySymbol => '\$';
 
   HomeState copyWith({
     List<Wallet>? wallets,
     Wallet? primaryWallet,
+    TotalAvailableBalance? totalAvailableBalance,
     bool? isLoading,
     String? errorMessage,
   }) {
     return HomeState(
       wallets: wallets ?? this.wallets,
       primaryWallet: primaryWallet ?? this.primaryWallet,
+      totalAvailableBalance:
+          totalAvailableBalance ?? this.totalAvailableBalance,
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage ?? this.errorMessage,
     );
@@ -108,23 +89,25 @@ class HomeViewModel extends StateNotifier<HomeState> {
     state = state.copyWith(isLoading: shouldShowLoading, errorMessage: null);
     try {
       AppLogger.info('Fetching wallet details from API...');
-      final response = await _walletService.fetchWalletDetails();
-      if (response.wallets.isEmpty) {
-        AppLogger.warning('No wallets found in response');
-        state = state.copyWith(wallets: [], primaryWallet: null, isLoading: false, errorMessage: null);
-        return;
+      final hub = await _walletService.fetchWalletHub();
+      final wallets = hub.ledgerWallets;
+      final primaryWallet = wallets.cast<Wallet?>().firstWhere(
+            (w) => w?.currency.toUpperCase() == 'USD',
+            orElse: () => wallets.isNotEmpty ? wallets.first : null,
+          );
+      if (wallets.isNotEmpty) {
+        await _localCache.saveToLocalCache(
+          key: 'wallets',
+          value: wallets.map((e) => e.toJson()).toList(),
+        );
       }
-      Wallet? primaryWallet;
-      for (final wallet in response.wallets) {
-        if (wallet.currency.toUpperCase() == 'NGN') {
-          primaryWallet = wallet;
-          break;
-        }
-      }
-      primaryWallet ??= response.wallets.first;
-      // Cache wallets
-      await _localCache.saveToLocalCache(key: 'wallets', value: response.wallets.map((e) => e.toJson()).toList());
-      state = state.copyWith(wallets: response.wallets, primaryWallet: primaryWallet, isLoading: false, errorMessage: null);
+      state = state.copyWith(
+        wallets: wallets,
+        primaryWallet: primaryWallet,
+        totalAvailableBalance: hub.totalAvailableBalance,
+        isLoading: false,
+        errorMessage: null,
+      );
     } catch (e) {
       AppLogger.error('Error fetching wallet details: $e');
       state = state.copyWith(isLoading: false, errorMessage: 'Failed to load wallet balance. Please try again.');

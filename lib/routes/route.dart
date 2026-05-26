@@ -27,6 +27,11 @@ import 'package:dayfi/features/auth/biometric_setup/views/biometric_setup_view.d
 import 'package:dayfi/features/auth/dayfi_tag/views/dayfi_tag_explanation_view.dart';
 import 'package:dayfi/features/auth/dayfi_tag/views/create_dayfi_tag_view.dart';
 import 'package:dayfi/features/main/views/main_view.dart';
+import 'package:dayfi/features/home/views/home_view.dart';
+import 'package:dayfi/features/wallet/views/wallet_receive_view.dart';
+import 'package:dayfi/features/wallet/views/wallet_convert_view.dart';
+import 'package:dayfi/features/wallet/views/wallet_crypto_send_view.dart';
+import 'package:dayfi/features/invest/views/invest_view.dart';
 import 'package:dayfi/features/auth/onboarding/views/onboarding_view.dart';
 import 'package:dayfi/features/profile/edit_profile/views/edit_profile_view.dart';
 import 'package:dayfi/features/profile/account_limits/views/account_limits_view.dart';
@@ -99,6 +104,8 @@ class AppRoute {
   static const String bvnNinVerificationView = '/bvnNinVerificationView';
   static const String biometricSetupView = '/biometricSetupView';
   static const String mainView = '/mainView';
+  static const String homeView = '/homeView';
+  static const String investView = '/investView';
   static const String recipientsView = '/recipientsView';
   static const String editProfileView = '/editProfileView';
   static const String accountLimitsView = '/accountLimitsView';
@@ -146,6 +153,9 @@ class AppRoute {
   static const String softposInfoView = '/softposInfoView';
   static const String sendFetchCryptoChannelsView =
       '/sendFetchCryptoChannelsView';
+  static const String addMoneySelectWalletView = '/addMoneySelectWalletView';
+  static const String walletConvertView = '/walletConvertView';
+  static const String walletCryptoSendView = '/walletCryptoSendView';
   static const String sendCryptoNetworksView = '/sendCryptoNetworksView';
   static const String securityScreen = '/securityScreen';
   static const String recoveryPhraseView = '/recoveryPhraseView';
@@ -254,6 +264,21 @@ class AppRoute {
           routeSettings,
           MainView(key: mainViewKey, initialTabIndex: initialTabIndex),
         );
+
+      case homeView:
+        return _getPageRoute(routeSettings, const HomeView());
+      case addMoneySelectWalletView:
+        return _getPageRoute(routeSettings, const AddMoneySelectWalletView());
+      case walletConvertView:
+        return _getPageRoute(routeSettings, const WalletConvertView());
+      case walletCryptoSendView:
+        final args = routeSettings.arguments as Map<String, dynamic>? ?? {};
+        return _getPageRoute(
+          routeSettings,
+          WalletCryptoSendView(selectedData: args),
+        );
+      case investView:
+        return _getPageRoute(routeSettings, const InvestView());
 
       case recipientsView:
         bool fromProfile = false;

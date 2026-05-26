@@ -29,6 +29,22 @@ class UrlConfig {
   static const String fetchNetworks = '/payments/networks';
   static const String fetchRates = '/payments/rates';
   static const String fetchFees = '/payments/fees';
+  static const String walletDetails = '/payments/wallet-details';
+  static const String greyAccounts = '/payments/grey/accounts';
+  static const String receiveCrypto = '/payments/receive/crypto';
+  static const String cryptoSendConfig = '/payments/crypto/send-config';
+  static const String cryptoBalances = '/payments/crypto/balances';
+  static const String cryptoSend = '/payments/crypto/send';
+  static const String bankTransfer = '/payments/bank-transfer';
+  static const String receiveUsBank = '/payments/receive/us-bank';
+  static const String exchangeRate = '/payments/exchange-rate';
+  static const String walletSwap = '/payments/wallets/swap';
+  static const String createWallet = '/payments/wallets';
+  static const String provisionNgnFiat = '/payments/wallets/add/fiat/ngn';
+  static const String investment = '/payments/investment';
+  static const String investmentDeposit = '/payments/investment/deposit';
+  static const String investmentWithdraw = '/payments/investment/withdraw';
+  static const String investmentAcceptRisk = '/payments/investment/accept-risk';
   /// Async job: returns `job_id` (or completed payload in `data`).
   static const String walletProvisionStart = '/payments/wallet-provision/start';
   /// GET with path suffix `/{job_id}` — see [WalletProvisionService].

@@ -82,40 +82,38 @@ class _AccountLimitsViewState extends ConsumerState<AccountLimitsView> {
       body: LayoutBuilder(
         builder: (context, constraints) {
           final bool isWide = constraints.maxWidth > 600;
-          return Center(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: isWide ? 500 : double.infinity,
-              ),
-              child: SafeArea(
-                bottom: false,
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isWide ? 24 : 18,
-                    vertical: 16,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Tier 1 Card
-                      _buildTierCard(
-                        tier: KycTier.tier1,
-                        isCurrentTier: userTier == KycTier.tier1,
-                        isCompleted: true, // Tier 1 is always completed
-                      ),
-                      SizedBox(height: 20),
+          return ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: isWide ? 500 : double.infinity,
+            ),
+            child: SafeArea(
+              bottom: false,
+              child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isWide ? 24 : 18,
+                  vertical: 16,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    // Tier 1 Card
+                    _buildTierCard(
+                      tier: KycTier.tier1,
+                      isCurrentTier: userTier == KycTier.tier1,
+                      isCompleted: true, // Tier 1 is always completed
+                    ),
+                    SizedBox(height: 20),
 
-                      // Tier 2 Card
-                      _buildTierCard(
-                        tier: KycTier.tier2,
-                        isCurrentTier: userTier == KycTier.tier2,
-                        isCompleted: (userTier.level) >= 2,
-                      ),
-                      SizedBox(height: 20),
+                    // Tier 2 Card
+                    _buildTierCard(
+                      tier: KycTier.tier2,
+                      isCurrentTier: userTier == KycTier.tier2,
+                      isCompleted: (userTier.level) >= 2,
+                    ),
 
-                      SizedBox(height: 50),
-                    ],
-                  ),
+                    SizedBox(height: 24),
+                  ],
                 ),
               ),
             ),

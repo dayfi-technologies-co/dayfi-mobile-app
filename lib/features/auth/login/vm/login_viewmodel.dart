@@ -63,7 +63,9 @@ class LoginNotifier extends StateNotifier<LoginState> {
   }) async {
     await _secureStorage.write(StorageKeys.token, token);
     await _secureStorage.write(StorageKeys.isFirstTime, 'false');
-    await _secureStorage.write(StorageKeys.user, json.encode(userJson));
+    final previous = await _secureStorage.read(StorageKeys.user);
+    final merged = mergeStoredDayfiTagIntoUserMap(userJson, previous);
+    await _secureStorage.write(StorageKeys.user, json.encode(merged));
     await _secureStorage.write(StorageKeys.email, email);
     await _secureStorage.write(StorageKeys.password, password);
     // Optionally, you can call _disableBiometricsOnLogin if needed
@@ -144,9 +146,14 @@ class LoginNotifier extends StateNotifier<LoginState> {
 
         // Save user data if available
         if (response.data?.user != null) {
+          final previous = await _secureStorage.read(StorageKeys.user);
+          final merged = mergeStoredDayfiTagIntoUserMap(
+            response.data!.user!.toJson(),
+            previous,
+          );
           await _secureStorage.write(
             StorageKeys.user,
-            json.encode(response.data!.user!.toJson()),
+            json.encode(merged),
           );
         }
 
@@ -360,9 +367,14 @@ class LoginNotifier extends StateNotifier<LoginState> {
 
         // Save user data if available
         if (response.data?.user != null) {
+          final previous = await _secureStorage.read(StorageKeys.user);
+          final merged = mergeStoredDayfiTagIntoUserMap(
+            response.data!.user!.toJson(),
+            previous,
+          );
           await _secureStorage.write(
             StorageKeys.user,
-            json.encode(response.data!.user!.toJson()),
+            json.encode(merged),
           );
         }
 

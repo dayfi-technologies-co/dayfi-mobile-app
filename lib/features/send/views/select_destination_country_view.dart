@@ -4,13 +4,15 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/features/send/vm/send_viewmodel.dart';
 import 'package:dayfi/models/payment_response.dart';
-import 'package:dayfi/features/send/widgets/delivery_methods_sheet.dart';
+import 'package:dayfi/common/constants/wallet_flag_assets.dart';
+import 'package:dayfi/features/send/send_flow.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
 import 'package:dayfi/common/widgets/shimmer_widgets.dart';
 
 class SelectDestinationCountryView extends ConsumerStatefulWidget {
-  const SelectDestinationCountryView({super.key});
+  final bool hasBackButton;
+  const SelectDestinationCountryView({super.key, this.hasBackButton = true});
 
   @override
   ConsumerState<SelectDestinationCountryView> createState() =>
@@ -85,6 +87,8 @@ class _SelectDestinationCountryViewState
         return 'Zambia';
       case 'US':
         return 'United States';
+      case 'DE':
+        return 'Euro';
       case 'GB':
         return 'United Kingdom';
       case 'CA':
@@ -138,6 +142,8 @@ class _SelectDestinationCountryViewState
         return 'assets/icons/svgs/world_flags/zambia.svg';
       case 'US':
         return 'assets/icons/svgs/world_flags/united states.svg';
+      case 'DE':
+        return WalletFlagAssets.eur;
       case 'GB':
         return 'assets/icons/svgs/world_flags/united kingdom.svg';
       case 'CA':
@@ -200,12 +206,39 @@ class _SelectDestinationCountryViewState
       );
     }
 
-    List<Channel> finalWithdrawalChannels =
-        uniqueWithdrawalChannels.values.toList()..sort(
-          (a, b) => '${a.country ?? ''} - ${a.currency ?? ''}'.compareTo(
-            '${b.country ?? ''} - ${b.currency ?? ''}',
-          ),
-        );
+    // Pin PRD wallets (USD, GBP, EUR, NGN) at top, then Yellow Card corridors.
+    final coreChannels = <Channel>[
+      for (final d in kCoreSendDestinations)
+        Channel(
+          country: d.country,
+          currency: d.currency,
+          rampType: 'withdrawal',
+          status: 'active',
+          min: 0,
+          max: 999999999,
+          id: 'core_${d.currency}',
+        ),
+    ];
+
+    final ycOnly = <String, Channel>{};
+    for (final ch in uniqueWithdrawalChannels.values) {
+      final cur = ch.currency?.toUpperCase() ?? '';
+      if (kCoreSendCurrencies.contains(cur) &&
+          coreChannels.any((c) => c.currency?.toUpperCase() == cur)) {
+        continue;
+      }
+      ycOnly['${ch.country}-${ch.currency}'] = ch;
+    }
+
+    List<Channel> finalWithdrawalChannels = [
+      ...coreChannels,
+      ...ycOnly.values,
+    ]..sort((a, b) {
+        final aCore = kCoreSendCurrencies.contains(a.currency?.toUpperCase() ?? '');
+        final bCore = kCoreSendCurrencies.contains(b.currency?.toUpperCase() ?? '');
+        if (aCore != bCore) return aCore ? -1 : 1;
+        return _getCountryName(a.country).compareTo(_getCountryName(b.country));
+      });
 
     // If no withdrawal channels, add fallback
     if (finalWithdrawalChannels.isEmpty) {
@@ -251,41 +284,48 @@ class _SelectDestinationCountryViewState
         scrolledUnderElevation: .5,
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
-        leadingWidth: 72,
+        leadingWidth: widget.hasBackButton ? 72 : 0,
         foregroundColor: Theme.of(context).scaffoldBackgroundColor,
         shadowColor: Theme.of(context).scaffoldBackgroundColor,
         surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
-        leading: InkWell(
-          splashColor: Colors.transparent,
-          highlightColor: Colors.transparent,
-          onTap:
-              () => {Navigator.pop(context), FocusScope.of(context).unfocus()},
-          child: Stack(
-            alignment: AlignmentGeometry.center,
-            children: [
-              SvgPicture.asset(
-                "assets/icons/svgs/notificationn.svg",
-                height: 40,
-                color: Theme.of(context).colorScheme.surface,
-              ),
-              SizedBox(
-                height: 40,
-                width: 40,
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 8.0),
-                    child: Icon(
-                      Icons.arrow_back_ios,
-                      size: 20,
-                      color: Theme.of(context).textTheme.bodyLarge!.color,
-                      // size: 20,
-                    ),
+        leading:
+            widget.hasBackButton
+                ? InkWell(
+                  splashColor: Colors.transparent,
+                  highlightColor: Colors.transparent,
+                  onTap:
+                      () => {
+                        Navigator.pop(context),
+                        FocusScope.of(context).unfocus(),
+                      },
+                  child: Stack(
+                    alignment: AlignmentGeometry.center,
+                    children: [
+                      SvgPicture.asset(
+                        "assets/icons/svgs/notificationn.svg",
+                        height: 40,
+                        color: Theme.of(context).colorScheme.surface,
+                      ),
+                      SizedBox(
+                        height: 40,
+                        width: 40,
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 8.0),
+                            child: Icon(
+                              Icons.arrow_back_ios,
+                              size: 20,
+                              color:
+                                  Theme.of(context).textTheme.bodyLarge!.color,
+                              // size: 20,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ),
-            ],
-          ),
-        ),
+                )
+                : SizedBox.shrink(),
         automaticallyImplyLeading: false,
         title: Text(
           "Send Money",
@@ -460,7 +500,7 @@ class _SelectDestinationCountryViewState
                                   isSearch: true,
                                   controller: _searchController,
                                   label: '',
-                                  hintText: 'Search for a country',
+                                  hintText: 'Search',
                                   borderRadius: 40,
                                   prefixIcon: Container(
                                     width: 40,
@@ -490,7 +530,7 @@ class _SelectDestinationCountryViewState
                                 horizontal: isWide ? 24 : 18,
                               ),
                               child: Text(
-                                "Select a country and currency to\nsend money to",
+                                "Choose who you're sending to",
                                 style: Theme.of(
                                   context,
                                 ).textTheme.bodyMedium?.copyWith(
@@ -518,18 +558,11 @@ class _SelectDestinationCountryViewState
                         splashColor: Colors.transparent,
                         // color: Colors.transparent,
                         onTap: () {
-                          showModalBottomSheet(
-                            barrierColor: Colors.black.withOpacity(0.85),
-                            context: context,
-                            isScrollControlled: true,
-                            backgroundColor:
-                                Theme.of(context).colorScheme.surface,
-                            builder: (BuildContext ctx) {
-                              return DeliveryMethodsSheet(
-                                selectedCountry: channel.country ?? 'NG',
-                                selectedCurrency: channel.currency ?? 'NGN',
-                              );
-                            },
+                          handleSendDestinationSelected(
+                            context,
+                            ref,
+                            countryCode: channel.country ?? 'NG',
+                            receiveCurrency: channel.currency ?? 'NGN',
                           );
                         },
                         title: Row(

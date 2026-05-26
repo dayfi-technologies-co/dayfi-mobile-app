@@ -29,7 +29,6 @@ import 'package:dayfi/services/local/crashlytics_service.dart';
 import 'package:dayfi/services/remote/wallet_service.dart';
 import 'package:dayfi/features/send/views/bank_transfer_amount_view.dart';
 import 'package:dayfi/common/utils/phone_country_utils.dart';
-import 'package:dayfi/features/home/vm/home_viewmodel.dart';
 import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
 import 'package:intercom_flutter/intercom_flutter.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
@@ -116,6 +115,10 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
   bool _isCheckingWallet = false;
   bool _isLoading = false;
 
+  /// Must not create a new [Future] on every [build] — [ref.watch] on send state was
+  /// restarting [FutureBuilder] (double shimmer / "loads twice").
+  Future<Widget>? _paymentMethodCardsFuture;
+
   // Constants
   static const String _defaultPhone = '+2340000000000';
   static const String _targetCountry = 'NG';
@@ -143,9 +146,16 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
   void initState() {
     super.initState();
 
-    // Update viewModel with selected data
+    // Update viewModel with selected data; kick off payment cards once (stable future).
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       _updateViewModelWithSelectedData();
+      if (_paymentMethodCardsFuture == null) {
+        _paymentMethodCardsFuture = _buildPaymentMethodCard(
+          ref.read(sendViewModelProvider),
+        );
+        setState(() {});
+      }
     });
   }
 
@@ -368,24 +378,10 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
     log('handleDayfiTagSelection');
 
     // Fast path: Check cached wallet data first (no network call)
-    final homeState = ref.read(homeViewModelProvider);
+    final homeState = ref.read(sendViewModelProvider);
     String? dayfiId;
 
     // Check cached wallets first - super fast!
-    if (homeState.wallets.isNotEmpty) {
-      for (final wallet in homeState.wallets) {
-        if (wallet.dayfiId.isNotEmpty) {
-          dayfiId = wallet.dayfiId;
-          break; // Found it, exit early
-        }
-      }
-    }
-
-    // If not found in cache, check primary wallet
-    if (dayfiId == null &&
-        homeState.primaryWallet?.dayfiId.isNotEmpty == true) {
-      dayfiId = homeState.primaryWallet!.dayfiId;
-    }
 
     // If found in cache, show bottom sheet immediately (no loading, no network call)
     if (dayfiId != null && dayfiId.isNotEmpty) {
@@ -747,7 +743,14 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
 
   @override
   Widget build(BuildContext context) {
-    final sendState = ref.watch(sendViewModelProvider);
+    // When Yellow Card / channels load after mount, rebuild cards once — not on every
+    // unrelated send-state field change.
+    ref.listen<SendState>(sendViewModelProvider, (previous, next) {
+      final prevLen = previous?.channels.length ?? -1;
+      if (prevLen == next.channels.length) return;
+      _paymentMethodCardsFuture = _buildPaymentMethodCard(next);
+      if (mounted) setState(() {});
+    });
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -848,26 +851,38 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                       ),
                     ),
                     SizedBox(height: 36),
-                    FutureBuilder<Widget>(
-                      future: _buildPaymentMethodCard(sendState),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return ShimmerWidgets.recipientListShimmer(
+                    _paymentMethodCardsFuture == null
+                        ? ShimmerWidgets.recipientListShimmer(
                             context,
                             itemCount: 6,
-                          );
-                        }
-                        if (snapshot.hasError) {
-                          return ErrorStateWidget(
-                            message: 'Failed to load payment methods',
-                            details: snapshot.error?.toString(),
-                            onRetry: () => setState(() {}),
-                          );
-                        }
-                        return snapshot.data ?? SizedBox.shrink();
-                      },
-                    ),
+                          )
+                        : FutureBuilder<Widget>(
+                            future: _paymentMethodCardsFuture,
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return ShimmerWidgets.recipientListShimmer(
+                                  context,
+                                  itemCount: 6,
+                                );
+                              }
+                              if (snapshot.hasError) {
+                                return ErrorStateWidget(
+                                  message: 'Failed to load payment methods',
+                                  details: snapshot.error?.toString(),
+                                  onRetry: () {
+                                    setState(() {
+                                      _paymentMethodCardsFuture =
+                                          _buildPaymentMethodCard(
+                                        ref.read(sendViewModelProvider),
+                                      );
+                                    });
+                                  },
+                                );
+                              }
+                              return snapshot.data ?? const SizedBox.shrink();
+                            },
+                          ),
                     SizedBox(height: 32),
                     // Removed the select funding method button; navigation is now on card tap
                     SizedBox(height: 32),
@@ -881,7 +896,6 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
     );
   }
 
-  // ...existing code...
   Future<Widget> _buildPaymentMethodCard(SendState sendState) async {
     // Read user country from secure storage
     final secureStorage = locator<SecureStorageService>();

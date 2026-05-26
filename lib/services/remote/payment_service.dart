@@ -374,21 +374,121 @@ class PaymentService {
     }
   }
 
+  /// GET /payments/crypto/send-config
+  Future<Map<String, dynamic>> fetchCryptoSendConfig() async {
+    final response = await _networkService.call(
+      F.baseUrl + UrlConfig.cryptoSendConfig,
+      RequestMethod.get,
+    );
+    final data = response.data;
+    if (data is Map<String, dynamic>) {
+      return (data['data'] as Map<String, dynamic>?) ?? data;
+    }
+    return {};
+  }
+
+  /// POST /payments/crypto/send
+  Future<CryptoSendResult> sendCrypto({
+    required String to,
+    required String amount,
+    required String asset,
+    required String network,
+    required String pin,
+    String memo = '',
+  }) async {
+    final response = await _networkService.call(
+      '${F.baseUrl}${UrlConfig.cryptoSend}',
+      RequestMethod.post,
+      data: {
+        'to': to,
+        'amount': amount,
+        'asset': asset.toUpperCase(),
+        'network': network.toLowerCase(),
+        'pin': pin,
+        if (memo.isNotEmpty) 'memo': memo,
+      },
+    );
+    Map<String, dynamic> envelope;
+    if (response.data is Map<String, dynamic>) {
+      envelope = response.data;
+    } else if (response.data is String) {
+      envelope = json.decode(response.data) as Map<String, dynamic>;
+    } else {
+      throw Exception('Invalid response format');
+    }
+    final status = envelope['status']?.toString().toLowerCase();
+    final code = envelope['code'];
+    final ok = status == 'success' || code == 200;
+    final data = envelope['data'];
+    final hash = data is Map ? data['hash']?.toString() : null;
+    return CryptoSendResult(
+      success: ok,
+      message: envelope['message']?.toString() ?? '',
+      hash: hash,
+      raw: data is Map<String, dynamic> ? data : null,
+    );
+  }
+
+  /// POST /payments/bank-transfer — NGN bank payout via Flutterwave (debits NGN wallet).
+  Future<PaymentResponse> bankTransfer({
+    required num amount,
+    required String accountNumber,
+    required String bankCode,
+    required String bankName,
+    required String accountName,
+    required num fee,
+    required String pin,
+    String spendCurrency = 'NGN',
+  }) async {
+    final response = await _networkService.call(
+      '${F.baseUrl}${UrlConfig.bankTransfer}',
+      RequestMethod.post,
+      data: {
+        'amount': amount,
+        'accountNumber': accountNumber,
+        'bankCode': bankCode,
+        'bankName': bankName,
+        'accountName': accountName,
+        'fee': fee,
+        'pin': pin,
+        'spendCurrency': spendCurrency,
+        'debitCurrency': spendCurrency,
+      },
+    );
+    return _parsePaymentResponse(response.data);
+  }
+
+  PaymentResponse _parsePaymentResponse(dynamic data) {
+    Map<String, dynamic> responseData;
+    if (data is Map<String, dynamic>) {
+      responseData = data;
+    } else if (data is String) {
+      responseData = json.decode(data) as Map<String, dynamic>;
+    } else {
+      throw Exception('Invalid response format');
+    }
+    return PaymentResponse.fromJson(responseData);
+  }
+
   /// Initiate wallet to wallet transfer
   /// POST /api/v1/payments/initiate-wallet-transfer
   Future<PaymentResponse> initiateWalletTransfer({
     required String dayfiId,
     required int amount,
     required String encryptedPin,
+    String debitCurrency = 'USD',
   }) async {
     try {
-      Map<String, dynamic> map = {};
-      map['receiverDayfiId'] = dayfiId.replaceAll('@', '');
-      map['amount'] = amount;
-      map['pin'] = encryptedPin;
+      final map = <String, dynamic>{
+        'dayfiId': dayfiId.replaceAll('@', ''),
+        'amount': amount,
+        'pin': encryptedPin,
+        'debitCurrency': debitCurrency.toUpperCase(),
+        'spendCurrency': debitCurrency.toUpperCase(),
+      };
 
       final response = await _networkService.call(
-        '${F.baseUrl}/payments/dayfi-to-dayfi-transfer',
+        '${F.baseUrl}/payments/initiate-wallet-transfer',
         RequestMethod.post,
         data: map,
       );
@@ -462,4 +562,18 @@ class PaymentService {
       rethrow;
     }
   }
+}
+
+class CryptoSendResult {
+  final bool success;
+  final String message;
+  final String? hash;
+  final Map<String, dynamic>? raw;
+
+  const CryptoSendResult({
+    required this.success,
+    required this.message,
+    this.hash,
+    this.raw,
+  });
 }

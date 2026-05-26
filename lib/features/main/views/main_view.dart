@@ -1,10 +1,9 @@
 import 'package:dayfi/features/home/views/home_view.dart';
-import 'package:dayfi/features/transactions/views/transactions_view.dart';
+import 'package:dayfi/features/send/views/select_destination_country_view.dart';
+import 'package:dayfi/features/invest/views/invest_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// import 'package:dayfi/features/send/views/send_view.dart';
-import 'package:dayfi/features/recipients/views/recipients_view.dart';
 import 'package:dayfi/features/profile/views/profile_view.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
@@ -35,10 +34,11 @@ class _MainViewState extends ConsumerState<MainView> {
   late int _currentIndex;
   final SecureStorageService _secureStorage = locator<SecureStorageService>();
 
+  // Tab order: Home (0) | Send (1) | Invest (2) | More (3)
   final List<Widget> _screens = [
     const HomeView(),
-    const TransactionsView(),
-    RecipientsView(fromSendView: false, fromProfile: false),
+    const SelectDestinationCountryView(hasBackButton: false),
+    const InvestView(),
     const ProfileView(),
   ];
 
@@ -345,22 +345,22 @@ class _MainViewState extends ConsumerState<MainView> {
               children: [
                 _buildNavItem(
                   index: 0,
-                  icon: "assets/icons/svgs/swap.svg",
+                  icon: "assets/icons/svgs/home-2.svg",
                   isSelected: _currentIndex == 0,
                 ),
                 _buildNavItem(
                   index: 1,
-                  icon: "assets/icons/svgs/transactions.svg",
+                  icon: "assets/icons/svgs/brand-telegram.svg",
                   isSelected: _currentIndex == 1,
                 ),
                 _buildNavItem(
                   index: 2,
-                  icon: "assets/icons/svgs/recipients.svg",
+                  icon: "assets/icons/svgs/clock-dollar.svg",
                   isSelected: _currentIndex == 2,
                 ),
                 _buildNavItem(
                   index: 3,
-                  icon: "assets/icons/pngs/account.png",
+                  icon: "assets/icons/svgs/user-square-rounded.svg",
                   isSelected: _currentIndex == 3,
                   isPNG: true,
                 ),
@@ -389,33 +389,20 @@ class _MainViewState extends ConsumerState<MainView> {
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 50),
-        height: 80,
-        padding: EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          // color: isSelected ? AppColors.purple500ForTheme(context) : Colors.transparent,
-          borderRadius: BorderRadius.circular(50),
-        ),
+        height: 72,
+        padding: EdgeInsets.symmetric(horizontal: 24),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(50)),
         child: Opacity(
           opacity: isSelected ? 1 : 0.25,
           child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              isPNG
-                  ? Image.asset(icon, height: 40)
-                  : SvgPicture.asset(
-                    icon,
-                    height: 40,
-                    // color: index == 1 ? Color(0xFF5F2EA1) : null,
-                  ),
-
-              SizedBox(height: 4),
+              SvgPicture.asset(icon, height: 28,        color: Theme.of(context).colorScheme.onSurface,),
+              SizedBox(height: 2),
               Text(
-                index == 0
-                    ? '    Home    '
-                    : index == 1
-                    ? 'Transactions'
-                    : index == 2
-                    ? ' Recipients '
-                    : '   Profile   ',
+                _labelForIndex(index),
                 style: AppTypography.bodySmall.copyWith(
                   fontFamily: 'Chirp',
                   fontSize: 12,
@@ -428,6 +415,21 @@ class _MainViewState extends ConsumerState<MainView> {
         ),
       ),
     );
+  }
+
+  String _labelForIndex(int index) {
+    switch (index) {
+      case 0:
+        return 'Home';
+      case 1:
+        return 'Send';
+      case 2:
+        return 'Invest';
+      case 3:
+        return 'More';
+      default:
+        return '';
+    }
   }
 
   void _showWelcomeBottomSheet() {
@@ -517,35 +519,37 @@ class _MainViewState extends ConsumerState<MainView> {
 
             // Features list
             _buildFeatureItem(
-              icon: _buildTransactionsIcon(),
+              icon: _buildHomeIcon(),
               title: 'Home',
               description:
-                  'Top up your wallet and send money globally with ease.',
+                  'Top up your wallet, check your balance, and send globally.',
             ),
 
-            SizedBox(height: 24),
+            SizedBox(height: 20),
 
             _buildFeatureItem(
-              icon: _buildSoftPOSIcon(),
-              title: 'Transactions',
+              icon: _buildSendIcon(),
+              title: 'Send',
               description:
-                  'Track all your payment history and transaction details.',
+                  'Transfer money to anyone, anywhere — fast and secure.',
             ),
 
-            SizedBox(height: 24),
+            SizedBox(height: 20),
 
             _buildFeatureItem(
-              icon: _buildRecipientsIcon(),
-              title: 'Recipients',
+              icon: _buildInvestIcon(),
+              title: 'Invest',
               description:
-                  'Manage your saved beneficiaries for quick transfers.',
+                  'Grow your money with crypto and savings — coming soon.',
             ),
-            SizedBox(height: 24),
+
+            SizedBox(height: 20),
 
             _buildFeatureItem(
-              icon: _buildProfileIcon(),
-              title: 'Profile',
-              description: 'Update your personal details and account settings.',
+              icon: _buildMoreIcon(),
+              title: 'More',
+              description:
+                  'Profile, transactions, recipients, and account settings.',
             ),
 
             // SizedBox(height: MediaQuery.of(context).size.width * .46),
@@ -625,23 +629,19 @@ class _MainViewState extends ConsumerState<MainView> {
     );
   }
 
-  Widget _buildTransactionsIcon() {
-    return SvgPicture.asset("assets/icons/svgs/swap.svg", height: 40);
+  Widget _buildHomeIcon() {
+    return SvgPicture.asset("assets/icons/svgs/home.svg", height: 36);
   }
 
-  Widget _buildSoftPOSIcon() {
-    return SvgPicture.asset(
-      "assets/icons/svgs/transactions.svg",
-      height: 40,
-      // color: Color(0xFF5F2EA1),
-    );
+  Widget _buildSendIcon() {
+    return SvgPicture.asset("assets/icons/svgs/swap.svg", height: 36);
   }
 
-  Widget _buildProfileIcon() {
-    return Image.asset("assets/icons/pngs/account.png", height: 40);
+  Widget _buildInvestIcon() {
+    return SvgPicture.asset("assets/icons/svgs/cryptoo.svg", height: 36);
   }
 
-  Widget _buildRecipientsIcon() {
-    return SvgPicture.asset("assets/icons/svgs/recipients.svg", height: 40);
+  Widget _buildMoreIcon() {
+    return Image.asset("assets/icons/pngs/account.png", height: 36);
   }
 }

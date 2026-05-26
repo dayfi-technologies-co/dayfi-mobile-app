@@ -805,7 +805,7 @@ class TypewriterText extends StatefulWidget {
 }
 
 class _TypewriterTextState extends State<TypewriterText> {
-  final String _fullText = 'Send\nmoney\nin a\nheartbeat';
+  final String _fullText = 'Let\'s\ndo money\nbetter';
 
   @override
   Widget build(BuildContext context) {

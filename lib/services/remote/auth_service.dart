@@ -1,9 +1,13 @@
 import 'dart:convert';
+import 'package:get_it/get_it.dart';
 import 'package:dayfi/flavors.dart';
 import 'package:dayfi/models/api_response.dart';
 import 'package:dayfi/models/auth_response.dart';
+import 'package:dayfi/models/user_model.dart';
+import 'package:dayfi/services/local/local_cache.dart';
 import 'package:dayfi/services/local/secure_storage.dart';
 import 'package:dayfi/services/notification_service.dart';
+import 'package:dayfi/services/remote/network/api_error.dart';
 import 'package:dayfi/services/remote/network/network_service.dart';
 import 'package:dayfi/services/remote/network/url_config.dart';
 import 'package:dayfi/common/constants/storage_keys.dart';
@@ -15,6 +19,14 @@ class AuthService {
 
   void updateNetworkService() =>
       _networkService = NetworkService(baseUrl: F.baseUrl);
+
+  Future<void> _saveAuthUserPreservingDayfiTag(User? user) async {
+    if (user == null) return;
+    final secureStorage = SecureStorageService();
+    final previous = await secureStorage.read(StorageKeys.user);
+    final merged = mergeStoredDayfiTagIntoUserMap(user.toJson(), previous);
+    await secureStorage.write(StorageKeys.user, json.encode(merged));
+  }
 
   Future<APIResponse> loginUser({
     required String username,
@@ -349,11 +361,10 @@ class AuthService {
       final authResponse = AuthResponse.fromJson(responseData);
 
       if (!authResponse.error) {
-        // Save user details to secure storage
-        final secureStorage = SecureStorageService();
-        await secureStorage.write(
-          StorageKeys.user,
-          json.encode(authResponse.data.user?.toJson()),
+        await _saveAuthUserPreservingDayfiTag(
+          authResponse.data is AuthData
+              ? (authResponse.data as AuthData).user
+              : null,
         );
       }
 
@@ -388,11 +399,10 @@ class AuthService {
       final authResponse = AuthResponse.fromJson(responseData);
 
       if (!authResponse.error) {
-        // Save updated user
-        final secureStorage = SecureStorageService();
-        await secureStorage.write(
-          StorageKeys.user,
-          json.encode(authResponse.data.user?.toJson()),
+        await _saveAuthUserPreservingDayfiTag(
+          authResponse.data is AuthData
+              ? (authResponse.data as AuthData).user
+              : null,
         );
       }
 
@@ -467,11 +477,10 @@ class AuthService {
       final authResponse = AuthResponse.fromJson(responseData);
 
       if (!authResponse.error) {
-        // Save user details to secure storage
-        final secureStorage = SecureStorageService();
-        await secureStorage.write(
-          StorageKeys.user,
-          json.encode(authResponse.data.user?.toJson()),
+        await _saveAuthUserPreservingDayfiTag(
+          authResponse.data is AuthData
+              ? (authResponse.data as AuthData).user
+              : null,
         );
       }
 
@@ -497,17 +506,32 @@ class AuthService {
       // Update user data on success (body `data` is often null; tag is still created).
       if (!apiResponse.error) {
         final secureStorage = SecureStorageService();
+        final tag = dayfiId.replaceAll('@', '');
         final userJson = await secureStorage.read(StorageKeys.user);
         if (userJson.isNotEmpty) {
           final userMap = json.decode(userJson) as Map<String, dynamic>;
-          userMap['dayfi_id'] = dayfiId.replaceAll('@', '');
+          userMap['dayfi_id'] = tag;
           await secureStorage.write(StorageKeys.user, json.encode(userMap));
         }
+        try {
+          await GetIt.instance<LocalCache>().saveToLocalCache(
+            key: 'dayfi_id',
+            value: tag,
+          );
+        } catch (_) {}
       }
 
       return apiResponse;
-    } catch (e) {
-      rethrow;
+    } on ApiError catch (e) {
+      final rawMsg = e.apiErrorModel?.message;
+      final fromModel = (rawMsg ?? '').trim();
+      final desc = (e.errorDescription ?? '').trim();
+      final msg = fromModel.isNotEmpty
+          ? fromModel
+          : (desc.isNotEmpty
+              ? desc
+              : 'Could not save your Dayfi Tag. Please try again.');
+      return APIResponse(error: true, message: msg);
     }
   }
 
@@ -559,11 +583,10 @@ class AuthService {
       final authResponse = AuthResponse.fromJson(responseData);
 
       if (!authResponse.error) {
-        // Save user details to secure storage
-        final secureStorage = SecureStorageService();
-        await secureStorage.write(
-          StorageKeys.user,
-          json.encode(authResponse.data.user?.toJson()),
+        await _saveAuthUserPreservingDayfiTag(
+          authResponse.data is AuthData
+              ? (authResponse.data as AuthData).user
+              : null,
         );
       }
 
@@ -603,11 +626,10 @@ class AuthService {
       final authResponse = AuthResponse.fromJson(responseData);
 
       if (!authResponse.error) {
-        // Save user details to secure storage
-        final secureStorage = SecureStorageService();
-        await secureStorage.write(
-          StorageKeys.user,
-          json.encode(authResponse.data.user?.toJson()),
+        await _saveAuthUserPreservingDayfiTag(
+          authResponse.data is AuthData
+              ? (authResponse.data as AuthData).user
+              : null,
         );
       }
 
@@ -657,4 +679,31 @@ class AuthService {
       rethrow;
     }
   }
+}
+
+/// API payloads often omit [dayfi_id] (it lives on the wallet server-side). When
+/// [user_id] matches stored user, copy the tag so Account does not ask to create it again.
+Map<String, dynamic> mergeStoredDayfiTagIntoUserMap(
+  Map<String, dynamic> incoming,
+  String? existingUserJson,
+) {
+  final merged = Map<String, dynamic>.from(incoming);
+  if (existingUserJson == null || existingUserJson.isEmpty) return merged;
+  try {
+    final old = json.decode(existingUserJson) as Map<String, dynamic>;
+    final oldUserId = '${old['user_id'] ?? old['userId'] ?? ''}';
+    final newUserId = '${merged['user_id'] ?? merged['userId'] ?? ''}';
+    final sameUser = oldUserId.isNotEmpty &&
+        newUserId.isNotEmpty &&
+        oldUserId == newUserId;
+    if (!sameUser) return merged;
+    final oldTag = old['dayfi_id'] ?? old['dayfiId'];
+    final newTag = merged['dayfi_id'] ?? merged['dayfiId'];
+    final oldNonEmpty = oldTag != null && oldTag.toString().trim().isNotEmpty;
+    final newEmpty = newTag == null || newTag.toString().trim().isEmpty;
+    if (oldNonEmpty && newEmpty) {
+      merged['dayfi_id'] = oldTag.toString().replaceAll('@', '');
+    }
+  } catch (_) {}
+  return merged;
 }

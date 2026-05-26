@@ -304,7 +304,7 @@ class _ThemeSelectionSheet extends ConsumerWidget {
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                   fontFamily: 'Chirp',
-                  letterSpacing: -0.25,
+                  letterSpacing: -0.20,
                   height: 1.5,
                 ),
                 textAlign: TextAlign.center,
@@ -318,7 +318,7 @@ class _ThemeSelectionSheet extends ConsumerWidget {
               children: [
                 _ThemeOptionTile(
                   selected: themeMode == AppThemeMode.light,
-                  icon: Icons.light_mode,
+                  icon: "assets/icons/svgs/sun.svg",
                   title: 'Light',
                   subtitle: 'Always use light theme',
                   primary: primary,
@@ -327,7 +327,7 @@ class _ThemeSelectionSheet extends ConsumerWidget {
                 const SizedBox(height: 12),
                 _ThemeOptionTile(
                   selected: themeMode == AppThemeMode.dark,
-                  icon: Icons.dark_mode,
+                  icon: "assets/icons/svgs/moon.svg",
                   title: 'Dark',
                   subtitle: 'Always use dark theme',
                   primary: primary,
@@ -336,7 +336,7 @@ class _ThemeSelectionSheet extends ConsumerWidget {
                 const SizedBox(height: 12),
                 _ThemeOptionTile(
                   selected: themeMode == AppThemeMode.system,
-                  icon: Icons.brightness_auto,
+                  icon: "assets/icons/svgs/sun.svg",
                   title: 'System',
                   subtitle: 'Follow system theme',
                   primary: primary,
@@ -362,7 +362,7 @@ class _ThemeOptionTile extends StatelessWidget {
   });
 
   final bool selected;
-  final IconData icon;
+  final String icon;
   final String title;
   final String subtitle;
   final Color primary;
@@ -389,17 +389,10 @@ class _ThemeOptionTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            SizedBox(
-              width: 40,
-              height: 40,
-              child: Icon(
-                icon,
-                size: 26,
-                color:
-                    selected
-                        ? AppColors.purple500
-                        : onSurface.withValues(alpha: 0.85),
-              ),
+            SvgPicture.asset(
+              icon,
+              height: icon == "assets/icons/svgs/moon.svg" ? 24 : 26,
+              color: selected ? AppColors.purple500 : onSurface.withValues(alpha: 0.85),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -411,7 +404,7 @@ class _ThemeOptionTile extends StatelessWidget {
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontFamily: 'Chirp',
                       fontSize: 18,
-                      letterSpacing: -0.25,
+                      letterSpacing: -0.20,
                       fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                       color: selected ? AppColors.purple500 : onSurface,
                     ),
@@ -424,7 +417,7 @@ class _ThemeOptionTile extends StatelessWidget {
                       fontWeight: FontWeight.w500,
                       height: 1.2,
                       fontFamily: 'Chirp',
-                      letterSpacing: -0.25,
+                      letterSpacing: -0.20,
                       fontSize: 14,
                       color: onSurface.withValues(alpha: 0.75),
                     ),

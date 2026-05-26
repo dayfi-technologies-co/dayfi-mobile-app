@@ -7,6 +7,7 @@ import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/models/user_model.dart';
 import 'package:dayfi/services/remote/auth_service.dart';
+import 'package:dayfi/services/remote/network/api_error.dart';
 import 'package:dayfi/services/local/secure_storage.dart';
 import 'package:dayfi/common/constants/storage_keys.dart';
 
@@ -154,14 +155,34 @@ class BvnNinVerificationNotifier
         return true;
       } else {
         AppLogger.error('BVN verification failed: ${response.message}');
-        TopSnackbar.show(context, message: response.message, isError: true);
+        final detail = response.message.trim();
+        TopSnackbar.show(
+          context,
+          message: detail.isNotEmpty
+              ? 'BVN: $detail'
+              : 'BVN verification failed. Please check your 11-digit BVN and try again.',
+          isError: true,
+        );
         return false;
       }
+    } on ApiError catch (e) {
+      final rawMsg = e.apiErrorModel?.message;
+      final fromModel = (rawMsg ?? '').trim();
+      final desc = (e.errorDescription ?? '').trim();
+      final combined = fromModel.isNotEmpty ? fromModel : desc;
+      TopSnackbar.show(
+        context,
+        message: combined.isNotEmpty
+            ? 'BVN: $combined'
+            : 'BVN verification failed. Please check your 11-digit BVN and try again.',
+        isError: true,
+      );
+      return false;
     } catch (e) {
       AppLogger.error('Error verifying BVN: $e');
       TopSnackbar.show(
         context,
-        message: 'Failed to verify BVN. Please try again.',
+        message: 'BVN verification failed. Please try again.',
         isError: true,
       );
       return false;
@@ -201,14 +222,34 @@ class BvnNinVerificationNotifier
         return true;
       } else {
         AppLogger.error('Profile update failed: ${response.message}');
-        TopSnackbar.show(context, message: response.message, isError: true);
+        final detail = response.message.trim();
+        TopSnackbar.show(
+          context,
+          message: detail.isNotEmpty
+              ? 'NIN: $detail'
+              : 'NIN could not be saved. Please check your 11-digit NIN and try again.',
+          isError: true,
+        );
         return false;
       }
+    } on ApiError catch (e) {
+      final rawMsg = e.apiErrorModel?.message;
+      final fromModel = (rawMsg ?? '').trim();
+      final desc = (e.errorDescription ?? '').trim();
+      final combined = fromModel.isNotEmpty ? fromModel : desc;
+      TopSnackbar.show(
+        context,
+        message: combined.isNotEmpty
+            ? 'NIN: $combined'
+            : 'NIN could not be saved. Please check your 11-digit NIN and try again.',
+        isError: true,
+      );
+      return false;
     } catch (e) {
       AppLogger.error('Error updating profile: $e');
       TopSnackbar.show(
         context,
-        message: 'Failed to update profile. Please try again.',
+        message: 'NIN could not be saved. Please try again.',
         isError: true,
       );
       return false;

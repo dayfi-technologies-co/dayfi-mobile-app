@@ -118,22 +118,35 @@ class WalletDetailsResponse {
   final String message;
   final int code;
   final List<Wallet> wallets;
+  final Map<String, dynamic>? data;
 
   WalletDetailsResponse({
     required this.status,
     required this.message,
     required this.code,
     required this.wallets,
+    this.data,
   });
 
   factory WalletDetailsResponse.fromJson(Map<String, dynamic> json) {
-    final walletsList = json['data'];
+    final payload = json['data'];
     List<Wallet> wallets = [];
+    Map<String, dynamic>? dataMap;
 
-    if (walletsList is List) {
-      for (var walletData in walletsList) {
+    if (payload is List) {
+      for (var walletData in payload) {
         if (walletData is Map<String, dynamic>) {
           wallets.add(Wallet.fromJson(walletData));
+        }
+      }
+    } else if (payload is Map<String, dynamic>) {
+      dataMap = payload;
+      final walletsList = payload['wallets'];
+      if (walletsList is List) {
+        for (var walletData in walletsList) {
+          if (walletData is Map<String, dynamic>) {
+            wallets.add(Wallet.fromJson(walletData));
+          }
         }
       }
     }
@@ -141,10 +154,11 @@ class WalletDetailsResponse {
     return WalletDetailsResponse(
       status: json['status']?.toString() ?? '',
       message: json['message']?.toString() ?? '',
-      code: json['code'] is int 
-          ? json['code'] 
+      code: json['code'] is int
+          ? json['code']
           : int.tryParse(json['code']?.toString() ?? '200') ?? 200,
       wallets: wallets,
+      data: dataMap,
     );
   }
 }

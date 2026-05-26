@@ -47,6 +47,7 @@ class MyApp extends ConsumerStatefulWidget {
 class _MyAppState extends ConsumerState<MyApp> {
   String _initialRoute = AppRoute.onboardingView;
   bool _isInitialized = false;
+  bool _transactionMonitorStarted = false;
 
   @override
   void initState() {
@@ -100,8 +101,17 @@ class _MyAppState extends ConsumerState<MyApp> {
       _initialRoute = AppRoute.onboardingView;
     } finally {
       if (mounted) {
+        final targetRoute = _initialRoute;
         setState(() {
           _isInitialized = true;
+        });
+        // Navigator was created with `home: _BootstrapSplash`. Switching to
+        // `initialRoute` on rebuild leaves a null route name — push the real entry.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          final nav = NavigatorKey.appNavigatorKey.currentState;
+          if (nav == null) return;
+          nav.pushReplacementNamed(targetRoute);
         });
       }
     }
@@ -142,28 +152,16 @@ class _MyAppState extends ConsumerState<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    // Show a minimal loading screen while determining route
-    if (!_isInitialized) {
-      return MaterialApp(
-        debugShowCheckedModeBanner: false,
-        home: Scaffold(
-          backgroundColor: const Color(0xFFFFF9E3),
-          body: Center(
-            child: Image.asset('assets/images/logo_splash.png', width: 88.0)
-          ),
-        ),
-      );
-    }
-
+    // One ProviderScope + one MaterialApp for the whole app lifecycle. Previously we
+    // swapped a bare MaterialApp (splash) for a second MaterialApp under ProviderScope,
+    // which remounted Navigator/Riverpod and felt like "the screen loads twice".
     return ProviderScope(
       observers: [ProviderScopeObserver()],
       overrides: [
-        // Override the theme provider with SharedPreferences
         themeProvider.overrideWith((ref) {
           final prefs = ref.watch(sharedPreferencesProvider);
           return ThemeNotifier(prefs);
         }),
-        // Override the SharedPreferences provider
         sharedPreferencesProvider.overrideWith((ref) {
           return ref.watch(sharedPreferencesInstanceProvider);
         }),
@@ -176,17 +174,21 @@ class _MyAppState extends ConsumerState<MyApp> {
           return Consumer(
             builder: (context, ref, child) {
               final themeData = ref.watch(themeDataProvider);
-
-              // Initialize transaction monitoring
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                final transactionMonitor = ref.read(transactionMonitorProvider);
-                transactionMonitor.startMonitoring();
-              });
               final themeMode = ref.watch(flutterThemeModeProvider);
+
+              if (_isInitialized && !_transactionMonitorStarted) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (!mounted || _transactionMonitorStarted) return;
+                  _transactionMonitorStarted = true;
+                  ref.read(transactionMonitorProvider).startMonitoring();
+                });
+              }
 
               return ConnectivityWrapper(
                 child: MaterialApp(
-                  navigatorObservers: [if (analyticsObserver != null) analyticsObserver!],
+                  navigatorObservers: [
+                    if (analyticsObserver != null) analyticsObserver!,
+                  ],
                   debugShowCheckedModeBanner: false,
                   title: AppConstants.appName,
                   theme: themeData.copyWith(
@@ -202,14 +204,44 @@ class _MyAppState extends ConsumerState<MyApp> {
                             .toList(),
                   ),
                   themeMode: themeMode,
-                  initialRoute: _initialRoute,
                   navigatorKey: NavigatorKey.appNavigatorKey,
-                  onGenerateRoute: AppRoute.getRoute,
+                  // Keep a stable bootstrap route; never swap home ↔ initialRoute after init.
+                  initialRoute: '/',
+                  onGenerateRoute: (RouteSettings settings) {
+                    if (!_isInitialized) {
+                      return MaterialPageRoute<void>(
+                        settings: settings,
+                        builder: (_) => const _BootstrapSplash(),
+                      );
+                    }
+                    final name = settings.name;
+                    if (name == null || name == '/') {
+                      return AppRoute.getRoute(
+                        RouteSettings(name: _initialRoute),
+                      );
+                    }
+                    return AppRoute.getRoute(settings);
+                  },
                 ),
               );
             },
           );
         },
+      ),
+    );
+  }
+}
+
+/// Shown under the same [MaterialApp] until async route bootstrap completes.
+class _BootstrapSplash extends StatelessWidget {
+  const _BootstrapSplash();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFFFF9E3),
+      body: Center(
+        child: Image.asset('assets/images/logo_splash.png', width: 88.0),
       ),
     );
   }
