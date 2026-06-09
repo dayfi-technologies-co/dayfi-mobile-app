@@ -1,4 +1,5 @@
 import 'package:dayfi/common/utils/ui_helpers.dart';
+import 'package:dayfi/common/constants/username_copy.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
@@ -15,7 +16,13 @@ import 'package:dayfi/routes/route.dart';
 import 'dart:async';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/models/beneficiary_with_source.dart';
+import 'package:dayfi/features/recipients/helpers/recipient_history_helper.dart';
+import 'package:dayfi/features/send/send_flow.dart';
+import 'package:dayfi/features/recipients/helpers/recipient_save_helper.dart';
+import 'package:dayfi/features/recipients/widgets/recipient_avatar_badge.dart';
 import 'package:dayfi/features/recipients/vm/recipients_viewmodel.dart';
+import 'package:dayfi/features/wallet/constants/global_wallet.dart';
+import 'package:dayfi/features/wallet/providers/wallet_hub_provider.dart';
 
 class SendDayfiIdView extends ConsumerStatefulWidget {
   final Map<String, dynamic> selectedData;
@@ -37,11 +44,29 @@ class _SendDayfiIdViewState extends ConsumerState<SendDayfiIdView> {
 
   String? _myDayfiId;
 
+  bool get _saveRecipientOnly =>
+      widget.selectedData['saveRecipientOnly'] == true;
+
   @override
   void initState() {
     super.initState();
-    _dayfiIdController.text = widget.selectedData['accountNumber'] ?? '';
+    final prefillTag = (widget.selectedData['accountNumber'] ??
+            widget.selectedData['dayfiId'] ??
+            widget.selectedData['recipientTag'])
+        ?.toString()
+        .replaceFirst('@', '')
+        .trim();
+    if (prefillTag != null && prefillTag.isNotEmpty) {
+      _dayfiIdController.text = prefillTag;
+      _validatedDayfiId = prefillTag;
+      _recipientName = widget.selectedData['recipientName']?.toString();
+    }
     _loadMyDayfiId();
+    if (_validatedDayfiId != null && _validatedDayfiId!.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _validateDayfiId(_validatedDayfiId!);
+      });
+    }
   }
 
   Future<void> _loadMyDayfiId() async {
@@ -182,11 +207,17 @@ class _SendDayfiIdViewState extends ConsumerState<SendDayfiIdView> {
               final firstName = data['first_name']?.toString() ?? '';
               final lastName = data['last_name']?.toString() ?? '';
               recipientDisplayName = '$firstName $lastName'.trim();
-              if (recipientDisplayName.isEmpty) {
-                recipientDisplayName = '@$cleanDayfiId';
+            }
+            if (recipientDisplayName == null || recipientDisplayName.isEmpty) {
+              final accountName = data['account_name']?.toString() ??
+                  data['accountName']?.toString() ??
+                  data['name']?.toString();
+              if (accountName != null && accountName.trim().isNotEmpty) {
+                recipientDisplayName = accountName.trim();
               }
-            } else if (data.containsKey('name')) {
-              recipientDisplayName = data['name']?.toString();
+            }
+            if (recipientDisplayName == null || recipientDisplayName.isEmpty) {
+              recipientDisplayName = '@$cleanDayfiId';
             }
             // Get recipient currency and country from API response
             if (data.containsKey('currency')) {
@@ -247,59 +278,24 @@ class _SendDayfiIdViewState extends ConsumerState<SendDayfiIdView> {
           return;
         }
 
-        // Prevent sending to own Dayfi Tag
-        try {
-          final localCache = locator<LocalCache>();
-          final userData = await localCache.getUser();
-
-          String? myDayfi;
-          if (userData.containsKey('dayfi_id')) {
-            myDayfi = (userData['dayfi_id'] ?? '').toString().trim();
-          }
-          if ((myDayfi == null || myDayfi.isEmpty) && userData.containsKey('dayfiId')) {
-            myDayfi = (userData['dayfiId'] ?? '').toString().trim();
-          }
-
-          if (myDayfi != null &&
-              myDayfi.isNotEmpty &&
-              myDayfi.toLowerCase() == cleanDayfiId.toLowerCase()) {
-            if (mounted) {
-              setState(() {
-                _validationError = 'Cannot send to your own Dayfi Tag';
-                _validatedDayfiId = null;
-                _recipientName = null;
-              });
-            }
-          } else {
-            if (mounted) {
-              setState(() {
-                _validatedDayfiId = cleanDayfiId;
-                _recipientName = recipientDisplayName ?? '@$cleanDayfiId';
-                _validationError = null;
-              });
-            }
-          }
-        } catch (e) {
-          AppLogger.error('Error checking local Dayfi Tag: $e');
-          if (mounted) {
-            setState(() {
-              _validatedDayfiId = cleanDayfiId;
-              _recipientName = recipientDisplayName ?? '@$cleanDayfiId';
-              _validationError = null;
-            });
-          }
+        if (mounted) {
+          setState(() {
+            _validatedDayfiId = cleanDayfiId;
+            _recipientName = recipientDisplayName ?? '@$cleanDayfiId';
+            _validationError = null;
+          });
         }
       } else {
         if (mounted) {
           setState(() {
-            _validationError = 'Dayfi Tag not found';
+            _validationError = UsernameCopy.notFound;
             _validatedDayfiId = null;
             _recipientName = null;
           });
         }
       }
     } catch (e) {
-      AppLogger.error('Error validating Dayfi Tag: $e');
+      AppLogger.error('UsernameCopy.validationError: $e');
       if (mounted) {
         setState(() {
           _validationError = 'Unable to verify username';
@@ -351,18 +347,50 @@ class _SendDayfiIdViewState extends ConsumerState<SendDayfiIdView> {
     });
   }
 
-  void _handleContinue() {
+  Future<void> _handleContinue() async {
     if (_formKey.currentState!.validate() &&
         _validatedDayfiId != null &&
         _validatedDayfiId!.isNotEmpty) {
-      // Navigate to send view to enter amount, then to review
+      if (_saveRecipientOnly) {
+        final currency =
+            widget.selectedData['receiveCurrency']?.toString() ?? 'USD';
+        final entry = RecipientSaveHelper.dayfi(
+          tag: _dayfiIdController.text.trim(),
+          displayName:
+              _recipientName?.trim().isNotEmpty == true
+                  ? _recipientName!.trim()
+                  : '@${_dayfiIdController.text.trim()}',
+          currency: currency,
+        );
+        await RecipientSaveHelper.save(ref, entry);
+        if (!mounted) return;
+        RecipientSaveHelper.completeSaveRecipientOnlyNavigation(context);
+        return;
+      }
+
+      final payWith = ref.read(selectedDebitCurrencyProvider);
+      final receiveCurrency =
+          widget.selectedData['receiveCurrency']?.toString().toUpperCase() ??
+          payWith;
+      final receiveCountry =
+          widget.selectedData['receiveCountry']?.toString().toUpperCase() ??
+          (receiveCurrency.isNotEmpty
+              ? countryForCurrency(receiveCurrency)
+              : null);
+
       appRouter.pushNamed(
         AppRoute.sendView,
         arguments: {
           'selectedData': {
             ...widget.selectedData,
+            ...payWithRouteArgs(payWithCurrency: payWith),
             'dayfiId': _dayfiIdController.text.trim(),
             'recipientName': _recipientName,
+            'receiveCurrency': payWith,
+            if (receiveCountry != null && receiveCountry.isNotEmpty)
+              'receiveCountry': receiveCountry,
+            if (widget.selectedData['prefillSendAmount'] != null)
+              'prefillSendAmount': widget.selectedData['prefillSendAmount'],
           },
         },
       );
@@ -371,7 +399,7 @@ class _SendDayfiIdViewState extends ConsumerState<SendDayfiIdView> {
         context,
         message:
             _validatedDayfiId == null
-                ? 'Please enter a valid Dayfi Tag'
+                ? UsernameCopy.enterValid
                 : 'Please complete the form',
         isError: true,
       );
@@ -464,7 +492,9 @@ class _SendDayfiIdViewState extends ConsumerState<SendDayfiIdView> {
                             horizontal: isWide ? 24 : 24,
                           ),
                           child: Text(
-                            "Add a recipient via Dayfi Tag to proceed with your transfer",
+                            _saveRecipientOnly
+                                ? 'Save a ${UsernameCopy.label.toLowerCase()} recipient for future transfers.'
+                                : UsernameCopy.addRecipientSubtitle,
                             style: Theme.of(
                               context,
                             ).textTheme.bodyMedium?.copyWith(
@@ -482,7 +512,7 @@ class _SendDayfiIdViewState extends ConsumerState<SendDayfiIdView> {
                         // Dayfi Tag Input Field
                         CustomTextField(
                           controller: _dayfiIdController,
-                          label: "Recipient's Dayfi Tag",
+                          label: UsernameCopy.recipient,
                           hintText: 'dayfitag',
                           textCapitalization: TextCapitalization.none,
                           autofocus: true,
@@ -586,7 +616,7 @@ class _SendDayfiIdViewState extends ConsumerState<SendDayfiIdView> {
                           //           style: TextStyle(
                           //             fontFamily: 'Chirp',
                           //             fontWeight: FontWeight.w600,
-                          //             fontSize: 12,
+                          //             fontSize: 12.5,
                           //             letterSpacing: 0.00,
                           //             height: 1.450,
                           //             color:
@@ -729,8 +759,8 @@ class _SendDayfiIdViewState extends ConsumerState<SendDayfiIdView> {
                         SizedBox(height: 32),
 
                         // Continue Button
-                        PrimaryButton(
-                          text: 'Enter Amount',
+                   Padding(padding: EdgeInsets.symmetric(horizontal: 18), child:     PrimaryButton(
+                          text: _saveRecipientOnly ? 'Save Recipient' : 'Enter Amount',
                           onPressed:
                               _validatedDayfiId != null
                                   ? _handleContinue
@@ -752,26 +782,30 @@ class _SendDayfiIdViewState extends ConsumerState<SendDayfiIdView> {
                           width: double.infinity,
                           fullWidth: true,
                           borderRadius: 40,
-                        ),
+                        ),),
 
                         SizedBox(height: 20),
 
-                        Center(
-                          child: Center(
-                            child: TextButton(
-                              style: TextButton.styleFrom(
-                                // padding: EdgeInsets.zero,
-                                // minimumSize: Size(50, 30),
-                                splashFactory: NoSplash.splashFactory,
-                                backgroundColor: Colors.transparent,
-                                foregroundColor: Colors.transparent,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                alignment: Alignment.center,
-                              ),
-                              onPressed: () async {
+                        if (!_saveRecipientOnly)
+                          Center(
+                            child: Center(
+                              child: TextButton(
+                                style: TextButton.styleFrom(
+                                  // padding: EdgeInsets.zero,
+                                  // minimumSize: Size(50, 30),
+                                  splashFactory: NoSplash.splashFactory,
+                                  backgroundColor: Colors.transparent,
+                                  foregroundColor: Colors.transparent,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  alignment: Alignment.center,
+                                ),
+                                onPressed: () async {
                                 FocusScope.of(context).unfocus();
-                                // Show recent beneficiaries in a bottom sheet and allow selection
-                                final selectedCountry = widget.selectedData['country']?.toString()?.toLowerCase();
+                                unawaited(
+                                  ref
+                                      .read(recipientsProvider.notifier)
+                                      .loadBeneficiaries(),
+                                );
                                 final result = await showAppBottomSheet<
                                   BeneficiaryWithSource
                                 >(
@@ -787,56 +821,49 @@ class _SendDayfiIdViewState extends ConsumerState<SendDayfiIdView> {
                                           final recipientsState = sheetRef
                                               .watch(recipientsProvider);
                                           final allBeneficiaries =
-                                              recipientsState.beneficiaries
-                                                  .where((b) {
-                                                    final isDayFi =
-                                                        b.source.accountType
-                                                                ?.toLowerCase() ==
-                                                            'dayfi' ||
-                                                        b.source.accountNumber
-                                                                ?.startsWith(
-                                                                  '@',
-                                                                ) ==
-                                                            true ||
-                                                        b
-                                                                .beneficiary
-                                                                .accountNumber
-                                                                ?.startsWith(
-                                                                  '@',
-                                                                ) ==
-                                                            true ||
-                                                        b
-                                                                .beneficiary
-                                                                .accountType
-                                                                ?.toLowerCase() ==
-                                                            'dayfi';
-                                                    final isNotOwn =
-                                                        (b
-                                                                .beneficiary
-                                                                .accountNumber ??
-                                                            '') !=
-                                                        (_myDayfiId ?? '');
-                                                    // Filter by selected country (case-insensitive)
-                                                    final beneficiaryCountry = b.beneficiary.country?.toLowerCase();
-                                                    final matchesCountry = selectedCountry == null || beneficiaryCountry == selectedCountry;
-                                                    return isDayFi && isNotOwn && matchesCountry;
-                                                  })
-                                                  .fold<
-                                                    Map<
-                                                      String,
-                                                      BeneficiaryWithSource
-                                                    >
-                                                  >({}, (map, b) {
-                                                    final key =
-                                                        b
-                                                            .beneficiary
-                                                            .accountNumber ??
-                                                        '';
-                                                    if (!map.containsKey(key))
-                                                      map[key] = b;
-                                                    return map;
-                                                  })
-                                                  .values
+                                              RecipientHistoryHelper
+                                                  .filterForSendContext(
+                                                    recipientsState.beneficiaries,
+                                                    deliveryMethod: 'dayfi_tag',
+                                                    currency: (widget
+                                                                .selectedData[
+                                                            'debitCurrency'] ??
+                                                        widget.selectedData[
+                                                            'sendCurrency'])
+                                                        ?.toString(),
+                                                    receiveCountry: widget
+                                                            .selectedData[
+                                                        'receiveCountry']
+                                                        ?.toString(),
+                                                    receiveCurrency: widget
+                                                            .selectedData[
+                                                        'receiveCurrency']
+                                                        ?.toString(),
+                                                  )
+                                                  .where(
+                                                    (b) {
+                                                      final tag = b
+                                                          .source
+                                                          .accountNumber
+                                                          ?.replaceFirst(
+                                                            '@',
+                                                            '',
+                                                          )
+                                                          .trim()
+                                                          .toLowerCase();
+                                                      final excluded =
+                                                          _myDayfiId
+                                                              ?.replaceFirst(
+                                                                '@',
+                                                                '',
+                                                              )
+                                                              .trim()
+                                                              .toLowerCase();
+                                                      return excluded == null ||
+                                                          excluded.isEmpty ||
+                                                          tag != excluded;
+                                                    },
+                                                  )
                                                   .toList();
                                           return StatefulBuilder(
                                             builder: (context, setModalState) {
@@ -1142,84 +1169,10 @@ class _SendDayfiIdViewState extends ConsumerState<SendDayfiIdView> {
                                                                             },
                                                                             child: Row(
                                                                               children: [
-                                                                                // Avatar
-                                                                                Column(
-                                                                                  children: [
-                                                                                    Stack(
-                                                                                      alignment:
-                                                                                          Alignment.bottomRight,
-                                                                                      children: [
-                                                                                        Stack(
-                                                                                          alignment:
-                                                                                              Alignment.center,
-                                                                                          children: [
-                                                                                            SvgPicture.asset(
-                                                                                              'assets/icons/svgs/account.svg',
-                                                                                              width:
-                                                                                                  40,
-                                                                                              height:
-                                                                                                  40,
-                                                                                              color: AppColors.purple500ForTheme(
-                                                                                                context,
-                                                                                              ),
-                                                                                            ),
-                                                                                            Text(
-                                                                                              (b.beneficiary.name.isNotEmpty
-                                                                                                      ? b.beneficiary.name[0]
-                                                                                                      : '?')
-                                                                                                  .toUpperCase(),
-                                                                                              style: TextStyle(
-                                                                                                color:
-                                                                                                    AppColors.neutral0,
-                                                                                                fontFamily:
-                                                                                                    'Chirp',
-                                                                                                fontSize:
-                                                                                                    16,
-                                                                                                fontWeight:
-                                                                                                    FontWeight.w500,
-                                                                                              ),
-                                                                                            ),
-                                                                                          ],
-                                                                                        ),
-
-                                                                                        Align(
-                                                                                          alignment:
-                                                                                              Alignment.bottomRight,
-                                                                                          child: Container(
-                                                                                            width:
-                                                                                                15,
-                                                                                            height:
-                                                                                                15,
-                                                                                            decoration: BoxDecoration(
-                                                                                              color:
-                                                                                                  AppColors.neutral0,
-                                                                                              shape:
-                                                                                                  BoxShape.circle,
-                                                                                              border: Border.all(
-                                                                                                color:
-                                                                                                    AppColors.neutral200,
-                                                                                                width:
-                                                                                                    1,
-                                                                                              ),
-                                                                                            ),
-                                                                                            child: ClipOval(
-                                                                                              child: SvgPicture.asset(
-                                                                                                _getFlagPath(
-                                                                                                  b.beneficiary.country,
-                                                                                                ),
-                                                                                                fit:
-                                                                                                    BoxFit.cover,
-                                                                                                width:
-                                                                                                    20,
-                                                                                                height:
-                                                                                                    20,
-                                                                                              ),
-                                                                                            ),
-                                                                                          ),
-                                                                                        ),
-                                                                                      ],
-                                                                                    ),
-                                                                                  ],
+                                                                                RecipientAvatarBadge(
+                                                                                  entry: b,
+                                                                                  flagPathForCountry:
+                                                                                      _getFlagPath,
                                                                                 ),
                                                                                 SizedBox(
                                                                                   width:
@@ -1232,7 +1185,10 @@ class _SendDayfiIdViewState extends ConsumerState<SendDayfiIdView> {
                                                                                         CrossAxisAlignment.start,
                                                                                     children: [
                                                                                       Text(
-                                                                                        b.beneficiary.name.toUpperCase(),
+                                                                                        RecipientHistoryHelper.primaryLabel(
+                                                                                          b.beneficiary,
+                                                                                          b.source,
+                                                                                        ).toUpperCase(),
                                                                                         style: AppTypography.bodyLarge.copyWith(
                                                                                           fontFamily:
                                                                                               'Chirp',
@@ -1247,27 +1203,12 @@ class _SendDayfiIdViewState extends ConsumerState<SendDayfiIdView> {
                                                                                             2,
                                                                                       ),
                                                                                       Text(
-                                                                                        (() {
-                                                                                          String accountNum =
-                                                                                              b.beneficiary.accountNumber ??
-                                                                                              b.source.accountNumber ??
-                                                                                              '';
-                                                                                          // If accountNum looks like a wallet ID, use beneficiary name instead
-                                                                                          if (accountNum.startsWith(
-                                                                                            'wallet-',
-                                                                                          )) {
-                                                                                            accountNum =
-                                                                                                b.beneficiary.name;
-                                                                                          }
-                                                                                          // Always add @ prefix for Dayfi Tags in this view
-                                                                                          if (!accountNum.startsWith(
-                                                                                            '@',
-                                                                                          )) {
-                                                                                            accountNum =
-                                                                                                '@$accountNum';
-                                                                                          }
-                                                                                          return accountNum;
-                                                                                        })(),
+                                                                                        RecipientHistoryHelper.secondaryLabel(
+                                                                                          b.beneficiary,
+                                                                                          b.source,
+                                                                                          ledgerCurrency:
+                                                                                              b.ledgerCurrency,
+                                                                                        ),
                                                                                         style: AppTypography.bodyMedium.copyWith(
                                                                                           fontFamily:
                                                                                               'Chirp',

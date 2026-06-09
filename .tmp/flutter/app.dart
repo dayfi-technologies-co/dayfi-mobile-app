@@ -22,7 +22,7 @@ class App extends StatelessWidget {
           message: F.name,
           color: Colors.green.withAlpha(150),
           textStyle: TextStyle(
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
             fontSize: 12.0,
             letterSpacing: 1.0,
           ),

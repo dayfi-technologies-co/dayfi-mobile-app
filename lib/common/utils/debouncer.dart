@@ -63,5 +63,5 @@ class Debouncer {
 /// 
 /// Provides a default 300ms delay which is optimal for search-as-you-type
 class SearchDebouncer extends Debouncer {
-  SearchDebouncer({int milliseconds = 300}) : super(milliseconds: milliseconds);
+  SearchDebouncer({super.milliseconds = 300});
 }

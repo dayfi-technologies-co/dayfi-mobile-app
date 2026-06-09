@@ -26,6 +26,10 @@
 		<string>$(FLUTTER_BUILD_NUMBER)</string>
 		<key>LSRequiresIPhoneOS</key>
 		<true/>
+		<key>NSMicrophoneUsageDescription</key>
+		<string>DayX uses the microphone so you can speak your questions instead of typing.</string>
+		<key>NSSpeechRecognitionUsageDescription</key>
+		<string>DayX converts your speech to text to help you chat with the assistant.</string>
 		<key>NSBiometricUsageDescription</key>
 		<string>This app uses biometric authentication (Touch ID or Face ID) to provide secure and convenient access to your account.</string>
 		<key>NSCameraUsageDescription</key>
@@ -55,6 +59,8 @@
 			<string>UIInterfaceOrientationLandscapeLeft</string>
 			<string>UIInterfaceOrientationLandscapeRight</string>
 		</array>
+		<key>GIDClientID</key>
+		<string>826631103417-uc5f8ruhc8av1ncunkpufu9dpa1190ar.apps.googleusercontent.com</string>
 		<key>CFBundleURLTypes</key>
 		<array>
 			<dict>

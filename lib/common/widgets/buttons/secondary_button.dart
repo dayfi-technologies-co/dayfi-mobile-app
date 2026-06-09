@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'package:dayfi/common/widgets/buttons/dayfi_button_inset.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
-import 'package:dayfi/common/utils/haptic_helper.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 /// A reusable secondary button widget that follows the Dayfi design system.
@@ -85,6 +85,8 @@ class SecondaryButton extends StatelessWidget {
   /// The shadow color of the button
   final Color? shadowColor;
 
+  final bool applyFeatureInset;
+
   const SecondaryButton({
     super.key,
     required this.text,
@@ -112,6 +114,7 @@ class SecondaryButton extends StatelessWidget {
     this.fullWidth = false,
     this.elevation,
     this.shadowColor,
+    this.applyFeatureInset = true,
   });
 
   /// Creates a secondary button with default Dayfi styling
@@ -172,9 +175,19 @@ class SecondaryButton extends StatelessWidget {
             ? (borderColor ?? AppColors.primary400).withOpacity(0.5)
             : borderColor ?? AppColors.primary400;
 
-    return Container(
-      width: MediaQuery.of(context).size.width > 600 ? 300 : 400,
-      height: 48,
+    final resolvedWidth =
+        fullWidth
+            ? double.infinity
+            : (width ?? (MediaQuery.of(context).size.width > 600 ? 300.0 : 400.0));
+    final resolvedHeight = height ?? 48;
+    final resolvedRadius = borderRadius ?? 10;
+
+    return wrapDayfiFeatureButtonInset(
+      fullWidth: fullWidth,
+      applyFeatureInset: applyFeatureInset,
+      child: Container(
+      width: resolvedWidth,
+      height: resolvedHeight,
       // padding: EdgeInsets.symmetric(
       //   horizontal: horizontalPadding ?? 10,
       //   vertical: verticalPadding ?? 8,
@@ -183,8 +196,11 @@ class SecondaryButton extends StatelessWidget {
       decoration: ShapeDecoration(
         color: effectiveBackgroundColor,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(borderRadius ?? 10),
-          side: BorderSide(color: effectiveBorderColor, width: 1),
+          borderRadius: BorderRadius.circular(resolvedRadius),
+          side: BorderSide(
+            color: effectiveBorderColor,
+            width: borderWidth ?? 1,
+          ),
         ),
         shadows:
             elevation != null && elevation! > 0
@@ -214,9 +230,9 @@ class SecondaryButton extends StatelessWidget {
                       // HapticHelper.mediumImpact();
                       onPressed?.call();
                     },
-            borderRadius: BorderRadius.circular(borderRadius ?? 10),
+            borderRadius: BorderRadius.circular(resolvedRadius),
             child: SizedBox(
-              width: 400,
+              width: fullWidth ? double.infinity : resolvedWidth,
               height: double.infinity,
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -258,6 +274,7 @@ class SecondaryButton extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 }

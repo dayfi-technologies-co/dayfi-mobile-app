@@ -65,11 +65,12 @@ class _BvnNinVerificationViewState
     // Update controllers when state changes
     _updateControllers(verificationState);
 
-    // Get showBackButton from arguments if available
+    // Get route args
     final args = ModalRoute.of(context)?.settings.arguments;
     final showBackButton =
         (args is Map && args['showBackButton'] == true) ||
         widget.showBackButton;
+    final fromSignup = args is Map && args['fromSignup'] == true;
 
     return Stack(
       children: [
@@ -151,14 +152,16 @@ class _BvnNinVerificationViewState
                     child: // Submit Button
                         PrimaryButton(
                           borderRadius: 38,
-                          text: "Verify",
+                          text: 'Verify & create NGN account',
                           onPressed:
                               verificationState.isFormValid &&
                                       !verificationState.isBusy
                                   ? () =>
                                       verificationNotifier.submitVerification(
                                         context,
-                                        widget.showBackButton,
+                                        ref,
+                                        showBackButton: showBackButton,
+                                        fromSignup: fromSignup,
                                       )
                                   : null,
                           backgroundColor:
@@ -176,6 +179,7 @@ class _BvnNinVerificationViewState
                           letterSpacing: -.70,
                           fontSize: 18,
                           fullWidth: true,
+                          applyFeatureInset: false,
                           isLoading: verificationState.isBusy,
                         )
                         .animate()
@@ -222,7 +226,7 @@ class _BvnNinVerificationViewState
                           children: [
                             SizedBox(height: 8),
                             Text(
-                              "KYC Level 2 Verification",
+                              'Verify identity',
                               textAlign: TextAlign.center,
                               style: Theme.of(
                                 context,
@@ -241,7 +245,7 @@ class _BvnNinVerificationViewState
 
                             SizedBox(height: 18),
                             Text(
-                              "Enter your BVN and NIN to complete your KYC Level 2 verification. This will only take about 30 seconds.",
+                              'Enter your BVN and NIN. We verify your BVN matches your name, then create your NGN bank account automatically.',
                               style: Theme.of(
                                 context,
                               ).textTheme.bodyMedium?.copyWith(
@@ -267,7 +271,20 @@ class _BvnNinVerificationViewState
                               verificationState,
                               verificationNotifier,
                             ),
-                            SizedBox(height: 24),
+                            if (verificationState.submitError.isNotEmpty) ...[
+                              const SizedBox(height: 16),
+                              Text(
+                                verificationState.submitError,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 14,
+                                  fontFamily: 'Chirp',
+                                  height: 1.35,
+                                ),
+                              ),
+                            ],
+                            const SizedBox(height: 24),
                           ],
                         ),
                       ),

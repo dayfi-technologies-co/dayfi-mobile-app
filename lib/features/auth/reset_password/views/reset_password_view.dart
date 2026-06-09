@@ -354,6 +354,7 @@ class ResetPasswordView extends ConsumerWidget {
                     fontSize: 18,
                     width: 375,
                     fullWidth: true,
+                    applyFeatureInset: false,
                   )
                   .animate()
                   .fadeIn(

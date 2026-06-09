@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dayfi/app_locator.dart';
+import 'package:dayfi/features/dayflow/services/dayflow_user_storage.dart';
 import 'package:dayfi/services/local/local_cache.dart';
 import 'package:dayfi/services/local/secure_storage.dart';
 import 'package:dayfi/common/constants/storage_keys.dart';
@@ -166,14 +167,7 @@ class DataClearingService {
   Future<void> _clearCachedData() async {
     try {
       AppLogger.info('Clearing cached data...');
-      
-      // Clear any image cache
-      // Note: Flutter automatically manages image cache, but we can force clear it
-      // if needed in the future
-      
-      // Clear any other cached data here
-      // For example: API response cache, temporary files, etc.
-      
+      await DayFlowUserStorage.clearAllForLogout();
       AppLogger.info('Cached data cleared successfully');
     } catch (e) {
       AppLogger.error('Error clearing cached data: $e');

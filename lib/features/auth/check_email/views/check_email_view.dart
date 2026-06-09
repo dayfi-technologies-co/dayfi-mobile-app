@@ -1,3 +1,5 @@
+import 'package:dayfi/app_locator.dart';
+import 'package:dayfi/common/utils/dayfi_platform.dart';
 import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/features/auth/check_email/vm/check_email_viewmodel.dart';
@@ -19,6 +21,15 @@ class CheckEmailView extends ConsumerStatefulWidget {
 class _CheckEmailViewState extends ConsumerState<CheckEmailView> {
   final TextEditingController emailController = TextEditingController();
 
+  void _handleBack() {
+    FocusScope.of(context).unfocus();
+    if (isDayfiWeb) {
+      appRouter.pushUnauthenticatedEntryAndClearStack();
+      return;
+    }
+    Navigator.pop(context);
+  }
+
   @override
   void dispose() {
     emailController.dispose();
@@ -36,8 +47,11 @@ class _CheckEmailViewState extends ConsumerState<CheckEmailView> {
     }
 
     return PopScope(
-      canPop:
-          widget.showBackButton, // Only allow back if showBackButton is true
+      canPop: widget.showBackButton && !isDayfiWeb,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop || !widget.showBackButton) return;
+        if (isDayfiWeb) _handleBack();
+      },
       child: GestureDetector(
         onTap: () {
           // Dismiss keyboard and remove focus from all text fields
@@ -60,10 +74,7 @@ class _CheckEmailViewState extends ConsumerState<CheckEmailView> {
                         ? InkWell(
                           splashColor: Colors.transparent,
                           highlightColor: Colors.transparent,
-                          onTap: () {
-                            FocusScope.of(context).unfocus();
-                            Navigator.pop(context);
-                          },
+                          onTap: _handleBack,
                           child: Stack(
                             alignment: Alignment.center,
                             children: [
@@ -133,6 +144,7 @@ class _CheckEmailViewState extends ConsumerState<CheckEmailView> {
                                     : AppColors.neutral0.withOpacity(.20),
                           fontFamily: 'Chirp',
                           fullWidth: true,
+                          applyFeatureInset: false,
                         ),
                       ),
                     ],

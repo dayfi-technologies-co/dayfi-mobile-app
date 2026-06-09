@@ -1,6 +1,8 @@
 import 'package:dayfi/common/widgets/top_snackbar.dart';
+import 'package:dayfi/common/constants/username_copy.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
-import 'package:flutter/cupertino.dart' show CupertinoActivityIndicator;
+import 'package:dayfi/common/widgets/dayfi_loading_indicator.dart';
+import 'package:dayfi/common/widgets/dayfi_screen_app_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,19 +13,24 @@ import 'package:dayfi/models/wallet_transaction.dart';
 import 'package:dayfi/common/widgets/buttons/buttons.dart';
 import 'package:dayfi/common/widgets/buttons/help_button.dart';
 import 'package:dayfi/app_locator.dart';
-import 'package:intercom_flutter/intercom_flutter.dart';
+import 'package:dayfi/services/local/intercom_support_service.dart';
 import 'package:dayfi/common/utils/string_utils.dart';
 import 'package:dayfi/features/send/vm/send_viewmodel.dart';
 import 'package:dayfi/services/remote/payment_service.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:dayfi/models/payment_response.dart' as payment;
+import 'package:dayfi/features/recipients/helpers/recipient_history_helper.dart';
 import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
+import 'package:dayfi/common/helpers/ngn_bank_transfer_partner.dart';
+import 'package:dayfi/common/helpers/wallet_transaction_display.dart';
+import 'package:dayfi/common/helpers/wallet_transaction_labels.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'dart:async';
 import 'package:dayfi/features/transactions/widgets/transaction_receipt_widget.dart';
+import 'package:dayfi/common/utils/share_origin.dart';
 import 'package:dayfi/common/utils/available_balance_calculator.dart';
 
 class TransactionDetailsView extends ConsumerStatefulWidget {
@@ -67,36 +74,11 @@ class _TransactionDetailsViewState
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        scrolledUnderElevation: .5,
-        foregroundColor: Theme.of(context).scaffoldBackgroundColor,
-        shadowColor: Theme.of(context).scaffoldBackgroundColor,
-        surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
-
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios,
-            size: 20,
-            color: Theme.of(context).colorScheme.onSurface,
-            // size: 20,
-          ),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Text(
-          "Transaction Details",
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontFamily: 'FunnelDisplay',
-            fontSize: 24,
-            fontWeight: FontWeight.w600,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-        ),
-        centerTitle: true,
+      appBar: DayfiScreenAppBar(
+        title: 'Transaction Details',
         actions: [
           Padding(
-            padding: EdgeInsets.only(right: 16),
+            padding: const EdgeInsets.only(right: 16),
             child: HelpButton(onTap: _navigateToContactUs),
           ),
         ],
@@ -127,14 +109,16 @@ class _TransactionDetailsViewState
 
                     SizedBox(height: 20),
 
-                    // Only show account details if it's a wallet top-up and fee is 0.00
-                    if (_isWalletTopUp() && _isFeeZero()) ...[
+                    if (_shouldShowBankAccountDetails()) ...[
                       _buildBankAccountDetails(),
                       SizedBox(height: 16),
                     ],
 
-                    // For collections, show sender details; for payments, show recipient details
-                    if (!_isWalletTopUp()) ...[
+                    if (_isBillPayment() || _isBillReversal()) ...[
+                      _buildBillDetails(),
+                      SizedBox(height: 16),
+                      _buildPaymentSummary(),
+                    ] else if (!_isWalletTopUp()) ...[
                       // Account Details
                       if (!_effectiveStatus.toLowerCase().contains(
                         'collection',
@@ -152,35 +136,38 @@ class _TransactionDetailsViewState
                           ? _buildSenderDetails()
                           : _buildRecipientDetails(),
                       SizedBox(height: 16),
+                      _buildPaymentSummary(),
+                    ] else ...[
+                      _buildPaymentSummary(),
                     ],
-
-                    // Payment Summary
-                    _buildPaymentSummary(),
 
                     SizedBox(height: 18),
 
-                    TextButton(
-                      style: TextButton.styleFrom(
-                        // padding: EdgeInsets.zero,
-                        // minimumSize: Size(50, 30),
-                        splashFactory: NoSplash.splashFactory,
-                        backgroundColor: Colors.transparent,
-                        foregroundColor: Colors.transparent,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        alignment: Alignment.center,
-                      ),
-                      onPressed: () => _shareTransactionReceipt(),
-                      child: Text(
-                        'Share transaction',
-                        style: TextStyle(
-                          fontFamily: 'Chirp',
-                          color: AppColors.purple500ForTheme(context),
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: -.40,
-                          decoration: TextDecoration.underline,
-                        ),
-                      ),
+                    Builder(
+                      builder: (shareContext) {
+                        return TextButton(
+                          style: TextButton.styleFrom(
+                            splashFactory: NoSplash.splashFactory,
+                            backgroundColor: Colors.transparent,
+                            foregroundColor: Colors.transparent,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            alignment: Alignment.center,
+                          ),
+                          onPressed: () =>
+                              _shareTransactionReceipt(shareContext),
+                          child: Text(
+                            'Share transaction',
+                            style: TextStyle(
+                              fontFamily: 'Chirp',
+                              color: AppColors.purple500ForTheme(context),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: -.40,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        );
+                      },
                     ),
 
                     SizedBox(height: 32),
@@ -196,7 +183,16 @@ class _TransactionDetailsViewState
 
   Widget _buildTransactionHeader() {
     final amount = _getTransactionAmount();
-    final recipientName = _getRecipientDisplayName();
+    final recipientName = WalletTransactionDisplay.detailPrimaryLabel(
+      widget.transaction,
+    );
+    final networkSubtitle =
+        WalletTransactionDisplay.outboundNetworkSubtitle(widget.transaction);
+    final payoutProfile = WalletTransactionDisplay.resolveLocalPayout(
+      widget.transaction,
+    );
+    final showLocalPayoutNgn =
+        payoutProfile.isPayout && payoutProfile.hasLocalReceive;
     final dateTime = _formatDateTime(widget.transaction.timestamp);
     final isCollection = _effectiveStatus.toLowerCase().contains(
       'collection',
@@ -207,7 +203,7 @@ class _TransactionDetailsViewState
       children: [
         // Amount
         Text(
-          amount.split('.')[0],
+          _formatHeaderAmount(amount),
 
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
             fontFamily: 'FunnelDisplay',
@@ -217,6 +213,24 @@ class _TransactionDetailsViewState
             color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
+        if (showLocalPayoutNgn) ...[
+          SizedBox(height: 4),
+          Text(
+            WalletTransactionDisplay.payoutReceiveAmountText(
+                  widget.transaction,
+                ) ??
+                '',
+            style: AppTypography.bodyMedium.copyWith(
+              fontFamily: 'Karla',
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              letterSpacing: -.2,
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withOpacity(0.65),
+            ),
+          ),
+        ],
 
         SizedBox(height: 8),
 
@@ -234,13 +248,19 @@ class _TransactionDetailsViewState
                   SvgPicture.asset(
                     'assets/icons/svgs/account.svg',
                     height: 40,
-                    color: _getTransactionTypeColor(widget.transaction.status),
+                    color: WalletTransactionDisplay.typeIconColor(
+                      widget.transaction,
+                    ),
                   ),
                   // Foreground icon
                   Center(
                     child: SvgPicture.asset(
-                      _getTransactionTypeIcon(widget.transaction.status),
-                      height: 28,
+                      WalletTransactionDisplay.typeIconAsset(
+                        widget.transaction,
+                      ),
+                      height: WalletTransactionDisplay.typeIconHeight(
+                        widget.transaction,
+                      ),
                       color: Colors.white,
                     ),
                   ),
@@ -253,7 +273,7 @@ class _TransactionDetailsViewState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    isCollection ? "Wallet Top Up" : recipientName,
+                    recipientName,
                     style: AppTypography.bodyLarge.copyWith(
                       fontFamily: 'Chirp',
                       fontSize: 16,
@@ -262,6 +282,44 @@ class _TransactionDetailsViewState
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
+                  if (networkSubtitle != null && networkSubtitle.isNotEmpty) ...[
+                    SizedBox(height: 4),
+                    Text(
+                      networkSubtitle,
+                      style: AppTypography.bodyMedium.copyWith(
+                        fontFamily: 'Chirp',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: -.2,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.65),
+                      ),
+                    ),
+                  ],
+                  if (WalletTransactionDisplay.ngnBankDepositFx(
+                        widget.transaction,
+                      ) !=
+                      null &&
+                      !WalletTransactionDisplay.isCrossBorderBankSend(
+                        widget.transaction,
+                      )) ...[
+                    SizedBox(height: 4),
+                    Text(
+                      WalletTransactionDisplay.formatNgnBankDepositSubtitle(
+                        widget.transaction,
+                      ),
+                      style: AppTypography.bodyMedium.copyWith(
+                        fontFamily: 'Chirp',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: -.2,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.65),
+                      ),
+                    ),
+                  ],
 
                   Text(
                     dateTime,
@@ -377,7 +435,7 @@ class _TransactionDetailsViewState
   }
 
   Widget _buildStatusTimeline() {
-    final status = _effectiveStatus.toLowerCase();
+    final status = _effectiveStatus.toLowerCase().replaceAll('_', '-');
     final sendAmount = _getTransactionAmount();
     final receiveAmount = _getReceiveAmount();
     final recipientDisplayName = _getRecipientDisplayName();
@@ -397,6 +455,15 @@ class _TransactionDetailsViewState
     final isSuccess = status.contains('success');
     final isPending = status.contains('pending');
 
+    final isFailed = status.contains('failed');
+    final isExpired = status.contains('expired');
+    final isOutboundSend =
+        WalletTransactionLabels.isDebit(widget.transaction) &&
+        (isPayment ||
+            WalletTransactionDisplay.isCrossBorderBankSend(widget.transaction));
+    final isFailedOrExpiredPayment =
+        isOutboundSend && (isFailed || isExpired);
+
     return Container(
       padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -405,26 +472,63 @@ class _TransactionDetailsViewState
       ),
       child: Column(
         children: [
-          // First item: Transaction initiated
           _buildTimelineItem(
             isCompleted: true,
-            isActive: true,
+            isActive: false,
             date: dateTime.split(',')[0],
-            title:
-                isSuccess && isCollection
-                    ? "You received $sendAmount into your wallet"
-                    : isSuccess && isPayment
-                    ? "You sent $sendAmount to ${recipientName.replaceAll("Sent to ", "")}"
-                    : isCollection
-                    ? "You set up wallet funding of $sendAmount"
-                    : "You've set up a $transferPhrase of $sendAmount to $recipientName",
+            title: () {
+              final featureTimeline =
+                  WalletTransactionLabels.statusTimelineTitle(
+                widget.transaction,
+                sendAmount,
+              );
+              if (featureTimeline.isNotEmpty) return featureTimeline;
+              if (isSuccess && isCollection) {
+                return "You received $sendAmount into your balance";
+              }
+              if (isSuccess && isPayment) {
+                return "You sent $sendAmount to ${recipientName.replaceAll("Sent to ", "")}";
+              }
+              if (isCollection) {
+                return "You set up a balance top-up of $sendAmount";
+              }
+              return "You've set up a $transferPhrase of $sendAmount to $recipientName";
+            }(),
             isFirst: true,
-            isLast: isSuccess, // If successful, this is the last item to show
+            isLast: isSuccess,
           ),
 
-          // Only show additional timeline items if transaction is not yet successful
-          if (!isSuccess) ...[
-            SizedBox(height: 20),
+          if (isFailedOrExpiredPayment) ...[
+            SizedBox(height: 8),
+            _buildTimelineItem(
+              isCompleted: true,
+              isActive: false,
+              date: dateTime.split(',')[0],
+              title: "We're processing your payment",
+              isFirst: false,
+              isLast: false, 
+            ),
+            SizedBox(height: 8),
+            _buildTimelineItem(
+              isCompleted: true,
+              isActive: false,
+              date: dateTime.split(',')[0],
+              title:
+                  isExpired ? "Transaction expired" : "Transaction failed",
+              isFirst: false,
+              isLast: false,
+            ),
+            SizedBox(height: 8),
+            _buildTimelineItem(
+              isCompleted: true,
+              isActive: false,
+              date: dateTime.split(',')[0],
+              title: "Your balance has been credited back",
+              isFirst: false,
+              isLast: true,
+            ),
+          ] else if (!isSuccess) ...[
+            SizedBox(height: 8),
 
             // Second item for collections: Waiting for transfer
             if (isCollection)
@@ -448,29 +552,46 @@ class _TransactionDetailsViewState
                 isLast: isTopUp, // Hide third item for wallet top-ups
               ),
 
-            // For failed or expired transactions, show failure/expiry and credit back for payments
-            if (!isPending && (status.contains('failed') || status.contains('expired'))) ...[
+            // For failed or expired collections, show failure/expiry only
+            if (!isPending &&
+                (isFailed || isExpired) &&
+                !isFailedOrExpiredPayment) ...[
+              SizedBox(height: 8),
+              _buildTimelineItem(
+                isCompleted: false,
+                isActive: false,
+                date: dateTime.split(',')[0],
+                title:
+                    isExpired ? "Transaction expired" : "Transaction failed",
+                isFirst: false,
+                isLast: true,
+              ),
+            ],
+
+            // Legacy failed-payment branch (wallet sends use isFailedOrExpiredPayment above)
+            if (!isPending &&
+                (isFailed || isExpired) &&
+                isPayment &&
+                !isFailedOrExpiredPayment) ...[
+              SizedBox(height: 8),
+              _buildTimelineItem(
+                isCompleted: false,
+                isActive: false,
+                date: dateTime.split(',')[0],
+                title:
+                    isExpired ? "Transaction expired" : "Transaction failed",
+                isFirst: false,
+                isLast: false,
+              ),
               SizedBox(height: 20),
               _buildTimelineItem(
                 isCompleted: false,
                 isActive: false,
                 date: dateTime.split(',')[0],
-                title: status.contains('expired') ? "Transaction expired" : "Transaction failed",
+                title: "Your balance has been credited back",
                 isFirst: false,
-                isLast: isPayment ? false : true, // Last item for collections, not for payments
+                isLast: true,
               ),
-              // Only show credited back message for payments
-              if (isPayment) ...[
-                SizedBox(height: 20),
-                _buildTimelineItem(
-                  isCompleted: false,
-                  isActive: false,
-                  date: dateTime.split(',')[0],
-                  title: "Your wallet has been credited back",
-                  isFirst: false,
-                  isLast: true,
-                ),
-              ],
             ],
 
             // Third item for collections: Funds received into wallet
@@ -480,7 +601,7 @@ class _TransactionDetailsViewState
                 isCompleted: false,
                 isActive: false,
                 date: dateTime.split(',')[0],
-                title: "You'll receive $sendAmount into your wallet",
+                title: "You'll receive $sendAmount into your balance",
                 isFirst: false,
                 isLast: true,
               ),
@@ -528,39 +649,7 @@ class _TransactionDetailsViewState
         // Timeline indicator
         Column(
           children: [
-            if (!isFirst)
-              Container(
-                width: 2,
-                height: 24,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: statusColor.withOpacity(0.2),
-                    width: 1,
-                  ),
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      isCompleted
-                          ? AppColors.success500
-                          : isActive
-                          ? AppColors.warning500
-                          : Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withOpacity(0.2),
-                      isCompleted
-                          ? AppColors.success500.withOpacity(0.3)
-                          : isActive
-                          ? AppColors.warning500.withOpacity(0.3)
-                          : Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withOpacity(0.1),
-                    ],
-                  ),
-                ),
-              ),
-            Container(
+           Container(
               width: 16,
               height: 16,
               decoration: BoxDecoration(
@@ -590,38 +679,7 @@ class _TransactionDetailsViewState
                         : null,
               ),
             ),
-            if (!isLast)
-              Container(
-                width: 2,
-                height: 24,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: statusColor.withOpacity(0.2),
-                    width: 1,
-                  ),
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      isCompleted
-                          ? AppColors.success500.withOpacity(0.3)
-                          : isActive
-                          ? AppColors.warning500.withOpacity(0.3)
-                          : Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withOpacity(0.1),
-                      isCompleted
-                          ? AppColors.success500
-                          : isActive
-                          ? AppColors.warning500
-                          : Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withOpacity(0.2),
-                    ],
-                  ),
-                ),
-              ),
+          
           ],
         ),
 
@@ -643,7 +701,7 @@ class _TransactionDetailsViewState
                   date,
                   style: AppTypography.bodySmall.copyWith(
                     fontFamily: 'Chirp',
-                    fontSize: 12,
+                    fontSize: 12.5,
                     letterSpacing: -.25,
                     height: 1.2,
                     fontWeight: FontWeight.w600,
@@ -673,9 +731,16 @@ class _TransactionDetailsViewState
   }
 
   Widget _buildAccountDetails() {
-    final isDayfiTransfer =
-        widget.transaction.source.accountType?.toLowerCase() == 'dayfi' ||
-        widget.transaction.beneficiary.accountType?.toLowerCase() == 'dayfi';
+    final tx = widget.transaction;
+    final kind = RecipientHistoryHelper.transactionKind(tx);
+    final isP2p = kind == TransactionRecipientKind.p2p;
+    final isCrypto = kind == TransactionRecipientKind.crypto;
+    final isMobile = kind == TransactionRecipientKind.mobile;
+    final isWalletBankSend = RecipientHistoryHelper.isWalletFundedBankSend(tx);
+    final payoutCurrency =
+        WalletTransactionDisplay.payoutCurrencyLabel(tx);
+    final currency =
+        payoutCurrency ?? RecipientHistoryHelper.inferLedgerCurrency(tx);
 
     return Container(
       padding: EdgeInsets.all(20),
@@ -690,7 +755,7 @@ class _TransactionDetailsViewState
             "Transaction Details",
             style: AppTypography.bodySmall.copyWith(
               fontFamily: 'Chirp',
-              fontSize: 12,
+              fontSize: 12.5,
               letterSpacing: -.25,
               height: 1.2,
               fontWeight: FontWeight.w600,
@@ -698,53 +763,83 @@ class _TransactionDetailsViewState
             ),
           ),
           SizedBox(height: 16),
-          if (isDayfiTransfer)
+          if (isP2p) ...[
             _buildDetailRow(
-              "Dayfi Tag",
-              widget.transaction.beneficiary.accountNumber != null &&
-                      widget.transaction.beneficiary.accountNumber!.isNotEmpty
-                  ? (widget.transaction.beneficiary.accountNumber!.startsWith(
-                        '@',
-                      )
-                      ? widget.transaction.beneficiary.accountNumber!
-                      : '@${widget.transaction.beneficiary.accountNumber!}')
-                  : "N/A",
-            )
-          else
+              UsernameCopy.label,
+              RecipientHistoryHelper.p2pUsername(tx) ??
+                  (RecipientHistoryHelper.p2pTagFromTransaction(tx) != null
+                      ? '@${RecipientHistoryHelper.p2pTagFromTransaction(tx)}'
+                      : 'N/A'),
+            ),
+          ] else if (isCrypto) ...[
+            _buildDetailRow(
+              'Wallet address',
+              RecipientHistoryHelper.truncateAddress(
+                RecipientHistoryHelper.cryptoAddress(tx),
+              ),
+            ),
+            _buildDetailRow(
+              'Network',
+              RecipientHistoryHelper.cryptoNetworkLabel(tx).isNotEmpty
+                  ? RecipientHistoryHelper.cryptoNetworkLabel(tx)
+                  : 'Stellar',
+            ),
+            _buildDetailRow(
+              'Asset',
+              RecipientHistoryHelper.cryptoAssetLabel(tx),
+            ),
+          ] else if (isMobile) ...[
+            _buildDetailRow(
+              'Phone number',
+              tx.source.accountNumber ?? 'N/A',
+            ),
+            _buildDetailRow('Provider', _getBankName()),
+          ] else if (isWalletBankSend) ...[
+            _buildDetailRow('Paid from', 'Global USD wallet'),
+            _buildDetailRow(
+              'Destination bank',
+              RecipientHistoryHelper.transactionRecipientBank(tx) ??
+                  _getBankName(),
+            ),
+          ] else ...[
             _buildDetailRow(
               "Account number",
-              widget.transaction.source.accountNumber ?? "N/A",
+              tx.source.accountNumber ?? "N/A",
             ),
-          if (!isDayfiTransfer) _buildDetailRow("Bank", _getBankName()),
+            _buildDetailRow("Bank", _getBankName()),
+          ],
           _buildDetailRow(
             "Send type",
-            _getChannelDisplayName(
-              isDayfiTransfer
-                  ? 'p2p'
-                  : (widget.transaction.receiveChannel ??
-                      widget.transaction.sendChannel),
-            ),
+            WalletTransactionLabels.sendTypeLabel(tx).isNotEmpty
+                ? WalletTransactionLabels.sendTypeLabel(tx)
+                : _getChannelDisplayName(
+                    isP2p
+                        ? 'p2p'
+                        : isCrypto
+                            ? 'crypto'
+                            : (tx.receiveChannel ?? tx.sendChannel),
+                  ),
           ),
+          if (currency != null && currency.isNotEmpty)
+            _buildDetailRow('Currency', currency),
           _buildDetailRow(
             "Transaction ID",
-            widget.transaction.id.substring(0, 8).toUpperCase(),
+            tx.id.substring(0, tx.id.length > 12 ? 12 : tx.id.length).toUpperCase(),
           ),
           _buildDetailRow(
             "Status",
             _getStatusTextDisplay(_effectiveStatus),
           ),
-          if (widget.transaction.reason != null &&
-              widget.transaction.reason!.isNotEmpty) ...[
+          if (tx.reason != null && tx.reason!.isNotEmpty) ...[
             SizedBox(height: 8),
             Divider(
               height: 16,
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
             ),
             SizedBox(height: 8),
-
             _buildDetailRow(
               "Description",
-              _capitalizeWords(widget.transaction.reason!),
+              WalletTransactionDisplay.humanReason(tx),
             ),
           ],
         ],
@@ -767,7 +862,7 @@ class _TransactionDetailsViewState
       case 'success-collection':
       case 'success-payment':
       case 'success':
-        return 'Completed';
+        return 'Success';
       case 'pending-collection':
       case 'pending-payment':
       case 'pending':
@@ -801,7 +896,7 @@ class _TransactionDetailsViewState
             "Sender Details",
             style: AppTypography.bodySmall.copyWith(
               fontFamily: 'Chirp',
-              fontSize: 12,
+              fontSize: 12.5,
               letterSpacing: -.25,
               height: 1.2,
               fontWeight: FontWeight.w600,
@@ -819,7 +914,7 @@ class _TransactionDetailsViewState
               widget.transaction.beneficiary.accountNumber != null &&
               widget.transaction.beneficiary.accountNumber!.isNotEmpty)
             _buildDetailRow(
-              "Dayfi Tag",
+              UsernameCopy.label,
               widget.transaction.beneficiary.accountNumber!.startsWith('@')
                   ? widget.transaction.beneficiary.accountNumber!
                   : '@${widget.transaction.beneficiary.accountNumber!}',
@@ -844,9 +939,54 @@ class _TransactionDetailsViewState
   }
 
   Widget _buildRecipientDetails() {
-    final isDayfiTransfer =
-        widget.transaction.source.accountType?.toLowerCase() == 'dayfi' ||
-        widget.transaction.beneficiary.accountType?.toLowerCase() == 'dayfi';
+    final tx = widget.transaction;
+    if (WalletTransactionLabels.isDayEarn(tx) ||
+        WalletTransactionLabels.isDayFlow(tx)) {
+      final product =
+          WalletTransactionLabels.isDayEarn(tx) ? 'DayEarn' : 'DayFlow';
+      final potName = tx.beneficiary.accountNumber?.trim();
+      final displayName = (potName != null && potName.isNotEmpty)
+          ? potName
+          : tx.beneficiary.name;
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Plan details',
+              style: AppTypography.bodySmall.copyWith(
+                fontFamily: 'Chirp',
+                fontSize: 12.5,
+                letterSpacing: -.25,
+                height: 1.2,
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildDetailRow('Product', product),
+            _buildDetailRow('Name', displayName),
+            _buildDetailRow(
+              'Type',
+              WalletTransactionLabels.isCredit(tx)
+                  ? '$product withdrawal'
+                  : '$product ${WalletTransactionLabels.isDayFlow(tx) ? 'lock' : 'deposit'}',
+            ),
+          ],
+        ),
+      );
+    }
+
+    final kind = RecipientHistoryHelper.transactionKind(tx);
+    final isP2p = kind == TransactionRecipientKind.p2p;
+    final isCrypto = kind == TransactionRecipientKind.crypto;
+    final isMobile = kind == TransactionRecipientKind.mobile;
+    final countryCode = RecipientHistoryHelper.recipientCountryCode(tx);
 
     return Container(
       padding: EdgeInsets.all(20),
@@ -861,7 +1001,7 @@ class _TransactionDetailsViewState
             "Recipient Details",
             style: AppTypography.bodySmall.copyWith(
               fontFamily: 'Chirp',
-              fontSize: 12,
+              fontSize: 12.5,
               letterSpacing: -.25,
               height: 1.2,
               fontWeight: FontWeight.w600,
@@ -869,50 +1009,50 @@ class _TransactionDetailsViewState
             ),
           ),
           SizedBox(height: 16),
-          _buildDetailRow("Name", widget.transaction.beneficiary.name),
-          if (isDayfiTransfer &&
-              widget.transaction.beneficiary.accountNumber != null &&
-              widget.transaction.beneficiary.accountNumber!.isNotEmpty)
+          _buildDetailRow(
+            "Name",
+            RecipientHistoryHelper.transactionRecipientName(tx),
+          ),
+          if (isP2p) ...[
             _buildDetailRow(
-              "Dayfi Tag",
-              widget.transaction.beneficiary.accountNumber!.startsWith('@')
-                  ? widget.transaction.beneficiary.accountNumber!
-                  : '@${widget.transaction.beneficiary.accountNumber!}',
+              UsernameCopy.label,
+              RecipientHistoryHelper.p2pUsername(tx) ??
+                  (RecipientHistoryHelper.p2pTagFromTransaction(tx) != null
+                      ? '@${RecipientHistoryHelper.p2pTagFromTransaction(tx)}'
+                      : 'N/A'),
             ),
-          if (isDayfiTransfer &&
-              widget.transaction.beneficiary.accountNumber != null &&
-              widget.transaction.beneficiary.accountNumber!.isNotEmpty)
+          ] else if (isCrypto) ...[
             _buildDetailRow(
-              "Username",
-              widget.transaction.beneficiary.accountNumber!.startsWith('@')
-                  ? widget.transaction.beneficiary.accountNumber!.substring(1)
-                  : widget.transaction.beneficiary.accountNumber!,
+              'Wallet address',
+              RecipientHistoryHelper.truncateAddress(
+                RecipientHistoryHelper.cryptoAddress(tx),
+              ),
             ),
-          // _buildDetailRow(
-          //   "Phone",
-          //   widget.transaction.beneficiary.phone,
-          // ),
-          // _buildDetailRow(
-          //   "Email",
-          //   widget.transaction.beneficiary.email,
-          // ),
-          if (widget.transaction.beneficiary.country.isNotEmpty)
             _buildDetailRow(
-              "Country",
-              _getCountryName(widget.transaction.beneficiary.country),
+              'Network',
+              RecipientHistoryHelper.cryptoNetworkLabel(tx).isNotEmpty
+                  ? RecipientHistoryHelper.cryptoNetworkLabel(tx)
+                  : 'Stellar',
             ),
-          // _buildDetailRow(
-          //   "Address",
-          //   widget.transaction.beneficiary.address,
-          // ),
-          // _buildDetailRow(
-          //   "ID Type",
-          //   _getIDTypeDisplay(widget.transaction.beneficiary.idType),
-          // ),
-          // _buildDetailRow(
-          //   "ID Number",
-          //   widget.transaction.beneficiary.idNumber,
-          // ),
+          ] else if (isMobile) ...[
+            _buildDetailRow(
+              'Phone number',
+              tx.source.accountNumber ?? tx.beneficiary.phone,
+            ),
+          ] else ...[
+            if (tx.source.accountNumber?.trim().isNotEmpty == true)
+              _buildDetailRow('Account number', tx.source.accountNumber!.trim()),
+            _buildDetailRow(
+              'Bank',
+              RecipientHistoryHelper.transactionRecipientBank(tx) ??
+                  _getBankName(),
+            ),
+          ],
+          if (countryCode.isNotEmpty)
+            _buildDetailRow(
+              isCrypto ? 'Region' : 'Country',
+              _getCountryName(countryCode),
+            ),
         ],
       ),
     );
@@ -967,6 +1107,91 @@ class _TransactionDetailsViewState
     final exchangeRate = _getExchangeRate();
     final isTopUp = _isWalletTopUp();
     final status = _effectiveStatus.toLowerCase();
+    final ngnFx = WalletTransactionDisplay.ngnBankDepositFx(widget.transaction);
+    final transferUsd = WalletTransactionDisplay.outboundTransferAmount(
+      widget.transaction,
+    );
+    final showAmountSent =
+        !isTopUp &&
+        transferUsd != null &&
+        transferUsd > 0 &&
+        WalletTransactionDisplay.hasSeparateTransferFee(widget.transaction);
+    final amountSentLabel = showAmountSent
+        ? '\$${StringUtils.formatNumberWithCommas(transferUsd.toStringAsFixed(2))}'
+        : null;
+
+    if (_isBillReversal()) {
+      return _buildBillRefundSummary(receiveAmount);
+    }
+
+    if (_isBillPayment()) {
+      return _buildBillPaymentSummary(total);
+    }
+
+    if (ngnFx != null) {
+      return Container(
+        padding: EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Deposit Summary',
+              style: AppTypography.bodySmall.copyWith(
+                fontFamily: 'Chirp',
+                fontSize: 12.5,
+                letterSpacing: -.25,
+                height: 1.2,
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              ),
+            ),
+            SizedBox(height: 16),
+            _buildSummaryRow(
+              "Reference number",
+              widget.transaction.id,
+              showCopy: true,
+            ),
+            _buildSummaryRow(
+              'Exchange rate',
+              WalletTransactionDisplay.formatNgnPerUsd(ngnFx.ngnPerUsd),
+            ),
+            // Padding(
+            //   padding: const EdgeInsets.only(bottom: 12),
+            //   child: Text(
+            //     WalletTransactionDisplay.ngnBankDepositRateFootnote,
+            //     style: AppTypography.bodySmall.copyWith(
+            //       fontFamily: 'Chirp',
+            //       fontSize: 11.5,
+            //       height: 1.3,
+            //       color: Theme.of(context).colorScheme.onSurface.withOpacity(0.45),
+            //     ),
+            //   ),
+            // ),
+            _buildSummaryRow(
+              'Amount received',
+              '₦${StringUtils.formatNumberWithCommas(ngnFx.ngnAmount.toStringAsFixed(2))}',
+            ),
+            _buildSummaryRow(
+              'Wallet credit (USD)',
+              '\$${StringUtils.formatNumberWithCommas(ngnFx.usdCredited.toStringAsFixed(2))}',
+            ),
+            Divider(
+              height: 24,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
+            ),
+            _buildSummaryRow(
+              'Total received',
+              '\$${StringUtils.formatNumberWithCommas(ngnFx.usdCredited.toStringAsFixed(2))}',
+              isTotal: true,
+            ),
+          ],
+        ),
+      );
+    }
 
     // Determine the recipient amount label based on transaction status
     String recipientLabel;
@@ -990,10 +1215,10 @@ class _TransactionDetailsViewState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Payment Summary",
+            _summarySectionTitle(),
             style: AppTypography.bodySmall.copyWith(
               fontFamily: 'Chirp',
-              fontSize: 12,
+              fontSize: 12.5,
               letterSpacing: -.25,
               height: 1.2,
               fontWeight: FontWeight.w600,
@@ -1006,25 +1231,214 @@ class _TransactionDetailsViewState
             widget.transaction.id,
             showCopy: true,
           ),
-          if (!isTopUp) ...[
+          if (!isTopUp && !_isDepositIncome()) ...[
             _buildSummaryRow(
               "Exchange rate",
               exchangeRate,
               isLoading: _isRatesLoading,
             ),
+            if (amountSentLabel != null)
+              _buildSummaryRow('Amount sent', amountSentLabel),
             _buildSummaryRow(
               recipientLabel,
               receiveAmount,
               isLoading: _isRatesLoading,
             ),
+            if (NgnBankTransferPartner.matchesTransaction(widget.transaction)) ...[
+              _buildSummaryRow(
+                'Processing partner',
+                NgnBankTransferPartner.name,
+              ),
+              _buildSummaryRow(
+                'Expected credit',
+                NgnBankTransferPartner.expectedCredit,
+              ),
+            ],
+          ] else if (_isDepositIncome()) ...[
+            _buildSummaryRow('Amount received', receiveAmount),
           ],
-          // Always show fees
-          _buildSummaryRow("Fee", fee),
+          if (!_isDepositIncome() || !_isFeeZero())
+            _buildSummaryRow("Fee", fee),
           Divider(
             height: 24,
             color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
           ),
-          _buildSummaryRow("Total paid", total, isTotal: true),
+          _buildSummaryRow(
+            _totalSummaryLabel(),
+            _isDepositIncome() ? _calculateDepositTotal() : total,
+            isTotal: true,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBillDetails() {
+    final tx = widget.transaction;
+    final biller = WalletTransactionLabels.billerDisplayName(tx);
+    final customerId = WalletTransactionLabels.billCustomerId(tx);
+
+    return Container(
+      padding: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _isBillReversal() ? 'Refund details' : 'Bill details',
+            style: AppTypography.bodySmall.copyWith(
+              fontFamily: 'Chirp',
+              fontSize: 12.5,
+              letterSpacing: -.25,
+              height: 1.2,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+            ),
+          ),
+          SizedBox(height: 16),
+          if (!_isBillReversal()) ...[
+            _buildDetailRow('Biller', biller),
+            if (customerId != null) _buildDetailRow('Customer ID', customerId),
+          ] else ...[
+            _buildDetailRow(
+              'Original reference',
+              WalletTransactionLabels.billOriginalReference(tx) ?? tx.id,
+            ),
+          ],
+          _buildDetailRow(
+            'Send type',
+            WalletTransactionLabels.sendTypeLabel(tx).isNotEmpty
+                ? WalletTransactionLabels.sendTypeLabel(tx)
+                : 'Bill pay',
+          ),
+          _buildDetailRow(
+            'Status',
+            _getStatusTextDisplay(_effectiveStatus),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBillPaymentSummary(String total) {
+    final headline = WalletTransactionLabels.billDetailHeadline(widget.transaction);
+    final fx = WalletTransactionDisplay.billPaymentFx(widget.transaction);
+    return Container(
+      padding: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$headline summary',
+            style: AppTypography.bodySmall.copyWith(
+              fontFamily: 'Chirp',
+              fontSize: 12.5,
+              letterSpacing: -.25,
+              height: 1.2,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+            ),
+          ),
+          SizedBox(height: 16),
+          _buildSummaryRow(
+            'Reference number',
+            widget.transaction.id,
+            showCopy: true,
+          ),
+          if (fx != null) ...[
+            if (fx.rateNgnPerUsd != null)
+              _buildSummaryRow(
+                'Exchange rate',
+                WalletTransactionDisplay.formatNgnPerUsd(fx.ngnPerUsd),
+              ),
+            _buildSummaryRow(
+              'Bill amount',
+              '₦${StringUtils.formatNumberWithCommas(fx.ngnAmount.toStringAsFixed(2))}',
+            ),
+            _buildSummaryRow(
+              'Wallet debit (USD)',
+              '\$${StringUtils.formatNumberWithCommas(fx.usdCredited.toStringAsFixed(2))}',
+            ),
+          ] else
+            _buildSummaryRow(
+              'Amount paid',
+              total,
+            ),
+          Divider(
+            height: 24,
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
+          ),
+          _buildSummaryRow(
+            'Total paid',
+            total,
+            isTotal: true,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBillRefundSummary(String amount) {
+    final headline = WalletTransactionLabels.billDetailHeadline(widget.transaction);
+    final fx = WalletTransactionDisplay.billPaymentFx(widget.transaction);
+    return Container(
+      padding: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$headline summary',
+            style: AppTypography.bodySmall.copyWith(
+              fontFamily: 'Chirp',
+              fontSize: 12.5,
+              letterSpacing: -.25,
+              height: 1.2,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+            ),
+          ),
+          SizedBox(height: 16),
+          _buildSummaryRow(
+            'Reference number',
+            widget.transaction.id,
+            showCopy: true,
+          ),
+          if (fx != null) ...[
+            if (fx.rateNgnPerUsd != null)
+              _buildSummaryRow(
+                'Exchange rate',
+                WalletTransactionDisplay.formatNgnPerUsd(fx.ngnPerUsd),
+              ),
+            _buildSummaryRow(
+              'Bill amount',
+              '₦${StringUtils.formatNumberWithCommas(fx.ngnAmount.toStringAsFixed(2))}',
+            ),
+            _buildSummaryRow(
+              'Wallet credit (USD)',
+              '\$${StringUtils.formatNumberWithCommas(fx.usdCredited.toStringAsFixed(2))}',
+            ),
+          ] else
+            _buildSummaryRow('Amount refunded', amount),
+          Divider(
+            height: 24,
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
+          ),
+          _buildSummaryRow(
+            'Total returned',
+            amount,
+            isTotal: true,
+          ),
         ],
       ),
     );
@@ -1209,12 +1623,95 @@ class _TransactionDetailsViewState
     );
   }
 
+  String _formatHeaderAmount(String amount) {
+    if (amount == 'N/A') return amount;
+    final ngnFx = WalletTransactionDisplay.ngnBankDepositFx(widget.transaction);
+    if (ngnFx != null) {
+      final formatted = StringUtils.formatNumberWithCommas(
+        ngnFx.usdCredited.toStringAsFixed(2),
+      );
+      return '\$$formatted';
+    }
+    final numeric = amount.replaceAll(RegExp(r'[^\d.]'), '');
+    final parsed = double.tryParse(numeric.replaceAll(',', ''));
+    if (parsed == null) return amount;
+    final ledger = widget.transaction.ledgerCurrency?.toUpperCase() ?? '';
+    final symbol = ledger.isNotEmpty
+        ? _ledgerCurrencySymbol(ledger)
+        : _paymentCurrencySymbol();
+    final formatted = StringUtils.formatNumberWithCommas(parsed.toStringAsFixed(2));
+    return '$symbol$formatted';
+  }
+
+  bool _isDepositIncome() =>
+      WalletTransactionDisplay.isDepositIncome(widget.transaction);
+
+  String _summarySectionTitle() =>
+      _isDepositIncome() ? 'Deposit Summary' : 'Payment Summary';
+
+  String _totalSummaryLabel() =>
+      _isDepositIncome() ? 'Total received' : 'Total paid';
+
+  String _calculateDepositTotal() {
+    final receive = _getReceiveAmount();
+    if (receive != 'N/A') return receive;
+    return _getTransactionAmount();
+  }
+
   bool _shouldShowActionButtons() {
     final status = _effectiveStatus.toLowerCase();
     return status == 'failed' || status == 'failed-collection' || status == 'expired-payment';
   }
 
   String _getTransactionAmount() {
+    final ngnFx = WalletTransactionDisplay.ngnBankDepositFx(widget.transaction);
+    if (ngnFx != null) {
+      final formatted = StringUtils.formatNumberWithCommas(
+        ngnFx.usdCredited.toStringAsFixed(2),
+      );
+      return '\$$formatted';
+    }
+
+    if (WalletTransactionDisplay.isCrossBorderBankSend(widget.transaction) ||
+        WalletTransactionDisplay.resolveLocalPayout(widget.transaction).isPayout) {
+      final amount = WalletTransactionDisplay.payoutSendAmountText(
+        widget.transaction,
+      );
+      if (amount != 'N/A') return amount;
+    }
+
+    if (WalletTransactionLabels.isDebit(widget.transaction) &&
+        (widget.transaction.ledgerCurrency ?? 'USD').toUpperCase() == 'USD' &&
+        ((widget.transaction.receiveAmount ?? 0) >= 50 ||
+            (widget.transaction.sendAmount ?? 0) >= 50)) {
+      final header = WalletTransactionDisplay.amountText(widget.transaction);
+      if (header != 'N/A') return header;
+    }
+
+    if (WalletTransactionDisplay.hasSeparateTransferFee(widget.transaction)) {
+      final transfer = WalletTransactionDisplay.outboundTransferAmount(
+        widget.transaction,
+      );
+      if (transfer != null && transfer > 0) {
+        final formatted = StringUtils.formatNumberWithCommas(
+          transfer.toStringAsFixed(2),
+        );
+        return '\$$formatted';
+      }
+    }
+
+    // USD wallet debits: never label NGN-scale receive_amount as USD.
+    if (WalletTransactionLabels.isDebit(widget.transaction) &&
+        (widget.transaction.ledgerCurrency ?? 'USD').toUpperCase() == 'USD' &&
+        (widget.transaction.receiveAmount ?? 0) >= 50) {
+      final usd = WalletTransactionDisplay.outboundTransferAmount(
+        widget.transaction,
+      );
+      if (usd != null && usd > 0) {
+        return WalletTransactionDisplay.payoutSendAmountText(widget.transaction);
+      }
+    }
+
     // For pending transactions, use calculated amount from API if available
     final isPending = _effectiveStatus.toLowerCase().contains('pending');
     if (isPending && _calculatedReceiveAmount.isNotEmpty) {
@@ -1230,34 +1727,89 @@ class _TransactionDetailsViewState
 
     // For completed/expired transactions, use the actual receive amount from transaction data
     if (widget.transaction.receiveAmount != null &&
-        widget.transaction.receiveAmount! > 0) {
-      final currencyCode = _getCurrencyCodeFromCountry(
-        widget.transaction.beneficiary.country,
-      );
-      final currencySymbol = _getCurrencySymbolFromCode(currencyCode);
+        widget.transaction.receiveAmount! > 0 &&
+        !WalletTransactionDisplay.resolveLocalPayout(widget.transaction).isPayout) {
+      final ledger = widget.transaction.ledgerCurrency?.toUpperCase() ?? '';
+      final currencySymbol = ledger.isNotEmpty
+          ? _ledgerCurrencySymbol(ledger)
+          : _getCurrencySymbolFromCode(
+              _getCurrencyCodeFromCountry(widget.transaction.beneficiary.country),
+            );
       final formattedAmount = StringUtils.formatNumberWithCommas(
         widget.transaction.receiveAmount!.toStringAsFixed(2),
       );
       return '$currencySymbol$formattedAmount';
     } else if (widget.transaction.sendAmount != null &&
         widget.transaction.sendAmount! > 0) {
-      // Fallback to send amount if receive amount is not available
+      final ledger = widget.transaction.ledgerCurrency?.toUpperCase() ?? '';
+      final currencySymbol = ledger.isNotEmpty
+          ? _ledgerCurrencySymbol(ledger)
+          : '₦';
       final formattedAmount = StringUtils.formatNumberWithCommas(
         widget.transaction.sendAmount!.toStringAsFixed(2),
       );
-      return '₦$formattedAmount';
+      return '$currencySymbol$formattedAmount';
     } else {
       return 'N/A';
     }
   }
 
+  String _ledgerCurrencySymbol(String currency) {
+    switch (currency) {
+      case 'USD':
+        return r'$';
+      case 'EUR':
+        return '€';
+      case 'GBP':
+        return '£';
+      case 'NGN':
+        return '₦';
+      default:
+        return '₦';
+    }
+  }
+
+  String _effectivePaymentCurrency() {
+    final ledger = widget.transaction.ledgerCurrency?.trim().toUpperCase() ?? '';
+    if (ledger.isNotEmpty) return ledger;
+
+    final reason = widget.transaction.reason?.toLowerCase() ?? '';
+    if (reason.startsWith('p2p:') ||
+        reason.contains('via p2p') ||
+        widget.transaction.sendChannel == 'wallet') {
+      if (widget.transaction.sendAmount != null &&
+          widget.transaction.sendAmount! > 0) {
+        return _getCurrencyCodeFromCountry(widget.transaction.beneficiary.country);
+      }
+    }
+
+    return _getCurrencyCodeFromCountry(widget.transaction.beneficiary.country);
+  }
+
+  String _paymentCurrencySymbol() =>
+      _getCurrencySymbolFromCode(_effectivePaymentCurrency());
+
   String _getReceiveAmount() {
+    final payoutReceive = WalletTransactionDisplay.payoutReceiveAmountText(
+      widget.transaction,
+    );
+    if (payoutReceive != null && payoutReceive.isNotEmpty) {
+      return payoutReceive;
+    }
+
+    // Guard: NGN-scale receive on USD wallet must not use $.
+    if (WalletTransactionLabels.isDebit(widget.transaction) &&
+        (widget.transaction.ledgerCurrency ?? 'USD').toUpperCase() == 'USD' &&
+        (widget.transaction.receiveAmount ?? 0) >= 50) {
+      return WalletTransactionDisplay.formatNgnWhole(
+        widget.transaction.receiveAmount!,
+      );
+    }
+
+    final currencySymbol = _paymentCurrencySymbol();
+
     // Use calculated amount from API if available (for any transaction status)
     if (_calculatedReceiveAmount.isNotEmpty) {
-      final currencyCode = _getCurrencyCodeFromCountry(
-        widget.transaction.beneficiary.country,
-      );
-      final currencySymbol = _getCurrencySymbolFromCode(currencyCode);
       final formattedAmount = StringUtils.formatNumberWithCommas(
         _calculatedReceiveAmount,
       );
@@ -1267,33 +1819,24 @@ class _TransactionDetailsViewState
     // For completed transactions, calculate receive amount if not stored
     if (widget.transaction.receiveAmount != null &&
         widget.transaction.receiveAmount! > 0) {
-      final currencyCode = _getCurrencyCodeFromCountry(
-        widget.transaction.beneficiary.country,
-      );
-      final currencySymbol = _getCurrencySymbolFromCode(currencyCode);
       final formattedAmount = StringUtils.formatNumberWithCommas(
         widget.transaction.receiveAmount!.toStringAsFixed(2),
       );
       return '$currencySymbol$formattedAmount';
     } else if (widget.transaction.sendAmount != null &&
         widget.transaction.sendAmount! > 0) {
-      // Calculate what the recipient should receive based on current exchange rates
+      // Same-currency wallet transfers (P2P, bank) — recipient gets send amount
       final convertedAmount = _calculateReceiveAmountFromSend();
       if (convertedAmount != null) {
-        final currencyCode = _getCurrencyCodeFromCountry(
-          widget.transaction.beneficiary.country,
-        );
-        final currencySymbol = _getCurrencySymbolFromCode(currencyCode);
         final formattedAmount = StringUtils.formatNumberWithCommas(
           convertedAmount.toStringAsFixed(2),
         );
         return '$currencySymbol$formattedAmount';
       } else {
-        // Final fallback to send amount if receive amount is not available and calculation fails
         final formattedAmount = StringUtils.formatNumberWithCommas(
           widget.transaction.sendAmount!.toStringAsFixed(2),
         );
-        return '₦$formattedAmount';
+        return '$currencySymbol$formattedAmount';
       }
     } else {
       return 'N/A';
@@ -1377,21 +1920,65 @@ class _TransactionDetailsViewState
 
   /// Get transaction fee
   String _getTransactionFee() {
-    // Use actual fee from transaction data if available
-    if (widget.transaction.fee != null && widget.transaction.fee! > 0) {
-      final formattedAmount = StringUtils.formatNumberWithCommas(
-        widget.transaction.fee!.toStringAsFixed(2),
-      );
-      return '₦$formattedAmount';
+    final currencySymbol = _paymentCurrencySymbol();
+
+    double? fee = widget.transaction.fee;
+    if (fee == null || fee <= 0) {
+      final meta = widget.transaction.ledgerMetadata?['feeUsd'];
+      if (meta is num) {
+        fee = meta.toDouble();
+      } else {
+        fee = double.tryParse('${meta ?? ''}');
+      }
     }
 
-    // Fallback to placeholder fee
+    if (fee != null && fee > 0) {
+      final formattedAmount = StringUtils.formatNumberWithCommas(
+        fee.toStringAsFixed(2),
+      );
+      return '$currencySymbol$formattedAmount';
+    }
+
     final formattedAmount = StringUtils.formatNumberWithCommas('0.00');
-    return '₦$formattedAmount';
+    return '$currencySymbol$formattedAmount';
   }
 
   /// Get exchange rate display
   String _getExchangeRate() {
+    final payoutRate = WalletTransactionDisplay.payoutExchangeRateText(
+      widget.transaction,
+    );
+    if (payoutRate != null && payoutRate.isNotEmpty) {
+      return payoutRate;
+    }
+
+    if (WalletTransactionLabels.isDebit(widget.transaction) &&
+        (widget.transaction.ledgerCurrency ?? 'USD').toUpperCase() == 'USD' &&
+        (widget.transaction.receiveAmount ?? 0) >= 50) {
+      final usd = WalletTransactionDisplay.outboundTransferAmount(
+        widget.transaction,
+      );
+      final ngn = widget.transaction.receiveAmount;
+      if (usd != null && usd > 0 && ngn != null && ngn >= 50) {
+        return WalletTransactionDisplay.formatNgnPerUsd(ngn / usd);
+      }
+    }
+
+    final paymentCurrency = _effectivePaymentCurrency();
+    final paymentSymbol = _paymentCurrencySymbol();
+
+    // Same-currency transfers (P2P username, same-wallet bank)
+    if (widget.transaction.sendAmount != null &&
+        widget.transaction.receiveAmount != null &&
+        widget.transaction.sendAmount == widget.transaction.receiveAmount) {
+      return '${paymentSymbol}1 = ${paymentSymbol}1';
+    }
+    if (widget.transaction.sendAmount != null &&
+        widget.transaction.receiveAmount == null &&
+        (widget.transaction.reason?.toLowerCase().startsWith('p2p:') ?? false)) {
+      return '${paymentSymbol}1 = ${paymentSymbol}1';
+    }
+
     // Use calculated rate from API if available
     if (_exchangeRate.isNotEmpty) {
       return _exchangeRate;
@@ -1401,14 +1988,29 @@ class _TransactionDetailsViewState
     if (widget.transaction.sendAmount != null &&
         widget.transaction.receiveAmount != null &&
         widget.transaction.sendAmount! > 0 &&
-        widget.transaction.receiveAmount! > 0) {
-      // Calculate the exchange rate: receiveAmount / sendAmount
-      final rate =
-          widget.transaction.receiveAmount! / widget.transaction.sendAmount!;
-      final sendCurrency = 'NGN';
-      final receiveCurrency = _getCurrencyCodeFromCountry(
-        widget.transaction.beneficiary.country,
-      );
+        widget.transaction.receiveAmount! > 0 &&
+        !WalletTransactionDisplay.resolveLocalPayout(widget.transaction).isPayout) {
+      final usdSend = WalletTransactionDisplay.outboundTransferAmount(
+            widget.transaction,
+          ) ??
+          (WalletTransactionDisplay.isUsdDebitAmount(
+                widget.transaction.sendAmount!,
+                widget.transaction,
+              )
+              ? widget.transaction.sendAmount!
+              : null);
+      final sendAmount = usdSend ?? widget.transaction.sendAmount!;
+      final rate = widget.transaction.receiveAmount! / sendAmount;
+      const sendCurrency = 'USD';
+      final receiveCurrency =
+          (widget.transaction.receiveAmount ?? 0) >= 50 &&
+                  (widget.transaction.ledgerCurrency ?? 'USD')
+                          .toUpperCase() ==
+                      'USD'
+              ? 'NGN'
+              : _getCurrencyCodeFromCountry(
+                  widget.transaction.beneficiary.country,
+                );
 
       // Get currency symbols
       final sendSymbol = _getCurrencySymbolFromCode(sendCurrency);
@@ -1432,10 +2034,8 @@ class _TransactionDetailsViewState
       return displayText;
     } else {
       // Fallback: try to get a reasonable exchange rate based on common currency pairs
-      final receiveCurrency = _getCurrencyCodeFromCountry(
-        widget.transaction.beneficiary.country,
-      );
-      final sendSymbol = '₦';
+      final receiveCurrency = _effectivePaymentCurrency();
+      final sendSymbol = _paymentCurrencySymbol();
       final receiveSymbol = _getCurrencySymbolFromCode(receiveCurrency);
 
       // Provide a fallback rate based on common currency pairs
@@ -1495,17 +2095,29 @@ class _TransactionDetailsViewState
     }
   }
 
-  /// Calculate total amount paid
+  /// Calculate total amount paid (transfer + fee).
   String _calculateTotal() {
+    final currencySymbol = _paymentCurrencySymbol();
+    final total = WalletTransactionDisplay.outboundTotalDebited(
+      widget.transaction,
+    );
+    if (total != null && total > 0) {
+      final formattedAmount = StringUtils.formatNumberWithCommas(
+        total.toStringAsFixed(2),
+      );
+      return '$currencySymbol$formattedAmount';
+    }
     if (widget.transaction.sendAmount != null &&
         widget.transaction.sendAmount! > 0) {
-      // Use actual fee from transaction data
       final feeAmount = widget.transaction.fee ?? 0.0;
-      final totalAmount = widget.transaction.sendAmount! + feeAmount;
+      final transfer =
+          WalletTransactionDisplay.outboundTransferAmount(widget.transaction) ??
+          widget.transaction.sendAmount!;
+      final totalAmount = transfer + feeAmount;
       final formattedAmount = StringUtils.formatNumberWithCommas(
         totalAmount.toStringAsFixed(2),
       );
-      return '₦$formattedAmount';
+      return '$currencySymbol$formattedAmount';
     } else {
       return 'N/A';
     }
@@ -1524,10 +2136,8 @@ class _TransactionDetailsViewState
 
     try {
       // Fetch rates for both currencies in parallel
-      final sendCurrency = 'NGN';
-      final receiveCurrency = _getCurrencyCodeFromCountry(
-        widget.transaction.beneficiary.country,
-      );
+      final sendCurrency = _effectivePaymentCurrency();
+      final receiveCurrency = _effectivePaymentCurrency();
 
       await Future.wait([
         _fetchRates(sendCurrency),
@@ -1740,6 +2350,22 @@ class _TransactionDetailsViewState
   }
 
   String _getBankName() {
+    final bank = RecipientHistoryHelper.transactionRecipientBank(
+      widget.transaction,
+    );
+    if (bank != null && bank.isNotEmpty) {
+      return bank;
+    }
+
+    if (WalletTransactionDisplay.isCrossBorderBankSend(widget.transaction)) {
+      final cross = WalletTransactionDisplay.crossBorderBankName(
+        widget.transaction,
+      );
+      if (cross != null && cross.isNotEmpty) {
+        return cross;
+      }
+    }
+
     try {
       // Check if it's a DayFi transfer
       if (widget.transaction.source.accountType?.toLowerCase() == 'dayfi' ||
@@ -2024,7 +2650,7 @@ class _TransactionDetailsViewState
 
   void _navigateToContactUs() async {
     try {
-      await Intercom.instance.displayMessenger();
+      await IntercomSupportService.openContactSupport();
     } catch (e) {
       // Fallback in case Intercom fails
       if (mounted) {
@@ -2038,7 +2664,8 @@ class _TransactionDetailsViewState
   }
 
   /// Share transaction receipt as an image
-  Future<void> _shareTransactionReceipt() async {
+  Future<void> _shareTransactionReceipt(BuildContext shareContext) async {
+    final shareOrigin = sharePositionOrigin(shareContext);
     try {
       // Show loading indicator
       showDialog(
@@ -2057,7 +2684,7 @@ class _TransactionDetailsViewState
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      CupertinoActivityIndicator(),
+                      const DayfiLoadingIndicator(),
                       SizedBox(height: 16),
                       Text(
                         'Generating receipt...',
@@ -2119,6 +2746,7 @@ class _TransactionDetailsViewState
         text:
             'Transaction Receipt - ${widget.transaction.id.substring(0, 8).toUpperCase()}',
         subject: 'DayFi Transaction Receipt',
+        sharePositionOrigin: shareOrigin,
       );
 
       // print('Share completed successfully');
@@ -2129,7 +2757,7 @@ class _TransactionDetailsViewState
           imageFile.delete();
         }
       });
-    } catch (e, stackTrace) {
+    } catch (e) {
       // print('Error sharing receipt: $e');
       // print('Stack trace: $stackTrace');
 
@@ -2341,8 +2969,19 @@ class _TransactionDetailsViewState
     }
   }
 
+  bool _isBillPayment() =>
+      WalletTransactionDisplay.isBillPayment(widget.transaction);
+
+  bool _isBillReversal() =>
+      WalletTransactionDisplay.isBillReversal(widget.transaction);
+
   /// Check if this is a wallet top-up transaction
   bool _isWalletTopUp() {
+    if (_isBillReversal()) return false;
+    if (WalletTransactionDisplay.isDepositIncome(widget.transaction)) {
+      return true;
+    }
+
     final profileState = ref.read(profileViewModelProvider);
     final user = profileState.user;
 
@@ -2369,11 +3008,35 @@ class _TransactionDetailsViewState
     return feeAmount == 0.0;
   }
 
+  bool _shouldShowBankAccountDetails() {
+    if (!_isWalletTopUp() || !_isFeeZero()) return false;
+    if (WalletTransactionDisplay.isNgnBankDeposit(widget.transaction)) {
+      return false;
+    }
+
+    final isDayfiTransfer =
+        widget.transaction.source.accountType?.toLowerCase() == 'dayfi' ||
+        widget.transaction.beneficiary.accountType?.toLowerCase() == 'dayfi';
+
+    if (isDayfiTransfer) {
+      return (widget.transaction.beneficiary.accountNumber?.isNotEmpty ??
+              false) ||
+          widget.transaction.beneficiary.name.isNotEmpty;
+    }
+
+    final hasAccount =
+        widget.transaction.source.accountNumber?.isNotEmpty ?? false;
+    final bankName = _getBankName();
+    return hasAccount ||
+        !WalletTransactionDisplay.isPlaceholderDetail(bankName);
+  }
+
   /// Build bank account details for wallet top-up
   Widget _buildBankAccountDetails() {
     final isDayfiTransfer =
         widget.transaction.source.accountType?.toLowerCase() == 'dayfi' ||
         widget.transaction.beneficiary.accountType?.toLowerCase() == 'dayfi';
+    final bankName = _getBankName();
 
     return Container(
       padding: EdgeInsets.all(20),
@@ -2385,10 +3048,10 @@ class _TransactionDetailsViewState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            isDayfiTransfer ? "Dayfi Tag Details" : "Bank Account Details",
+            isDayfiTransfer ? UsernameCopy.details : "Bank Account Details",
             style: AppTypography.bodySmall.copyWith(
               fontFamily: 'Chirp',
-              fontSize: 12,
+              fontSize: 12.5,
               letterSpacing: -.25,
               height: 1.2,
               fontWeight: FontWeight.w600,
@@ -2400,7 +3063,7 @@ class _TransactionDetailsViewState
             if (widget.transaction.beneficiary.accountNumber != null &&
                 widget.transaction.beneficiary.accountNumber!.isNotEmpty)
               _buildDetailRow(
-                "Dayfi Tag",
+                UsernameCopy.label,
                 widget.transaction.beneficiary.accountNumber!.startsWith('@')
                     ? widget.transaction.beneficiary.accountNumber!
                     : '@${widget.transaction.beneficiary.accountNumber!}',
@@ -2414,7 +3077,8 @@ class _TransactionDetailsViewState
                 "Account number",
                 widget.transaction.source.accountNumber!,
               ),
-            _buildDetailRow("Bank", _getBankName()),
+            if (!WalletTransactionDisplay.isPlaceholderDetail(bankName))
+              _buildDetailRow("Bank", bankName),
           ],
         ],
       ),
@@ -2422,6 +3086,17 @@ class _TransactionDetailsViewState
   }
 
   String _getRecipientDisplayName() {
+    if (_isBillReversal()) {
+      return WalletTransactionLabels.detailHeadline(widget.transaction);
+    }
+    if (_isBillPayment()) {
+      return WalletTransactionLabels.detailHeadline(widget.transaction);
+    }
+
+    final featureHeadline =
+        WalletTransactionLabels.detailHeadline(widget.transaction);
+    if (featureHeadline.isNotEmpty) return featureHeadline;
+
     final isCollection = _effectiveStatus.toLowerCase().contains(
       'collection',
     );
@@ -2436,6 +3111,12 @@ class _TransactionDetailsViewState
 
     // For collection (incoming money)
     if (isCollection) {
+      if (widget.transaction.receiveChannel?.toLowerCase() == 'crypto') {
+        return 'Money added via crypto';
+      }
+      if (widget.transaction.receiveChannel?.toLowerCase() == 'bank') {
+        return 'Money added via NGN bank account';
+      }
       if (isDayfiTransfer &&
           widget.transaction.beneficiary.accountNumber != null &&
           widget.transaction.beneficiary.accountNumber!.isNotEmpty) {
@@ -2446,37 +3127,54 @@ class _TransactionDetailsViewState
       return 'Money added to your wallet';
     }
 
+    if (isPayment &&
+        (WalletTransactionLabels.isInvestment(widget.transaction) ||
+            WalletTransactionLabels.isDayEarn(widget.transaction) ||
+            WalletTransactionLabels.isDayFlow(widget.transaction))) {
+      return WalletTransactionLabels.detailHeadline(widget.transaction);
+    }
+
+    if (isCollection &&
+        (WalletTransactionLabels.isDayEarn(widget.transaction) ||
+            WalletTransactionLabels.isDayFlow(widget.transaction))) {
+      return WalletTransactionLabels.detailHeadline(widget.transaction);
+    }
+
     // For payment (outgoing money)
     if (isPayment) {
-      // Check if it's a wallet top-up (sending to yourself)
-      final profileState = ref.read(profileViewModelProvider);
-      final user = profileState.user;
-
-      if (user != null) {
-        final userFullName =
-            '${user.firstName} ${user.lastName}'.trim().toUpperCase();
-        final beneficiaryName =
-            widget.transaction.beneficiary.name.trim().toUpperCase();
-
-        // if (beneficiaryName == userFullName ||
-        //     beneficiaryName == 'SELF FUNDING' ||
-        //     (beneficiaryName.contains('SELF') &&
-        //         beneficiaryName.contains('FUNDING'))) {
-        //   return 'Topped up your wallet';
-        // }
+      if (WalletTransactionDisplay.isCrossBorderBankSend(widget.transaction) ||
+          WalletTransactionDisplay.isUsdWalletLocalPayout(widget.transaction) ||
+          RecipientHistoryHelper.isWalletFundedBankSend(widget.transaction)) {
+        return WalletTransactionDisplay.detailPrimaryLabel(widget.transaction);
       }
 
-      // Regular payment to another person
+      if (RecipientHistoryHelper.isP2pTransaction(widget.transaction) ||
+          RecipientHistoryHelper.isCryptoTransaction(widget.transaction)) {
+        final name = RecipientHistoryHelper.transactionRecipientName(
+          widget.transaction,
+        );
+        if (!RecipientHistoryHelper.isGenericRecipientName(name)) {
+          return name;
+        }
+        final username = RecipientHistoryHelper.p2pUsername(widget.transaction);
+        if (username != null) return username;
+      }
+
       if (isDayfiTransfer &&
           widget.transaction.beneficiary.accountNumber != null &&
           widget.transaction.beneficiary.accountNumber!.isNotEmpty) {
         final tag = widget.transaction.beneficiary.accountNumber!;
-        final displayTag = tag.startsWith('@') ? tag : '@$tag';
-        return 'Sent money to $displayTag';
+        return tag.startsWith('@') ? tag : '@$tag';
       }
 
-      // Payment to beneficiary name
-      return 'Sent to ${widget.transaction.beneficiary.name}';
+      final resolvedName = RecipientHistoryHelper.transactionRecipientName(
+        widget.transaction,
+      );
+      if (!RecipientHistoryHelper.isGenericRecipientName(resolvedName)) {
+        return resolvedName;
+      }
+
+      return widget.transaction.beneficiary.name;
     }
 
     // Fallback to beneficiary name

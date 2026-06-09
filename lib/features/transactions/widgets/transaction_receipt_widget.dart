@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:dayfi/common/constants/username_copy.dart';
 
+import 'package:dayfi/common/helpers/wallet_transaction_display.dart';
+import 'package:dayfi/common/helpers/wallet_transaction_labels.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/models/wallet_transaction.dart';
 import 'package:dayfi/common/utils/string_utils.dart';
@@ -57,8 +60,13 @@ class TransactionReceiptWidget extends StatelessWidget {
           SizedBox(height: 20),
 
           // Recipient Details (if not a wallet top-up)
-          if (!_isWalletTopUp()) ...[
+          if (!_isWalletTopUp() && !_isBillPayment() && !_isBillReversal()) ...[
             _buildRecipientDetails(),
+            SizedBox(height: 20),
+          ],
+
+          if (_isBillPayment() || _isBillReversal()) ...[
+            _buildBillDetails(),
             SizedBox(height: 20),
           ],
 
@@ -83,7 +91,7 @@ class TransactionReceiptWidget extends StatelessWidget {
           'Transaction Receipt',
           style: TextStyle(
             fontFamily: 'Chirp',
-            fontSize: 12,
+            fontSize: 12.5,
             fontWeight: FontWeight.w500,
             color: AppColors.neutral600,
           ),
@@ -99,7 +107,7 @@ class TransactionReceiptWidget extends StatelessWidget {
 
     if (status.contains('success')) {
       badgeColor = AppColors.success500;
-      statusText = 'Completed';
+      statusText = 'Success';
     } else if (status.contains('pending')) {
       badgeColor = AppColors.warning500;
       statusText = 'Pending';
@@ -122,7 +130,7 @@ class TransactionReceiptWidget extends StatelessWidget {
         style: TextStyle(
           fontFamily: 'Chirp',
           fontSize: 10,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
           color: badgeColor,
           letterSpacing: 1,
         ),
@@ -142,8 +150,8 @@ class TransactionReceiptWidget extends StatelessWidget {
           amount,
           style: TextStyle(
             fontFamily: 'FunnelDisplay',
-            fontSize: 36,
-            fontWeight: FontWeight.w700,
+            fontSize: 40,
+            fontWeight: FontWeight.w600,
             color: AppColors.neutral900,
           ),
         ),
@@ -164,7 +172,7 @@ class TransactionReceiptWidget extends StatelessWidget {
           dateTime,
           style: TextStyle(
             fontFamily: 'Chirp',
-            fontSize: 12,
+            fontSize: 12.5,
             fontWeight: FontWeight.w500,
             color: AppColors.neutral500,
           ),
@@ -184,7 +192,7 @@ class TransactionReceiptWidget extends StatelessWidget {
           style: TextStyle(
             fontFamily: 'Chirp',
             fontSize: 14,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
             color: AppColors.neutral900,
           ),
         ),
@@ -198,11 +206,14 @@ class TransactionReceiptWidget extends StatelessWidget {
         _buildDetailRow(
           'Send Type',
           isDayfiTransfer
-              ? 'Dayfi Tag'
+              ? UsernameCopy.label
               : _getChannelDisplayName(transaction.sendChannel),
         ),
         if (transaction.reason != null && transaction.reason!.isNotEmpty)
-          _buildDetailRow('Description', _capitalizeWords(transaction.reason!)),
+          _buildDetailRow(
+            'Description',
+            WalletTransactionDisplay.humanReason(transaction),
+          ),
       ],
     );
   }
@@ -224,7 +235,7 @@ class TransactionReceiptWidget extends StatelessWidget {
             style: TextStyle(
               fontFamily: 'Chirp',
               fontSize: 14,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w600,
               color: AppColors.neutral900,
             ),
           ),
@@ -239,7 +250,7 @@ class TransactionReceiptWidget extends StatelessWidget {
               transaction.beneficiary.accountNumber != null &&
               transaction.beneficiary.accountNumber!.isNotEmpty)
             _buildDetailRow(
-              'Dayfi Tag',
+              UsernameCopy.label,
               transaction.beneficiary.accountNumber!.startsWith('@')
                   ? transaction.beneficiary.accountNumber!
                   : '@${transaction.beneficiary.accountNumber!}',
@@ -263,7 +274,7 @@ class TransactionReceiptWidget extends StatelessWidget {
             style: TextStyle(
               fontFamily: 'Chirp',
               fontSize: 14,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w600,
               color: AppColors.neutral900,
             ),
           ),
@@ -273,7 +284,7 @@ class TransactionReceiptWidget extends StatelessWidget {
               transaction.beneficiary.accountNumber != null &&
               transaction.beneficiary.accountNumber!.isNotEmpty)
             _buildDetailRow(
-              'Dayfi Tag',
+              UsernameCopy.label,
               transaction.beneficiary.accountNumber!.startsWith('@')
                   ? transaction.beneficiary.accountNumber!
                   : '@${transaction.beneficiary.accountNumber!}',
@@ -292,28 +303,205 @@ class TransactionReceiptWidget extends StatelessWidget {
   }
 
   Widget _buildPaymentSummary() {
+    if (_isBillReversal()) {
+      return _buildBillRefundSummary();
+    }
+    if (_isBillPayment()) {
+      return _buildBillPaymentSummary();
+    }
+
+    final isDeposit = WalletTransactionDisplay.isDepositIncome(transaction);
+    final ngnFx = WalletTransactionDisplay.ngnBankDepositFx(transaction);
+    final hideFee = isDeposit && fee.replaceAll(RegExp(r'[^\d.]'), '') == '0.00';
+
+    if (ngnFx != null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Deposit Summary',
+            style: TextStyle(
+              fontFamily: 'Chirp',
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppColors.neutral900,
+            ),
+          ),
+          SizedBox(height: 12),
+          _buildDetailRow(
+            'Exchange rate',
+            WalletTransactionDisplay.formatNgnPerUsd(ngnFx.ngnPerUsd),
+          ),
+          // Padding(
+          //   padding: const EdgeInsets.only(bottom: 8),
+          //   child: Text(
+          //     WalletTransactionDisplay.ngnBankDepositRateFootnote,
+          //     style: TextStyle(
+          //       fontFamily: 'Chirp',
+          //       fontSize: 11,
+          //       height: 1.3,
+          //       color: AppColors.neutral500,
+          //     ),
+          //   ),
+          // ),
+          _buildDetailRow(
+            'Amount received',
+            '₦${StringUtils.formatNumberWithCommas(ngnFx.ngnAmount.toStringAsFixed(2))}',
+          ),
+          _buildDetailRow(
+            'Wallet credit (USD)',
+            '\$${StringUtils.formatNumberWithCommas(ngnFx.usdCredited.toStringAsFixed(2))}',
+          ),
+          SizedBox(height: 8),
+          Container(height: 1, color: AppColors.neutral200),
+          SizedBox(height: 8),
+          _buildDetailRow(
+            'Total received',
+            '\$${StringUtils.formatNumberWithCommas(ngnFx.usdCredited.toStringAsFixed(2))}',
+            isBold: true,
+          ),
+        ],
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Payment Summary',
+          isDeposit ? 'Deposit Summary' : 'Payment Summary',
           style: TextStyle(
             fontFamily: 'Chirp',
             fontSize: 14,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
             color: AppColors.neutral900,
           ),
         ),
         SizedBox(height: 12),
-        if (!_isWalletTopUp()) ...[
+        if (!_isWalletTopUp() && !isDeposit) ...[
           _buildDetailRow('Exchange Rate', exchangeRate),
           _buildDetailRow('Recipient Got', receiveAmount),
+        ] else if (isDeposit) ...[
+          _buildDetailRow('Amount received', receiveAmount),
         ],
-        _buildDetailRow('Fee', fee),
+        if (!hideFee) _buildDetailRow('Fee', fee),
         SizedBox(height: 8),
         Container(height: 1, color: AppColors.neutral200),
         SizedBox(height: 8),
-        _buildDetailRow('Total Paid', total, isBold: true),
+        _buildDetailRow(
+          isDeposit ? 'Total received' : 'Total Paid',
+          isDeposit ? receiveAmount : total,
+          isBold: true,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBillDetails() {
+    final biller = WalletTransactionLabels.billerDisplayName(transaction);
+    final customerId = WalletTransactionLabels.billCustomerId(transaction);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          _isBillReversal() ? 'Refund Details' : 'Bill Details',
+          style: TextStyle(
+            fontFamily: 'Chirp',
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: AppColors.neutral900,
+          ),
+        ),
+        SizedBox(height: 12),
+        if (!_isBillReversal()) ...[
+          _buildDetailRow('Biller', biller),
+          if (customerId != null) _buildDetailRow('Customer ID', customerId),
+        ] else
+          _buildDetailRow(
+            'Original reference',
+            WalletTransactionLabels.billOriginalReference(transaction) ??
+                transaction.id,
+          ),
+      ],
+    );
+  }
+
+  Widget _buildBillPaymentSummary() {
+    final headline =
+        WalletTransactionLabels.billDetailHeadline(transaction);
+    final fx = WalletTransactionDisplay.billPaymentFx(transaction);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '$headline summary',
+          style: TextStyle(
+            fontFamily: 'Chirp',
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: AppColors.neutral900,
+          ),
+        ),
+        SizedBox(height: 12),
+        if (fx != null) ...[
+          if (fx.rateNgnPerUsd != null)
+            _buildDetailRow(
+              'Exchange rate',
+              WalletTransactionDisplay.formatNgnPerUsd(fx.ngnPerUsd),
+            ),
+          _buildDetailRow(
+            'Bill amount',
+            '₦${StringUtils.formatNumberWithCommas(fx.ngnAmount.toStringAsFixed(2))}',
+          ),
+          _buildDetailRow(
+            'Wallet debit (USD)',
+            '\$${StringUtils.formatNumberWithCommas(fx.usdCredited.toStringAsFixed(2))}',
+          ),
+        ] else
+          _buildDetailRow('Amount paid', total),
+        SizedBox(height: 8),
+        Container(height: 1, color: AppColors.neutral200),
+        SizedBox(height: 8),
+        _buildDetailRow('Total paid', total, isBold: true),
+      ],
+    );
+  }
+
+  Widget _buildBillRefundSummary() {
+    final fx = WalletTransactionDisplay.billPaymentFx(transaction);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Refund Summary',
+          style: TextStyle(
+            fontFamily: 'Chirp',
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: AppColors.neutral900,
+          ),
+        ),
+        SizedBox(height: 12),
+        if (fx != null) ...[
+          if (fx.rateNgnPerUsd != null)
+            _buildDetailRow(
+              'Exchange rate',
+              WalletTransactionDisplay.formatNgnPerUsd(fx.ngnPerUsd),
+            ),
+          _buildDetailRow(
+            'Bill amount',
+            '₦${StringUtils.formatNumberWithCommas(fx.ngnAmount.toStringAsFixed(2))}',
+          ),
+          _buildDetailRow(
+            'Wallet credit (USD)',
+            '\$${StringUtils.formatNumberWithCommas(fx.usdCredited.toStringAsFixed(2))}',
+          ),
+        ] else
+          _buildDetailRow('Amount refunded', receiveAmount),
+        SizedBox(height: 8),
+        Container(height: 1, color: AppColors.neutral200),
+        SizedBox(height: 8),
+        _buildDetailRow('Total returned', receiveAmount, isBold: true),
       ],
     );
   }
@@ -328,7 +516,7 @@ class TransactionReceiptWidget extends StatelessWidget {
           textAlign: TextAlign.center,
           style: TextStyle(
             fontFamily: 'Chirp',
-            fontSize: 12,
+            fontSize: 12.5,
             fontWeight: FontWeight.w500,
             color: AppColors.neutral500,
           ),
@@ -358,7 +546,7 @@ class TransactionReceiptWidget extends StatelessWidget {
             label,
             style: TextStyle(
               fontFamily: 'Chirp',
-              fontSize: 12,
+              fontSize: 12.5,
               fontWeight: FontWeight.w500,
               color: AppColors.neutral600,
             ),
@@ -367,8 +555,8 @@ class TransactionReceiptWidget extends StatelessWidget {
             value,
             style: TextStyle(
               fontFamily: 'Chirp',
-              fontSize: 12,
-              fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,
+              fontSize: 12.5,
+              fontWeight: isBold ? FontWeight.w600 : FontWeight.w500,
               color: AppColors.neutral900,
             ),
           ),
@@ -379,7 +567,24 @@ class TransactionReceiptWidget extends StatelessWidget {
 
   // Helper methods
   String _getTransactionAmount() {
-    // Use receive amount with proper currency if available
+    final ngnFx = WalletTransactionDisplay.ngnBankDepositFx(transaction);
+    if (ngnFx != null) {
+      return '\$${StringUtils.formatNumberWithCommas(ngnFx.usdCredited.toStringAsFixed(2))}';
+    }
+
+    if (WalletTransactionDisplay.resolveLocalPayout(transaction).isPayout ||
+        WalletTransactionDisplay.isCrossBorderBankSend(transaction)) {
+      return WalletTransactionDisplay.payoutSendAmountText(transaction);
+    }
+
+    if (WalletTransactionLabels.isDebit(transaction) &&
+        (transaction.ledgerCurrency ?? 'USD').toUpperCase() == 'USD' &&
+        ((transaction.receiveAmount ?? 0) >= 50 ||
+            (transaction.sendAmount ?? 0) >= 50)) {
+      final header = WalletTransactionDisplay.amountText(transaction);
+      if (header != 'N/A') return header;
+    }
+
     if (transaction.receiveAmount != null && transaction.receiveAmount! > 0) {
       final currencyCode = _getCurrencyCodeFromCountry(
         transaction.beneficiary.country,
@@ -390,7 +595,6 @@ class TransactionReceiptWidget extends StatelessWidget {
       );
       return '$currencySymbol$formattedAmount';
     } else if (transaction.sendAmount != null && transaction.sendAmount! > 0) {
-      // Fallback to send amount if receive amount is not available
       final formattedAmount = StringUtils.formatNumberWithCommas(
         transaction.sendAmount!.toStringAsFixed(2),
       );
@@ -401,6 +605,13 @@ class TransactionReceiptWidget extends StatelessWidget {
   }
 
   String _getRecipientDisplayName() {
+    if (_isBillReversal()) {
+      return WalletTransactionLabels.detailHeadline(transaction);
+    }
+    if (_isBillPayment()) {
+      return WalletTransactionLabels.detailHeadline(transaction);
+    }
+
     final isCollection = transaction.status.toLowerCase().contains(
       'collection',
     );
@@ -455,7 +666,7 @@ class TransactionReceiptWidget extends StatelessWidget {
 
   String _getStatusText() {
     final status = transaction.status.toLowerCase();
-    if (status.contains('success')) return 'Completed';
+    if (status.contains('success')) return 'Success';
     if (status.contains('pending')) return 'Pending';
     if (status.contains('failed')) return 'Failed';
     return 'Unknown';
@@ -487,11 +698,17 @@ class TransactionReceiptWidget extends StatelessWidget {
   }
 
   bool _isWalletTopUp() {
-    return transaction.beneficiary.name.trim().toUpperCase().contains(
-          'SELF FUNDING',
-        ) ||
-        transaction.beneficiary.name.trim().toUpperCase().contains('WALLET');
+    if (_isBillReversal()) return false;
+    if (WalletTransactionDisplay.isDepositIncome(transaction)) return true;
+    final name = transaction.beneficiary.name.trim().toUpperCase();
+    return name.contains('SELF FUNDING') ||
+        name.contains('WALLET') ||
+        name == 'WALLET TOP UP';
   }
+
+  bool _isBillPayment() => WalletTransactionLabels.isBillPayment(transaction);
+
+  bool _isBillReversal() => WalletTransactionLabels.isBillReversal(transaction);
 
   bool _isDayfiTransfer() {
     return transaction.source.accountType?.toLowerCase() == 'dayfi' ||
@@ -504,7 +721,7 @@ class TransactionReceiptWidget extends StatelessWidget {
     switch (channel.toLowerCase()) {
       case 'dayfi':
       case 'dayfi_tag':
-        return 'Dayfi Tag';
+        return UsernameCopy.label;
       case 'bank':
       case 'bank_transfer':
         return 'Bank Transfer';

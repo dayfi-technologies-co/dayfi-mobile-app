@@ -1,6 +1,9 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:dayfi/common/utils/dayfi_platform.dart';
+import 'package:dayfi/features/web/utils/web_route_helper.dart'
+    show instantWebBootRoute, resolveWebInitialRoute, unauthenticatedEntryRoute;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dayfi/common/app_constants.dart';
 
@@ -45,13 +48,22 @@ class MyApp extends ConsumerStatefulWidget {
 }
 
 class _MyAppState extends ConsumerState<MyApp> {
-  String _initialRoute = AppRoute.onboardingView;
+  String _initialRoute = unauthenticatedEntryRoute;
   bool _isInitialized = false;
   bool _transactionMonitorStarted = false;
+  String? _instantBootRoute;
 
   @override
   void initState() {
     super.initState();
+    if (isDayfiWeb) {
+      final instantRoute = instantWebBootRoute(Uri.base.path);
+      if (instantRoute != null) {
+        _instantBootRoute = instantRoute;
+        _initialRoute = instantRoute;
+        _isInitialized = true;
+      }
+    }
     _determineInitialRoute();
   }
 
@@ -78,41 +90,63 @@ class _MyAppState extends ConsumerState<MyApp> {
           userJson != 'null' && 
           _isValidUserJson(userJson);
 
+      String appBootstrapRoute = unauthenticatedEntryRoute;
+
       // Validate data consistency - if we have a token but no user data, something is wrong
       if (userToken.isNotEmpty && !hasValidUserData) {
-        // Clear inconsistent data and redirect to login
         AppLogger.warning('Inconsistent state: token exists but no valid user data');
         await _clearInconsistentData(secureStorage);
-        _initialRoute = AppRoute.onboardingView;
+        appBootstrapRoute = unauthenticatedEntryRoute;
       } else if (isFirstTimeUser && userToken.isEmpty) {
-        _initialRoute = AppRoute.onboardingView;
+        appBootstrapRoute = unauthenticatedEntryRoute;
       } else if (userToken.isEmpty) {
-        _initialRoute = AppRoute.onboardingView;
+        appBootstrapRoute = unauthenticatedEntryRoute;
       } else if (userPasscode.isEmpty) {
-        _initialRoute = AppRoute.onboardingView;
+        final phone =
+            (jsonDecode(userJson) as Map<String, dynamic>)['phone_number']
+                ?.toString()
+                .trim() ??
+            '';
+        appBootstrapRoute =
+            phone.isNotEmpty
+                ? AppRoute.createPasscodeView
+                : AppRoute.successSignupView;
       } else {
-        _initialRoute = AppRoute.passcodeView;
+        appBootstrapRoute = AppRoute.passcodeView;
       }
+
+      final isAuthenticated = userToken.isNotEmpty && hasValidUserData;
+
+      _initialRoute = resolveWebInitialRoute(
+        uriPath: Uri.base.path,
+        fallbackAppRoute: appBootstrapRoute,
+        isAuthenticated: isAuthenticated,
+      );
 
       AppLogger.info('Initial route determined: $_initialRoute');
     } catch (e) {
       AppLogger.error('Error determining initial route: $e');
-      // Navigate to onboarding view as fallback
-      _initialRoute = AppRoute.onboardingView;
+      _initialRoute = unauthenticatedEntryRoute;
     } finally {
       if (mounted) {
         final targetRoute = _initialRoute;
+        final instantRoute = _instantBootRoute;
+        final shouldReplaceRoute =
+            instantRoute == null || targetRoute != instantRoute;
+
         setState(() {
           _isInitialized = true;
         });
-        // Navigator was created with `home: _BootstrapSplash`. Switching to
-        // `initialRoute` on rebuild leaves a null route name — push the real entry.
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          final nav = NavigatorKey.appNavigatorKey.currentState;
-          if (nav == null) return;
-          nav.pushReplacementNamed(targetRoute);
-        });
+
+        if (shouldReplaceRoute) {
+          // Navigator may still be on bootstrap splash — swap to the resolved entry.
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            final nav = NavigatorKey.appNavigatorKey.currentState;
+            if (nav == null) return;
+            nav.pushReplacementNamed(targetRoute);
+          });
+        }
       }
     }
   }
@@ -186,6 +220,16 @@ class _MyAppState extends ConsumerState<MyApp> {
 
               return ConnectivityWrapper(
                 child: MaterialApp(
+                  builder: (context, child) {
+                    // Ignore iOS/Android system font-size accessibility scaling.
+                    final mediaQuery = MediaQuery.of(context);
+                    return MediaQuery(
+                      data: mediaQuery.copyWith(
+                        textScaler: TextScaler.noScaling,
+                      ),
+                      child: child ?? const SizedBox.shrink(),
+                    );
+                  },
                   navigatorObservers: [
                     if (analyticsObserver != null) analyticsObserver!,
                   ],
@@ -203,7 +247,10 @@ class _MyAppState extends ConsumerState<MyApp> {
                         AppThemeExtensionsFactory.createDarkExtensions().values
                             .toList(),
                   ),
-                  themeMode: themeMode,
+                  themeMode:
+                      isDayfiWeb && themeMode == ThemeMode.system
+                          ? ThemeMode.dark
+                          : themeMode,
                   navigatorKey: NavigatorKey.appNavigatorKey,
                   // Keep a stable bootstrap route; never swap home ↔ initialRoute after init.
                   initialRoute: '/',
@@ -233,15 +280,55 @@ class _MyAppState extends ConsumerState<MyApp> {
 }
 
 /// Shown under the same [MaterialApp] until async route bootstrap completes.
-class _BootstrapSplash extends StatelessWidget {
+class _BootstrapSplash extends StatefulWidget {
   const _BootstrapSplash();
 
   @override
+  State<_BootstrapSplash> createState() => _BootstrapSplashState();
+}
+
+class _BootstrapSplashState extends State<_BootstrapSplash>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulseController;
+  late final Animation<double> _pulseAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2400),
+    )..repeat(reverse: true);
+    _pulseAnimation = Tween<double>(begin: 0.35, end: 1).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final backgroundColor =
+        isDayfiWeb
+            ? AppColors.neutral950
+            : AppColors.splashBackgroundLight;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF9E3),
+      backgroundColor: backgroundColor,
       body: Center(
-        child: Image.asset('assets/images/logo_splash.png', width: 88.0),
+        child: FadeTransition(
+          opacity: _pulseAnimation,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.96, end: 1).animate(
+              CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+            ),
+            child: Image.asset('assets/images/logo_splash.png', width: 88.0),
+          ),
+        ),
       ),
     );
   }

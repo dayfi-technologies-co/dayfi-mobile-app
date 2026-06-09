@@ -215,6 +215,29 @@ class WalletProvisionService {
     }
   }
 
+  Future<String?> fetchRecoveryPhraseFromServer({required String pin}) async {
+    try {
+      final response = await _networkService.call(
+        '${F.baseUrl}${UrlConfig.walletRecoveryPhrase}',
+        RequestMethod.post,
+        data: <String, dynamic>{'pin': pin},
+      );
+      final root = _parseBody(response.data);
+      final data = _unwrap(root);
+      final phrase =
+          data['phrase'] as String? ??
+          (data['words'] is List
+              ? (data['words'] as List).map((e) => e.toString()).join(' ')
+              : null);
+      final trimmed = phrase?.trim();
+      if (trimmed == null || trimmed.isEmpty) return null;
+      await secureStorage.write(StorageKeys.walletRecoveryPhrase, trimmed);
+      return trimmed;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<void> confirmRecoveryPhraseBackedUp() async {
     try {
       await _networkService.call(

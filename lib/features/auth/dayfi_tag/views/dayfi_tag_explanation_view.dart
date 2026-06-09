@@ -1,4 +1,5 @@
 import 'package:dayfi/core/theme/app_typography.dart';
+import 'package:dayfi/common/constants/username_copy.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -105,7 +106,7 @@ class DayfiTagExplanationView extends ConsumerWidget {
                         Column(
                           children: [
                             Text(
-                              "Meet your Dayfi Tag",
+                              UsernameCopy.meetYour,
                               style: AppTypography.headlineLarge.copyWith(
                                 fontFamily: 'FunnelDisplay',
                                 fontSize: isWide ? 32 : 28,
@@ -152,7 +153,7 @@ class DayfiTagExplanationView extends ConsumerWidget {
                           padding: EdgeInsets.symmetric(horizontal: 24),
                           child: PrimaryButton(
                             borderRadius: 38,
-                            text: "Create Dayfi Tag",
+                            text: UsernameCopy.create,
                             onPressed: () async {
                               final result = await Navigator.pushNamed(
                                 context,
@@ -171,6 +172,7 @@ class DayfiTagExplanationView extends ConsumerWidget {
                             fontSize: 18,
                             width: double.infinity,
                             fullWidth: true,
+                            applyFeatureInset: false,
                           ),
                         ),
                         SizedBox(height: 50),

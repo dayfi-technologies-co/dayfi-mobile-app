@@ -7,6 +7,7 @@ import 'package:dayfi/services/remote/network/network_service.dart';
 import 'package:dayfi/services/remote/network/api_error.dart';
 import 'package:dayfi/services/remote/network/url_config.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
+import 'package:dayfi/common/utils/api_error_message.dart';
 
 class PaymentService {
   NetworkService _networkService;
@@ -21,11 +22,16 @@ class PaymentService {
   Future<PaymentResponse> resolveBank({
     required String accountNumber,
     required String networkId,
+    String? bankCode,
   }) async {
     try {
       Map<String, dynamic> map = {};
       map['accountNumber'] = accountNumber;
       map['networkId'] = networkId;
+      final code = (bankCode ?? networkId).trim();
+      if (RegExp(r'^\d{3,6}$').hasMatch(code)) {
+        map['bankCode'] = code;
+      }
 
       final response = await _networkService.call(
         F.baseUrl + UrlConfig.resolveBank,
@@ -131,6 +137,23 @@ class PaymentService {
     } catch (_) {
       return PaymentCapabilities.empty;
     }
+  }
+
+  /// GET /payments/banks/ng — Flutterwave Nigerian banks (fallback when YC networks empty).
+  Future<PaymentResponse> fetchNigerianBanks() async {
+    final response = await _networkService.call(
+      '${F.baseUrl}${UrlConfig.fetchNgBanks}',
+      RequestMethod.get,
+    );
+    Map<String, dynamic> responseData;
+    if (response.data is Map<String, dynamic>) {
+      responseData = response.data;
+    } else if (response.data is String) {
+      responseData = json.decode(response.data);
+    } else {
+      throw Exception('Invalid response format');
+    }
+    return PaymentResponse.fromJson(responseData);
   }
 
   /// Fetch available payment networks
@@ -292,18 +315,13 @@ class PaymentService {
         RequestMethod.get,
       );
 
-      // Handle response data
-      Map<String, dynamic> responseData;
-      if (response.data is Map<String, dynamic>) {
-        responseData = response.data;
-      } else if (response.data is String) {
-        responseData = json.decode(response.data);
-      } else {
-        throw Exception('Invalid response format');
-      }
-
-      // Extract status from response
-      final status = responseData['status']?.toString() ?? 'unknown';
+      final envelope = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : json.decode(response.data as String) as Map<String, dynamic>;
+      final data = envelope['data'];
+      final status = (data is Map ? data['status'] : null)?.toString() ??
+          envelope['status']?.toString() ??
+          'unknown';
       // print('🔍 Collection status for $collectionSequenceId: $status');
 
       return status;
@@ -429,6 +447,56 @@ class PaymentService {
     );
   }
 
+  /// POST /payments/send/yellowcard — wallet-funded Yellow Card payout.
+  Future<PaymentResponse> walletFundedYellowCardSend({
+    required num sendAmount,
+    required num receiveAmount,
+    required String receiveCurrency,
+    required String country,
+    required String channelId,
+    required String networkId,
+    required String accountNumber,
+    required String accountName,
+    required num fee,
+    required String pin,
+    required Map<String, dynamic> recipient,
+    String accountType = 'bank',
+    String spendCurrency = 'USD',
+    String reason = 'other',
+    String? bankName,
+  }) async {
+    try {
+      final response = await _networkService.call(
+        '${F.baseUrl}${UrlConfig.walletFundedYellowCardSend}',
+        RequestMethod.post,
+        data: {
+          'sendAmount': sendAmount,
+          'receiveAmount': receiveAmount,
+          'receiveCurrency': receiveCurrency,
+          'country': country,
+          'channelId': channelId,
+          'networkId': networkId,
+          'accountNumber': accountNumber,
+          'accountName': accountName,
+          'accountType': accountType,
+          if (bankName != null && bankName.trim().isNotEmpty)
+            'bankName': bankName.trim(),
+          'fee': fee,
+          'pin': pin,
+          'spendCurrency': spendCurrency,
+          'debitCurrency': spendCurrency,
+          'reason': reason,
+          'recipient': recipient,
+        },
+      );
+      return _parsePaymentResponse(response.data);
+    } catch (e) {
+      throw Exception(
+        messageFromApiError(e, fallback: 'Transfer failed'),
+      );
+    }
+  }
+
   /// POST /payments/bank-transfer — NGN bank payout via Flutterwave (debits NGN wallet).
   Future<PaymentResponse> bankTransfer({
     required num amount,
@@ -440,22 +508,28 @@ class PaymentService {
     required String pin,
     String spendCurrency = 'NGN',
   }) async {
-    final response = await _networkService.call(
-      '${F.baseUrl}${UrlConfig.bankTransfer}',
-      RequestMethod.post,
-      data: {
-        'amount': amount,
-        'accountNumber': accountNumber,
-        'bankCode': bankCode,
-        'bankName': bankName,
-        'accountName': accountName,
-        'fee': fee,
-        'pin': pin,
-        'spendCurrency': spendCurrency,
-        'debitCurrency': spendCurrency,
-      },
-    );
-    return _parsePaymentResponse(response.data);
+    try {
+      final response = await _networkService.call(
+        '${F.baseUrl}${UrlConfig.bankTransfer}',
+        RequestMethod.post,
+        data: {
+          'amount': amount,
+          'accountNumber': accountNumber,
+          'bankCode': bankCode,
+          'bankName': bankName,
+          'accountName': accountName,
+          'fee': fee,
+          'pin': pin,
+          'spendCurrency': spendCurrency,
+          'debitCurrency': spendCurrency,
+        },
+      );
+      return _parsePaymentResponse(response.data);
+    } catch (e) {
+      throw Exception(
+        messageFromApiError(e, fallback: 'Bank transfer failed'),
+      );
+    }
   }
 
   PaymentResponse _parsePaymentResponse(dynamic data) {
@@ -553,7 +627,7 @@ class PaymentService {
           message: e.errorDescription ?? 'Fees not available',
           code: e.errorType ?? 404,
           data: FeesData(
-            transfer: TransferFees(dayfiToDayfi: 0, dayfiToBank: 0),
+            transfer: TransferFees(dayfiToDayfi: 0, dayfiToBank: 0.1),
             withdrawal: WithdrawalFees(local: 0, international: 0),
           ),
         );

@@ -5,23 +5,47 @@ import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/features/send/vm/send_viewmodel.dart';
 import 'package:dayfi/models/payment_response.dart';
 import 'package:dayfi/common/constants/wallet_flag_assets.dart';
+import 'package:dayfi/features/send/constants/send_country_metadata.dart';
+import 'package:dayfi/features/send/helpers/standard_send_destinations.dart';
 import 'package:dayfi/features/send/send_flow.dart';
 import 'package:dayfi/app_locator.dart';
+import 'package:dayfi/common/widgets/dayfi_screen_app_bar.dart';
+import 'package:dayfi/common/widgets/dayfi_screen_description.dart';
+import 'package:dayfi/features/send/constants/send_copy.dart';
 import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
 import 'package:dayfi/common/widgets/shimmer_widgets.dart';
 
 class SelectDestinationCountryView extends ConsumerStatefulWidget {
   final bool hasBackButton;
-  const SelectDestinationCountryView({super.key, this.hasBackButton = true});
+  final bool addRecipientOnly;
+
+  const SelectDestinationCountryView({
+    super.key,
+    this.hasBackButton = true,
+    this.addRecipientOnly = false,
+  });
 
   @override
   ConsumerState<SelectDestinationCountryView> createState() =>
       _SelectDestinationCountryViewState();
 }
 
+enum _SendDestinationScope { all, global, standard }
+
+class _DestinationListEntry {
+  final String? sectionTitle;
+  final Channel? channel;
+
+  const _DestinationListEntry.header(this.sectionTitle) : channel = null;
+  const _DestinationListEntry.row(this.channel) : sectionTitle = null;
+
+  bool get isHeader => sectionTitle != null;
+}
+
 class _SelectDestinationCountryViewState
     extends ConsumerState<SelectDestinationCountryView> {
   final TextEditingController _searchController = TextEditingController();
+  _SendDestinationScope _scope = _SendDestinationScope.all;
 
   @override
   void initState() {
@@ -43,114 +67,141 @@ class _SelectDestinationCountryViewState
     super.dispose();
   }
 
-  String _getCountryName(String? countryCode) {
-    switch (countryCode?.toUpperCase()) {
-      case 'NG':
-        return 'Nigeria';
-      case 'GH':
-        return 'Ghana';
-      case 'RW':
-        return 'Rwanda';
-      case 'KE':
-        return 'Kenya';
-      case 'UG':
-        return 'Uganda';
-      case 'TZ':
-        return 'Tanzania';
-      case 'ZA':
-        return 'South Africa';
-      case 'BF':
-        return 'Burkina Faso';
-      case 'BJ':
-        return 'Benin';
-      case 'BW':
-        return 'Botswana';
-      case 'CD':
-        return 'Democratic Republic of Congo';
-      case 'CG':
-        return 'Republic of Congo';
-      case 'CI':
-        return 'Côte d\'Ivoire';
-      case 'CM':
-        return 'Cameroon';
-      case 'GA':
-        return 'Gabon';
-      case 'MW':
-        return 'Malawi';
-      case 'ML':
-        return 'Mali';
-      case 'SN':
-        return 'Senegal';
-      case 'TG':
-        return 'Togo';
-      case 'ZM':
-        return 'Zambia';
-      case 'US':
-        return 'United States';
-      case 'DE':
-        return 'Euro';
-      case 'GB':
-        return 'United Kingdom';
-      case 'CA':
-        return 'Canada';
-      default:
-        return countryCode ?? 'Unknown';
+  String _getCountryName(String? countryCode) =>
+      sendCountryDisplayName(countryCode);
+
+  List<_DestinationListEntry> _buildDestinationListEntries({
+    required List<Channel> globalChannels,
+    required List<Channel> standardChannels,
+    required bool showSectionHeaders,
+  }) {
+    final entries = <_DestinationListEntry>[];
+
+    void appendSection({
+      required String title,
+      required List<Channel> channels,
+    }) {
+      if (channels.isEmpty) return;
+      if (showSectionHeaders) {
+        entries.add(_DestinationListEntry.header(title));
+      }
+      for (final channel in channels) {
+        entries.add(_DestinationListEntry.row(channel));
+      }
     }
+
+    switch (_scope) {
+      case _SendDestinationScope.all:
+        appendSection(title: 'Global', channels: globalChannels);
+        appendSection(title: 'Standard', channels: standardChannels);
+      case _SendDestinationScope.global:
+        appendSection(title: 'Global', channels: globalChannels);
+      case _SendDestinationScope.standard:
+        appendSection(title: 'Standard', channels: standardChannels);
+    }
+
+    return entries;
+  }
+
+  Widget _buildScopeFilter(BuildContext context, bool isWide) {
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+
+    return Container(
+      height: 40,
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: onSurface.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: onSurface.withValues(alpha: 0.08)),
+      ),
+      child: Row(
+        children: [
+          _scopeChip(context, label: 'All', scope: _SendDestinationScope.all),
+          _scopeChip(context, label: 'Global', scope: _SendDestinationScope.global),
+          _scopeChip(
+            context,
+            label: 'Standard',
+            scope: _SendDestinationScope.standard,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _scopeChip(
+    BuildContext context, {
+    required String label,
+    required _SendDestinationScope scope,
+  }) {
+    final selected = _scope == scope;
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+
+    return Expanded(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
+          onTap: () => setState(() => _scope = scope),
+          borderRadius: BorderRadius.circular(9),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color:
+                  selected
+                      ? Theme.of(context).colorScheme.surface
+                      : Colors.transparent,
+              borderRadius: BorderRadius.circular(9),
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Chirp',
+                fontSize: 13,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                letterSpacing: -0.2,
+                color:
+                    selected
+                        ? Theme.of(context).textTheme.bodyLarge?.color
+                        : onSurface.withValues(alpha: 0.55),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(
+    BuildContext context,
+    String title,
+    bool isWide,
+  ) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        isWide ? 24 : 18,
+        14,
+        isWide ? 24 : 18,
+        6,
+      ),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontFamily: 'Chirp',
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          letterSpacing: -0.2,
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.45),
+        ),
+      ),
+    );
   }
 
   String _getFlagPath(String? countryCode) {
-    switch (countryCode?.toUpperCase()) {
-      case 'NG':
-        return 'assets/icons/svgs/world_flags/nigeria.svg';
-      case 'GH':
-        return 'assets/icons/svgs/world_flags/ghana.svg';
-      case 'RW':
-        return 'assets/icons/svgs/world_flags/rwanda.svg';
-      case 'KE':
-        return 'assets/icons/svgs/world_flags/kenya.svg';
-      case 'UG':
-        return 'assets/icons/svgs/world_flags/uganda.svg';
-      case 'TZ':
-        return 'assets/icons/svgs/world_flags/tanzania.svg';
-      case 'ZA':
-        return 'assets/icons/svgs/world_flags/south africa.svg';
-      case 'BF':
-        return 'assets/icons/svgs/world_flags/burkina faso.svg';
-      case 'BJ':
-        return 'assets/icons/svgs/world_flags/benin.svg';
-      case 'BW':
-        return 'assets/icons/svgs/world_flags/botswana.svg';
-      case 'CD':
-        return 'assets/icons/svgs/world_flags/democratic republic of congo.svg';
-      case 'CG':
-        return 'assets/icons/svgs/world_flags/republic of the congo.svg';
-      case 'CI':
-        return 'assets/icons/svgs/world_flags/ivory coast.svg';
-      case 'CM':
-        return 'assets/icons/svgs/world_flags/cameroon.svg';
-      case 'GA':
-        return 'assets/icons/svgs/world_flags/gabon.svg';
-      case 'MW':
-        return 'assets/icons/svgs/world_flags/malawi.svg';
-      case 'ML':
-        return 'assets/icons/svgs/world_flags/mali.svg';
-      case 'SN':
-        return 'assets/icons/svgs/world_flags/senegal.svg';
-      case 'TG':
-        return 'assets/icons/svgs/world_flags/togo.svg';
-      case 'ZM':
-        return 'assets/icons/svgs/world_flags/zambia.svg';
-      case 'US':
-        return 'assets/icons/svgs/world_flags/united states.svg';
-      case 'DE':
-        return WalletFlagAssets.eur;
-      case 'GB':
-        return 'assets/icons/svgs/world_flags/united kingdom.svg';
-      case 'CA':
-        return 'assets/icons/svgs/world_flags/canada.svg';
-      default:
-        return 'assets/icons/svgs/world_flags/nigeria.svg';
-    }
+    final code = countryCode?.toUpperCase() ?? '';
+    if (code == 'DE') return WalletFlagAssets.eur;
+    return sendCountryFlagAsset(countryCode);
   }
 
   @override
@@ -167,45 +218,6 @@ class _SelectDestinationCountryViewState
     // ];
     final sendState = ref.watch(sendViewModelProvider);
 
-    // Filter withdrawal channels (where user can send TO)
-    final withdrawalChannels =
-        sendState.channels
-            .where(
-              (channel) =>
-                  (channel.rampType == 'withdrawal' ||
-                      channel.rampType == 'withdraw' ||
-                      channel.rampType == 'payout' ||
-                      channel.rampType == 'deposit' ||
-                      channel.rampType == 'receive') &&
-                  channel.status == 'active' &&
-                  channel.currency != null &&
-                  channel.country != null,
-            )
-            .toList();
-
-    // Deduplicate by country-currency combination
-    final uniqueWithdrawalChannels = <String, Channel>{};
-    for (final channel in withdrawalChannels) {
-      final key = '${channel.country} - ${channel.currency}';
-      if (!uniqueWithdrawalChannels.containsKey(key) ||
-          (channel.max ?? 0) > (uniqueWithdrawalChannels[key]?.max ?? 0)) {
-        uniqueWithdrawalChannels[key] = channel;
-      }
-    }
-
-    // Always ensure NG-NGN is available
-    final ngnKey = 'NG - NGN';
-    if (!uniqueWithdrawalChannels.containsKey(ngnKey)) {
-      uniqueWithdrawalChannels[ngnKey] = Channel(
-        country: 'NG',
-        currency: 'NGN',
-        rampType: 'withdrawal',
-        status: 'active',
-        min: 1000.0,
-        max: 5000000.0,
-      );
-    }
-
     // Pin PRD wallets (USD, GBP, EUR, NGN) at top, then Yellow Card corridors.
     final coreChannels = <Channel>[
       for (final d in kCoreSendDestinations)
@@ -220,25 +232,11 @@ class _SelectDestinationCountryViewState
         ),
     ];
 
-    final ycOnly = <String, Channel>{};
-    for (final ch in uniqueWithdrawalChannels.values) {
-      final cur = ch.currency?.toUpperCase() ?? '';
-      if (kCoreSendCurrencies.contains(cur) &&
-          coreChannels.any((c) => c.currency?.toUpperCase() == cur)) {
-        continue;
-      }
-      ycOnly['${ch.country}-${ch.currency}'] = ch;
-    }
+    final standardChannels = buildStandardSendDestinations(
+      sendState.channels,
+    );
 
-    List<Channel> finalWithdrawalChannels = [
-      ...coreChannels,
-      ...ycOnly.values,
-    ]..sort((a, b) {
-        final aCore = kCoreSendCurrencies.contains(a.currency?.toUpperCase() ?? '');
-        final bCore = kCoreSendCurrencies.contains(b.currency?.toUpperCase() ?? '');
-        if (aCore != bCore) return aCore ? -1 : 1;
-        return _getCountryName(a.country).compareTo(_getCountryName(b.country));
-      });
+    var finalWithdrawalChannels = [...coreChannels, ...standardChannels];
 
     // If no withdrawal channels, add fallback
     if (finalWithdrawalChannels.isEmpty) {
@@ -280,120 +278,15 @@ class _SelectDestinationCountryViewState
     //   child:
     Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        scrolledUnderElevation: .5,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        leadingWidth: widget.hasBackButton ? 72 : 0,
-        foregroundColor: Theme.of(context).scaffoldBackgroundColor,
-        shadowColor: Theme.of(context).scaffoldBackgroundColor,
-        surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
-        leading:
-            widget.hasBackButton
-                ? InkWell(
-                  splashColor: Colors.transparent,
-                  highlightColor: Colors.transparent,
-                  onTap:
-                      () => {
-                        Navigator.pop(context),
-                        FocusScope.of(context).unfocus(),
-                      },
-                  child: Stack(
-                    alignment: AlignmentGeometry.center,
-                    children: [
-                      SvgPicture.asset(
-                        "assets/icons/svgs/notificationn.svg",
-                        height: 40,
-                        color: Theme.of(context).colorScheme.surface,
-                      ),
-                      SizedBox(
-                        height: 40,
-                        width: 40,
-                        child: Center(
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 8.0),
-                            child: Icon(
-                              Icons.arrow_back_ios,
-                              size: 20,
-                              color:
-                                  Theme.of(context).textTheme.bodyLarge!.color,
-                              // size: 20,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-                : SizedBox.shrink(),
-        automaticallyImplyLeading: false,
-        title: Text(
-          "Send Money",
-          style: AppTypography.titleLarge.copyWith(
-            fontFamily: 'FunnelDisplay',
-            fontSize: 24,
-            // height: 1.6,
-            fontWeight: FontWeight.w600,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-        ),
-        centerTitle: true,
-
-        // bottom: PreferredSize(
-        //   preferredSize: Size.fromHeight(112),
-        //   child: Column(
-        //     mainAxisSize: MainAxisSize.min,
-        //     children: [
-        //       Column(
-        //         children: [
-        //           SizedBox(height: 8),
-        //           Text(
-        //             "Select the country and currency or choose a stablecoin you want to send money to.",
-        //             // 'What currency do you want to use as your payment method?',
-        //             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-        //               fontSize: 16,
-        //               fontWeight: FontWeight.w500,
-        //               fontFamily: 'Chirp',
-        //               letterSpacing: -.25,
-        //               height: 1.5,
-        //             ),
-        //             textAlign: TextAlign.center,
-        //           ),
-
-        //           SizedBox(height: 8),
-        //           SizedBox(
-        //             height: 48,
-        //             child: TabBar(
-        //               isScrollable: false,
-        //               indicatorColor: AppColors.purple500,
-        //               indicatorSize: TabBarIndicatorSize.tab,
-        //               labelColor: AppColors.purple500,
-        //               unselectedLabelColor: Theme.of(
-        //                 context,
-        //               ).colorScheme.onSurface.withOpacity(0.6),
-        //               labelStyle: AppTypography.bodyLarge.copyWith(
-        //                 fontSize: 16,
-        //                 fontFamily: 'Chirp',
-        //                 fontWeight: FontWeight.w500,
-        //                 letterSpacing: -0.3,
-        //                 height: 1.2,
-        //               ),
-        //               tabs: const [
-        //                 Tab(text: 'Via Fiat'),
-        //                 Tab(text: 'Via Crypto'),
-        //               ],
-        //             ),
-        //           ),
-        //         ],
-        //       ),
-        //     ],
-        //   ),
-        // ),
+      appBar: DayfiScreenAppBar(
+        title: widget.addRecipientOnly ? 'Add recipient' : 'Send money',
+        showBackButton: widget.hasBackButton,
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
           final bool isWide = constraints.maxWidth > 600;
-          return Center(
+          return Align(
+            alignment: Alignment.topCenter,
             child: ConstrainedBox(
               constraints: BoxConstraints(
                 maxWidth: isWide ? 500 : double.infinity,
@@ -410,6 +303,12 @@ class _SelectDestinationCountryViewState
                     return ShimmerWidgets.recipientListShimmer(
                       context,
                       itemCount: 6,
+                      padding: EdgeInsets.fromLTRB(
+                        isWide ? 24 : 18,
+                        12,
+                        isWide ? 24 : 18,
+                        112,
+                      ),
                     );
                   }
 
@@ -458,14 +357,6 @@ class _SelectDestinationCountryViewState
                   }
                   final deduplicatedChannels = uniqueChannels.values.toList();
 
-                  // Sort alphabetically by country name
-                  deduplicatedChannels.sort((a, b) {
-                    final countryA = _getCountryName(a.country);
-                    final countryB = _getCountryName(b.country);
-                    return countryA.compareTo(countryB);
-                  });
-
-                  // Filter based on search
                   final searchQuery = _searchController.text.toLowerCase();
                   final filteredChannels =
                       deduplicatedChannels.where((channel) {
@@ -482,12 +373,28 @@ class _SelectDestinationCountryViewState
                             countryCode.contains(searchQuery);
                       }).toList();
 
+                  final globalChannels =
+                      filteredChannels
+                          .where(isGlobalSendDestination)
+                          .toList();
+                  final standardChannels =
+                      filteredChannels
+                          .where((c) => !isGlobalSendDestination(c))
+                          .toList();
+                  sortGlobalSendDestinations(globalChannels);
+                  sortStandardSendDestinations(standardChannels);
+
+                  final listEntries = _buildDestinationListEntries(
+                    globalChannels: globalChannels,
+                    standardChannels: standardChannels,
+                    showSectionHeaders: searchQuery.isEmpty,
+                  );
+
                   return ListView.builder(
-                    padding: EdgeInsets.only(top: 12),
-                    itemCount: filteredChannels.length + 2,
+                    padding: const EdgeInsets.only(top: 12, bottom: 24),
+                    itemCount: listEntries.length + 1,
                     itemBuilder: (context, index) {
                       if (index == 0) {
-                        // Search Bar
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
@@ -495,101 +402,116 @@ class _SelectDestinationCountryViewState
                               padding: EdgeInsets.symmetric(
                                 horizontal: isWide ? 24 : 18,
                               ),
-                              child: SizedBox(
-                                child: CustomTextField(
-                                  isSearch: true,
-                                  controller: _searchController,
-                                  label: '',
-                                  hintText: 'Search',
-                                  borderRadius: 40,
-                                  prefixIcon: Container(
-                                    width: 40,
-                                    alignment: Alignment.centerRight,
-                                    constraints:
-                                        BoxConstraints.tightForFinite(),
-                                    child: Center(
-                                      child: SvgPicture.asset(
-                                        'assets/icons/svgs/search-normal.svg',
-                                        height: 22,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface
-                                            .withOpacity(0.6),
-                                      ),
+                              child: CustomTextField(
+                                isSearch: true,
+                                controller: _searchController,
+                                label: '',
+                                hintText: 'Search',
+                                borderRadius: 40,
+                                prefixIcon: Container(
+                                  width: 40,
+                                  alignment: Alignment.centerRight,
+                                  constraints:
+                                      const BoxConstraints.tightForFinite(),
+                                  child: Center(
+                                    child: SvgPicture.asset(
+                                      'assets/icons/svgs/search-normal.svg',
+                                      height: 22,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface
+                                          .withOpacity(0.6),
                                     ),
                                   ),
-                                  onChanged: (value) {
-                                    setState(() {});
-                                  },
                                 ),
+                                onChanged: (_) => setState(() {}),
                               ),
                             ),
-                            SizedBox(height: 18),
-                            Padding(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: isWide ? 24 : 18,
-                              ),
-                              child: Text(
-                                "Choose who you're sending to",
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.bodyMedium?.copyWith(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                  fontFamily: 'Chirp',
-                                  letterSpacing: -.25,
-                                  height: 1.5,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
+                            // const SizedBox(height: 16),
+                            // Padding(
+                            //   padding: EdgeInsets.symmetric(
+                            //     horizontal: isWide ? 24 : 18,
+                            //   ),
+                            //   child: _buildScopeFilter(context, isWide),
+                            // ),
+                            const SizedBox(height: 14),
+                            DayfiScreenDescription(
+                              text:
+                                  widget.addRecipientOnly
+                                      ? SendCopy.chooseRecipientCountry
+                                      : SendCopy.chooseDestination,
+                              bottomSpacing: 12,
                             ),
                           ],
                         );
-                      } else if (index == 1) {
-                        // Spacing below search bar
-                        return SizedBox(height: 18);
                       }
-                      final channel = filteredChannels[index - 2];
+
+                      final entry = listEntries[index - 1];
+                      if (entry.isHeader) {
+                        return _buildSectionHeader(
+                          context,
+                          entry.sectionTitle!,
+                          isWide,
+                        );
+                      }
+
+                      final channel = entry.channel!;
                       return ListTile(
                         contentPadding: EdgeInsets.symmetric(
                           vertical: 4,
                           horizontal: isWide ? 24 : 18,
                         ),
                         splashColor: Colors.transparent,
-                        // color: Colors.transparent,
                         onTap: () {
-                          handleSendDestinationSelected(
-                            context,
-                            ref,
-                            countryCode: channel.country ?? 'NG',
-                            receiveCurrency: channel.currency ?? 'NGN',
-                          );
+                          final country = channel.country ?? 'NG';
+                          final currency = channel.currency ?? 'NGN';
+                          if (widget.addRecipientOnly) {
+                            handleSaveRecipientDestinationSelected(
+                              context,
+                              ref,
+                              countryCode: country,
+                              receiveCurrency: currency,
+                            );
+                          } else {
+                            handleSendDestinationSelected(
+                              context,
+                              ref,
+                              countryCode: country,
+                              receiveCurrency: currency,
+                            );
+                          }
                         },
                         title: Row(
                           children: [
                             SvgPicture.asset(
                               _getFlagPath(channel.country),
-                              height: 32.0,
+                              height: 32,
                             ),
-                            SizedBox(width: 12),
-                            Text(
-                              _getCountryName(channel.country),
-                              style: AppTypography.bodyLarge.copyWith(
-                                fontFamily: 'Chirp',
-                                fontSize: 16,
-                                letterSpacing: -.4,
-                                fontWeight: FontWeight.w500,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                _getCountryName(channel.country),
+                                style: AppTypography.bodyLarge.copyWith(
+                                  fontFamily: 'Chirp',
+                                  fontSize: 16,
+                                  letterSpacing: -.4,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ),
                           ],
                         ),
                         trailing: Text(
-                          '${channel.currency}',
+                          channel.currency ?? '',
                           style: AppTypography.bodyLarge.copyWith(
                             fontFamily: 'Chirp',
                             fontSize: 14,
                             letterSpacing: -.4,
                             fontWeight: FontWeight.w500,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurface
+                                .withOpacity(0.55),
                           ),
                         ),
                       );

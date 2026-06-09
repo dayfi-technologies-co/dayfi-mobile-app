@@ -20,8 +20,8 @@
       ]
     },
     {
-      // Uses HTTPS API on Railway (set dayfiRailwayApiUrl to your service URL + /api/v1). Phone and simulator both work.
-      "name": "Flutter Dev (Railway API)",
+      // Production API on Hetzner (api.dayfi.co) — use to test Flutterwave / Yellow Card from the app.
+      "name": "Flutter Dev (api.dayfi.co)",
       "type": "dart",
       "request": "launch",
       "program": "lib/main.dart",
@@ -30,7 +30,7 @@
         "dev",
         "--dart-define",
         "FLAVOR=dev",
-        "--dart-define=DAYFI_API_BASE_URL=${input:dayfiRailwayApiUrl}"
+        "--dart-define=DAYFI_API_BASE_URL=https://api.dayfi.co/api/v1"
       ]
     },
     {
@@ -50,7 +50,7 @@
       ]
     },
     {
-      "name": "Flutter Pilot",
+      "name": "Flutter Pilot (api.dayfi.co)",
       "type": "dart",
       "request": "launch",
       "program": "lib/main.dart",
@@ -62,7 +62,7 @@
       ]
     },
     {
-      "name": "Flutter Prod",
+      "name": "Flutter Prod (api.dayfi.co)",
       "type": "dart",
       "request": "launch",
       "program": "lib/main.dart",
@@ -86,16 +86,6 @@
       "type": "promptString",
       "description": "Backend port (must match DAYFI_PORT in dayfi_backend .env, often 3000 or 3001).",
       "default": "3001"
-    },
-    {
-      "id": "dayfiRailwayApiUrl",
-      "type": "promptString",
-      "description": "Railway public HTTPS root for API, ending with /api/v1 (e.g. https://dayfi-api-production-xxxx.up.railway.app/api/v1)",
-      "default": "https://dayfibackend-production.up.railway.app/api/v1"
     }
   ]
 }
-
-
-
-

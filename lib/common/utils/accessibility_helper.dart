@@ -120,9 +120,9 @@ class AccessibilityHelper {
     return MediaQuery.of(context).accessibleNavigation;
   }
 
-  /// Gets the text scale factor for dynamic text sizing
+  /// Effective text scale (1.0 when the app locks system font scaling).
   static double getTextScaleFactor(BuildContext context) {
-    return MediaQuery.of(context).textScaleFactor;
+    return MediaQuery.textScalerOf(context).scale(1);
   }
 
   /// Checks if reduce motion is enabled

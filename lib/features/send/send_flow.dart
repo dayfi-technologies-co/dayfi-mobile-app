@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/features/send/widgets/delivery_methods_sheet.dart';
+import 'package:dayfi/features/wallet/constants/global_wallet.dart';
 import 'package:dayfi/features/wallet/providers/wallet_hub_provider.dart';
-import 'package:dayfi/features/wallet/widgets/debit_wallet_picker_sheet.dart';
+import 'package:dayfi/models/payment_response.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,10 +15,69 @@ const List<({String country, String currency, String label})> kCoreSendDestinati
   (country: 'NG', currency: 'NGN', label: 'Nigeria'),
   (country: 'US', currency: 'USD', label: 'United States'),
   (country: 'GB', currency: 'GBP', label: 'United Kingdom'),
-  (country: 'DE', currency: 'EUR', label: 'Euro area'),
+  (country: 'DE', currency: 'EUR', label: 'Euro'),
 ];
 
 const Set<String> kCoreSendCurrencies = {'USD', 'GBP', 'EUR', 'NGN'};
+
+/// Launch market + global wallets — order on the Send destination screen.
+const List<String> kGlobalSendCurrencyOrder = ['NGN', 'USD', 'EUR', 'GBP'];
+
+/// African corridors — priority order (top markets first).
+const List<String> kStandardAfricanCountryOrder = [
+  'ZA',
+  'KE',
+  'GH',
+  'UG',
+  'TZ',
+  'RW',
+  'ZM',
+  'BW',
+  'MW',
+  'SN',
+  'CM',
+  'CI',
+  'CD',
+  'CG',
+  'GA',
+  'BJ',
+  'BF',
+  'ML',
+  'TG',
+];
+
+bool isGlobalSendDestination(Channel channel) {
+  final currency = channel.currency?.toUpperCase() ?? '';
+  return kGlobalSendCurrencyOrder.contains(currency);
+}
+
+int _globalSendSortIndex(Channel channel) {
+  final currency = channel.currency?.toUpperCase() ?? '';
+  final index = kGlobalSendCurrencyOrder.indexOf(currency);
+  return index >= 0 ? index : kGlobalSendCurrencyOrder.length;
+}
+
+int _standardSendSortIndex(Channel channel) {
+  final country = channel.country?.toUpperCase() ?? '';
+  final index = kStandardAfricanCountryOrder.indexOf(country);
+  return index >= 0 ? index : kStandardAfricanCountryOrder.length;
+}
+
+void sortGlobalSendDestinations(List<Channel> channels) {
+  channels.sort((a, b) {
+    final byRank = _globalSendSortIndex(a).compareTo(_globalSendSortIndex(b));
+    if (byRank != 0) return byRank;
+    return (a.country ?? '').compareTo(b.country ?? '');
+  });
+}
+
+void sortStandardSendDestinations(List<Channel> channels) {
+  channels.sort((a, b) {
+    final byRank = _standardSendSortIndex(a).compareTo(_standardSendSortIndex(b));
+    if (byRank != 0) return byRank;
+    return (a.country ?? '').compareTo(b.country ?? '');
+  });
+}
 
 String countryForCurrency(String currency) {
   switch (currency.toUpperCase()) {
@@ -37,11 +99,39 @@ bool userHasLedgerWallet(WidgetRef ref, String currency) {
   return row?.hasLedgerWallet == true;
 }
 
-/// Home Send — same destination list as Send tab (no debit picker upfront).
-Future<void> openSendFromHomeOrTab(BuildContext context) async {
+/// Pay-with currency for Send (global wallet). Defaults from home display pill.
+String resolveDebitCurrency(WidgetRef ref, String receiveCurrency) {
+  final payWith = ref.read(selectedDebitCurrencyProvider).toUpperCase();
+  final receive = receiveCurrency.toUpperCase();
+  if (!isGlobalPayCurrency(payWith)) {
+    return resolvePayWithCurrencyForTransfer(
+      payWithCurrency: isGlobalPayCurrency(receive) ? receive : 'USD',
+      receiveCurrency: receive,
+    );
+  }
+  return resolvePayWithCurrencyForTransfer(
+    payWithCurrency: payWith,
+    receiveCurrency: receive,
+  );
+}
+
+/// Home Send — navigate immediately; refresh wallet hub in background.
+Future<void> openSendFromHomeOrTab(
+  BuildContext context, {
+  String? payWithCurrency,
+}) async {
   try {
     final container = ProviderScope.containerOf(context);
-    await container.read(walletHubProvider.notifier).load(showLoading: false);
+    if (payWithCurrency != null && isGlobalPayCurrency(payWithCurrency)) {
+      container.read(selectedDebitCurrencyProvider.notifier).state =
+          payWithCurrency.toUpperCase();
+    }
+    unawaited(
+      container
+          .read(walletHubProvider.notifier)
+          .load(showLoading: false)
+          .catchError((_) {}),
+    );
   } catch (_) {}
 
   if (!context.mounted) return;
@@ -53,7 +143,13 @@ Future<void> openSendFromWallet(BuildContext context, String currency) async {
   final c = currency.toUpperCase();
   try {
     final container = ProviderScope.containerOf(context);
-    await container.read(walletHubProvider.notifier).load(showLoading: false);
+    // Keep tap-to-sheet interaction instant; refresh wallet hub in background.
+    unawaited(
+      container
+          .read(walletHubProvider.notifier)
+          .load(showLoading: false)
+          .catchError((_) {}),
+    );
     container.read(selectedDebitCurrencyProvider.notifier).state = c;
   } catch (_) {}
 
@@ -74,22 +170,14 @@ Future<void> handleSendDestinationSelected(
   required String countryCode,
   required String receiveCurrency,
 }) async {
-  await ref.read(walletHubProvider.notifier).load(showLoading: false);
+  // Keep tap-to-sheet interaction instant; refresh wallet hub in background.
+  unawaited(
+    ref.read(walletHubProvider.notifier).load(showLoading: false).catchError((_) {}),
+  );
 
   final receive = receiveCurrency.toUpperCase();
-  final hasWallet = userHasLedgerWallet(ref, receive);
-
-  String debitCurrency;
-  if (hasWallet) {
-    debitCurrency = receive;
-    ref.read(selectedDebitCurrencyProvider.notifier).state = debitCurrency;
-  } else {
-    if (!context.mounted) return;
-    final picked = await showDebitWalletPicker(context);
-    if (!context.mounted) return;
-    if (picked == null || picked.isEmpty) return;
-    debitCurrency = picked;
-  }
+  final debitCurrency = resolveDebitCurrency(ref, receive);
+  ref.read(selectedDebitCurrencyProvider.notifier).state = debitCurrency;
 
   if (!context.mounted) return;
   await showSendDeliveryMethodsSheet(
@@ -105,16 +193,43 @@ Future<void> showSendDeliveryMethodsSheet(
   required String selectedCountry,
   required String selectedCurrency,
   required String debitCurrency,
+  bool saveRecipientOnly = false,
 }) {
   return showModalBottomSheet<void>(
     barrierColor: Colors.black.withOpacity(0.85),
     context: context,
     isScrollControlled: true,
-    backgroundColor: Theme.of(context).colorScheme.surface,
+    backgroundColor: Colors.transparent,
     builder: (ctx) => DeliveryMethodsSheet(
       selectedCountry: selectedCountry,
       selectedCurrency: selectedCurrency,
       debitCurrency: debitCurrency,
+      saveRecipientOnly: saveRecipientOnly,
     ),
+  );
+}
+
+/// After user picks a country/currency when saving a recipient (Recipients +).
+Future<void> handleSaveRecipientDestinationSelected(
+  BuildContext context,
+  WidgetRef ref, {
+  required String countryCode,
+  required String receiveCurrency,
+}) async {
+  unawaited(
+    ref.read(walletHubProvider.notifier).load(showLoading: false).catchError((_) {}),
+  );
+
+  final receive = receiveCurrency.toUpperCase();
+  final debitCurrency = resolveDebitCurrency(ref, receive);
+  ref.read(selectedDebitCurrencyProvider.notifier).state = debitCurrency;
+
+  if (!context.mounted) return;
+  await showSendDeliveryMethodsSheet(
+    context,
+    selectedCountry: countryCode.toUpperCase(),
+    selectedCurrency: receive,
+    debitCurrency: debitCurrency,
+    saveRecipientOnly: true,
   );
 }

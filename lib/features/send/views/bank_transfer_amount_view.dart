@@ -1,5 +1,7 @@
 import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
+import 'package:dayfi/common/constants/username_copy.dart';
 import 'package:dayfi/common/utils/tier_utils.dart';
+import 'package:dayfi/common/utils/kyc_flow_navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
+import 'package:dayfi/features/send/constants/send_copy.dart';
 import 'package:dayfi/features/send/vm/send_viewmodel.dart';
 import 'package:dayfi/common/utils/number_formatter.dart';
 import 'package:dayfi/common/utils/string_utils.dart';
@@ -23,7 +26,7 @@ import 'package:dayfi/common/utils/phone_country_utils.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/services/local/crashlytics_service.dart';
 import 'package:dayfi/services/local/local_cache.dart';
-import 'package:intercom_flutter/intercom_flutter.dart';
+import 'package:dayfi/services/local/intercom_support_service.dart';
 
 class BankTransferAmountView extends ConsumerStatefulWidget {
   final Map<String, dynamic> selectedData;
@@ -422,16 +425,18 @@ class _BankTransferAmountViewState
 
   void _handleContinue() {
     FocusManager.instance.primaryFocus?.unfocus();
-    // Check user tier from profileViewModelProvider
-    final profileState = ref.read(profileViewModelProvider);
-    final user = profileState.user;
-    final userTierLevel = TierUtils.getCurrentTierLevel(user);
-    if (userTierLevel == 1) {
-      // Navigate to UploadDocumentsView for Tier 1 users
-      Navigator.pushNamed(
+    _continueSend();
+  }
+
+  Future<void> _continueSend() async {
+    final canSend = await KycFlowNavigation.refreshAndCanSendMoney(ref);
+    if (!mounted) return;
+    if (!canSend) {
+      await KycFlowNavigation.startUpgrade(
         context,
-        AppRoute.uploadDocumentsView,
-        arguments: {'showBackButton': true},
+        ref: ref,
+        showBackButton: true,
+        showIntro: false,
       );
       return;
     }
@@ -608,7 +613,8 @@ class _BankTransferAmountViewState
             selectedChannel.channelType ??
             "Bank Transfer",
         "country": sendState.sendCountry,
-        "reason": widget.paymentData['reason'] ?? "Funding wallet",
+        "reason":
+            widget.paymentData['reason'] ?? SendCopy.defaultTransferReason,
         "receiveChannel": selectedChannel.id ?? "",
         "receiveNetwork": selectedNetwork?.id ?? "",
         "receiveAmount": amount,
@@ -1436,9 +1442,8 @@ class _BankTransferAmountViewState
                     hoverColor: Colors.transparent,
                     onTap: () async {
                       try {
-                        await Intercom.instance.displayMessenger();
+                        await IntercomSupportService.openContactSupport();
                       } catch (e) {
-                        // Fallback in case Intercom fails
                         if (mounted) {
                           TopSnackbar.show(
                             context,
@@ -1518,8 +1523,8 @@ class _BankTransferAmountViewState
                     TopSnackbar.show(
                       context,
                       message:
-                          label == 'Dayfi Tag'
-                              ? 'Dayfi Tag copied to clipboard'
+                          label == UsernameCopy.label
+                              ? UsernameCopy.copiedToClipboard
                               : 'Account number copied to clipboard',
                     );
                   },

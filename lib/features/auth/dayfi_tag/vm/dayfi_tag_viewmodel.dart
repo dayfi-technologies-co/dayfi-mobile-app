@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:dayfi/common/constants/username_copy.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dayfi/app_locator.dart';
@@ -110,9 +111,9 @@ class DayfiTagNotifier extends StateNotifier<DayfiTagState> {
 
   String _validateDayfiId(String value) {
     value = value.trim();
-    if (value.isEmpty) return 'Please enter a Dayfi Tag';
-    if (!value.startsWith('@')) return 'Your tag should start with @';
-    if (value.length < 3) return 'Your tag needs at least 3 characters';
+    if (value.isEmpty) return 'Please enter a username';
+    if (!value.startsWith('@')) return UsernameCopy.mustStartWithAt;
+    if (value.length < 3) return UsernameCopy.minLength;
     return '';
   }
 
@@ -132,8 +133,8 @@ class DayfiTagNotifier extends StateNotifier<DayfiTagState> {
             map?['accountName'] ?? map?['account_name'] ?? 'someone';
         // Tag is taken
         state = state.copyWith(
-          dayfiIdResponse: 'This tag belongs to $accountName',
-          dayfiIdError: 'This tag is already taken. Try something different.',
+          dayfiIdResponse: UsernameCopy.belongsTo(accountName),
+          dayfiIdError: UsernameCopy.alreadyTaken,
           isValidating: false,
         );
       } else {
@@ -161,8 +162,8 @@ class DayfiTagNotifier extends StateNotifier<DayfiTagState> {
         final msg =
             e.errorDescription ??
             e.apiErrorModel?.message ??
-            'Could not verify this tag. Try again.';
-        AppLogger.error('Error validating Dayfi Tag: $e');
+            UsernameCopy.couldNotVerify;
+        AppLogger.error('UsernameCopy.validationError: $e');
         state = state.copyWith(
           clearDayfiIdResponse: true,
           dayfiIdError: msg,
@@ -171,10 +172,10 @@ class DayfiTagNotifier extends StateNotifier<DayfiTagState> {
         return;
       }
 
-      AppLogger.error('Error validating Dayfi Tag: $e');
+      AppLogger.error('UsernameCopy.validationError: $e');
       state = state.copyWith(
         clearDayfiIdResponse: true,
-        dayfiIdError: 'Error validating Dayfi Tag',
+        dayfiIdError: UsernameCopy.validationError,
         isValidating: false,
       );
     }

@@ -1,10 +1,15 @@
 import 'dart:async' show unawaited;
+import 'package:dayfi/common/constants/username_copy.dart';
 
+import 'package:dayfi/features/send/helpers/send_amount_limits.dart';
 import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
 import 'package:dayfi/common/utils/tier_utils.dart';
+import 'package:dayfi/common/utils/kyc_flow_navigation.dart';
 import 'package:dayfi/common/utils/haptic_helper.dart';
 import 'package:dayfi/common/utils/available_balance_calculator.dart';
+import 'package:dayfi/common/widgets/dayfi_screen_description.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
+import 'package:dayfi/features/send/constants/send_copy.dart';
 import 'package:dayfi/common/widgets/buttons/secondary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -12,8 +17,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
+import 'package:dayfi/features/send/send_flow.dart';
+import 'package:dayfi/features/wallet/constants/global_wallet.dart';
+import 'package:dayfi/features/wallet/providers/wallet_hub_provider.dart';
 import 'package:dayfi/features/send/vm/send_viewmodel.dart';
-import 'package:dayfi/features/transactions/vm/transactions_viewmodel.dart';
 import 'package:dayfi/models/payment_response.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/common/utils/string_utils.dart';
@@ -23,9 +30,8 @@ import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/services/remote/wallet_service.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
-import 'package:dayfi/models/wallet.dart';
-import 'package:dayfi/features/send/views/send_payment_method_view.dart';
 import 'package:dayfi/models/beneficiary_with_source.dart';
+import 'package:dayfi/features/recipients/helpers/recipient_history_helper.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 
 class SendView extends ConsumerStatefulWidget {
@@ -58,19 +64,129 @@ class _SendViewState extends ConsumerState<SendView>
   DateTime? _lastWalletFetchTime;
 
   // Cached fiat wallet snapshot (NGN primary) for balance checks on this screen.
-  List<Wallet> _wallets = [];
-  String _walletBalance = '0.00';
-  String _walletCurrency = 'NGN';
+  Future<void> _fetchWalletDetails() async {
+    try {
+      await ref.read(walletHubProvider.notifier).load(showLoading: false);
+    } catch (e) {
+      AppLogger.error('Error fetching wallet balance: $e');
+    }
+  }
 
   // Route argument helpers (populated when opened via named route)
   BeneficiaryWithSource? _initialBeneficiaryWithSource;
   bool _openedFromRecipients = false;
   bool _didLoadRouteArgs = false;
+  bool _prefillSendAmountApplied = false;
+  double? _routePrefillSendAmount;
 
   // Stored data from send_add_recipients_view
   Map<String, dynamic>? _recipientData;
   Map<String, dynamic>? _selectedData;
   Map<String, dynamic>? _senderData;
+
+  bool get _isCryptoSend => _selectedData?['cryptoSend'] == true;
+
+  String _cryptoDisplayCurrency() {
+    final asset = _selectedData?['cryptoAsset']?.toString().toUpperCase() ?? '';
+    if (asset == 'EURC') return 'EUR';
+    return _selectedData?['sendCurrency']?.toString().toUpperCase() ?? 'USD';
+  }
+
+  String _cryptoNetworkLabel() {
+    final network =
+        _selectedData?['cryptoNetwork']?.toString().toLowerCase() ?? 'stellar';
+    switch (network) {
+      case 'ethereum':
+      case 'eth':
+        return 'Ethereum';
+      case 'bsc':
+        return 'BNB Smart Chain';
+      case 'arbitrum':
+        return 'Arbitrum One';
+      case 'mantle':
+        return 'Mantle Network';
+      case 'sonic':
+        return 'Sonic';
+      case 'xdc':
+        return 'XDC Network';
+      case 'stellar':
+        return 'Stellar';
+      default:
+        return network.isEmpty
+            ? 'Stellar'
+            : network[0].toUpperCase() + network.substring(1);
+    }
+  }
+
+  double _cryptoNetworkFeeUsd() {
+    return double.tryParse(
+          _selectedData?['cryptoNetworkFeeUsd']?.toString() ?? '',
+        ) ??
+        0;
+  }
+
+  double _cryptoPlatformFeeUsd() {
+    return double.tryParse(
+          _selectedData?['cryptoPlatformFeeUsd']?.toString() ?? '',
+        ) ??
+        SendCopy.transferFeeUsd;
+  }
+
+  String _cryptoEnterAmountDescription() {
+    return SendCopy.cryptoEnterAmount(
+      currency: _cryptoDisplayCurrency(),
+      address: RecipientHistoryHelper.truncateAddress(
+        _selectedData?['cryptoAddress']?.toString() ?? '',
+      ),
+      network: _cryptoNetworkLabel(),
+    );
+  }
+
+  BeneficiaryWithSource? _beneficiaryFromRoute() {
+    if (_initialBeneficiaryWithSource != null) {
+      return _initialBeneficiaryWithSource;
+    }
+    final fromSelected = _selectedData?['beneficiaryWithSource'];
+    if (fromSelected is BeneficiaryWithSource) return fromSelected;
+    final prefill = _selectedData?['prefillBeneficiary'];
+    if (prefill is BeneficiaryWithSource) return prefill;
+    return null;
+  }
+
+  String? _resolvedRecipientDisplayName() {
+    final beneficiary = _beneficiaryFromRoute();
+    if (beneficiary != null) {
+      final label = RecipientHistoryHelper.primaryLabel(
+        beneficiary.beneficiary,
+        beneficiary.source,
+      );
+      if (label.isNotEmpty && label != 'Recipient') return label;
+    }
+
+    for (final source in [
+      _recipientData?['name'],
+      _recipientData?['accountName'],
+      _selectedData?['recipientName'],
+      _selectedData?['accountName'],
+    ]) {
+      final name = source?.toString().trim();
+      if (name != null && name.isNotEmpty) return name;
+    }
+
+    final dayfiId = _selectedData?['dayfiId']?.toString().trim();
+    if (dayfiId != null && dayfiId.isNotEmpty) {
+      return dayfiId.startsWith('@') ? dayfiId : '@$dayfiId';
+    }
+
+    return null;
+  }
+
+  String _enterAmountDescription() {
+    if (_isCryptoSend) return _cryptoEnterAmountDescription();
+    final name = _resolvedRecipientDisplayName();
+    if (name != null) return SendCopy.sendingToRecipient(name);
+    return SendCopy.enterAmount;
+  }
 
   // Helper function to get full country name from country code
   String _getCountryName(String? countryCode) {
@@ -309,26 +425,52 @@ class _SendViewState extends ConsumerState<SendView>
       _isUpdatingSendController = false;
       _isUpdatingReceiveController = false;
 
-      // Set receiver country and currency from route arguments BEFORE initialization
-      // This ensures that when navigating from select_delivery_method_view or
-      // send_add_recipients_view, the selected country/currency is preserved
+      // Set receiver/send country and currency from route arguments BEFORE initialization
+      String? routeSendCountry;
+      String? routeSendCurrency;
+      String? routeReceiveCountry;
+      String? routeReceiveCurrency;
+      String? routeDeliveryMethod;
+
       if (_selectedData != null) {
-        // Update receiver country and currency from selected data BEFORE initialize
-        final receiveCountry = _selectedData!['receiveCountry'] as String?;
-        final receiveCurrency = _selectedData!['receiveCurrency'] as String?;
-        if (receiveCountry != null &&
-            receiveCountry.isNotEmpty &&
-            receiveCurrency != null &&
-            receiveCurrency.isNotEmpty) {
-          viewModel.updateReceiveCountry(receiveCountry, receiveCurrency);
+        routeReceiveCountry = _selectedData!['receiveCountry'] as String?;
+        routeReceiveCurrency = _selectedData!['receiveCurrency'] as String?;
+        routeSendCountry = _selectedData!['sendCountry'] as String?;
+        routeSendCurrency =
+            (_selectedData!['sendCurrency'] ?? _selectedData!['debitCurrency'])
+                ?.toString();
+        routeDeliveryMethod =
+            _selectedData!['recipientDeliveryMethod'] as String?;
+
+        if (routeReceiveCurrency != null && routeReceiveCurrency.isNotEmpty) {
+          final receiveCur = routeReceiveCurrency.toUpperCase();
+          routeReceiveCountry =
+              (routeReceiveCountry != null && routeReceiveCountry.isNotEmpty)
+                  ? routeReceiveCountry.toUpperCase()
+                  : countryForCurrency(receiveCur);
+          viewModel.updateReceiveCountry(routeReceiveCountry, receiveCur);
         }
 
-        final recipientDeliveryMethod =
-            _selectedData!['recipientDeliveryMethod'] as String?;
-        if (recipientDeliveryMethod != null &&
-            recipientDeliveryMethod.isNotEmpty) {
-          viewModel.updateDeliveryMethod(recipientDeliveryMethod);
+        if (routeDeliveryMethod != null && routeDeliveryMethod.isNotEmpty) {
+          viewModel.updateDeliveryMethod(routeDeliveryMethod);
         }
+      }
+
+      // Apply pay-with before initialize so defaults don't collapse to NGN→NGN.
+      if (routeSendCurrency != null && routeSendCurrency.isNotEmpty) {
+        final receiveCur =
+            routeReceiveCurrency?.toUpperCase() ??
+            ref.read(sendViewModelProvider).receiverCurrency;
+        final sendCur = resolvePayWithCurrencyForTransfer(
+          payWithCurrency: routeSendCurrency,
+          receiveCurrency: receiveCur.isNotEmpty ? receiveCur : 'NGN',
+        );
+        final sendCountry =
+            (routeSendCountry != null && routeSendCountry.isNotEmpty)
+                ? routeSendCountry.toUpperCase()
+                : countryCodeForPayCurrency(sendCur);
+        ref.read(selectedDebitCurrencyProvider.notifier).state = sendCur;
+        await viewModel.updateSendCountry(sendCountry, sendCur);
       }
 
       // Initialize viewmodel if needed (will preserve receiver country/currency set above)
@@ -338,6 +480,45 @@ class _SendViewState extends ConsumerState<SendView>
         } catch (e) {
           // Log error but don't crash the app
         }
+      }
+
+      // Re-apply pay-with after init in case defaults overwrote route args.
+      if (routeSendCurrency != null && routeSendCurrency.isNotEmpty) {
+        final receiveCur =
+            routeReceiveCurrency?.toUpperCase() ??
+            ref.read(sendViewModelProvider).receiverCurrency;
+        final sendCur = resolvePayWithCurrencyForTransfer(
+          payWithCurrency: routeSendCurrency,
+          receiveCurrency: receiveCur.isNotEmpty ? receiveCur : 'NGN',
+        );
+        final sendCountry =
+            (routeSendCountry != null && routeSendCountry.isNotEmpty)
+                ? routeSendCountry.toUpperCase()
+                : countryCodeForPayCurrency(sendCur);
+        ref.read(selectedDebitCurrencyProvider.notifier).state = sendCur;
+        await viewModel.updateSendCountry(sendCountry, sendCur);
+      } else {
+        final payWith = ref.read(selectedDebitCurrencyProvider);
+        final receiveCur = ref.read(sendViewModelProvider).receiverCurrency;
+        final sendCur = resolvePayWithCurrencyForTransfer(
+          payWithCurrency: payWith,
+          receiveCurrency: receiveCur.isNotEmpty ? receiveCur : 'NGN',
+        );
+        await viewModel.updateSendCountry(
+          countryCodeForPayCurrency(sendCur),
+          sendCur,
+        );
+      }
+      if (routeReceiveCurrency != null && routeReceiveCurrency.isNotEmpty) {
+        final receiveCur = routeReceiveCurrency.toUpperCase();
+        final receiveCountry =
+            (routeReceiveCountry != null && routeReceiveCountry.isNotEmpty)
+                ? routeReceiveCountry.toUpperCase()
+                : countryForCurrency(receiveCur);
+        await viewModel.updateReceiveCountry(receiveCountry, receiveCur);
+      }
+      if (routeDeliveryMethod != null && routeDeliveryMethod.isNotEmpty) {
+        viewModel.updateDeliveryMethod(routeDeliveryMethod);
       }
 
       // Fetch rates only if country/currency has changed since last fetch
@@ -364,122 +545,139 @@ class _SendViewState extends ConsumerState<SendView>
         _lastWalletFetchTime = now;
       }
 
+      unawaited(KycFlowNavigation.prefetchCanSendMoney(ref));
+
       analyticsService.trackScreenView(screenName: 'SendView');
+
+      await _applyPrefillSendAmountIfNeeded();
     });
   }
 
-  Wallet? _resolvePrimaryWallet(List<Wallet> wallets) {
-    if (wallets.isEmpty) return null;
-    for (final wallet in wallets) {
-      if (wallet.currency.toUpperCase() == 'NGN') {
-        return wallet;
-      }
+  double? _readPrefillSendAmountFromArgs(Map<String, dynamic> args) {
+    final top = args['prefillSendAmount'];
+    if (top is num && top > 0) return top.toDouble();
+    final selected = args['selectedData'];
+    if (selected is Map<String, dynamic>) {
+      final nested = selected['prefillSendAmount'];
+      if (nested is num && nested > 0) return nested.toDouble();
     }
-    return wallets.first;
+    return null;
   }
 
-  Future<void> _fetchWalletDetails() async {
-    try {
-      final walletService = locator<WalletService>();
-      final response = await walletService.fetchWalletDetails();
-      if (!mounted) return;
+  Future<void> _applyPrefillSendAmountIfNeeded() async {
+    if (_prefillSendAmountApplied) return;
 
-      final wallets = response.wallets;
-      final primary = _resolvePrimaryWallet(wallets);
-      setState(() {
-        _wallets = wallets;
-        _walletBalance = primary?.balance ?? '0.00';
-        _walletCurrency = primary?.currency ?? 'NGN';
-      });
-    } catch (e) {
-      AppLogger.error('Error fetching wallet balance: $e');
+    final amount = _routePrefillSendAmount ??
+        (_selectedData?['prefillSendAmount'] as num?)?.toDouble();
+    if (amount == null || amount <= 0) return;
+
+    final viewModel = ref.read(sendViewModelProvider.notifier);
+    if (!viewModel.isInitialized && !viewModel.isInitializing) {
+      try {
+        await viewModel.initialize();
+      } catch (_) {
+        return;
+      }
     }
+
+    final cleanValue = amount == amount.truncateToDouble()
+        ? '${amount.toInt()}.00'
+        : amount.toStringAsFixed(2);
+    final formattedWithCommas = StringUtils.formatNumberWithCommas(cleanValue);
+
+    _isUpdatingSendController = true;
+    _sendAmountController.value = TextEditingValue(
+      text: formattedWithCommas,
+      selection: TextSelection.collapsed(offset: formattedWithCommas.length),
+    );
+    _isUpdatingSendController = false;
+
+    viewModel.updateSendAmount(cleanValue);
+    _selectedData?['sendAmount'] = cleanValue;
+    _prefillSendAmountApplied = true;
+  }
+
+  String _spendCurrencyForSend(SendState state) {
+    final sendCur = state.sendCurrency.trim().toUpperCase();
+    if (sendCur.isNotEmpty) return sendCur;
+    return ref.read(selectedDebitCurrencyProvider).toUpperCase();
+  }
+
+  // Future<void> _fetchWalletDetails() async {
+  //   try {
+  //     await ref.read(walletHubProvider.notifier).load(showLoading: false);
+  //   } catch (e) {
+  //     AppLogger.error('Error fetching wallet balance: $e');
+  //   }
+  // }
+
+  Future<bool> _hasInsufficientBalance(
+    SendState state, {
+    bool forceRefresh = false,
+  }) async {
+    final hubState = ref.read(walletHubProvider);
+    final cacheFresh =
+        !forceRefresh &&
+        hubState.hub != null &&
+        _lastWalletFetchTime != null &&
+        DateTime.now().difference(_lastWalletFetchTime!).inSeconds < 30;
+
+    if (!cacheFresh) {
+      try {
+        await ref
+            .read(walletHubProvider.notifier)
+            .load(showLoading: false)
+            .timeout(const Duration(seconds: 8));
+        _lastWalletFetchTime = DateTime.now();
+      } catch (e) {
+        AppLogger.error('Error fetching wallet balance: $e');
+        if (hubState.hub == null) return true;
+      }
+    } else {
+      unawaited(
+        ref.read(walletHubProvider.notifier).load(showLoading: false).catchError(
+          (_) {},
+        ),
+      );
+    }
+
+    if (!mounted) return true;
+
+    final hub = ref.read(walletHubProvider).hub;
+    final currency = _spendCurrencyForSend(state);
+    final displayBalance = hub?.balanceInDisplayCurrency(currency) ?? 0;
+
+    final totalAmount =
+        double.tryParse(state.totalToPay.replaceAll(',', '')) ?? 0.0;
+    if (totalAmount <= 0) {
+      final sendAmount =
+          double.tryParse(state.sendAmount.replaceAll(',', '')) ?? 0.0;
+      if (sendAmount <= 0) return false;
+    }
+
+    return displayBalance <= 0 || displayBalance < totalAmount;
   }
 
   Future<bool> _checkWalletBalanceAndNavigate(SendState state) async {
     try {
-      // Set loading state
       if (mounted) {
-        setState(() {
-          _isCheckingWallet = true;
-        });
+        setState(() => _isCheckingWallet = true);
       }
 
-      // Fetch wallet details and transactions in parallel
-      final transactionsNotifier = ref.read(transactionsProvider.notifier);
+      final insufficient = await _hasInsufficientBalance(state);
 
-      await Future.wait([
-        _fetchWalletDetails(),
-        transactionsNotifier.loadTransactions(),
-      ]);
+      if (!mounted) return false;
 
-      if (mounted) {
-        final transactionsState = ref.read(transactionsProvider);
-
-        // Check if wallets list is empty
-        if (_wallets.isEmpty) {
-          // Reset loading state before showing dialog
-          setState(() {
-            _isCheckingWallet = false;
-          });
-
-          // Show dialog before navigating
-          _showInsufficientBalanceDialog();
-          return true;
-        }
-
-        final balance = _walletBalance;
-
-        // Calculate available balance (current balance - pending transactions)
-        final availableBalance =
-            AvailableBalanceCalculator.calculateAvailableBalance(
-              balance,
-              transactionsState.transactions,
-              currency: _walletCurrency,
-            );
-
-        // Get send amount
-        final sendAmount =
-            double.tryParse(state.sendAmount.replaceAll(',', '')) ?? 0.0;
-        final fee = double.tryParse(state.fee.replaceAll(',', '')) ?? 0.0;
-        final totalAmount = sendAmount + fee;
-
-        // Check if available balance is insufficient
-        if (balance.isEmpty ||
-            balance == '0.00' ||
-            availableBalance <= 0 ||
-            availableBalance < totalAmount) {
-          // Reset loading state before showing dialog
-          setState(() {
-            _isCheckingWallet = false;
-          });
-
-          // Show dialog with pending transaction info if applicable
-          final pendingCount =
-              AvailableBalanceCalculator.getPendingTransactionCount(
-                transactionsState.transactions,
-              );
-          _showInsufficientBalanceDialog(pendingTransactionCount: pendingCount);
-          return true;
-        }
+      if (insufficient) {
+        setState(() => _isCheckingWallet = false);
+        _showInsufficientBalanceDialog();
+        return true;
       }
 
-      // Reset loading state if balance is sufficient
-      if (mounted) {
-        setState(() {
-          _isCheckingWallet = false;
-        });
-      }
-
+      if (mounted) setState(() => _isCheckingWallet = false);
       return false;
     } catch (e) {
-      // Reset loading state on error
-      if (mounted) {
-        setState(() {
-          _isCheckingWallet = false;
-        });
-      }
-      // Log error but don't crash the app
+      if (mounted) setState(() => _isCheckingWallet = false);
       AppLogger.error('Error checking wallet balance: $e');
       return false;
     }
@@ -589,18 +787,7 @@ class _SendViewState extends ConsumerState<SendView>
       text: 'Add Funds',
       onPressed: () {
         Navigator.pop(context);
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder:
-                (context) => SendPaymentMethodView(
-                  selectedData: {},
-                  recipientData: {},
-                  senderData: {},
-                  paymentData: {},
-                ),
-          ),
-        );
+        Navigator.pushNamed(context, AppRoute.addMoneySelectWalletView);
       },
       backgroundColor: AppColors.purple500,
       textColor: AppColors.neutral0,
@@ -744,6 +931,7 @@ class _SendViewState extends ConsumerState<SendView>
     if (!_didLoadRouteArgs) {
       final args = ModalRoute.of(context)?.settings.arguments;
       if (args is Map<String, dynamic>) {
+        _routePrefillSendAmount = _readPrefillSendAmountFromArgs(args);
         if (args['beneficiaryWithSource'] is BeneficiaryWithSource) {
           _initialBeneficiaryWithSource =
               args['beneficiaryWithSource'] as BeneficiaryWithSource;
@@ -791,10 +979,29 @@ class _SendViewState extends ConsumerState<SendView>
 
     // Determine delivery method based on account type
     String deliveryMethod = '';
-    String receiveCountry =
-        beneficiary.country.isNotEmpty ? beneficiary.country : 'NG';
-    // Derive currency from country code
-    String receiveCurrency = _getCurrencyFromCountry(receiveCountry);
+    final String receiveCountry;
+    final String receiveCurrency;
+    if (RecipientHistoryHelper.isBankOrMobileRecipient(
+      _initialBeneficiaryWithSource!,
+    )) {
+      receiveCountry = RecipientHistoryHelper.resolveReceiveCountry(
+        _initialBeneficiaryWithSource!,
+      );
+      receiveCurrency = RecipientHistoryHelper.resolveReceiveCurrency(
+        _initialBeneficiaryWithSource!,
+      );
+    } else {
+      final ledger =
+          _initialBeneficiaryWithSource!.ledgerCurrency?.trim().toUpperCase();
+      if (ledger != null && ledger.isNotEmpty) {
+        receiveCurrency = ledger;
+        receiveCountry = countryForCurrency(ledger);
+      } else {
+        receiveCountry =
+            beneficiary.country.isNotEmpty ? beneficiary.country : 'NG';
+        receiveCurrency = _getCurrencyFromCountry(receiveCountry);
+      }
+    }
 
     if (source.accountType?.toLowerCase() == 'dayfi') {
       deliveryMethod = 'dayfi_tag';
@@ -813,6 +1020,8 @@ class _SendViewState extends ConsumerState<SendView>
     if (deliveryMethod.isNotEmpty) {
       viewModel.updateDeliveryMethod(deliveryMethod);
     }
+
+    await _applyPrefillSendAmountIfNeeded();
   }
 
   void _scheduleSendProviderListenWork(SendState? previous) {
@@ -1034,26 +1243,10 @@ class _SendViewState extends ConsumerState<SendView>
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
                                     // Transfer Limit Card
-                                    Padding(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: isWide ? 24 : 18,
-                                        vertical: 4,
-                                      ),
-                                      child: Text(
-                                        "Enter the amount you want to send to ${_getCountryName(sendState.receiverCountry)} (${sendState.receiverCurrency}) via ${_getDeliveryMethodDisplayName(sendState.selectedDeliveryMethod)}${_getNetworkName().isNotEmpty ? ' (${_getNetworkName()})' : ''}",
-                                        style: Theme.of(
-                                          context,
-                                        ).textTheme.bodyMedium?.copyWith(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w500,
-                                          fontFamily: 'Chirp',
-                                          letterSpacing: -.25,
-                                          height: 1.5,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
+                                    DayfiScreenDescription(
+                                      text: _enterAmountDescription(),
+                                      bottomSpacing: 32,
                                     ),
-                                    SizedBox(height: 32),
                                     AnimatedSwitcher(
                                       duration: const Duration(
                                         milliseconds: 400,
@@ -1251,47 +1444,60 @@ class _SendViewState extends ConsumerState<SendView>
                                                     ),
                                           ),
 
-                                          AnimatedContainer(
-                                            duration: const Duration(
-                                              milliseconds: 350,
+                                          if (!_isCryptoSend) ...[
+                                            AnimatedContainer(
+                                              duration: const Duration(
+                                                milliseconds: 350,
+                                              ),
+                                              curve: Curves.easeInOut,
+                                              height: 24,
+                                              child: const SizedBox.shrink(),
                                             ),
-                                            curve: Curves.easeInOut,
-                                            height: 24,
-                                            child: const SizedBox.shrink(),
-                                          ),
-                                          AnimatedContainer(
-                                            duration: const Duration(
-                                              milliseconds: 350,
+                                            AnimatedContainer(
+                                              duration: const Duration(
+                                                milliseconds: 350,
+                                              ),
+                                              curve: Curves.easeInOut,
+                                              child: _buildExchangeRateSection(
+                                                sendState,
+                                              ),
                                             ),
-                                            curve: Curves.easeInOut,
-                                            child: _buildExchangeRateSection(
-                                              sendState,
+                                            AnimatedContainer(
+                                              duration: const Duration(
+                                                milliseconds: 350,
+                                              ),
+                                              curve: Curves.easeInOut,
+                                              height: 12,
+                                              child: const SizedBox.shrink(),
                                             ),
-                                          ),
-                                          // Sender Delivery Method Section (commented out)
-                                          // AnimatedContainer(
-                                          //   duration: const Duration(milliseconds: 350),
-                                          //   curve: Curves.easeInOut,
-                                          //   child: _buildSenderDeliveryMethodSection(sendState),
-                                          // ),
-                                          AnimatedContainer(
-                                            duration: const Duration(
-                                              milliseconds: 350,
+                                            AnimatedContainer(
+                                              duration: const Duration(
+                                                milliseconds: 350,
+                                              ),
+                                              curve: Curves.easeInOut,
+                                              child: _buildReceiveAmountSection(
+                                                sendState,
+                                              ),
                                             ),
-                                            curve: Curves.easeInOut,
-                                            height: 12,
-                                            child: const SizedBox.shrink(),
-                                          ),
-                                          // Receive Amount Section
-                                          AnimatedContainer(
-                                            duration: const Duration(
-                                              milliseconds: 350,
+                                          ] else ...[
+                                            AnimatedContainer(
+                                              duration: const Duration(
+                                                milliseconds: 350,
+                                              ),
+                                              curve: Curves.easeInOut,
+                                              height: 24,
+                                              child: const SizedBox.shrink(),
                                             ),
-                                            curve: Curves.easeInOut,
-                                            child: _buildReceiveAmountSection(
-                                              sendState,
+                                            AnimatedContainer(
+                                              duration: const Duration(
+                                                milliseconds: 350,
+                                              ),
+                                              curve: Curves.easeInOut,
+                                              child: _buildCryptoFeeSection(
+                                                sendState,
+                                              ),
                                             ),
-                                          ),
+                                          ],
                                           // AnimatedContainer(
                                           //   duration: const Duration(milliseconds: 350),
                                           //   curve: Curves.easeInOut,
@@ -1426,46 +1632,27 @@ class _SendViewState extends ConsumerState<SendView>
                       bottom: 16,
                       left: -4,
                     ),
-                    suffixIcon: GestureDetector(
-                      // onTap: () => _showSendCountryBottomSheet(state),
-                      child: SizedBox(
-                        // padding: EdgeInsets.symmetric(
-                        //   horizontal: 8,
-                        //   vertical: 8,
-                        // ),
-                        // margin: EdgeInsets.only(right: 0),
-                        // decoration: BoxDecoration(
-                        //   color: Theme.of(
-                        //     context,
-                        //   ).colorScheme.primaryContainer.withOpacity(.35),
-                        //   borderRadius: BorderRadius.circular(40),
-                        // ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // add country flag
-                            SvgPicture.asset(
-                              _getFlagPath(state.sendCountry),
-                              height: 24.00000,
+                    suffixIcon: Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SvgPicture.asset(
+                            kGlobalPayCurrencyFlags[state.sendCurrency
+                                    .toUpperCase()] ??
+                                _getFlagPath(state.sendCountry),
+                            height: 24,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            state.sendCurrency,
+                            style: AppTypography.bodyMedium.copyWith(
+                              fontFamily: 'Chirp',
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
                             ),
-                            SizedBox(width: 6),
-                            Text(
-                              state.sendCurrency,
-                              style: AppTypography.bodyMedium.copyWith(
-                                fontFamily: 'Chirp',
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                // color: Theme.of(context).colorScheme.primary,
-                              ),
-                            ),
-                            // SizedBox(width: 4),
-                            // Icon(
-                            //   Icons.keyboard_arrow_down,
-                            //   color: AppColors.neutral400,
-                            //   size: 20,
-                            // ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -1476,6 +1663,29 @@ class _SendViewState extends ConsumerState<SendView>
             ],
           ),
         ),
+        if (_isCryptoSend) ...[
+          const SizedBox(height: 6),
+          Center(
+            child: Consumer(
+              builder: (context, ref, _) {
+                final hub = ref.watch(walletHubProvider).hub;
+                final currency = _cryptoDisplayCurrency();
+                final available =
+                    hub?.balanceInDisplayCurrency(currency) ?? 0;
+                return Text(
+                  'Available: ${available.toStringAsFixed(2)} $currency',
+                  style: AppTypography.bodySmall.copyWith(
+                    fontFamily: 'Chirp',
+                    fontSize: 12.5,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.5),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
 
         // SizedBox(height: 8),
         // Consumer(
@@ -1547,7 +1757,7 @@ class _SendViewState extends ConsumerState<SendView>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Recipient gets',
+          'You receive',
           style: AppTypography.titleMedium.copyWith(
             fontFamily: 'Chirp',
             fontSize: 14,
@@ -1662,8 +1872,8 @@ class _SendViewState extends ConsumerState<SendView>
 
   /// Quick amount shortcut buttons below the send amount field
   Widget _buildQuickAmountOptions(SendState state) {
-    // Common quick amounts (NGN-centric). Adjust as needed per currency.
-    final amounts = [2000.0, 5000.0, 10000.0];
+    final amounts = SendAmountLimits.quickAmountsFor(state.sendCurrency);
+    final symbol = _currencySymbolFor(state.sendCurrency);
 
     return Container(
       width: double.infinity,
@@ -1714,22 +1924,22 @@ class _SendViewState extends ConsumerState<SendView>
                                   ? Theme.of(context)
                                       .colorScheme
                                       .primaryContainer
-                                      .withOpacity(.15)
+                                      .withOpacity(.22)
                                   : Theme.of(context).scaffoldBackgroundColor,
                           borderRadius: BorderRadius.circular(40),
                           border: Border.all(
-                            width: 1,
+                            width: isSelected ? 1.5 : 1,
                             color:
                                 isSelected
-                                    ? Theme.of(
-                                      context,
-                                    ).colorScheme.primary.withOpacity(.05)
-                                    : Colors.transparent,
+                                    ? Theme.of(context).colorScheme.primary
+                                        .withOpacity(0.55)
+                                    : Theme.of(context).colorScheme.outline
+                                        .withOpacity(0.35),
                           ),
                         ),
                         child: Center(
                           child: Text(
-                            '₦${display.split('.').first}',
+                            '$symbol${display.split('.').first}',
                             style: AppTypography.bodyMedium.copyWith(
                               fontFamily: 'FunnelDisplay',
                               fontSize: 15,
@@ -1767,34 +1977,12 @@ class _SendViewState extends ConsumerState<SendView>
     );
   }
 
-  // Helper function to get recipient info text
-  String _getRecipientInfoText() {
-    // Try beneficiary data first (from recipients screen)
-    if (_initialBeneficiaryWithSource != null) {
-      final name = _initialBeneficiaryWithSource!.beneficiary.name;
-      if (name.isNotEmpty) {
-        return 'to $name';
-      }
-    }
-
-    // Try recipient data (from add recipients view)
-    if (_recipientData != null && _recipientData!['name'] != null) {
-      final name = _recipientData!['name'] as String;
-      if (name.isNotEmpty) {
-        return 'to $name';
-      }
-    }
-
-    // No recipient info available
-    return '';
-  }
-
   // Helper function to get delivery method display name
   String _getDeliveryMethodDisplayName(String? method) {
     if (method == null) return 'Unknown';
     switch (method.toLowerCase()) {
       case 'dayfi_tag':
-        return 'Dayfi Tag';
+        return UsernameCopy.label;
       case 'bank_transfer':
       case 'bank':
         return 'Bank Transfer';
@@ -1835,6 +2023,102 @@ class _SendViewState extends ConsumerState<SendView>
 
   /// Get simplified delivery method type (just the main category)
   /// Get delivery duration based on method type
+  /// Fee + total for on-chain crypto sends (no FX rate row).
+  Widget _buildCryptoFeeSection(SendState state) {
+    final networkFee = _cryptoNetworkFeeUsd();
+    final platformFee = _cryptoPlatformFeeUsd();
+    final sendAmount =
+        double.tryParse(state.sendAmount.replaceAll(',', '')) ?? 0;
+    final total = sendAmount + networkFee + platformFee;
+
+    Widget feeRow(String label, double value) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                SvgPicture.asset('assets/icons/svgs/fee.svg', height: 24),
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: AppTypography.bodyMedium.copyWith(
+                    fontFamily: 'Chirp',
+                    letterSpacing: -.25,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.6),
+                  ),
+                ),
+              ],
+            ),
+            Text(
+              StringUtils.formatCurrency(
+                value.toStringAsFixed(2),
+                state.sendCurrency,
+              ),
+              style: AppTypography.bodyMedium.copyWith(
+                fontFamily: 'FunnelDisplay',
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          feeRow('Network fee', networkFee),
+          feeRow('Platform fee', platformFee),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  SvgPicture.asset('assets/icons/svgs/total.svg', height: 24),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Total to pay',
+                    style: AppTypography.bodyMedium.copyWith(
+                      fontFamily: 'Chirp',
+                      letterSpacing: -.25,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.6),
+                    ),
+                  ),
+                ],
+              ),
+              Text(
+                StringUtils.formatCurrency(
+                  total.toStringAsFixed(2),
+                  state.sendCurrency,
+                ),
+                style: AppTypography.bodyMedium.copyWith(
+                  fontFamily: 'FunnelDisplay',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildExchangeRateSection(SendState state) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16),
@@ -1897,10 +2181,15 @@ class _SendViewState extends ConsumerState<SendView>
                   state.fee.isNotEmpty) ...[
                 Consumer(
                   builder: (context, ref, child) {
-                    final sendState = ref.watch(sendViewModelProvider);
-
+                    ref.watch(sendViewModelProvider);
+                    final feeInSend = ref
+                        .read(sendViewModelProvider.notifier)
+                        .feeInSendCurrency;
                     return Text(
-                      '₦${sendState.fee}',
+                      StringUtils.formatCurrency(
+                        feeInSend.toStringAsFixed(2),
+                        state.sendCurrency,
+                      ),
                       style: AppTypography.bodyMedium.copyWith(
                         fontFamily: 'FunnelDisplay',
                         fontSize: 16,
@@ -1958,9 +2247,10 @@ class _SendViewState extends ConsumerState<SendView>
                 // ),
               ] else ...[
                 () {
-                  final fee = double.tryParse(state.fee) ?? 0.0;
-                  final sendAmount = double.tryParse(state.sendAmount) ?? 0.0;
-                  final total = fee + sendAmount;
+                  final total =
+                      double.tryParse(state.totalToPay) ??
+                      double.tryParse(state.sendAmount) ??
+                      0.0;
                   final formatted = StringUtils.formatCurrency(
                     total.toStringAsFixed(2),
                     state.sendCurrency,
@@ -2024,9 +2314,7 @@ class _SendViewState extends ConsumerState<SendView>
               ] else if (state.exchangeRate.isNotEmpty) ...[
                 Flexible(
                   child: Text(
-                    state.receiverCurrency == 'NGN'
-                        ? '₦1 = ₦1'
-                        : state.exchangeRate,
+                    state.exchangeRate,
                     style: AppTypography.bodyLarge.copyWith(
                       fontFamily: 'FunnelDisplay',
                       fontSize: 16,
@@ -2086,22 +2374,45 @@ class _SendViewState extends ConsumerState<SendView>
     return null;
   }
 
-  Future<void> _navigateToRecipientScreen(SendState state) async {
+  Future<void> _navigateToRecipientScreen(
+    SendState state, {
+    bool skipBalanceCheck = false,
+  }) async {
     // Dismiss keyboard when continue button is pressed
     FocusScope.of(context).unfocus();
 
     AppLogger.info('🚀 _navigateToRecipientScreen called');
 
-    // Check wallet balance first
-    final shouldNavigateToPayment = await _checkWalletBalanceAndNavigate(state);
-    if (shouldNavigateToPayment) {
-      AppLogger.info(
-        '⚠️ Navigating to payment method due to insufficient balance',
-      );
-      return; // Balance is insufficient, already navigated to payment method view
+    if (!skipBalanceCheck) {
+      // Check wallet balance first
+      final shouldNavigateToPayment = await _checkWalletBalanceAndNavigate(state);
+      if (shouldNavigateToPayment) {
+        AppLogger.info(
+          '⚠️ Navigating to payment method due to insufficient balance',
+        );
+        return; // Balance is insufficient, already navigated to payment method view
+      }
     }
 
     AppLogger.info('✅ Wallet balance check passed');
+
+    if (_isCryptoSend && _selectedData != null) {
+      AppLogger.info('📍 Navigating to crypto send review');
+      await appRouter.pushNamed(
+        AppRoute.walletCryptoSendReviewView,
+        arguments: {
+          'draft': {
+            'to': _selectedData!['cryptoAddress']?.toString() ?? '',
+            'asset': _selectedData!['cryptoAsset']?.toString() ?? 'USDC',
+            'network': _selectedData!['cryptoNetwork']?.toString() ?? 'stellar',
+            'memo': _selectedData!['cryptoMemo']?.toString() ?? '',
+            'amount': state.sendAmount,
+            'selectedData': _selectedData,
+          },
+        },
+      );
+      return;
+    }
 
     // If we have beneficiary data from recipients view, navigate directly to review
     if (_initialBeneficiaryWithSource != null && _openedFromRecipients) {
@@ -2137,6 +2448,13 @@ class _SendViewState extends ConsumerState<SendView>
       );
       // Ensure sendAmount is up to date in selectedData
       _selectedData!['sendAmount'] = state.sendAmount;
+      _selectedData!['receiveAmount'] = state.receiverAmount.isNotEmpty
+          ? state.receiverAmount
+          : state.sendAmount;
+      _selectedData!['sendCurrency'] = state.sendCurrency;
+      _selectedData!['receiveCurrency'] = state.receiverCurrency;
+      _selectedData!['debitCurrency'] = state.sendCurrency;
+      _selectedData!['recipientDeliveryMethod'] = 'dayfi_tag';
       await _navigateToSendDayfiIdReview(_selectedData!);
       return;
     }
@@ -2223,7 +2541,7 @@ class _SendViewState extends ConsumerState<SendView>
         // Show error and navigate to explanation view as fallback
         TopSnackbar.show(
           context,
-          message: 'Failed to verify Dayfi Tag. Please try again.',
+          message: UsernameCopy.verifyError,
           isError: true,
         );
         // Navigate to explanation view as fallback
@@ -2340,33 +2658,22 @@ class _SendViewState extends ConsumerState<SendView>
     AppLogger.info('✅ Routing to Send Review View for bank/mobile transfer');
 
     // Find the network object for the beneficiary's source.networkId (if any)
-    final selectedNetwork =
-        source.networkId != null
-            ? state.networks.firstWhere(
-              (n) => n.id == source.networkId,
-              orElse: () => Network(id: null, name: null),
-            )
-            : null;
+    final notifier = ref.read(sendViewModelProvider.notifier);
+    final selectedNetwork = notifier.findNetworkById(source.networkId);
 
     AppLogger.info('Network found: ${selectedNetwork?.name}');
 
-    // Attempt to resolve a channel ID from the network's channelIds
-    String resolvedRecipientChannelId = '';
-    if (selectedNetwork?.channelIds != null &&
-        selectedNetwork!.channelIds!.isNotEmpty) {
-      // Prefer a channel that exists in state.channels and matches criteria
-      final candidate = state.channels.firstWhere(
-        (ch) => selectedNetwork.channelIds!.contains(ch.id ?? ''),
-        orElse: () => Channel(id: null),
-      );
-
-      if (candidate.id != null) {
-        resolvedRecipientChannelId = candidate.id!;
-      } else {
-        // Fallback to first channel id string from the network
-        resolvedRecipientChannelId = selectedNetwork.channelIds!.first;
-      }
-    }
+    final deliveryMethod = state.selectedDeliveryMethod.isNotEmpty
+        ? state.selectedDeliveryMethod
+        : (accountType == 'mobile_money' ? 'mobile_money' : 'bank');
+    final resolvedRecipientChannelId =
+        notifier.resolveRecipientChannelId(
+          receiveCountry: state.receiverCountry,
+          receiveCurrency: state.receiverCurrency,
+          deliveryMethod: deliveryMethod,
+          networkId: selectedNetwork?.id ?? source.networkId,
+        ) ??
+        '';
 
     final payload = <String, dynamic>{
       'selectedData': {
@@ -2379,14 +2686,13 @@ class _SendViewState extends ConsumerState<SendView>
         'senderDeliveryMethod': state.selectedSenderDeliveryMethod,
         'recipientDeliveryMethod': state.selectedDeliveryMethod,
         'senderChannelId': state.selectedSenderChannelId,
-        // Use resolved channel id if we could find one from the network, else empty
-        'recipientChannelId':
-            resolvedRecipientChannelId.isNotEmpty
-                ? resolvedRecipientChannelId
-                : (source.networkId ?? ''),
-        // networkId should be the network's id (not a channel id)
+        if (resolvedRecipientChannelId.isNotEmpty)
+          'recipientChannelId': resolvedRecipientChannelId,
         'networkId': selectedNetwork?.id ?? (source.networkId ?? ''),
-        'networkName': selectedNetwork?.name ?? 'Bank Transfer',
+        'networkName':
+            selectedNetwork?.name ??
+            beneficiary.beneficiary.bankName ??
+            'Bank Transfer',
         'accountNumberType': selectedNetwork?.accountNumberType ?? 'bank',
       },
       'recipientData': {
@@ -2399,7 +2705,9 @@ class _SendViewState extends ConsumerState<SendView>
         'idNumber': beneficiary.beneficiary.idNumber,
         'idType': beneficiary.beneficiary.idType,
         'accountNumber': source.accountNumber ?? '',
-        'networkId': source.networkId ?? '',
+        'networkId': selectedNetwork?.id ?? source.networkId ?? '',
+        'bankName': beneficiary.beneficiary.bankName ?? selectedNetwork?.name,
+        'networkName': selectedNetwork?.name ?? beneficiary.beneficiary.bankName,
         'accountType': source.accountType ?? '',
       },
       'senderData': null,
@@ -2456,17 +2764,28 @@ class _SendViewState extends ConsumerState<SendView>
     );
 
     final state = ref.read(sendViewModelProvider);
+    final notifier = ref.read(sendViewModelProvider.notifier);
 
     // Find the network object for the recipient's networkId
-    final selectedNetwork =
-        recipientData['networkId'] != null
-            ? state.networks.firstWhere(
-              (n) => n.id == recipientData['networkId'],
-              orElse: () => Network(id: null, name: null),
-            )
-            : null;
+    final selectedNetwork = notifier.findNetworkById(
+      recipientData['networkId']?.toString(),
+    );
 
     AppLogger.info('Network found: ${selectedNetwork?.name}');
+
+    final deliveryMethod =
+        recipientData['recipientDeliveryMethod'] ??
+        selectedData['recipientDeliveryMethod'] ??
+        'bank';
+    final resolvedChannelId = notifier.resolveRecipientChannelId(
+      receiveCountry: state.receiverCountry,
+      receiveCurrency: state.receiverCurrency,
+      deliveryMethod: deliveryMethod.toString(),
+      networkId: selectedNetwork?.id ?? recipientData['networkId']?.toString(),
+      existingChannelId:
+          recipientData['recipientChannelId']?.toString() ??
+          selectedData['recipientChannelId']?.toString(),
+    );
 
     // Build the payload for send review view
     final payload = <String, dynamic>{
@@ -2483,12 +2802,13 @@ class _SendViewState extends ConsumerState<SendView>
             selectedData['recipientDeliveryMethod'] ??
             '',
         'senderChannelId': state.selectedSenderChannelId,
-        'recipientChannelId':
-            recipientData['recipientChannelId'] ??
-            selectedData['recipientChannelId'] ??
-            '',
+        if (resolvedChannelId != null) 'recipientChannelId': resolvedChannelId,
         'networkId': selectedNetwork?.id ?? recipientData['networkId'] ?? '',
-        'networkName': selectedNetwork?.name ?? 'Bank Transfer',
+        'networkName':
+            selectedNetwork?.name ??
+            recipientData['networkName'] ??
+            recipientData['bankName'] ??
+            'Bank Transfer',
         'accountNumberType': selectedNetwork?.accountNumberType ?? 'bank',
       },
       'recipientData': recipientData,
@@ -2520,40 +2840,65 @@ class _SendViewState extends ConsumerState<SendView>
     final hasValidAmount =
         isAmountValid && state.sendAmount.isNotEmpty && parsedSend > 0;
     final isLoading = _isCheckingWallet;
-    final hasRates = state.hasValidRates && !state.showRatesLoading;
+    final sameCurrency = viewModel.isSameFiatCurrency;
+    final hasRates =
+        sameCurrency || (state.hasValidRates && !state.showRatesLoading);
     final isButtonEnabled =
-        hasValidAmount && state.channels.isNotEmpty && hasRates;
+        _isCryptoSend
+            ? hasValidAmount
+            : hasValidAmount && viewModel.hasRequiredChannels && hasRates;
 
-    return PrimaryButton(
-      text: 'Review Transfer',
+    final buttonText = _getSendButtonText(
+      state,
+      viewModel,
+      isAmountValid,
+      isLoading,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: PrimaryButton(
+      text: buttonText == 'Continue' ? 'Review Transfer' : buttonText,
       onPressed:
           isButtonEnabled
               ? () async {
-                // 1. Check for insufficient funds (uses balance cached on init / resume)
-                final balance = _walletBalance;
-                final balanceValue =
-                    double.tryParse(balance.replaceAll(',', '')) ?? 0.0;
-                if (balance.isEmpty ||
-                    balance == '0.00' ||
-                    balanceValue <= 0 ||
-                    balanceValue < parsedSend) {
-                  _showInsufficientBalanceDialog();
-                  return;
-                }
-                // 2. Check user tier
-                final profileState = ref.read(profileViewModelProvider);
-                final user = profileState.user;
-                final userTierLevel = TierUtils.getCurrentTierLevel(user);
-                if (userTierLevel == 1) {
-                  Navigator.pushNamed(
-                    context,
-                    AppRoute.uploadDocumentsView,
-                    arguments: {'showBackButton': true},
+                setState(() => _isCheckingWallet = true);
+                try {
+                  final balanceFuture = _hasInsufficientBalance(state);
+                  final kycFuture =
+                      KycFlowNavigation.refreshAndCanSendMoney(ref);
+                  final results = await Future.wait<bool>([
+                    balanceFuture,
+                    kycFuture,
+                  ]);
+                  if (!mounted) return;
+
+                  final insufficient = results[0];
+                  final canSend = results[1];
+
+                  if (insufficient) {
+                    _showInsufficientBalanceDialog();
+                    return;
+                  }
+                  if (!canSend) {
+                    await KycFlowNavigation.startUpgrade(
+                      context,
+                      ref: ref,
+                      showBackButton: true,
+                      showIntro: false,
+                    );
+                    return;
+                  }
+
+                  await _navigateToRecipientScreen(
+                    state,
+                    skipBalanceCheck: true,
                   );
-                  return;
+                } finally {
+                  if (mounted) {
+                    setState(() => _isCheckingWallet = false);
+                  }
                 }
-                // 3. Proceed as normal
-                _navigateToRecipientScreen(state);
               }
               : null,
       isLoading: isLoading,
@@ -2572,6 +2917,7 @@ class _SendViewState extends ConsumerState<SendView>
       width: double.infinity,
       fullWidth: true,
       borderRadius: 48,
+      ),
     );
   }
 
@@ -2586,60 +2932,33 @@ class _SendViewState extends ConsumerState<SendView>
     }
 
     // Show "Fetching rates..." when rates are being loaded
-    if (state.showRatesLoading) {
+    if (state.showRatesLoading &&
+        state.selectedDeliveryMethod.toLowerCase() != 'crypto') {
       return 'Fetching rates...';
     }
 
     if (!isAmountValid) {
-      // if (state.sendAmount.isEmpty) {
-      //   return 'Enter amount to continue';
-      // }
-
-      final cleanAmount = state.sendAmount.replaceAll(RegExp(r'[,\s]'), '');
-      final sendAmount = double.tryParse(cleanAmount);
-
-      if (sendAmount == null || sendAmount <= 0) {
-        return 'Enter valid amount';
-      }
-
-      // Hard limits - 1000 minimum for dayfi_tag, 2000 for others
-      const hardMaximumLimit = 5000000.0;
-
-      if (state.selectedDeliveryMethod.toLowerCase() == 'dayfi_tag') {
-        const dayfiTagMinimum = 1000.0;
-        if (sendAmount < dayfiTagMinimum) {
-          final minAmount =
-              StringUtils.formatCurrency(
-                dayfiTagMinimum.toStringAsFixed(2),
-                state.sendCurrency,
-              ).split('.')[0];
-          return 'Minimum amount is $minAmount';
-        }
-      } else {
-        const otherMethodsMinimum = 2000.0;
-        if (sendAmount < otherMethodsMinimum) {
-          final minAmount =
-              StringUtils.formatCurrency(
-                otherMethodsMinimum.toStringAsFixed(2),
-                state.sendCurrency,
-              ).split('.')[0];
-          return 'Minimum amount is $minAmount';
-        }
-      }
-
-      if (sendAmount > hardMaximumLimit) {
-        final maxAmount =
-            StringUtils.formatCurrency(
-              hardMaximumLimit.toStringAsFixed(2),
-              state.sendCurrency,
-            ).split('.')[0];
-        return 'Maximum amount is $maxAmount';
-      }
-
+      final message = viewModel.sendAmountValidation.message;
+      if (message != null && message.isNotEmpty) return message;
       return 'Enter valid amount';
     }
 
     return 'Continue';
+  }
+
+  String _currencySymbolFor(String currency) {
+    switch (currency.toUpperCase()) {
+      case 'NGN':
+        return '₦';
+      case 'USD':
+        return r'$';
+      case 'EUR':
+        return '€';
+      case 'GBP':
+        return '£';
+      default:
+        return '$currency ';
+    }
   }
 
   // Helper function to get the canonical name for sorting

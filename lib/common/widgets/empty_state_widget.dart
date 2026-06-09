@@ -3,7 +3,6 @@
 import 'package:flutter/material.dart';
 
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:dayfi/core/theme/app_typography.dart';
 // import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 
 /// A reusable widget for displaying empty states with optional CTAs
@@ -92,12 +91,11 @@ class EmptyStateWidget extends StatelessWidget {
               child: Text(
                 title,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontFamily: 'FunnelDisplay',
-                  fontSize: 16,
+                  fontFamily: 'Chirp',
+                  fontSize: 20,
                   fontWeight: FontWeight.w600,
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withOpacity(0.6),
+                  letterSpacing: -0.3,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
                 textAlign: TextAlign.center,
               ),

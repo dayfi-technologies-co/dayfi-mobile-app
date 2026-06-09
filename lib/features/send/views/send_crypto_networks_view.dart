@@ -194,7 +194,7 @@ class _SendCryptoNetworksViewState
                               style: AppTypography.labelSmall.copyWith(
                                 fontFamily: 'Chirp',
                                 fontSize: 8,
-                                fontWeight: FontWeight.w700,
+                                fontWeight: FontWeight.w600,
                                 color:
                                     enabled
                                         ? _getNetworkColor(networkKey)
@@ -216,7 +216,7 @@ class _SendCryptoNetworksViewState
                         networkKey,
                         style: AppTypography.titleMedium.copyWith(
                           fontFamily: 'FunnelDisplay',
-                          fontSize: 12,
+                          fontSize: 12.5,
                           fontWeight: FontWeight.w600,
                           color:
                               enabled
@@ -230,7 +230,7 @@ class _SendCryptoNetworksViewState
                         " ($name)",
                         style: AppTypography.bodySmall.copyWith(
                           fontFamily: 'FunnelDisplay',
-                          fontSize: 12,
+                          fontSize: 12.5,
                           fontWeight: FontWeight.w500,
                           letterSpacing:-.250,
                           height: 1.5,
@@ -631,7 +631,7 @@ class _SendCryptoNetworksViewState
             //                   style: AppTypography.titleLarge.copyWith(
             //                  fontFamily: 'FunnelDisplay',
             //                      fontSize: 20, // height: 1.6,
-            //                     fontWeight: FontWeight.w700,
+            //                     fontWeight: FontWeight.w600,
             //                     color: AppColors.purple500ForTheme(context),
             //                   ),
             //                 ),
@@ -670,7 +670,7 @@ class _SendCryptoNetworksViewState
               'What network do you want to use for $channelCode?',
               style: AppTypography.titleLarge.copyWith(
                 fontFamily: 'FunnelDisplay',
-                fontSize: 12,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w600,
                 color: Theme.of(context).colorScheme.onSurface,
               ),
@@ -1026,7 +1026,7 @@ class _SendCryptoNetworksViewState
                                     context,
                                   ).textTheme.titleLarge?.copyWith(
                                     fontFamily: 'FunnelDisplay',
-                                    fontSize: 12,
+                                    fontSize: 12.5,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),

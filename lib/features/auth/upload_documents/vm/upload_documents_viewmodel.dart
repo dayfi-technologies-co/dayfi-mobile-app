@@ -4,10 +4,8 @@ import 'package:dayfi/core/navigation/navigation.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/services/local/analytics_service.dart';
 import 'package:dayfi/services/kyc/kyc_service.dart';
-import 'package:dayfi/common/widgets/top_snackbar.dart';
+import 'package:dayfi/common/utils/tier_utils.dart';
 import 'package:dayfi/app_locator.dart';
-import 'package:dayfi/common/utils/app_logger.dart';
-import 'package:dayfi/services/notification_service.dart';
 
 class UploadDocumentsState {
   final bool isBusy;
@@ -161,13 +159,16 @@ class UploadDocumentsNotifier extends StateNotifier<UploadDocumentsState> {
   }
 
     // Skip verification for later
-  void navigateToNINAndBVNVerification(BuildContext context, {bool showBackButton = false}) {
-    _analyticsService.logEvent(name: 'kyc_tier2_verification_not_skipped');
+  void navigateToTier2Verification(BuildContext context, {bool showBackButton = false}) {
+    _analyticsService.logEvent(name: 'kyc_tier2_verification_started');
 
-    // Pass showBackButton as argument
     _appRouter.pushNamed(
-      AppRoute.bvnNinVerificationView,
-      arguments: {'showBackButton': showBackButton},
+      AppRoute.smileKycView,
+      arguments: {
+        'showBackButton': showBackButton,
+        'fromSignup': !showBackButton,
+        'mode': KycVerificationMode.tier2.name,
+      },
     );
   }
 

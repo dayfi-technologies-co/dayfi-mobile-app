@@ -403,6 +403,50 @@ class NotificationService {
     }
   }
 
+  /// Local alert when a budget reminder lands in the inbox.
+  Future<void> triggerBudgetReminderAlert({
+    required String title,
+    required String message,
+    required String budgetId,
+  }) async {
+    try {
+      await _showLocalNotification(
+        title,
+        message,
+        {
+          'type': 'budget_reminder',
+          'action': 'open_budget',
+          'budgetId': budgetId,
+        },
+      );
+      AppLogger.info('Budget reminder alert triggered for budget: $budgetId');
+    } catch (e) {
+      AppLogger.error('Error triggering budget reminder alert: $e');
+    }
+  }
+
+  /// Show a local alert for a new inbox notification (deposit, send, bill pay, etc.)
+  Future<void> triggerInboxAlert({
+    required String title,
+    required String message,
+    required String transactionId,
+  }) async {
+    try {
+      await _showLocalNotification(
+        title,
+        message,
+        {
+          'type': 'inbox_alert',
+          'action': 'navigate_to_notifications',
+          'transactionId': transactionId,
+        },
+      );
+      AppLogger.info('Inbox alert triggered for transaction: $transactionId');
+    } catch (e) {
+      AppLogger.error('Error triggering inbox alert notification: $e');
+    }
+  }
+
   /// Trigger tier upgrade notification
   Future<void> triggerTierUpgrade({
     required String newTier,

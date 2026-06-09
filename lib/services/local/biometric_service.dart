@@ -5,25 +5,24 @@ import 'dart:io';
 class BiometricService {
   static final LocalAuthentication _localAuth = LocalAuthentication();
 
-  /// Check if biometric authentication is available on the device
-  static Future<bool> isBiometricAvailable() async {
+  /// Device hardware/OS supports biometrics (may still need enrollment in Settings).
+  static Future<bool> isDeviceBiometricCapable() async {
     try {
-      final bool isAvailable = await _localAuth.canCheckBiometrics;
+      final bool canCheck = await _localAuth.canCheckBiometrics;
       final bool isDeviceSupported = await _localAuth.isDeviceSupported();
-      
-      AppLogger.info('Biometric available: $isAvailable, Device supported: $isDeviceSupported');
-      
-      // Check if biometrics are actually enrolled
-      final List<BiometricType> availableBiometrics = await getAvailableBiometrics();
-      final bool hasEnrolledBiometrics = availableBiometrics.isNotEmpty;
-      
-      AppLogger.info('Has enrolled biometrics: $hasEnrolledBiometrics, Available types: $availableBiometrics');
-      
-      return isAvailable && isDeviceSupported && hasEnrolledBiometrics;
+      AppLogger.info(
+        'Biometric capable: canCheck=$canCheck, deviceSupported=$isDeviceSupported',
+      );
+      return canCheck && isDeviceSupported;
     } catch (e) {
-      AppLogger.error('Error checking biometric availability: $e');
+      AppLogger.error('Error checking biometric capability: $e');
       return false;
     }
+  }
+
+  /// Check if biometric authentication is available on the device
+  static Future<bool> isBiometricAvailable() async {
+    return isDeviceBiometricCapable();
   }
 
   /// Get available biometric types
@@ -46,8 +45,8 @@ class BiometricService {
     String? goToSettingsDescription,
   }) async {
     try {
-      final bool isAvailable = await isBiometricAvailable();
-      if (!isAvailable) {
+      final bool isCapable = await isDeviceBiometricCapable();
+      if (!isCapable) {
         AppLogger.error('Biometric authentication not available');
         return false;
       }
@@ -71,11 +70,16 @@ class BiometricService {
   /// Check if biometrics are enrolled on the device
   static Future<bool> hasEnrolledBiometrics() async {
     try {
-      final bool isAvailable = await isBiometricAvailable();
-      if (!isAvailable) return false;
+      if (!await isDeviceBiometricCapable()) return false;
 
-      final List<BiometricType> availableBiometrics = await getAvailableBiometrics();
-      return availableBiometrics.isNotEmpty;
+      final List<BiometricType> availableBiometrics =
+          await getAvailableBiometrics();
+      if (availableBiometrics.isNotEmpty) return true;
+
+      // iOS may return an empty list until Face ID is used once; still allow setup.
+      if (Platform.isIOS) return true;
+
+      return false;
     } catch (e) {
       AppLogger.error('Error checking enrolled biometrics: $e');
       return false;
@@ -102,7 +106,9 @@ class BiometricService {
   static Future<String> getPrimaryBiometricType() async {
     try {
       final List<BiometricType> availableBiometrics = await getAvailableBiometrics();
-      if (availableBiometrics.isEmpty) return 'Biometric';
+      if (availableBiometrics.isEmpty) {
+        return Platform.isIOS ? 'Face ID' : 'Biometric';
+      }
 
       // Prioritize face over fingerprint
       if (availableBiometrics.contains(BiometricType.face)) {
@@ -135,7 +141,9 @@ class BiometricService {
   static Future<String> getBiometricDescription() async {
     try {
       final List<BiometricType> availableBiometrics = await getAvailableBiometrics();
-      if (availableBiometrics.isEmpty) return 'Biometric authentication';
+      if (availableBiometrics.isEmpty) {
+        return Platform.isIOS ? 'Face ID' : 'Biometric authentication';
+      }
 
       if (availableBiometrics.length == 1) {
         return getBiometricTypeName(availableBiometrics.first);

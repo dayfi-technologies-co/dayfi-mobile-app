@@ -33,13 +33,13 @@ class HelpButton extends StatelessWidget {
             children: [
               SvgPicture.asset(
                 "assets/icons/svgs/notificationn.svg",
-                height: 40,
+                height: 36,
                 color: AppColors.neutral700.withOpacity(.35),
               ),
               Center(
                 child: SvgPicture.asset(
-                  "assets/icons/svgs/support.svg",
-                  height: 28,
+                 "assets/icons/svgs/contact.svg",
+                  height: 24,
                   color: Theme.of(
                     context,
                   ).colorScheme.onSurface.withOpacity(.65),

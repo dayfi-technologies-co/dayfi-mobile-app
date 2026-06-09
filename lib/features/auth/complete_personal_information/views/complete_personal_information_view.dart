@@ -1,4 +1,5 @@
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:dayfi/common/constants/username_copy.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -156,7 +157,7 @@ class _CompletePersonalInformationViewState
         Padding(
           padding: EdgeInsets.only(left: 18, right: 72.0),
           child: Text(
-            "Create your Dayfi Tag",
+            UsernameCopy.create,
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
               fontFamily: 'FunnelDisplay',
               fontSize: MediaQuery.of(context).size.width > 600 ? 28 : 24,
@@ -169,7 +170,7 @@ class _CompletePersonalInformationViewState
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 18),
           child: Text(
-            "Create a unique Dayfi Tag — this is how others can find and pay you via username.",
+            UsernameCopy.createExplanation,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               fontSize: 16,
               fontWeight: FontWeight.w500,
@@ -189,7 +190,7 @@ class _CompletePersonalInformationViewState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               CustomTextField(
-                label: "Dayfi Tag",
+                label: UsernameCopy.label,
                 hintText: "username",
                 controller: _usernameController,
                 isDayfiId: true,
@@ -347,10 +348,17 @@ class _CompletePersonalInformationViewState
     );
   }
 
+  static const String _onboardingCountryName = 'Nigeria';
+
   // Country Step
   Widget _buildCountryStep() {
     final state = ref.watch(completePersonalInfoProvider);
     final notifier = ref.read(completePersonalInfoProvider.notifier);
+    if (state.country.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) notifier.setCountry(_onboardingCountryName);
+      });
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1287,6 +1295,7 @@ class _CompletePersonalInformationViewState
                                   letterSpacing: -.70,
                                   fontSize: 18,
                                   fullWidth: true,
+                                  applyFeatureInset: false,
                                 )
                                 .animate()
                                 .fadeIn(
@@ -1585,8 +1594,8 @@ class _CountryBottomSheet extends StatefulWidget {
 }
 
 class _CountryBottomSheetState extends State<_CountryBottomSheet> {
-  final List<Map<String, String>> _countries = [
-    // ...existing country maps...
+  /// Onboarding is limited to Nigeria (NGN) for now.
+  final List<Map<String, String>> _countries = const [
     {
       'name': 'Nigeria',
       'code': 'NG',
@@ -1594,132 +1603,7 @@ class _CountryBottomSheetState extends State<_CountryBottomSheet> {
       'api': 'Yellow Card Payments API',
       'dial_code': '+234',
     },
-    {
-      'name': 'Kenya',
-      'code': 'KE',
-      'flag': 'assets/icons/svgs/world_flags/kenya.svg',
-      'api': 'Yellow Card Payments API',
-      'dial_code': '+254',
-    },
-    {
-      'name': 'South Africa',
-      'code': 'ZA',
-      'flag': 'assets/icons/svgs/world_flags/south africa.svg',
-      'api': 'Yellow Card Payments API',
-      'dial_code': '+27',
-    },
-    {
-      'name': 'Botswana',
-      'code': 'BW',
-      'flag': 'assets/icons/svgs/world_flags/botswana.svg',
-      'api': 'Yellow Card Payments API',
-      'dial_code': '+267',
-    },
-    {
-      'name': 'Zambia',
-      'code': 'ZM',
-      'flag': 'assets/icons/svgs/world_flags/zambia.svg',
-      'api': 'Yellow Card Payments API',
-      'dial_code': '+260',
-    },
-    {
-      'name': 'Rwanda',
-      'code': 'RW',
-      'flag': 'assets/icons/svgs/world_flags/rwanda.svg',
-      'api': 'Yellow Card Payments API',
-      'dial_code': '+250',
-    },
-    {
-      'name': 'Malawi',
-      'code': 'MW',
-      'flag': 'assets/icons/svgs/world_flags/malawi.svg',
-      'api': 'Yellow Card Payments API',
-      'dial_code': '+265',
-    },
-    {
-      'name': 'Tanzania',
-      'code': 'TZ',
-      'flag': 'assets/icons/svgs/world_flags/tanzania.svg',
-      'api': 'Yellow Card Payments API',
-      'dial_code': '+255',
-    },
-    {
-      'name': 'Uganda',
-      'code': 'UG',
-      'flag': 'assets/icons/svgs/world_flags/uganda.svg',
-      'api': 'Yellow Card Payments API',
-      'dial_code': '+256',
-    },
-    {
-      'name': 'Cameroon',
-      'code': 'CM',
-      'flag': 'assets/icons/svgs/world_flags/cameroon.svg',
-      'api': 'Yellow Card Payments API',
-      'dial_code': '+237',
-    },
-    {
-      'name': 'Benin',
-      'code': 'BJ',
-      'flag': 'assets/icons/svgs/world_flags/benin.svg',
-      'api': 'Yellow Card Payments API',
-      'dial_code': '+229',
-    },
-    {
-      'name': 'Côte d’Ivoire',
-      'code': 'CI',
-      'flag': 'assets/icons/svgs/world_flags/ivory coast.svg',
-      'api': 'Yellow Card Payments API',
-      'dial_code': '+225',
-    },
-    {
-      'name': 'Senegal',
-      'code': 'SN',
-      'flag': 'assets/icons/svgs/world_flags/senegal.svg',
-      'api': 'Yellow Card Payments API',
-      'dial_code': '+221',
-    },
-    {
-      'name': 'Republic of the Congo',
-      'code': 'CG',
-      'flag': 'assets/icons/svgs/world_flags/republic of the congo.svg',
-      'api': 'Yellow Card Payments API',
-      'dial_code': '+242',
-    },
-    {
-      'name': 'Gabon',
-      'code': 'GA',
-      'flag': 'assets/icons/svgs/world_flags/gabon.svg',
-      'api': 'Yellow Card Payments API',
-      'dial_code': '+241',
-    },
-    {
-      'name': 'Togo',
-      'code': 'TG',
-      'flag': 'assets/icons/svgs/world_flags/togo.svg',
-      'api': 'Yellow Card Payments API',
-      'dial_code': '+228',
-    },
-    {
-      'name': 'Mali',
-      'code': 'ML',
-      'flag': 'assets/icons/svgs/world_flags/mali.svg',
-      'api': 'Yellow Card Payments API',
-      'dial_code': '+223',
-    },
-    {
-      'name': 'Burkina Faso',
-      'code': 'BF',
-      'flag': 'assets/icons/svgs/world_flags/burkina faso.svg',
-      'api': 'Yellow Card Payments API',
-      'dial_code': '+226',
-    },
   ];
-
-  @override
-  void initState() {
-    super.initState();
-    _countries.sort((a, b) => a['name']!.compareTo(b['name']!));
-  }
 
   @override
   Widget build(BuildContext context) {

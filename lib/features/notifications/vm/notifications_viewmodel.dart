@@ -5,22 +5,26 @@ import 'package:dayfi/app_locator.dart';
 
 class NotificationsState {
   final List<NotificationItem> notifications;
+  final int unreadCount;
   final bool isLoading;
   final String? errorMessage;
 
   const NotificationsState({
     this.notifications = const [],
+    this.unreadCount = 0,
     this.isLoading = false,
     this.errorMessage,
   });
 
   NotificationsState copyWith({
     List<NotificationItem>? notifications,
+    int? unreadCount,
     bool? isLoading,
     String? errorMessage,
   }) {
     return NotificationsState(
       notifications: notifications ?? this.notifications,
+      unreadCount: unreadCount ?? this.unreadCount,
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage,
     );
@@ -34,7 +38,6 @@ class NotificationsViewModel extends StateNotifier<NotificationsState> {
       : super(const NotificationsState());
 
   Future<void> loadNotifications({bool isInitialLoad = false}) async {
-    // Only show loading state if there's no existing data (initial load)
     final shouldShowLoading = isInitialLoad || state.notifications.isEmpty;
     state = state.copyWith(
       isLoading: shouldShowLoading,
@@ -42,10 +45,16 @@ class NotificationsViewModel extends StateNotifier<NotificationsState> {
     );
 
     try {
-      final notifications = await _notificationService.fetchNotifications();
+      final results = await Future.wait([
+        _notificationService.fetchNotifications(),
+        _notificationService.fetchUnreadCount(),
+      ]);
+      final notifications = results[0] as List<NotificationItem>;
+      final unreadCount = results[1] as int;
 
       state = state.copyWith(
         notifications: notifications,
+        unreadCount: unreadCount,
         isLoading: false,
       );
     } catch (e) {
@@ -57,42 +66,45 @@ class NotificationsViewModel extends StateNotifier<NotificationsState> {
   }
 
   Future<void> markAsRead(String notificationId) async {
+    final wasUnread = state.notifications.any(
+      (n) => n.id == notificationId && !n.isRead,
+    );
+
     try {
       await _notificationService.markNotificationAsRead(notificationId);
-      
-      // Update local state
-      final updatedNotifications = state.notifications.map((notification) {
-        if (notification.id == notificationId) {
-          return notification.copyWith(isRead: true);
-        }
-        return notification;
-      }).toList();
+    } catch (_) {}
 
-      state = state.copyWith(notifications: updatedNotifications);
-    } catch (e) {
-      // If API call fails, still update local state for better UX
-      final updatedNotifications = state.notifications.map((notification) {
-        if (notification.id == notificationId) {
-          return notification.copyWith(isRead: true);
-        }
-        return notification;
-      }).toList();
+    final updatedNotifications = state.notifications.map((notification) {
+      if (notification.id == notificationId) {
+        return notification.copyWith(isRead: true);
+      }
+      return notification;
+    }).toList();
 
-      state = state.copyWith(notifications: updatedNotifications);
-      // Could show error message here if needed
-    }
+    state = state.copyWith(
+      notifications: updatedNotifications,
+      unreadCount: wasUnread && state.unreadCount > 0
+          ? state.unreadCount - 1
+          : state.unreadCount,
+    );
   }
 
-  void markAllAsRead() {
+  Future<void> markAllAsRead() async {
+    try {
+      await _notificationService.markAllNotificationsAsRead();
+    } catch (_) {}
+
     final updatedNotifications = state.notifications
         .map((notification) => notification.copyWith(isRead: true))
         .toList();
 
-    state = state.copyWith(notifications: updatedNotifications);
+    state = state.copyWith(
+      notifications: updatedNotifications,
+      unreadCount: 0,
+    );
   }
 }
 
-// Provider
 final notificationsProvider =
     StateNotifierProvider<NotificationsViewModel, NotificationsState>((ref) {
   return NotificationsViewModel(notificationService);

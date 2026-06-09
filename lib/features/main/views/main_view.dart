@@ -1,9 +1,14 @@
+import 'package:dayfi/features/dayx/services/dayx_action_handler.dart';
+import 'package:dayfi/features/dayx/widgets/dayx_orb_button.dart';
+import 'package:dayfi/features/dayx/widgets/dayx_overlay.dart';
+import 'package:dayfi/features/dayx/services/dayx_voice_hold_bridge.dart';
+import 'package:dayfi/features/dayx/widgets/dayx_voice_overlay.dart';
 import 'package:dayfi/features/home/views/home_view.dart';
-import 'package:dayfi/features/send/views/select_destination_country_view.dart';
-import 'package:dayfi/features/invest/views/invest_view.dart';
+import 'package:dayfi/features/home/vm/home_viewmodel.dart';
+import 'package:dayfi/features/recipients/views/recipients_view.dart';
+import 'package:dayfi/features/transactions/views/transactions_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:dayfi/features/profile/views/profile_view.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
@@ -17,14 +22,20 @@ import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/services/notification_service.dart';
 import 'package:dayfi/services/remote/auth_service.dart';
 import 'package:dayfi/services/local/biometric_service.dart';
+import 'package:dayfi/common/helpers/biometric_preferences.dart';
 import 'dart:convert';
 
 final mainViewKey = GlobalKey<_MainViewState>();
 
 class MainView extends ConsumerStatefulWidget {
   final int initialTabIndex;
+  final bool promptBiometricSetup;
 
-  const MainView({super.key, this.initialTabIndex = 0});
+  const MainView({
+    super.key,
+    this.initialTabIndex = 0,
+    this.promptBiometricSetup = false,
+  });
 
   @override
   ConsumerState<MainView> createState() => _MainViewState();
@@ -34,11 +45,10 @@ class _MainViewState extends ConsumerState<MainView> {
   late int _currentIndex;
   final SecureStorageService _secureStorage = locator<SecureStorageService>();
 
-  // Tab order: Home (0) | Send (1) | Invest (2) | More (3)
   final List<Widget> _screens = [
     const HomeView(),
-    const SelectDestinationCountryView(hasBackButton: false),
-    const InvestView(),
+    const TransactionsView(),
+    const RecipientsView(),
     const ProfileView(),
   ];
 
@@ -49,7 +59,9 @@ class _MainViewState extends ConsumerState<MainView> {
     // Check if welcome has been shown and show it only once
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAndShowWelcome();
-      _checkBiometricSetup();
+      if (widget.promptBiometricSetup) {
+        _checkBiometricSetup();
+      }
     });
   }
 
@@ -134,23 +146,15 @@ class _MainViewState extends ConsumerState<MainView> {
 
   Future<void> _checkBiometricSetup() async {
     try {
-      final userJson = await _secureStorage.read(StorageKeys.user);
-      bool isBiometricsSetup = false;
-      if (userJson.isNotEmpty) {
-        try {
-          final data = jsonDecode(userJson);
-          if (data is Map<String, dynamic>) {
-            isBiometricsSetup = (data['is_biometrics_setup'] as bool?) ?? false;
-          }
-        } catch (_) {}
-      }
+      final bool isBiometricsSetup = await BiometricPreferences.isEnabled();
+      final completed = await _secureStorage.read(
+        StorageKeys.biometricSetupCompleted,
+      );
 
-      // Only show the biometric reminder if the device supports biometrics
-      // and the user has NOT enabled biometrics for this app.
       final bool deviceHasBiometrics =
-          await BiometricService.isBiometricAvailable();
+          await BiometricService.isDeviceBiometricCapable();
 
-      if (deviceHasBiometrics && !isBiometricsSetup) {
+      if (deviceHasBiometrics && !isBiometricsSetup && completed != 'true') {
         await Future.delayed(const Duration(seconds: 2));
         if (mounted) {
           _showBiometricReminder();
@@ -268,6 +272,7 @@ class _MainViewState extends ConsumerState<MainView> {
                 TextButton(
                   onPressed: () async {
                     Navigator.of(context).pop();
+                    await BiometricPreferences.markPromptDismissed();
                     await _updateBiometricStatus(false);
                   },
                   child: Text(
@@ -296,19 +301,51 @@ class _MainViewState extends ConsumerState<MainView> {
 
       // Call the backend API
       await authService.updateBiometrics(isBiometricsSetup: isEnabled);
-
-      // Update local storage
-      final userJson = await _secureStorage.read(StorageKeys.user);
-      if (userJson.isNotEmpty) {
-        final userMap = json.decode(userJson) as Map<String, dynamic>;
-        userMap['is_biometrics_setup'] = isEnabled;
-        await _secureStorage.write(StorageKeys.user, json.encode(userMap));
-      }
+      await BiometricPreferences.setEnabled(isEnabled);
 
       AppLogger.info('Biometric status updated: $isEnabled');
     } catch (e) {
       AppLogger.error('Error updating biometric status: $e');
     }
+  }
+
+  void _openDayX() {
+    DayxOverlay.show(
+      context,
+      onChangeTab: changeTab,
+      onNavigate: (target) {
+        DayxNavigation.handle(
+          context: context,
+          target: target,
+          changeTab: changeTab,
+        );
+      },
+    );
+  }
+
+  void _openDayXVoice({required bool fromNavHold}) {
+    DayxVoiceHoldBridge.onHoldReleased =
+        fromNavHold ? DayxVoiceOverlay.requestFinalizeListening : null;
+    DayxVoiceOverlay.show(
+      context,
+      fromNavHold: fromNavHold,
+      onChangeTab: changeTab,
+      onNavigate: (target) {
+        DayxNavigation.handle(
+          context: context,
+          target: target,
+          changeTab: changeTab,
+        );
+      },
+    ).whenComplete(DayxVoiceHoldBridge.clear);
+  }
+
+  void _onDayXHoldStart() {
+    _openDayXVoice(fromNavHold: true);
+  }
+
+  void _onDayXHoldEnd() {
+    DayxVoiceHoldBridge.notifyHoldReleased();
   }
 
   @override
@@ -326,7 +363,7 @@ class _MainViewState extends ConsumerState<MainView> {
         // Recipients with a blank body until a hot reload repainted the sliver tree.
         body: IndexedStack(index: _currentIndex, children: _screens),
         bottomNavigationBar: Container(
-          padding: EdgeInsets.fromLTRB(24, 4, 24, 4), // float up a bit
+          padding: EdgeInsets.fromLTRB(8, 4, 8, 4), // float up a bit
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
             // borderRadius: BorderRadius.circular(100),
@@ -339,30 +376,51 @@ class _MainViewState extends ConsumerState<MainView> {
             ],
           ),
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 0),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                _buildNavItem(
-                  index: 0,
-                  icon: "assets/icons/svgs/home-2.svg",
-                  isSelected: _currentIndex == 0,
+                Expanded(
+                  child: _buildNavItem(
+                    index: 0,
+                    icon: "assets/icons/svgs/swap.svg",
+                    isSelected: _currentIndex == 0,
+                  ),
                 ),
-                _buildNavItem(
-                  index: 1,
-                  icon: "assets/icons/svgs/brand-telegram.svg",
-                  isSelected: _currentIndex == 1,
+                Expanded(
+                  child: _buildNavItem(
+                    index: 1,
+                    icon: "assets/icons/svgs/transactions.svg",
+                    isSelected: _currentIndex == 1,
+                  ),
                 ),
-                _buildNavItem(
-                  index: 2,
-                  icon: "assets/icons/svgs/clock-dollar.svg",
-                  isSelected: _currentIndex == 2,
+                
+                Container(
+                  margin: EdgeInsets.symmetric(horizontal: 12),
+                  width: 56,
+                  child: Transform.translate(
+                    offset: const Offset(0, -14),
+                    child: DayxOrbButton(
+                      onTap: _openDayX,
+                      onHoldStart: _onDayXHoldStart,
+                      onHoldEnd: _onDayXHoldEnd,
+                    ),
+                  ),
                 ),
-                _buildNavItem(
-                  index: 3,
-                  icon: "assets/icons/svgs/user-square-rounded.svg",
-                  isSelected: _currentIndex == 3,
-                  isPNG: true,
+                Expanded(
+                  child: _buildNavItem(
+                    index: 2,
+                    icon: "assets/icons/svgs/recipients.svg",
+                    isSelected: _currentIndex == 2,
+                  ),
+                ),
+                Expanded(
+                  child: _buildNavItem(
+                    index: 3,
+                    icon: "assets/icons/pngs/account.png",
+                    isSelected: _currentIndex == 3,
+                    isPNG: true,
+                  ),
                 ),
               ],
             ),
@@ -383,14 +441,18 @@ class _MainViewState extends ConsumerState<MainView> {
         if (index != _currentIndex) {
           setState(() {
             _currentIndex = index;
-            // _showWelcomeBottomSheet();
           });
+          if (index == 0) {
+            ref
+                .read(homeViewModelProvider.notifier)
+                .fetchWalletDetails(forceRefresh: true);
+          }
         }
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 50),
-        height: 72,
-        padding: EdgeInsets.symmetric(horizontal: 24),
+        height: 80,
+        padding: EdgeInsets.symmetric(horizontal: 8),
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(50)),
         child: Opacity(
           opacity: isSelected ? 1 : 0.25,
@@ -399,14 +461,20 @@ class _MainViewState extends ConsumerState<MainView> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              SvgPicture.asset(icon, height: 28,        color: Theme.of(context).colorScheme.onSurface,),
-              SizedBox(height: 2),
+              isPNG
+                  ? Image.asset(icon, height: 40)
+                  : SvgPicture.asset(
+                    icon,
+                    height: 40,
+                    // color: index == 1 ? Color(0xFF5F2EA1) : null,
+                  ),
+              SizedBox(height: 4),
               Text(
                 _labelForIndex(index),
                 style: AppTypography.bodySmall.copyWith(
                   fontFamily: 'Chirp',
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
                   color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
@@ -422,9 +490,9 @@ class _MainViewState extends ConsumerState<MainView> {
       case 0:
         return 'Home';
       case 1:
-        return 'Send';
+        return 'History';
       case 2:
-        return 'Invest';
+        return 'People';
       case 3:
         return 'More';
       default:
@@ -455,126 +523,130 @@ class _MainViewState extends ConsumerState<MainView> {
       height: MediaQuery.of(context).size.height * 0.92,
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: BorderRadius.only(
+        borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(16),
           topRight: Radius.circular(16),
         ),
       ),
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(18, 18, 18, 40),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Close button
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                InkWell(
-                  splashColor: Colors.transparent,
-                  highlightColor: Colors.transparent,
-                  onTap: () => _dismissWelcomeBottomSheet(context),
-                  child: Stack(
-                    alignment: AlignmentGeometry.center,
+      child: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      SvgPicture.asset(
-                        "assets/icons/svgs/notificationn.svg",
-                        height: 40,
-                        color: Theme.of(context).colorScheme.surface,
-                      ),
-                      SizedBox(
-                        height: 40,
-                        width: 40,
-                        child: Center(
-                          child: Image.asset(
-                            "assets/icons/pngs/cancelicon.png",
-                            height: 20,
-                            width: 20,
-                            color: Theme.of(context).textTheme.bodyLarge!.color,
-                          ),
+                      InkWell(
+                        splashColor: Colors.transparent,
+                        highlightColor: Colors.transparent,
+                        onTap: () => _dismissWelcomeBottomSheet(context),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            SvgPicture.asset(
+                              'assets/icons/svgs/notificationn.svg',
+                              height: 40,
+                              color: Theme.of(context).colorScheme.surface,
+                            ),
+                            SizedBox(
+                              height: 40,
+                              width: 40,
+                              child: Center(
+                                child: Image.asset(
+                                  'assets/icons/pngs/cancelicon.png',
+                                  height: 20,
+                                  width: 20,
+                                  color:
+                                      Theme.of(
+                                        context,
+                                      ).textTheme.bodyLarge!.color,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                ),
-              ],
-            ),
-
-            SizedBox(height: 32),
-
-            // Title
-            Text(
-              'Welcome to Dayfi App',
-              style: AppTypography.headlineLarge.copyWith(
-                fontSize: 18,
-                fontFamily: 'FunnelDisplay',
-                // letterSpacing: -.5,
-                fontWeight: FontWeight.w500,
-                color: Theme.of(context).colorScheme.onSurface,
-                // height: 1.2,
-              ),
-              textAlign: TextAlign.center,
-            ),
-
-            SizedBox(height: 32),
-
-            // Features list
-            _buildFeatureItem(
-              icon: _buildHomeIcon(),
-              title: 'Home',
-              description:
-                  'Top up your wallet, check your balance, and send globally.',
-            ),
-
-            SizedBox(height: 20),
-
-            _buildFeatureItem(
-              icon: _buildSendIcon(),
-              title: 'Send',
-              description:
-                  'Transfer money to anyone, anywhere — fast and secure.',
-            ),
-
-            SizedBox(height: 20),
-
-            _buildFeatureItem(
-              icon: _buildInvestIcon(),
-              title: 'Invest',
-              description:
-                  'Grow your money with crypto and savings — coming soon.',
-            ),
-
-            SizedBox(height: 20),
-
-            _buildFeatureItem(
-              icon: _buildMoreIcon(),
-              title: 'More',
-              description:
-                  'Profile, transactions, recipients, and account settings.',
-            ),
-
-            // SizedBox(height: MediaQuery.of(context).size.width * .46),
-            Spacer(),
-
-            // Okay button
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              child: PrimaryButton(
-                text: 'Okay',
-                onPressed: () => _dismissWelcomeBottomSheet(context),
-                backgroundColor: AppColors.purple500,
-                textColor: AppColors.neutral0,
-                borderRadius: 40,
-                height: 48.00000,
-                width: double.infinity,
-                fullWidth: true,
-                fontFamily: 'Chirp',
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.5,
+                  const SizedBox(height: 16),
+                  Text(
+                    'Welcome to Dayfi',
+                    style: AppTypography.headlineLarge.copyWith(
+                      fontSize: 24,
+                      fontFamily: 'FunnelDisplay',
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Everything you need to move, grow, and manage your money — in one place.',
+                    style: AppTypography.bodyMedium.copyWith(
+                      fontFamily: 'Chirp',
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: -.25,
+                      height: 1.35,
+                      color: Theme.of(
+                        context,
+                      ).textTheme.bodyLarge!.color!.withOpacity(.75),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 28),
+                  _buildFeatureItem(
+                    icon: _buildHomeTabIcon(),
+                    title: 'Home',
+                    description:
+                        'Your balance, wallets, and recent activity — plus quick actions to send, add, swap, and pay bills.',
+                  ),
+                  const SizedBox(height: 16),
+                  _buildFeatureItem(
+                    icon: _buildTransactionsTabIcon(),
+                    title: 'History',
+                    description:
+                        'Search and review every deposit, send, swap, bill payment, and investment.',
+                  ),
+                  const SizedBox(height: 16),
+                  _buildFeatureItem(
+                    icon: _buildRecipientsTabIcon(),
+                    title: 'Recipients',
+                    description:
+                        'Saved beneficiaries and Dayfi tags — send again in one tap.',
+                  ),
+                  const SizedBox(height: 16),
+                  _buildFeatureItem(
+                    icon: _buildMoreIcon(),
+                    title: 'More',
+                    description:
+                        'Profile, account limits, security, support, and settings.',
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(48, 8, 48, 32),
+            child: PrimaryButton(
+              text: 'Get started',
+              onPressed: () => _dismissWelcomeBottomSheet(context),
+              backgroundColor: AppColors.purple500,
+              textColor: AppColors.neutral0,
+              borderRadius: 40,
+              height: 48,
+              width: double.infinity,
+              fullWidth: true,
+              fontFamily: 'Chirp',
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              letterSpacing: -0.5,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -629,19 +701,23 @@ class _MainViewState extends ConsumerState<MainView> {
     );
   }
 
-  Widget _buildHomeIcon() {
-    return SvgPicture.asset("assets/icons/svgs/home.svg", height: 36);
+  Widget _buildHomeTabIcon() {
+    return SvgPicture.asset('assets/icons/svgs/swap.svg', height: 36);
   }
 
-  Widget _buildSendIcon() {
-    return SvgPicture.asset("assets/icons/svgs/swap.svg", height: 36);
+  Widget _buildTransactionsTabIcon() {
+    return SvgPicture.asset('assets/icons/svgs/transactions.svg', height: 36);
   }
 
-  Widget _buildInvestIcon() {
-    return SvgPicture.asset("assets/icons/svgs/cryptoo.svg", height: 36);
+  Widget _buildRecipientsTabIcon() {
+    return SvgPicture.asset('assets/icons/svgs/recipients.svg', height: 36);
   }
 
   Widget _buildMoreIcon() {
-    return Image.asset("assets/icons/pngs/account.png", height: 36);
+    return Image.asset('assets/icons/pngs/account.png', height: 36);
+  }
+
+  Widget _buildQuickActionIcon(String assetPath) {
+    return SvgPicture.asset(assetPath, height: 32);
   }
 }

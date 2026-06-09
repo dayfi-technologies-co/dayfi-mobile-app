@@ -1,11 +1,10 @@
 import 'package:dayfi/models/wallet_transaction.dart';
 
-/// Utility class for calculating available balance by accounting for pending transactions.
+/// Utility for wallet balance display and pending-outbound summaries.
 ///
-/// This prevents users from initiating multiple transactions that would exceed
-/// their actual available balance while other transactions are still processing.
-///
-/// Formula: Available Balance = Current Balance - Σ(Pending Transactions Amount + Fees)
+/// [totalAvailableBalance] from the wallet hub already reflects debits for
+/// in-flight outbound payments. The home balance must use that value directly.
+/// Pending totals are shown separately for information only.
 class AvailableBalanceCalculator {
   /// Pending transaction statuses that should be considered for balance calculation
   /// Only tracking pending-payment (outgoing money) - not pending-collection (incoming money)
@@ -26,23 +25,9 @@ class AvailableBalanceCalculator {
   }) {
     double totalPending = 0.0;
 
-    // DEBUG: Log all transaction statuses
-    print(
-      '🔍 [AvailableBalanceCalculator] Total transactions: ${transactions.length}',
-    );
-    for (final transaction in transactions) {
-      print(
-        '   📋 TX: ${transaction.id.substring(0, 8)}... | status: "${transaction.status}" | sendAmount: ${transaction.sendAmount} | fee: ${transaction.fee}',
-      );
-    }
-
     for (final transaction in transactions) {
       // Check if transaction is in a pending state
       final status = transaction.status.toLowerCase();
-
-      print(
-        '   🔎 Checking status: "$status" | isPending: ${_isPendingStatus(status)} | containsPayment: ${status.contains('payment')}',
-      );
 
       if (!_isPendingStatus(status)) {
         continue;
@@ -56,24 +41,56 @@ class AvailableBalanceCalculator {
 
       // Skip expired transactions - they no longer hold the balance
       if (_isTransactionExpired(transaction)) {
-        print(
-          '   ⏰ EXPIRED TX SKIPPED: ${transaction.id.substring(0, 8)}... (pending >12 hours)',
-        );
         continue;
       }
 
-      // Add send amount + fee for this pending transaction
-      final sendAmount = transaction.sendAmount ?? 0.0;
-      final fee = transaction.fee ?? 0.0;
-      totalPending += sendAmount + fee;
-
-      print(
-        '   ✅ PENDING TX FOUND: sendAmount=$sendAmount, fee=$fee, runningTotal=$totalPending',
-      );
+      totalPending += _pendingOutboundTotal(transaction);
     }
 
-    print('🔍 [AvailableBalanceCalculator] Final pending total: $totalPending');
     return totalPending;
+  }
+
+  /// USD (or ledger) total reserved for a pending outbound payment.
+  static double _pendingOutboundTotal(WalletTransaction transaction) {
+    final fee = transaction.fee ?? 0.0;
+    final metaSend = transaction.ledgerMetadata?['sendAmount'];
+    if (metaSend is num && metaSend > 0) {
+      return metaSend.toDouble() + fee;
+    }
+    final parsedMeta = double.tryParse('${metaSend ?? ''}');
+    if (parsedMeta != null && parsedMeta > 0) {
+      return parsedMeta + fee;
+    }
+
+    final raw = transaction.sendAmount;
+    if (raw != null && raw > 0 && _looksLikeUsdDebit(raw, transaction)) {
+      return raw + fee;
+    }
+
+    if (raw != null && raw > 0) {
+      final receive = transaction.receiveAmount ?? transaction.ngnAmount ?? raw;
+      final metaRate = transaction.ledgerMetadata?['rate'];
+      if (metaRate is num && metaRate > 50) {
+        final usd = receive / metaRate.toDouble();
+        if (usd > 0) return usd + fee;
+      }
+      final fx = transaction.fxNgnToUsd;
+      if (fx != null && fx > 0 && receive >= 50) {
+        final ngnPerUsd = fx < 1 ? 1 / fx : fx;
+        if (ngnPerUsd > 50) return (receive / ngnPerUsd) + fee;
+      }
+    }
+
+    return (raw ?? 0.0) + fee;
+  }
+
+  static bool _looksLikeUsdDebit(double amount, WalletTransaction transaction) {
+    if (amount <= 0) return false;
+    final local = transaction.receiveAmount ?? transaction.ngnAmount;
+    if (local != null && local >= 100) {
+      return amount < local * 0.05;
+    }
+    return amount < 100_000;
   }
 
   /// Check if a transaction status is considered "pending"
@@ -101,32 +118,14 @@ class AvailableBalanceCalculator {
     }
   }
 
-  /// Calculate available balance by subtracting pending amounts from current balance
-  ///
-  /// [currentBalance] - The wallet's current balance (as string, may contain commas)
-  /// [transactions] - List of all user transactions
-  /// [currency] - Optional currency filter
-  ///
-  /// Returns the available balance as a double
+  /// Parses [currentBalance] from hub `totalAvailableBalance` (already net of debits).
   static double calculateAvailableBalance(
     String currentBalance,
     List<WalletTransaction> transactions, {
     String? currency,
   }) {
-    // Parse current balance (remove commas if present)
     final balance = double.tryParse(currentBalance.replaceAll(',', '')) ?? 0.0;
-
-    // Calculate total pending amount
-    final pendingAmount = calculatePendingAmount(
-      transactions,
-      currency: currency,
-    );
-
-    // Available balance = current balance - pending amounts
-    final availableBalance = balance - pendingAmount;
-
-    // Ensure we don't return negative balance
-    return availableBalance > 0 ? availableBalance : 0.0;
+    return balance > 0 ? balance : 0.0;
   }
 
   /// Check if a transaction amount would exceed available balance
@@ -184,12 +183,14 @@ class AvailableBalanceCalculator {
     for (final transaction in transactions) {
       final status = transaction.status.toLowerCase();
       if (_isPendingStatus(status) && status.contains('payment') && !_isTransactionExpired(transaction)) {
+        final total = _pendingOutboundTotal(transaction);
+        final fee = transaction.fee ?? 0.0;
         breakdown.add(
           PendingTransactionInfo(
             id: transaction.id,
             beneficiaryName: transaction.beneficiary.name,
-            amount: transaction.sendAmount ?? 0.0,
-            fee: transaction.fee ?? 0.0,
+            amount: (total - fee).clamp(0.0, total),
+            fee: fee,
             timestamp: transaction.timestamp,
           ),
         );

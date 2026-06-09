@@ -5,8 +5,8 @@ import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/services/kyc/kyc_service.dart';
 import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
+import 'package:dayfi/common/utils/kyc_flow_navigation.dart';
 import 'package:dayfi/common/utils/tier_utils.dart';
-import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:flutter_svg/svg.dart';
 
@@ -102,6 +102,7 @@ class _AccountLimitsViewState extends ConsumerState<AccountLimitsView> {
                       tier: KycTier.tier1,
                       isCurrentTier: userTier == KycTier.tier1,
                       isCompleted: true, // Tier 1 is always completed
+                      userTierLevel: userTierLevel,
                     ),
                     SizedBox(height: 20),
 
@@ -109,7 +110,17 @@ class _AccountLimitsViewState extends ConsumerState<AccountLimitsView> {
                     _buildTierCard(
                       tier: KycTier.tier2,
                       isCurrentTier: userTier == KycTier.tier2,
-                      isCompleted: (userTier.level) >= 2,
+                      isCompleted: userTierLevel >= 2,
+                      userTierLevel: userTierLevel,
+                    ),
+
+                    SizedBox(height: 20),
+
+                    _buildTierCard(
+                      tier: KycTier.tier3,
+                      isCurrentTier: userTier == KycTier.tier3,
+                      isCompleted: userTierLevel >= 3,
+                      userTierLevel: userTierLevel,
                     ),
 
                     SizedBox(height: 24),
@@ -127,6 +138,7 @@ class _AccountLimitsViewState extends ConsumerState<AccountLimitsView> {
     required KycTier tier,
     required bool isCurrentTier,
     required bool isCompleted,
+    required int userTierLevel,
     bool isTier4 = false,
   }) {
     // Get tier-specific colors and descriptions
@@ -191,15 +203,10 @@ class _AccountLimitsViewState extends ConsumerState<AccountLimitsView> {
                         ).colorScheme.onSurface.withOpacity(0.6),
                       ),
                     ),
-                    // Show Increase limit button for Tier 1 if it's the current tier
-                    if (isCurrentTier && tier == KycTier.tier1)
+                    // Increase limit CTA for current tier when upgrade is available
+                    if (isCurrentTier && _shouldShowIncreaseLimit(tier, userTierLevel))
                       GestureDetector(
-                        onTap: () {
-                          appRouter.pushNamed(
-                            AppRoute.uploadDocumentsView,
-                            arguments: {'showBackButton': true},
-                          );
-                        },
+                        onTap: () => _navigateToVerification(tier),
                         child: Container(
                           padding: EdgeInsets.only(top: 10),
                           child: Text(
@@ -224,23 +231,26 @@ class _AccountLimitsViewState extends ConsumerState<AccountLimitsView> {
     );
   }
 
+  bool _shouldShowIncreaseLimit(KycTier tier, int userTierLevel) {
+    if (tier == KycTier.tier1 && userTierLevel == 1) return true;
+    if (tier == KycTier.tier2 && userTierLevel == 2) return true;
+    return false;
+  }
+
   void _navigateToVerification(KycTier tier) {
     switch (tier) {
       case KycTier.tier1:
-        // Tier 1 is already completed
+        KycFlowNavigation.startUpgrade(
+          context,
+          ref: ref,
+          showBackButton: true,
+          showIntro: true,
+        );
         break;
       case KycTier.tier2:
-        appRouter.pushNamed(
-          AppRoute.uploadDocumentsView,
-          arguments: {'showBackButton': true},
-        );
+        KycFlowNavigation.startTier3(context, showBackButton: true);
         break;
       case KycTier.tier3:
-        // TODO: Navigate to Tier 3 verification when implemented
-        appRouter.pushNamed(
-          AppRoute.uploadDocumentsView,
-          arguments: {'showBackButton': true},
-        );
         break;
     }
   }

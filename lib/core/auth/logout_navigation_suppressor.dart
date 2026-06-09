@@ -1,5 +1,5 @@
 /// While [begin] / [end] wraps logout, global 401 handlers must not navigate —
-/// manual logout owns a single [AppRouter.pushCheckEmailAndClearStack] transition.
+/// manual logout owns a single [AppRouter.pushOnboardingAndClearStack] transition.
 class LogoutNavigationSuppressor {
   LogoutNavigationSuppressor._();
 

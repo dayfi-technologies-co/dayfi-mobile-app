@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:dayfi/app_locator.dart';
+import 'package:dayfi/features/web/utils/web_route_helper.dart';
 import 'package:dayfi/routes/route.dart';
+import 'package:flutter/services.dart';
 import 'package:dayfi/services/local/secure_storage.dart';
 import 'package:dayfi/services/version_service.dart';
 import 'package:dayfi/common/constants/storage_keys.dart';
@@ -46,18 +48,18 @@ class _SplashViewState extends ConsumerState<SplashView> {
       if (mounted) {
         // Validate data consistency - if we have a token but no user data, something is wrong
         if (userToken.isNotEmpty && userJson.isEmpty) {
-          // Clear inconsistent data and redirect to login
+          // Clear inconsistent data and redirect to onboarding
           await _clearInconsistentData();
-          appRouter.pushLoginAndClearStack(arguments: false);
+          appRouter.pushUnauthenticatedEntryAndClearStack();
           return;
         }
 
         if (isFirstTimeUser && userToken.isEmpty) {
-          Navigator.of(context).pushReplacementNamed(AppRoute.onboardingView);
+          Navigator.of(context).pushReplacementNamed(unauthenticatedEntryRoute);
         } else if (userToken.isEmpty) {
-          appRouter.pushLoginAndClearStack(arguments: false);
+          appRouter.pushUnauthenticatedEntryAndClearStack();
         } else if (userPasscode.isEmpty) {
-          appRouter.pushLoginAndClearStack(arguments: false);
+          appRouter.pushUnauthenticatedEntryAndClearStack();
         } else {
           // Skip biometric setup for now - go directly to passcode view
           // } else if (!hasCompletedBiometricSetup) {
@@ -69,7 +71,7 @@ class _SplashViewState extends ConsumerState<SplashView> {
     } catch (e) {
       // Navigate to onboarding view as fallback
       if (mounted) {
-        Navigator.of(context).pushReplacementNamed(AppRoute.onboardingView);
+        Navigator.of(context).pushReplacementNamed(unauthenticatedEntryRoute);
       }
     }
   }
@@ -89,8 +91,19 @@ class _SplashViewState extends ConsumerState<SplashView> {
 
   @override
   Widget build(BuildContext context) {
+    final background = Theme.of(context).scaffoldBackgroundColor;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    SystemChrome.setSystemUIOverlayStyle(
+      SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+        statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+      ),
+    );
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF9E3), // Bright yellow background
+      backgroundColor: background,
       body: Stack(
         fit: StackFit.expand,
         children: [
@@ -121,7 +134,7 @@ class _SplashViewState extends ConsumerState<SplashView> {
           //           'dayfi',
           //           style: TextStyle(
           //             fontFamily: 'FunnenDiDplayDplaysplay',
-          //             fontSize: 12,
+          //             fontSize: 12.5,
           //             fontWeight: FontWeight.w500,
           //             color: AppColors.neutral900,
           //             height: 1.3,

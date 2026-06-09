@@ -25,13 +25,11 @@ class _LoginViewState extends ConsumerState<LoginView> {
   bool _hasInitializedEmail = false;
   bool _isLeavingToOnboarding = false;
 
-  /// Single-fire navigation back to Onboarding. Repeated taps / a queued system
-  /// pop while we're already navigating are ignored so we never push two
-  /// onboarding screens.
-  void _goToOnboarding() {
+  /// Single-fire navigation to the unauthenticated entry (landing on web).
+  void _goToUnauthenticatedEntry() {
     if (_isLeavingToOnboarding) return;
     _isLeavingToOnboarding = true;
-    appRouter.pushOnboardingAndClearStack();
+    appRouter.pushUnauthenticatedEntryAndClearStack();
   }
 
   @override
@@ -82,7 +80,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
       onPopInvokedWithResult: (didPop, _) {
         if (didPop) return;
         if (!widget.showBackButton) return;
-        _goToOnboarding();
+        _goToUnauthenticatedEntry();
       },
       child: GestureDetector(
         onTap: () {
@@ -111,7 +109,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                           highlightColor: Colors.transparent,
                           onTap: () {
                             FocusScope.of(context).unfocus();
-                            _goToOnboarding();
+                            _goToUnauthenticatedEntry();
                           },
                           child: Stack(
                             alignment: AlignmentGeometry.center,
@@ -200,6 +198,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                                   letterSpacing: -.70,
                                   fontSize: 18,
                                   fullWidth: true,
+                                  applyFeatureInset: false,
                                 )
                                 .animate()
                                 .fadeIn(

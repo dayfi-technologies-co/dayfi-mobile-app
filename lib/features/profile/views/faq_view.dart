@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
-import 'package:intercom_flutter/intercom_flutter.dart';
+import 'package:dayfi/services/local/intercom_support_service.dart';
 
 class FaqView extends StatefulWidget {
   const FaqView({super.key});
@@ -129,7 +129,7 @@ class _FaqViewState extends State<FaqView> {
 
   void _navigateToContactUs() async {
     try {
-      await Intercom.instance.displayMessenger();
+      await IntercomSupportService.openContactSupport();
     } catch (e) {
       // Fallback in case Intercom fails
       if (mounted) {

@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/services/local/secure_storage.dart';
-import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
@@ -222,6 +221,7 @@ class ReenterPasscodeNotifier extends StateNotifier<ReenterPasscodeState> {
                   height: 48.00000,
                   width: double.infinity,
                   fullWidth: true,
+                  applyFeatureInset: false,
                   fontFamily: 'Chirp',
                   fontSize: 18,
                   fontWeight: FontWeight.w500,

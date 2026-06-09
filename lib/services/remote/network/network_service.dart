@@ -6,11 +6,7 @@ import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/services/remote/network/api_error.dart';
 import 'package:dayfi/services/remote/network/app_interceptor.dart';
 import 'package:dayfi/flavors.dart';
-import 'package:dayfi/core/auth/logout_navigation_suppressor.dart';
-import 'package:dayfi/core/auth/unauthorized_navigation_guard.dart';
-import 'package:dayfi/services/data_clearing_service.dart';
-import 'package:dayfi/common/utils/app_logger.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dayfi/core/auth/session_auth_service.dart';
 
 /// description: A network provider class which manages network connections
 /// between the app and external services. This is a wrapper around [Dio].
@@ -168,47 +164,10 @@ class NetworkService {
             path.contains('/auth/verify');
 
         if (!isAuthEndpoint) {
-          // Only handle unauthorized for non-auth endpoints (token expiry)
-          await _handleUnauthorized();
+          await SessionAuthService.handleUnauthorized();
         }
       }
       return Future.error(apiError, stackTrace);
-    }
-  }
-
-  /// Handle unauthorized access (401) by clearing all user data and redirecting to login.
-  ///
-  /// Guarded so simultaneous 401s only trigger a single redirect.
-  Future<void> _handleUnauthorized() async {
-    if (LogoutNavigationSuppressor.isActive) {
-      AppLogger.info('Skipping global 401 redirect during manual logout');
-      return;
-    }
-    if (!UnauthorizedNavigationGuard.tryBegin()) {
-      AppLogger.info('Skipping global 401 redirect: another redirect is already in progress');
-      return;
-    }
-    try {
-      AppLogger.info('Unauthorized access detected, clearing all user data...');
-
-      final container = ProviderContainer();
-      final dataClearingService = DataClearingService();
-      await dataClearingService.clearAllUserDataWithContainer(container);
-
-      appRouter.pushLoginAndClearStack(arguments: false);
-
-      AppLogger.info('Unauthorized access handled successfully');
-    } catch (e) {
-      AppLogger.error('Error handling unauthorized access: $e');
-      try {
-        appRouter.pushLoginAndClearStack(arguments: false);
-      } catch (navError) {
-        AppLogger.error(
-          'Error navigating to login after unauthorized access: $navError',
-        );
-      }
-    } finally {
-      UnauthorizedNavigationGuard.scheduleEnd();
     }
   }
 }

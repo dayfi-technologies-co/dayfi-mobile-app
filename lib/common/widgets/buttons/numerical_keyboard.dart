@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'package:dayfi/core/extensions/gesture_extension.dart';
 import 'package:dayfi/core/extensions/widget_extension.dart';
-import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/gen/assets.gen.dart';
 
@@ -76,7 +75,7 @@ class NumericalKeyboard extends StatelessWidget {
               '$n',
               style: AppTypography.bodyLarge.copyWith(
                 // color: ,
-                fontSize: 12,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w600,
               ),
             )),

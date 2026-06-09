@@ -147,6 +147,7 @@ class _ForgotPasswordViewState extends ConsumerState<ForgotPasswordView> {
                             letterSpacing: -.70,
                             fontSize: 18,
                             fullWidth: true,
+                            applyFeatureInset: false,
                           )
                           .animate()
                           .fadeIn(

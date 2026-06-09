@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dayfi/features/web/utils/web_route_helper.dart';
 import 'package:dayfi/routes/route.dart';
 
 import 'navigator_key.dart';
@@ -141,16 +142,23 @@ class AppRouter {
   }
 
 
-  /// Navigate to login and clear the entire route stack
-  /// This prevents back button from going to passcode or other auth screens
-  Future<T?> pushOnboardingAndClearStack<T extends Object?>({
+  /// Clears the stack and routes to the unauthenticated entry screen
+  /// (web landing on browser, onboarding on native).
+  Future<T?> pushUnauthenticatedEntryAndClearStack<T extends Object?>({
     Object? arguments,
   }) {
     return navigatorState.pushNamedAndRemoveUntil<T>(
-      AppRoute.onboardingView,
-      (Route route) => false, // Remove all previous routes
+      unauthenticatedEntryRoute,
+      (Route route) => false,
       arguments: arguments,
     );
+  }
+
+  /// @deprecated Prefer [pushUnauthenticatedEntryAndClearStack].
+  Future<T?> pushOnboardingAndClearStack<T extends Object?>({
+    Object? arguments,
+  }) {
+    return pushUnauthenticatedEntryAndClearStack<T>(arguments: arguments);
   }
 
 
@@ -172,8 +180,7 @@ class AppRouter {
     if (navigatorState.canPop()) {
       navigatorState.pop();
     } else {
-      // If we can't pop and there's no valid route, go to login
-      pushLoginAndClearStack(arguments: false);
+      pushUnauthenticatedEntryAndClearStack();
     }
   }
 }

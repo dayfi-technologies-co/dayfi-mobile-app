@@ -99,7 +99,7 @@ class PrivacyNoticeView extends StatelessWidget {
               "• Request deletion of your data (subject to legal obligations).",
               "• Restrict or object to processing.",
               "• Data portability (receive your data in a structured format).",
-              "To exercise your rights, email us at privacy@dayfi.com",
+              "To exercise your rights, email us at privacy@dayfi.co",
             ]),
 
             _buildSection(context, "8. Security Measures", [
@@ -123,8 +123,8 @@ class PrivacyNoticeView extends StatelessWidget {
 
             _buildSection(context, "12. Contact Us", [
               "For privacy-related questions or concerns, contact us at:",
-              "📧 privacy@dayfi.com",
-              "📧 support@dayfi.com",
+              "📧 privacy@dayfi.co",
+              "📧 support@dayfi.co",
             ]),
 
             SizedBox(height: 32),

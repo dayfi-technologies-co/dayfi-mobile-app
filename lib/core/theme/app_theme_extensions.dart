@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import 'app_colors.dart';
 import 'app_typography.dart';
+import 'package:dayfi/core/navigation/dayfi_page_transitions.dart';
 
 /// App Theme System
 ///
@@ -28,6 +29,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
+      fontFamily: AppTypography.primaryFontFamily,
 
       // Scaffold Background
       scaffoldBackgroundColor: const Color(0xffFEF9F3),
@@ -196,6 +198,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
+      fontFamily: AppTypography.primaryFontFamily,
 
       // Scaffold Background
       scaffoldBackgroundColor: AppColors.neutral950,
@@ -830,7 +833,7 @@ class AppTheme {
   static ScrollbarThemeData get _lightScrollbarTheme =>
       const ScrollbarThemeData();
   static PageTransitionsTheme get _lightPageTransitionsTheme =>
-      const PageTransitionsTheme();
+      dayfiPageTransitionsTheme();
 
   // Dark theme components
   static BottomNavigationBarThemeData get _darkBottomNavigationBarTheme =>
@@ -897,5 +900,5 @@ class AppTheme {
   static ScrollbarThemeData get _darkScrollbarTheme =>
       const ScrollbarThemeData();
   static PageTransitionsTheme get _darkPageTransitionsTheme =>
-      const PageTransitionsTheme();
+      dayfiPageTransitionsTheme();
 }

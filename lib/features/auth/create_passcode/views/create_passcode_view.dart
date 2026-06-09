@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/features/auth/create_passcode/vm/create_passcode_viewmodel.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
+import 'package:dayfi/common/widgets/dayfi_web_dialog.dart';
 import 'package:dayfi/common/utils/haptic_helper.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -35,8 +36,7 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: Theme.of(context).colorScheme.surface,
+        return DayfiWebDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
           ),
@@ -105,6 +105,7 @@ class _CreatePasscodeViewState extends ConsumerState<CreatePasscodeView> {
                   height: 48.00000,
                   width: double.infinity,
                   fullWidth: true,
+                  applyFeatureInset: false,
                   fontFamily: 'Chirp',
                   fontSize: 18,
                   fontWeight: FontWeight.w500,

@@ -57,7 +57,7 @@ class SoftposView extends StatelessWidget {
                         'Accept Payments\nwith NFC',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: 28,
+                          fontSize: 24,
                           fontWeight: FontWeight.w600,
                           height: 1.2,
                           fontFamily: 'FunnelDisplay',

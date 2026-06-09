@@ -142,7 +142,7 @@ class TermsOfUseView extends StatelessWidget {
 
             _buildSection(context, "15. Contact Us", [
               "For questions about these Terms, contact us at:",
-              "📧 support@dayfi.com",
+              "📧 support@dayfi.co",
             ]),
 
             SizedBox(height: 32),

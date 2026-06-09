@@ -126,6 +126,11 @@ class CheckEmailNotifier extends StateNotifier<CheckEmailState> {
 
       // Existing account: go to sign-in instead of only showing an error banner.
       if (duplicateEmail) {
+        final lower = backendMessage.toLowerCase();
+        if (lower.contains('google') || lower.contains('apple')) {
+          TopSnackbar.show(context, message: backendMessage, isError: true);
+          return;
+        }
         appRouter.pushNamed(
           AppRoute.loginView,
           arguments: LoginViewArguments(email: state.email),

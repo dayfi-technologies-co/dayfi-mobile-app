@@ -1,5 +1,8 @@
 import 'package:dayfi/models/user_model.dart';
 
+/// Tier 2 = BVN + Smile selfie. Tier 3 = NIN only.
+enum KycVerificationMode { tier2, tier3 }
+
 /// Utility class for handling tier-related information and display logic
 class TierUtils {
   /// Get the current tier level from user model
@@ -12,12 +15,44 @@ class TierUtils {
     final levelString = user.level!.toLowerCase();
     if (levelString.startsWith('level-')) {
       final levelNumber = int.tryParse(levelString.substring(6));
-      return levelNumber ?? 1;
+      if (levelNumber == null || levelNumber < 1) return 1;
+      return levelNumber.clamp(1, 3);
     }
 
     // Handle numeric strings
     final levelNumber = int.tryParse(user.level!);
-    return levelNumber ?? 1;
+    return (levelNumber ?? 1).clamp(1, 3);
+  }
+
+  static bool hasBvnVerified(User? user) {
+    if (user == null) return false;
+    if (user.idType?.toUpperCase() == 'BVN' &&
+        (user.idNumber?.trim().length ?? 0) == 11) {
+      return true;
+    }
+    return getCurrentTierLevel(user) >= 2;
+  }
+
+  /// True when the profile has a BVN on file (required for Flutterwave NGN VA).
+  static bool hasBvnOnProfile(User? user) {
+    if (user == null) return false;
+    final idType = user.idType?.toUpperCase() ?? '';
+    final idNum = user.idNumber?.trim() ?? '';
+    return idType.contains('BVN') && idNum.length == 11;
+  }
+
+  /// Tier 2+ with BVN saved — matches backend before POST /wallets/add/fiat/ngn.
+  static bool canProvisionNgnVirtualAccount(User? user) {
+    if (user == null) return false;
+    return getCurrentTierLevel(user) >= 2 && hasBvnOnProfile(user);
+  }
+
+  static bool hasNinVerified(User? user) {
+    if (user == null) return false;
+    final idType = user.idType?.toUpperCase() ?? '';
+    final idNum = user.idNumber?.trim() ?? '';
+    if (idType.contains('NIN') && idNum.length == 11) return true;
+    return getCurrentTierLevel(user) >= 3;
   }
 
   /// Get tier display name (e.g., "Tier 1", "Tier 2")
@@ -52,32 +87,36 @@ class TierUtils {
     final tierLevel = getCurrentTierLevel(user);
     switch (tierLevel) {
       case 1:
-        return 'You\'re currently on Tier 1. Complete additional verification to access Tier 2, more features and send higher amounts.';
+        return 'You\'re currently on Tier 1. Complete BVN and selfie verification to unlock Tier 2, send money, and get your NGN account.';
       case 2:
-        return 'You\'re currently on Tier 2. You have access to the highest transfer limits.';
+        if (hasNinVerified(user)) {
+          return 'You\'re currently on Tier 2. You have access to higher transfer limits.';
+        }
+        return 'You\'re currently on Tier 2. Verify your NIN to unlock Tier 3 and the highest transfer limits.';
+      case 3:
+        return 'You\'re on Tier 3 with the highest transfer limits.';
       default:
-        return 'You\'re currently on Tier 1. Complete additional verification to access higher tiers and send higher amounts.';
+        return 'You\'re currently on Tier 1. Complete verification to access higher tiers.';
     }
   }
 
   /// Get next tier information for upgrade prompts
   static String getNextTierInfo(User? user) {
-    final tierLevel = getCurrentTierLevel(user);
-    switch (tierLevel) {
-      case 1:
-        return 'Upgrade to Tier 2';
-      case 2:
-        return 'You\'re on the highest tier';
-      default:
-        return 'Upgrade to Tier 2';
-    }
+    if (needsTier2(user)) return 'Upgrade to Tier 2';
+    if (needsTier3(user)) return 'Upgrade to Tier 3';
+    return 'You\'re on the highest tier';
+  }
+
+  static bool needsTier2(User? user) =>
+      getCurrentTierLevel(user) < 2 || !hasBvnVerified(user);
+
+  static bool needsTier3(User? user) {
+    final tier = getCurrentTierLevel(user);
+    return tier >= 2 && tier < 3 && !hasNinVerified(user);
   }
 
   /// Check if user can upgrade to next tier
-  static bool canUpgrade(User? user) {
-    final tierLevel = getCurrentTierLevel(user);
-    return tierLevel < 3;
-  }
+  static bool canUpgrade(User? user) => needsTier2(user) || needsTier3(user);
 
   /// Get tier limits information
   static Map<String, String> getTierLimits(User? user) {
@@ -85,31 +124,31 @@ class TierUtils {
     switch (tierLevel) {
       case 1:
         return {
-          'monthly': '1,000 USD',
-          'yearly': '10,000 USD',
+          'monthly': '1,500,000 NGN',
+          'yearly': '5,000,000 NGN',
           'description':
-              'No verification required. However, you have a transfer limit of 1,000 USD per month and 10,000 USD per year.',
+              'No verification required. However, you have a transfer limit of 1,500,000 NGN per month and 5,000,000 NGN per year.',
         };
       case 2:
         return {
-          'monthly': '20,000 USD',
-          'yearly': '100,000 USD',
+          'monthly': '30,000,000 NGN',
+          'yearly': '150,000,000 NGN',
           'description':
-              'You can send up to 20,000 USD per month and 100,000 USD per year.',
+              'You can send up to 30,000,000 NGN per month and 150,000,000 NGN per year.',
         };
       case 3:
         return {
-          'monthly': '100,000 USD',
-          'yearly': '300,000 USD',
+          'monthly': '150,000,000 NGN',
+          'yearly': '450,000,000 NGN',
           'description':
-              'You can send up to 100,000 USD per month and 300,000 USD per year.',
+              'You can send up to 150,000,000 NGN per month and 450,000,000 NGN per year.',
         };
       default:
         return {
-          'monthly': '1,000 USD',
-          'yearly': '10,000 USD',
+          'monthly': '1,500,000 NGN',
+          'yearly': '5,000,000 NGN',
           'description':
-              'No verification required. However, you have a transfer limit of 1,000 USD per month and 10,000 USD per year.',
+              'No verification required. However, you have a transfer limit of 1,500,000 NGN per month and 5,000,000 NGN per year.',
         };
     }
   }

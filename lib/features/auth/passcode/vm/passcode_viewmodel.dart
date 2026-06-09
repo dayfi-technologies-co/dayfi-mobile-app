@@ -3,12 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/services/local/secure_storage.dart';
 import 'package:dayfi/services/remote/auth_service.dart';
+import 'package:dayfi/common/helpers/biometric_preferences.dart';
 import 'package:dayfi/services/local/biometric_service.dart';
 import 'package:dayfi/models/user_model.dart';
 import 'package:dayfi/common/constants/storage_keys.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/services/data_clearing_service.dart';
 import 'package:dayfi/core/auth/logout_navigation_suppressor.dart';
+import 'package:dayfi/core/auth/session_auth_service.dart';
 
 class PasscodeState {
   final String passcode;
@@ -297,19 +299,31 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
   /// Shared authentication and navigation logic for both passcode and biometric auth
   Future<void> _authenticateAndNavigate() async {
     try {
-      // Check for valid token and user data
+      await SessionAuthService.trySilentSessionRefresh();
+
       final token = await _secureStorage.read(StorageKeys.token);
       final userJson = await _secureStorage.read(StorageKeys.user);
+      final hasUser = userJson.isNotEmpty && userJson != 'null';
 
-      if (token.isNotEmpty && userJson.isNotEmpty) {
-        // Token and user data exist, allow access to main view
-        appRouter.pushMainAndClearStack();
-      } else {
-        // No valid session, redirect to login
-        await _clearStoredCredentials();
-        _showErrorSnackBar('Please login again.');
-        appRouter.pushOnboardingAndClearStack();
+      if (token.isNotEmpty && hasUser) {
+        final promptBiometric =
+            await BiometricPreferences.consumePostLoginBiometricPrompt();
+        appRouter.pushMainAndClearStack(
+          arguments:
+              promptBiometric ? {'promptBiometricSetup': true} : null,
+        );
+        return;
       }
+
+      if (hasUser) {
+        _showErrorSnackBar('Session expired. Please sign in again.');
+        appRouter.pushCheckEmailAndClearStack();
+        return;
+      }
+
+      await _clearStoredCredentials();
+      _showErrorSnackBar('Please login again.');
+      appRouter.pushOnboardingAndClearStack();
     } catch (e) {
       AppLogger.error('Error in authentication and navigation: $e');
       _showErrorSnackBar('Login failed. Please try again.');
@@ -341,7 +355,7 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
       final dataClearingService = DataClearingService();
       await dataClearingService.clearAllUserData(ref);
 
-      appRouter.pushCheckEmailAndClearStack(showBackButton: false);
+      appRouter.pushOnboardingAndClearStack();
     } catch (e) {
       if (mounted) {
         _showErrorSnackBar('Error during logout: ${e.toString()}');

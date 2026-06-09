@@ -1,4 +1,5 @@
 import 'package:dayfi/common/widgets/buttons/buttons.dart';
+import 'package:dayfi/common/widgets/dayfi_circle_check_icon.dart';
 import 'package:lottie/lottie.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
@@ -169,7 +170,10 @@ class SuccessSignupView extends ConsumerWidget {
               ),
             ],
           ),
-          child: Icon(Icons.check_rounded, color: AppColors.neutral0, size: 60),
+          child: const DayfiCircleCheckIcon(
+            color: AppColors.neutral0,
+            size: 60,
+          ),
         )
         .animate()
         .fadeIn(delay: 200.ms, duration: 600.ms, curve: Curves.easeOutCubic)

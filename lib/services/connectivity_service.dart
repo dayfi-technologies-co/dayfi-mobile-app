@@ -46,12 +46,11 @@ class ConnectivityService {
 
   /// Update connection status based on connectivity result
   void _updateConnectionStatus(List<ConnectivityResult> results) {
-    // Check if any result indicates connection
-    final hasConnection = results.any((result) =>
-        result == ConnectivityResult.mobile ||
-        result == ConnectivityResult.wifi ||
-        result == ConnectivityResult.ethernet ||
-        result == ConnectivityResult.vpn);
+    // Treat any transport other than `none` as connected.
+    // This is resilient across plugin/platform variants (e.g. `other`, `bluetooth`).
+    final hasConnection = results.any(
+      (result) => result != ConnectivityResult.none,
+    );
 
     // Only emit if status changed
     if (_isConnected != hasConnection) {
@@ -70,11 +69,7 @@ class ConnectivityService {
   Future<bool> checkConnectivity() async {
     try {
       final result = await _connectivity.checkConnectivity();
-      final hasConnection = result.any((r) =>
-          r == ConnectivityResult.mobile ||
-          r == ConnectivityResult.wifi ||
-          r == ConnectivityResult.ethernet ||
-          r == ConnectivityResult.vpn);
+      final hasConnection = result.any((r) => r != ConnectivityResult.none);
       
       _isConnected = hasConnection;
       return hasConnection;

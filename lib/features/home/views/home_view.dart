@@ -1,27 +1,50 @@
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/common/constants/wallet_flag_assets.dart';
+import 'package:dayfi/common/constants/username_copy.dart';
 import 'package:dayfi/common/utils/haptic_helper.dart';
 import 'package:dayfi/common/utils/available_balance_calculator.dart';
-import 'package:dayfi/features/home/views/wallet_detail_view.dart';
 import 'package:dayfi/features/main/views/main_view.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:dayfi/common/utils/tier_utils.dart';
-import 'package:dayfi/common/widgets/empty_state_widget.dart';
+import 'package:dayfi/common/widgets/dayfi_refresh_scroll_view.dart';
 import 'package:dayfi/common/widgets/shimmer_widgets.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/features/home/vm/home_viewmodel.dart';
 import 'package:dayfi/features/wallet/providers/wallet_hub_provider.dart';
-import 'package:dayfi/features/wallet/views/wallet_receive_view.dart';
-import 'package:dayfi/features/wallet/views/wallet_convert_view.dart';
-import 'package:dayfi/models/wallet_hub.dart';
+import 'package:dayfi/features/wallet/widgets/pay_with_currency_sheet.dart';
+// import 'package:dayfi/features/budget/views/create_budget_view.dart';
+import 'package:dayfi/features/dayearn/dayearn_flow.dart';
+import 'package:dayfi/features/dayearn/dayearn_entry.dart';
+import 'package:dayfi/features/dayflow/daybudget_flow.dart';
+import 'package:dayfi/features/dayflow/dayflow_flow.dart';
+import 'package:dayfi/features/dayflow/helpers/dayflow_analytics.dart';
+import 'package:dayfi/features/dayflow/models/dayflow_models.dart';
+import 'package:dayfi/features/dayflow/services/dayflow_api_service.dart';
+import 'package:dayfi/features/dayflow/services/dayflow_income_service.dart';
+import 'package:dayfi/features/dayflow/services/dayflow_dashboard_cache.dart';
+import 'package:dayfi/features/dayflow/services/dayflow_local_store.dart';
+import 'package:dayfi/features/dayflow/services/dayflow_user_storage.dart';
+import 'package:dayfi/features/dayearn/services/dayearn_summary_cache.dart';
+// import 'package:dayfi/features/dayflow/widgets/dayflow_budget_summary_banner.dart';
+// import 'package:dayfi/features/dayflow/widgets/dayflow_income_banner.dart';
+// import 'package:dayfi/common/services/feature_activity_service.dart';
+import 'package:dayfi/features/home/widgets/home_promo_banners.dart';
+// import 'package:dayfi/features/profile/widgets/profile_upgrade_card.dart';
+import 'package:dayfi/features/profile/views/user_profile_view.dart';
+import 'package:dayfi/features/send/constants/send_country_metadata.dart';
+import 'package:dayfi/features/send/helpers/standard_send_destinations.dart';
 import 'package:dayfi/features/notifications/views/notifications_view.dart';
+import 'package:dayfi/features/notifications/vm/notifications_viewmodel.dart';
 import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
 import 'package:dayfi/features/send/vm/send_viewmodel.dart';
-import 'package:dayfi/features/send/widgets/send_money_entry_sheet.dart';
+import 'package:dayfi/features/send/send_flow.dart';
 import 'package:dayfi/features/transactions/vm/transactions_viewmodel.dart';
+import 'package:dayfi/features/budget/helpers/budget_notification_helper.dart';
+import 'package:dayfi/models/notification_item.dart';
+import 'package:dayfi/models/wallet_hub.dart';
 import 'package:dayfi/models/wallet_transaction.dart';
+import 'package:dayfi/services/notification_service.dart' as push;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dayfi/models/payment_response.dart' as payment;
 import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/services/remote/wallet_service.dart';
@@ -29,7 +52,6 @@ import 'package:dayfi/services/local/secure_storage.dart';
 import 'package:dayfi/common/constants/storage_keys.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:flutter/material.dart';
-import 'package:dayfi/features/auth/upload_documents/views/upload_documents_view.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:intercom_flutter/intercom_flutter.dart';
@@ -42,8 +64,7 @@ class HomeView extends ConsumerStatefulWidget {
   ConsumerState<HomeView> createState() => _HomeViewState();
 }
 
-class _HomeViewState extends ConsumerState<HomeView>
-    with WidgetsBindingObserver {
+class _HomeViewState extends ConsumerState<HomeView> {
   // Top 7 African countries for quick send
   final List<Map<String, String>> topAfricanCountries = [
     {'code': 'NG', 'name': 'Nigeria', 'currency': 'NGN'},
@@ -60,13 +81,34 @@ class _HomeViewState extends ConsumerState<HomeView>
   String? _dayfiId;
   bool _isLoadingDayfiId = true;
   bool _isBalanceVisible = true;
-  bool _isRefreshing = false;
+  final bool _isRefreshing = false;
+  String _displayBalanceCurrency = 'USD';
+  double? _displayRate = 1.0;
+  bool _loadingDisplayRate = false;
+  DayFlowIncomeEvent? _pendingIncome;
+  DayFlowDashboardSnapshot? _budgetSnapshot;
+  bool _sendBootstrapStarted = false;
   final SecureStorageService _secureStorage = locator<SecureStorageService>();
+
+  static const List<String> _balanceCurrencies = ['USD', 'GBP', 'EUR', 'NGN'];
+
+  static const Map<String, String> _balanceSymbols = {
+    'USD': r'$',
+    'NGN': '₦',
+    'GBP': '£',
+    'EUR': '€',
+  };
+
+  static const Map<String, String> _balanceFlags = {
+    'USD': 'assets/icons/svgs/world_flags/united states.svg',
+    'GBP': 'assets/icons/svgs/world_flags/united kingdom.svg',
+    'EUR': WalletFlagAssets.eur,
+    'NGN': 'assets/icons/svgs/world_flags/nigeria.svg',
+  };
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
     // Initialize wallet data when view loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Load profile first to get user name
@@ -74,13 +116,229 @@ class _HomeViewState extends ConsumerState<HomeView>
           .read(profileViewModelProvider.notifier)
           .loadUserProfile(isInitialLoad: true);
       ref.read(homeViewModelProvider.notifier).initialize();
-      ref.read(walletHubProvider.notifier).load();
       ref
           .read(transactionsProvider.notifier)
           .loadTransactions(isInitialLoad: true);
+      _refreshNotificationsInbox();
+      _checkPendingDayFlowIncome();
+      _loadDayBudgetSummary();
+      _prefetchDayEarnSummary();
+      _loadDisplayBalanceCurrencyPreference();
       _loadDayfiId();
       _loadBalanceVisibilityPreference();
+      _bootstrapSendViewModel();
     });
+  }
+
+  void _bootstrapSendViewModel() {
+    if (_sendBootstrapStarted) return;
+    _sendBootstrapStarted = true;
+
+    Future.microtask(() async {
+      final sendViewModel = ref.read(sendViewModelProvider.notifier);
+      if (!sendViewModel.isInitialized && !sendViewModel.isInitializing) {
+        await sendViewModel.initialize();
+      }
+      final sendState = ref.read(sendViewModelProvider);
+      if (sendState.networks.isEmpty) {
+        await sendViewModel.prefetchNigerianBanks();
+      }
+    });
+  }
+
+  Future<void> _loadDisplayBalanceCurrencyPreference() async {
+    try {
+      final saved = locator<SharedPreferences>().getString(
+        StorageKeys.homeDisplayBalanceCurrency,
+      );
+      if (saved != null && _balanceCurrencies.contains(saved)) {
+        setState(() => _displayBalanceCurrency = saved);
+        ref.read(selectedDebitCurrencyProvider.notifier).state = saved;
+      }
+    } catch (_) {}
+    await _loadDisplayRate();
+  }
+
+  Future<void> _saveDisplayBalanceCurrencyPreference(String currency) async {
+    try {
+      await locator<SharedPreferences>().setString(
+        StorageKeys.homeDisplayBalanceCurrency,
+        currency,
+      );
+    } catch (_) {}
+  }
+
+  Future<void> _loadDisplayRate() async {
+    if (_displayBalanceCurrency == 'USD') {
+      if (mounted) setState(() => _displayRate = 1.0);
+      return;
+    }
+    if (mounted) setState(() => _loadingDisplayRate = true);
+    try {
+      final rate = await walletService.fetchExchangeRate(
+        fromCurrency: 'USD',
+        toCurrency: _displayBalanceCurrency,
+      );
+      if (mounted) setState(() => _displayRate = rate);
+    } catch (_) {
+      if (mounted) setState(() => _displayRate = null);
+    } finally {
+      if (mounted) setState(() => _loadingDisplayRate = false);
+    }
+  }
+
+  Future<void> _pickDisplayBalanceCurrency() async {
+    final picked = await showPayWithCurrencySheet(
+      context,
+      selected: _displayBalanceCurrency,
+      title: 'Display balance in',
+      helperText: null,
+    );
+    if (picked == null || picked == _displayBalanceCurrency) return;
+    setState(() => _displayBalanceCurrency = picked);
+    ref.read(selectedDebitCurrencyProvider.notifier).state = picked;
+    await _saveDisplayBalanceCurrencyPreference(picked);
+    await _loadDisplayRate();
+  }
+
+  Widget _buildBalanceCurrencyChip() {
+    final flag = _balanceFlags[_displayBalanceCurrency]!;
+    return GestureDetector(
+      onTap: _pickDisplayBalanceCurrency,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.06),
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ClipOval(
+              child: SvgPicture.asset(
+                flag,
+                width: 18,
+                height: 18,
+                fit: BoxFit.cover,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 16,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _loadDayBudgetSummary() async {
+    try {
+      await DayFlowUserStorage.ensureUserScope();
+      final localPlan = await DayFlowLocalStore.instance.loadCachedPlan();
+      WalletHubSnapshot? hub;
+      try {
+        hub = await walletService.fetchWalletHub();
+      } catch (_) {}
+
+      if (DayflowDashboardCache.instance.peek() == null &&
+          localPlan != null &&
+          hub != null) {
+        DayflowDashboardCache.instance.put(
+          DayFlowAnalytics.buildLocalDashboard(
+            plan: localPlan,
+            hub: hub,
+            flows: const [],
+          ),
+        );
+      }
+
+      final dash = await dayFlowApiService.fetchDashboard(
+        localPlan: localPlan,
+        localHub: hub,
+      );
+      if (!mounted) return;
+      if (dash != null) {
+        DayflowDashboardCache.instance.put(dash);
+      }
+      setState(() => _budgetSnapshot = dash);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _budgetSnapshot = null);
+    }
+  }
+
+  Future<void> _prefetchDayEarnSummary() async {
+    try {
+      await dayEarnService.fetchSummary();
+    } catch (_) {}
+  }
+
+  Future<void> _checkPendingDayFlowIncome() async {
+    try {
+      final income = await DayFlowIncomeService.instance.latestPending(
+        preferCurrency: 'NGN',
+      );
+      if (!mounted) return;
+      setState(() => _pendingIncome = income);
+    } catch (_) {}
+  }
+
+  Future<void> _onPlanPendingIncome() async {
+    final income = _pendingIncome;
+    if (income == null) return;
+    setState(() => _pendingIncome = null);
+    await DayFlowFlow.openForIncome(context, income);
+    if (mounted) await _checkPendingDayFlowIncome();
+  }
+
+  Future<void> _dismissPendingIncome() async {
+    final income = _pendingIncome;
+    if (income == null) return;
+    await DayFlowIncomeService.instance.dismiss(income);
+    if (!mounted) return;
+    setState(() => _pendingIncome = null);
+  }
+
+  Future<void> _refreshNotificationsInbox() async {
+    await ref
+        .read(notificationsProvider.notifier)
+        .loadNotifications(isInitialLoad: false);
+    await _surfaceNewInboxAlerts();
+  }
+
+  Future<void> _surfaceNewInboxAlerts() async {
+    try {
+      final items = ref.read(notificationsProvider).notifications;
+      final prefs = locator<SharedPreferences>();
+      for (final item in items) {
+        if (item.isRead) continue;
+        final isTransaction = item.type == NotificationType.transaction;
+        final isBudget = isBudgetNotification(item);
+        if (!isTransaction && !isBudget) continue;
+
+        final seenKey = 'seen_notif_${item.id}';
+        if (prefs.getBool(seenKey) == true) continue;
+        await prefs.setBool(seenKey, true);
+
+        if (isBudget) {
+          await push.NotificationService().triggerBudgetReminderAlert(
+            title: item.title,
+            message: item.message,
+            budgetId: budgetIdFromNotification(item) ?? item.id,
+          );
+        } else {
+          final refId = item.metadata?['reference']?.toString() ?? item.id;
+          await push.NotificationService().triggerInboxAlert(
+            title: item.title,
+            message: item.message,
+            transactionId: refId,
+          );
+        }
+      }
+    } catch (_) {}
   }
 
   void _toggleBalanceVisibility() {
@@ -116,6 +374,17 @@ class _HomeViewState extends ConsumerState<HomeView>
     } catch (e) {
       AppLogger.error('Error saving balance visibility preference: $e');
     }
+  }
+
+  Future<void> _refreshHome() async {
+    await Future.wait([
+      ref.read(homeViewModelProvider.notifier).refreshWalletDetails(),
+      ref.read(walletHubProvider.notifier).refresh(),
+    ]);
+    await ref.read(transactionsProvider.notifier).loadTransactions();
+    await _refreshNotificationsInbox();
+    await _checkPendingDayFlowIncome();
+    await _loadDayBudgetSummary();
   }
 
   // Helper to get initials from a name
@@ -198,12 +467,45 @@ class _HomeViewState extends ConsumerState<HomeView>
   }
 
   void _onSendMoneyTapped() {
-    openSendMoneyEntry(context);
+    openSendFromHomeOrTab(context, payWithCurrency: _displayBalanceCurrency);
+  }
+
+  void _onAddMoneyTapped() {
+    if (!mounted) return;
+    Navigator.pushNamed(context, AppRoute.addMoneySelectWalletView);
+  }
+
+  void _onPayTapped() {
+    if (!mounted) return;
+    Navigator.pushNamed(context, AppRoute.payBillsScopeView);
+  }
+
+  void _onBudgetsTapped() {
+    if (!mounted) return;
+    Navigator.pushNamed(context, AppRoute.budgetsView);
+  }
+
+  Future<void> _onDayFlowTapped() async {
+    if (!mounted) return;
+    await DayBudgetFlow.open(context);
+  }
+
+  Future<void> _onDayEarnTapped() async {
+    if (!mounted) return;
+    final cachedPots = DayEarnSummaryCache.instance.peek()?.pots;
+    final hasPots =
+        cachedPots != null && cachedPots.isNotEmpty ||
+        await DayEarnEntry.shouldSkipIntro();
+    if (!mounted) return;
+    if (hasPots) {
+      DayEarnFlow.openHome(context);
+      return;
+    }
+    await DayEarnFlow.openCreate(context);
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
@@ -224,724 +526,289 @@ class _HomeViewState extends ConsumerState<HomeView>
 
   @override
   Widget build(BuildContext context) {
-    // Ensure channels are loaded in the background for quick send
     final sendState = ref.watch(sendViewModelProvider);
+    final unreadNotificationCount =
+        ref.watch(notificationsProvider).unreadCount;
     final sendViewModel = ref.read(sendViewModelProvider.notifier);
     if (sendState.channels.isEmpty && !sendState.isLoading) {
-      // Trigger channel loading if not already loaded
       Future.microtask(() => sendViewModel.initialize());
     }
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        scrolledUnderElevation: .5,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        leadingWidth: 1,
-        foregroundColor: Theme.of(context).scaffoldBackgroundColor,
-        shadowColor: Theme.of(context).scaffoldBackgroundColor,
-        surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
-        leading: const SizedBox.shrink(),
-        title: Consumer(
-          builder: (context, ref, child) {
-            final profileState = ref.watch(profileViewModelProvider);
-            final userName = profileState.userName;
-            final firstName = userName.split(' ').first;
+    return Stack(
+      children: [
+        Scaffold(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          appBar: AppBar(
+            scrolledUnderElevation: .5,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            elevation: 0,
+            leadingWidth: 1,
+            foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+            shadowColor: Theme.of(context).scaffoldBackgroundColor,
+            surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+            leading: const SizedBox.shrink(),
+            title: Consumer(
+              builder: (context, ref, child) {
+                final profileState = ref.watch(profileViewModelProvider);
+                final userName = profileState.userName;
+                final firstName = userName.split(' ').first;
 
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Home',
-                  style: AppTypography.titleMedium.copyWith(
-                    fontFamily: 'FunnelDisplay',
-                    fontSize: 24,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.onSurface,
+                return InkWell(
+                  splashColor: Colors.transparent,
+                  highlightColor: Colors.transparent,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const UserProfileView(),
+                      ),
+                    );
+                  },
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Image.asset("assets/icons/pngs/account.png", height: 40),
+                      const SizedBox(width: 8),
+                      Text(
+                        firstName,
+                        style: AppTypography.titleMedium.copyWith(
+                          fontFamily: 'Chirp',
+                          fontWeight: FontWeight.w600,
+                          fontSize: 18,
+                        ),
+                      ),
+                    ],
                   ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            );
-          },
-        ),
-
-        // leadingWidth: 0,
-        centerTitle: true,
-        actions: [
-          Padding(
-            padding: EdgeInsets.only(right: 8),
-            child: InkWell(
-              splashColor: Colors.transparent,
-              highlightColor: Colors.transparent,
-              onTap: _navigateToContactUs,
-              child: Stack(
-                alignment: AlignmentGeometry.center,
-                children: [
-                  SvgPicture.asset(
-                    "assets/icons/svgs/notificationn.svg",
-                    height: 36,
-                    color: Theme.of(context).colorScheme.surface,
-                  ),
-                  Center(
-                    child: SvgPicture.asset(
-                      "assets/icons/svgs/contact.svg",
-                      height: 24,
-                      color: Theme.of(context).textTheme.bodyLarge!.color,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.only(right: 18),
-            child: InkWell(
-              splashColor: Colors.transparent,
-              highlightColor: Colors.transparent,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => NotificationsView()),
                 );
               },
-              child: Stack(
-                alignment: AlignmentGeometry.center,
-                children: [
-                  SvgPicture.asset(
-                    "assets/icons/svgs/notificationn.svg",
-                    height: 36,
-                    color: Theme.of(context).colorScheme.surface,
-                  ),
-                  Center(
-                    child: SvgPicture.asset(
-                      "assets/icons/svgs/bell2.svg",
-                      height: 24,
-                      color: Theme.of(context).textTheme.bodyLarge!.color,
-                    ),
-                  ),
-                ],
-              ),
             ),
-          ),
-        ],
-      ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final bool isWide = constraints.maxWidth > 600;
-          return Center(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: isWide ? 500 : double.infinity,
-              ),
-              child: SizedBox(
-                height: MediaQuery.of(context).size.height,
-                child: CustomScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  slivers: [
-                    CupertinoSliverRefreshControl(
-                      onRefresh: () async {
-                        // Haptic feedback for pull-to-refresh
-                        HapticHelper.lightImpact();
-
-                        // Dismiss keyboard when refreshing
-                        FocusScope.of(context).unfocus();
-
-                        // Refresh wallet data and transactions
-                        try {
-                          await Future.wait([
-                            ref
-                                .read(homeViewModelProvider.notifier)
-                                .refreshWalletDetails(),
-                            ref.read(walletHubProvider.notifier).refresh(),
-                          ]);
-                          await ref
-                              .read(transactionsProvider.notifier)
-                              .loadTransactions();
-
-                          // Success haptic
-                          HapticHelper.success();
-                        } catch (e) {
-                          // Error haptic
-                          HapticHelper.error();
-                          // Log error but don't crash the app
-                          // print('Error refreshing HomeView: $e');
-                        }
-                      },
-                    ),
-                    SliverPadding(
-                      padding: EdgeInsets.symmetric(vertical: 8.0),
-                      sliver: SliverList(
-                        delegate: SliverChildListDelegate([
-                          Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: isWide ? 24 : 18,
-                            ),
-                            child: _buildUpgradeCard(),
-                          ),
-
-                          SizedBox(height: 8),
-                          Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: isWide ? 24 : 18,
-                            ),
-                            child: _buildWalletBalanceCard(),
-                          ),
-
-                          SizedBox(height: 12),
-
-                          _buildHomeActionButtons(context),
-
-                          SizedBox(height: 12),
-
-                          _buildIndividualWalletBalanceCards(),
-
-                          // Padding(
-                          //   padding: EdgeInsets.symmetric(
-                          //     horizontal: isWide ? 24 : 18,
-                          //   ),
-                          //   child: _infoCard(),
-                          // ),
-                          // SizedBox(height: 32),
-
-                          // Padding(
-                          //   padding: EdgeInsets.symmetric(
-                          //     horizontal: isWide ? 24 : 18,
-                          //   ),
-                          //   child: Text(
-                          //     'Quick Send',
-                          //     style: AppTypography.titleMedium.copyWith(
-                          //       fontFamily: 'Chirp',
-                          //       fontSize: 14,
-                          //       fontWeight: FontWeight.w500,
-                          //       letterSpacing: -.2,
-                          //       height: 1.450,
-                          //       color: Theme.of(
-                          //         context,
-                          //       ).textTheme.bodyLarge!.color!.withOpacity(.75),
-                          //     ),
-                          //     textAlign: TextAlign.start,
-                          //     overflow: TextOverflow.ellipsis,
-                          //   ),
-                          // ),
-                          // // Shimmer only while channels are loading (not when empty after load).
-                          // if (sendState.isLoading)
-                          //   ShimmerWidgets.quickSendListShimmer(context)
-                          // else
-                          //   SizedBox(
-                          //     height: 72,
-                          //     child: ListView.builder(
-                          //       shrinkWrap: true,
-                          //       scrollDirection: Axis.horizontal,
-                          //       padding: EdgeInsets.symmetric(horizontal: 12),
-                          //       itemCount: topAfricanCountries.length,
-                          //       // separatorBuilder: (context, idx) => SizedBox(width: 8),
-                          //       itemBuilder: (context, idx) {
-                          //         final country = topAfricanCountries[idx];
-                          //         // Only show chip if channel exists for this country/currency
-                          //         final hasChannel = sendState.channels.any(
-                          //           (c) =>
-                          //               c.country?.toUpperCase() ==
-                          //                   country['code'] &&
-                          //               c.currency?.toUpperCase() ==
-                          //                   country['currency'] &&
-                          //               c.status == 'active',
-                          //         );
-                          //         if (!hasChannel) {
-                          //           return const SizedBox.shrink();
-                          //         }
-                          //         return GestureDetector(
-                          //           onTap: () {
-                          //             sendViewModel.updateReceiveCountry(
-                          //               country['code']!,
-                          //               country['currency']!,
-                          //             );
-
-                          //             showModalBottomSheet(
-                          //               barrierColor: Colors.black.withOpacity(
-                          //                 0.85,
-                          //               ),
-                          //               context: context,
-                          //               isScrollControlled: true,
-                          //               backgroundColor:
-                          //                   Theme.of(
-                          //                     context,
-                          //                   ).scaffoldBackgroundColor,
-                          //               builder: (BuildContext ctx) {
-                          //                 return DeliveryMethodsSheet(
-                          //                   selectedCountry: country['code']!,
-                          //                   selectedCurrency:
-                          //                       country['currency']!,
-                          //                 );
-                          //               },
-                          //             );
-                          //           },
-                          //           child: Padding(
-                          //             padding: const EdgeInsets.all(6.0),
-                          //             child: Chip(
-                          //               backgroundColor:
-                          //                   Theme.of(
-                          //                     context,
-                          //                   ).colorScheme.surface,
-                          //               shape: RoundedRectangleBorder(
-                          //                 borderRadius: BorderRadius.circular(
-                          //                   12,
-                          //                 ),
-                          //                 side: BorderSide(
-                          //                   color: Colors.transparent,
-                          //                 ),
-                          //               ),
-                          //               labelPadding: const EdgeInsets.fromLTRB(
-                          //                 8.0,
-                          //                 2.0,
-                          //                 0,
-                          //                 2.0,
-                          //               ),
-                          //               avatar: SvgPicture.asset(
-                          //                 _getFlagPath(country['code']),
-                          //                 height: 32,
-                          //               ),
-                          //               label: Row(
-                          //                 mainAxisSize: MainAxisSize.min,
-                          //                 children: [
-                          //                   Text(
-                          //                     country['name']!,
-                          //                     style: AppTypography.bodyLarge
-                          //                         .copyWith(
-                          //                           fontWeight:
-                          //                               AppTypography.medium,
-                          //                           height: 1.5,
-                          //                           fontFamily: 'Chirp',
-                          //                           letterSpacing: -.250,
-                          //                           fontSize: 18,
-                          //                           color:
-                          //                               Theme.of(context)
-                          //                                   .textTheme
-                          //                                   .bodyLarge!
-                          //                                   .color,
-                          //                         ),
-                          //                   ),
-                          //                   SizedBox(width: 6),
-                          //                   Text(
-                          //                     country['currency']!,
-                          //                     style: AppTypography.bodyLarge
-                          //                         .copyWith(
-                          //                           fontFamily: 'Chirp',
-                          //                           fontSize: 12,
-                          //                           fontWeight: FontWeight.w500,
-                          //                           color:
-                          //                               Theme.of(
-                          //                                 context,
-                          //                               ).colorScheme.primary,
-                          //                         ),
-                          //                   ),
-                          //                 ],
-                          //               ),
-                          //             ),
-                          //           ),
-                          //         );
-                          //       },
-                          //     ),
-                          //   ),
-
-                          // SizedBox(height: 18),
-
-                          // Padding(
-                          //   padding: EdgeInsets.symmetric(horizontal: 18),
-                          //   child: Text(
-                          //     'Recent Transactions',
-                          //     style: AppTypography.titleMedium.copyWith(
-                          //       fontFamily: 'Chirp',
-                          //       fontSize: 14,
-                          //       fontWeight: FontWeight.w500,
-                          //       letterSpacing: -.2,
-                          //       height: 1.450,
-                          //       color: Theme.of(
-                          //         context,
-                          //       ).textTheme.bodyLarge!.color!.withOpacity(.75),
-                          //     ),
-                          //     textAlign: TextAlign.start,
-                          //     overflow: TextOverflow.ellipsis,
-                          //   ),
-                          // ),
-
-                          // _buildRecentTransactions(),
-                          SizedBox(height: 24),
-                        ]),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildIndividualWalletBalanceCards() {
-    final hubState = ref.watch(walletHubProvider);
-    final homeState = ref.watch(homeViewModelProvider);
-    final isLoading = hubState.isLoading || homeState.isLoading;
-
-    final rows = hubState.hub?.displayRows ??
-        WalletHubSnapshot.walletCatalog.map((m) {
-          return WalletDisplayRow(
-            currency: m['currency']! as String,
-            name: m['name']! as String,
-            symbol: m['symbol']! as String,
-            flagPath: m['flag']! as String,
-            balance: 0,
-          );
-        }).toList();
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '',
-            style: TextStyle(
-              fontFamily: 'Chirp',
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              letterSpacing: -0.2,
-              height: 1.45,
-              color: Theme.of(
-                context,
-              ).textTheme.bodyLarge!.color!.withOpacity(0.6),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child:
-                isLoading
-                    ? _buildWalletShimmer()
-                    : Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: List.generate(rows.length, (index) {
-                        final row = rows[index];
-                        final grey = hubState.hub?.greyFor(row.currency);
-                        String? statusHint;
-                        if (grey != null &&
-                            !grey.fiatReceiveReady &&
-                            row.currency != 'NGN') {
-                          statusHint = grey.statusLabel.isNotEmpty
-                              ? grey.statusLabel
-                              : 'Coming soon';
-                        }
-                        return Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _buildWalletRow(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder:
-                                        (_) => WalletDetailView(
-                                          name: row.name,
-                                          currency: row.currency,
-                                          symbol: row.symbol,
-                                          flagPath: row.flagPath,
-                                          balance: row.balance,
-                                        ),
-                                  ),
-                                );
-                              },
-                              name: row.name,
-                              currency: row.currency,
-                              symbol: row.symbol,
-                              flagPath: row.flagPath,
-                              balance: row.balance,
-                              statusHint: statusHint,
-                              isVisible: _isBalanceVisible,
-                              isFirst: index == 0,
-                              isLast: index == rows.length - 1,
-                            ),
-                            if (index < rows.length - 1)
-                              Divider(
-                                height: 1,
-                                indent: 56,
-                                endIndent: 0,
-                                color: Theme.of(
-                                  context,
-                                ).dividerColor.withOpacity(0.06),
-                              ),
-                          ],
-                        );
-                      }),
-                    ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWalletRow({
-    required String name,
-    required String currency,
-    required String symbol,
-    required String flagPath,
-    required double balance,
-    required bool isVisible,
-    required VoidCallback onTap,
-    String? statusHint,
-    bool isFirst = false,
-    bool isLast = false,
-  }) {
-    return InkWell(
-      borderRadius: BorderRadius.vertical(
-        top: isFirst ? const Radius.circular(12) : Radius.zero,
-        bottom: isLast ? const Radius.circular(12) : Radius.zero,
-      ),
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-        child: Row(
-          children: [
-            ClipOval(
-              child: SvgPicture.asset(
-                flagPath,
-                width: 32,
-                height: 32,
-                fit: BoxFit.cover,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    style: TextStyle(
-                      fontFamily: 'Chirp',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: -0.3,
-                      height: 1.3,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                  if (statusHint != null && statusHint.isNotEmpty)
-                    Text(
-                      statusHint,
-                      style: TextStyle(
-                        fontFamily: 'Chirp',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                  // const SizedBox(height: 2),
-                  // Text(
-                  //   'Balance',
-                  //   style: TextStyle(
-                  //     fontFamily: 'Chirp',
-                  //     fontSize: 12,
-                  //     fontWeight: FontWeight.w500,
-                  //     letterSpacing: -0.2,
-                  //     color: Theme.of(
-                  //       context,
-                  //     ).colorScheme.onSurface.withOpacity(0.45),
-                  //   ),
-                  // ),
-                ],
-              ),
-            ),
-
-            // Balance + chevron
-            Row(
-              children: [
-                isVisible
-                    ? Text(
-                      '$symbol${_formatNumber(balance)}',
-                      style: TextStyle(
-                        fontFamily: 'Chirp',
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: -0.4,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                    )
-                    : Text(
-                      '***',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: -0.4,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                    ),
-                const SizedBox(width: 4),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  size: 18,
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withOpacity(0.3),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildWalletShimmer() {
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: 4,
-      separatorBuilder:
-          (_, __) => Divider(
-            height: 1,
-            indent: 56,
-            color: Theme.of(context).dividerColor.withOpacity(0.06),
-          ),
-      itemBuilder:
-          (_, __) => Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-            child: Row(
-              children: [
-                ShimmerWidgets.circle(size: 36),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            // leadingWidth: 0,
+            centerTitle: false,
+            actions: [
+              Padding(
+                padding: EdgeInsets.only(right: 8),
+                child: InkWell(
+                  splashColor: Colors.transparent,
+                  highlightColor: Colors.transparent,
+                  onTap: _navigateToContactUs,
+                  child: Stack(
+                    alignment: AlignmentGeometry.center,
                     children: [
-                      ShimmerWidgets.line(width: 140, height: 13),
-                      const SizedBox(height: 6),
-                      ShimmerWidgets.line(width: 60, height: 11),
+                      SvgPicture.asset(
+                        "assets/icons/svgs/notificationn.svg",
+                        height: 40,
+                        color: Theme.of(context).colorScheme.surface,
+                      ),
+                      Center(
+                        child: SvgPicture.asset(
+                          "assets/icons/svgs/contact.svg",
+                          height: 28,
+                          color: Theme.of(context).textTheme.bodyLarge!.color,
+                        ),
+                      ),
                     ],
                   ),
                 ),
-                ShimmerWidgets.line(width: 60, height: 13),
-              ],
-            ),
-          ),
-    );
-  }
-
-  Widget _buildUpgradeCard() {
-    final profileState = ref.watch(profileViewModelProvider);
-    final user = profileState.user;
-
-    // Only show upgrade card if user can upgrade
-    if (!TierUtils.canUpgrade(user)) {
-      return const SizedBox.shrink();
-    }
-
-    final tierDescription = TierUtils.getTierDescription(user);
-    final nextTierInfo = TierUtils.getNextTierInfo(user);
-
-    return tierDescription ==
-            'You\'re currently on Tier 2. You have access to the highest transfer limits.'
-        ? const SizedBox()
-        : Container(
-          width: double.infinity,
-          padding: EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(12),
-            // border: Border.all(color: AppColors.warning400.withOpacity(0.5)),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.neutral500.withOpacity(0.05),
-                blurRadius: 4.0,
-                offset: const Offset(0, 4),
-                spreadRadius: 0.5,
               ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Image.asset("assets/icons/pngs/account_4.png", height: 40),
-              SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Increase transfer limit',
-                      style: AppTypography.titleMedium.copyWith(
-                        fontFamily: 'FunnelDisplay',
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
+              Padding(
+                padding: EdgeInsets.only(right: 18),
+                child: InkWell(
+                  splashColor: Colors.transparent,
+                  highlightColor: Colors.transparent,
+                  onTap: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const NotificationsView(),
                       ),
-                    ),
-                    SizedBox(height: 4),
-                    RichText(
-                      text: TextSpan(
-                        text: "$tierDescription ",
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurface,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          fontFamily: 'Chirp',
-                          letterSpacing: -.250,
-                          height: 1.2,
+                    );
+                    if (mounted) {
+                      await ref
+                          .read(notificationsProvider.notifier)
+                          .loadNotifications();
+                    }
+                  },
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    alignment: AlignmentGeometry.center,
+                    children: [
+                      SvgPicture.asset(
+                        "assets/icons/svgs/notificationn.svg",
+                        height: 40,
+                        color: Theme.of(context).colorScheme.surface,
+                      ),
+                      Center(
+                        child: SvgPicture.asset(
+                          "assets/icons/svgs/bell2.svg",
+                          height: 28,
+                          color: Theme.of(context).textTheme.bodyLarge!.color,
                         ),
-                        children: [
-                          WidgetSpan(
-                            alignment: PlaceholderAlignment.baseline,
-                            baseline: TextBaseline.alphabetic,
-                            child: GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder:
-                                        (context) =>
-                                        // Import the correct class for the upload documents view
-                                        // If it's UploadDocumentsView, adjust as needed
-                                        // ignore: prefer_const_constructors
-                                        UploadDocumentsView(
-                                          showBackButton: true,
-                                        ),
-                                  ),
-                                );
-                              },
-                              child: Text(
-                                nextTierInfo,
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.primary,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  fontFamily: 'Chirp',
-                                  letterSpacing: -.4,
-                                  height: 1.2,
-                                  // decoration: TextDecoration.underline,
-                                ),
+                      ),
+                      if (unreadNotificationCount > 0)
+                        Positioned(
+                          top: 2,
+                          right: 2,
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: unreadNotificationCount > 8 ? 4 : 5,
+                              vertical: 2,
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: 16,
+                              minHeight: 16,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.purple500ForTheme(context),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              unreadNotificationCount > 99
+                                  ? '99+'
+                                  : '$unreadNotificationCount',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                height: 1,
+                                fontWeight: FontWeight.w600,
                               ),
+                              textAlign: TextAlign.center,
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ],
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ],
           ),
-        );
+          body: LayoutBuilder(
+            builder: (context, constraints) {
+              final bool isWide = constraints.maxWidth > 600;
+              return Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: isWide ? 500 : double.infinity,
+                  ),
+                  child: SizedBox(
+                    height: MediaQuery.of(context).size.height,
+                    child: CustomScrollView(
+                      physics: dayfiRefreshScrollPhysics,
+                      slivers: [
+                        DayfiRefreshSliverControl(onRefresh: _refreshHome),
+                        SliverPadding(
+                          padding: EdgeInsets.symmetric(vertical: 8.0),
+                          sliver: SliverList(
+                            delegate: SliverChildListDelegate([
+                              // Padding(
+                              //   padding: EdgeInsets.symmetric(
+                              //     horizontal: isWide ? 24 : 18,
+                              //   ),
+                              //   child: const ProfileUpgradeCard(),
+                              // ),
+                              const SizedBox(height: 4),
+                              Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: isWide ? 24 : 18,
+                                ),
+                                child: _buildWalletBalanceCard(),
+                              ),
+
+                              const SizedBox(height: 12),
+                              Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: isWide ? 20 : 14,
+                                ),
+                                child: _buildHomeActionButtons(context),
+                              ),
+
+                              const SizedBox(height: 12),
+                              _buildHomePromoSection(),
+
+                              Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: isWide ? 24 : 18,
+                                ),
+                                child: _infoCard(),
+                              ),
+
+                              const SizedBox(height: 32),
+                              Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: isWide ? 24 : 18,
+                                ),
+                                child: _buildQuickSendHeader(),
+                              ),
+                              _buildQuickSendList(sendState),
+
+                              // const SizedBox(height: 24),
+                              // _buildRecentTransactions(),
+
+                              // if (_budgetSnapshot != null &&
+                              //     _budgetSnapshot!.hasActivePlan &&
+                              //     (_budgetSnapshot!.committedThisPeriod > 0 ||
+                              //         _budgetSnapshot!
+                              //             .scheduleInstances
+                              //             .upcoming
+                              //             .isNotEmpty))
+                              //   Padding(
+                              //     padding: EdgeInsets.fromLTRB(
+                              //      isWide ? 24 : 18,
+                              //      24,
+                              //      isWide ? 24 : 18,
+                              //      0,
+                              //     ),
+                              //     child: DayFlowBudgetSummaryBanner(
+                              //       snapshot: _budgetSnapshot!,
+                              //     ),
+                              //   ),
+                              const SizedBox(height: 124),
+                            ]),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+
+        // Opacity(opacity: .5, child: Image.asset('assets/images/IMG_3058.jpeg')),
+      ],
+    );
+  }
+
+  Widget _buildHomePromoSection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // if (_pendingIncome != null)
+          //   DayFlowIncomeBanner(
+          //     income: _pendingIncome!,
+          //     onPlan: _onPlanPendingIncome,
+          //     onDismiss: _dismissPendingIncome,
+          //   ),
+          const SizedBox(height: 12),
+          HomePromoBannersRow(
+            onTapToPay: () => TapToPayComingSoonSheet.show(context),
+            onDayFlow: _onDayFlowTapped,
+            onEarn: _onDayEarnTapped,
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
   }
 
   Widget _buildWalletBalanceCard() {
     final homeState = ref.watch(homeViewModelProvider);
     final transactionsState = ref.watch(transactionsProvider);
-    final isLoading = homeState.isLoading;
+    final showBalanceLoading =
+        homeState.isLoading && homeState.totalAvailableBalance == null;
     final balance = homeState.balance;
-    final hasBalance = balance != '0.00' && balance.isNotEmpty;
 
     // Calculate pending amounts
     final pendingAmount = AvailableBalanceCalculator.calculatePendingAmount(
@@ -953,44 +820,47 @@ class _HomeViewState extends ConsumerState<HomeView>
     );
     final hasPendingTransactions = pendingCount > 0;
 
-    // Calculate available balance
-    final availableBalance =
+    // Calculate available balance (always USD-equivalent from hub)
+    final availableBalanceUsd =
         AvailableBalanceCalculator.calculateAvailableBalance(
           balance,
           transactionsState.transactions,
-          currency: homeState.currency,
+          currency: 'USD',
         );
+    final rate = _displayBalanceCurrency == 'USD' ? 1.0 : (_displayRate ?? 0.0);
+    final displayBalance = availableBalanceUsd * rate;
+    final displaySymbol = _balanceSymbols[_displayBalanceCurrency] ?? r'$';
+    final pendingDisplay = pendingAmount * rate;
 
     return Container(
       width: MediaQuery.of(context).size.width,
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(18)),
       child: Container(
-        padding: const EdgeInsets.fromLTRB(18, 24, 18, 0),
+        padding: const EdgeInsets.fromLTRB(0, 24, 0, 12),
         // decoration: BoxDecoration(
         //   color: Theme.of(context).colorScheme.surface,
         //   borderRadius: BorderRadius.circular(12),
         // ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 Text(
                   "Total available balance   ".toUpperCase(),
                   style: TextStyle(
                     fontFamily: 'Chirp',
-                    fontSize: 12,
+                    fontSize: 12.5,
                     color: Theme.of(
                       context,
                     ).textTheme.bodyLarge!.color!.withOpacity(.85),
                     fontWeight: FontWeight.w600,
                     letterSpacing: -.04,
-                    height: 1.450,
+                    height: 1,
                   ),
                 ),
-
                 InkWell(
                   splashColor: Colors.transparent,
                   highlightColor: Colors.transparent,
@@ -1000,7 +870,7 @@ class _HomeViewState extends ConsumerState<HomeView>
                       _isBalanceVisible
                           ? "assets/icons/svgs/eye.svg"
                           : "assets/icons/svgs/eye-closed.svg",
-                      height: 20,
+                      height: 22,
                       color: Theme.of(
                         context,
                       ).textTheme.bodyLarge!.color!.withOpacity(0.45),
@@ -1009,11 +879,10 @@ class _HomeViewState extends ConsumerState<HomeView>
                 ),
               ],
             ),
-
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
 
             // this is show the total balance across all wallets in usd
-            if (isLoading && !hasBalance)
+            if (showBalanceLoading)
               Padding(
                 padding: const EdgeInsets.only(top: 16.0, bottom: 5),
                 child: LoadingAnimationWidget.horizontalRotatingDots(
@@ -1025,69 +894,129 @@ class _HomeViewState extends ConsumerState<HomeView>
               Column(
                 children: [
                   const SizedBox(height: 8),
-                  RichText(
-                    text: TextSpan(
-                      children:
-                          _isBalanceVisible
-                              ? [
-                                TextSpan(
-                                  text: "\$",
-                                  style: TextStyle(
-                                    fontSize: 40,
-                                    height: 1,
-                                    fontFamily: 'Chirp',
-                                    fontWeight: FontWeight.w500,
-                                    color:
-                                        Theme.of(context).colorScheme.onSurface,
-                                    letterSpacing: -1,
-                                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildBalanceCurrencyChip(),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (_loadingDisplayRate &&
+                                _displayBalanceCurrency != 'USD')
+                              LoadingAnimationWidget.horizontalRotatingDots(
+                                color: Theme.of(context).colorScheme.primary,
+                                size: 24,
+                              )
+                            else if (_displayRate == null &&
+                                _displayBalanceCurrency != 'USD')
+                              Text(
+                                'Rate unavailable',
+                                style: TextStyle(
+                                  fontFamily: 'Chirp',
+                                  fontSize: 14,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface.withOpacity(0.5),
                                 ),
-                                TextSpan(
-                                  text:
-                                      _formatNumber(
-                                        availableBalance,
-                                      ).split('.')[0],
-                                  style: TextStyle(
-                                    fontSize: 44,
-                                    height: 1,
-                                    fontFamily: 'Chirp',
-                                    fontWeight: FontWeight.w500,
-                                    color:
-                                        Theme.of(context).colorScheme.onSurface,
-                                    letterSpacing: -1,
-                                  ),
+                              )
+                            else
+                              RichText(
+                                text: TextSpan(
+                                  children:
+                                      _isBalanceVisible
+                                          ? [
+                                            TextSpan(
+                                              text: displaySymbol,
+                                              style: TextStyle(
+                                                fontSize: 30,
+                                                height: 1,
+                                                fontFamily: 'Chirp',
+                                                fontWeight: FontWeight.w600,
+                                                color:
+                                                    Theme.of(
+                                                      context,
+                                                    ).colorScheme.onSurface,
+                                                letterSpacing: -1,
+                                              ),
+                                            ),
+                                            TextSpan(
+                                              text:
+                                                  _formatNumber(
+                                                    displayBalance,
+                                                  ).split('.')[0],
+                                              style: TextStyle(
+                                                fontSize: 40.0,
+                                                height: 1,
+                                                fontFamily: 'Chirp',
+                                                fontWeight: FontWeight.w600,
+                                                color:
+                                                    Theme.of(
+                                                      context,
+                                                    ).colorScheme.onSurface,
+                                                letterSpacing: -1,
+                                              ),
+                                            ),
+                                            TextSpan(
+                                              text:
+                                                  ".${_formatNumber(displayBalance).split('.').length > 1 ? _formatNumber(displayBalance).split('.')[1] : '00'}",
+                                              style: TextStyle(
+                                                fontSize: 40.0,
+                                                height: 1,
+                                                fontFamily: 'Chirp',
+                                                fontWeight: FontWeight.w600,
+                                                color:
+                                                    Theme.of(
+                                                      context,
+                                                    ).colorScheme.onSurface,
+                                                letterSpacing: -1,
+                                              ),
+                                            ),
+                                          ]
+                                          : [
+                                            TextSpan(
+                                              text: '*****',
+                                              style: TextStyle(
+                                                fontSize: 40.0,
+                                                height: 1,
+                                                fontFamily: 'Chirp',
+                                                fontWeight: FontWeight.w500,
+                                                color:
+                                                    Theme.of(
+                                                      context,
+                                                    ).colorScheme.onSurface,
+                                                letterSpacing: -1.2,
+                                              ),
+                                            ),
+                                          ],
                                 ),
-                                TextSpan(
-                                  text:
-                                      ".${_formatNumber(availableBalance).split('.').length > 1 ? _formatNumber(availableBalance).split('.')[1] : '00'}",
-                                  style: TextStyle(
-                                    fontSize: 24,
-                                    height: 1,
-                                    fontFamily: 'Chirp',
-                                    fontWeight: FontWeight.w500,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurface.withOpacity(0.45),
-                                    letterSpacing: -1,
-                                  ),
+                              ),
+                            if (_displayBalanceCurrency != 'USD') ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                _isBalanceVisible
+                                    ? '${_formatNumber(availableBalanceUsd)} USD'
+                                    : '***** USD',
+                                style: AppTypography.titleMedium.copyWith(
+                                  fontFamily: 'Chirp',
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                  letterSpacing: -.2,
+                                  height: 1.2,
+                                  color: Theme.of(
+                                    context,
+                                  ).textTheme.bodyLarge!.color!.withOpacity(.8),
                                 ),
-                              ]
-                              : [
-                                TextSpan(
-                                  text: '*****',
-                                  style: TextStyle(
-                                    fontSize: 44,
-                                    height: 1,
-                                    fontFamily: 'Chirp',
-                                    fontWeight: FontWeight.w500,
-                                    color:
-                                        Theme.of(context).colorScheme.onSurface,
-                                    letterSpacing: -1.2,
-                                  ),
-                                ),
-                              ],
-                    ),
-                    textAlign: TextAlign.center,
+                                textAlign: TextAlign.start,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
 
                   const SizedBox(height: 8),
@@ -1127,11 +1056,11 @@ class _HomeViewState extends ConsumerState<HomeView>
                             ),
                             SizedBox(width: 4),
                             Text(
-                              '${homeState.currencySymbol}${_formatNumber(pendingAmount)} pending across '
+                              '$displaySymbol${_formatNumber(pendingDisplay)} pending across '
                               '$pendingCount transaction${pendingCount > 1 ? 's' : ''}',
                               style: TextStyle(
                                 fontFamily: 'Chirp',
-                                fontSize: 12,
+                                fontSize: 12.5,
                                 fontWeight: FontWeight.w500,
                                 color: AppColors.warning600,
                                 letterSpacing: -0.2,
@@ -1150,9 +1079,148 @@ class _HomeViewState extends ConsumerState<HomeView>
     );
   }
 
+  Widget _buildQuickSendHeader() {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            'Quick Send',
+            style: AppTypography.titleMedium.copyWith(
+              fontFamily: 'Chirp',
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              letterSpacing: -.2,
+              height: 1.2,
+              color: Theme.of(
+                context,
+              ).textTheme.bodyLarge!.color!.withOpacity(.8),
+            ),
+            textAlign: TextAlign.start,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        InkWell(
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
+          onTap: () {
+            HapticHelper.lightImpact();
+            openSendFromHomeOrTab(
+              context,
+              payWithCurrency: _displayBalanceCurrency,
+            );
+          },
+          child: Text(
+            'See all',
+            style: AppTypography.bodyMedium.copyWith(
+              fontFamily: 'Chirp',
+              fontWeight: FontWeight.w600,
+              color: AppColors.primary500,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuickSendList(SendState sendState) {
+    final destinations = buildStandardSendDestinations(sendState.channels);
+    final destByKey = {
+      for (final d in destinations)
+        '${d.country?.toUpperCase()}-${d.currency?.toUpperCase()}': d,
+    };
+
+    final quickCountries =
+        topAfricanCountries
+            .where(
+              (c) => destByKey.containsKey(
+                '${c['code']?.toUpperCase()}-${c['currency']?.toUpperCase()}',
+              ),
+            )
+            .toList();
+
+    if (sendState.isLoading && sendState.channels.isEmpty) {
+      return ShimmerWidgets.quickSendListShimmer(context);
+    }
+
+    if (quickCountries.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return SizedBox(
+      height: 72,
+      child: ListView.builder(
+        shrinkWrap: true,
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        itemCount: quickCountries.length,
+        itemBuilder: (context, idx) {
+          final country = quickCountries[idx];
+          final code = country['code']!.toUpperCase();
+          final currency = country['currency']!.toUpperCase();
+          final name = sendCountryDisplayName(code);
+
+          return GestureDetector(
+            onTap: () {
+              HapticHelper.lightImpact();
+              ref.read(selectedDebitCurrencyProvider.notifier).state =
+                  _displayBalanceCurrency;
+              showSendDeliveryMethodsSheet(
+                context,
+                selectedCountry: code,
+                selectedCurrency: currency,
+                debitCurrency: _displayBalanceCurrency,
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(4.0),
+              child: Chip(
+                backgroundColor: Theme.of(context).colorScheme.surface,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: const BorderSide(color: Colors.transparent),
+                ),
+                labelPadding: const EdgeInsets.fromLTRB(8.0, 2.0, 0, 2.0),
+                avatar: SvgPicture.asset(
+                  sendCountryFlagAsset(code),
+                  height: 32,
+                ),
+                label: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      name,
+                      style: AppTypography.bodyLarge.copyWith(
+                        fontWeight: AppTypography.medium,
+                        height: 1.5,
+                        fontFamily: 'Chirp',
+                        letterSpacing: -.250,
+                        fontSize: 18,
+                        color: Theme.of(context).textTheme.bodyLarge!.color,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      currency,
+                      style: AppTypography.bodyLarge.copyWith(
+                        fontFamily: 'Chirp',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   Widget _infoCard() {
     return Container(
-      padding: EdgeInsets.all(12),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.25),
         borderRadius: BorderRadius.circular(12),
@@ -1160,12 +1228,12 @@ class _HomeViewState extends ConsumerState<HomeView>
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          SizedBox(width: 4),
-          Image.asset("assets/images/idea.png", height: 20),
-          SizedBox(width: 12),
+          const SizedBox(width: 4),
+          Image.asset('assets/images/idea.png', height: 20),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Send money via bank transfers, mobile money and more globally',
+              'Your global wallet — send worldwide, pay bills, earn with Daily Earn, and budget with DayFlow.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 fontSize: 14,
                 fontFamily: 'Chirp',
@@ -1184,560 +1252,36 @@ class _HomeViewState extends ConsumerState<HomeView>
   Widget _buildActionButtonWidget(
     BuildContext context,
     String label,
-    IconData icon,
+    String icon,
     VoidCallback onTap,
   ) {
     return GestureDetector(
       onTap: onTap,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(
-              icon,
-              size: 24,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontWeight: FontWeight.w500,
-              height: 1.3,
-              fontFamily: 'Chirp',
-              letterSpacing: -0.20,
-              fontSize: 14,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHomeActionButtons(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: MediaQuery.of(context).size.width * 0.1,
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          Expanded(
-            child: _buildActionButtonWidget(
-              context,
-              'Add',
-              Icons.add_rounded,
-              () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const AddMoneySelectWalletView(),
-                  ),
-                );
-              },
-            ),
-          ),
-
-          Expanded(
-            child: _buildActionButtonWidget(
-              context,
-              'Send',
-              Icons.arrow_upward_rounded,
-              _onSendMoneyTapped,
-            ),
-          ),
-
-          Expanded(
-            child: _buildActionButtonWidget(
-              context,
-              'Convert',
-              Icons.swap_horiz_rounded,
-              () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const WalletConvertView(),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRecentTransactions() {
-    final transactionsState = ref.watch(transactionsProvider);
-    final profileState = ref.watch(profileViewModelProvider);
-    final user = profileState.user;
-
-    // Build multiple name variations for comparison
-    Set<String> userNames = {};
-    if (user != null) {
-      final firstName = user.firstName.trim().toLowerCase();
-      final middleName = user.middleName?.trim().toLowerCase();
-      final lastName = user.lastName.trim().toLowerCase();
-
-      // Add different name combinations
-      if (firstName.isNotEmpty && lastName.isNotEmpty) {
-        userNames.add('$firstName $lastName');
-        userNames.add('$firstName$lastName');
-        userNames.add('$firstName $lastName'.trim());
-      }
-
-      if (middleName != null && middleName.isNotEmpty) {
-        if (firstName.isNotEmpty && lastName.isNotEmpty) {
-          userNames.add('$firstName $middleName $lastName');
-          userNames.add('$firstName $middleName$lastName');
-          userNames.add('$firstName$middleName$lastName');
-        }
-      }
-
-      // Also add the userName from profileState (which includes middle name)
-      final userName = profileState.userName.toLowerCase().trim();
-      if (userName.isNotEmpty && userName != 'loading...') {
-        userNames.add(userName);
-        // Add without spaces
-        userNames.add(userName.replaceAll(' ', ''));
-      }
-    }
-
-    // Sort transactions by timestamp (most recent first)
-    final sortedTransactions = List<WalletTransaction>.from(
-      transactionsState.transactions,
-    )..sort((a, b) => b.timestamp.compareTo(a.timestamp));
-
-    // Filter out duplicates and self-transactions
-    final seenAccountNumbers = <String>{};
-    final filteredTransactions =
-        sortedTransactions.where((tx) {
-          final beneficiary = tx.beneficiary;
-          final source = tx.source;
-
-          // Skip if beneficiary name is empty or whitespace only
-          if (beneficiary.name.trim().isEmpty) {
-            return false;
-          }
-
-          // Filter out self-transactions
-          final beneficiaryName = beneficiary.name.toLowerCase().trim();
-          final beneficiaryNameNoSpaces = beneficiaryName.replaceAll(' ', '');
-
-          for (final userName in userNames) {
-            final userNameNoSpaces = userName.replaceAll(' ', '');
-
-            if (beneficiaryName == userName ||
-                beneficiaryNameNoSpaces == userNameNoSpaces) {
-              return false; // Hide this transaction
-            }
-          }
-
-          // Create a unique key combining source account number and beneficiary account number (dayfi tag)
-          final sourceAccountNumber = source.accountNumber ?? '';
-          final beneficiaryAccountNumber = beneficiary.accountNumber ?? '';
-
-          // For dayfi tags, use the beneficiary's account number as the unique identifier
-          final uniqueKey =
-              source.accountType?.toLowerCase() == 'dayfi'
-                  ? 'dayfi_${beneficiaryAccountNumber.toLowerCase()}'
-                  // ignore: unnecessary_brace_in_string_interps
-                  : 'other_${sourceAccountNumber}';
-
-          if (seenAccountNumbers.contains(uniqueKey)) {
-            return false; // Skip duplicate
-          }
-          seenAccountNumbers.add(uniqueKey);
-          return true;
-        }).toList();
-
-    // Get top 5 recent transactions
-    final recentTransactions = filteredTransactions.take(5).toList();
-
-    // If we have cached transactions (even if empty), show empty state immediately if not loading new data
-    if (recentTransactions.isEmpty) {
-      if (transactionsState.isLoading &&
-          transactionsState.transactions.isEmpty) {
-        // Only show shimmer if there is truly no cached data at all
-        return Padding(
-          padding: EdgeInsets.only(top: 16),
-          child: ShimmerWidgets.transactionListShimmer(context, itemCount: 5),
-        );
-      } else {
-        // Show empty state if not loading or if we have already loaded once
-        return Padding(
-          padding: const EdgeInsets.only(top: 88.0),
-          child: EmptyStateWidget(
-            icon: Icons.receipt_long_outlined,
-            title: 'No transactions yet',
-            message:
-                'Your transactions will appear here once you start sending or receiving money',
-            actionText: 'Send Money',
-            onAction: () {
-              Navigator.pushNamed(context, '/send');
-            },
-          ),
-        );
-      }
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 18),
-          child: Text(
-            'Send Again',
-            style: AppTypography.titleMedium.copyWith(
-              fontFamily: 'Chirp',
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              letterSpacing: -.2,
-              height: 1.450,
-              color: Theme.of(
-                context,
-              ).textTheme.bodyLarge!.color!.withOpacity(.75),
-            ),
-            textAlign: TextAlign.start,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        SizedBox(height: 8),
-        SizedBox(
-          height: 72,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.symmetric(horizontal: 12),
-            itemCount: recentTransactions.length,
-            itemBuilder: (context, i) {
-              final tx = recentTransactions[i];
-              final beneficiary = tx.beneficiary;
-              final source = tx.source;
-              return GestureDetector(
-                onTap: () {
-                  Navigator.pushNamed(
-                    context,
-                    AppRoute.sendView,
-                    arguments: <String, dynamic>{
-                      'beneficiaryWithSource': {
-                        'beneficiary': beneficiary,
-                        'source': source,
-                      },
-                      'fromRecipients': true,
-                    },
-                  );
-                },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6.0),
-                  child: Chip(
-                    padding: EdgeInsets.all(4),
-                    backgroundColor: Theme.of(context).colorScheme.surface,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: BorderSide(color: Colors.transparent),
-                    ),
-                    labelPadding: EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 5,
-                    ),
-                    avatar: Stack(
-                      alignment: Alignment.bottomRight,
-                      children: [
-                        Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            SvgPicture.asset(
-                              "assets/icons/svgs/recipients.svg",
-                              width: 40,
-                              height: 40,
-                              color: AppColors.purple500ForTheme(context),
-                            ),
-                            SizedBox(
-                              width: 40,
-                              height: 40,
-                              child: Center(
-                                child: Text(
-                                  _getInitials(beneficiary.name),
-                                  style: TextStyle(
-                                    color: AppColors.neutral0,
-                                    fontFamily: 'Chirp',
-                                    fontSize: 16,
-                                    letterSpacing: -.25,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        Align(
-                          alignment: Alignment.bottomRight,
-                          child: Container(
-                            width: 16,
-                            height: 16,
-                            decoration: BoxDecoration(
-                              color: AppColors.neutral0,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: AppColors.neutral200,
-                                width: 1,
-                              ),
-                            ),
-                            child: ClipOval(
-                              child: SvgPicture.asset(
-                                _getFlagPath(beneficiary.country),
-                                fit: BoxFit.cover,
-                                width: 24,
-                                height: 24,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    label: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          beneficiary.name.split(' ').first,
-                          style: Theme.of(
-                            context,
-                          ).textTheme.bodyLarge?.copyWith(
-                            fontFamily: 'Chirp',
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                        ),
-                        SizedBox(height: 2),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _getAccountIcon(source, beneficiary),
-                            SizedBox(width: 4),
-                            Flexible(
-                              child:
-                                  source.accountType?.toLowerCase() == 'dayfi'
-                                      ? Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(
-                                            beneficiary.accountNumber
-                                                    ?.split("@")
-                                                    .last ??
-                                                '',
-                                            style: Theme.of(
-                                              context,
-                                            ).textTheme.bodyMedium?.copyWith(
-                                              fontFamily: 'Chirp',
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w500,
-                                              letterSpacing: -.25,
-                                              height: 1.450,
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .onSurface
-                                                  .withOpacity(0.6),
-                                            ),
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          SizedBox(width: 8),
-                                          Container(
-                                            padding: EdgeInsets.symmetric(
-                                              vertical: 3,
-                                              horizontal: 8,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: AppColors.warning400
-                                                  .withOpacity(0.15),
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                            ),
-                                            child: Text(
-                                              "dayfi tag",
-                                              style: TextStyle(
-                                                fontFamily: 'Chirp',
-                                                fontSize: 10,
-                                                color: AppColors.warning600,
-                                                fontWeight: FontWeight.w600,
-                                                height: 1.2,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      )
-                                      : Text(
-                                        '${_getNetworkName(source)} • ${_getAccountNumber(source, beneficiary)}',
-                                        style: Theme.of(
-                                          context,
-                                        ).textTheme.bodyMedium?.copyWith(
-                                          fontFamily: 'Chirp',
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w500,
-                                          letterSpacing: -.4,
-                                          height: 1.450,
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurface
-                                              .withOpacity(0.6),
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTransactionCard(
-    WalletTransaction transaction, {
-    bool isLast = false,
-  }) {
-    return InkWell(
-      onTap: () {
-        appRouter.pushNamed(
-          AppRoute.transactionDetailsView,
-          arguments: transaction,
-        );
-      },
       child: Container(
-        margin: EdgeInsets.only(bottom: isLast ? 12 : 24, top: 8),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.start,
+        margin: EdgeInsets.symmetric(horizontal: 4),
+        padding: EdgeInsets.only(top: 16, bottom: 16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.max,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Transaction Type Icon (Inflow/Outflow)
-            SizedBox(
-              width: 40,
-              height: 40,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // Background circle
-                  SvgPicture.asset(
-                    'assets/icons/svgs/account.svg',
-                    height: 40,
-                    color: _getTransactionTypeColorForTransaction(
-                      transaction,
-                    ).withOpacity(0.35),
-                  ),
-                  // Foreground icon
-                  Center(
-                    child: SvgPicture.asset(
-                      _getTransactionTypeIconForTransaction(transaction),
-                      height: 20,
-                      color: _getTransactionTypeColorForTransaction(
-                        transaction,
-                      ),
-                    ),
-                  ),
-                ],
+            SvgPicture.asset(icon, height: 28, color: AppColors.orange500),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                height: 1.3,
+                fontFamily: 'Chirp',
+                letterSpacing: 0,
+                fontSize: 12.5,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
-            ),
-            SizedBox(width: 12),
-
-            // Transaction Info
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Text(
-                    _getBeneficiaryDisplayName(transaction),
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontFamily: 'Chirp',
-                      fontSize: 16,
-                      letterSpacing: -.250,
-                      fontWeight: FontWeight.w500,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-
-                  SizedBox(height: 4),
-                  if (transaction.reason != null &&
-                      transaction.reason!.isNotEmpty) ...[
-                    Text(
-                      _capitalizeWords(transaction.reason!),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontFamily: 'Chirp',
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: -.1,
-                        height: 1.5,
-                        fontSize: 12,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withOpacity(.65),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                  Text(
-                    _formatTransactionTime(transaction.timestamp),
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontFamily: 'Chirp',
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: -.2,
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withOpacity(0.6),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(width: 12),
-            // Amount
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  _getTransactionAmount(transaction),
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    fontFamily: 'Chirp',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-                SizedBox(height: 2),
-                Text(
-                  _getStatusText(transaction.status),
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontFamily: 'Chirp',
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: -.25,
-                    height: 1.450,
-                    color: _getStatusColor(transaction.status),
-                  ),
-                ),
-              ],
             ),
           ],
         ),
@@ -1745,43 +1289,48 @@ class _HomeViewState extends ConsumerState<HomeView>
     );
   }
 
-  Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'success-collection' || 'success-payment':
-        return AppColors.success500;
-      case 'pending-collection' || 'pending-payment':
-        return AppColors.warning500;
-      case 'failed-collection' || 'failed-payment':
-        return AppColors.error500;
-      default:
-        return AppColors.neutral500;
-    }
-  }
-
-  String _getStatusIcon(String status) {
-    switch (status.toLowerCase()) {
-      case 'success-collection' || 'success-payment':
-        return 'assets/icons/svgs/circle-check.svg';
-      case 'pending-collection' || 'pending-payment':
-        return "assets/icons/svgs/exclamation-circle.svg";
-      case 'failed-collection' || 'failed-payment':
-        return "assets/icons/svgs/circle-x.svg";
-      default:
-        return "assets/icons/svgs/info-circle.svg";
-    }
-  }
-
-  String _getStatusText(String status) {
-    switch (status.toLowerCase()) {
-      case 'success-collection' || 'success-payment':
-        return 'Completed';
-      case 'pending-collection' || 'pending-payment':
-        return 'Pending';
-      case 'failed-collection' || 'failed-payment':
-        return 'Failed';
-      default:
-        return 'Unknown';
-    }
+  Widget _buildHomeActionButtons(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            Expanded(
+              child: _buildActionButtonWidget(
+                context,
+                'Send',
+                "assets/icons/svgs/brand-telegram.svg",
+                _onSendMoneyTapped,
+              ),
+            ),
+            Expanded(
+              child: _buildActionButtonWidget(
+                context,
+                'Add',
+                "assets/icons/svgs/add_c.svg",
+                _onAddMoneyTapped,
+              ),
+            ),
+            Expanded(
+              child: _buildActionButtonWidget(
+                context,
+                'Pay',
+                "assets/icons/svgs/invoice_c.svg",
+                _onPayTapped,
+              ),
+            ),
+            Expanded(
+              child: _buildActionButtonWidget(
+                context,
+                'Budget',
+                "assets/icons/svgs/bell-dollar.svg",
+                _onBudgetsTapped,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
   }
 
   String _getBeneficiaryDisplayName(WalletTransaction transaction) {
@@ -2055,10 +1604,10 @@ class _HomeViewState extends ConsumerState<HomeView>
 
   String _getNetworkName(Source source) {
     if (source.accountType?.toLowerCase() == 'dayfi') {
-      return 'dayfi tag';
+      return UsernameCopy.label;
     }
 
-    final sendState = ref.watch(sendViewModelProvider);
+    final sendState = ref.read(sendViewModelProvider);
     final networkId = source.networkId;
 
     if (networkId == null || networkId.isEmpty) {

@@ -1,5 +1,7 @@
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
+import 'package:dayfi/common/widgets/dayfi_circle_check_icon.dart';
+import 'package:dayfi/common/widgets/dayfi_loading_indicator.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/features/profile/views/recovery_phrase_view.dart';
@@ -366,10 +368,9 @@ class _DigitalDollarReceiveViewState extends State<DigitalDollarReceiveView> {
                 ),
               ),
               if (selected)
-                Icon(
-                  Icons.check_circle,
-                  color: AppColors.purple500ForTheme(ctx),
+                DayfiCircleCheckIcon(
                   size: 22,
+                  color: AppColors.purple500ForTheme(ctx),
                 ),
             ],
           ),
@@ -579,16 +580,18 @@ class _DigitalDollarReceiveViewState extends State<DigitalDollarReceiveView> {
               padding: const EdgeInsets.only(bottom: 12),
               child: Row(
                 children: [
-                  Icon(
-                    row.done ? Icons.check_circle : Icons.radio_button_off,
-                    size: 22,
-                    color:
-                        row.done
-                            ? AppColors.purple500ForTheme(context)
-                            : Theme.of(
-                              context,
-                            ).colorScheme.onSurface.withValues(alpha: 0.25),
-                  ),
+                  row.done
+                      ? DayfiCircleCheckIcon(
+                        size: 22,
+                        color: AppColors.purple500ForTheme(context),
+                      )
+                      : Icon(
+                        Icons.radio_button_off,
+                        size: 22,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.25),
+                      ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -603,7 +606,7 @@ class _DigitalDollarReceiveViewState extends State<DigitalDollarReceiveView> {
               ),
             );
           }),
-          if (_provisioningBusy) const Center(child: CircularProgressIndicator()),
+          if (_provisioningBusy) const DayfiLoadingCenter(),
         ],
       ),
     );
@@ -867,16 +870,14 @@ class _DigitalDollarReceiveViewState extends State<DigitalDollarReceiveView> {
       body: SafeArea(
         child:
             _loading && _phase == _ReceivePhase.loading
-                ? const Center(child: CircularProgressIndicator())
+                ? const DayfiLoadingCenter()
                 : switch (_phase) {
                   _ReceivePhase.intro => _introBody(),
                   _ReceivePhase.provisioning => _provisioningBody(),
                   _ReceivePhase.awaitingAddresses => _awaitingAddressesBody(),
                   _ReceivePhase.error => _errorBody(),
                   _ReceivePhase.main => _mainBody(),
-                  _ReceivePhase.loading => const Center(
-                    child: CircularProgressIndicator(),
-                  ),
+                  _ReceivePhase.loading => const DayfiLoadingCenter(),
                 },
       ),
     );

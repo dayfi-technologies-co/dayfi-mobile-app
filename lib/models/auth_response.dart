@@ -47,14 +47,17 @@ class AuthData {
   String? token;
   User? user;
   String? action;
+  String? authProvider;
 
-  AuthData({this.token, this.user, this.action});
+  AuthData({this.token, this.user, this.action, this.authProvider});
 
   factory AuthData.fromJson(Map<String, dynamic> data) {
     return AuthData(
       token: data['token'],
       user: data.containsKey('user_id') ? User.fromJson(data) : null,
       action: data['action'] as String?,
+      authProvider: data['authProvider'] as String? ??
+          data['auth_provider'] as String?,
     );
   }
 
@@ -63,6 +66,7 @@ class AuthData {
       'token': token,
       'user': user?.toJson(),
       'action': action,
+      'authProvider': authProvider,
     };
   }
 }

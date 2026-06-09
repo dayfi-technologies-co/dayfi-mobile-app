@@ -34,6 +34,10 @@ class NotificationService {
 
   Future<void> triggerReceiveMoney({required String senderName, required String amount, required String currency, required String transactionId}) async {}
 
+  Future<void> triggerInboxAlert({required String title, required String message, required String transactionId}) async {}
+
+  Future<void> triggerBudgetReminderAlert({required String title, required String message, required String budgetId}) async {}
+
   Future<void> triggerTierUpgrade({required String newTier, required String newLimits}) async {}
 
   Future<void> triggerKycSuccess() async {}

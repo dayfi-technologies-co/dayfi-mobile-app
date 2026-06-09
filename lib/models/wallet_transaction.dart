@@ -99,6 +99,13 @@ class WalletTransaction {
         'status': status,
         'reason': reason,
         'timestamp': timestamp,
+        'ledger_currency': ledgerCurrency,
+        'activity_kind': activityKind,
+        'external_reference': externalReference,
+        'ngn_amount': ngnAmount,
+        'usd_credited': usdCredited,
+        'fx_ngn_to_usd': fxNgnToUsd,
+        'ledger_metadata': ledgerMetadata,
         'beneficiary': {
           'id': beneficiary.id,
           'name': beneficiary.name,
@@ -133,6 +140,13 @@ class WalletTransaction {
   final String status;
   final String? reason;
   final String timestamp;
+  final String? ledgerCurrency;
+  final String? activityKind;
+  final String? externalReference;
+  final double? ngnAmount;
+  final double? usdCredited;
+  final double? fxNgnToUsd;
+  final Map<String, dynamic>? ledgerMetadata;
   final Beneficiary beneficiary;
   final Source source;
 
@@ -148,6 +162,13 @@ class WalletTransaction {
     required this.status,
     this.reason,
     required this.timestamp,
+    this.ledgerCurrency,
+    this.activityKind,
+    this.externalReference,
+    this.ngnAmount,
+    this.usdCredited,
+    this.fxNgnToUsd,
+    this.ledgerMetadata,
     required this.beneficiary,
     required this.source,
   });
@@ -167,6 +188,18 @@ class WalletTransaction {
         status: json['status']?.toString() ?? '',
         reason: json['reason']?.toString(),
         timestamp: json['timestamp']?.toString() ?? '',
+        ledgerCurrency: json['ledger_currency']?.toString() ??
+            json['ledgerCurrency']?.toString(),
+        activityKind: json['activity_kind']?.toString() ??
+            json['activityKind']?.toString(),
+        externalReference: json['external_reference']?.toString() ??
+            json['externalReference']?.toString(),
+        ngnAmount: _parseDouble(json['ngn_amount'] ?? json['ngnAmount']),
+        usdCredited: _parseDouble(json['usd_credited'] ?? json['usdCredited']),
+        fxNgnToUsd: _parseDouble(json['fx_ngn_to_usd'] ?? json['fxNgnToUsd']),
+        ledgerMetadata: _parseMetadata(
+          json['ledger_metadata'] ?? json['ledgerMetadata'],
+        ),
         beneficiary: Beneficiary.fromJson(json['beneficiary'] is Map<String, dynamic> 
             ? json['beneficiary'] as Map<String, dynamic>
             : {}),
@@ -182,6 +215,18 @@ class WalletTransaction {
   }
 }
 
+double? _parseDouble(dynamic value) {
+  if (value == null) return null;
+  if (value is num) return value.toDouble();
+  return double.tryParse(value.toString());
+}
+
+Map<String, dynamic>? _parseMetadata(dynamic value) {
+  if (value is Map<String, dynamic>) return value;
+  if (value is Map) return Map<String, dynamic>.from(value);
+  return null;
+}
+
 class Beneficiary {
   final String id;
   final String name;
@@ -194,6 +239,7 @@ class Beneficiary {
   final String idType;
   final String? accountNumber;
   final String? accountType;
+  final String? bankName;
 
   Beneficiary({
     required this.id,
@@ -207,6 +253,7 @@ class Beneficiary {
     required this.idType,
     this.accountNumber,
     this.accountType,
+    this.bankName,
   });
 
   factory Beneficiary.fromJson(Map<String, dynamic> json) {
@@ -219,10 +266,14 @@ class Beneficiary {
         address: json['address']?.toString() ?? '',
         dob: json['dob']?.toString() ?? '',
         email: json['email']?.toString() ?? '',
-        idNumber: json['idNumber']?.toString() ?? '',
-        idType: json['idType']?.toString() ?? '',
-        accountNumber: json['account_number']?.toString(),
-        accountType: json['account_type']?.toString(),
+        idNumber:
+            json['idNumber']?.toString() ?? json['id_number']?.toString() ?? '',
+        idType: json['idType']?.toString() ?? json['id_type']?.toString() ?? '',
+        accountNumber:
+            json['account_number']?.toString() ?? json['accountNumber']?.toString(),
+        accountType:
+            json['account_type']?.toString() ?? json['accountType']?.toString(),
+        bankName: json['bankName']?.toString() ?? json['bank_name']?.toString(),
       );
     } catch (e) {
       // print('Error parsing Beneficiary: $e');

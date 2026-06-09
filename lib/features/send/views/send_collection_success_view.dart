@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:dayfi/models/payment_response.dart' as payment;
+import 'package:dayfi/models/wallet_transaction.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -6,11 +9,10 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/common/widgets/buttons/secondary_button.dart';
+import 'package:dayfi/features/send/helpers/send_success_navigation.dart';
 import 'package:dayfi/features/send/vm/send_viewmodel.dart';
 import 'package:dayfi/features/transactions/vm/transactions_viewmodel.dart';
-import 'package:dayfi/features/recipients/vm/recipients_viewmodel.dart';
 import 'package:dayfi/services/notification_service.dart';
-import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
 
 class SendCollectionSuccessView extends ConsumerStatefulWidget {
@@ -37,14 +39,32 @@ class SendCollectionSuccessView extends ConsumerStatefulWidget {
 class _SendCollectionSuccessViewState
     extends ConsumerState<SendCollectionSuccessView> {
   bool _notificationTriggered = false;
+  WalletTransaction? _transaction;
+  bool _isNavigating = false;
 
   @override
   void initState() {
     super.initState();
-    // Trigger success notification when view loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _triggerSuccessNotification();
+      if (!mounted) return;
+      unawaited(_triggerSuccessNotification());
+      unawaited(_prefetchTransaction());
     });
+  }
+
+  Future<void> _prefetchTransaction() async {
+    final id = widget.transactionId ?? widget.collectionData?.id;
+    if (id == null || id.isEmpty) return;
+
+    try {
+      await ref.read(transactionsProvider.notifier).loadTransactions();
+      final transactions = ref.read(transactionsProvider).transactions;
+      final match = SendSuccessNavigation.findTransaction(transactions, id);
+      if (!mounted) return;
+      if (match != null) setState(() => _transaction = match);
+    } catch (e) {
+      AppLogger.error('Failed to prefetch collection transaction: $e');
+    }
   }
 
   Future<void> _triggerSuccessNotification() async {
@@ -120,7 +140,7 @@ class _SendCollectionSuccessViewState
                               'We\'re processing your transfer. You\'ll receive a confirmation once your payment is verified.',
                               style: AppTypography.headlineLarge.copyWith(
                                 fontFamily: 'FunnelDisplay',
-                                fontSize: 28,
+                                fontSize: 24,
                                 height: 1.2,
                                 fontWeight: FontWeight.w500,
                                 color: AppColors.neutral0,
@@ -135,28 +155,9 @@ class _SendCollectionSuccessViewState
                         Column(
                           children: [
                             SecondaryButton(
-                              text: 'View Transactions',
-                              onPressed: () async {
-                                // Refresh transactions and beneficiaries data
-                                try {
-                                  // Refresh transactions
-                                  ref
-                                      .read(transactionsProvider.notifier)
-                                      .loadTransactions();
-                                  // Refresh recipients
-                                  ref
-                                      .read(recipientsProvider.notifier)
-                                      .loadBeneficiaries();
-                                } catch (e) {
-                                  AppLogger.error('Failed to refresh data: $e');
-                                }
-
-                                // Navigate to main view with clean stack (Transactions tab)
-                                _navigateToMainViewWithCleanStack(
-                                  context,
-                                  tabIndex: 1,
-                                );
-                              },
+                              text: 'View transaction',
+                              onPressed: _viewTransaction,
+                              isLoading: _isNavigating,
                               backgroundColor: Colors.white,
                               textColor: AppColors.purple500,
                               borderColor: AppColors.neutral0,
@@ -183,17 +184,20 @@ class _SendCollectionSuccessViewState
     );
   }
 
-  /// Navigate to main view with clean navigation stack
-  void _navigateToMainViewWithCleanStack(
-    BuildContext context, {
-    int tabIndex = 1,
-  }) {
-    // Clear the navigation stack and navigate to main view with specified tab
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      AppRoute.mainView,
-      (Route route) => false, // Remove all previous routes
-      arguments: tabIndex,
-    );
+  Future<void> _viewTransaction() async {
+    if (_isNavigating) return;
+    setState(() => _isNavigating = true);
+    try {
+      await SendSuccessNavigation.openTransactionDetailsOrList(
+        ref: ref,
+        transactionId:
+            widget.transactionId ??
+            widget.collectionData?.id ??
+            widget.collectionData?.sequenceId,
+        prefetchedTransaction: _transaction,
+      );
+    } finally {
+      if (mounted) setState(() => _isNavigating = false);
+    }
   }
 }

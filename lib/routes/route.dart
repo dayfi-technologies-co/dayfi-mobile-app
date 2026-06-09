@@ -1,14 +1,11 @@
-import 'package:dayfi/features/legal/privacy_notice.dart';
-import 'package:dayfi/features/legal/terms_of_use.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
-// #if !dart.library.html
-import 'dart:io' show Platform;
-// #endif
+import 'package:dayfi/features/web/models/legal_document.dart';
+import 'package:dayfi/features/web/views/legal_document_view.dart';
+import 'package:dayfi/features/web/views/web_landing_view.dart';
 
 import 'package:dayfi/features/auth/check_email/vm/check_email_viewmodel.dart';
 import 'package:dayfi/features/recipients/views/recipients_view.dart';
 import 'package:dayfi/features/softpos/views/softpos_info_view.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:dayfi/core/navigation/dayfi_page_transitions.dart';
 import 'package:flutter/material.dart';
 import 'package:dayfi/features/auth/login/views/login_view.dart';
 import 'package:dayfi/features/auth/signup/views/signup_view.dart';
@@ -22,7 +19,8 @@ import 'package:dayfi/features/auth/reset_password/views/reset_password_view.dar
 import 'package:dayfi/features/auth/passcode/views/passcode_view.dart';
 import 'package:dayfi/features/auth/complete_personal_information/views/complete_personal_information_view.dart';
 import 'package:dayfi/features/auth/upload_documents/views/upload_documents_view.dart';
-import 'package:dayfi/features/auth/bvn_nin_verification/views/bvn_nin_verification_view.dart';
+import 'package:dayfi/features/auth/smile_kyc/views/smile_kyc_view.dart';
+import 'package:dayfi/common/utils/tier_utils.dart';
 import 'package:dayfi/features/auth/biometric_setup/views/biometric_setup_view.dart';
 import 'package:dayfi/features/auth/dayfi_tag/views/dayfi_tag_explanation_view.dart';
 import 'package:dayfi/features/auth/dayfi_tag/views/create_dayfi_tag_view.dart';
@@ -30,8 +28,18 @@ import 'package:dayfi/features/main/views/main_view.dart';
 import 'package:dayfi/features/home/views/home_view.dart';
 import 'package:dayfi/features/wallet/views/wallet_receive_view.dart';
 import 'package:dayfi/features/wallet/views/wallet_convert_view.dart';
+import 'package:dayfi/features/wallet/views/wallet_crypto_amount_view.dart';
+import 'package:dayfi/features/wallet/views/wallet_crypto_send_review_view.dart';
 import 'package:dayfi/features/wallet/views/wallet_crypto_send_view.dart';
-import 'package:dayfi/features/invest/views/invest_view.dart';
+import 'package:dayfi/features/dayearn/views/dayearn_main_view.dart';
+import 'package:dayfi/features/dayearn/views/dayearn_create_view.dart';
+import 'package:dayfi/features/dayflow/views/dayflow_main_view.dart';
+import 'package:dayfi/features/dayflow/views/dayflow_chat_view.dart';
+import 'package:dayfi/features/pay/views/pay_view.dart';
+import 'package:dayfi/features/pay/views/pay_bills_scope_view.dart';
+import 'package:dayfi/features/pay/views/pay_bills_international_view.dart';
+import 'package:dayfi/features/budget/views/budgets_view.dart';
+import 'package:dayfi/features/profile/views/user_profile_view.dart';
 import 'package:dayfi/features/auth/onboarding/views/onboarding_view.dart';
 import 'package:dayfi/features/profile/edit_profile/views/edit_profile_view.dart';
 import 'package:dayfi/features/profile/account_limits/views/account_limits_view.dart';
@@ -45,6 +53,7 @@ import 'package:dayfi/features/send/views/send_dayfi_id_view.dart';
 import 'package:dayfi/features/send/views/send_dayfi_id_review_view.dart';
 import 'package:dayfi/features/send/views/send_recipient_view.dart';
 import 'package:dayfi/features/send/views/send_review_view.dart';
+import 'package:dayfi/features/send/constants/send_copy.dart';
 import 'package:dayfi/features/send/views/regular_transfer_transaction_pin_view.dart';
 import 'package:dayfi/features/send/views/send_payment_success_view.dart';
 import 'package:dayfi/features/send/views/send_collection_success_view.dart';
@@ -86,12 +95,23 @@ class AppRoute {
   static const String addWalletAddressView = '/addWalletAddressView';
   static RouteSettings globalrouteSettings = const RouteSettings();
 
+  static const String webLandingView = '/';
+  static const String webTermsPath = '/terms';
+  static const String webPrivacyPath = '/privacy';
+  static const String webAboutPath = '/about';
+  static const String webSecurityPath = '/security';
+  static const String webGovernmentPath = '/government';
+  static const String webFaqPath = '/faqs';
+
   static const String onboardingView = '/onboardingView';
   static const String termsOfUseView = '/termsOfUseView';
   static const String privacyNoticeView = '/privacyNoticeView';
   static const String checkEmailView = '/checkEmailView';
+  static const String checkEmailPath = '/checkEmail';
   static const String loginView = '/loginView';
+  static const String loginPath = '/login';
   static const String signupView = '/signupView';
+  static const String signupPath = '/signup';
   static const String verifyEmailView = '/verifyEmailView';
   static const String successSignupView = '/successSignupView';
   static const String createPasscodeView = '/createPasscodeView';
@@ -99,15 +119,26 @@ class AppRoute {
   static const String forgotPasswordView = '/forgotPasswordView';
   static const String resetPasswordView = '/resetPasswordView';
   static const String passcodeView = '/passcodeView';
+  static const String passcodePath = '/passcode';
   static const String completePersonalInfoView = '/completePersonalInfoView';
   static const String uploadDocumentsView = '/uploadDocumentsView';
   static const String bvnNinVerificationView = '/bvnNinVerificationView';
+  static const String smileKycView = '/smileKycView';
   static const String biometricSetupView = '/biometricSetupView';
   static const String mainView = '/mainView';
   static const String homeView = '/homeView';
   static const String investView = '/investView';
+  static const String dayEarnView = '/dayEarnView';
+  static const String dayEarnCreateView = '/dayEarnCreateView';
+  static const String dayFlowView = '/dayFlowView';
+  static const String dayFlowChatView = '/dayFlowChatView';
+  static const String payView = '/payView';
+  static const String payBillsScopeView = '/payBillsScopeView';
+  static const String payBillsInternationalView = '/payBillsInternationalView';
+  static const String budgetsView = '/budgetsView';
   static const String recipientsView = '/recipientsView';
   static const String editProfileView = '/editProfileView';
+  static const String userProfileView = '/userProfileView';
   static const String accountLimitsView = '/accountLimitsView';
   static const String transactionDetailsView = '/transactionDetailsView';
   static const String transactionsView = '/transactionsView';
@@ -156,6 +187,8 @@ class AppRoute {
   static const String addMoneySelectWalletView = '/addMoneySelectWalletView';
   static const String walletConvertView = '/walletConvertView';
   static const String walletCryptoSendView = '/walletCryptoSendView';
+  static const String walletCryptoAmountView = '/walletCryptoAmountView';
+  static const String walletCryptoSendReviewView = '/walletCryptoSendReviewView';
   static const String sendCryptoNetworksView = '/sendCryptoNetworksView';
   static const String securityScreen = '/securityScreen';
   static const String recoveryPhraseView = '/recoveryPhraseView';
@@ -163,10 +196,38 @@ class AppRoute {
   static Route getRoute(RouteSettings routeSettings) {
     globalrouteSettings = routeSettings;
     switch (routeSettings.name) {
+      case webLandingView:
+        return _getPageRoute(routeSettings, const WebLandingView());
+      case webTermsPath:
       case termsOfUseView:
-        return _getPageRoute(routeSettings, const TermsOfUseView());
+        return _getPageRoute(
+          routeSettings,
+          const LegalDocumentView(documentId: LegalDocumentId.terms),
+        );
+      case webPrivacyPath:
       case privacyNoticeView:
-        return _getPageRoute(routeSettings, const PrivacyNoticeView());
+        return _getPageRoute(
+          routeSettings,
+          const LegalDocumentView(documentId: LegalDocumentId.privacy),
+        );
+      case webAboutPath:
+        return _getPageRoute(
+          routeSettings,
+          const LegalDocumentView(documentId: LegalDocumentId.about),
+        );
+      case webSecurityPath:
+        return _getPageRoute(
+          routeSettings,
+          const LegalDocumentView(documentId: LegalDocumentId.security),
+        );
+      case webGovernmentPath:
+        return _getPageRoute(
+          routeSettings,
+          const LegalDocumentView(documentId: LegalDocumentId.government),
+        );
+      case webFaqPath:
+      case faqView:
+        return _getPageRoute(routeSettings, const FaqView());
       case addWalletAddressView:
         final args = routeSettings.arguments as Map<String, dynamic>? ?? {};
         return _getPageRoute(
@@ -179,6 +240,7 @@ class AppRoute {
           ),
         );
       case loginView:
+      case loginPath:
         // Support both legacy (bool) and new (LoginViewArguments) navigation
         bool showBackButton = true;
         String? email;
@@ -194,6 +256,7 @@ class AppRoute {
         );
 
       case checkEmailView:
+      case checkEmailPath:
         final showBackButton = routeSettings.arguments as bool? ?? true;
         return _getPageRoute(
           routeSettings,
@@ -202,6 +265,7 @@ class AppRoute {
       case onboardingView:
         return _getPageRoute(routeSettings, const OnboardingView());
       case signupView:
+      case signupPath:
         return _getPageRoute(routeSettings, const SignupView());
       case verifyEmailView:
         VerifyEmailViewArguments args =
@@ -235,6 +299,7 @@ class AppRoute {
         String email = routeSettings.arguments as String;
         return _getPageRoute(routeSettings, ResetPasswordView(email: email));
       case passcodeView:
+      case passcodePath:
         return _getPageRoute(routeSettings, const PasscodeView());
       case completePersonalInfoView:
         return _getPageRoute(
@@ -255,14 +320,56 @@ class AppRoute {
           UploadDocumentsView(showBackButton: showBackButton),
         );
       case bvnNinVerificationView:
-        return _getPageRoute(routeSettings, const BvnNinVerificationView());
-      case biometricSetupView:
-        return _getPageRoute(routeSettings, const BiometricSetupView());
-      case mainView:
-        int initialTabIndex = routeSettings.arguments as int? ?? 0;
+        final bvnArgs = routeSettings.arguments as Map<String, dynamic>?;
         return _getPageRoute(
           routeSettings,
-          MainView(key: mainViewKey, initialTabIndex: initialTabIndex),
+          SmileKycView(
+            showBackButton: bvnArgs?['showBackButton'] == true,
+            fromSignup: bvnArgs?['fromSignup'] == true,
+            mode: KycVerificationMode.tier2,
+          ),
+        );
+      case smileKycView:
+        final smileArgs = routeSettings.arguments as Map<String, dynamic>?;
+        final modeName = smileArgs?['mode'] as String? ?? 'tier2';
+        final mode = KycVerificationMode.values.firstWhere(
+          (m) => m.name == modeName,
+          orElse: () => KycVerificationMode.tier2,
+        );
+        return _getPageRoute(
+          routeSettings,
+          SmileKycView(
+            showBackButton: smileArgs?['showBackButton'] == true,
+            fromSignup: smileArgs?['fromSignup'] == true,
+            mode: mode,
+          ),
+        );
+      case biometricSetupView:
+        final bioArgs = routeSettings.arguments as Map<String, dynamic>?;
+        return _getPageRoute(
+          routeSettings,
+          BiometricSetupView(
+            fromProfile: bioArgs?['fromProfile'] != false,
+            fromSignup: bioArgs?['fromSignup'] == true,
+          ),
+        );
+      case mainView:
+        var initialTabIndex = 0;
+        var promptBiometricSetup = false;
+        final mainArgs = routeSettings.arguments;
+        if (mainArgs is int) {
+          initialTabIndex = mainArgs;
+        } else if (mainArgs is Map) {
+          initialTabIndex = mainArgs['initialTabIndex'] as int? ?? 0;
+          promptBiometricSetup = mainArgs['promptBiometricSetup'] == true;
+        }
+        return _getPageRoute(
+          routeSettings,
+          MainView(
+            key: mainViewKey,
+            initialTabIndex: initialTabIndex,
+            promptBiometricSetup: promptBiometricSetup,
+          ),
         );
 
       case homeView:
@@ -277,8 +384,46 @@ class AppRoute {
           routeSettings,
           WalletCryptoSendView(selectedData: args),
         );
+      case walletCryptoAmountView:
+        final amountArgs = routeSettings.arguments as Map<String, dynamic>? ?? {};
+        return _getPageRoute(
+          routeSettings,
+          WalletCryptoAmountView(
+            draft: Map<String, dynamic>.from(
+              amountArgs['draft'] as Map? ?? amountArgs,
+            ),
+          ),
+        );
+      case walletCryptoSendReviewView:
+        final reviewArgs = routeSettings.arguments as Map<String, dynamic>? ?? {};
+        return _getPageRoute(
+          routeSettings,
+          WalletCryptoSendReviewView(
+            draft: Map<String, dynamic>.from(
+              reviewArgs['draft'] as Map? ?? reviewArgs,
+            ),
+          ),
+        );
       case investView:
-        return _getPageRoute(routeSettings, const InvestView());
+      case dayEarnView:
+        return _getPageRoute(routeSettings, const DayEarnMainView());
+      case dayEarnCreateView:
+        return _getPageRoute(routeSettings, const DayEarnCreateView());
+      case dayFlowView:
+        return _getPageRoute(routeSettings, const DayFlowMainView());
+      case dayFlowChatView:
+        return _getPageRoute(routeSettings, const DayFlowChatView());
+      case payView:
+        return _getPageRoute(routeSettings, const PayView());
+      case payBillsScopeView:
+        return _getPageRoute(routeSettings, const PayBillsScopeView());
+      case payBillsInternationalView:
+        return _getPageRoute(
+          routeSettings,
+          const PayBillsInternationalView(),
+        );
+      case budgetsView:
+        return _getPageRoute(routeSettings, const BudgetsView());
 
       case recipientsView:
         bool fromProfile = false;
@@ -300,6 +445,8 @@ class AppRoute {
         );
       case editProfileView:
         return _getPageRoute(routeSettings, const EditProfileView());
+      case userProfileView:
+        return _getPageRoute(routeSettings, const UserProfileView());
 
       case accountLimitsView:
         return _getPageRoute(routeSettings, const AccountLimitsView());
@@ -325,8 +472,12 @@ class AppRoute {
           SendCryptoNetworksView(selectedChannel: channel),
         );
       case addRecipientsView:
+        final args = routeSettings.arguments as Map<String, dynamic>? ?? {};
+        final nested = args['selectedData'];
         final selectedData =
-            routeSettings.arguments as Map<String, dynamic>? ?? {};
+            nested is Map<String, dynamic>
+                ? Map<String, dynamic>.from(nested)
+                : args;
         return _getPageRoute(
           routeSettings,
           SendAddRecipientsView(selectedData: selectedData),
@@ -420,7 +571,7 @@ class AppRoute {
             recipientData: args['recipientData'] as Map<String, dynamic>? ?? {},
             senderData: args['senderData'] as Map<String, dynamic>? ?? {},
             paymentData: args['paymentData'] as Map<String, dynamic>? ?? {},
-            reason: args['reason'] as String? ?? '',
+            reason: args['reason'] as String? ?? SendCopy.defaultTransferReason,
             description: args['description'] as String? ?? '',
           ),
         );
@@ -481,8 +632,6 @@ class AppRoute {
           routeSettings,
           const ResetTransactionPinConfirmView(),
         );
-      case faqView:
-        return _getPageRoute(routeSettings, const FaqView());
       case sendView:
         return MaterialPageRoute(
           settings: routeSettings,
@@ -492,11 +641,16 @@ class AppRoute {
             return const SendView();
           },
         );
-      case selectDestinationCountryView:
+      case selectDestinationCountryView: {
+        final args = routeSettings.arguments as Map<String, dynamic>? ?? {};
         return _getPageRoute(
           routeSettings,
-          const SelectDestinationCountryView(),
+          SelectDestinationCountryView(
+            hasBackButton: args['hasBackButton'] as bool? ?? true,
+            addRecipientOnly: args['addRecipientOnly'] as bool? ?? false,
+          ),
         );
+      }
       case selectDeliveryMethodView:
         return _getPageRoute(routeSettings, const SelectDeliveryMethodView());
       case softposInfoView:
@@ -529,25 +683,10 @@ class AppRoute {
     Widget screen, {
     bool isFullScreen = false,
   }) {
-    if (!kIsWeb) {
-      // #if !dart.library.html
-      if (Platform.isIOS) {
-        return CupertinoPageRoute(
-          settings: routeSettings,
-          builder: (context) {
-            return screen;
-          },
-          fullscreenDialog: isFullScreen,
-        );
-      }
-      // #endif
-    }
-    return MaterialPageRoute(
+    return DayfiPageRoute(
       settings: routeSettings,
-      builder: (context) {
-        return screen;
-      },
       fullscreenDialog: isFullScreen,
+      builder: (context) => screen,
     );
   }
 }

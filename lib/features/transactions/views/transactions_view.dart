@@ -1,22 +1,23 @@
-import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
 import 'package:dayfi/common/widgets/shimmer_widgets.dart';
 import 'package:dayfi/common/widgets/error_state_widget.dart';
-import 'package:dayfi/common/widgets/empty_state_widget.dart';
+import 'package:dayfi/common/widgets/dayfi_empty_state.dart';
 import 'package:dayfi/common/utils/haptic_helper.dart';
+import 'package:dayfi/common/widgets/dayfi_refresh_scroll_view.dart';
 import 'package:dayfi/features/transactions/vm/transactions_viewmodel.dart';
 import 'package:dayfi/features/transactions/widgets/transaction_filter_bottom_sheet.dart';
+import 'package:dayfi/features/transactions/widgets/wallet_transaction_list_tile.dart';
 import 'package:dayfi/features/send/widgets/send_money_entry_sheet.dart';
 import 'package:dayfi/models/wallet_transaction.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/app_locator.dart';
-import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/common/utils/available_balance_calculator.dart';
+import 'package:dayfi/common/helpers/wallet_transaction_labels.dart';
+import 'package:dayfi/common/helpers/wallet_transaction_display.dart';
 
 class TransactionsView extends ConsumerStatefulWidget {
   const TransactionsView({super.key});
@@ -56,9 +57,8 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
     }
   }
 
-  void _refreshTransactions() {
-    HapticHelper.lightImpact();
-    ref.read(transactionsProvider.notifier).loadTransactions();
+  Future<void> _refreshTransactions() async {
+    await ref.read(transactionsProvider.notifier).loadTransactions();
   }
 
   void _showFilterBottomSheet(TransactionsState transactionsState) {
@@ -107,8 +107,7 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
           surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
-          // leading: const SizedBox.shrink(),
-          automaticallyImplyLeading: false,
+          leading: const SizedBox.shrink(),
           leadingWidth: 0,
           title: Text(
             "Transactions",
@@ -131,14 +130,10 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                     : MediaQuery.sizeOf(context).height;
 
             return CustomScrollView(
-              physics: const BouncingScrollPhysics(
-                parent: AlwaysScrollableScrollPhysics(),
-              ),
+              physics: dayfiRefreshScrollPhysics,
               slivers: [
-                CupertinoSliverRefreshControl(
-                  onRefresh: () async {
-                    _refreshTransactions();
-                  },
+                DayfiRefreshSliverControl(
+                  onRefresh: _refreshTransactions,
                 ),
                 if (listEmpty) ...[
                   if (transactionsState.filters.hasActiveFilters)
@@ -161,7 +156,12 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                     child: SizedBox(
                       width: constraints.maxWidth,
                       height: bodyHeight,
-                      child: Center(
+                      child: Align(
+                        alignment:
+                            transactionsState.isLoading &&
+                                    transactionsState.transactions.isEmpty
+                                ? Alignment.topCenter
+                                : Alignment.center,
                         child: ConstrainedBox(
                           constraints: BoxConstraints(
                             maxWidth: isWide ? 500 : double.infinity,
@@ -255,7 +255,7 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                 'Clear',
                 style: AppTypography.bodySmall.copyWith(
                   fontFamily: 'Karla',
-                  fontSize: 12,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.w600,
                   color: AppColors.purple500ForTheme(context),
                 ),
@@ -270,7 +270,16 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
   Widget _buildMainContent(TransactionsState transactionsState, bool isWide) {
     if (transactionsState.transactions.isEmpty) {
       if (transactionsState.isLoading) {
-        return ShimmerWidgets.recipientListShimmer(context, itemCount: 8);
+        return ShimmerWidgets.recipientListShimmer(
+          context,
+          itemCount: 8,
+          padding: EdgeInsets.fromLTRB(
+            isWide ? 24 : 18,
+            8,
+            isWide ? 24 : 18,
+            112,
+          ),
+        );
       } else if (transactionsState.errorMessage != null) {
         return ErrorStateWidget(
           message: 'Failed to load transactions',
@@ -278,28 +287,11 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
           onRetry: _refreshTransactions,
         );
       } else {
-        return EmptyStateWidget(
-          icon: Icons.receipt_long_outlined,
+        return DayfiEmptyState(
           title: 'No transactions yet',
           message: 'Your transaction history will appear here',
-          customButton: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            child: PrimaryButton(
-              borderRadius: 12,
-              text: 'Send money',
-              onPressed: () {
-                openSendMoneyEntry(context);
-              },
-              backgroundColor: AppColors.purple500,
-              height: 56,
-              textColor: AppColors.neutral0,
-              fontFamily: 'Chirp',
-              letterSpacing: -0.7,
-              fontSize: 18,
-              width: 375,
-              fullWidth: true,
-            ),
-          ),
+          actionText: 'Send money',
+          onAction: () => openSendMoneyEntry(context),
         );
       }
     }
@@ -476,162 +468,9 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
     WalletTransaction transaction, {
     double bottomMargin = 24,
   }) {
-    final beneficiaryName = _getBeneficiaryDisplayName(transaction);
-    final statusText = _getStatusText(_getEffectiveStatus(transaction));
-    final amount = _getTransactionAmount(transaction);
-
-    return Semantics(
-      button: true,
-      label: 'Transaction to $beneficiaryName for $amount, $statusText',
-      hint: 'Double tap to view transaction details',
-      child: InkWell(
-        onTap: () {
-          appRouter.pushNamed(
-            AppRoute.transactionDetailsView,
-            arguments: transaction,
-          );
-        },
-        child: Container(
-          key: ValueKey(transaction.id),
-          margin: EdgeInsets.only(
-            bottom: bottomMargin,
-            top: 8,
-            left: 8,
-            right: 8,
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              // Transaction Type Icon
-              SizedBox(
-                width: 40,
-                height: 40,
-                child: Stack(
-                  children: [
-                    SizedBox(
-                      width: 40,
-                      height: 40,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          SvgPicture.asset(
-                            'assets/icons/svgs/account.svg',
-                            height: 40,
-                            color: _getTransactionTypeColorForTransaction(
-                              transaction,
-                            ),
-                          ),
-                          Center(
-                            child: SvgPicture.asset(
-                              _getTransactionTypeIconForTransaction(
-                                transaction,
-                              ),
-                              height: 28,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(width: 10),
-
-              // Transaction Info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            _getBeneficiaryDisplayName(transaction),
-                            style: Theme.of(
-                              context,
-                            ).textTheme.bodyLarge?.copyWith(
-                              fontFamily: 'Karla',
-                              fontSize: 16,
-                              letterSpacing: -.7,
-                              fontWeight: FontWeight.w500,
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 4),
-                    if (transaction.reason != null &&
-                        transaction.reason!.isNotEmpty) ...[
-                      Text(
-                        _capitalizeWords(transaction.reason!),
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          fontFamily: 'karla',
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: -.1,
-                          height: 1.5,
-                          fontSize: 12,
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withOpacity(.65),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                    Text(
-                      _formatTransactionTime(transaction.timestamp),
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontFamily: 'Karla',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: -.2,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withOpacity(0.6),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(width: 12),
-
-              // Amount and Status
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    _getTransactionAmount(transaction),
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontFamily: 'Karla',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                  SizedBox(height: 2),
-                  Text(
-                    _getStatusText(_getEffectiveStatus(transaction)),
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontFamily: 'Karla',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: -.6,
-                      height: 1.450,
-                      color: _getStatusColor(_getEffectiveStatus(transaction)),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
+    return WalletTransactionListTile(
+      transaction: transaction,
+      bottomMargin: bottomMargin,
     );
   }
 
@@ -646,7 +485,7 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
     }
 
     if (lowerStatus.contains('collection')) {
-      return 'Wallet Funding (Money coming into Dayfi)';
+      return 'Money added to your balance';
     }
 
     if (lowerStatus.contains('payment')) {
@@ -696,7 +535,7 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
     switch (status.toLowerCase()) {
       case 'success-collection':
       case 'success-payment':
-        return 'Completed';
+        return 'Success';
       case 'pending-collection':
       case 'pending-payment':
         return 'Pending';
@@ -715,20 +554,29 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
   }
 
   String _getTransactionAmount(WalletTransaction transaction) {
-    if (transaction.receiveAmount != null && transaction.receiveAmount! > 0) {
-      final currencyCode = _getCurrencyCodeFromCountry(
-        transaction.beneficiary.country,
-      );
-      final currencySymbol = _getCurrencySymbolFromCode(currencyCode);
-      return '$currencySymbol${_formatNumber(transaction.receiveAmount!)}';
-    } else if (transaction.sendAmount != null && transaction.sendAmount! > 0) {
-      return '₦${_formatNumber(transaction.sendAmount!)}';
-    } else {
-      return 'N/A';
+    return WalletTransactionDisplay.amountText(transaction);
+  }
+
+  String _currencySymbol(String currency) {
+    switch (currency) {
+      case 'USD':
+        return r'$';
+      case 'EUR':
+        return '€';
+      case 'GBP':
+        return '£';
+      case 'NGN':
+        return '₦';
+      default:
+        return r'$';
     }
   }
 
   String _getBeneficiaryDisplayName(WalletTransaction transaction) {
+    final investmentTitle =
+        WalletTransactionLabels.listTitle(transaction);
+    if (investmentTitle.isNotEmpty) return investmentTitle;
+
     final effectiveStatus = _getEffectiveStatus(transaction);
     final isCollection = effectiveStatus.toLowerCase().contains('collection');
     final isPayment = effectiveStatus.toLowerCase().contains('payment');
@@ -738,6 +586,15 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
         transaction.beneficiary.accountType?.toLowerCase() == 'dayfi';
 
     if (isCollection) {
+      if (transaction.beneficiary.name == 'Wallet Top Up') {
+        if (transaction.receiveChannel?.toLowerCase() == 'crypto') {
+          return 'CRYPTO DEPOSIT';
+        }
+        if (transaction.receiveChannel?.toLowerCase() == 'bank') {
+          return 'BANK DEPOSIT';
+        }
+        return 'WALLET CREDIT';
+      }
       if (isDayfiTransfer &&
           transaction.beneficiary.accountNumber != null &&
           transaction.beneficiary.accountNumber!.isNotEmpty) {
@@ -813,13 +670,7 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
   }
 
   String _getTransactionTypeIconForTransaction(WalletTransaction transaction) {
-    final beneficiaryName = _getBeneficiaryDisplayName(transaction);
-
-    if (beneficiaryName == 'Wallet Top Up') {
-      return 'assets/icons/svgs/arrow-narrow-down.svg';
-    }
-
-    return _getTransactionTypeIcon(transaction.status);
+    return WalletTransactionDisplay.typeIconAsset(transaction);
   }
 
   Color _getTransactionTypeColor(String status) {
@@ -832,13 +683,7 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
   }
 
   Color _getTransactionTypeColorForTransaction(WalletTransaction transaction) {
-    final beneficiaryName = _getBeneficiaryDisplayName(transaction);
-
-    if (beneficiaryName == 'Wallet Top Up') {
-      return AppColors.success500;
-    }
-
-    return _getTransactionTypeColor(transaction.status);
+    return WalletTransactionDisplay.typeIconColor(transaction);
   }
 
   String _getFilterSummary(TransactionFilterOptions filters) {

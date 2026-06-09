@@ -10,10 +10,13 @@ plugins {
 android {
         signingConfigs {
             create("release") {
-                storeFile = file("/Users/mac/my-release-key.jks")
-                storePassword = "unicorn77"
-                keyAlias = "my-key-alias"
-                keyPassword = "unicorn77"
+                val keystore = file("/Users/mac/my-release-key.jks")
+                if (keystore.exists()) {
+                    storeFile = keystore
+                    storePassword = "unicorn77"
+                    keyAlias = "my-key-alias"
+                    keyPassword = "unicorn77"
+                }
             }
         }
     namespace = "com.dayfi.app"
@@ -24,10 +27,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
         isCoreLibraryDesugaringEnabled = true
-    }
-
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
     defaultConfig {
@@ -42,13 +41,30 @@ android {
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("release")
+            val releaseKeystore = signingConfigs.getByName("release").storeFile
+            signingConfig = if (releaseKeystore != null && releaseKeystore.exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
+        }
+    }
+
+    packaging {
+        resources {
+            excludes += "/META-INF/versions/9/OSGI-INF/MANIFEST.MF"
         }
     }
 }
 
 flutter {
     source = "../.."
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+    }
 }
 
 dependencies {

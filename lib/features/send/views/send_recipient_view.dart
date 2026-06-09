@@ -1,4 +1,5 @@
 // import 'package:dayfi/common/widgets/buttons/help_button.dart';
+import 'package:dayfi/common/constants/username_copy.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/common/widgets/shimmer_widgets.dart';
 import 'package:dayfi/common/widgets/error_state_widget.dart';
@@ -593,7 +594,7 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
                     Expanded(
                       child:
                           _getChannelAndNetworkInfo(beneficiaryWithSource) ==
-                                  "Dayfi Tag"
+                                  UsernameCopy.label
                               ? Row(
                                 children: [
                                   Text(
@@ -637,7 +638,7 @@ class _SendRecipientViewState extends ConsumerState<SendRecipientView> {
                                         // ),
                                         // SizedBox(width: 4),
                                         Text(
-                                          "Dayfi Tag",
+                                          UsernameCopy.label,
                                           style: TextStyle(
                                             fontFamily: 'Chirp',
                                             fontSize: 10,

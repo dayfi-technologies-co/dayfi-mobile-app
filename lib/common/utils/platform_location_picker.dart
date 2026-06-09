@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' as material;
 
 import 'package:dayfi/common/data/nigeria_locations.dart';
+import 'package:dayfi/common/widgets/dayfi_circle_check_icon.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 
 /// Platform-specific location picker utility
@@ -380,11 +381,10 @@ class PlatformLocationPicker {
                               : null,
                         ),
                       ),
-                      trailing: isSelected 
-                          ? material.Icon(
-                              material.Icons.check,
-                              color: material.Theme.of(context).primaryColor,
-                            )
+                      trailing: isSelected
+                          ? DayfiCircleCheckIcon(
+                            color: material.Theme.of(context).primaryColor,
+                          )
                           : null,
                       onTap: () => Navigator.of(context).pop(state),
                     );
@@ -485,11 +485,10 @@ class PlatformLocationPicker {
                               : null,
                         ),
                       ),
-                      trailing: isSelected 
-                          ? material.Icon(
-                              material.Icons.check,
-                              color: material.Theme.of(context).primaryColor,
-                            )
+                      trailing: isSelected
+                          ? DayfiCircleCheckIcon(
+                            color: material.Theme.of(context).primaryColor,
+                          )
                           : null,
                       onTap: () => Navigator.of(context).pop(city),
                     );

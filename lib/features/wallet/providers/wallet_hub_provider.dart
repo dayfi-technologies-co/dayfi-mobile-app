@@ -32,12 +32,13 @@ class WalletHubNotifier extends StateNotifier<WalletHubState> {
 
   final WalletService _walletService = walletService;
 
-  Future<void> load({bool showLoading = true}) async {
-    if (showLoading && state.hub == null) {
+  Future<void> load({bool showLoading = true, bool syncCrypto = false}) async {
+    final showSpinner = showLoading && state.hub == null;
+    if (showSpinner) {
       state = state.copyWith(isLoading: true, errorMessage: null);
     }
     try {
-      final hub = await _walletService.fetchWalletHub();
+      final hub = await _walletService.fetchWalletHub(syncCrypto: syncCrypto);
       state = WalletHubState(hub: hub, isLoading: false);
     } catch (e) {
       state = state.copyWith(
@@ -47,7 +48,8 @@ class WalletHubNotifier extends StateNotifier<WalletHubState> {
     }
   }
 
-  Future<void> refresh() => load(showLoading: false);
+  Future<void> refresh({bool syncCrypto = false}) =>
+      load(showLoading: false, syncCrypto: syncCrypto);
 }
 
 final walletHubProvider =
@@ -55,5 +57,5 @@ final walletHubProvider =
   return WalletHubNotifier();
 });
 
-/// Wallet the user chose to debit on Send (Yellow Card / username / crypto).
+/// Pay-with / display currency for Send (maps to global USD balance).
 final selectedDebitCurrencyProvider = StateProvider<String>((ref) => 'USD');

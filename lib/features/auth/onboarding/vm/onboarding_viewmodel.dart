@@ -3,6 +3,8 @@ import 'dart:math';
 
 import 'package:crypto/crypto.dart';
 import 'package:dayfi/app_locator.dart';
+import 'package:dayfi/common/helpers/biometric_preferences.dart';
+import 'package:dayfi/core/google_auth_config.dart';
 import 'package:dayfi/models/auth_response.dart';
 import 'package:dayfi/features/auth/login/vm/login_viewmodel.dart';
 import 'package:dayfi/services/remote/auth_service.dart';
@@ -17,12 +19,14 @@ class OnboardingState {
   final String? message;
   final bool isSuccess;
   final String? action;
+  final bool isReturningUser;
   OnboardingState({
     required this.page,
     this.isLoading = false,
     this.message,
     this.isSuccess = false,
     this.action,
+    this.isReturningUser = false,
   });
 
   OnboardingState copyWith({
@@ -31,6 +35,7 @@ class OnboardingState {
     String? message,
     bool? isSuccess,
     String? action,
+    bool? isReturningUser,
   }) {
     return OnboardingState(
       page: page ?? this.page,
@@ -38,6 +43,7 @@ class OnboardingState {
       message: message,
       isSuccess: isSuccess ?? false,
       action: action ?? this.action,
+      isReturningUser: isReturningUser ?? this.isReturningUser,
     );
   }
 }
@@ -52,8 +58,8 @@ class OnboardingViewModel extends StateNotifier<OnboardingState> {
   final AuthService _authService = authService;
 
   final GoogleSignIn _googleSignIn = GoogleSignIn(
-    clientId:
-        "826631103417-uc5f8ruhc8av1ncunkpufu9dpa1190ar.apps.googleusercontent.com",
+    clientId: GoogleAuthConfig.webClientId ?? GoogleAuthConfig.iosClientId,
+    serverClientId: GoogleAuthConfig.serverClientId,
     scopes: ['email', 'profile'],
   );
 
@@ -72,6 +78,7 @@ class OnboardingViewModel extends StateNotifier<OnboardingState> {
     required String providerLabel,
   }) async {
     String? action;
+    var isReturningUser = false;
     if (response.data != null) {
       final loginNotifier = locator<LoginNotifier>();
       final authData = response.data;
@@ -79,18 +86,24 @@ class OnboardingViewModel extends StateNotifier<OnboardingState> {
       final user = authData?.user;
       final email = user?.email ?? fallbackEmail;
       action = authData?.action;
+      final phone = user?.phoneNumber?.trim() ?? '';
+      isReturningUser = action == 'login' || phone.isNotEmpty;
       await loginNotifier.saveGoogleAuthData(
         token: token,
         userJson: user != null ? user.toJson() : {},
         email: email,
         password: '',
       );
+      if (isReturningUser) {
+        await BiometricPreferences.schedulePostLoginBiometricPrompt();
+      }
     }
     state = state.copyWith(
       isLoading: false,
       message: '$providerLabel sign-in successful!',
       isSuccess: true,
       action: action,
+      isReturningUser: isReturningUser,
     );
   }
 
@@ -110,16 +123,22 @@ class OnboardingViewModel extends StateNotifier<OnboardingState> {
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
       final accessToken = googleAuth.accessToken;
-      if (accessToken == null || accessToken.isEmpty) {
+      final idToken = googleAuth.idToken;
+      final authToken =
+          (accessToken != null && accessToken.isNotEmpty)
+              ? accessToken
+              : idToken;
+      if (authToken == null || authToken.isEmpty) {
         state = state.copyWith(
           isLoading: false,
-          message: 'Could not obtain Google access token.',
+          message:
+              'Could not obtain Google sign-in token. Check Google OAuth setup for this app flavor.',
           isSuccess: false,
         );
         return;
       }
       final response =
-          await _authService.googleAuth(authToken: accessToken);
+          await _authService.googleAuth(authToken: authToken);
       await _finalizeSocialAuth(
         response,
         fallbackEmail: googleUser.email,
@@ -247,7 +266,12 @@ class OnboardingViewModel extends StateNotifier<OnboardingState> {
   /// Clears success flag and message after post-auth navigation (avoids
   /// treating the success string as an error snackbar on the next frame).
   void consumeAuthSuccess() {
-    state = state.copyWith(isSuccess: false, message: null, page: 0);
+    state = state.copyWith(
+      isSuccess: false,
+      message: null,
+      page: 0,
+      isReturningUser: false,
+    );
   }
 
   bool get isLastPage => state.page == 3;

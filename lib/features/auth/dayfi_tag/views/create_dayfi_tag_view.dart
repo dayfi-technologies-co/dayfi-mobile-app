@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dayfi/common/constants/username_copy.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:dayfi/core/theme/app_colors.dart';
@@ -78,7 +79,7 @@ class _CreateDayfiTagViewState extends ConsumerState<CreateDayfiTagView> {
                   onPressed: () => Navigator.of(context).pop(),
                 ),
                 title: Text(
-                  "Create Your Dayfi Tag",
+                  UsernameCopy.createTitle,
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontFamily: 'FunnelDisplay',
                     fontSize: 24, // height: 1.6,
@@ -140,7 +141,7 @@ class _CreateDayfiTagViewState extends ConsumerState<CreateDayfiTagView> {
                                           tagState.dayfiIdResponse!.contains(
                                                 'User not found',
                                               )
-                                              ? 'Perfect! This tag is available'
+                                              ? UsernameCopy.available
                                               : tagState.dayfiIdResponse!,
                                           style: TextStyle(
                                             color:
@@ -166,7 +167,7 @@ class _CreateDayfiTagViewState extends ConsumerState<CreateDayfiTagView> {
                                     // Submit Button
                                     PrimaryButton(
                                       borderRadius: 38,
-                                      text: "Create Tag",
+                                      text: UsernameCopy.createButton,
                                       onPressed:
                                           tagState.isFormValid && !tagState.isBusy
                                               ? () =>
@@ -189,6 +190,7 @@ class _CreateDayfiTagViewState extends ConsumerState<CreateDayfiTagView> {
                                       fontSize: 18,
                                       width: double.infinity,
                                       fullWidth: true,
+                                      applyFeatureInset: false,
                                       isLoading: tagState.isBusy,
                                     ),
                                     SizedBox(height: 50),
@@ -229,7 +231,7 @@ class _CreateDayfiTagViewState extends ConsumerState<CreateDayfiTagView> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         CustomTextField(
-          label: "Dayfi Tag",
+          label: UsernameCopy.label,
           hintText: "@username",
           controller: _dayfiIdController,
           isDayfiId: true,
@@ -238,7 +240,7 @@ class _CreateDayfiTagViewState extends ConsumerState<CreateDayfiTagView> {
           onChanged: (value) {
             // Ensure the tag starts with '@'
             if (!value.startsWith('@')) {
-              _dayfiIdController.text = '@' + value.replaceAll('@', '');
+              _dayfiIdController.text = '@${value.replaceAll('@', '')}';
               _dayfiIdController.selection = TextSelection.fromPosition(
                 TextPosition(offset: _dayfiIdController.text.length),
               );

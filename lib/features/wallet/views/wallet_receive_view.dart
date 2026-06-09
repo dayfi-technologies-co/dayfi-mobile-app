@@ -1,215 +1,365 @@
+import 'dart:async';
+
 import 'package:dayfi/app_locator.dart';
-import 'package:dayfi/core/theme/app_colors.dart';
-import 'package:dayfi/core/theme/app_typography.dart';
-import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
+import 'package:dayfi/common/constants/username_copy.dart';
+import 'package:dayfi/common/widgets/dayfi_screen_app_bar.dart';
+import 'package:dayfi/common/widgets/dayfi_screen_description.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
+import 'package:dayfi/features/wallet/constants/grey_demo_bank_accounts.dart';
+import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
 import 'package:dayfi/features/wallet/providers/wallet_hub_provider.dart';
+import 'package:dayfi/models/user_model.dart';
 import 'package:dayfi/models/wallet.dart';
 import 'package:dayfi/models/wallet_hub.dart';
+import 'package:dayfi/common/utils/tier_utils.dart';
+import 'package:dayfi/common/utils/kyc_flow_navigation.dart';
+import 'package:dayfi/features/wallet/add_money_flow.dart';
+import 'package:dayfi/features/wallet/widgets/add_money_option_list.dart';
 import 'package:dayfi/services/local/local_cache.dart';
+import 'package:dayfi/features/dayflow/dayflow_flow.dart';
+import 'package:dayfi/routes/route.dart';
+import 'package:dayfi/common/widgets/dayfi_loading_indicator.dart';
+import 'package:dayfi/features/wallet/constants/crypto_network_catalog.dart';
+import 'package:dayfi/features/wallet/widgets/crypto_network_picker.dart';
+import 'package:dayfi/common/widgets/dayfi_readonly_copy_field.dart';
+import 'package:dayfi/common/widgets/dayfi_receive_extra_details_card.dart';
+import 'package:dayfi/common/widgets/dayfi_receive_tab_shell.dart';
+import 'package:dayfi/common/widgets/dayfi_username_share_content.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:dayfi/services/remote/wallet_provision_service.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:share_plus/share_plus.dart';
 
-// ─── Entry: wallet selector ─────────────────────────────────────────────────
+// ─── Entry: method picker (full screen, bottom-sheet-style list) ─────────────
 
-class AddMoneySelectWalletView extends ConsumerStatefulWidget {
+class AddMoneySelectWalletView extends ConsumerWidget {
   const AddMoneySelectWalletView({super.key});
 
   @override
-  ConsumerState<AddMoneySelectWalletView> createState() =>
-      _AddMoneySelectWalletViewState();
-}
-
-class _AddMoneySelectWalletViewState extends ConsumerState<AddMoneySelectWalletView> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(walletHubProvider.notifier).load();
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final hub = ref.watch(walletHubProvider).hub;
-    final rows = hub?.displayRows ?? WalletHubSnapshot.walletCatalog.map((m) {
-      return WalletDisplayRow(
-        currency: m['currency']! as String,
-        name: m['name']! as String,
-        symbol: m['symbol']! as String,
-        flagPath: m['flag']! as String,
-        balance: 0,
-      );
-    }).toList();
-
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          splashColor: Colors.transparent,
-          highlightColor: Colors.transparent,
-          icon: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            size: 18,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          'Add money',
-          style: AppTypography.titleMedium.copyWith(
-            fontFamily: 'FunnelDisplay',
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-        ),
-        centerTitle: false,
-      ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(18, 8, 18, 16),
-            child: Text(
-              'Which wallet do you want to fund?',
-              style: TextStyle(
-                fontFamily: 'Chirp',
-                fontSize: 14,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.55),
+      appBar: const DayfiScreenAppBar(title: 'Add money'),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = constraints.maxWidth > 600;
+          return Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: isWide ? 500 : double.infinity,
+              ),
+              child: ListView(
+                padding: EdgeInsets.fromLTRB(
+                  isWide ? 24 : 18,
+                  12,
+                  isWide ? 24 : 18,
+                  24,
+                ),
+                children: [
+                  DayfiScreenDescription(text: kAddMoneyHubDescription),
+                  AddMoneyOptionList(
+                    options: kAddMoneyMethodOptions,
+                    onTap: (option) => handleAddMoneyMethodTap(context, option),
+                  ),
+                ],
               ),
             ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 18),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: List.generate(rows.length, (i) {
-                    final row = rows[i];
-                    return Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        InkWell(
-                          borderRadius: BorderRadius.vertical(
-                            top: i == 0
-                                ? const Radius.circular(14)
-                                : Radius.zero,
-                            bottom: i == rows.length - 1
-                                ? const Radius.circular(14)
-                                : Radius.zero,
-                          ),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => WalletReceiveView(
-                                  currency: row.currency,
-                                  symbol: row.symbol,
-                                  name: row.name,
-                                  flagPath: row.flagPath,
-                                ),
-                              ),
-                            );
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 14,
-                            ),
-                            child: Row(
-                              children: [
-                                ClipOval(
-                                  child: SvgPicture.asset(
-                                    row.flagPath,
-                                    width: 36,
-                                    height: 36,
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        row.name,
-                                        style: TextStyle(
-                                          fontFamily: 'Chirp',
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w500,
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurface,
-                                        ),
-                                      ),
-                                      Text(
-                                        row.currency,
-                                        style: TextStyle(
-                                          fontFamily: 'Chirp',
-                                          fontSize: 12,
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurface
-                                              .withOpacity(0.45),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Icon(
-                                  Icons.chevron_right_rounded,
-                                  size: 18,
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurface
-                                      .withOpacity(0.3),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        if (i < rows.length - 1)
-                          Divider(
-                            height: 1,
-                            indent: 62,
-                            color: Theme.of(context)
-                                .dividerColor
-                                .withOpacity(0.06),
-                          ),
-                      ],
-                    );
-                  }),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 32),
-        ],
+          );
+        },
       ),
     );
   }
 }
 
-// ─── Receive: 3 tabs per wallet ─────────────────────────────────────────────
+/// Username receive — no tabs.
+class AddMoneyUsernameView extends ConsumerWidget {
+  const AddMoneyUsernameView({super.key});
 
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tag = _resolveDayfiTag(ref);
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: DayfiScreenAppBar(
+        title: addMoneyViaTitle('Username'),
+      ),
+      body: AddMoneyUsernameBody(
+        dayfiId: tag?.replaceFirst('@', '') ?? '',
+        hasUsername: tag != null,
+      ),
+    );
+  }
+}
 
-class WalletReceiveView extends ConsumerStatefulWidget {
+/// Bank transfer receive for one currency — no tabs.
+class AddMoneyBankView extends ConsumerWidget {
+  final String currency;
+  final bool retainCurrencySheetOnBack;
+
+  const AddMoneyBankView({
+    super.key,
+    required this.currency,
+    this.retainCurrencySheetOnBack = false,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final hub = ref.watch(walletHubProvider).hub;
+    final c = currency.toUpperCase();
+
+    final scaffold = Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: DayfiScreenAppBar(
+        title: addMoneyViaTitle('Bank transfer'),
+        onBack:
+            retainCurrencySheetOnBack
+                ? () => Navigator.pop(context, false)
+                : null,
+      ),
+      body: AddMoneyBankBody(
+        currency: c,
+        hub: hub,
+        accountName: ref.watch(profileViewModelProvider).userName,
+        onClose:
+            retainCurrencySheetOnBack
+                ? () => Navigator.pop(context, true)
+                : null,
+      ),
+    );
+
+    if (!retainCurrencySheetOnBack) return scaffold;
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) Navigator.pop(context, false);
+      },
+      child: scaffold,
+    );
+  }
+}
+
+/// Cached Stellar/ETH deposit addresses from the wallet hub (same source as bank details).
+Map<String, dynamic>? cryptoReceivePayloadFromHub(WalletHubSnapshot? hub) {
+  if (hub == null) return null;
+  String? stellar;
+  String? eth;
+  for (final w in hub.ledgerWallets) {
+    final s = w.stellarDepositAddress?.trim();
+    if (stellar == null && s != null && s.isNotEmpty) stellar = s;
+    final e = w.ethereumDepositAddress?.trim();
+    if (eth == null && e != null && e.isNotEmpty) eth = e;
+  }
+  if ((stellar ?? '').isEmpty && (eth ?? '').isEmpty) return null;
+  return {
+    'stellarAddress': stellar ?? '',
+    'ethereumAddress': eth ?? '',
+    'networks':
+        CryptoNetworkCatalog.defaultsForReceive(
+          stellarAddress: stellar ?? '',
+          evmAddress: eth ?? '',
+        ).map((n) => {
+          'key': n.key,
+          'name': n.name,
+          'subtitle': n.subtitle,
+          'rail': n.rail,
+          'recommended': n.recommended,
+          'enabled': n.enabled,
+          'assets': n.assets,
+          'address': n.address,
+        }).toList(),
+  };
+}
+
+/// On-chain stablecoin deposit — no tabs.
+class AddMoneyCryptoView extends ConsumerStatefulWidget {
+  final String coin;
+
+  const AddMoneyCryptoView({super.key, required this.coin});
+
+  @override
+  ConsumerState<AddMoneyCryptoView> createState() => _AddMoneyCryptoViewState();
+}
+
+class _AddMoneyCryptoViewState extends ConsumerState<AddMoneyCryptoView> {
+  Map<String, dynamic>? _cryptoDetails;
+  bool _loadingCrypto = false;
+  bool _provisioningCrypto = false;
+  String? _cryptoError;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadCrypto());
+  }
+
+  Future<void> _loadCrypto() async {
+    final cached = cryptoReceivePayloadFromHub(ref.read(walletHubProvider).hub);
+    if (cached != null && mounted) {
+      setState(() {
+        _cryptoDetails = cached;
+        _loadingCrypto = false;
+        _cryptoError = null;
+      });
+      unawaited(_refreshCryptoDetailsSilently());
+      return;
+    }
+
+    setState(() {
+      _loadingCrypto = true;
+      _cryptoError = null;
+    });
+    try {
+      var data = await walletService.fetchReceiveCrypto();
+      final stellar = data['stellarAddress']?.toString().trim() ?? '';
+      final eth = data['ethereumAddress']?.toString().trim() ?? '';
+      if (stellar.isEmpty && eth.isEmpty) {
+        data = await _provisionAndFetchCrypto();
+      }
+      if (mounted) setState(() => _cryptoDetails = data);
+    } catch (e) {
+      try {
+        final data = await _provisionAndFetchCrypto();
+        if (mounted) setState(() => _cryptoDetails = data);
+      } catch (e2) {
+        if (mounted) {
+          setState(() {
+            _cryptoDetails = null;
+            _cryptoError = e2.toString().replaceFirst('Exception: ', '');
+          });
+        }
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loadingCrypto = false;
+          _provisioningCrypto = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _refreshCryptoDetailsSilently() async {
+    try {
+      final data = await walletService.fetchReceiveCrypto();
+      if (!mounted) return;
+      final stellar = data['stellarAddress']?.toString().trim() ?? '';
+      final eth = data['ethereumAddress']?.toString().trim() ?? '';
+      if (stellar.isNotEmpty || eth.isNotEmpty) {
+        setState(() => _cryptoDetails = data);
+      }
+    } catch (_) {
+      // Keep showing cached hub addresses.
+    }
+  }
+
+  Future<void> _refreshCryptoNow() async {
+    setState(() => _loadingCrypto = true);
+    try {
+      await walletService.syncCryptoInflows();
+      await _loadCrypto();
+      await ref.read(walletHubProvider.notifier).refresh();
+      if (mounted) {
+        TopSnackbar.show(context, message: 'Deposits synced');
+        await DayFlowFlow.promptPendingIncome(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        TopSnackbar.show(
+          context,
+          message: e.toString().replaceFirst('Exception: ', ''),
+          isError: true,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loadingCrypto = false);
+    }
+  }
+
+  Future<Map<String, dynamic>> _provisionAndFetchCrypto() async {
+    if (mounted) setState(() => _provisioningCrypto = true);
+    final outcome = await walletProvisionService.runWithProgress((_, __, ___) {});
+    if (!outcome.success) {
+      throw Exception(outcome.errorMessage ?? 'Wallet setup failed');
+    }
+    await ref.read(walletHubProvider.notifier).refresh();
+    return walletService.fetchReceiveCrypto();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final coin = widget.coin.toUpperCase();
+    final hubPayload = cryptoReceivePayloadFromHub(ref.watch(walletHubProvider).hub);
+    final details = _cryptoDetails ?? hubPayload;
+    final hubLoading =
+        ref.watch(walletHubProvider).isLoading && hubPayload == null;
+
+    if (details == null && (_loadingCrypto || _provisioningCrypto || hubLoading)) {
+      return Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        appBar: DayfiScreenAppBar(
+          title: addMoneyViaTitle(kAddMoneyCryptoLabel),
+        ),
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const DayfiLoadingIndicator(),
+              const SizedBox(height: 12),
+              Text(
+                _provisioningCrypto
+                    ? 'Setting up your crypto wallets…'
+                    : 'Loading deposit addresses…',
+                style: TextStyle(
+                  fontFamily: 'Chirp',
+                  fontSize: 13,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.55),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: DayfiScreenAppBar(
+        title: addMoneyViaTitle(kAddMoneyCryptoLabel),
+      ),
+      body: AddMoneyCryptoBody(
+        coin: coin,
+        available: details != null,
+        cryptoPayload: details,
+        errorMessage: _cryptoError,
+        onRefresh: _refreshCryptoNow,
+      ),
+    );
+  }
+}
+
+String? _resolveDayfiTag(WidgetRef ref) {
+  final cached = locator<LocalCache>().getFromLocalCache('dayfi_id');
+  if (cached != null && cached.toString().isNotEmpty) {
+    final t = cached.toString();
+    return t.startsWith('@') ? t : '@$t';
+  }
+  final profile = ref.read(profileViewModelProvider).user;
+  final fromUser = profile?.dayfiId;
+  if (fromUser != null && fromUser.isNotEmpty) {
+    return fromUser.startsWith('@') ? fromUser : '@$fromUser';
+  }
+  for (final w in ref.read(walletHubProvider).hub?.ledgerWallets ?? <Wallet>[]) {
+    if (w.dayfiId.isNotEmpty && w.dayfiId != 'null') {
+      return w.dayfiId.startsWith('@') ? w.dayfiId : '@${w.dayfiId}';
+    }
+  }
+  return null;
+}
+
+/// Legacy wrapper — opens bank receive for a currency (wallet detail Add).
+class WalletReceiveView extends StatelessWidget {
   final String currency;
   final String symbol;
   final String name;
@@ -224,358 +374,186 @@ class WalletReceiveView extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<WalletReceiveView> createState() => _WalletReceiveViewState();
-}
-
-class _WalletReceiveViewState extends ConsumerState<WalletReceiveView>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  Map<String, dynamic>? _cryptoDetails;
-  bool _loadingCrypto = false;
-  bool _provisioningCrypto = false;
-  String? _cryptoError;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(walletHubProvider.notifier).load(showLoading: false);
-    });
-    if (_hasCrypto) _loadCrypto();
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  bool get _hasFiat {
-    final c = widget.currency.toUpperCase();
-    final row = ref.read(walletHubProvider).hub?.rowFor(c);
-    if (c == 'NGN') {
-      return row?.accountNumber != null && row!.accountNumber!.isNotEmpty;
-    }
-    final grey = ref.read(walletHubProvider).hub?.greyFor(c);
-    return grey?.fiatReceiveReady ?? false;
-  }
-
-  bool get _hasCrypto {
-    final c = widget.currency.toUpperCase();
-    return c == 'USD' || c == 'EUR';
-  }
-
-  bool get _fiatComingSoon {
-    final c = widget.currency.toUpperCase();
-    return c != 'NGN' && !_hasFiat;
-  }
-
-  Future<void> _loadCrypto() async {
-    setState(() {
-      _loadingCrypto = true;
-      _cryptoError = null;
-    });
-    try {
-      var data = await walletService.fetchReceiveCrypto();
-      final stellar = data['stellarAddress']?.toString().trim() ?? '';
-      final eth = data['ethereumAddress']?.toString().trim() ?? '';
-      if (stellar.isEmpty && eth.isEmpty) {
-        data = await _provisionAndFetchCrypto();
-      }
-      if (mounted) {
-        setState(() => _cryptoDetails = data);
-      }
-    } catch (e) {
-      try {
-        final data = await _provisionAndFetchCrypto();
-        if (mounted) setState(() => _cryptoDetails = data);
-      } catch (e2) {
-        if (mounted) {
-          setState(() {
-            _cryptoDetails = null;
-            _cryptoError = e2.toString();
-          });
-        }
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _loadingCrypto = false;
-          _provisioningCrypto = false;
-        });
-      }
-    }
-  }
-
-  Future<Map<String, dynamic>> _provisionAndFetchCrypto() async {
-    if (mounted) setState(() => _provisioningCrypto = true);
-    final outcome = await walletProvisionService.runWithProgress((_, __, ___) {});
-    if (!outcome.success) {
-      throw Exception(outcome.errorMessage ?? 'Wallet setup failed');
-    }
-    return walletService.fetchReceiveCrypto();
-  }
-
-  String? get _dayfiTag {
-    final cached = locator<LocalCache>().getFromLocalCache('dayfi_id');
-    if (cached != null && cached.toString().isNotEmpty) {
-      final t = cached.toString();
-      return t.startsWith('@') ? t : '@$t';
-    }
-    final profile = ref.read(profileViewModelProvider).user;
-  final fromUser = profile?.dayfiId;
-    if (fromUser != null && fromUser.isNotEmpty) {
-      return fromUser.startsWith('@') ? fromUser : '@$fromUser';
-    }
-    for (final w in ref.read(walletHubProvider).hub?.ledgerWallets ?? <Wallet>[]) {
-      if (w.dayfiId.isNotEmpty && w.dayfiId != 'null') {
-        return w.dayfiId.startsWith('@') ? w.dayfiId : '@${w.dayfiId}';
-      }
-    }
-    return null;
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final hub = ref.watch(walletHubProvider).hub;
-    final grey = hub?.greyFor(widget.currency);
-    final ngnRow = hub?.rowFor('NGN');
-    final accountName = ref.watch(profileViewModelProvider).userName;
-
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          splashColor: Colors.transparent,
-          highlightColor: Colors.transparent,
-          icon: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            size: 18,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          'Add ${widget.currency}',
-          style: AppTypography.titleMedium.copyWith(
-            fontFamily: 'FunnelDisplay',
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-        ),
-        centerTitle: false,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(48),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18),
-            child: Container(
-              height: 40,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: TabBar(
-                controller: _tabController,
-                indicator: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                indicatorSize: TabBarIndicatorSize.tab,
-                dividerColor: Colors.transparent,
-                labelColor: Colors.white,
-                unselectedLabelColor:
-                    Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-                tabs: const [
-                  Tab(text: 'Username'),
-                  Tab(text: 'Fiat'),
-                  Tab(text: 'Crypto'),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _UsernameTab(
-            dayfiTag: _dayfiTag ?? 'Set your Dayfi Tag in profile',
-            currency: widget.currency,
-          ),
-          _FiatTab(
-            currency: widget.currency,
-            available: _hasFiat,
-            comingSoon: _fiatComingSoon,
-            accountNumber: widget.currency == 'NGN'
-                ? (ngnRow?.accountNumber ?? '')
-                : (grey?.accountNumber ?? grey?.iban ?? ''),
-            bankName: widget.currency == 'NGN'
-                ? (ngnRow?.bankName ?? 'Bank')
-                : (grey?.bankName ?? 'Grey'),
-            routingNumber: '',
-            accountName: accountName,
-            statusLabel: grey?.statusLabel,
-          ),
-          _loadingCrypto || _provisioningCrypto
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const CircularProgressIndicator(),
-                      const SizedBox(height: 12),
-                      Text(
-                        _provisioningCrypto
-                            ? 'Setting up your crypto wallets…'
-                            : 'Loading deposit addresses…',
-                        style: TextStyle(
-                          fontFamily: 'Chirp',
-                          fontSize: 13,
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurface
-                              .withOpacity(0.55),
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              : _CryptoTab(
-                  currency: widget.currency,
-                  available: _hasCrypto && _cryptoDetails != null,
-                  stellarAddress:
-                      _cryptoDetails?['stellarAddress']?.toString() ?? '',
-                  ethAddress:
-                      _cryptoDetails?['ethereumAddress']?.toString() ?? '',
-                  errorMessage: _cryptoError,
-                ),
-        ],
-      ),
-    );
+    return AddMoneyBankView(currency: currency);
   }
 }
 
-class _UsernameTab extends StatelessWidget {
-  final String dayfiTag;
-  final String currency;
+// ─── Shared receive bodies ───────────────────────────────────────────────────
 
-  const _UsernameTab({required this.dayfiTag, required this.currency});
+class AddMoneyUsernameBody extends StatelessWidget {
+  final String dayfiId;
+  final bool hasUsername;
 
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(18, 24, 18, 32),
-      child: Column(
-        children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Column(
-              children: [
-                Icon(
-                  Icons.alternate_email_rounded,
-                  size: 32,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Your Dayfi Tag',
-                  style: TextStyle(
-                    fontFamily: 'Chirp',
-                    fontSize: 13,
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withOpacity(0.5),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  dayfiTag,
-                  style: TextStyle(
-                    fontFamily: 'FunnelDisplay',
-                    fontSize: 26,
-                    fontWeight: FontWeight.w700,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Anyone on Dayfi can send $currency to your tag.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: 'Chirp',
-                    fontSize: 13,
-                    height: 1.5,
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withOpacity(0.5),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 14),
-          _CopyButton(label: 'Copy tag', value: dayfiTag),
-          const SizedBox(height: 12),
-          _ShareButton(value: dayfiTag),
-        ],
-      ),
-    );
-  }
-}
-
-class _FiatTab extends ConsumerStatefulWidget {
-  final String currency;
-  final bool available;
-  final bool comingSoon;
-  final String accountNumber;
-  final String bankName;
-  final String routingNumber;
-  final String accountName;
-  final String? statusLabel;
-
-  const _FiatTab({
-    required this.currency,
-    required this.available,
-    required this.comingSoon,
-    required this.accountNumber,
-    required this.bankName,
-    required this.routingNumber,
-    required this.accountName,
-    this.statusLabel,
+  const AddMoneyUsernameBody({
+    super.key,
+    required this.dayfiId,
+    required this.hasUsername,
   });
 
   @override
-  ConsumerState<_FiatTab> createState() => _FiatTabState();
+  Widget build(BuildContext context) {
+    if (!hasUsername) {
+      return DayfiReceiveTabShell(
+        showTitle: false,
+        description: UsernameCopy.setInProfile,
+        primaryButtonText: UsernameCopy.create,
+        onPrimaryPressed: () {
+          Navigator.pushNamed(context, AppRoute.dayfiTagExplanationView);
+        },
+      );
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.only(top: 8, bottom: 32),
+      child: DayfiUsernameShareContent(
+        dayfiId: dayfiId,
+        showTitle: false,
+        onClose: () => Navigator.pop(context),
+      ),
+    );
+  }
 }
 
-class _FiatTabState extends ConsumerState<_FiatTab> {
-  bool _provisioning = false;
+class AddMoneyBankBody extends ConsumerStatefulWidget {
+  final String currency;
+  final WalletHubSnapshot? hub;
+  final String accountName;
+  final VoidCallback? onClose;
 
-  Future<void> _requestNgnAccount() async {
-    setState(() => _provisioning = true);
+  const AddMoneyBankBody({
+    super.key,
+    required this.currency,
+    required this.hub,
+    required this.accountName,
+    this.onClose,
+  });
+
+  @override
+  ConsumerState<AddMoneyBankBody> createState() => _AddMoneyBankBodyState();
+}
+
+class _AddMoneyBankBodyState extends ConsumerState<AddMoneyBankBody> {
+  bool _provisioning = false;
+  bool _refreshingAfterKyc = false;
+  String? _provisionError;
+
+  bool _canCreateNgnAccount(User? user) {
+    return TierUtils.canProvisionNgnVirtualAccount(user);
+  }
+
+  bool _canCreateNgnAccountNow() {
+    return _canCreateNgnAccount(ref.watch(profileViewModelProvider).user);
+  }
+
+  bool _needsNgnIdentityVerification(User? user) {
+    if (user == null) return true;
+    return !_canCreateNgnAccount(user);
+  }
+
+  bool _needsNgnIdentityVerificationNow() {
+    return _needsNgnIdentityVerification(
+      ref.watch(profileViewModelProvider).user,
+    );
+  }
+
+  bool get _hasBankDetails {
+    final currency = widget.currency.toUpperCase();
+    final grey = widget.hub?.greyFor(currency);
+    final ngnRow = widget.hub?.rowFor('NGN');
+    if (currency == 'NGN') {
+      return ngnRow?.accountNumber?.isNotEmpty ?? false;
+    }
+    return grey?.hasBankDisplayDetails ?? false;
+  }
+
+  String _kycSuccessMessage({
+    required KycUpgradeOutcome? outcome,
+    required bool hasNgnAccount,
+  }) {
+    final fromFlow = outcome?.message?.trim();
+    if (fromFlow != null && fromFlow.isNotEmpty) return fromFlow;
+    if (widget.currency.toUpperCase() == 'NGN' && hasNgnAccount) {
+      return 'Your NGN bank account is ready.';
+    }
+    return 'Verification complete.';
+  }
+
+  Future<void> _openUpgradeFlow() async {
+    final outcome = await KycFlowNavigation.startUpgrade(
+      context,
+      ref: ref,
+      showBackButton: true,
+      showIntro: false,
+    );
+    if (!mounted || outcome?.success != true) return;
+
+    setState(() => _refreshingAfterKyc = true);
+    try {
+      await ref.read(profileViewModelProvider.notifier).loadUserProfile();
+      await ref.read(walletHubProvider.notifier).refresh();
+      if (!mounted) return;
+
+      final refreshedHub = ref.read(walletHubProvider).hub;
+      final hasNgnAccount =
+          refreshedHub?.rowFor('NGN')?.accountNumber?.isNotEmpty ?? false;
+      TopSnackbar.showSafe(
+        context,
+        message: _kycSuccessMessage(
+          outcome: outcome,
+          hasNgnAccount: hasNgnAccount,
+        ),
+      );
+
+      final hasBankDetailsNow =
+          widget.currency.toUpperCase() == 'NGN'
+              ? hasNgnAccount
+              : (refreshedHub?.greyFor(widget.currency)?.hasBankDisplayDetails ??
+                  false);
+
+      if (widget.currency.toUpperCase() == 'NGN' &&
+          !hasBankDetailsNow &&
+          _canCreateNgnAccount(ref.read(profileViewModelProvider).user)) {
+        await _requestNgnAccount(showSuccessSnackbar: false);
+      }
+    } finally {
+      if (mounted) setState(() => _refreshingAfterKyc = false);
+    }
+  }
+
+  Future<void> _requestNgnAccount({bool showSuccessSnackbar = true}) async {
+    final user = ref.read(profileViewModelProvider).user;
+    if (!_canCreateNgnAccount(user)) {
+      if (mounted) {
+        setState(() {
+          _provisionError =
+              'Verify your BVN first to create your NGN bank account.';
+        });
+      }
+      return;
+    }
+
+    setState(() {
+      _provisioning = true;
+      _provisionError = null;
+    });
     try {
       await walletService.provisionNgnFiatAccount();
       await ref.read(walletHubProvider.notifier).refresh();
-      if (mounted) {
+      if (mounted && showSuccessSnackbar) {
         TopSnackbar.show(context, message: 'NGN account details updated');
       }
     } catch (e) {
+      final message = e.toString().replaceFirst('Exception: ', '');
       if (mounted) {
+        setState(() {
+          _provisionError = message.contains('BVN')
+              ? 'Verify your BVN to create your NGN bank account.'
+              : message;
+        });
         TopSnackbar.show(
           context,
-          message: e.toString().replaceFirst('Exception: ', ''),
+          message: message,
           isError: true,
         );
       }
@@ -586,530 +564,431 @@ class _FiatTabState extends ConsumerState<_FiatTab> {
 
   @override
   Widget build(BuildContext context) {
-    final currency = widget.currency;
-    final available = widget.available;
-    final comingSoon = widget.comingSoon;
-    final accountNumber = widget.accountNumber;
-    final bankName = widget.bankName;
-    final routingNumber = widget.routingNumber;
-    final accountName = widget.accountName;
-    final statusLabel = widget.statusLabel;
-    if (comingSoon) {
-      return _UnavailableTab(
-        icon: Icons.account_balance_rounded,
-        title: 'Bank transfer — coming soon',
-        message:
-            'Fiat virtual accounts for $currency via Grey will appear here once KYB is complete. You can still receive via Username or Crypto (where available).',
-        badge: statusLabel ?? 'Coming soon',
-      );
-    }
+    final currency = widget.currency.toUpperCase();
+    final grey = widget.hub?.greyFor(currency);
+    final ngnRow = widget.hub?.rowFor('NGN');
+    final greyAccountNumber = grey?.accountNumber ?? '';
+    final greyIban = grey?.iban ?? '';
+    final bankName =
+        currency == 'NGN'
+            ? (ngnRow?.bankName ?? 'Bank')
+            : (grey?.bankName ?? 'Grey');
 
-    if (!available || accountNumber.isEmpty) {
-      if (currency == 'NGN') {
-        return Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.account_balance_rounded, size: 40),
-                const SizedBox(height: 16),
-                const Text(
-                  'Request NGN bank account',
-                  style: TextStyle(fontFamily: 'Chirp', fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Get a Flutterwave virtual account to receive NGN by bank transfer.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontFamily: 'Chirp', fontSize: 13),
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: _provisioning ? null : _requestNgnAccount,
-                  child: _provisioning
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('Request bank account'),
-                ),
-              ],
-            ),
-          ),
-        );
-      }
-      return _UnavailableTab(
-        icon: Icons.account_balance_rounded,
-        title: 'Bank account not ready',
-        message:
-            'Complete verification in Grey to activate this account.',
-      );
-    }
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(18, 24, 18, 32),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _InfoBanner(
-            icon: Icons.info_outline_rounded,
-            message: currency == 'NGN'
-                ? 'Send NGN to this account. Deposits credit your unified USD balance after FX.'
-                : 'Wire or ACH to this account. Funds credit your USD balance.',
-          ),
-          const SizedBox(height: 16),
-          Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Column(
-              children: [
-                _DetailRow(label: 'Bank name', value: bankName),
-                _DetailRow(
-                  label: 'Account number',
-                  value: accountNumber,
-                  copyable: true,
-                ),
-                if (currency == 'USD' && routingNumber.isNotEmpty)
-                  _DetailRow(
-                    label: 'Routing number',
-                    value: routingNumber,
-                    copyable: true,
-                  ),
-                _DetailRow(label: 'Account name', value: accountName),
-                _DetailRow(label: 'Currency', value: currency),
-              ],
-            ),
-          ),
-          const SizedBox(height: 14),
-          _CopyButton(label: 'Copy account number', value: accountNumber),
-        ],
-      ),
+    return _FiatTab(
+      currency: currency,
+      hasDisplayDetails: _hasBankDetails,
+      isDemoAccount: grey?.isDemoAccount ?? false,
+      accountNumber:
+          currency == 'NGN' ? (ngnRow?.accountNumber ?? '') : greyAccountNumber,
+      iban: greyIban,
+      bankName: bankName,
+      routingNumber: grey?.routingNumber ?? '',
+      accountName: widget.accountName,
+      statusLabel: grey?.statusLabel,
+      provisioning: _provisioning,
+      refreshingAfterKyc: _refreshingAfterKyc,
+      onRequestNgnAccount: _requestNgnAccount,
+      onUpgrade: _openUpgradeFlow,
+      needsNgnIdentityVerification: _needsNgnIdentityVerificationNow(),
+      canCreateNgnAccount: _canCreateNgnAccountNow(),
+      provisionError: _provisionError,
+      onClose: widget.onClose,
     );
   }
 }
 
-class _CryptoTab extends StatefulWidget {
-  final String currency;
+class AddMoneyCryptoBody extends StatefulWidget {
+  final String coin;
   final bool available;
-  final String stellarAddress;
-  final String ethAddress;
+  final Map<String, dynamic>? cryptoPayload;
   final String? errorMessage;
+  final Future<void> Function()? onRefresh;
 
-  const _CryptoTab({
-    required this.currency,
+  const AddMoneyCryptoBody({
+    super.key,
+    required this.coin,
     required this.available,
-    required this.stellarAddress,
-    required this.ethAddress,
+    this.cryptoPayload,
     this.errorMessage,
+    this.onRefresh,
   });
 
   @override
-  State<_CryptoTab> createState() => _CryptoTabState();
+  State<AddMoneyCryptoBody> createState() => _AddMoneyCryptoBodyState();
 }
 
-class _CryptoTabState extends State<_CryptoTab> {
-  String _selectedNetwork = 'stellar';
+class _AddMoneyCryptoBodyState extends State<AddMoneyCryptoBody> {
+  String _selectedNetworkKey = 'stellar';
+  late List<CryptoNetworkOption> _networks;
 
-  String get _coinLabel => widget.currency == 'EUR' ? 'EURC' : 'USDC';
+  @override
+  void initState() {
+    super.initState();
+    _networks = _resolveNetworks();
+    _selectedNetworkKey = _defaultNetworkKey();
+  }
 
-  String get _currentAddress => _selectedNetwork == 'stellar'
-      ? widget.stellarAddress
-      : widget.ethAddress;
+  @override
+  void didUpdateWidget(covariant AddMoneyCryptoBody oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.cryptoPayload != widget.cryptoPayload) {
+      _networks = _resolveNetworks();
+      if (!_networks.any((n) => n.key == _selectedNetworkKey && _hasAddress(n))) {
+        _selectedNetworkKey = _defaultNetworkKey();
+      }
+    }
+  }
+
+  List<CryptoNetworkOption> _resolveNetworks() {
+    final payload = widget.cryptoPayload;
+    final stellar = payload?['stellarAddress']?.toString() ?? '';
+    final eth = payload?['ethereumAddress']?.toString() ?? '';
+    return CryptoNetworkCatalog.parseReceiveNetworks(
+      payload,
+      stellarAddress: stellar,
+      evmAddress: eth,
+    );
+  }
+
+  List<CryptoNetworkOption> get _readyNetworks =>
+      _networks.where((n) => n.enabled && n.address.trim().isNotEmpty).toList();
+
+  String _defaultNetworkKey() {
+    final ready = _readyNetworks;
+    if (ready.isEmpty) return 'stellar';
+    final recommended = ready.where((n) => n.recommended);
+    if (recommended.isNotEmpty) return recommended.first.key;
+    return ready.first.key;
+  }
+
+  bool _hasAddress(CryptoNetworkOption network) =>
+      network.enabled && network.address.trim().isNotEmpty;
+
+  CryptoNetworkOption? get _selectedNetwork =>
+      CryptoNetworkCatalog.find(_networks, _selectedNetworkKey) ??
+      CryptoNetworkCatalog.find(_readyNetworks, _selectedNetworkKey);
+
+  String get _currentAddress => _selectedNetwork?.address.trim() ?? '';
+
+  Future<void> _openNetworkPicker() async {
+    final coin = widget.coin.toUpperCase();
+    await showCryptoNetworkPickerSheet(
+      context: context,
+      title: 'Choose network',
+      subtitle: 'Receive $coin on the selected network',
+      networks: _networks,
+      selectedKey: _selectedNetworkKey,
+      receiveMode: true,
+      onSelected: (network) {
+        setState(() => _selectedNetworkKey = network.key);
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     if (!widget.available) {
-      return _UnavailableTab(
-        icon: Icons.currency_bitcoin_rounded,
-        title: widget.currency == 'GBP'
-            ? 'GBP crypto not supported'
-            : 'Could not load deposit address',
-        message: widget.currency == 'GBP'
-            ? 'GBP has no standard USDC/EURC-style token on Ethereum testnet. Use Fiat or Convert.'
-            : (widget.errorMessage ??
-                'Pull to refresh or try again in a moment.'),
+      return DayfiReceiveTabShell(
+        showTitle: false,
+        description:
+            widget.errorMessage ?? 'Pull to refresh or try again in a moment.',
+        showCloseButton: true,
       );
     }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(18, 24, 18, 32),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Select network',
+    final coin = widget.coin.toUpperCase();
+    final network = _selectedNetwork;
+    final networkLabel =
+        network == null
+            ? 'Network'
+            : CryptoNetworkCatalog.displayNetworkLabel(network);
+    final networkShort = network?.name ?? 'Network';
+    final shareText = '$coin deposit ($networkShort)\n$_currentAddress';
+
+    final body = DayfiReceiveTabShell(
+      showTitle: false,
+      description:
+          'Only send $coin on $networkShort. Other assets may be lost.',
+      showCloseButton: true,
+      children: [
+        CryptoNetworkSelectorField(
+          iconAsset: CryptoNetworkCatalog.iconAsset(_selectedNetworkKey),
+          value: networkShort,
+          onTap: _openNetworkPicker,
+        ),
+        const SizedBox(height: 6),
+        Center(
+          child: Text(
+            'via $coin on $networkShort',
             style: TextStyle(
               fontFamily: 'Chirp',
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              fontSize: 12.5,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.45),
             ),
           ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: _NetworkChip(
-                  label: 'Stellar',
-                  sublabel: 'Recommended',
-                  selected: _selectedNetwork == 'stellar',
-                  onTap: () => setState(() => _selectedNetwork = 'stellar'),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _NetworkChip(
-                  label: 'Ethereum',
-                  sublabel: 'ERC-20',
-                  selected: _selectedNetwork == 'eth',
-                  onTap: () => setState(() => _selectedNetwork = 'eth'),
-                ),
-              ),
-            ],
+        ),
+        const SizedBox(height: 16),
+        if (_currentAddress.isEmpty) ...[
+          Text(
+            'No deposit address for this network yet.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: 'Chirp',
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.55),
+            ),
           ),
-          const SizedBox(height: 16),
-          _InfoBanner(
-            icon: Icons.warning_amber_rounded,
-            message:
-                'Only send $_coinLabel on ${_selectedNetwork == 'stellar' ? 'Stellar' : 'Ethereum (ERC-20)'}. Other assets may be lost.',
-            isWarning: true,
-          ),
-          const SizedBox(height: 16),
+        ] else ...[
           Center(
             child: Container(
               padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-              ),
               child: QrImageView(
                 data: _currentAddress,
                 version: QrVersions.auto,
-                size: 200,
+                size: MediaQuery.of(context).size.width * 0.5,
                 backgroundColor: Colors.white,
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Column(
-              children: [
-                _DetailRow(label: 'Token', value: _coinLabel),
-                _DetailRow(
-                  label: 'Network',
-                  value: _selectedNetwork == 'stellar'
-                      ? 'Stellar Network'
-                      : 'Ethereum (ERC-20)',
-                ),
-                _DetailRow(
-                  label: 'Address',
-                  value: _currentAddress,
-                  copyable: true,
-                  truncate: true,
-                ),
-              ],
-            ),
+          const SizedBox(height: 24),
+          DayfiReadonlyCopyField(
+            label: 'Wallet address',
+            value: _currentAddress,
+            shareText: shareText,
+            shareSubject: '$coin deposit',
+            maxLines: 4,
           ),
-          const SizedBox(height: 14),
-          _CopyButton(label: 'Copy address', value: _currentAddress),
-          const SizedBox(height: 12),
-          _ShareButton(value: _currentAddress),
         ],
-      ),
+        const SizedBox(height: 20),
+        DayfiReceiveExtraDetailsCard(
+          rows: [
+            (label: 'Token', value: coin),
+            (label: 'Network', value: networkLabel),
+          ],
+        ),
+        const SizedBox(height: 32),
+      ],
     );
+
+    if (widget.onRefresh == null) return body;
+    return RefreshIndicator(onRefresh: widget.onRefresh!, child: body);
   }
 }
 
-// ─── Shared widgets ───────────────────────────────────────────────────────────
+// ─── Bank transfer body ──────────────────────────────────────────────────────
 
-class _DetailRow extends StatelessWidget {
-  final String label;
-  final String value;
-  final bool copyable;
-  final bool truncate;
+class _FiatTab extends StatelessWidget {
+  final String currency;
+  final bool hasDisplayDetails;
+  final bool isDemoAccount;
+  final String accountNumber;
+  final String iban;
+  final String bankName;
+  final String routingNumber;
+  final String accountName;
+  final String? statusLabel;
+  final bool provisioning;
+  final bool refreshingAfterKyc;
+  final VoidCallback onRequestNgnAccount;
+  final VoidCallback onUpgrade;
+  final bool needsNgnIdentityVerification;
+  final bool canCreateNgnAccount;
+  final String? provisionError;
+  final VoidCallback? onClose;
 
-  const _DetailRow({
-    required this.label,
-    required this.value,
-    this.copyable = false,
-    this.truncate = false,
+  const _FiatTab({
+    required this.currency,
+    required this.hasDisplayDetails,
+    required this.isDemoAccount,
+    required this.accountNumber,
+    required this.iban,
+    required this.bankName,
+    required this.routingNumber,
+    required this.accountName,
+    this.statusLabel,
+    required this.provisioning,
+    this.refreshingAfterKyc = false,
+    required this.onRequestNgnAccount,
+    required this.onUpgrade,
+    required this.needsNgnIdentityVerification,
+    required this.canCreateNgnAccount,
+    this.provisionError,
+    this.onClose,
   });
+
+  GreyDemoBankDetails? get _greyDemo => greyDemoBankFor(currency);
+
+  bool get _usesGreyDemo =>
+      !hasDisplayDetails && supportsGreyDemoBankTab(currency);
+
+  bool get _showBankDetails => hasDisplayDetails || _usesGreyDemo;
+
+  String get _bankName => _usesGreyDemo ? _greyDemo!.bankName : bankName;
+
+  String get _accountNumber =>
+      _usesGreyDemo ? _greyDemo!.accountNumber : accountNumber;
+
+  String get _iban => _usesGreyDemo ? _greyDemo!.iban : iban;
+
+  String get _routingNumber =>
+      _usesGreyDemo ? _greyDemo!.routingNumber : routingNumber;
+
+  bool get _isDemoBank => isDemoAccount || _usesGreyDemo;
+
+  String _routingLabel(String c) {
+    switch (c.toUpperCase()) {
+      case 'GBP':
+        return 'Sort code';
+      case 'EUR':
+        return _iban.isNotEmpty ? 'BIC' : 'Routing number';
+      case 'USD':
+        return 'Routing number';
+      default:
+        return 'Routing number';
+    }
+  }
+
+  String _primaryAccountValue() {
+    if (currency.toUpperCase() == 'EUR' && _iban.isNotEmpty) {
+      return _iban;
+    }
+    return _accountNumber;
+  }
+
+  String _primaryAccountLabel() {
+    if (currency.toUpperCase() == 'EUR' && _iban.isNotEmpty) {
+      return 'IBAN';
+    }
+    return 'Account number';
+  }
+
+  String _shareText() {
+    final lines = <String>[
+      'Bank: $_bankName',
+      '${_primaryAccountLabel()}: ${_primaryAccountValue()}',
+    ];
+    if (_routingNumber.isNotEmpty) {
+      lines.add('${_routingLabel(currency)}: $_routingNumber');
+    }
+    if (accountName.isNotEmpty) {
+      lines.add('Name: $accountName');
+    }
+    lines.add('Currency: ${currency.toUpperCase()}');
+    return lines.join('\n');
+  }
+
+  Widget _buildBankDetailsContent() {
+    final c = currency.toUpperCase();
+    final isDemo = _isDemoBank;
+    final primaryValue = _primaryAccountValue();
+    final statusMessage =
+        isDemo
+            ? 'Sample Grey sandbox account for demo. '
+                'Real wire deposits credit your wallet after business verification.'
+            : c == 'NGN'
+            ? 'Send NGN to this account. Deposits credit your global balance.'
+            : 'Wire or transfer to this account. Funds credit your global balance.';
+
+    final extraRows = <({String label, String value})>[
+      (label: 'Bank name', value: _bankName),
+      if (accountName.isNotEmpty) (label: 'Account name', value: accountName),
+      if (_routingNumber.isNotEmpty)
+        (label: _routingLabel(c), value: _routingNumber),
+      (label: 'Currency', value: c),
+      if (isDemo)
+        (
+          label: 'Status',
+          value: statusLabel ?? 'Demo · Grey sandbox',
+        ),
+    ];
+
+    return DayfiReceiveTabShell(
+      showTitle: false,
+      description: statusMessage,
+      showCloseButton: true,
+      onClose: onClose,
+      children: [
+        DayfiReadonlyCopyField(
+          label: _primaryAccountLabel(),
+          value: primaryValue,
+          shareText: _shareText(),
+          shareSubject: 'Bank account ($currency)',
+          maxLines: currency.toUpperCase() == 'EUR' ? 4 : 3,
+        ),
+        const SizedBox(height: 20),
+        DayfiReceiveExtraDetailsCard(rows: extraRows),
+        const SizedBox(height: 32),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final display = truncate && value.length > 16
-        ? '${value.substring(0, 8)}...${value.substring(value.length - 6)}'
-        : value;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      child: Row(
+    final c = currency.toUpperCase();
+
+    if (refreshingAfterKyc) {
+      return DayfiReceiveTabShell(
+        showTitle: false,
+        description: 'Loading your bank account details…',
+        showCloseButton: true,
+        onClose: onClose,
+        children: const [
+          Padding(
+            padding: EdgeInsets.only(bottom: 24),
+            child: DayfiLoadingCenter(),
+          ),
+        ],
+      );
+    }
+
+    if (_showBankDetails) {
+      return _buildBankDetailsContent();
+    }
+
+    if (c == 'NGN') {
+      if (needsNgnIdentityVerification) {
+        return _NgnUpgradeRequired(onUpgrade: onUpgrade);
+      }
+      final errorText = provisionError?.trim();
+      return DayfiReceiveTabShell(
+        showTitle: false,
+        description:
+            provisioning
+                ? 'Creating your NGN virtual account. This usually takes a few seconds.'
+                : errorText?.isNotEmpty == true
+                ? errorText!
+                : 'Tap below to create your NGN virtual account for bank transfers.',
+        primaryButtonText:
+            provisioning || !canCreateNgnAccount ? null : 'Create bank account',
+        onPrimaryPressed:
+            provisioning || !canCreateNgnAccount ? null : onRequestNgnAccount,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'Chirp',
-              fontSize: 13,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+          if (provisioning)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 24),
+              child: DayfiLoadingCenter(),
             ),
-          ),
-          const Spacer(),
-          Flexible(
-            child: Text(
-              display,
-              textAlign: TextAlign.end,
-              style: TextStyle(
-                fontFamily: 'Chirp',
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-            ),
-          ),
-          if (copyable && value.isNotEmpty) ...[
-            const SizedBox(width: 8),
-            GestureDetector(
-              onTap: () {
-                Clipboard.setData(ClipboardData(text: value));
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Copied', style: TextStyle(fontFamily: 'Chirp')),
-                    duration: Duration(seconds: 1),
-                  ),
-                );
-              },
-              child: Icon(
-                Icons.copy_rounded,
-                size: 14,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-            ),
-          ],
         ],
-      ),
-    );
+      );
+    }
+
+    return const SizedBox.shrink();
   }
 }
 
-class _InfoBanner extends StatelessWidget {
-  final IconData icon;
-  final String message;
-  final bool isWarning;
+class _NgnUpgradeRequired extends StatelessWidget {
+  final VoidCallback onUpgrade;
 
-  const _InfoBanner({
-    required this.icon,
-    required this.message,
-    this.isWarning = false,
-  });
+  const _NgnUpgradeRequired({required this.onUpgrade});
 
   @override
   Widget build(BuildContext context) {
-    final color =
-        isWarning ? AppColors.warning600 : Theme.of(context).colorScheme.primary;
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.07),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 16, color: color),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              message,
-              style: TextStyle(
-                fontFamily: 'Chirp',
-                fontSize: 12,
-                height: 1.5,
-                color: color,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _UnavailableTab extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String message;
-  final String? badge;
-
-  const _UnavailableTab({
-    required this.icon,
-    required this.title,
-    required this.message,
-    this.badge,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 40, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.25)),
-            const SizedBox(height: 16),
-            if (badge != null)
-              Container(
-                margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  badge!,
-                  style: TextStyle(
-                    fontFamily: 'Chirp',
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                ),
-              ),
-            Text(title, textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Chirp',
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: Theme.of(context).colorScheme.onSurface,
-              )),
-            const SizedBox(height: 8),
-            Text(message, textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Chirp',
-                fontSize: 13,
-                height: 1.5,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.45),
-              )),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _CopyButton extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _CopyButton({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton.icon(
-        onPressed: value.isEmpty
-            ? null
-            : () {
-                Clipboard.setData(ClipboardData(text: value));
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Copied')),
-                );
-              },
-        icon: const Icon(Icons.copy_rounded, size: 16),
-        label: Text(label),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      ),
-    );
-  }
-}
-
-class _ShareButton extends StatelessWidget {
-  final String value;
-  const _ShareButton({required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton.icon(
-        onPressed: value.isEmpty ? null : () => Share.share(value),
-        icon: const Icon(Icons.share_rounded, size: 16),
-        label: const Text('Share'),
-        style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      ),
-    );
-  }
-}
-
-class _NetworkChip extends StatelessWidget {
-  final String label;
-  final String sublabel;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _NetworkChip({
-    required this.label,
-    required this.sublabel,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: selected
-              ? Theme.of(context).colorScheme.primary.withOpacity(0.08)
-              : Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: selected
-                ? Theme.of(context).colorScheme.primary
-                : Colors.transparent,
-            width: 1.5,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label,
-              style: TextStyle(
-                fontFamily: 'Chirp',
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: selected
-                    ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context).colorScheme.onSurface,
-              )),
-            Text(sublabel,
-              style: TextStyle(
-                fontFamily: 'Chirp',
-                fontSize: 11,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.45),
-              )),
-          ],
-        ),
-      ),
+    return DayfiReceiveTabShell(
+      showTitle: false,
+      description:
+          'Verify your BVN to get a Nigerian bank account for deposits. '
+          'It takes about 30 seconds.',
+      primaryButtonText: 'Verify identity',
+      onPrimaryPressed: onUpgrade,
     );
   }
 }

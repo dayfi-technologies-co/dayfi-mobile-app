@@ -3,12 +3,12 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
-import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/services/local/biometric_service.dart';
 import 'package:dayfi/services/local/secure_storage.dart';
 import 'package:dayfi/services/remote/auth_service.dart';
 import 'package:dayfi/common/constants/storage_keys.dart';
+import 'package:dayfi/common/helpers/biometric_preferences.dart';
 
 class BiometricSetupState {
   final bool isAvailable;
@@ -69,8 +69,7 @@ class BiometricSetupNotifier extends StateNotifier<BiometricSetupState> {
     try {
       AppLogger.info('Initializing biometric setup...');
 
-      // Check if biometrics are available
-      final bool isAvailable = await BiometricService.isBiometricAvailable();
+      final bool isAvailable = await BiometricService.isDeviceBiometricCapable();
       AppLogger.info('Biometric available: $isAvailable');
 
       if (!isAvailable) {
@@ -187,24 +186,17 @@ class BiometricSetupNotifier extends StateNotifier<BiometricSetupState> {
           // Continue with local setup even if backend fails
         }
 
-        // Save biometric preference locally
-        await _secureStorage.write('biometric_enabled', 'true');
-        // Mark biometric setup as completed
-        await _secureStorage.write(StorageKeys.biometricSetupCompleted, 'true');
+        await BiometricPreferences.setEnabled(true);
+        await _secureStorage.write(
+          StorageKeys.biometricSetupCompleted,
+          'true',
+        );
 
         AppLogger.info('Biometric authentication enabled successfully');
 
         state = state.copyWith(isEnabled: true, isBusy: false);
 
-        TopSnackbar.show(
-          context,
-          message: '${state.biometricDescription} enabled successfully!',
-          isError: false,
-        );
-
-        // Navigate to main view after a short delay
-        await Future.delayed(const Duration(milliseconds: 1500));
-        appRouter.pushNamed(AppRoute.mainView);
+        _finishSetup(context);
       } else {
         AppLogger.info('Biometric authentication was cancelled or failed');
         state = state.copyWith(
@@ -252,7 +244,7 @@ class BiometricSetupNotifier extends StateNotifier<BiometricSetupState> {
         // }
 
         // Save preference to skip biometrics locally
-        await _secureStorage.write('biometric_enabled', 'false');
+        await BiometricPreferences.setEnabled(false);
       } catch (e) {
         AppLogger.error('Error updating biometric skip status: $e');
         // Continue even if backend fails
@@ -276,6 +268,18 @@ class BiometricSetupNotifier extends StateNotifier<BiometricSetupState> {
         isError: true,
       );
     }
+  }
+
+  void _finishSetup(BuildContext context) {
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop(true);
+      return;
+    }
+    if (appRouter.canPop()) {
+      appRouter.pop(true);
+      return;
+    }
+    appRouter.pushMainAndClearStack();
   }
 
   Future<void> retrySetup() async {

@@ -1,3 +1,5 @@
+import 'package:dayfi/common/helpers/wallet_transaction_display.dart';
+import 'package:dayfi/common/services/feature_activity_service.dart';
 import 'package:dayfi/services/local/local_cache.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dayfi/models/wallet_transaction.dart';
@@ -64,7 +66,9 @@ class TransactionsNotifier extends StateNotifier<TransactionsState> {
               (cached is String)
                   ? (walletTransactionsFromJson(cached))
                   : (cached as List<dynamic>);
-          final txs = txJson.map((e) => WalletTransaction.fromJson(e)).toList();
+          final txs = WalletTransactionDisplay.dedupeTransactions(
+            txJson.map((e) => WalletTransaction.fromJson(e)).toList(),
+          );
           final grouped = _groupTransactionsByDate(txs);
           state = state.copyWith(
             transactions: txs,
@@ -101,17 +105,19 @@ class TransactionsNotifier extends StateNotifier<TransactionsState> {
           allTransactions.addAll(response.data.transactions);
         }
       }
-      final groupedTransactions = _groupTransactionsByDate(allTransactions);
+      final deduped = WalletTransactionDisplay.dedupeTransactions(allTransactions);
+      final groupedTransactions = _groupTransactionsByDate(deduped);
       // Cache transactions
       await _localCache.saveToLocalCache(
         key: 'transactions',
-        value: allTransactions.map((e) => e.toJson()).toList(),
+        value: deduped.map((e) => e.toJson()).toList(),
       );
       state = state.copyWith(
-        transactions: allTransactions,
+        transactions: deduped,
         groupedTransactions: groupedTransactions,
         isLoading: false,
       );
+      FeatureActivityService.instance.updateFromTransactions(allTransactions);
       // Reapply any existing search/filters
       if (state.searchQuery.isNotEmpty || state.filters.hasActiveFilters) {
         _applyFiltersAndSort();

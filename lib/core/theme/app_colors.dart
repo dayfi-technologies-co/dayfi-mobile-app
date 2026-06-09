@@ -50,6 +50,10 @@ class AppColors {
   static const Color neutral900 = Color.fromARGB(255, 32, 32, 32);
   static const Color neutral950 = Color.fromARGB(255, 9, 9, 9);
 
+  /// Splash / bootstrap — matches [AppTheme] scaffold backgrounds.
+  static const Color splashBackgroundLight = Color(0xffFEF9F3);
+  static const Color splashBackgroundDark = neutral950;
+
   // ============================================================================
   // SEMANTIC COLORS
   // ============================================================================
@@ -135,6 +139,9 @@ class AppColors {
   static const Color pink800 = Color(0xFFAD1F66);
   static const Color pink900 = Color(0xFF8B1852);
   static const Color pink950 = Color(0xFF68123D);
+
+  /// Dominant coral from the People bottom-nav icon (`recipients.svg` heart).
+  static const Color peopleTab500 = Color(0xFFEC5865);
 
   /// Teal accent colors
   static const Color teal50 = Color(0xFFE0FAEC);

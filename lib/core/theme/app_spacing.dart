@@ -95,7 +95,7 @@ class AppSpacings {
   static const double k650 = 650;
   static const double k700 = 700;
 
-  static const double webWidth = 1080;
+  static const double webWidth = 1280;
   static const double elementSpacing = k20 * 0.5;
   static const double cardOutlineWidth = 0.25;
 

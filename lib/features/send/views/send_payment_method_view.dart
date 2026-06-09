@@ -1,4 +1,5 @@
 import 'package:dayfi/common/widgets/error_state_widget.dart';
+import 'package:dayfi/common/constants/username_copy.dart';
 import 'package:dayfi/common/widgets/shimmer_widgets.dart';
 import 'dart:convert';
 import 'dart:developer';
@@ -16,6 +17,7 @@ import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/services/remote/payment_service.dart';
 import 'package:dayfi/app_locator.dart';
+import 'package:dayfi/features/send/constants/send_copy.dart';
 import 'package:dayfi/features/send/vm/send_viewmodel.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/models/payment_response.dart' as payment;
@@ -30,7 +32,7 @@ import 'package:dayfi/services/remote/wallet_service.dart';
 import 'package:dayfi/features/send/views/bank_transfer_amount_view.dart';
 import 'package:dayfi/common/utils/phone_country_utils.dart';
 import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
-import 'package:intercom_flutter/intercom_flutter.dart';
+import 'package:dayfi/services/local/intercom_support_service.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -211,7 +213,8 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
           widget.selectedData['recipientDeliveryMethod'] ??
           (isCrypto ? "Digital Dollar" : "Bank Transfer"),
       "country": sendState.sendCountry,
-      "reason": widget.paymentData['reason'] ?? "Money Transfer",
+      "reason":
+          widget.paymentData['reason'] ?? SendCopy.defaultTransferReason,
       "receiveChannel":
           widget.selectedData['recipientChannelId'] ?? selectedChannel.id ?? "",
       "receiveNetwork": widget.recipientData['networkId'] ?? "",
@@ -459,7 +462,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                   children: [
                     SizedBox(height: 40, width: 40),
                     Text(
-                      'My Dayfi Tag',
+                      UsernameCopy.myUsername,
                       style: AppTypography.titleLarge.copyWith(
                         fontFamily: 'FunnelDisplay',
                         fontSize: 20,
@@ -519,7 +522,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                         child: Opacity(
                           opacity: .85,
                           child: Text(
-                            'Share your Dayfi Tag with friends and family for instant money transfers.',
+                            UsernameCopy.shareInstant,
                             style: Theme.of(
                               context,
                             ).textTheme.bodyMedium?.copyWith(
@@ -535,7 +538,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                       ),
                       SizedBox(height: 32),
                       CustomTextField(
-                        label: "Dayfi Tag",
+                        label: UsernameCopy.label,
                         hintText: "",
                         enableInteractiveSelection: false,
                         shouldReadOnly: true,
@@ -579,7 +582,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                                   );
                                   TopSnackbar.show(
                                     context,
-                                    message: 'Dayfi Tag copied to clipboard',
+                                    message: UsernameCopy.copiedToClipboard,
                                     isError: false,
                                   );
                                 },
@@ -591,7 +594,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                                       style: TextStyle(
                                         fontFamily: 'Chirp',
                                         fontWeight: FontWeight.w600,
-                                        fontSize: 12,
+                                        fontSize: 12.5,
                                         letterSpacing: 0.00,
                                         height: 1.450,
                                         color:
@@ -621,8 +624,8 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                                             ? dayfiId
                                             : '@$dayfiId';
                                     await Share.share(
-                                      'Send me money on DayFi! My tag is $tagToShare\n\nDownload DayFi: https://dayfi.co',
-                                      subject: 'My Dayfi Tag',
+                                      UsernameCopy.shareInvite(tagToShare),
+                                      subject: UsernameCopy.myUsername,
                                     );
                                   } catch (e) {
                                     if (mounted) {
@@ -643,7 +646,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                                       style: TextStyle(
                                         fontFamily: 'Chirp',
                                         fontWeight: FontWeight.w600,
-                                        fontSize: 12,
+                                        fontSize: 12.5,
                                         letterSpacing: 0.00,
                                         height: 1.450,
                                         color:
@@ -698,9 +701,8 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                       hoverColor: Colors.transparent,
                       onTap: () async {
                         try {
-                          await Intercom.instance.displayMessenger();
+                          await IntercomSupportService.openContactSupport();
                         } catch (e) {
-                          // Fallback in case Intercom fails
                           if (mounted) {
                             TopSnackbar.show(
                               context,
@@ -901,7 +903,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
     final secureStorage = locator<SecureStorageService>();
     final userJson = await secureStorage.read(StorageKeys.user);
     User? user;
-    if (userJson != null && userJson.isNotEmpty) {
+    if (userJson.isNotEmpty) {
       try {
         user = User.fromJson(json.decode(userJson));
       } catch (e) {
@@ -978,9 +980,9 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
               ),
             ],
           ),
-          title: 'Via Dayfi Tag',
+          title: UsernameCopy.via,
           description:
-              'Share your Dayfi Tag with friends and family. Instant transfers. (NGN only)',
+              UsernameCopy.shareInstantNgn,
           iconColor: Theme.of(context).colorScheme.primary,
           isSelected: false,
           isEnabled: true,
@@ -1056,7 +1058,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
               SizedBox(height: 16),
             ],
           );
-        }).toList(),
+        }),
 
         stablecoinTopup
             ? Opacity(
@@ -1187,7 +1189,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                               ),
                             ),
                             SizedBox(width: 12),
-                            title == "Dayfi Tag"
+                            title == UsernameCopy.label
                                 ? Container(
                                   padding: EdgeInsets.symmetric(
                                     horizontal: 10,
@@ -1726,8 +1728,8 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
                   TopSnackbar.show(
                     context,
                     message:
-                        label == 'Dayfi Tag'
-                            ? 'Dayfi Tag copied to clipboard'
+                        label == UsernameCopy.label
+                            ? UsernameCopy.copiedToClipboard
                             : 'Account number copied to clipboard',
                   );
                 },
@@ -1956,7 +1958,8 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
             selectedChannel.channelType ??
             "Bank Transfer",
         "country": sendState.sendCountry,
-        "reason": widget.paymentData['reason'] ?? "Funding wallet",
+        "reason":
+            widget.paymentData['reason'] ?? SendCopy.defaultTransferReason,
         "receiveChannel": selectedChannel.id ?? "",
         "receiveNetwork": selectedNetwork?.id ?? "",
         "receiveAmount": amount,

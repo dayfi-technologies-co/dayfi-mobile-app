@@ -560,40 +560,40 @@ class CompletePersonalInfoNotifier
       AppLogger.info('Retrieved token: $token');
 
       // Prepare only valid (non-empty, non-null) fields for the API call
-      final String? _country = (country != null && country.isNotEmpty) ? country : null;
-      final String? _state = (state != null && state.isNotEmpty) ? state : null;
-      final String? _street = (street != null && street.isNotEmpty) ? street : null;
-      final String? _city = (city != null && city.isNotEmpty) ? city : null;
-      final String? _address = (address != null && address.isNotEmpty) ? address : null;
-      final String? _gender = (gender != null && gender.isNotEmpty) ? gender.toLowerCase() : null;
-      final String? _dob = (dob != null && dob.isNotEmpty) ? dob : null;
-      final String? _phoneNumber = (phoneNumber != null && phoneNumber.isNotEmpty) ? phoneNumber : null;
+      final String? country0 = (country != null && country.isNotEmpty) ? country : null;
+      final String? state0 = (state != null && state.isNotEmpty) ? state : null;
+      final String? street0 = (street != null && street.isNotEmpty) ? street : null;
+      final String? city0 = (city != null && city.isNotEmpty) ? city : null;
+      final String? address0 = (address != null && address.isNotEmpty) ? address : null;
+      final String? gender0 = (gender != null && gender.isNotEmpty) ? gender.toLowerCase() : null;
+      final String? dob0 = (dob != null && dob.isNotEmpty) ? dob : null;
+      final String? phoneNumber0 = (phoneNumber != null && phoneNumber.isNotEmpty) ? phoneNumber : null;
 
       AppLogger.info('Calling updateProfile API with data:');
       AppLogger.info({
         'userId': user.userId,
-        if (_country != null) 'country': _country,
-        if (_state != null) 'state': _state,
-        if (_street != null) 'street': _street,
-        if (_city != null) 'city': _city,
-        if (_address != null) 'address': _address,
-        if (_gender != null) 'gender': _gender,
-        if (_dob != null) 'dob': _dob,
-        if (_phoneNumber != null) 'phoneNumber': _phoneNumber,
+        if (country0 != null) 'country': country0,
+        if (state0 != null) 'state': state0,
+        if (street0 != null) 'street': street0,
+        if (city0 != null) 'city': city0,
+        if (address0 != null) 'address': address0,
+        if (gender0 != null) 'gender': gender0,
+        if (dob0 != null) 'dob': dob0,
+        if (phoneNumber0 != null) 'phoneNumber': phoneNumber0,
         'bvn': '00000000000',
       }.toString());
 
       // Call the API service to update profile, only passing valid fields
       final response = await _authService.updateProfile(
         userId: user.userId,
-        country: _country ?? '',
-        state: _state ?? '',
-        street: _street ?? '',
-        city: _city ?? '',
-        address: _address ?? '',
-        gender: _gender ?? '',
-        dob: _dob ?? '',
-        phoneNumber: _phoneNumber ?? '',
+        country: country0 ?? '',
+        state: state0 ?? '',
+        street: street0 ?? '',
+        city: city0 ?? '',
+        address: address0 ?? '',
+        gender: gender0 ?? '',
+        dob: dob0 ?? '',
+        phoneNumber: phoneNumber0 ?? '',
         bvn: '00000000000',
       );
 

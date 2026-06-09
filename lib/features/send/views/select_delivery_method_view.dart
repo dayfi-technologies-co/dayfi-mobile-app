@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dayfi/common/constants/username_copy.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
@@ -195,7 +196,7 @@ class _SelectDeliveryMethodViewState
     String baseName;
     switch (channelType.toLowerCase()) {
       case 'dayfi_tag':
-        baseName = 'Dayfi Tag';
+        baseName = UsernameCopy.label;
         break;
       case 'bank_transfer':
       case 'bank':
@@ -450,7 +451,7 @@ class _SelectDeliveryMethodViewState
                             "Sending to ${_getCountryName(_selectedCountry)} (${_selectedCurrency ?? 'NGN'})",
                             style: TextStyle(
                               fontFamily: 'Chirp',
-                              fontSize: 12,
+                              fontSize: 12.5,
                               color: const Color(0xff2A0079),
                               fontWeight: FontWeight.w600,
                               letterSpacing: -.04,

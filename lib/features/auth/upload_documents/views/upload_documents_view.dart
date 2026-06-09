@@ -158,8 +158,8 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
                                 SizedBox(height: 18),
                                 Text(
                                   widget.showBackButton
-                                      ? "Just one step left.\nupgrade your account to complete this transaction.\nIt only takes about 30 seconds, promise."
-                                      : "Your account is ready! You can now transfer up to 1,000 USD per month and 10,000 USD per year. Submit additional documents to increase your limit to 20,000 USD per month and 100,000 USD",
+                                      ? "Verify your BVN and take a quick selfie to unlock Tier 2 — send money and get your NGN account. NIN verification for Tier 3 can wait."
+                                      : "Your account is ready on Tier 1. Verify your BVN and selfie to unlock Tier 2 (send money + NGN account). You can add NIN later for Tier 3 limits.",
                                   style: Theme.of(
                                     context,
                                   ).textTheme.bodyMedium?.copyWith(
@@ -227,7 +227,7 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
                 text: "Increase limits",
                 borderRadius: 38,
                 onPressed:
-                    () => notifier.navigateToNINAndBVNVerification(
+                    () => notifier.navigateToTier2Verification(
                       context,
                       showBackButton: widget.showBackButton,
                     ),
@@ -420,7 +420,10 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
                     text: 'No, enable it now',
                     onPressed: () {
                       Navigator.of(context).pop();
-                      notifier.navigateToNINAndBVNVerification(context);
+                      notifier.navigateToTier2Verification(
+                        context,
+                        showBackButton: widget.showBackButton,
+                      );
                     },
                     borderColor: Colors.transparent,
                     textColor: Theme.of(context).textTheme.bodyLarge!.color!,

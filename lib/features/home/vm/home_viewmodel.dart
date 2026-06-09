@@ -65,27 +65,62 @@ class HomeState {
 }
 
 class HomeViewModel extends StateNotifier<HomeState> {
-    final LocalCache _localCache = locator<LocalCache>();
+  static const _walletsCacheKey = 'wallets';
+  static const _balanceCacheKey = 'totalAvailableBalance';
+
+  final LocalCache _localCache = locator<LocalCache>();
   final WalletService _walletService = walletService;
 
   HomeViewModel() : super(const HomeState());
 
+  TotalAvailableBalance? _readCachedTotalBalance() {
+    final cached = _localCache.getFromLocalCache(_balanceCacheKey);
+    if (cached is! Map) return null;
+    try {
+      return TotalAvailableBalance.fromJson(
+        Map<String, dynamic>.from(cached),
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Fetch wallet details from API, with local cache fallback
-  Future<void> fetchWalletDetails({bool isInitialLoad = false}) async {
-    // Try to load cached wallets first
-    if (state.wallets.isEmpty) {
-      final cached = _localCache.getFromLocalCache('wallets');
-      if (cached != null) {
-        try {
-          final List<dynamic> walletsJson = (cached is String) ? (walletsFromJson(cached)) : (cached as List<dynamic>);
-          final wallets = walletsJson.map((e) => Wallet.fromJson(e)).toList();
-          Wallet? primaryWallet = wallets.firstWhere((w) => w.currency.toUpperCase() == 'NGN', orElse: () => wallets.first);
-          state = state.copyWith(wallets: wallets, primaryWallet: primaryWallet, isLoading: false);
-        } catch (_) {}
+  Future<void> fetchWalletDetails({
+    bool isInitialLoad = false,
+    bool forceRefresh = false,
+  }) async {
+    TotalAvailableBalance? cachedBalance;
+    if (!forceRefresh) {
+      cachedBalance = _readCachedTotalBalance();
+      if (state.totalAvailableBalance == null && cachedBalance != null) {
+        state = state.copyWith(totalAvailableBalance: cachedBalance);
+      }
+
+      if (state.wallets.isEmpty) {
+        final cached = _localCache.getFromLocalCache(_walletsCacheKey);
+        if (cached != null) {
+          try {
+            final List<dynamic> walletsJson =
+                (cached is String) ? (walletsFromJson(cached)) : (cached as List<dynamic>);
+            final wallets = walletsJson.map((e) => Wallet.fromJson(e)).toList();
+            final primaryWallet = wallets.cast<Wallet?>().firstWhere(
+              (w) => w?.currency.toUpperCase() == 'USD',
+              orElse: () => wallets.isNotEmpty ? wallets.first : null,
+            );
+            state = state.copyWith(
+              wallets: wallets,
+              primaryWallet: primaryWallet,
+              totalAvailableBalance:
+                  state.totalAvailableBalance ?? cachedBalance,
+            );
+          } catch (_) {}
+        }
       }
     }
-    // Only show loading if no cache
-    final shouldShowLoading = state.wallets.isEmpty;
+
+    final hasDisplayedBalance = state.totalAvailableBalance != null;
+    final shouldShowLoading = !hasDisplayedBalance && state.wallets.isEmpty;
     state = state.copyWith(isLoading: shouldShowLoading, errorMessage: null);
     try {
       AppLogger.info('Fetching wallet details from API...');
@@ -97,10 +132,18 @@ class HomeViewModel extends StateNotifier<HomeState> {
           );
       if (wallets.isNotEmpty) {
         await _localCache.saveToLocalCache(
-          key: 'wallets',
+          key: _walletsCacheKey,
           value: wallets.map((e) => e.toJson()).toList(),
         );
       }
+      await _localCache.saveToLocalCache(
+        key: _balanceCacheKey,
+        value: {
+          'currency': hub.totalAvailableBalance.currency,
+          'amount': hub.totalAvailableBalance.amount,
+          'formatted': hub.totalAvailableBalance.formatted,
+        },
+      );
       state = state.copyWith(
         wallets: wallets,
         primaryWallet: primaryWallet,
@@ -116,7 +159,7 @@ class HomeViewModel extends StateNotifier<HomeState> {
 
   /// Refresh wallet details
   Future<void> refreshWalletDetails() async {
-    await fetchWalletDetails();
+    await fetchWalletDetails(forceRefresh: true);
   }
 
   /// Initialize wallet data (call this when view loads)

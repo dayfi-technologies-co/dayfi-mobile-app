@@ -17,7 +17,7 @@ String maskEmail(String email) {
   final domain = parts[1];
   String maskedName;
   if (name.length <= 2) {
-    maskedName = name[0] + '*';
+    maskedName = '${name[0]}*';
   } else if (name.length <= 4) {
     maskedName = name[0] + '*' * (name.length - 2) + name[name.length - 1];
   } else {
@@ -27,7 +27,7 @@ String maskEmail(String email) {
         name.substring(name.length - 2);
   }
   final domainParts = domain.split('.');
-  if (domainParts.length < 2) return '$maskedName@${domain}';
+  if (domainParts.length < 2) return '$maskedName@$domain';
   final domainName = domainParts[0];
   final domainExt = domainParts.sublist(1).join('.');
   String maskedDomain = domainName[0] + '*' * (domainName.length - 1);
@@ -137,6 +137,7 @@ class VerifyEmailView extends ConsumerWidget {
                                 letterSpacing: -.40,
                                 fontSize: 18,
                                 fullWidth: true,
+                                applyFeatureInset: false,
                               )
                               .animate()
                               .fadeIn(

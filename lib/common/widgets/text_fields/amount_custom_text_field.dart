@@ -130,7 +130,7 @@ class AmountCustomTextField extends StatelessWidget {
             ),
             errorStyle: TextStyle(
               fontFamily: "Chirp",
-              fontSize: 12,
+              fontSize: 12.5,
               color: Colors.red.shade800,
               letterSpacing: -.25,
             ),

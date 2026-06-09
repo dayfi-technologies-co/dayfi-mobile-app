@@ -1,8 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import 'package:dayfi/common/widgets/dayfi_loading_indicator.dart';
 import 'package:dayfi/common/widgets/empty_state_widget.dart';
 import 'package:dayfi/common/widgets/error_state_widget.dart';
+import 'package:dayfi/features/budget/helpers/budget_notification_helper.dart';
+import 'package:dayfi/features/budget/views/budget_detail_view.dart';
 import 'package:dayfi/models/notification_item.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,26 +20,13 @@ class NotificationsView extends ConsumerStatefulWidget {
 }
 
 class _NotificationsViewState extends ConsumerState<NotificationsView> {
-  /// Format currency amount with commas
-  String _formatAmount(String message) {
-    final regex = RegExp(r'(NGN|USD|EUR|GBP)\s*(\d+)');
-    return message.replaceAllMapped(regex, (match) {
-      final currency = match.group(1);
-      final amount = match.group(2);
-      if (amount == null) return match.group(0) ?? '';
-      final formatted = _addCommas(amount);
-      return '$currency $formatted';
-    });
-  }
-
-  String _addCommas(String amount) {
-    if (amount.isEmpty) return amount;
-    final numValue = int.tryParse(amount);
-    if (numValue == null) return amount;
-    return numValue.toString().replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (Match m) => '${m[1]},',
-    );
+  String _formatTime(DateTime date) {
+    final local = date.toLocal();
+    final hour =
+        local.hour > 12 ? local.hour - 12 : (local.hour == 0 ? 12 : local.hour);
+    final minute = local.minute.toString().padLeft(2, '0');
+    final period = local.hour >= 12 ? 'PM' : 'AM';
+    return '$hour:$minute $period';
   }
 
   @override
@@ -180,17 +170,22 @@ class _NotificationsViewState extends ConsumerState<NotificationsView> {
           ),
         ),
         centerTitle: true,
-        // actions: [
-        //   if (notifications.any((n) => !n.isRead))
-        //     Padding(
-        //       padding: EdgeInsets.only(right: 16),
-        //       child: HelpButton(
-        //         onTap: _markAllAsRead,
-        //         text: "Read All",
-        //         svgIcon: const SizedBox.shrink(),
-        //       ),
-        //     ),
-        // ],
+        actions: [
+          if (notifications.any((n) => !n.isRead))
+            TextButton(
+              onPressed: () {
+                ref.read(notificationsProvider.notifier).markAllAsRead();
+              },
+              child: Text(
+                'Read all',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontFamily: 'Chirp',
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.purple500ForTheme(context),
+                ),
+              ),
+            ),
+        ],
       ),
 
       body: LayoutBuilder(
@@ -289,15 +284,15 @@ class _NotificationsViewState extends ConsumerState<NotificationsView> {
         // ),
 
         // to be removed: date header above
-        SizedBox(height: 8),
+        SizedBox(height: 12),
 
         // Notifications for this date
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(12),
-          ),
+        SizedBox(
+          // padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          // decoration: BoxDecoration(
+          //   color: Theme.of(context).colorScheme.surface,
+          //   borderRadius: BorderRadius.circular(12),
+          // ),
           child: Column(
             children: [
               for (int i = 0; i < notifications.length; i++)
@@ -313,21 +308,21 @@ class _NotificationsViewState extends ConsumerState<NotificationsView> {
   }
 
   Widget _buildLoadingState() {
-    return const Center(child: CupertinoActivityIndicator());
+    return const DayfiLoadingCenter();
   }
 
   Widget _buildNotificationCard(
     NotificationItem notification, {
     double bottomMargin = 24,
   }) {
-    final formattedMessage =
-        '${_formatAmount(notification.message.replaceAll('.', ''))}.';
     return InkWell(
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
       onTap: () {
         if (!notification.isRead) {
           _markAsRead(notification);
         }
-        // Handle notification tap (e.g., navigate to relevant screen)
+        _openNotificationTarget(notification);
       },
       child: Container(
         margin: EdgeInsets.only(bottom: bottomMargin, top: 8),
@@ -372,7 +367,7 @@ class _NotificationsViewState extends ConsumerState<NotificationsView> {
                   ),
                   SizedBox(height: 6),
                   Text(
-                    formattedMessage,
+                    notification.message,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontFamily: 'Chirp',
                       fontSize: 14,
@@ -383,21 +378,24 @@ class _NotificationsViewState extends ConsumerState<NotificationsView> {
                         context,
                       ).colorScheme.onSurface.withOpacity(0.75),
                     ),
-                    maxLines: 2,
+                    maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  // SizedBox(height: 4),
-                  // Align(
-                  //   alignment: Alignment.centerRight,
-                  //   child: Text(
-                  //     _formatTime(notification.timestamp),
-                  //     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  //       fontFamily: 'Chirp',
-                  //       fontWeight: FontWeight.w500,
-                  //       fontSize: 12,
-                  //     ),
-                  //   ),
-                  // ),
+                  const SizedBox(height: 4),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      _formatTime(notification.timestamp),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontFamily: 'Chirp',
+                        fontWeight: FontWeight.w500,
+                        fontSize: 12.5,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.55),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -420,10 +418,24 @@ class _NotificationsViewState extends ConsumerState<NotificationsView> {
     );
   }
 
+  void _openNotificationTarget(NotificationItem notification) {
+    if (!isBudgetNotification(notification)) return;
+    final budgetId = budgetIdFromNotification(notification);
+    if (budgetId == null) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => BudgetDetailView(budgetId: budgetId),
+      ),
+    );
+  }
+
   Color _getNotificationColor(NotificationType type) {
     switch (type) {
       case NotificationType.transaction:
         return AppColors.success500;
+      case NotificationType.budget:
+        return AppColors.primary400;
       case NotificationType.security:
         return Theme.of(context).colorScheme.primary;
       case NotificationType.promotion:

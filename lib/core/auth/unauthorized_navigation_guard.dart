@@ -1,9 +1,9 @@
-/// De-duplicates the “session expired → go to Login” redirect.
+/// De-duplicates the “session expired → go to Onboarding” redirect.
 ///
 /// Multiple in-flight requests can each receive a 401 at the same time. Both
 /// [AppInterceptor.onResponse] and [NetworkService] Dio error handlers call
-/// `pushNamedAndRemoveAllBehind('/loginView', …)`, which without a guard ends
-/// up pushing the login screen more than once.
+/// `pushOnboardingAndClearStack()`, which without a guard ends up pushing
+/// onboarding more than once.
 ///
 /// Usage:
 /// ```dart

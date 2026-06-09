@@ -109,7 +109,7 @@ await Share.shareXFiles(
 
 **Recipient Details** (if not a wallet top-up):
 - Name
-- Account number/Dayfi Tag
+- Account number/username
 - Country
 
 **Payment Summary:**

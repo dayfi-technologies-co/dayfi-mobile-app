@@ -59,6 +59,9 @@ dependencies:
   firebase_storage: ^13.0.4
   qr_flutter: ^4.1.0
   video_player: ^2.10.1
+  smile_id: ^11.2.10
+  speech_to_text: ^7.4.0
+  flutter_tts: ^4.2.0
   # open_mail_app_plus: ^0.0.2
 
 dev_dependencies:
@@ -122,6 +125,7 @@ flutter:
     - assets/icons/pngs/
     - assets/icons/svgs/
     - assets/icons/svgs/world_flags/
+    - assets/images/bills/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -209,18 +213,14 @@ flutter:
   
     - family: Chirp
       fonts:
-        - asset: assets/fonts/chirp/Chirp Regular.otf
         - asset: assets/fonts/chirp/Chirp Regular.ttf
-        - asset: assets/fonts/chirp/Chirp Regular.woff
-        - asset: assets/fonts/chirp/Chirp Medium.otf
+          weight: 400
         - asset: assets/fonts/chirp/Chirp Medium.ttf
-        - asset: assets/fonts/chirp/Chirp Medium.woff
-        - asset: assets/fonts/chirp/Chirp Bold.otf
+          weight: 500
         - asset: assets/fonts/chirp/Chirp Bold.ttf
-        - asset: assets/fonts/chirp/Chirp Bold.woff
-        - asset: assets/fonts/chirp/Chirp Heavy.otf
+          weight: 700
         - asset: assets/fonts/chirp/Chirp Heavy.ttf
-        - asset: assets/fonts/chirp/Chirp Heavy.woff
+          weight: 800
 
 
 flutter_icons:
@@ -239,14 +239,19 @@ flutter_icons:
   image_path_ios: "assets/images/logo_splash.png"
 
 flutter_native_splash:
-  color: "#FFFFFF"
-  image: "assets/images/logo_splash.png"
+  color: "#FEF9F3"
+  color_dark: "#090909"
+  image: assets/images/logo_splash.png
+  image_dark: assets/images/logo_splash.png
 
-  # Android configuration (matches dayfi.wallet mobile_app)
+  web: true
+  web_image_mode: center
+
   android: true
   android_12:
-    color: "#FFFFFF"
-    image: "assets/images/logo_splash.png"
+    color: "#FEF9F3"
+    color_dark: "#090909"
+    image: assets/images/logo_splash.png
+    image_dark: assets/images/logo_splash.png
 
-  # iOS configuration
   ios: true

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'package:dayfi/common/widgets/buttons/dayfi_button_inset.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
-import 'package:dayfi/common/utils/haptic_helper.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 /// A reusable primary button widget that follows the Dayfi design system.
@@ -87,6 +87,9 @@ class PrimaryButton extends StatelessWidget {
 
   final bool isSmall;
 
+  /// Adds [AppConstants.buttonExtraHorizontalPadding] when [fullWidth] is true.
+  final bool applyFeatureInset;
+
   const PrimaryButton({
     super.key,
     required this.text,
@@ -115,6 +118,7 @@ class PrimaryButton extends StatelessWidget {
     this.elevation,
     this.shadowColor,
     this.isSmall = false,
+    this.applyFeatureInset = true,
   });
 
   /// Creates a primary button with default Dayfi styling
@@ -150,7 +154,7 @@ class PrimaryButton extends StatelessWidget {
       borderRadius: 10,
       borderWidth: 0,
       fontSize: 18,
-      fontWeight: AppTypography.bold, // FontWeight.w700
+      fontWeight: AppTypography.bold, // FontWeight.w600
       letterSpacing: 0.18,
       lineHeight: 1.78,
       fontFamily: AppTypography.secondaryFontFamily, // Youth
@@ -248,9 +252,19 @@ class PrimaryButton extends StatelessWidget {
             ? (textColor ?? AppColors.neutral0)
             : textColor ?? AppColors.neutral0;
 
-    return Container(
-      width: MediaQuery.of(context).size.width > 600 ? 300 : 400,
-      height: 48,
+    final resolvedWidth =
+        fullWidth
+            ? double.infinity
+            : (width ?? (MediaQuery.of(context).size.width > 600 ? 300.0 : 400.0));
+    final resolvedHeight = height ?? 48;
+    final resolvedRadius = borderRadius ?? 10;
+
+    return wrapDayfiFeatureButtonInset(
+      fullWidth: fullWidth,
+      applyFeatureInset: applyFeatureInset,
+      child: Container(
+      width: resolvedWidth,
+      height: resolvedHeight,
       // padding: EdgeInsets.symmetric(
       //   horizontal: horizontalPadding ?? 10,
       //   vertical: verticalPadding ?? 8,
@@ -259,7 +273,7 @@ class PrimaryButton extends StatelessWidget {
       decoration: ShapeDecoration(
         color: effectiveBackgroundColor,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(400),
+          borderRadius: BorderRadius.circular(resolvedRadius),
           side: BorderSide.none,
         ),
         shadows:
@@ -292,9 +306,9 @@ class PrimaryButton extends StatelessWidget {
                       // HapticHelper.mediumImpact();
                       onPressed?.call();
                     },
-            borderRadius: BorderRadius.circular(borderRadius ?? 10),
+            borderRadius: BorderRadius.circular(resolvedRadius),
             child: SizedBox(
-              width: double.infinity,
+              width: fullWidth ? double.infinity : resolvedWidth,
               height: double.infinity,
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -336,6 +350,7 @@ class PrimaryButton extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 }

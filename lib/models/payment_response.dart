@@ -34,11 +34,19 @@ class PaymentResponse {
       isError = statusCode != 200;
     }
     
+    final payload = data['data'];
+    PaymentData? paymentData;
+    if (payload is List) {
+      paymentData = PaymentData.fromChannelList(payload);
+    } else if (payload is Map<String, dynamic>) {
+      paymentData = PaymentData.fromJson(payload);
+    }
+
     return PaymentResponse(
         error: isError,
         message: data['message'] ?? "",
         statusCode: statusCode,
-        data: data['data'] != null ? PaymentData.fromJson(data['data']) : null);
+        data: paymentData);
   }
 }
 
@@ -144,6 +152,17 @@ class PaymentData {
     }
     
     return null;
+  }
+
+  /// When API returns `{ data: [ channel, ... ] }` (legacy Yellow Card array shape).
+  factory PaymentData.fromChannelList(List<dynamic> list) {
+    final channels = list
+        .whereType<Map>()
+        .map((e) => Map<String, dynamic>.from(e))
+        .where((e) => e.containsKey('channelType'))
+        .map((e) => Channel.fromJson(e))
+        .toList();
+    return PaymentData(channels: channels, rawChannels: list);
   }
 
   factory PaymentData.fromJson(Map<String, dynamic> data) {

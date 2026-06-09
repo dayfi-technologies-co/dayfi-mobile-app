@@ -1,21 +1,21 @@
 import 'dart:math';
+import 'package:dayfi/common/constants/username_copy.dart';
 import 'package:dayfi/common/utils/haptic_helper.dart';
-import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
-import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
 import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/services/remote/payment_service.dart';
-import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/features/send/vm/transaction_pin_viewmodel.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:dayfi/common/helpers/transaction_completion_flow.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
+import 'package:dayfi/features/send/constants/send_copy.dart';
 
 class SendDayfiIdReviewView extends ConsumerStatefulWidget {
   final Map<String, dynamic> selectedData;
@@ -35,8 +35,6 @@ class SendDayfiIdReviewView extends ConsumerStatefulWidget {
 class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
     with WidgetsBindingObserver {
   final _descriptionController = TextEditingController();
-  final _reasonController = TextEditingController();
-  String _selectedReason = '';
   final bool _isLoading = false;
   // ignore: unused_field
   bool _isProcessingPin = false;
@@ -46,22 +44,11 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
   Map<String, dynamic>? _paymentData;
   bool _hasCheckedPinOnResume = false;
 
-  final List<Map<String, String>> _reasons = [
-    {'emoji': '🎁', 'name': 'Gift'},
-    {'emoji': '🏠', 'name': 'Housing'},
-    {'emoji': '🛒', 'name': 'Groceries'},
-    {'emoji': '✈️', 'name': 'Travel'},
-    {'emoji': '🏥', 'name': 'Health'},
-    {'emoji': '🎬', 'name': 'Entertainment'},
-    {'emoji': '🏫', 'name': 'School Fees'},
-    {'emoji': '💡', 'name': 'Bills'},
-    {'emoji': '❓', 'name': 'Other'},
-  ];
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _paymentData = {'reason': SendCopy.defaultTransferReason};
     _descriptionController.addListener(() {
       setState(() {});
     });
@@ -76,7 +63,6 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _descriptionController.dispose();
-    _reasonController.dispose();
     _isProcessingPinNotifier.dispose();
     super.dispose();
   }
@@ -96,9 +82,7 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
     final hasTransactionPin =
         user?.transactionPin != null && user!.transactionPin!.isNotEmpty;
 
-    if (hasTransactionPin &&
-        _paymentData != null &&
-        _selectedReason.isNotEmpty) {
+    if (hasTransactionPin && _paymentData != null) {
       // User just created PIN, show entry bottom sheet
       _hasCheckedPinOnResume = false; // Reset flag
       _showPinEntryBottomSheet();
@@ -138,19 +122,10 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
   }
 
   void _proceedToPayment() {
-    if (_selectedReason.isEmpty) {
-      TopSnackbar.show(
-        context,
-        message: 'Please select a reason for transfer',
-        isError: true,
-      );
-      return;
-    }
-
     _paymentData = {
       ...widget.selectedData,
       'dayfiId': widget.dayfiId,
-      'reason': _selectedReason,
+      'reason': SendCopy.defaultTransferReason,
       'description': _descriptionController.text.trim(),
     };
 
@@ -193,9 +168,7 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
                 updatedUser?.transactionPin != null &&
                 updatedUser!.transactionPin!.isNotEmpty;
 
-            if (nowHasPin &&
-                _paymentData != null &&
-                _selectedReason.isNotEmpty) {
+            if (nowHasPin && _paymentData != null) {
               // Show PIN entry bottom sheet
               _hasCheckedPinOnResume = false; // Reset flag
               _showPinEntryBottomSheet();
@@ -237,105 +210,95 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
 
   /// Handle PIN entry and process payment
   Future<void> _handlePinEntered(String pin) async {
-    // Update processing state (this will trigger modal rebuild via ValueNotifier)
-    _isProcessingPin = true;
     _isProcessingPinNotifier.value = true;
+    if (mounted) Navigator.pop(context);
 
+    if (!mounted) return;
+
+    Map<String, dynamic>? successArgs;
     try {
-      // For now, sending plain pin - backend should handle encryption
-      final encryptedPin = pin; // TODO: Encrypt with bcrypt if needed
+      successArgs = await TransactionCompletionFlow.runWithOverlay<
+          Map<String, dynamic>>(
+        context: context,
+        task: () async {
+          final paymentService = locator<PaymentService>();
+          final amount = double.tryParse(
+                widget.selectedData['sendAmount']
+                        ?.toString()
+                        .replaceAll(RegExp(r'[,\s]'), '') ??
+                    widget.selectedData['receiveAmount']?.toString() ??
+                    '0',
+              ) ??
+              0;
+          final debit =
+              widget.selectedData['debitCurrency']?.toString().toUpperCase() ??
+              widget.selectedData['sendCurrency']?.toString().toUpperCase() ??
+              'USD';
+          final response = await paymentService.initiateWalletTransfer(
+            dayfiId: widget.dayfiId,
+            amount: amount.toInt(),
+            encryptedPin: pin,
+            debitCurrency: debit,
+          );
 
-      final paymentService = locator<PaymentService>();
-      final amount =
-          double.tryParse(
-            widget.selectedData['receiveAmount']?.toString() ?? '0',
-          ) ??
-          0;
+          if (response.error == false) {
+            final recipientName =
+                widget.selectedData['recipientName']?.toString() ??
+                '@${widget.dayfiId}';
+            return {
+              'recipientData': {'name': recipientName},
+              'selectedData': {
+                ...widget.selectedData,
+                'sendAmount': amount.toString(),
+                'receiveAmount': amount.toString(),
+                'sendCurrency': debit,
+                'receiveCurrency': debit,
+              },
+              'paymentData': _paymentData ?? {},
+              'transactionId':
+                  response.data?.id?.toString() ??
+                  response.data?.sequenceId?.toString(),
+            };
+          }
 
-      // Call initiateWalletTransfer API
-      final debit =
-          widget.selectedData['debitCurrency']?.toString().toUpperCase() ??
-          'USD';
-      final response = await paymentService.initiateWalletTransfer(
-        dayfiId: widget.dayfiId,
-        amount: amount.toInt(),
-        encryptedPin: encryptedPin,
-        debitCurrency: debit,
+          final errorMessage = response.message.isNotEmpty
+              ? response.message
+              : 'Failed to initiate transfer';
+          if (errorMessage.toLowerCase().contains('pin') ||
+              errorMessage.toLowerCase().contains('incorrect') ||
+              errorMessage.toLowerCase().contains('invalid')) {
+            ref.read(transactionPinProvider.notifier).resetForm();
+          }
+          throw Exception(errorMessage);
+        },
       );
-
-      if (response.error == false) {
-        AppLogger.info('Wallet transfer initiated successfully');
-
-        // Close bottom sheet
-        Navigator.pop(context);
-
-        // Navigate to success screen
-        appRouter.pushNamedAndRemoveUntil(
-          AppRoute.sendPaymentSuccessView,
-          (Route route) => false, // Remove all previous routes
-          arguments: {
-            'recipientData': {'name': '@${widget.dayfiId}'},
-            'selectedData': widget.selectedData,
-            'paymentData': _paymentData ?? {},
-            'transactionId':
-                response.data?.id?.toString() ??
-                response.data?.sequenceId?.toString(),
-          },
-        );
-      } else {
-        // Check if error is PIN-related
-        final errorMessage =
-            response.message.isNotEmpty
-                ? response.message
-                : 'Failed to initiate transfer';
-
-        // Clear PIN if error is PIN-related
-        if (errorMessage.toLowerCase().contains('pin') ||
-            errorMessage.toLowerCase().contains('incorrect') ||
-            errorMessage.toLowerCase().contains('invalid')) {
-          ref.read(transactionPinProvider.notifier).resetForm();
-        }
-
-        throw Exception(errorMessage);
-      }
-    } catch (e) {
-      AppLogger.error('Error initiating wallet transfer: $e');
-
-      // Clear PIN on error
-      ref.read(transactionPinProvider.notifier).resetForm();
-
-      // Determine user-friendly message based on error
-      String userFriendlyMessage;
-      final errorString = e.toString().toLowerCase();
-
-      if (errorString.contains('pin') || errorString.contains('incorrect')) {
-        userFriendlyMessage = 'Incorrect PIN. Please try again.';
-      } else if (errorString.contains('insufficient') ||
-          errorString.contains('balance')) {
-        userFriendlyMessage =
-            'Insufficient wallet balance. Please fund your wallet and try again.';
-      } else {
-        // Prefer backend-provided message when available
-        userFriendlyMessage =
-            e.toString().isNotEmpty
-                ? e.toString()
-                : 'Failed to initiate transfer. Please try again.';
-      }
-
-      // Show error as a top snackbar (keeps bottom sheet open for retry)
-      TopSnackbar.show(context, message: userFriendlyMessage, isError: true);
     } finally {
-      // Reset processing state (this will trigger modal rebuild via ValueNotifier)
       _isProcessingPin = false;
       _isProcessingPinNotifier.value = false;
+    }
+
+    if (successArgs != null && mounted) {
+      appRouter.pushNamedAndRemoveUntil(
+        AppRoute.sendPaymentSuccessView,
+        (route) => false,
+        arguments: successArgs,
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final receiveAmount =
-        double.tryParse(widget.selectedData['receiveAmount']?.toString() ?? '0') ??
+    final receiveAmount = double.tryParse(
+          widget.selectedData['sendAmount']
+                  ?.toString()
+                  .replaceAll(RegExp(r'[,\s]'), '') ??
+              widget.selectedData['receiveAmount']?.toString() ??
+              '0',
+        ) ??
         0;
+    final recipientName =
+        widget.selectedData['recipientName']?.toString() ??
+        '@${widget.dayfiId}';
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
@@ -433,40 +396,25 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
                       ),
                       SizedBox(height: 32),
 
-                      // Reason Selection
-                      _buildReasonSelection(),
-
-                      SizedBox(height: 24),
-
-                      // Transfer Details
                       _buildTransferDetails(receiveAmount),
 
                       SizedBox(height: 32),
 
                       // Continue Button
-                      PrimaryButton(
+                  Padding(padding: EdgeInsets.symmetric(horizontal: 18), child:    PrimaryButton(
                         text: 'Confirm Payment',
-                        onPressed:
-                            _selectedReason.isNotEmpty
-                                ? _proceedToPayment
-                                : null,
+                        onPressed: _proceedToPayment,
                         isLoading: _isLoading,
                         height: 48.00000,
-                        backgroundColor:
-                            _selectedReason.isNotEmpty
-                                ? AppColors.purple500
-                                : AppColors.purple500.withOpacity(0.12),
-                        textColor:
-                            _selectedReason.isNotEmpty
-                                ? AppColors.neutral0
-                                : AppColors.neutral0.withOpacity(.20),
+                        backgroundColor: AppColors.purple500,
+                        textColor: AppColors.neutral0,
                         fontFamily: 'Chirp',
                         letterSpacing: -.70,
                         fontSize: 18,
                         width: double.infinity,
                         fullWidth: true,
                         borderRadius: 40,
-                      ),
+                      ),),
 
                       SizedBox(height: 32),
                     ],
@@ -480,26 +428,10 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
     );
   }
 
-  Widget _buildReasonSelection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        CustomTextField(
-          label: 'Reason for transfer',
-          hintText: 'Select reason for transfer',
-          controller: _reasonController,
-          onTap: _showReasonBottomSheet,
-          shouldReadOnly: true,
-          suffixIcon: Icon(
-            Icons.keyboard_arrow_down,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildTransferDetails(double receiveAmount) {
+    final recipientName =
+        widget.selectedData['recipientName']?.toString() ??
+        '@${widget.dayfiId}';
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
@@ -526,8 +458,8 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
           SizedBox(height: 20),
 
           _buildDetailRow('Transfer Amount', '${_getCurrencySymbol(widget.selectedData['receiveCurrency']?.toString() ?? 'NGN')}${_formatNumber(receiveAmount)}'),
-          _buildDetailRow('Recipient', '@${widget.dayfiId}'),
-          _buildDetailRow('Delivery Method', 'Dayfi Tag Transfer'),
+          _buildDetailRow('Recipient', recipientName),
+          _buildDetailRow('Delivery Method', UsernameCopy.transfer),
           Divider(
             color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
             height: 24,
@@ -601,7 +533,7 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 fontFamily: 'Chirp',
                 fontSize: isTotal ? 16 : 13,
-                fontWeight: isTotal ? FontWeight.w700 : FontWeight.w600,
+                fontWeight: isTotal ? FontWeight.w600 : FontWeight.w600,
                 color: Theme.of(context).colorScheme.onSurface,
               ),
               textAlign: TextAlign.end,
@@ -611,158 +543,8 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
       ),
     );
   }
-
-  Widget _buildDescriptionSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Additional Information (Optional)',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontFamily: 'Chirp',
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-
-        SizedBox(height: 16),
-
-        CustomTextField(
-          controller: _descriptionController,
-          label: 'Description',
-          hintText: 'Add any additional info about this transfer...',
-          minLines: 2,
-        ),
-      ],
-    );
-  }
-
-  void _showReasonBottomSheet() {
-    showModalBottomSheet(
-      barrierColor: Colors.black.withOpacity(0.85),
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder:
-          (context) => Container(
-            height: MediaQuery.of(context).size.height * 0.92,
-
-            decoration: BoxDecoration(
-              color: Theme.of(context).scaffoldBackgroundColor,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            child: Column(
-              children: [
-                SizedBox(height: 18),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 18),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      SizedBox(height: 40, width: 40),
-                      Text(
-                        'Transfer reason',
-                        style: AppTypography.titleLarge.copyWith(
-                          fontFamily: 'FunnelDisplay',
-                          fontSize: 20,
-                          // height: 1.6,
-                          fontWeight: FontWeight.w600,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
-                      ),
-                      InkWell(
-                        splashColor: Colors.transparent,
-                        highlightColor: Colors.transparent,
-                        onTap:
-                            () => {
-                              Navigator.pop(context),
-                              FocusScope.of(context).unfocus(),
-                            },
-                        child: Stack(
-                          alignment: AlignmentGeometry.center,
-                          children: [
-                            SvgPicture.asset(
-                              "assets/icons/svgs/notificationn.svg",
-                              height: 40,
-                              color: Theme.of(context).colorScheme.surface,
-                            ),
-                            SizedBox(
-                              height: 40,
-                              width: 40,
-                              child: Center(
-                                child: Image.asset(
-                                  "assets/icons/pngs/cancelicon.png",
-                                  height: 20,
-                                  width: 20,
-                                  color:
-                                      Theme.of(
-                                        context,
-                                      ).textTheme.bodyLarge!.color,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 16),
-                Expanded(
-                  child: ListView.builder(
-                    padding: EdgeInsets.symmetric(horizontal: 18),
-                    itemCount: _reasons.length,
-                    itemBuilder: (context, index) {
-                      final reason = _reasons[index];
-                      final isSelected = _selectedReason == reason['name'];
-                      return ListTile(
-                        contentPadding: EdgeInsets.symmetric(vertical: 4),
-                        leading: Container(
-                          padding: EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: AppColors.neutral0,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Text(
-                            reason['emoji']!,
-                            style: TextStyle(fontSize: 24),
-                          ),
-                        ),
-                        title: Text(
-                          reason['name']!,
-                          style: AppTypography.bodyLarge.copyWith(
-                            fontFamily: 'Chirp',
-                            fontSize: 16,
-                            letterSpacing: -.4,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        trailing:
-                            isSelected
-                                ? SvgPicture.asset(
-                                  'assets/icons/svgs/circle-check.svg',
-                                  color: AppColors.purple500ForTheme(context),
-                                )
-                                : null,
-                        onTap: () {
-                          setState(() {
-                            _selectedReason = reason['name']!;
-                            _reasonController.text = reason['name']!;
-                          });
-                          Navigator.pop(context);
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-    );
-  }
 }
 
-// Transaction PIN Bottom Sheet Widget
 // Transaction PIN Bottom Sheet Widget
 class TransactionPinBottomSheet extends ConsumerStatefulWidget {
   final Function(String) onPinEntered;
@@ -874,7 +656,7 @@ class _TransactionPinBottomSheetState
                                 fontSize: 60,
                                 letterSpacing: -25,
                                 fontFamily: 'FunnelDisplay',
-                                fontWeight: FontWeight.w700,
+                                fontWeight: FontWeight.w600,
                                 color:
                                     index < pinState.pin.length
                                         ? AppColors.purple500ForTheme(context)

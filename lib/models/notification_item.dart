@@ -116,6 +116,7 @@ class NotificationItem {
 
 enum NotificationType {
   transaction,
+  budget,
   security,
   promotion,
   system,
@@ -127,6 +128,8 @@ extension NotificationTypeExtension on NotificationType {
     switch (this) {
       case NotificationType.transaction:
         return 'Transaction';
+      case NotificationType.budget:
+        return 'Budget';
       case NotificationType.security:
         return 'Security';
       case NotificationType.promotion:
@@ -142,6 +145,8 @@ extension NotificationTypeExtension on NotificationType {
     switch (this) {
       case NotificationType.transaction:
         return '💰';
+      case NotificationType.budget:
+        return '📅';
       case NotificationType.security:
         return '🔒';
       case NotificationType.promotion:

@@ -1,17 +1,21 @@
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
+import 'package:dayfi/common/constants/username_copy.dart';
 import 'package:dayfi/common/widgets/shimmer_widgets.dart';
-import 'package:dayfi/common/widgets/error_state_widget.dart';
-import 'package:dayfi/common/widgets/empty_state_widget.dart';
+import 'package:dayfi/common/widgets/dayfi_empty_state.dart';
 import 'package:dayfi/common/utils/haptic_helper.dart';
+import 'package:dayfi/common/utils/string_utils.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
+import 'package:dayfi/features/recipients/helpers/recipient_history_helper.dart';
+import 'package:dayfi/features/recipients/widgets/recipient_avatar_badge.dart';
 import 'package:dayfi/features/recipients/vm/recipients_viewmodel.dart';
 import 'package:dayfi/features/send/vm/send_viewmodel.dart';
-import 'package:dayfi/features/send/widgets/send_money_entry_sheet.dart';
+import 'package:dayfi/features/wallet/constants/global_wallet.dart';
+import 'package:dayfi/features/wallet/providers/wallet_hub_provider.dart';
 import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
 import 'package:dayfi/models/beneficiary_with_source.dart';
 import 'package:dayfi/models/wallet_transaction.dart' show Beneficiary;
@@ -48,6 +52,7 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
       ref
           .read(recipientsProvider.notifier)
           .loadBeneficiaries(isInitialLoad: true);
+      _prefetchBankLabels();
       // Removed redundant transaction loading - transactions are loaded when transactions view is accessed
       // Store initial count if coming from profile
       if (widget.fromProfile) {
@@ -112,22 +117,44 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
     ref.read(recipientsProvider.notifier).loadBeneficiaries();
   }
 
+  Future<void> _onAddRecipientTapped() async {
+    HapticHelper.lightImpact();
+    if (widget.fromProfile) {
+      _hasNavigatedToAdd = true;
+    }
+    await Navigator.pushNamed(
+      context,
+      AppRoute.selectDestinationCountryView,
+      arguments: <String, dynamic>{
+        'hasBackButton': true,
+        'addRecipientOnly': true,
+      },
+    );
+    if (!mounted) return;
+    // State already updated by saveRecipient; refresh merges API + saved rows.
+    await ref.read(recipientsProvider.notifier).loadBeneficiaries();
+    if (widget.fromProfile && _hasNavigatedToAdd) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      _checkAndNavigateBack();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final recipientsState = ref.watch(recipientsProvider);
     final profileState = ref.watch(profileViewModelProvider);
     final user = profileState.user;
 
-    ref.listen<String>(
-      recipientsProvider.select((s) => s.searchQuery),
-      (previous, next) {
-        if (_searchController.text == next) return;
-        _searchController.value = TextEditingValue(
-          text: next,
-          selection: TextSelection.collapsed(offset: next.length),
-        );
-      },
-    );
+    ref.listen<String>(recipientsProvider.select((s) => s.searchQuery), (
+      previous,
+      next,
+    ) {
+      if (_searchController.text == next) return;
+      _searchController.value = TextEditingValue(
+        text: next,
+        selection: TextSelection.collapsed(offset: next.length),
+      );
+    });
 
     // Build multiple name variations for comparison
     Set<String> userNames = {};
@@ -210,30 +237,22 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
     //       return true; // Show this beneficiary
     //     }).toList();
 
-    // Remove duplicate beneficiaries based on account number and filter out empty names
-    final seenAccountNumbers = <String>{};
+    // Deduplicate using the same key as merge logic (type + account + currency).
+    final seenKeys = <String>{};
     final visibleBeneficiaries =
         recipientsState.filteredBeneficiaries.where((beneficiary) {
-          // Skip if beneficiary name is empty or whitespace only
+          if (!RecipientHistoryHelper.isSendRecipient(beneficiary)) {
+            return false;
+          }
           if (beneficiary.beneficiary.name.trim().isEmpty) {
             return false;
           }
 
-          // Create a unique key combining source account number and beneficiary account number (Dayfi Tag)
-          final sourceAccountNumber = beneficiary.source.accountNumber ?? '';
-          final beneficiaryAccountNumber =
-              beneficiary.beneficiary.accountNumber ?? '';
-
-          // For Dayfi Tags, use the beneficiary's account number as the unique identifier
-          final uniqueKey =
-              beneficiary.source.accountType?.toLowerCase() == 'dayfi'
-                  ? 'dayfi_${beneficiaryAccountNumber.toLowerCase()}'
-                  : 'other_${sourceAccountNumber}';
-
-          if (seenAccountNumbers.contains(uniqueKey)) {
-            return false; // Skip duplicate
+          final uniqueKey = RecipientHistoryHelper.peopleListDedupKey(beneficiary);
+          if (seenKeys.contains(uniqueKey)) {
+            return false;
           }
-          seenAccountNumbers.add(uniqueKey);
+          seenKeys.add(uniqueKey);
           return true;
         }).toList();
 
@@ -248,19 +267,20 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
           surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
-          automaticallyImplyLeading: false,
           leading:
-              widget.fromSendView
+              widget.fromSendView || widget.fromProfile
                   ? IconButton(
+                    splashColor: Colors.transparent,
+                    highlightColor: Colors.transparent,
                     icon: Icon(
                       Icons.arrow_back_ios,
                       size: 20,
                       color: Theme.of(context).colorScheme.onSurface,
-                      // size: 20,
                     ),
                     onPressed: () => Navigator.pop(context),
                   )
                   : const SizedBox.shrink(),
+          leadingWidth: widget.fromSendView || widget.fromProfile ? null : 0,
           title: Text(
             "Recipients",
             style: AppTypography.titleLarge.copyWith(
@@ -271,57 +291,36 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
             ),
           ),
           centerTitle: true,
-          actions:
-              widget.fromSendView
-                  ? [
-                    Padding(
-                      padding: EdgeInsets.only(right: 0),
-                      child: IconButton(
-                        onPressed: () async {
-                          if (widget.fromProfile) {
-                            _hasNavigatedToAdd = true;
-                          }
-                          await Navigator.pushNamed(
-                            context,
-                            AppRoute.addRecipientsView,
-                            arguments: <String, dynamic>{
-                              'fromProfile': widget.fromProfile,
-                            },
-                          );
-
-                          // Refresh beneficiaries list when returning
-                          _refreshRecipients();
-
-                          // If coming from profile, check if beneficiary was created
-                          if (widget.fromProfile && _hasNavigatedToAdd) {
-                            // Wait a bit for the list to refresh
-                            await Future.delayed(
-                              const Duration(milliseconds: 500),
-                            );
-                            _checkAndNavigateBack();
-                          }
-                        },
-                        icon: SvgPicture.asset(
-                          "assets/icons/svgs/user-plus.svg",
-                          width: 24,
-                          height: 24,
-                          color: Theme.of(context).colorScheme.onSurface,
-                          colorFilter: ColorFilter.mode(
-                            Theme.of(context).colorScheme.onSurface,
-                            BlendMode.srcIn,
+          actions: [
+            if (!widget.fromSendView)
+              Padding(
+                padding: EdgeInsets.only(right: 18),
+                child: InkWell(
+                  onTap: _onAddRecipientTapped,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      SvgPicture.asset(
+                        'assets/icons/svgs/notificationn.svg',
+                        height: 40,
+                        color: Theme.of(context).colorScheme.surface,
+                      ),
+                      SizedBox(
+                        height: 40,
+                        width: 40,
+                        child: Center(
+                          child: Icon(
+                            Icons.add,
+                            size: 28,
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
                           ),
                         ),
-                        tooltip: 'Add beneficiary',
-                        style: IconButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
                       ),
-                    ),
-                    SizedBox(width: 16),
-                  ]
-                  : [],
+                    ],
+                  ),
+                ),
+              ),
+          ],
         ),
         body: LayoutBuilder(
           builder: (context, constraints) {
@@ -347,7 +346,12 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
                     child: SizedBox(
                       width: constraints.maxWidth,
                       height: bodyHeight,
-                      child: Center(
+                      child: Align(
+                        alignment:
+                            recipientsState.isLoading &&
+                                    recipientsState.beneficiaries.isEmpty
+                                ? Alignment.topCenter
+                                : Alignment.center,
                         child: ConstrainedBox(
                           constraints: BoxConstraints(
                             maxWidth: isWide ? 500 : double.infinity,
@@ -398,8 +402,6 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
     if (visibleBeneficiaries.isEmpty) {
       if (recipientsState.isLoading && recipientsState.beneficiaries.isEmpty) {
         key = 'loading';
-      } else if (recipientsState.errorMessage != null) {
-        key = 'error';
       } else if (recipientsState.searchQuery.isEmpty) {
         key = 'empty';
       } else {
@@ -414,50 +416,22 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
       child:
           recipientsState.beneficiaries.isEmpty
               ? (recipientsState.isLoading
-                  ? ShimmerWidgets.recipientListShimmer(context, itemCount: 6)
-                  : recipientsState.errorMessage != null
-                  ? ErrorStateWidget(
-                    message: 'Failed to load Beneficiaries',
-                    details: recipientsState.errorMessage,
-                    onRetry: _refreshRecipients,
-                  )
-                  : EmptyStateWidget(
-                    icon: Icons.people_outline,
-                    title: 'No beneficiaries yet',
-                    message:
-                        'Your beneficiaries will appear here. Start sending money quickly',
-                    customButton: Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
-                      ),
-                      child: PrimaryButton(
-                        borderRadius: 12,
-                        text: "Send Money",
-                        onPressed: () {
-                          openSendMoneyEntry(context);
-                        },
-                        backgroundColor: AppColors.purple500,
-                        height: 56,
-                        textColor: AppColors.neutral0,
-                        fontFamily: 'Chirp',
-                        letterSpacing: -0.7,
-                        fontSize: 18,
-                        width: 375,
-                        fullWidth: true,
-                      ),
-
-                      // _buildActionButtonWidget(
-                      //   context,
-                      //   'Send Money',
-                      //   'assets/icons/svgs/swap.svg',
-                      //   () {
-                      //     appRouter.pushNamed(
-                      //       AppRoute.selectDestinationCountryView,
-                      //     );
-                      //   },
-                      // ),
+                  ? ShimmerWidgets.recipientListShimmer(
+                    context,
+                    itemCount: 6,
+                    padding: EdgeInsets.fromLTRB(
+                      isWide ? 24 : 18,
+                      8,
+                      isWide ? 24 : 18,
+                      112,
                     ),
+                  )
+                  : DayfiEmptyState(
+                    title: 'No recipients yet',
+                    message:
+                        'People you send money to will appear here for quick access',
+                    actionText: 'Create your first recipient',
+                    onAction: _onAddRecipientTapped,
                   ))
               : ListView(
                 shrinkWrap: true,
@@ -574,7 +548,7 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
                         top: 16,
                       ),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surface,
+                        // color: Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: ListView.builder(
@@ -611,7 +585,7 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
       curve: Curves.easeOut,
       transform: Matrix4.diagonal3Values(1.0, 1.0, 1.0),
       child: Container(
-        margin: EdgeInsets.only(bottom: 6, top: 6),
+        margin: EdgeInsets.only(bottom: 4, top: 4),
         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
@@ -619,58 +593,10 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
         ),
         child: Row(
           children: [
-            // Avatar
-            Stack(
-              alignment: Alignment.bottomRight,
-              children: [
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    SvgPicture.asset(
-                      "assets/icons/svgs/account.svg",
-                      width: 40,
-                      height: 40,
-                      color: AppColors.info500,
-                    ),
-                    SizedBox(
-                      width: 40,
-                      height: 40,
-                      child: Center(
-                        child: Text(
-                          _getInitials(beneficiary.name),
-                          style: TextStyle(
-                            color: AppColors.neutral0,
-                            fontFamily: 'Chirp',
-                            fontSize: 16,
-                            letterSpacing: -.25,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                Align(
-                  alignment: Alignment.bottomRight,
-                  child: Container(
-                    width: 15,
-                    height: 15,
-                    decoration: BoxDecoration(
-                      color: AppColors.neutral0,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.neutral200, width: 1),
-                    ),
-                    child: ClipOval(
-                      child: SvgPicture.asset(
-                        _getFlagPath(beneficiary.country),
-                        fit: BoxFit.cover,
-                        width: 20,
-                        height: 20,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+            // Avatar with Dayfi logo or country flag
+            RecipientAvatarBadge(
+              entry: beneficiaryWithSource,
+              flagPathForCountry: _getFlagPath,
             ),
             SizedBox(width: 10),
 
@@ -680,103 +606,38 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    beneficiary.name.toUpperCase(),
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    StringUtils.toTitleCase(
+                      RecipientHistoryHelper.primaryLabel(
+                        beneficiary,
+                        source,
+                      ),
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
                       fontFamily: 'Chirp',
+                      fontWeight: FontWeight.w600,
                       fontSize: 16,
-                      letterSpacing: -.25,
-                      fontWeight: FontWeight.w500,
+                      letterSpacing: -0.25,
+                      height: 1.2,
                       color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    _getChannelAndNetworkInfo(beneficiaryWithSource),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontFamily: 'Chirp',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: -.25,
+                      height: 1.450,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.6),
                     ),
                     overflow: TextOverflow.ellipsis,
                     maxLines: 2,
-                  ),
-                  SizedBox(height: 2),
-                  Row(
-                    children: [
-                      // _getAccountIcon(source, beneficiary),
-                      // SizedBox(width: 4),
-                      Expanded(
-                        child:
-                            _getChannelAndNetworkInfo(beneficiaryWithSource) ==
-                                    "Dayfi Tag"
-                                ? Row(
-                                  children: [
-                                    Text(
-                                      _getAccountNumber(
-                                        source,
-                                        beneficiary,
-                                      ).split("@").last,
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.bodyMedium?.copyWith(
-                                        fontFamily: 'Chirp',
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w500,
-                                        letterSpacing: -.25,
-                                        height: 1.450,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface
-                                            .withOpacity(0.6),
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    SizedBox(width: 8),
-                                    Container(
-                                      padding: EdgeInsets.symmetric(
-                                        vertical: 3,
-                                        horizontal: 8,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.warning400.withOpacity(
-                                          0.15,
-                                        ),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          // Icon(
-                                          //   Icons.auto_awesome,
-                                          //   size: 10,
-                                          //   color: Color(0xFF1A1A1A),
-                                          // ),
-                                          // SizedBox(width: 4),
-                                          Text(
-                                            "Dayfi Tag",
-                                            style: TextStyle(
-                                              fontFamily: 'Chirp',
-                                              fontSize: 10,
-                                              color: AppColors.warning600,
-                                              fontWeight: FontWeight.w600,
-                                              // letterSpacing: 0,
-                                              height: 1.2,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                )
-                                : Text(
-                                  '${_getChannelAndNetworkInfo(beneficiaryWithSource)} - ${_getAccountNumber(source, beneficiary)}',
-                                  style: Theme.of(
-                                    context,
-                                  ).textTheme.bodyMedium?.copyWith(
-                                    fontFamily: 'Chirp',
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                    letterSpacing: -.4,
-                                    height: 1.450,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurface.withOpacity(0.6),
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                      ),
-                    ],
                   ),
                 ],
               ),
@@ -795,7 +656,7 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
                 backgroundColor: AppColors.purple500,
                 textColor: AppColors.neutral0,
                 fontFamily: 'Chirp',
-                fontSize: 12,
+                fontSize: 12.5,
                 borderRadius: 20,
                 fontWeight: FontWeight.w500,
               ),
@@ -873,12 +734,14 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
         return 'assets/icons/svgs/world_flags/zambia.svg';
       case 'US':
         return 'assets/icons/svgs/world_flags/united states.svg';
+      case 'EU':
+        return 'assets/icons/svgs/world_flags/european-union.svg';
       case 'GB':
         return 'assets/icons/svgs/world_flags/united kingdom.svg';
       case 'CA':
         return 'assets/icons/svgs/world_flags/canada.svg';
       default:
-        return 'assets/icons/svgs/world_flags/nigeria.svg'; // fallback
+        return 'assets/icons/svgs/world_flags/united states.svg';
     }
   }
 
@@ -946,66 +809,117 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
     );
   }
 
+  Future<void> _prefetchBankLabels() async {
+    try {
+      await ref.read(sendViewModelProvider.notifier).prefetchNigerianBanks();
+      await ref.read(sendViewModelProvider.notifier).refreshPaymentNetworks();
+    } catch (_) {}
+    if (mounted) setState(() {});
+  }
+
   String _getChannelAndNetworkInfo(
     BeneficiaryWithSource beneficiaryWithSource,
   ) {
     final source = beneficiaryWithSource.source;
 
-    // For DayFi transfers, return "Dayfi Tag"
-    if (source.accountType?.toLowerCase() == 'dayfi') {
-      return 'Dayfi Tag';
-    }
-
-    try {
-      final sendState = ref.watch(sendViewModelProvider);
-      final networkId = source.networkId;
-
-      if (networkId == null || networkId.isEmpty) {
-        return 'Bank Transfer';
-      }
-
-      // Do not call initialize() from build: this ran every rebuild when networks were empty
-      // and flooded the send view model + layout pipeline.
-      if (sendState.networks.isEmpty) {
-        return 'Bank Transfer';
-      }
-
-      final network = sendState.networks.firstWhere(
-        (n) => n.id == networkId,
-        orElse: () => payment.Network(id: null, name: null),
+    if (source.accountType?.toLowerCase() == 'dayfi' ||
+        source.accountType?.toLowerCase() == 'crypto') {
+      return RecipientHistoryHelper.recipientChannelLabel(
+        beneficiaryWithSource,
       );
-
-      if (network.id == null) {
-        return 'Bank Transfer';
-      }
-
-      return network.name ?? 'Bank Transfer';
-    } catch (e) {
-      return 'Bank Transfer';
     }
+
+    String? networkName;
+    final networkId = source.networkId?.trim();
+    if (networkId != null && networkId.isNotEmpty) {
+      networkName =
+          ref
+              .read(sendViewModelProvider.notifier)
+              .findNetworkById(networkId)
+              ?.name;
+    }
+
+    return RecipientHistoryHelper.recipientChannelLabel(
+      beneficiaryWithSource,
+      networkName: networkName,
+    );
   }
 
   void _navigateToSend(BeneficiaryWithSource beneficiaryWithSource) {
     HapticHelper.lightImpact();
-    // Debug log the beneficiary data being passed
-    // print('📤 Navigating to send with beneficiary:');
-    // print('   Name: ${beneficiaryWithSource.beneficiary.name}');
-    // print('   Account Type: ${beneficiaryWithSource.source.accountType}');
-    // print('   Account Number: ${beneficiaryWithSource.source.accountNumber}');
-    // print('   Network ID: ${beneficiaryWithSource.source.networkId}');
+    final payWith = ref.read(selectedDebitCurrencyProvider);
+    final receiveCurrency =
+        RecipientHistoryHelper.isBankOrMobileRecipient(beneficiaryWithSource)
+            ? RecipientHistoryHelper.resolveReceiveCurrency(
+                beneficiaryWithSource,
+              )
+            : RecipientHistoryHelper.resolveLedgerCurrency(
+                beneficiaryWithSource,
+              );
 
-    final sendCurrency = ref.read(sendViewModelProvider).sendCurrency;
+    if (RecipientHistoryHelper.normalizeAccountType(
+          beneficiaryWithSource.source.accountType,
+        ) ==
+        'crypto') {
+      Navigator.pushNamed(
+        context,
+        AppRoute.walletCryptoSendView,
+        arguments: RecipientHistoryHelper.cryptoSendSelectedData(
+          beneficiaryWithSource,
+        ),
+      );
+      return;
+    }
 
-    // Navigate to send_view with beneficiary data
-    // The send_view will handle routing to the appropriate review screen
-    // based on beneficiary type (Dayfi Tag vs bank/mobile money)
+    final tag =
+        beneficiaryWithSource.source.accountNumber
+            ?.replaceFirst('@', '')
+            .trim();
+    if (RecipientHistoryHelper.normalizeAccountType(
+              beneficiaryWithSource.source.accountType,
+            ) ==
+            'dayfi' &&
+        tag != null &&
+        tag.isNotEmpty) {
+      Navigator.pushNamed(
+        context,
+        AppRoute.sendDayfiIdView,
+        arguments: RecipientHistoryHelper.dayfiSendSelectedData(
+          beneficiaryWithSource,
+          payWithCurrency: payWith,
+        ),
+      );
+      return;
+    }
+
+    if (RecipientHistoryHelper.isBankOrMobileRecipient(beneficiaryWithSource)) {
+      Navigator.pushNamed(
+        context,
+        AppRoute.addRecipientsView,
+        arguments: RecipientHistoryHelper.addRecipientsSelectedData(
+          beneficiaryWithSource,
+          payWithCurrency: payWith,
+        ),
+      );
+      return;
+    }
+
     Navigator.pushNamed(
       context,
       AppRoute.sendView,
       arguments: <String, dynamic>{
-        'beneficiaryWithSource': beneficiaryWithSource,
-        'fromRecipients': true,
-        'sendCurrency': sendCurrency,
+        'selectedData': {
+          'beneficiaryWithSource': beneficiaryWithSource,
+          'fromRecipients': true,
+          'receiveCountry': RecipientHistoryHelper.resolveReceiveCountry(
+            beneficiaryWithSource,
+          ),
+          'receiveCurrency': receiveCurrency,
+          ...payWithRouteArgs(
+            payWithCurrency: payWith,
+            receiveCurrency: receiveCurrency,
+          ),
+        },
       },
     );
   }

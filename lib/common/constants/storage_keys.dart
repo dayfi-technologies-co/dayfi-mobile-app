@@ -26,6 +26,9 @@ class StorageKeys {
   static const String languageCode = "languageCode";
   static const String biometricEnabled = "biometricEnabled";
   static const String biometricSetupCompleted = "biometricSetupCompleted";
+  /// Set after email/social login; consumed once when entering main after passcode.
+  static const String pendingBiometricPrompt = "pendingBiometricPrompt";
   static const String accountBalance = "accountBalance";
+  static const String homeDisplayBalanceCurrency = "homeDisplayBalanceCurrency";
   static const String lastLogin = "lastLogin";
 }

@@ -1,4 +1,7 @@
 /// Utility class for handling account number validation based on country and delivery method
+library;
+import 'package:flutter/services.dart';
+
 class AccountNumberUtils {
   /// Account number configuration by country and delivery type
   /// Format: countryCode -> deliveryType -> AccountNumberInfo
@@ -641,6 +644,64 @@ class AccountNumberUtils {
   static int getMinLength(String countryCode, String deliveryMethod) {
     final info = getAccountNumberInfo(countryCode, deliveryMethod);
     return info.minLength;
+  }
+
+  /// Strips formatting and optional country prefixes from pasted account numbers.
+  static String sanitizeDigits(String raw, String countryCode) {
+    var digits = raw.replaceAll(RegExp(r'[^0-9]'), '');
+    final cc = countryCode.toUpperCase();
+
+    if (cc == 'NG') {
+      if (digits.startsWith('234') && digits.length > 10) {
+        digits = digits.substring(3);
+      }
+      if (digits.length == 11 && digits.startsWith('0')) {
+        digits = digits.substring(1);
+      }
+    }
+
+    return digits;
+  }
+}
+
+/// Keeps account number fields digits-only and strips common paste formats.
+class AccountNumberInputFormatter extends TextInputFormatter {
+  final String countryCode;
+  final int? maxLength;
+
+  AccountNumberInputFormatter({
+    required this.countryCode,
+    this.maxLength,
+  });
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    var digits = AccountNumberUtils.sanitizeDigits(newValue.text, countryCode);
+
+    if (maxLength != null && digits.length > maxLength!) {
+      digits = digits.substring(0, maxLength!);
+    }
+
+    if (digits == newValue.text) {
+      return newValue;
+    }
+
+    final prefix = newValue.text.substring(
+      0,
+      newValue.selection.baseOffset.clamp(0, newValue.text.length),
+    );
+    final sanitizedPrefix =
+        AccountNumberUtils.sanitizeDigits(prefix, countryCode);
+    final offset = sanitizedPrefix.length.clamp(0, digits.length);
+
+    return TextEditingValue(
+      text: digits,
+      selection: TextSelection.collapsed(offset: offset),
+      composing: TextRange.empty,
+    );
   }
 }
 

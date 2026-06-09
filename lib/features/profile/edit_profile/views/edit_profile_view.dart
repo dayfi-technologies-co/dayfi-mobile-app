@@ -5,7 +5,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
-import 'package:dayfi/common/widgets/buttons/secondary_button.dart';
 import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/features/profile/edit_profile/vm/edit_profile_viewmodel.dart';

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:dayfi/core/theme/app_colors.dart';
-import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 
 /// A reusable widget for displaying error states with retry functionality
 ///

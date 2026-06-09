@@ -9,7 +9,9 @@ import 'package:dayfi/services/remote/payment_service.dart';
 import 'package:dayfi/services/remote/wallet_service.dart';
 import 'package:dayfi/services/remote/wallet_provision_service.dart';
 import 'package:dayfi/services/remote/investment_service.dart';
+import 'package:dayfi/services/remote/dayearn_service.dart';
 import 'package:dayfi/services/remote/notification_service.dart';
+import 'package:dayfi/services/remote/bills_service.dart';
 import 'package:dayfi/services/remote/network/network_service.dart';
 import 'package:dayfi/services/local/secure_storage.dart';
 import 'package:dayfi/services/local/local_cache.dart';
@@ -47,8 +49,14 @@ Future<void> setupLocator() async {
   locator.registerLazySingleton<InvestmentService>(
     () => InvestmentService(networkService: locator()),
   );
+  locator.registerLazySingleton<DayEarnService>(
+    () => DayEarnService(networkService: locator()),
+  );
   locator.registerLazySingleton<NotificationService>(
     () => NotificationService(networkService: locator()),
+  );
+  locator.registerLazySingleton<BillsService>(
+    () => BillsService(locator()),
   );
 
   final sharedPreferences = await SharedPreferences.getInstance();
@@ -97,6 +105,7 @@ final paymentService = locator<PaymentService>();
 final walletService = locator<WalletService>();
 final walletProvisionService = locator<WalletProvisionService>();
 final investmentService = locator<InvestmentService>();
+final dayEarnService = locator<DayEarnService>();
 final notificationService = locator<NotificationService>();
 final loadingModalController = locator<LoadingModalController>();
 final analyticsService = locator<AnalyticsService>();

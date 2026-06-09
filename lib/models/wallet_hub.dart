@@ -1,7 +1,7 @@
 import 'package:dayfi/common/constants/wallet_flag_assets.dart';
 import 'package:dayfi/models/wallet.dart';
 
-/// Display row for one of the four PRD wallets on home / add / convert.
+/// Global wallet — one USD ledger; display rows are pay-with / view currencies.
 class WalletDisplayRow {
   final String currency;
   final String name;
@@ -73,6 +73,8 @@ class GreyOperatingAccount {
   final String? accountNumber;
   final String? bankName;
   final String? iban;
+  final String? routingNumber;
+  final bool isDemoAccount;
   final bool canReceiveDeposits;
   final double balance;
 
@@ -84,6 +86,8 @@ class GreyOperatingAccount {
     this.accountNumber,
     this.bankName,
     this.iban,
+    this.routingNumber,
+    this.isDemoAccount = false,
     this.canReceiveDeposits = false,
     this.balance = 0,
   });
@@ -97,14 +101,18 @@ class GreyOperatingAccount {
       accountNumber: json['accountNumber']?.toString(),
       bankName: json['bankName']?.toString(),
       iban: json['iban']?.toString(),
+      routingNumber: json['routingNumber']?.toString(),
+      isDemoAccount: json['isDemoAccount'] == true,
       canReceiveDeposits: json['canReceiveDeposits'] == true,
       balance: _toDouble(json['balance']),
     );
   }
 
+  bool get hasBankDisplayDetails =>
+      (accountNumber?.isNotEmpty ?? false) || (iban?.isNotEmpty ?? false);
+
   bool get fiatReceiveReady =>
-      canReceiveDeposits &&
-      ((accountNumber?.isNotEmpty ?? false) || (iban?.isNotEmpty ?? false));
+      canReceiveDeposits && hasBankDisplayDetails;
 }
 
 class WalletHubSnapshot {
@@ -126,6 +134,11 @@ class WalletHubSnapshot {
       if (r.currency.toUpperCase() == c) return r;
     }
     return null;
+  }
+
+  /// Available balance shown in [currency] (same global pool, FX display).
+  double balanceInDisplayCurrency(String currency) {
+    return rowFor(currency)?.balance ?? totalAvailableBalance.amount;
   }
 
   GreyOperatingAccount? greyFor(String currency) {
@@ -182,25 +195,41 @@ class WalletHubSnapshot {
     final bankByCurrency = <String, String>{};
 
     final walletBalances = data?['walletBalances'];
-    if (walletBalances is List) {
+    final hasWalletBalanceRows =
+        walletBalances is List && walletBalances.isNotEmpty;
+    if (hasWalletBalanceRows) {
       for (final row in walletBalances) {
         if (row is! Map<String, dynamic>) continue;
         final c = row['currency']?.toString().toUpperCase() ?? '';
         balanceByCurrency[c] = _toDouble(row['balance']);
-        if (row['walletId'] != null) {
-          walletIdByCurrency[c] = row['walletId'].toString();
+
+        // Backend compatibility: some deployments may use snake_case keys.
+        final walletIdRaw = row['walletId'] ??
+            row['wallet_id'] ??
+            row['walletID'] ??
+            row['walletid'];
+        final walletIdStr = walletIdRaw?.toString();
+        if (walletIdStr != null && walletIdStr.isNotEmpty) {
+          walletIdByCurrency[c] = walletIdStr;
         }
-        if (row['accountNumber'] != null) {
-          accountByCurrency[c] = row['accountNumber'].toString();
+
+        final accountNumberRaw =
+            row['accountNumber'] ?? row['account_number'];
+        final accountNumberStr = accountNumberRaw?.toString();
+        if (accountNumberStr != null && accountNumberStr.isNotEmpty) {
+          accountByCurrency[c] = accountNumberStr;
         }
-        if (row['bankName'] != null) {
-          bankByCurrency[c] = row['bankName'].toString();
+
+        final bankNameRaw = row['bankName'] ?? row['bank_name'];
+        final bankNameStr = bankNameRaw?.toString();
+        if (bankNameStr != null && bankNameStr.isNotEmpty) {
+          bankByCurrency[c] = bankNameStr;
         }
       }
     }
 
     final balancesMap = data?['balances'];
-    if (balancesMap is Map) {
+    if (balancesMap is Map && !hasWalletBalanceRows) {
       balancesMap.forEach((key, value) {
         final c = key.toString().toUpperCase();
         balanceByCurrency[c] = _toDouble(value);
@@ -209,8 +238,13 @@ class WalletHubSnapshot {
 
     for (final w in wallets) {
       final c = w.currency.toUpperCase();
-      balanceByCurrency[c] = w.balanceAsDouble;
-      walletIdByCurrency[c] = w.walletId;
+      // PRD `walletBalances` is authoritative; legacy `wallets` may lag behind sync.
+      if (!hasWalletBalanceRows) {
+        balanceByCurrency[c] = w.balanceAsDouble;
+      }
+      if (w.walletId.isNotEmpty) {
+        walletIdByCurrency[c] = w.walletId;
+      }
       if (w.accountNumber != null && w.accountNumber!.isNotEmpty) {
         accountByCurrency[c] = w.accountNumber!;
       }
@@ -220,12 +254,12 @@ class WalletHubSnapshot {
     }
 
     final rows = walletCatalog.map((meta) {
-      final c = meta['currency']! as String;
+      final c = meta['currency']!;
       return WalletDisplayRow(
         currency: c,
-        name: meta['name']! as String,
-        symbol: meta['symbol']! as String,
-        flagPath: meta['flag']! as String,
+        name: meta['name']!,
+        symbol: meta['symbol']!,
+        flagPath: meta['flag']!,
         balance: balanceByCurrency[c] ?? 0,
         walletId: walletIdByCurrency[c],
         hasLedgerWallet: walletIdByCurrency.containsKey(c),

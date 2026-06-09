@@ -1,6 +1,12 @@
+import 'dart:async';
+
+import 'package:dayfi/app_locator.dart';
+import 'package:dayfi/common/constants/username_copy.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
+import 'package:dayfi/features/send/constants/yellow_card_corridors.dart';
+import 'package:dayfi/features/send/helpers/standard_send_destinations.dart';
 import 'package:dayfi/features/send/send_flow.dart';
 import 'package:dayfi/features/send/vm/send_viewmodel.dart';
 import 'package:dayfi/features/wallet/providers/wallet_hub_provider.dart';
@@ -14,12 +20,14 @@ class DeliveryMethodsSheet extends ConsumerStatefulWidget {
   final String selectedCountry;
   final String selectedCurrency;
   final String debitCurrency;
+  final bool saveRecipientOnly;
 
   const DeliveryMethodsSheet({
     super.key,
     required this.selectedCountry,
     required this.selectedCurrency,
     required this.debitCurrency,
+    this.saveRecipientOnly = false,
   });
 
   @override
@@ -28,6 +36,22 @@ class DeliveryMethodsSheet extends ConsumerStatefulWidget {
 }
 
 class _DeliveryMethodsSheetState extends ConsumerState<DeliveryMethodsSheet> {
+  static const Set<String> _coreBankSendCurrencies = {'USD', 'EUR', 'GBP'};
+
+  bool get _isCoreBankSendCorridor =>
+      _coreBankSendCurrencies.contains(selectedCurrency.toUpperCase());
+
+  String _bankTransferSubtitle(String receiveCurrency) {
+    switch (receiveCurrency.toUpperCase()) {
+      case 'EUR':
+        return 'Send to a European bank account';
+      case 'GBP':
+        return 'Send to a UK bank account';
+      default:
+        return 'Send to a US bank account';
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -36,17 +60,28 @@ class _DeliveryMethodsSheetState extends ConsumerState<DeliveryMethodsSheet> {
 
   Future<void> _syncViewModel() async {
     final notifier = ref.read(sendViewModelProvider.notifier);
-    if (!notifier.isInitialized && !notifier.isInitializing) {
-      await notifier.initialize();
-    }
     final debit = widget.debitCurrency.toUpperCase();
     final receive = widget.selectedCurrency.toUpperCase();
-    await notifier.updateSendCountry(countryForCurrency(debit), debit);
-    await notifier.updateReceiveCountry(
-      widget.selectedCountry.toUpperCase(),
-      receive,
-    );
+
     ref.read(selectedDebitCurrencyProvider.notifier).state = debit;
+
+    Future<void> applyCountries() async {
+      await notifier.updateSendCountry(countryForCurrency(debit), debit);
+      await notifier.updateReceiveCountry(
+        widget.selectedCountry.toUpperCase(),
+        receive,
+      );
+    }
+
+    // Keep the sheet tappable immediately; sync corridor + rates in background.
+    unawaited(
+      () async {
+        if (!notifier.isInitialized && !notifier.isInitializing) {
+          await notifier.initialize();
+        }
+        await applyCountries();
+      }().catchError((_) {}),
+    );
   }
 
   String get selectedCountry => widget.selectedCountry;
@@ -60,13 +95,13 @@ class _DeliveryMethodsSheetState extends ConsumerState<DeliveryMethodsSheet> {
 
     switch (channelType.toLowerCase()) {
       case 'dayfi_tag':
-        baseName = 'Dayfi Tag';
+        baseName = UsernameCopy.label;
         timing = 'Instant transfer';
         break;
       case 'bank_transfer':
       case 'bank':
         baseName = 'Bank Transfer';
-        timing = '24-48 hours';
+        timing = 'Usually under 5 minutes';
         break;
       case 'p2p':
       case 'peer_to_peer':
@@ -106,7 +141,7 @@ class _DeliveryMethodsSheetState extends ConsumerState<DeliveryMethodsSheet> {
       case 'crypto':
       case 'cryptocurrency':
         baseName = 'Crypto';
-        timing = '10-30 minutes';
+        timing = 'Instant';
         break;
       case 'digital_dollar':
       case 'stablecoins':
@@ -265,10 +300,20 @@ class _DeliveryMethodsSheetState extends ConsumerState<DeliveryMethodsSheet> {
         );
       case 'crypto':
       case 'cryptocurrency':
-        return SvgPicture.asset(
-          'assets/icons/svgs/cryptoo.svg',
-          height: 32,
-          width: 32,
+        return Stack(
+          alignment: AlignmentDirectional.center,
+          children: [
+            SvgPicture.asset(
+              'assets/icons/svgs/swap.svg',
+              height: 40,
+              color: Theme.of(context).textTheme.bodyLarge!.color,
+            ),
+            SvgPicture.asset(
+              'assets/icons/svgs/coin.svg',
+              height: 28,
+              color: Theme.of(context).colorScheme.surface,
+            ),
+          ],
         );
       default:
         return Stack(
@@ -304,11 +349,49 @@ class _DeliveryMethodsSheetState extends ConsumerState<DeliveryMethodsSheet> {
     return null;
   }
 
+  String? _routeForChannelType(String channelType) {
+    switch (channelType.toLowerCase()) {
+      case 'dayfi_tag':
+        return AppRoute.sendDayfiIdView;
+      case 'crypto':
+      case 'cryptocurrency':
+        return AppRoute.walletCryptoSendView;
+      default:
+        return AppRoute.addRecipientsView;
+    }
+  }
+
   void _onMethodTap({
     required BuildContext context,
     required String channelType,
     Channel? channel,
   }) {
+    if (isYellowCardFallbackChannel(channel)) {
+      TopSnackbar.showSafe(
+        context,
+        message: kThirdPartyUnavailableMessage,
+        isError: true,
+      );
+      return;
+    }
+
+    final type = channelType.toLowerCase();
+    final isBankType =
+        type == 'bank_transfer' ||
+        type == 'bank' ||
+        type == 'p2p' ||
+        type == 'peer_to_peer' ||
+        type == 'peer-to-peer' ||
+        type == 'eft';
+    if (_isCoreBankSendCorridor && isBankType) {
+      TopSnackbar.showSafe(
+        context,
+        message: kThirdPartyUnavailableMessage,
+        isError: true,
+      );
+      return;
+    }
+
     final sendNotifier = ref.read(sendViewModelProvider.notifier);
     sendNotifier.updateDeliveryMethod(channelType);
 
@@ -321,46 +404,15 @@ class _DeliveryMethodsSheetState extends ConsumerState<DeliveryMethodsSheet> {
       'recipientDeliveryMethod': channelType,
       'recipientChannelId': channel?.id ?? '',
       'debitCurrency': debitCurrency.toUpperCase(),
+      if (widget.saveRecipientOnly) 'saveRecipientOnly': true,
     };
 
-    if (channelType.toLowerCase() == 'dayfi_tag') {
-      Navigator.pushNamed(
-        context,
-        AppRoute.sendDayfiIdView,
-        arguments: selectedData,
-      );
-      return;
-    }
+    final route = _routeForChannelType(channelType);
+    if (route == null) return;
 
-    if (channelType.toLowerCase() == 'crypto' ||
-        channelType.toLowerCase() == 'cryptocurrency') {
-      Navigator.pushNamed(
-        context,
-        AppRoute.walletCryptoSendView,
-        arguments: selectedData,
-      );
-      return;
-    }
-
-    final sendState = ref.read(sendViewModelProvider);
-    final availableNetworks = sendState.networks.where(
-      (network) =>
-          network.status == 'active' && network.country == selectedCountry,
-    );
-    if (availableNetworks.isEmpty && selectedCountry != 'US') {
-      TopSnackbar.show(
-        context,
-        message: 'No networks available for $selectedCountry',
-        isError: true,
-      );
-      return;
-    }
-
-    Navigator.pushNamed(
-      context,
-      AppRoute.addRecipientsView,
-      arguments: selectedData,
-    );
+    // Close the sheet first so navigation feels instant on the root stack.
+    Navigator.of(context).pop();
+    appRouter.pushNamed(route, arguments: selectedData);
   }
 
   Widget _methodTile({
@@ -374,102 +426,150 @@ class _DeliveryMethodsSheetState extends ConsumerState<DeliveryMethodsSheet> {
   }) {
     return Opacity(
       opacity: enabled ? 1 : 0.45,
-      child: GestureDetector(
-        onTap: enabled
-            ? () => _onMethodTap(
-                  context: context,
-                  channelType: channelType,
-                  channel: channel,
-                )
-            : null,
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 40,
-                height: 40,
-                child: _getDeliveryMethodIcon(channelType, context),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          title,
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontFamily: 'Chirp',
-                            fontSize: 18,
-                            letterSpacing: -.25,
-                            fontWeight: FontWeight.w500,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap:
+              enabled
+                  ? () => _onMethodTap(
+                    context: context,
+                    channelType: channelType,
+                    channel: channel,
+                  )
+                  : null,
+          splashColor: Colors.transparent,
+          highlightColor: Theme.of(
+            context,
+          ).colorScheme.onSurface.withOpacity(0.04),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: _getDeliveryMethodIcon(channelType, context),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            title,
+                            style: Theme.of(
+                              context,
+                            ).textTheme.titleLarge?.copyWith(
+                              fontFamily: 'Chirp',
+                              fontSize: 18,
+                              letterSpacing: -.25,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
-                        ),
-                        if (badge != null) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: badge == 'FREE'
-                                  ? AppColors.warning400.withOpacity(0.15)
-                                  : Theme.of(context)
-                                      .colorScheme
-                                      .onSurface
-                                      .withOpacity(0.08),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              badge,
-                              style: AppTypography.labelSmall.copyWith(
-                                fontFamily: 'Chirp',
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: badge == 'FREE'
-                                    ? AppColors.warning600
-                                    : Theme.of(context)
-                                        .colorScheme
-                                        .onSurface
-                                        .withOpacity(0.5),
+                          if (badge != null) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color:
+                                    badge == 'FREE'
+                                        ? AppColors.warning400.withOpacity(0.15)
+                                        : Theme.of(context)
+                                            .colorScheme
+                                            .onSurface
+                                            .withOpacity(0.08),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                badge,
+                                style: AppTypography.labelSmall.copyWith(
+                                  fontFamily: 'Chirp',
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color:
+                                      badge == 'FREE'
+                                          ? AppColors.warning600
+                                          : Theme.of(context)
+                                              .colorScheme
+                                              .onSurface
+                                              .withOpacity(0.5),
+                                ),
                               ),
                             ),
-                          ),
+                          ],
                         ],
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w500,
-                        height: 1.2,
-                        fontFamily: 'Chirp',
-                        letterSpacing: -.25,
-                        fontSize: 14,
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withOpacity(0.65),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          height: 1.2,
+                          fontFamily: 'Chirp',
+                          letterSpacing: -.25,
+                          fontSize: 14,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.65),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              Icon(Icons.chevron_right, color: AppColors.neutral400, size: 20),
-            ],
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.28),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
+  }
+
+  Widget _methodGroup(BuildContext context, {required List<Widget> tiles}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: List.generate(tiles.length, (index) {
+          return Column(
+            children: [
+              tiles[index],
+              if (index < tiles.length - 1)
+                Divider(
+                  height: 1,
+                  thickness: 1,
+                  indent: 68,
+                  endIndent: 16,
+                  color: Theme.of(context).dividerColor.withOpacity(0.08),
+                ),
+            ],
+          );
+        }),
+      ),
+    );
+  }
+
+  String _cryptoSubtitle(String receiveCurrency) {
+    switch (receiveCurrency.toUpperCase()) {
+      case 'EUR':
+        return 'Send EURC on Stellar or Ethereum';
+      default:
+        return 'Send USDC on Stellar or Ethereum';
+    }
   }
 
   List<Widget> _buildCoreCurrencyMethods(
@@ -480,49 +580,57 @@ class _DeliveryMethodsSheetState extends ConsumerState<DeliveryMethodsSheet> {
     final bankChannel = receive == 'NGN' ? _findBankChannel(ycChannels) : null;
     // NGN bank: Flutterwave on review screen; channel list optional for UX.
     final bankEnabled = receive == 'NGN';
-    final cryptoEnabled =
-        receive == 'USD' || receive == 'EUR' || receive == 'NGN';
+    final cryptoEnabled = receive == 'USD' || receive == 'EUR';
 
-    return [
+    final tiles = <Widget>[
       _methodTile(
         context: context,
         channelType: 'dayfi_tag',
-        title: 'Dayfi user',
-        subtitle: 'Send to a Dayfi Tag — instant',
+        title: UsernameCopy.label,
+        subtitle: UsernameCopy.sendToInstant,
         enabled: true,
         badge: 'FREE',
       ),
-      const SizedBox(height: 12),
-      _methodTile(
-        context: context,
-        channelType: bankChannel?.channelType ?? 'bank_transfer',
-        title: 'Bank',
-        subtitle: receive == 'NGN'
-            ? 'Transfer to a Nigerian bank account'
-            : 'Bank transfers — coming soon',
-        enabled: bankEnabled,
-        badge: bankEnabled ? null : 'SOON',
-        channel: bankChannel,
-      ),
-      const SizedBox(height: 12),
-      _methodTile(
-        context: context,
-        channelType: 'mobile_money',
-        title: 'Mobile money',
-        subtitle: 'Coming soon',
-        enabled: false,
-        badge: 'SOON',
-      ),
-      const SizedBox(height: 12),
-      _methodTile(
-        context: context,
-        channelType: 'crypto',
-        title: 'Crypto',
-        subtitle: 'Send USDC/EURC on Stellar or Ethereum',
-        enabled: cryptoEnabled,
-        badge: cryptoEnabled ? null : 'SOON',
-      ),
     ];
+
+    if (bankEnabled) {
+      tiles.add(
+        _methodTile(
+          context: context,
+          channelType: bankChannel?.channelType ?? 'bank_transfer',
+          title: 'Bank',
+          subtitle: 'Transfer to a Nigerian bank account',
+          enabled: true,
+          channel: bankChannel,
+        ),
+      );
+    }
+
+    if (cryptoEnabled) {
+      tiles.add(
+        _methodTile(
+          context: context,
+          channelType: 'crypto',
+          title: 'Crypto',
+          subtitle: _cryptoSubtitle(receive),
+          enabled: true,
+        ),
+      );
+    }
+
+    if (_coreBankSendCurrencies.contains(receive)) {
+      tiles.add(
+        _methodTile(
+          context: context,
+          channelType: 'bank_transfer',
+          title: 'Bank Transfer',
+          subtitle: _bankTransferSubtitle(receive),
+          enabled: true,
+        ),
+      );
+    }
+
+    return tiles;
   }
 
   @override
@@ -531,162 +639,178 @@ class _DeliveryMethodsSheetState extends ConsumerState<DeliveryMethodsSheet> {
     final receive = selectedCurrency.toUpperCase();
     final isCore = kCoreSendCurrencies.contains(receive);
 
-    final filteredChannels = sendState.channels.where((channel) {
-      return channel.status == 'active' &&
-          (channel.rampType == 'withdrawal' ||
-              channel.rampType == 'withdraw' ||
-              channel.rampType == 'payout' ||
-              channel.rampType == 'deposit' ||
-              channel.rampType == 'receive') &&
-          (channel.country == selectedCountry ||
-              channel.currency == selectedCurrency);
-    }).toList();
+    var ycMethods =
+        isCore
+            ? sendState.channels
+                .where(
+                  (channel) =>
+                      channel.status == 'active' &&
+                      (channel.country == selectedCountry ||
+                          channel.currency == selectedCurrency),
+                )
+                .toList()
+            : deliveryChannelsForCorridor(
+              apiChannels: sendState.channels,
+              countryCode: selectedCountry,
+              currency: selectedCurrency,
+            );
 
-    Map<String, Channel> unique = {};
-    for (final channel in filteredChannels) {
-      final key = channel.channelType?.toLowerCase() ?? 'unknown';
-      if (!unique.containsKey(key) ||
-          (channel.max ?? 0) > (unique[key]!.max ?? 0)) {
-        unique[key] = channel;
-      }
+    final subtitleText =
+        'How should the recipient in $selectedCountry receive the money?';
+
+    final coreTiles = _buildCoreCurrencyMethods(context, ycMethods);
+
+    Widget methodsBody;
+    if (isCore) {
+      methodsBody = _methodGroup(context, tiles: coreTiles);
+    } else if (ycMethods.isEmpty) {
+      methodsBody = Padding(
+        padding: const EdgeInsets.symmetric(vertical: 32),
+        child: Text(
+          'No delivery methods available',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontFamily: 'FunnelDisplay',
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      );
+    } else {
+      methodsBody = ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.5,
+        ),
+        child: SingleChildScrollView(
+          child: _methodGroup(
+            context,
+            tiles: List.generate(ycMethods.length, (index) {
+              final method = ycMethods[index];
+              final type = method.channelType?.toLowerCase() ?? '';
+              final isDayfi = type == 'dayfi_tag';
+              final isFallback = isYellowCardFallbackChannel(method);
+              final name = _getDeliveryMethodName(method.channelType);
+              final parts = name.split(' - ');
+              return _methodTile(
+                context: context,
+                channelType: method.channelType ?? '',
+                title: parts.first,
+                subtitle: isFallback
+                    ? 'Temporarily unavailable'
+                    : (parts.length > 1 ? parts[1] : ''),
+                // Keep fallback methods tappable so we can show a friendly
+                // TopSnackbar error instead of silently disabling the row.
+                enabled: true,
+                badge: isDayfi ? 'FREE' : null,
+                channel: method,
+              );
+            }),
+          ),
+        ),
+      );
     }
 
-    final ycMethods = unique.values.toList()
-      ..sort((a, b) => (a.channelType ?? '').compareTo(b.channelType ?? ''));
-
-    final subtitleText = isCore
-        ? 'Send $receive from your $debitCurrency wallet'
-        : 'How should the recipient in $selectedCountry receive the money?';
-
-  return Container(
-      height: MediaQuery.of(context).size.height * 0.55,
+    return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      child: Column(
-        children: [
-          SizedBox(height: 18),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 18),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                SizedBox(height: 40, width: 40),
-                Text(
-                  'Choose delivery method',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontFamily: 'FunnelDisplay',
-                    fontSize: 20,
-                    // height: 1.6,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-                InkWell(
-                  splashColor: Colors.transparent,
-                  highlightColor: Colors.transparent,
-                  onTap:
-                      () => {
-                        Navigator.pop(context),
-                        FocusScope.of(context).unfocus(),
-                      },
-                  child: Stack(
-                    alignment: AlignmentGeometry.center,
-                    children: [
-                      SvgPicture.asset(
-                        "assets/icons/svgs/notificationn.svg",
-                        height: 40,
-                        color: Theme.of(context).colorScheme.surface,
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 10),
+            Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              child: Row(
+                children: [
+                  const SizedBox(width: 40),
+                  Expanded(
+                    child: Text(
+                      'Choose delivery method',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(
+                        context,
+                      ).textTheme.headlineMedium?.copyWith(
+                        fontFamily: 'FunnelDisplay',
+                        fontSize: 22,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
-                      SizedBox(
-                        height: 40,
-                        width: 40,
-                        child: Center(
-                          child: Image.asset(
-                            "assets/icons/pngs/cancelicon.png",
-                            height: 20,
-                            width: 20,
-                            color: Theme.of(context).textTheme.bodyLarge!.color,
+                    ),
+                  ),
+                  InkWell(
+                    splashColor: Colors.transparent,
+                    highlightColor: Colors.transparent,
+                    onTap: () {
+                      Navigator.pop(context);
+                      FocusScope.of(context).unfocus();
+                    },
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        SvgPicture.asset(
+                          'assets/icons/svgs/notificationn.svg',
+                          height: 40,
+                          color: Theme.of(context).colorScheme.surface,
+                        ),
+                        SizedBox(
+                          height: 40,
+                          width: 40,
+                          child: Center(
+                            child: Image.asset(
+                              'assets/icons/pngs/cancelicon.png',
+                              height: 20,
+                              width: 20,
+                              color:
+                                  Theme.of(context).textTheme.bodyLarge!.color,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40.0),
-            child: Opacity(
-              opacity: .7,
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 28),
               child: Text(
                 subtitleText,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontSize: 16,
+                  fontSize: 14,
                   fontWeight: FontWeight.w500,
                   fontFamily: 'Chirp',
                   letterSpacing: -.25,
-                  height: 1.5,
+                  height: 1.45,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.55),
                 ),
                 textAlign: TextAlign.center,
               ),
             ),
-          ),
-          const SizedBox(height: 24),
-          Expanded(
-            child: isCore
-                ? ListView(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 8,
-                    ),
-                    children: _buildCoreCurrencyMethods(context, ycMethods),
-                  )
-                : ycMethods.isEmpty
-                    ? Center(
-                        child: Text(
-                          'No delivery methods available',
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineMedium
-                              ?.copyWith(
-                                fontFamily: 'FunnelDisplay',
-                                fontSize: 20,
-                                fontWeight: FontWeight.w600,
-                              ),
-                        ),
-                      )
-                    : ListView.separated(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 8,
-                        ),
-                        itemCount: ycMethods.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 12),
-                        itemBuilder: (context, index) {
-                          final method = ycMethods[index];
-                          final type =
-                              method.channelType?.toLowerCase() ?? '';
-                          final isDayfi = type == 'dayfi_tag';
-                          final name =
-                              _getDeliveryMethodName(method.channelType);
-                          final parts = name.split(' - ');
-                          return _methodTile(
-                            context: context,
-                            channelType: method.channelType ?? '',
-                            title: parts.first,
-                            subtitle: parts.length > 1 ? parts[1] : '',
-                            enabled: true,
-                            badge: isDayfi ? 'FREE' : null,
-                            channel: method,
-                          );
-                        },
-                      ),
-          ),
-        ],
+            const SizedBox(height: 20),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              child: methodsBody,
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
       ),
     );
   }

@@ -133,7 +133,7 @@ class _ResetTransactionPinIntroViewState
                           "Reset your\ntransaction PIN",
                           style: AppTypography.headlineLarge.copyWith(
                             fontFamily: 'FunnelDisplay',
-                            fontSize: 28,
+                            fontSize: 24,
                             height: 1.2,
                             fontWeight: FontWeight.w600,
                             color: AppColors.neutral0,

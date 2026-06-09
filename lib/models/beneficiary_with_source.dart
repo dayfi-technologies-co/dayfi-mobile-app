@@ -7,16 +7,19 @@ List<dynamic> beneficiariesFromJson(String str) => List<dynamic>.from(json.decod
 class BeneficiaryWithSource {
   final Beneficiary beneficiary;
   final payment.Source source;
+  final String? ledgerCurrency;
 
   BeneficiaryWithSource({
     required this.beneficiary,
     required this.source,
+    this.ledgerCurrency,
   });
 
   factory BeneficiaryWithSource.fromJson(Map<String, dynamic> json) {
     return BeneficiaryWithSource(
       beneficiary: Beneficiary.fromJson(json['beneficiary']),
       source: payment.Source.fromJson(json['source']),
+      ledgerCurrency: json['ledgerCurrency']?.toString(),
     );
   }
 
@@ -32,8 +35,12 @@ class BeneficiaryWithSource {
         'email': beneficiary.email,
         'idNumber': beneficiary.idNumber,
         'idType': beneficiary.idType,
+        'accountNumber': beneficiary.accountNumber,
+        'accountType': beneficiary.accountType,
+        if (beneficiary.bankName != null) 'bankName': beneficiary.bankName,
       },
       'source': source.toJson(),
+      if (ledgerCurrency != null) 'ledgerCurrency': ledgerCurrency,
     };
   }
 
@@ -43,7 +50,9 @@ class BeneficiaryWithSource {
     return other is BeneficiaryWithSource &&
         other.beneficiary.name == beneficiary.name &&
         other.source.accountNumber == source.accountNumber &&
-        other.source.networkId == source.networkId;
+        other.source.networkId == source.networkId &&
+        other.source.accountType == source.accountType &&
+        other.ledgerCurrency == ledgerCurrency;
   }
 
   @override
@@ -52,6 +61,8 @@ class BeneficiaryWithSource {
       beneficiary.name,
       source.accountNumber,
       source.networkId,
+      source.accountType,
+      ledgerCurrency,
     );
   }
 }

@@ -156,6 +156,7 @@ class SignupView extends ConsumerWidget {
                             fontSize: 18,
                             width: 375,
                             fullWidth: true,
+                            applyFeatureInset: false,
                           )
                           .animate()
                           .fadeIn(
@@ -484,7 +485,7 @@ class SignupView extends ConsumerWidget {
                                                       .bodySmall
                                                       ?.copyWith(
                                                         fontFamily: 'Chirp',
-                                                        fontSize: 12,
+                                                        fontSize: 12.5,
                                                         fontWeight:
                                                             FontWeight.w400,
                                                         // letterspacing: 0,
@@ -594,7 +595,7 @@ class SignupView extends ConsumerWidget {
                                             signupState.confirmPasswordError,
                                             style: const TextStyle(
                                               color: Colors.red,
-                                              fontSize: 12,
+                                              fontSize: 12.5,
                                               fontFamily: 'Chirp',
                                             ),
                                           ),

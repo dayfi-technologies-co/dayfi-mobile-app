@@ -10,6 +10,8 @@ import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/common/constants/storage_keys.dart';
 import 'package:dayfi/common/constants/analytics_events.dart';
 import 'package:dayfi/common/utils/connectivity_utils.dart';
+import 'package:dayfi/common/helpers/biometric_preferences.dart';
+import 'package:dayfi/common/utils/post_auth_navigation.dart';
 
 class LoginState {
   final String email;
@@ -171,13 +173,10 @@ class LoginNotifier extends StateNotifier<LoginState> {
 
         // Check if user has completed profile (phone number)
         final phoneNumber = response.data?.user?.phoneNumber;
-        if (phoneNumber == null || phoneNumber.isEmpty) {
-          // User hasn't completed profile, navigate to success signup to complete profile
-          appRouter.pushNamed(AppRoute.successSignupView);
-        } else {
-          // Navigate to create passcode screen (for login flow)
-          appRouter.pushNamed(AppRoute.createPasscodeView, arguments: false);
-        }
+        await navigateAfterAuthenticatedSession(
+          profileComplete:
+              phoneNumber != null && phoneNumber.trim().isNotEmpty,
+        );
       } else {
         AppLogger.error('Login failed: ${response.message}');
         // Analytics: login failed
@@ -263,9 +262,8 @@ class LoginNotifier extends StateNotifier<LoginState> {
       // Call backend API to disable biometrics
       await _authService.updateProfileBiometrics(isBiometricsSetup: false);
 
-      // Also clear local biometric flag to ensure consistency
-      await _secureStorage.delete('biometric_enabled');
-      await _secureStorage.delete(StorageKeys.biometricSetupCompleted);
+      // Fresh login: offer biometric setup once after passcode (not every unlock).
+      await BiometricPreferences.schedulePostLoginBiometricPrompt();
 
       AppLogger.info(
         'Biometrics disabled on backend after login - user can re-enable during setup',
@@ -387,13 +385,10 @@ class LoginNotifier extends StateNotifier<LoginState> {
 
         // Check if user has completed profile (phone number)
         final phoneNumber = response.data?.user?.phoneNumber;
-        if (phoneNumber == null || phoneNumber.isEmpty) {
-          // User hasn't completed profile, navigate to success signup to complete profile
-          appRouter.pushNamed(AppRoute.successSignupView);
-        } else {
-          // Navigate to create passcode screen (for login flow)
-          appRouter.pushNamed(AppRoute.createPasscodeView, arguments: false);
-        }
+        await navigateAfterAuthenticatedSession(
+          profileComplete:
+              phoneNumber != null && phoneNumber.trim().isNotEmpty,
+        );
         return true;
       } else {
         AppLogger.error('Auto-login failed: ${response.message}');

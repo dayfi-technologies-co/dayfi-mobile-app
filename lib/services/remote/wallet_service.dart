@@ -4,7 +4,8 @@ import 'package:dayfi/models/wallet_hub.dart';
 import 'package:dayfi/models/wallet_transaction.dart';
 import 'package:dayfi/models/wallet.dart';
 import 'package:dayfi/models/beneficiary_with_source.dart';
-import 'package:dayfi/models/payment_response.dart' as payment;
+import 'package:dayfi/features/recipients/helpers/recipient_history_helper.dart';
+import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/services/remote/network/network_service.dart';
 import 'package:dayfi/services/remote/network/url_config.dart';
 
@@ -113,56 +114,107 @@ class WalletService {
     String? search,
   }) async {
     try {
-      final response = await getWalletTransactions(
+      final firstPage = await getWalletTransactions(
         search: search,
-        limit: 100, // Get more records to ensure we have unique beneficiaries
+        limit: 100,
       );
+      final totalPages = firstPage.data.totalPages;
+      final allTransactions = <WalletTransaction>[...firstPage.data.transactions];
+
+      if (totalPages > 1) {
+        final pageFutures = <Future<WalletTransactionResponse>>[];
+        for (var page = 2; page <= totalPages; page++) {
+          pageFutures.add(
+            getWalletTransactions(search: search, page: page, limit: 100),
+          );
+        }
+        final pages = await Future.wait(pageFutures);
+        for (final page in pages) {
+          allTransactions.addAll(page.data.transactions);
+        }
+      }
 
       // Extract unique beneficiaries with source data based on name + account details
       final Map<String, BeneficiaryWithSource> uniqueBeneficiaries = {};
       
-      for (final transaction in response.data.transactions) {
-        final beneficiary = transaction.beneficiary;
-        final source = transaction.source;
-        
-        // Skip transactions where beneficiary data is null/empty (collection/wallet funding transactions)
-        // These transactions have null beneficiary data in the API response which gets converted to empty strings
-        if (beneficiary.id.trim().isEmpty || 
-            beneficiary.name.trim().isEmpty ||
-            source.accountNumber == null || 
-            source.accountNumber!.trim().isEmpty) {
-          continue;
-        }
-        
-        // Create a unique key combining beneficiary name, account number, and network ID
-        // This ensures no duplicates based on the display string and name
-        final uniqueKey = '${beneficiary.name}_${source.accountNumber}_${source.networkId}';
-        
-        if (!uniqueBeneficiaries.containsKey(uniqueKey)) {
-          // Convert wallet_transaction Source to payment_response Source
-          final paymentSource = payment.Source(
-            accountType: source.accountType,
-            accountNumber: source.accountNumber,
-            networkId: source.networkId,
-          );
-          
-          // Debug log to verify accountType is being passed
-          // print('🔍 Creating beneficiary with source:');
-          // print('   Account Type: ${source.accountType}');
-          // print('   Account Number: ${source.accountNumber}');
-          // print('   Network ID: ${source.networkId}');
-          
-          uniqueBeneficiaries[uniqueKey] = BeneficiaryWithSource(
-            beneficiary: beneficiary,
-            source: paymentSource,
-          );
+      for (final transaction in allTransactions) {
+        final parsed = RecipientHistoryHelper.fromTransaction(transaction);
+        if (parsed == null) continue;
+
+        final uniqueKey = RecipientHistoryHelper.uniqueKey(parsed);
+        final existing = uniqueBeneficiaries[uniqueKey];
+        if (existing == null ||
+            RecipientHistoryHelper.shouldReplaceRecipient(parsed, existing)) {
+          uniqueBeneficiaries[uniqueKey] = parsed;
         }
       }
 
-      return uniqueBeneficiaries.values.toList();
+      return RecipientHistoryHelper.excludeInternalRecipients(
+        uniqueBeneficiaries.values.toList(),
+      );
     } catch (e) {
       throw Exception('Failed to fetch beneficiaries with source: $e');
     }
+  }
+
+  /// Saved recipients from backend (`GET /payments/beneficiaries`).
+  Future<List<BeneficiaryWithSource>> fetchSavedBeneficiaries({
+    int page = 1,
+    int limit = 200,
+  }) async {
+    try {
+      final response = await _networkService.call(
+        '${F.baseUrl}${UrlConfig.beneficiaries}',
+        RequestMethod.get,
+        queryParams: {'page': page, 'limit': limit},
+      );
+      final envelope = await _parseEnvelope(response.data);
+      final data = envelope['data'];
+      if (data is! Map<String, dynamic>) return const [];
+
+      final raw = data['recipients'];
+      if (raw is! List) return const [];
+
+      return raw
+          .whereType<Map<String, dynamic>>()
+          .map(BeneficiaryWithSource.fromJson)
+          .where(RecipientHistoryHelper.isSendRecipient)
+          .toList();
+    } catch (e) {
+      AppLogger.error('Failed to fetch saved beneficiaries: $e');
+      return const [];
+    }
+  }
+
+  /// Persist a manually saved recipient (`POST /payments/beneficiaries`).
+  Future<BeneficiaryWithSource> saveBeneficiary(
+    BeneficiaryWithSource entry,
+  ) async {
+    final body = {
+      'name': entry.beneficiary.name,
+      'country': entry.beneficiary.country,
+      'phone': entry.beneficiary.phone,
+      'ledgerCurrency':
+          entry.ledgerCurrency ??
+          RecipientHistoryHelper.resolveLedgerCurrency(entry),
+      'source': {
+        'accountType': entry.source.accountType,
+        'accountNumber': entry.source.accountNumber,
+        'networkId': entry.source.networkId ?? '',
+      },
+    };
+
+    final response = await _networkService.call(
+      '${F.baseUrl}${UrlConfig.beneficiaries}',
+      RequestMethod.post,
+      data: body,
+    );
+    final envelope = await _parseEnvelope(response.data);
+    final data = envelope['data'];
+    if (data is! Map<String, dynamic>) {
+      throw Exception('Invalid save beneficiary response');
+    }
+    return BeneficiaryWithSource.fromJson(data);
   }
 
   /// Get unique Dayfi Tags from transaction history
@@ -206,12 +258,28 @@ class WalletService {
   }
 
   /// Full hub: ledger + Grey operating accounts for home / add / convert.
-  Future<WalletHubSnapshot> fetchWalletHub() async {
+  /// [syncCrypto] — only true for explicit refresh (crypto receive); wallet-details
+  /// already syncs Stellar inflows on the backend.
+  Future<WalletHubSnapshot> fetchWalletHub({bool syncCrypto = false}) async {
+    if (syncCrypto) {
+      try {
+        final syncPayload = await syncCryptoInflows();
+        final sync = syncPayload['sync'];
+        if (sync is Map) {
+          final errors = sync['errors'];
+          if (errors is List && errors.isNotEmpty) {
+            AppLogger.warning('Stellar sync: ${errors.join('; ')}');
+          }
+        }
+      } catch (e) {
+        AppLogger.warning('syncCryptoInflows skipped: $e');
+      }
+    }
+
     final envelope = await _fetchWalletDetailsData();
-    final data = envelope['data'];
-    final hub = WalletHubSnapshot.fromApiData(
-      data is Map<String, dynamic> ? data : null,
-    );
+    final rawData = envelope['data'];
+    final data = rawData is Map<String, dynamic> ? rawData : null;
+    final hub = WalletHubSnapshot.fromApiData(data);
     try {
       final grey = await fetchGreyAccounts();
       return WalletHubSnapshot(
@@ -268,6 +336,20 @@ class WalletService {
     return {};
   }
 
+  /// POST /payments/crypto/sync-inflows
+  /// Forces immediate ingestion of inbound on-chain deposits into ledger wallets.
+  Future<Map<String, dynamic>> syncCryptoInflows() async {
+    final response = await _networkService.call(
+      '${F.baseUrl}${UrlConfig.cryptoSyncInflows}',
+      RequestMethod.post,
+      data: const <String, dynamic>{},
+    );
+    final envelope = await _parseEnvelope(response.data);
+    final data = envelope['data'];
+    if (data is Map<String, dynamic>) return data;
+    return envelope;
+  }
+
   /// GET /payments/exchange-rate?baseCurrency=&targetCurrency=
   Future<double> fetchExchangeRate({
     required String fromCurrency,
@@ -288,6 +370,18 @@ class WalletService {
     }
     if (data is num) return data.toDouble();
     return double.tryParse(data?.toString() ?? '') ?? 0;
+  }
+
+  /// GET /payments/exchange-rates/wallet — all USD/NGN/GBP/EUR pairs.
+  Future<Map<String, dynamic>> fetchWalletExchangeRates() async {
+    final response = await _networkService.call(
+      '${F.baseUrl}${UrlConfig.walletExchangeRates}',
+      RequestMethod.get,
+    );
+    final envelope = await _parseEnvelope(response.data);
+    final data = envelope['data'];
+    if (data is Map<String, dynamic>) return data;
+    return envelope;
   }
 
   /// POST /payments/wallets/swap
@@ -330,10 +424,16 @@ class WalletService {
   Future<void> ensureLedgerWallet(String currency) async {
     final c = currency.toUpperCase();
     if (c == 'USD' || c == 'NGN') return;
-    await _networkService.call(
-      '${F.baseUrl}${UrlConfig.createWallet}',
-      RequestMethod.post,
-      data: {'currency': c},
-    );
+    try {
+      await _networkService.call(
+        '${F.baseUrl}${UrlConfig.createWallet}',
+        RequestMethod.post,
+        data: {'currency': c},
+      );
+    } catch (e) {
+      final msg = e.toString().toLowerCase();
+      if (msg.contains('already have a wallet')) return;
+      rethrow;
+    }
   }
 }

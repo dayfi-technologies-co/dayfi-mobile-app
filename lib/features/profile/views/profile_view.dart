@@ -1,47 +1,26 @@
 import 'package:dayfi/app_locator.dart';
+import 'package:dayfi/common/widgets/dayfi_screen_app_bar.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/common/widgets/buttons/secondary_button.dart';
-import 'package:dayfi/common/widgets/shimmer_widgets.dart';
-import 'package:dayfi/common/utils/haptic_helper.dart';
-import 'package:dayfi/routes/route.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
-import 'package:dayfi/core/theme/theme_provider.dart';
-import 'package:dayfi/core/theme/theme_toggle_widget.dart';
+import 'package:dayfi/features/profile/profile_settings_navigation.dart';
 import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
-import 'package:dayfi/features/legal/terms_of_use.dart';
-import 'package:dayfi/features/legal/privacy_notice.dart';
+import 'package:dayfi/features/profile/widgets/profile_settings_style.dart';
+import 'package:dayfi/features/profile/widgets/profile_settings_widgets.dart';
+import 'package:dayfi/features/profile/widgets/profile_upgrade_card.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:intercom_flutter/intercom_flutter.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
-import 'package:dayfi/common/utils/tier_utils.dart';
-import 'package:dayfi/services/remote/wallet_service.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:dayfi/services/remote/auth_service.dart';
 import 'package:dayfi/services/data_clearing_service.dart';
 
-// Constants for consistent styling
 class _ProfileConstants {
-  static const double headerPaddingTop = 8.0;
-  static const double headerPaddingBottom = 0.0;
-  static const double contentPadding = 18.0;
-  static const double sectionSpacing = 32.0;
   static const double buttonHeight = 48.0;
   static const double buttonBorderRadius = 38.0;
-  static const double containerBorderRadius = 12.0;
-  static const double tierContainerBorderRadius = 40.0;
-  static const double iconContainerSize = 40.0;
-  static const double profileImageHeight = 84.0;
-  static const double tierImageHeight = 32.0;
   static const double dialogIconSize = 80.0;
-  static const double shadowOpacity = 0.05;
-  static const double shadowBlur = 2.0;
-  static const double shadowSpread = 0.5;
-  static const double shadowOffset = 2.0;
 }
 
 class ProfileView extends ConsumerStatefulWidget {
@@ -52,28 +31,7 @@ class ProfileView extends ConsumerStatefulWidget {
 }
 
 class _ProfileViewState extends ConsumerState<ProfileView> {
-  String? _dayfiId;
-  bool _isLoadingDayfiId = true;
-  bool _isBiometricEnabled = false;
-
-  /// Tag is shown without a leading `@` in the UI (the `@` is rendered separately).
-  static String? _normalizeStoredDayfiId(String? raw) {
-    if (raw == null) return null;
-    final t = raw.trim();
-    if (t.isEmpty || t.toLowerCase() == 'null') return null;
-    return t.startsWith('@') ? t.substring(1) : t;
-  }
-
-  Future<String?> _readDayfiIdFromStoredUser() async {
-    try {
-      final user = await localCache.getUser();
-      final raw = user['dayfi_id'] ?? user['dayfiId'];
-      return _normalizeStoredDayfiId(raw?.toString());
-    } catch (e) {
-      AppLogger.error('Error reading Dayfi Tag from stored user: $e');
-      return null;
-    }
-  }
+  static final _mutedIcon = AppColors.neutral700.withValues(alpha: 0.35);
 
   @override
   void initState() {
@@ -82,138 +40,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
       ref
           .read(profileViewModelProvider.notifier)
           .loadUserProfile(isInitialLoad: true);
-      _loadDayfiId();
-      _loadBiometricStatus();
     });
-  }
-
-  Future<void> _loadBiometricStatus() async {
-    try {
-      final userData = await localCache.getUser();
-      final biometricEnabled = userData['biometric_enabled'] as bool? ?? false;
-      if (mounted) {
-        setState(() => _isBiometricEnabled = biometricEnabled);
-      }
-    } catch (e) {
-      AppLogger.error('Error loading biometric status: $e');
-    }
-  }
-
-  Future<void> _handleBiometricToggle(bool value) async {
-    if (value) {
-      await appRouter.pushNamed(
-        AppRoute.biometricSetupView,
-        arguments: {'fromProfile': true},
-      );
-      await _loadBiometricStatus();
-    } else {
-      try {
-        await localCache.saveToLocalCache(
-          key: 'biometric_enabled',
-          value: false,
-        );
-        final userData = await localCache.getUser();
-        userData['biometric_enabled'] = false;
-        await localCache.saveToLocalCache(key: 'user', value: userData);
-        setState(() => _isBiometricEnabled = false);
-
-        if (mounted) {
-          TopSnackbar.show(
-            context,
-            message: 'Biometric authentication disabled',
-            isError: false,
-          );
-        }
-      } catch (e) {
-        AppLogger.error('Error disabling biometrics: $e');
-        if (mounted) {
-          TopSnackbar.show(
-            context,
-            message: 'Failed to disable biometrics',
-            isError: true,
-          );
-        }
-      }
-    }
-  }
-
-  Future<void> _loadDayfiId() async {
-    final cachedDayfiId = _normalizeStoredDayfiId(
-      localCache.getFromLocalCache('dayfi_id') as String?,
-    );
-    if (cachedDayfiId != null && cachedDayfiId.isNotEmpty) {
-      setState(() {
-        _dayfiId = cachedDayfiId;
-        _isLoadingDayfiId = false;
-      });
-    } else {
-      setState(() => _isLoadingDayfiId = true);
-    }
-
-    try {
-      final walletService = locator<WalletService>();
-      final walletResponse = await walletService.fetchWalletDetails();
-
-      if (walletResponse.wallets.isNotEmpty) {
-        final walletWithDayfiId = walletResponse.wallets.firstWhere(
-          (wallet) => wallet.dayfiId.isNotEmpty && wallet.dayfiId != 'null',
-          orElse: () => walletResponse.wallets.first,
-        );
-
-        final fromWallet = _normalizeStoredDayfiId(walletWithDayfiId.dayfiId);
-        if (fromWallet != null && fromWallet.isNotEmpty) {
-          await localCache.saveToLocalCache(key: 'dayfi_id', value: fromWallet);
-          setState(() {
-            _dayfiId = fromWallet;
-            _isLoadingDayfiId = false;
-          });
-          AppLogger.info('Dayfi Tag loaded from wallet: $fromWallet');
-        } else {
-          // Wallet payloads often omit `dayfi_id` until NGN wallet sync; user
-          // JSON is updated in [AuthService.createDayfiId] on success.
-          final fromUser = await _readDayfiIdFromStoredUser();
-          if (fromUser != null && fromUser.isNotEmpty) {
-            await localCache.saveToLocalCache(key: 'dayfi_id', value: fromUser);
-            setState(() {
-              _dayfiId = fromUser;
-              _isLoadingDayfiId = false;
-            });
-            AppLogger.info('Dayfi Tag loaded from stored user: $fromUser');
-          } else {
-            await localCache.removeFromLocalCache('dayfi_id');
-            setState(() {
-              _dayfiId = null;
-              _isLoadingDayfiId = false;
-            });
-          }
-        }
-      } else {
-        final fromUser = await _readDayfiIdFromStoredUser();
-        if (fromUser != null && fromUser.isNotEmpty) {
-          await localCache.saveToLocalCache(key: 'dayfi_id', value: fromUser);
-          setState(() {
-            _dayfiId = fromUser;
-            _isLoadingDayfiId = false;
-          });
-          AppLogger.info(
-            'Dayfi Tag loaded from stored user (no wallets): $fromUser',
-          );
-        } else {
-          setState(() => _isLoadingDayfiId = false);
-        }
-      }
-    } catch (e) {
-      AppLogger.error('Error loading Dayfi Tag: $e');
-      final fromUser = await _readDayfiIdFromStoredUser();
-      if (fromUser != null && fromUser.isNotEmpty) {
-        setState(() {
-          _dayfiId = fromUser;
-          _isLoadingDayfiId = false;
-        });
-      } else {
-        setState(() => _isLoadingDayfiId = false);
-      }
-    }
   }
 
   @override
@@ -222,24 +49,9 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        scrolledUnderElevation: 0.5,
-        foregroundColor: Theme.of(context).scaffoldBackgroundColor,
-        shadowColor: Theme.of(context).scaffoldBackgroundColor,
-        surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        leading: const SizedBox.shrink(),
-        leadingWidth: 0,
-        title: Text(
-          "Account",
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontFamily: 'FunnelDisplay',
-            fontSize: 24,
-            fontWeight: FontWeight.w600,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-        ),
+      appBar: const DayfiScreenAppBar(
+        title: 'More',
+        showBackButton: false,
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -252,11 +64,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
               child: SingleChildScrollView(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    _buildHeaderSection(profileState),
-                    SizedBox(height: 18),
-                    _buildContentSection(profileState),
-                  ],
+                  children: [_buildContentSection(profileState)],
                 ),
               ),
             ),
@@ -266,132 +74,16 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
     );
   }
 
-  Widget _buildHeaderSection(ProfileState profileState) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.fromLTRB(
-        24,
-        _ProfileConstants.headerPaddingTop,
-        24,
-        _ProfileConstants.headerPaddingBottom,
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _buildProfileImageWithTier(profileState),
-          SizedBox(height: 12),
-          _buildUserName(profileState),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProfileImageWithTier(ProfileState profileState) {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        Padding(
-          padding: EdgeInsets.only(bottom: 32),
-          child: Image.asset(
-            "assets/icons/pngs/account.png",
-            height: _ProfileConstants.profileImageHeight,
-          ),
-        ),
-        if (!profileState.isLoading) _buildTierBadge(profileState),
-      ],
-    );
-  }
-
-  Widget _buildTierBadge(ProfileState profileState) {
-    final tierDisplayName = TierUtils.getTierDisplayName(profileState.user);
-    final tierIconPath = TierUtils.getTierIconPath(profileState.user);
-    final tierColor = TierUtils.getTierColor(profileState.user);
-
-    Color tierColorValue;
-    switch (tierColor) {
-      case 'success600':
-        tierColorValue = AppColors.success600;
-        break;
-      case 'warning600':
-        tierColorValue = AppColors.warning600;
-        break;
-      default:
-        tierColorValue = AppColors.info600;
-    }
-
-    return Positioned(
-      bottom: 0,
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(
-            _ProfileConstants.tierContainerBorderRadius,
-          ),
-        ),
-        child: Row(
-          children: [
-            Image.asset(
-              tierIconPath,
-              height: _ProfileConstants.tierImageHeight,
-            ),
-            SizedBox(width: 4),
-            Text(
-              tierDisplayName,
-              style: AppTypography.labelMedium.copyWith(
-                color: tierColorValue,
-                fontSize: 16,
-                fontFamily: AppTypography.secondaryFontFamily,
-                fontWeight: AppTypography.regular,
-                height: 1,
-                letterSpacing: -0.7,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildUserName(ProfileState profileState) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          profileState.userName.isNotEmpty
-              ? profileState.userName
-                  .split(' ')
-                  .map(
-                    (word) =>
-                        word.isNotEmpty
-                            ? word[0].toUpperCase() + word.substring(1)
-                            : '',
-                  )
-                  .join(' ')
-              : '',
-          style: AppTypography.headlineSmall.copyWith(
-            color: Theme.of(context).colorScheme.onSurface,
-            fontSize: 28,
-            fontWeight: FontWeight.w600,
-            fontFamily: 'FunnelDisplay',
-            height: 0.95,
-            letterSpacing: -0.20,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ],
-    );
-  }
-
   Widget _buildContentSection(ProfileState profileState) {
     return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: _ProfileConstants.contentPadding,
+      padding: const EdgeInsets.symmetric(
+        horizontal: ProfileSettingsStyle.contentPadding,
       ),
       child: Column(
         children: [
-          _buildEditProfileButton(profileState),
-          SizedBox(height: 36),
+          const SizedBox(height: 8),
+          const ProfileUpgradeCard(),
+          const SizedBox(height: 16),
           _buildSettingsSections(),
           SizedBox(height: 28),
           _buildLogoutButton(),
@@ -405,559 +97,89 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
     );
   }
 
-  Widget _buildEditProfileButton(ProfileState profileState) {
-    return Column(
-      children: [
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 24),
-          child: PrimaryButton(
-            borderRadius: _ProfileConstants.buttonBorderRadius,
-            text: "Edit Profile",
-            onPressed: profileState.isLoading ? null : _navigateToEditProfile,
-            backgroundColor:
-                profileState.isLoading
-                    ? AppColors.purple500
-                    : AppColors.purple500,
-            height: _ProfileConstants.buttonHeight,
-            textColor: AppColors.neutral0,
-            fontFamily: 'Chirp',
-            letterSpacing: -0.7,
-            fontSize: 18,
-            width: 375,
-            fullWidth: true,
-          ),
-        ),
-        SizedBox(height: 24),
-        if (_isLoadingDayfiId) ...[
-          ShimmerWidgets.textShimmer(context, width: 200, height: 20),
-        ] else if (_dayfiId != null && _dayfiId!.isNotEmpty) ...[
-          _buildDayfiTagSection(),
-        ] else ...[
-          _buildCreateDayfiTagSection(),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildDayfiTagSection() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(
-          _ProfileConstants.containerBorderRadius,
-        ),
-        boxShadow: [_buildShadow()],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Row(
-            children: [
-              Text(
-                '@',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                  letterSpacing: 0.0,
-                  height: 1.45,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-              ),
-              Text(
-                _dayfiId!,
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                  letterSpacing: 0.0,
-                  height: 1.45,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(width: 12),
-          Row(
-            children: [
-              _buildCopyButton(),
-              SizedBox(width: 16),
-              _buildShareButton(),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCopyButton() {
-    return Semantics(
-      button: true,
-      label: 'Copy Dayfi Tag',
-      hint: 'Double tap to copy your Dayfi Tag to clipboard',
-      child: GestureDetector(
-        onTap: () {
-          HapticHelper.lightImpact();
-          Clipboard.setData(ClipboardData(text: '@$_dayfiId'));
-          TopSnackbar.show(
-            context,
-            message: 'Dayfi Tag copied to clipboard',
-            isError: false,
-          );
-        },
-        child: Row(
-          children: [
-            Text(
-              "copy",
-              style: TextStyle(
-                fontFamily: 'Chirp',
-                fontWeight: FontWeight.w600,
-                fontSize: 12,
-                letterSpacing: 0.0,
-                height: 1.45,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-            ),
-            SizedBox(width: 6),
-            SvgPicture.asset(
-              "assets/icons/svgs/copy.svg",
-              color: Theme.of(context).colorScheme.primary,
-              height: 16,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildShareButton() {
-    return Semantics(
-      button: true,
-      label: 'Share Dayfi Tag',
-      hint: 'Double tap to share your Dayfi Tag',
-      child: GestureDetector(
-        onTap: () async {
-          HapticHelper.lightImpact();
-          try {
-            await Share.share(
-              'Send me money on DayFi! My tag is @$_dayfiId\n\nDownload DayFi: https://dayfi.co',
-              subject: 'My Dayfi Tag',
-            );
-          } catch (e) {
-            if (mounted) {
-              TopSnackbar.show(
-                context,
-                message: 'Unable to share. Please try again.',
-                isError: true,
-              );
-            }
-          }
-        },
-        child: Row(
-          children: [
-            Text(
-              "share",
-              style: TextStyle(
-                fontFamily: 'Chirp',
-                fontWeight: FontWeight.w600,
-                fontSize: 12,
-                letterSpacing: 0.0,
-                height: 1.45,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-            ),
-            SizedBox(width: 6),
-            SvgPicture.asset(
-              "assets/icons/svgs/share.svg",
-              color: Theme.of(context).colorScheme.primary,
-              height: 16,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCreateDayfiTagSection() {
-    return InkWell(
-      splashColor: Colors.transparent,
-      highlightColor: Colors.transparent,
-      hoverColor: Colors.transparent,
-      onTap: () async {
-        final result = await Navigator.pushNamed(
-          context,
-          AppRoute.dayfiTagExplanationView,
-        );
-        if (result != null && result is String && result.isNotEmpty) {
-          final dayfiIdValue =
-              result.startsWith('@') ? result.substring(1) : result;
-          await localCache.saveToLocalCache(
-            key: 'dayfi_id',
-            value: dayfiIdValue,
-          );
-          setState(() {
-            _dayfiId = dayfiIdValue;
-            _isLoadingDayfiId = false;
-          });
-          _loadDayfiId();
-        }
-      },
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-        child: Text(
-          "Create your Dayfi Tag",
-          style: TextStyle(
-            fontFamily: 'Chirp',
-            color: AppColors.purple500ForTheme(context),
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            letterSpacing: -0.20,
-            height: 1.2,
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildSettingsSections() {
     return Column(
       children: [
-        _buildSection(
-          title: 'MY ACTIVITY',
-          children: _myActivity.map(_buildSettingsItem).toList(),
+        ProfileSettingsSection(
+          title: 'ACCOUNT',
+          children: [
+            ProfileSettingsTile(
+              icon: 'assets/icons/svgs/account.svg',
+              icon2: 'assets/icons/svgs/user1.svg',
+              iconColor: _mutedIcon,
+              title: 'Profile',
+              onTap: ProfileSettingsNavigation.toUserProfile,
+            ),
+          ],
         ),
-        SizedBox(height: _ProfileConstants.sectionSpacing),
-        _buildSection(
-          title: 'ACCOUNT SETTINGS',
-          children: _accountSettings.map(_buildSettingsItem).toList(),
-        ),
-        SizedBox(height: _ProfileConstants.sectionSpacing),
-        _buildSection(
+        const SizedBox(height: ProfileSettingsStyle.sectionSpacing),
+        const ProfileSettingsSection(
           title: 'APPEARANCE',
-          children: [_buildThemeAppearanceRow()],
+          children: [ProfileThemeSettingsTile()],
         ),
-        // SizedBox(height: _ProfileConstants.sectionSpacing),
-        // _buildSection(
-        //   title: 'PROMOTIONS',
-        //   children: _promotions.map(_buildPromotionItem).toList(),
-        // ),
-        SizedBox(height: _ProfileConstants.sectionSpacing),
-        _buildSection(
-          title: 'SECURITY',
-          children: _securitySettings.map(_buildSettingsItem).toList(),
-        ),
-        SizedBox(height: _ProfileConstants.sectionSpacing),
-        _buildSection(
+        const SizedBox(height: ProfileSettingsStyle.sectionSpacing),
+        ProfileSettingsSection(
           title: 'HELP AND SUPPORT',
-          children: _helpAndSupport.map(_buildSettingsItem).toList(),
+          children: [
+            ProfileSettingsTile(
+              icon: 'assets/icons/svgs/account.svg',
+              icon2: 'assets/icons/svgs/contact.svg',
+              iconColor: _mutedIcon,
+              title: 'Contact Us',
+              onTap: () => ProfileSettingsNavigation.contactUs(context),
+            ),
+            ProfileSettingsTile(
+              icon: 'assets/icons/svgs/account.svg',
+              icon2: 'assets/icons/svgs/message-question.svg',
+              iconColor: _mutedIcon,
+              title: 'FAQs',
+              onTap: ProfileSettingsNavigation.toFaqs,
+            ),
+          ],
         ),
-        SizedBox(height: _ProfileConstants.sectionSpacing),
-        _buildSection(
+        const SizedBox(height: ProfileSettingsStyle.sectionSpacing),
+        ProfileSettingsSection(
           title: 'ABOUT US',
-          children: _aboutUs.map(_buildSettingsItem).toList(),
+          children: [
+            ProfileSettingsTile(
+              icon: 'assets/icons/svgs/account.svg',
+              icon2: 'assets/icons/svgs/terms.svg',
+              iconColor: _mutedIcon,
+              title: 'Terms & Conditions',
+              onTap: () => ProfileSettingsNavigation.toTerms(context),
+            ),
+            ProfileSettingsTile(
+              icon: 'assets/icons/svgs/account.svg',
+              icon2: 'assets/icons/svgs/privacy.svg',
+              iconColor: _mutedIcon,
+              title: 'Privacy Notice',
+              onTap: () => ProfileSettingsNavigation.toPrivacy(context),
+            ),
+          ],
         ),
       ],
     );
   }
 
-  Widget _buildSection({
-    required String title,
-    required List<Widget> children,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionTitle(title),
-        SizedBox(height: 8),
-        _buildSectionContainer(children),
-      ],
-    );
-  }
+  ProfileSettingsTile _logoutTile() => ProfileSettingsTile(
+    icon: 'assets/icons/svgs/account.svg',
+    icon2: 'assets/icons/svgs/logout1.svg',
+    iconColor: _mutedIcon,
+    title: 'Log out',
+    onTap: _showLogoutDialog,
+  );
 
-  Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: AppTypography.labelLarge.copyWith(
-        color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.85),
-        fontSize: 11,
-        fontWeight: FontWeight.w500,
-        fontFamily: 'Chirp',
-        letterSpacing: -0.20,
-        height: 1.2,
-      ),
-    );
-  }
+  ProfileSettingsTile _deleteTile() => ProfileSettingsTile(
+    icon: 'assets/icons/svgs/account.svg',
+    icon2: 'assets/icons/svgs/delete.svg',
+    iconColor: AppColors.error500,
+    title: 'Delete Account',
+    onTap: _showDeleteAccountDialog,
+  );
 
-  Widget _buildSectionContainer(List<Widget> children) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(
-          _ProfileConstants.containerBorderRadius,
-        ),
-        boxShadow: [_buildShadow()],
-      ),
-      child: Column(children: children),
-    );
-  }
+  Widget _buildLogoutButton() => _logoutTile();
 
-  Widget _buildThemeAppearanceRow() {
-    final themeMode = ref.watch(themeProvider);
-
-    late final String trailingLabel;
-    late final String modeIcon;
-    switch (themeMode) {
-      case AppThemeMode.light:
-        trailingLabel = 'Light';
-        modeIcon = "assets/icons/svgs/sun.svg";
-        break;
-      case AppThemeMode.dark:
-        trailingLabel = 'Dark';
-        modeIcon = "assets/icons/svgs/moon.svg";
-        break;
-      case AppThemeMode.system:
-        trailingLabel = 'System';
-        modeIcon = "assets/icons/svgs/sun.svg";
-        break;
-    }
-
-    return InkWell(
-      onTap: () {
-        HapticHelper.lightImpact();
-        showThemeSelectionSheet(context);
-      },
-      borderRadius: BorderRadius.circular(
-        _ProfileConstants.containerBorderRadius,
-      ),
-      child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 14),
-        child: Row(
-          children: [
-            Container(
-              width: _ProfileConstants.iconContainerSize,
-              height: _ProfileConstants.iconContainerSize,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Theme.of(context).scaffoldBackgroundColor,
-              ),
-              child: SvgPicture.asset(
-                "assets/icons/svgs/sun.svg",
-                height: 24,
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.85),
-              ),
-            ),
-            SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                'Theme',
-                style: AppTypography.titleMedium.copyWith(
-                  fontFamily: 'Chirp',
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withValues(alpha: 0.8),
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: -0.20,
-                  height: 1.2,
-                ),
-              ),
-            ),
-
-            Text(
-              trailingLabel,
-              style: AppTypography.labelMedium.copyWith(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                fontFamily: 'Chirp',
-                letterSpacing: -0.20,
-                height: 1.2,
-              ),
-            ),
-            SizedBox(width: 8),
-            _buildChevronIcon(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSettingsItem(Map<String, dynamic> item) {
-    return InkWell(
-      onTap: item['onTap'],
-      borderRadius: BorderRadius.circular(
-        _ProfileConstants.containerBorderRadius,
-      ),
-      child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 14),
-        child: Row(
-          children: [
-            _buildIconContainer(item['iconColor'], item['icon'], item['icon2']),
-            SizedBox(width: 16),
-            Expanded(child: _buildItemText(item['title'], item['iconColor'])),
-            _buildChevronIcon(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPromotionItem(Map<String, dynamic> item) {
-    return InkWell(
-      onTap: item['onTap'],
-      borderRadius: BorderRadius.circular(24),
-      child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 14),
-        child: Row(
-          children: [
-            _buildIconContainer(item['iconColor'], item['icon'], item['icon2']),
-            SizedBox(width: 16),
-            Expanded(
-              child: _buildItemText(
-                item['title'],
-                Theme.of(context).colorScheme.onSurface,
-              ),
-            ),
-            _buildActionBadge(item['actionText'], item['actionColor']),
-            SizedBox(width: 8),
-            _buildChevronIcon(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildIconContainer(Color iconColor, String icon, String icon2) {
-    return SizedBox(
-      width: _ProfileConstants.iconContainerSize,
-      height: _ProfileConstants.iconContainerSize,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          SvgPicture.asset(
-            icon,
-            height: 40,
-            color:
-                icon2 == "assets/icons/svgs/delete.svg"
-                    ? AppColors.error600
-                    : Theme.of(context).scaffoldBackgroundColor,
-          ),
-          Center(
-            child: SvgPicture.asset(
-              icon2,
-              height: 24,
-              color:
-                  icon2 == "assets/icons/svgs/delete.svg"
-                      ? Colors.white
-                      : Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withOpacity(0.8),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildItemText(String title, Color iconColor) {
-    return Text(
-      title,
-      style: AppTypography.titleMedium.copyWith(
-        fontFamily: 'Chirp',
-        color:
-            iconColor == AppColors.error500
-                ? AppColors.error500
-                : Theme.of(context).colorScheme.onSurface,
-        fontSize: 18,
-        fontWeight: FontWeight.w500,
-        letterSpacing: -0.20,
-        height: 1.2,
-      ),
-    );
-  }
-
-  Widget _buildActionBadge(String actionText, Color actionColor) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 0, vertical: 4),
-      // decoration: BoxDecoration(
-      //   color: actionColor,
-      //   borderRadius: BorderRadius.circular(20),
-      // ),
-      child: Text(
-        actionText,
-        style: AppTypography.labelMedium.copyWith(
-          color: actionColor,
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
-          fontFamily: 'Chirp',
-          letterSpacing: -0.20,
-          height: 1.2,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildChevronIcon() {
-    return Icon(Icons.chevron_right, color: AppColors.neutral400, size: 20);
-  }
-
-  BoxShadow _buildShadow() {
-    return BoxShadow(
-      color: const Color.fromARGB(
-        255,
-        123,
-        36,
-        211,
-      ).withOpacity(_ProfileConstants.shadowOpacity),
-      blurRadius: _ProfileConstants.shadowBlur,
-      offset: const Offset(0, _ProfileConstants.shadowOffset),
-      spreadRadius: _ProfileConstants.shadowSpread,
-    );
-  }
-
-  Widget _buildLogoutButton() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(
-          _ProfileConstants.containerBorderRadius,
-        ),
-        boxShadow: [_buildShadow()],
-      ),
-      child: _buildSettingsItem({
-        'icon': "assets/icons/svgs/account.svg",
-        'icon2': "assets/icons/svgs/logout1.svg",
-        'iconColor': Theme.of(context).colorScheme.onSurface,
-        'title': 'Log out',
-        'subtitle': 'Get help and support',
-        'onTap': _showLogoutDialog,
-      }),
-    );
-  }
-
-  Widget _buildDeleteButton() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(
-          _ProfileConstants.containerBorderRadius,
-        ),
-        boxShadow: [_buildShadow()],
-      ),
-      child: _buildSettingsItem({
-        'icon': "assets/icons/svgs/account.svg",
-        'icon2': "assets/icons/svgs/delete.svg",
-        'iconColor': AppColors.error500,
-        'title': 'Delete Account',
-        'subtitle': 'Permanently delete your account and all data',
-        'onTap': _showDeleteAccountDialog,
-      }),
-    );
-  }
+  Widget _buildDeleteButton() => _deleteTile();
 
   Widget _buildPartnershipInfo() {
     return Padding(
@@ -971,7 +193,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                 fontFamily: 'Chirp',
                 color: Theme.of(
                   context,
-                ).colorScheme.onSurface.withOpacity(0.75),
+                ).colorScheme.onSurface.withValues(alpha: 0.75),
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 letterSpacing: -0.20,
@@ -988,7 +210,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                 fontFamily: 'Chirp',
                 color: Theme.of(
                   context,
-                ).colorScheme.onSurface.withOpacity(0.75),
+                ).colorScheme.onSurface.withValues(alpha: 0.75),
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 letterSpacing: -0.20,
@@ -999,60 +221,6 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
           ),
         ],
       ),
-    );
-  }
-
-  // Navigation methods
-  void _navigateToEditProfile() =>
-      Navigator.pushNamed(context, '/editProfileView');
-
-  void _navigateToAccountLimits() =>
-      appRouter.pushNamed(AppRoute.accountLimitsView);
-
-  void _navigateToTransactions() =>
-      appRouter.pushNamed(AppRoute.transactionsView);
-
-  void _navigateToRecipients() => appRouter.pushNamed(
-    AppRoute.recipientsView,
-    arguments: {'fromProfile': true, 'fromSendView': false},
-  );
-
-  void _navigateToSecurity() =>
-      appRouter.pushNamed(AppRoute.recoveryPhraseView);
-
-  void _navigateToChangeTransactionPin() =>
-      appRouter.pushNamed(AppRoute.changeTransactionPinOldView);
-
-  void _navigateToResetTransactionPin() =>
-      appRouter.pushNamed(AppRoute.resetTransactionPinIntroView);
-
-  void _navigateToContactUs() async {
-    try {
-      await Intercom.instance.displayMessenger();
-    } catch (e) {
-      if (mounted) {
-        TopSnackbar.show(
-          context,
-          message: 'Unable to open support chat. Please try again later.',
-          isError: true,
-        );
-      }
-    }
-  }
-
-  void _navigateToFAQs() => appRouter.pushNamed(AppRoute.faqView);
-
-  void _navigateToTermsAndConditions() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const TermsOfUseView()),
-    );
-  }
-
-  void _navigateToPrivacyNotice() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const PrivacyNoticeView()),
     );
   }
 
@@ -1254,7 +422,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
       if (!response.error) {
         await locator<DataClearingService>().clearAllUserData(ref);
         if (mounted) {
-          appRouter.pushNamedAndRemoveAllBehind(AppRoute.loginView);
+          appRouter.pushOnboardingAndClearStack();
           TopSnackbar.show(
             context,
             message: 'Account deleted successfully',
@@ -1281,115 +449,4 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
       }
     }
   }
-
-  // Settings data
-  List<Map<String, dynamic>> get _myActivity => [
-    {
-      'icon': "assets/icons/svgs/account.svg",
-      'icon2': "assets/icons/svgs/transactionsss.svg",
-      'iconColor': AppColors.neutral700.withOpacity(0.35),
-      'title': 'Transactions',
-      'subtitle': 'View your full payment history',
-      'onTap': _navigateToTransactions,
-    },
-    {
-      'icon': "assets/icons/svgs/account.svg",
-      'icon2': "assets/icons/svgs/recipientsss.svg",
-      'iconColor': AppColors.neutral700.withOpacity(0.35),
-      'title': 'Recipients',
-      'subtitle': 'Saved beneficiaries for quick transfers',
-      'onTap': _navigateToRecipients,
-    },
-  ];
-
-  List<Map<String, dynamic>> get _accountSettings => [
-    {
-      'icon': "assets/icons/svgs/account.svg",
-      'icon2': "assets/icons/svgs/user1.svg",
-      'iconColor': AppColors.neutral700.withOpacity(0.35),
-      'title': 'Account Limits',
-      'subtitle': 'View and manage your transfer limits',
-      'onTap': _navigateToAccountLimits,
-    },
-  ];
-
-  // List<Map<String, dynamic>> get _promotions => [
-  //   {
-  //     'icon': "assets/icons/svgs/account.svg",
-  //     'icon2': "assets/icons/svgs/gift.svg",
-  //     'iconColor': AppColors.neutral700.withOpacity(0.35),
-  //     'title': 'Referrals',
-  //     'subtitle': 'Invite friends and earn rewards',
-  //     'actionText': "Coming soon",
-  //     'actionColor': AppColors.neutral600,
-  //     'onTap': () {},
-  //   },
-  // ];
-
-  List<Map<String, dynamic>> get _securitySettings => [
-    // {
-    //   'icon': "assets/icons/svgs/account.svg",
-    //   'icon2': "assets/icons/svgs/security-safe.svg",
-    //   'iconColor': AppColors.neutral700.withOpacity(0.35),
-    //   'title': 'Recovery phrase',
-    //   'subtitle': '',
-    //   'onTap': _navigateToSecurity,
-    // },
-    {
-      'icon': "assets/icons/svgs/account.svg",
-      'icon2': "assets/icons/svgs/security-safe.svg",
-      'iconColor': AppColors.neutral700.withOpacity(0.35),
-      'title': 'Change my Transaction PIN',
-      'subtitle': '',
-      'onTap': _navigateToChangeTransactionPin,
-    },
-    {
-      'icon': "assets/icons/svgs/account.svg",
-      'icon2': "assets/icons/svgs/security-safe.svg",
-      'iconColor': AppColors.neutral700.withOpacity(0.35),
-      'title': 'Reset my Transaction PIN',
-      'subtitle': '',
-      'onTap': _navigateToResetTransactionPin,
-    },
-  ];
-
-  List<Map<String, dynamic>> get _helpAndSupport => [
-    {
-      'icon': "assets/icons/svgs/account.svg",
-      'icon2': "assets/icons/svgs/contact.svg",
-      'iconColor': AppColors.neutral700.withOpacity(0.35),
-      'title': 'Contact Us',
-      'subtitle': 'Reach out to our support team',
-      'onTap': _navigateToContactUs,
-    },
-    {
-      'icon': "assets/icons/svgs/account.svg",
-      'icon2': "assets/icons/svgs/message-question.svg",
-      'iconColor': AppColors.neutral700.withOpacity(0.35),
-      'title': 'FAQs',
-      'subtitle': '',
-      'actionText': "Coming soon",
-      'actionColor': AppColors.neutral600,
-      'onTap': _navigateToFAQs,
-    },
-  ];
-
-  List<Map<String, dynamic>> get _aboutUs => [
-    {
-      'icon': "assets/icons/svgs/account.svg",
-      'icon2': "assets/icons/svgs/terms.svg",
-      'iconColor': AppColors.neutral700.withOpacity(0.35),
-      'title': 'Terms & Conditions',
-      'subtitle': 'Reach out to our support team',
-      'onTap': _navigateToTermsAndConditions,
-    },
-    {
-      'icon': "assets/icons/svgs/account.svg",
-      'icon2': "assets/icons/svgs/privacy.svg",
-      'iconColor': AppColors.neutral700.withOpacity(0.35),
-      'title': 'Privacy Notice',
-      'subtitle': '',
-      'onTap': _navigateToPrivacyNotice,
-    },
-  ];
 }

@@ -11,8 +11,16 @@ PODS:
     - PromisesObjC (~> 2.4)
   - connectivity_plus (0.0.1):
     - Flutter
+  - CwlCatchException (2.2.1):
+    - CwlCatchExceptionSupport (~> 2.2.1)
+  - CwlCatchExceptionSupport (2.2.1)
   - device_info_plus (0.0.1):
     - Flutter
+  - FingerprintJS (1.6.0):
+    - FingerprintJS/Core (= 1.6.0)
+  - FingerprintJS/Core (1.6.0):
+    - FingerprintJS/SystemControl
+  - FingerprintJS/SystemControl (1.6.0)
   - Firebase/CoreOnly (12.4.0):
     - FirebaseCore (~> 12.4.0)
   - Firebase/Crashlytics (12.4.0):
@@ -120,6 +128,8 @@ PODS:
     - Flutter
   - flutter_secure_storage (6.0.0):
     - Flutter
+  - flutter_tts (0.0.1):
+    - Flutter
   - google_sign_in_ios (0.0.1):
     - AppAuth (>= 1.7.4)
     - Flutter
@@ -224,6 +234,9 @@ PODS:
   - PromisesObjC (2.4.0)
   - PromisesSwift (2.4.0):
     - PromisesObjC (= 2.4.0)
+  - Sentry (8.58.2):
+    - Sentry/Core (= 8.58.2)
+  - Sentry/Core (8.58.2)
   - share_plus (0.0.1):
     - Flutter
   - shared_preferences_foundation (0.0.1):
@@ -231,9 +244,23 @@ PODS:
     - FlutterMacOS
   - sign_in_with_apple (0.0.1):
     - Flutter
+  - smile_id (11.2.10):
+    - Flutter
+    - SmileID (= 11.1.11)
+  - SmileID (11.1.11):
+    - SmileIDSDK (= 11.1.11)
+  - SmileIDSDK (11.1.11):
+    - FingerprintJS (= 1.6.0)
+    - Sentry (~> 8.57)
+    - ZIPFoundation (= 0.9.20)
+  - speech_to_text (7.2.0):
+    - CwlCatchException
+    - Flutter
+    - FlutterMacOS
   - video_player_avfoundation (0.0.1):
     - Flutter
     - FlutterMacOS
+  - ZIPFoundation (0.9.20)
 
 DEPENDENCIES:
   - connectivity_plus (from `.symlinks/plugins/connectivity_plus/ios`)
@@ -248,6 +275,7 @@ DEPENDENCIES:
   - flutter_localization (from `.symlinks/plugins/flutter_localization/ios`)
   - flutter_native_splash (from `.symlinks/plugins/flutter_native_splash/ios`)
   - flutter_secure_storage (from `.symlinks/plugins/flutter_secure_storage/ios`)
+  - flutter_tts (from `.symlinks/plugins/flutter_tts/ios`)
   - google_sign_in_ios (from `.symlinks/plugins/google_sign_in_ios/darwin`)
   - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
   - intercom_flutter (from `.symlinks/plugins/intercom_flutter/ios`)
@@ -258,12 +286,17 @@ DEPENDENCIES:
   - share_plus (from `.symlinks/plugins/share_plus/ios`)
   - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
   - sign_in_with_apple (from `.symlinks/plugins/sign_in_with_apple/ios`)
+  - smile_id (from `.symlinks/plugins/smile_id/ios`)
+  - speech_to_text (from `.symlinks/plugins/speech_to_text/darwin`)
   - video_player_avfoundation (from `.symlinks/plugins/video_player_avfoundation/darwin`)
 
 SPEC REPOS:
   trunk:
     - AppAuth
     - AppCheckCore
+    - CwlCatchException
+    - CwlCatchExceptionSupport
+    - FingerprintJS
     - Firebase
     - FirebaseAnalytics
     - FirebaseAppCheckInterop
@@ -289,6 +322,10 @@ SPEC REPOS:
     - nanopb
     - PromisesObjC
     - PromisesSwift
+    - Sentry
+    - SmileID
+    - SmileIDSDK
+    - ZIPFoundation
 
 EXTERNAL SOURCES:
   connectivity_plus:
@@ -315,6 +352,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/flutter_native_splash/ios"
   flutter_secure_storage:
     :path: ".symlinks/plugins/flutter_secure_storage/ios"
+  flutter_tts:
+    :path: ".symlinks/plugins/flutter_tts/ios"
   google_sign_in_ios:
     :path: ".symlinks/plugins/google_sign_in_ios/darwin"
   image_picker_ios:
@@ -335,6 +374,10 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/shared_preferences_foundation/darwin"
   sign_in_with_apple:
     :path: ".symlinks/plugins/sign_in_with_apple/ios"
+  smile_id:
+    :path: ".symlinks/plugins/smile_id/ios"
+  speech_to_text:
+    :path: ".symlinks/plugins/speech_to_text/darwin"
   video_player_avfoundation:
     :path: ".symlinks/plugins/video_player_avfoundation/darwin"
 
@@ -342,7 +385,10 @@ SPEC CHECKSUMS:
   AppAuth: d4f13a8fe0baf391b2108511793e4b479691fb73
   AppCheckCore: cc8fd0a3a230ddd401f326489c99990b013f0c4f
   connectivity_plus: 2a701ffec2c0ae28a48cf7540e279787e77c447d
+  CwlCatchException: 7acc161b299a6de7f0a46a6ed741eae2c8b4d75a
+  CwlCatchExceptionSupport: 54ccab8d8c78907b57f99717fb19d4cc3bce02dc
   device_info_plus: c6fb39579d0f423935b0c9ce7ee2f44b71b9fce6
+  FingerprintJS: 3a0c3e7f5035ecae199e5e5836200d9b20f1266a
   Firebase: f07b15ae5a6ec0f93713e30b923d9970d144af3e
   firebase_analytics: 362a91e731c78824981aad3088abc79132c4a8d3
   firebase_core: e6b8bb503b7d1d9856e698d4f193f7b414e6bf1f
@@ -366,6 +412,7 @@ SPEC CHECKSUMS:
   flutter_localization: f43b18844a2b3d2c71fd64f04ffd6b1e64dd54d4
   flutter_native_splash: df59bb2e1421aa0282cb2e95618af4dcb0c56c29
   flutter_secure_storage: d33dac7ae2ea08509be337e775f6b59f1ff45f12
+  flutter_tts: 91ad1884033cd95ef6e9338754adad54f01f090f
   google_sign_in_ios: 7411fab6948df90490dc4620ecbcabdc3ca04017
   GoogleAdsOnDeviceConversion: e03a386840803ea7eef3fd22a061930142c039c1
   GoogleAppMeasurement: 1e718274b7e015cefd846ac1fcf7820c70dc017d
@@ -385,10 +432,16 @@ SPEC CHECKSUMS:
   path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   PromisesSwift: 9d77319bbe72ebf6d872900551f7eeba9bce2851
+  Sentry: de29b881e83bd91cf99a927f82f1fd86bfb39db2
   share_plus: 8b6f8b3447e494cca5317c8c3073de39b3600d1f
   shared_preferences_foundation: fcdcbc04712aee1108ac7fda236f363274528f78
   sign_in_with_apple: f3bf75217ea4c2c8b91823f225d70230119b8440
+  smile_id: d03e5df0a34bf5cb2d5ad5abaa1f09c9e2adf837
+  SmileID: 17ae5117a232247637e25e0d5914c1f844aea5f6
+  SmileIDSDK: 19673f084f52db83ceacb3484021da10cbaa145d
+  speech_to_text: 87bf9298952e8d9073be1b6aade6d5758db5170c
   video_player_avfoundation: 7993f492ae0bd77edaea24d9dc051d8bb2cd7c86
+  ZIPFoundation: dfd3d681c4053ff7e2f7350bc4e53b5dba3f5351
 
 PODFILE CHECKSUM: 7d30966d8b490c0a435ba1cee6ebcb99039f0383
 

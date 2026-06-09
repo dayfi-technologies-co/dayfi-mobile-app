@@ -90,11 +90,15 @@ class CustomTextField extends StatelessWidget {
   final Widget? prefixIcon;
   final Color? borderColor;
   final TextEditingController? controller;
+  final ScrollController? scrollController;
+  final FocusNode? focusNode;
+  final void Function(String)? onFieldSubmitted;
   final String? Function(String?)? validator;
   final bool shouldReadOnly;
   final bool enabled;
   final TextCapitalization? textCapitalization;
   final int? minLines;
+  final int? maxLines;
   final TextInputAction? textInputAction;
   final bool autofocus;
   final bool enableInteractiveSelection;
@@ -112,6 +116,8 @@ class CustomTextField extends StatelessWidget {
   final bool autocorrect;
   final bool enableSuggestions;
   final Iterable<String>? autofillHints;
+  /// Outer container outline. Off for borderless surfaces (wallet receive uses [DayfiReadonlyCopyField] instead).
+  final bool showContainerBorder;
 
   const CustomTextField({
     super.key,
@@ -127,10 +133,14 @@ class CustomTextField extends StatelessWidget {
     this.prefixIcon,
     this.borderColor,
     this.controller,
+    this.scrollController,
+    this.focusNode,
+    this.onFieldSubmitted,
     this.validator,
     this.shouldReadOnly = false,
     this.enabled = true,
     this.minLines,
+    this.maxLines,
     this.textCapitalization,
     this.textInputAction,
     this.autofocus = true,
@@ -149,6 +159,7 @@ class CustomTextField extends StatelessWidget {
     this.autocorrect = true,
     this.enableSuggestions = true,
     this.autofillHints,
+    this.showContainerBorder = true,
   });
 
   @override
@@ -161,7 +172,7 @@ class CustomTextField extends StatelessWidget {
               label!,
               style: TextStyle(
                 fontFamily: 'Chirp',
-                fontSize: 12,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w400,
                 // letterspacing: 0,
                 height: 1.450,
@@ -182,30 +193,23 @@ class CustomTextField extends StatelessWidget {
           height: isSearch ? 40 : null,
           width: width ?? 420,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              width: 1,
-              color:
-                  errorText.toString() != "null"
-                      ? isDayfiId
-                          ? Colors.green.withOpacity(0.3)
-                          : Colors.red.withOpacity(0.3)
-                      : Theme.of(
-                            context,
-                          ).textTheme.bodyLarge?.color?.withOpacity(0) ??
-                          Colors.black.withOpacity(0),
-            ),
+            borderRadius: BorderRadius.circular(borderRadius),
+            border: _containerBorder(context),
           ),
           child: Semantics(
             textField: true,
             label: label ?? label,
             hint: hintText,
-            enabled: !shouldReadOnly,
+            enabled: enabled,
             child: TextFormField(
               // autofocus: autofocus,
-              maxLines: obscureText ? 1 : minLines,
+              minLines: obscureText ? 1 : (minLines ?? 1),
+              maxLines: obscureText
+                  ? 1
+                  : (maxLines ?? minLines ?? 1),
               maxLengthEnforcement: MaxLengthEnforcement.enforced,
               onTap: onTap,
+              enabled: enabled,
               enableInteractiveSelection: enableInteractiveSelection,
               autocorrect: autocorrect,
               enableSuggestions: enableSuggestions,
@@ -215,6 +219,10 @@ class CustomTextField extends StatelessWidget {
               autovalidateMode: AutovalidateMode.onUserInteraction,
               maxLength: obscureText ? null : maxLength,
               controller: controller,
+              scrollController: scrollController,
+              scrollPhysics: const ClampingScrollPhysics(),
+              focusNode: focusNode,
+              onFieldSubmitted: onFieldSubmitted,
               cursorColor: AppColors.purple400,
               textInputAction: textInputAction,
               keyboardType: keyboardType,
@@ -230,15 +238,13 @@ class CustomTextField extends StatelessWidget {
                 );
               },
               inputFormatters: <TextInputFormatter>[
-                // If a specific formatter is provided, use it. Otherwise, automatically
-                // apply a word-capitalization formatter for fields that request
-                // `TextCapitalization.words` (e.g., names), otherwise use a default
-                // single-line filtering formatter.
-                formatter ??
-                    ((textCapitalization == TextCapitalization.words ||
-                            capitalizeFirstLetter)
-                        ? WordCapitalizationFormatter()
-                        : FilteringTextInputFormatter.singleLineFormatter),
+                if (formatter != null)
+                  formatter!
+                else if (textCapitalization == TextCapitalization.words ||
+                    capitalizeFirstLetter)
+                  WordCapitalizationFormatter()
+                else if ((maxLines ?? minLines ?? 1) <= 1)
+                  FilteringTextInputFormatter.singleLineFormatter,
               ],
               style:
                   textStyle ??
@@ -311,11 +317,34 @@ class CustomTextField extends StatelessWidget {
                   borderSide: BorderSide.none,
                   borderRadius: BorderRadius.all(Radius.circular(12)),
                 ),
+                disabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide.none,
+                  borderRadius: BorderRadius.all(Radius.circular(borderRadius)),
+                ),
               ),
             ),
           ),
         ),
       ],
+    );
+  }
+
+  Border? _containerBorder(BuildContext context) {
+    if (!showContainerBorder) return null;
+
+    if (borderColor != null) {
+      return Border.all(color: borderColor!, width: 1);
+    }
+
+    final hasError = errorText != null && errorText.toString() != 'null';
+    if (!hasError) return null;
+
+    return Border.all(
+      width: 1,
+      color:
+          isDayfiId
+              ? Colors.green.withOpacity(0.3)
+              : Colors.red.withOpacity(0.3),
     );
   }
 }
@@ -457,7 +486,7 @@ class ReadOnlyCustomTextField extends StatelessWidget {
               ),
               errorStyle: TextStyle(
                 fontFamily: 'Chirp',
-                fontSize: 12,
+                fontSize: 12.5,
                 color: Colors.red.shade800,
                 // letterspacing: 0,
               ),

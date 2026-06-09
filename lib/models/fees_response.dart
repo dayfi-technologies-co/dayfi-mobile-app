@@ -39,8 +39,8 @@ class FeesData {
 }
 
 class TransferFees {
-  final int dayfiToDayfi;
-  final int dayfiToBank;
+  final num dayfiToDayfi;
+  final num dayfiToBank;
 
   TransferFees({
     required this.dayfiToDayfi,

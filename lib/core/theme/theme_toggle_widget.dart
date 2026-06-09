@@ -1,4 +1,3 @@
-import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -207,7 +206,7 @@ class ThemeToggleListTile extends ConsumerWidget {
   }
 }
 
-/// Presents theme options in a modal bottom sheet (same shell as Send money).
+/// Presents theme options in a modal bottom sheet (same shell as delivery method).
 Future<void> showThemeSelectionSheet(BuildContext context) {
   return showModalBottomSheet<void>(
     context: context,
@@ -215,7 +214,7 @@ Future<void> showThemeSelectionSheet(BuildContext context) {
     isDismissible: true,
     enableDrag: true,
     barrierColor: Colors.black.withValues(alpha: 0.85),
-    backgroundColor: Theme.of(context).colorScheme.surface,
+    backgroundColor: Colors.transparent,
     builder: (ctx) => const _ThemeSelectionSheet(),
   );
 }
@@ -235,212 +234,240 @@ class _ThemeSelectionSheet extends ConsumerWidget {
       Navigator.of(context).pop();
     }
 
+    final options = [
+      (
+        mode: AppThemeMode.light,
+        icon: 'assets/icons/svgs/sun.svg',
+        title: 'Light',
+        subtitle: 'Always use light theme',
+      ),
+      (
+        mode: AppThemeMode.dark,
+        icon: 'assets/icons/svgs/moon.svg',
+        title: 'Dark',
+        subtitle: 'Always use dark theme',
+      ),
+      (
+        mode: AppThemeMode.system,
+        icon: 'assets/icons/svgs/sun.svg',
+        title: 'System',
+        subtitle: 'Follow system theme',
+      ),
+    ];
+
     return Container(
-      height: MediaQuery.of(context).size.height * 0.55,
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      child: Column(
-        children: [
-          const SizedBox(height: 18),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const SizedBox(height: 40, width: 40),
-                Text(
-                  'Select theme',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontFamily: 'FunnelDisplay',
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: onSurface,
-                  ),
-                ),
-                InkWell(
-                  splashColor: Colors.transparent,
-                  highlightColor: Colors.transparent,
-                  onTap: () {
-                    Navigator.pop(context);
-                    FocusScope.of(context).unfocus();
-                  },
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      SvgPicture.asset(
-                        'assets/icons/svgs/notificationn.svg',
-                        height: 40,
-                        // ignore: deprecated_member_use
-                        color: Theme.of(context).colorScheme.surface,
-                      ),
-                      SizedBox(
-                        height: 40,
-                        width: 40,
-                        child: Center(
-                          child: Image.asset(
-                            'assets/icons/pngs/cancelicon.png',
-                            height: 20,
-                            width: 20,
-                            color: Theme.of(context).textTheme.bodyLarge?.color,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40),
-            child: Opacity(
-              opacity: 0.7,
-              child: Text(
-                'Choose how Dayfi should look.',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  fontFamily: 'Chirp',
-                  letterSpacing: -0.20,
-                  height: 1.5,
-                ),
-                textAlign: TextAlign.center,
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 10),
+            Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: onSurface.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
-          ),
-          const SizedBox(height: 24),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-              children: [
-                _ThemeOptionTile(
-                  selected: themeMode == AppThemeMode.light,
-                  icon: "assets/icons/svgs/sun.svg",
-                  title: 'Light',
-                  subtitle: 'Always use light theme',
-                  primary: primary,
-                  onTap: () => pick(AppThemeMode.light),
-                ),
-                const SizedBox(height: 12),
-                _ThemeOptionTile(
-                  selected: themeMode == AppThemeMode.dark,
-                  icon: "assets/icons/svgs/moon.svg",
-                  title: 'Dark',
-                  subtitle: 'Always use dark theme',
-                  primary: primary,
-                  onTap: () => pick(AppThemeMode.dark),
-                ),
-                const SizedBox(height: 12),
-                _ThemeOptionTile(
-                  selected: themeMode == AppThemeMode.system,
-                  icon: "assets/icons/svgs/sun.svg",
-                  title: 'System',
-                  subtitle: 'Follow system theme',
-                  primary: primary,
-                  onTap: () => pick(AppThemeMode.system),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ThemeOptionTile extends StatelessWidget {
-  const _ThemeOptionTile({
-    required this.selected,
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.primary,
-    required this.onTap,
-  });
-
-  final bool selected;
-  final String icon;
-  final String title;
-  final String subtitle;
-  final Color primary;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final onSurface = Theme.of(context).colorScheme.onSurface;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
-          border:
-              selected
-                  ? Border.all(
-                    color: AppColors.purple500.withValues(alpha: 0.55),
-                    width: 1,
-                  )
-                  : null,
-        ),
-        child: Row(
-          children: [
-            SvgPicture.asset(
-              icon,
-              height: icon == "assets/icons/svgs/moon.svg" ? 24 : 26,
-              color: selected ? AppColors.purple500 : onSurface.withValues(alpha: 0.85),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              child: Row(
                 children: [
-                  Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontFamily: 'Chirp',
-                      fontSize: 18,
-                      letterSpacing: -0.20,
-                      fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                      color: selected ? AppColors.purple500 : onSurface,
+                  const SizedBox(width: 40),
+                  Expanded(
+                    child: Text(
+                      'Select theme',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        fontFamily: 'FunnelDisplay',
+                        fontSize: 22,
+                        fontWeight: FontWeight.w600,
+                        color: onSurface,
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    textAlign: TextAlign.start,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w500,
-                      height: 1.2,
-                      fontFamily: 'Chirp',
-                      letterSpacing: -0.20,
-                      fontSize: 14,
-                      color: onSurface.withValues(alpha: 0.75),
+                  InkWell(
+                    splashColor: Colors.transparent,
+                    highlightColor: Colors.transparent,
+                    onTap: () {
+                      Navigator.pop(context);
+                      FocusScope.of(context).unfocus();
+                    },
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        SvgPicture.asset(
+                          'assets/icons/svgs/notificationn.svg',
+                          height: 40,
+                          color: Theme.of(context).colorScheme.surface,
+                        ),
+                        SizedBox(
+                          height: 40,
+                          width: 40,
+                          child: Center(
+                            child: Image.asset(
+                              'assets/icons/pngs/cancelicon.png',
+                              height: 20,
+                              width: 20,
+                              color: Theme.of(context).textTheme.bodyLarge?.color,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 16),
-
-            selected
-                ? SvgPicture.asset(
-                  "assets/icons/svgs/circle-check.svg",
-                  color: AppColors.purple500,
-                  height: 22,
-                  width: 22,
-                )
-                : Icon(
-                  Icons.chevron_right,
-                  color: AppColors.neutral400,
-                  size: 20,
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 28),
+              child: Text(
+                'Choose how Dayfi should look.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  fontFamily: 'Chirp',
+                  letterSpacing: -.25,
+                  height: 1.45,
+                  color: onSurface.withValues(alpha: 0.55),
                 ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              child: _ThemeOptionsGroup(
+                options: options,
+                selected: themeMode,
+                primary: primary,
+                onPick: pick,
+              ),
+            ),
+            const SizedBox(height: 20),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ThemeOptionsGroup extends StatelessWidget {
+  const _ThemeOptionsGroup({
+    required this.options,
+    required this.selected,
+    required this.primary,
+    required this.onPick,
+  });
+
+  final List<({AppThemeMode mode, String icon, String title, String subtitle})>
+      options;
+  final AppThemeMode selected;
+  final Color primary;
+  final void Function(AppThemeMode mode) onPick;
+
+  @override
+  Widget build(BuildContext context) {
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: List.generate(options.length, (index) {
+          final option = options[index];
+          final isSelected = selected == option.mode;
+          return Column(
+            children: [
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => onPick(option.mode),
+                  splashColor: Colors.transparent,
+                  highlightColor: onSurface.withValues(alpha: 0.04),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 40,
+                          height: 40,
+                          child: Center(
+                            child: SvgPicture.asset(
+                              option.icon,
+                              height:
+                                  option.icon.contains('moon') ? 24 : 26,
+                              color: onSurface.withValues(alpha: 0.85),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                option.title,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(
+                                  fontFamily: 'Chirp',
+                                  fontSize: 18,
+                                  letterSpacing: -.25,
+                                  fontWeight: FontWeight.w500,
+                                  color: isSelected ? primary : onSurface,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                option.subtitle,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  height: 1.2,
+                                  fontFamily: 'Chirp',
+                                  letterSpacing: -.25,
+                                  fontSize: 14,
+                                  color: onSurface.withValues(alpha: 0.65),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 14,
+                          color: onSurface.withValues(alpha: 0.28),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              if (index < options.length - 1)
+                Divider(
+                  height: 1,
+                  thickness: 1,
+                  indent: 68,
+                  endIndent: 16,
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.08),
+                ),
+            ],
+          );
+        }),
       ),
     );
   }

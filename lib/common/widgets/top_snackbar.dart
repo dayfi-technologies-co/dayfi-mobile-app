@@ -1,11 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:another_flushbar/flushbar.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter/scheduler.dart';
 
 import 'package:flutter_svg/svg.dart';
 import 'package:dayfi/common/utils/haptic_helper.dart';
+import 'package:dayfi/core/navigation/navigator_key.dart';
 
 class TopSnackbar {
+  /// Shows a snackbar after the current frame (avoids Navigator `_debugLocked`).
+  static void showSafe(
+    BuildContext context, {
+    required String message,
+    bool isError = false,
+    Duration duration = const Duration(seconds: 3),
+  }) {
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      final ctx = NavigatorKey.appNavigatorKey.currentContext ?? context;
+      if (!ctx.mounted) return;
+      show(ctx, message: message, isError: isError, duration: duration);
+    });
+  }
+
   static void show(
     BuildContext context, {
     required String message,
@@ -69,8 +85,8 @@ class TopSnackbar {
             child: Text(
                   message,
                   style: TextStyle(
-                    fontSize: 14,
-                    fontFamily: 'Chirp',
+                    fontSize: 15,
+                    fontFamily: 'FunnelDisplay',
                     fontWeight: FontWeight.w500,
                     letterSpacing: -0.3,
                     height: 1.2,

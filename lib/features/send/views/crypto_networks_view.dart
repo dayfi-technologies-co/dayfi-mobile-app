@@ -5,8 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
-import 'package:dayfi/common/widgets/top_snackbar.dart';
-import 'package:dayfi/features/send/views/add_wallet_address_view.dart';
 import 'package:dayfi/routes/route.dart';
 
 class CryptoNetworksView extends ConsumerWidget {
@@ -234,7 +232,7 @@ class CryptoNetworksView extends ConsumerWidget {
                                                       fontFamily: 'Chirp',
                                                       fontSize: 18,
                                                       fontWeight:
-                                                          FontWeight.w700,
+                                                          FontWeight.w600,
                                                       color:
                                                           AppColors.purple500ForTheme(
                                                             context,

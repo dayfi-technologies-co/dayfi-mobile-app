@@ -12,8 +12,10 @@ import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
 import 'package:dayfi/services/transaction_monitor_service.dart';
 import 'package:dayfi/routes/route.dart';
 import 'dart:async';
+import 'package:dayfi/common/widgets/dayfi_loading_indicator.dart';
+import 'package:dayfi/common/widgets/transaction_processing_overlay.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:dayfi/features/send/constants/send_copy.dart';
 
 class RegularTransferTransactionPinView extends ConsumerStatefulWidget {
   final Map<String, dynamic> selectedData;
@@ -99,9 +101,9 @@ class _RegularTransferTransactionPinViewState
   }
 
   Future<void> _handlePinEntered(String pin) async {
-    setState(() {
-      _isProcessing = true;
-    });
+    setState(() => _isProcessing = true);
+    if (mounted) Navigator.pop(context);
+    if (mounted) TransactionProcessingOverlay.show(context);
 
     try {
       // Get user to verify transaction pin exists
@@ -154,13 +156,10 @@ class _RegularTransferTransactionPinViewState
           );
         }
 
-        // Close bottom sheet
-        Navigator.pop(context);
-
-        // Navigate to success screen
+        TransactionProcessingOverlay.hide();
         appRouter.pushNamedAndRemoveUntil(
           AppRoute.sendPaymentSuccessView,
-          (Route route) => false, // Remove all previous routes
+          (Route route) => false,
           arguments: {
             'recipientData': widget.recipientData,
             'selectedData': widget.selectedData,
@@ -190,9 +189,10 @@ class _RegularTransferTransactionPinViewState
         isError: true,
       );
     } finally {
-      setState(() {
-        _isProcessing = false;
-      });
+      TransactionProcessingOverlay.hide();
+      if (mounted) {
+        setState(() => _isProcessing = false);
+      }
     }
   }
 
@@ -247,7 +247,9 @@ class _RegularTransferTransactionPinViewState
           widget.selectedData['recipientDeliveryMethod'] ??
           (isCrypto ? "Digital Dollar" : "Bank Transfer"),
       "country": sendState.sendCountry,
-      "reason": widget.reason.isNotEmpty ? widget.reason : "Money Transfer",
+      "reason": widget.reason.isNotEmpty
+          ? widget.reason
+          : SendCopy.defaultTransferReason,
       "receiveChannel":
           widget.selectedData['recipientChannelId'] ??
           selectedChannel?.id ??
@@ -515,7 +517,7 @@ class _TransactionPinBottomSheetState
 
                   if (widget.isProcessing) ...[
                     SizedBox(height: 16),
-                    CupertinoActivityIndicator(),
+                    const DayfiLoadingIndicator(),
                     SizedBox(height: 16),
                   ],
 

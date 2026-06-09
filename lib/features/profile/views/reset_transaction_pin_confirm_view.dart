@@ -9,6 +9,7 @@ import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/services/local/secure_storage.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
+import 'package:dayfi/common/widgets/dayfi_circle_check_icon.dart';
 import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/routes/route.dart';
@@ -172,8 +173,7 @@ class _ResetTransactionPinConfirmViewState
                       shape: BoxShape.circle,
                       color: AppColors.success500.withOpacity(0.1),
                     ),
-                    child: Icon(
-                      Icons.check_circle,
+                    child: const DayfiCircleCheckIcon(
                       color: AppColors.success500,
                       size: 60,
                     ),
@@ -207,11 +207,11 @@ class _ResetTransactionPinConfirmViewState
                     text: 'Done',
                     onPressed: () {
                       Navigator.pop(context); // Close dialog
-                      // Pop all reset PIN screens and return to profile (index 2)
+                      // Pop all reset PIN screens and return to More tab (index 4)
                       appRouter.pushNamedAndRemoveUntil(
                         AppRoute.mainView,
                         (route) => false,
-                        arguments: 2, // Profile tab index
+                        arguments: 4, // More tab index
                       );
                     },
                     backgroundColor: AppColors.purple500,

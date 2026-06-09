@@ -1,23 +1,28 @@
 import 'dart:math';
-import 'package:dayfi/core/theme/app_typography.dart';
+import 'package:dayfi/common/constants/username_copy.dart';
 import 'package:dayfi/common/utils/haptic_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
+import 'package:dayfi/common/widgets/dayfi_screen_description.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
+import 'package:dayfi/features/send/constants/send_copy.dart';
+import 'package:dayfi/features/send/helpers/send_amount_limits.dart';
 import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
 import 'package:dayfi/features/send/vm/send_viewmodel.dart';
 import 'package:dayfi/features/wallet/providers/wallet_hub_provider.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/services/remote/payment_service.dart';
+import 'package:dayfi/common/widgets/transaction_processing_overlay.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
+import 'package:dayfi/common/utils/api_error_message.dart';
+import 'package:dayfi/common/utils/string_utils.dart';
 import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
+import 'package:dayfi/models/user_model.dart';
 import 'package:dayfi/features/send/vm/transaction_pin_viewmodel.dart';
-import 'package:dayfi/models/payment_response.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class SendReviewView extends ConsumerStatefulWidget {
@@ -39,8 +44,6 @@ class SendReviewView extends ConsumerStatefulWidget {
 class _SendReviewViewState extends ConsumerState<SendReviewView>
     with WidgetsBindingObserver {
   final _descriptionController = TextEditingController();
-  final _reasonController = TextEditingController();
-  String _selectedReason = '';
   final bool _isLoading = false;
   bool _isProcessingPin = false;
   final ValueNotifier<bool> _isProcessingPinNotifier = ValueNotifier<bool>(
@@ -49,22 +52,11 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
   Map<String, dynamic>? _paymentData;
   bool _hasCheckedPinOnResume = false;
 
-  final List<Map<String, String>> _reasons = [
-    {'emoji': '🎁', 'name': 'Gift'},
-    {'emoji': '🏠', 'name': 'Housing'},
-    {'emoji': '🛒', 'name': 'Groceries'},
-    {'emoji': '✈️', 'name': 'Travel'},
-    {'emoji': '🏥', 'name': 'Health'},
-    {'emoji': '🎬', 'name': 'Entertainment'},
-    {'emoji': '🏫', 'name': 'School Fees'},
-    {'emoji': '💡', 'name': 'Bills'},
-    {'emoji': '❓', 'name': 'Other'},
-  ];
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _paymentData = {'reason': SendCopy.defaultTransferReason};
     _descriptionController.addListener(() {
       setState(() {});
     });
@@ -82,7 +74,6 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _descriptionController.dispose();
-    _reasonController.dispose();
     _isProcessingPinNotifier.dispose();
     super.dispose();
   }
@@ -102,9 +93,7 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
     final hasTransactionPin =
         user?.transactionPin != null && user!.transactionPin!.isNotEmpty;
 
-    if (hasTransactionPin &&
-        _paymentData != null &&
-        _selectedReason.isNotEmpty) {
+    if (hasTransactionPin && _paymentData != null) {
       // User just created PIN, show entry bottom sheet
       _hasCheckedPinOnResume = false; // Reset flag
       _showPinEntryBottomSheet();
@@ -251,17 +240,12 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
       return 'Loading...';
     }
 
-    final network = sendState.networks.firstWhere(
-      (n) => n.id == networkId,
-      orElse: () => Network(id: null, name: null),
-    );
-
-    if (network.id == null) {
-      // print('❌ Network not found for ID: $networkId');
+    final network = ref
+        .read(sendViewModelProvider.notifier)
+        .findNetworkById(networkId);
+    if (network == null) {
       return 'Unknown Network';
     }
-
-    // print('✅ Found network: ${network.name} for ID: $networkId');
     return network.name ?? 'Unknown Network';
   }
 
@@ -273,7 +257,7 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
 
     switch (method.toLowerCase()) {
       case 'dayfi_tag':
-        return 'Dayfi Tag';
+        return UsernameCopy.label;
       case 'bank_transfer':
       case 'bank':
         return 'Bank Transfer';
@@ -344,6 +328,27 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
     return p;
   }
 
+  String _resolveRecipientPhone({
+    required String receiveCountry,
+    User? profile,
+  }) {
+    final fromRecipient = widget.recipientData['phone']?.toString().trim();
+    if (fromRecipient != null && fromRecipient.isNotEmpty) {
+      final formatted = _formatPhone(fromRecipient, receiveCountry);
+      if (formatted.isNotEmpty) return formatted;
+    }
+
+    final fromProfile = profile?.phoneNumber?.trim();
+    if (fromProfile != null && fromProfile.isNotEmpty) {
+      final formatted = _formatPhone(fromProfile, receiveCountry);
+      if (formatted.isNotEmpty) return formatted;
+    }
+
+    return receiveCountry.toUpperCase() == 'NG'
+        ? '+2340000000000'
+        : '+10000000000';
+  }
+
   // Ensure date is in YYYY-MM-DD format if possible
   String _formatDob(String? dob) {
     if (dob == null) return '';
@@ -358,6 +363,7 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
   @override
   Widget build(BuildContext context) {
     final sendState = ref.watch(sendViewModelProvider);
+    final isCrypto = _isCryptoTransfer();
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
@@ -410,7 +416,7 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
             'Review Transfer',
             style: Theme.of(context).textTheme.headlineLarge?.copyWith(
               fontFamily: 'FunnelDisplay',
-              fontSize: 24, // height: 1.6,
+              fontSize: isCrypto ? 20 : 24,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface,
             ),
@@ -434,63 +440,31 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: isWide ? 24 : 18,
-                        ),
-                        child: Text(
-                          "Confirm the details of your transfer before sending",
-                          style: Theme.of(
-                            context,
-                          ).textTheme.bodyMedium?.copyWith(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            fontFamily: 'Chirp',
-                            letterSpacing: -.25,
-                            height: 1.5,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
+                      DayfiScreenDescription(
+                        text: SendCopy.reviewTransfer,
+                        bottomSpacing: 24,
                       ),
-                      SizedBox(height: 32),
 
-                      // Reason Selection
-                      _buildReasonSelection(),
-
-                      SizedBox(height: 24),
-
-                      // Transfer Details
                       _buildTransferDetails(sendState),
 
-                      // SizedBox(height: 32),
-
-                      // // Description
-                      // _buildDescriptionSection(),
                       SizedBox(height: 32),
 
-                      // Continue Button
-                      PrimaryButton(
-                        text: 'Confirm Payment',
-                        onPressed:
-                            _selectedReason.isNotEmpty
-                                ? _proceedToPayment
-                                : null,
-                        isLoading: _isLoading,
-                        height: 48.00000,
-                        backgroundColor:
-                            _selectedReason.isNotEmpty
-                                ? AppColors.purple500
-                                : AppColors.purple500.withOpacity(0.12),
-                        textColor:
-                            _selectedReason.isNotEmpty
-                                ? AppColors.neutral0
-                                : AppColors.neutral0.withOpacity(.20),
-                        fontFamily: 'Chirp',
-                        letterSpacing: -.70,
-                        fontSize: 18,
-                        width: double.infinity,
-                        fullWidth: true,
-                        borderRadius: 40,
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 18),
+                        child: PrimaryButton(
+                          text: 'Confirm Payment',
+                          onPressed: _proceedToPayment,
+                          isLoading: _isLoading,
+                          height: 48.00000,
+                          backgroundColor: AppColors.purple500,
+                          textColor: AppColors.neutral0,
+                          fontFamily: 'Chirp',
+                          letterSpacing: -.70,
+                          fontSize: 18,
+                          width: double.infinity,
+                          fullWidth: true,
+                          borderRadius: 40,
+                        ),
                       ),
 
                       SizedBox(height: 36),
@@ -505,26 +479,25 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
     );
   }
 
-  Widget _buildReasonSelection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        CustomTextField(
-          label: 'Reason for transfer',
-          hintText: 'Select reason for transfer',
-          controller: _reasonController,
-          onTap: _showReasonBottomSheet,
-          shouldReadOnly: true,
-          suffixIcon: Icon(
-            Icons.keyboard_arrow_down,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-          ),
-        ),
-      ],
-    );
+  bool _isCryptoTransfer() {
+    final method =
+        widget.selectedData['recipientDeliveryMethod']
+            ?.toString()
+            .toLowerCase() ??
+        '';
+    return method == 'crypto' ||
+        method == 'cryptocurrency' ||
+        widget.selectedData['cryptoCurrency'] != null ||
+        widget.selectedData['cryptoNetwork'] != null ||
+        widget.recipientData['accountType']?.toString().toLowerCase() ==
+            'crypto';
   }
 
   Widget _buildTransferDetails(SendState sendState) {
+    if (_isCryptoTransfer()) {
+      return _buildCryptoTransferDetails();
+    }
+
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
@@ -561,12 +534,14 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
           _buildDetailRow('Exchange Rate', sendState.exchangeRate),
           _buildDetailRow(
             'Transfer Fee',
-            sendState.receiverCountry.toUpperCase() == 'NG'
-                ? '₦${_formatNumber(double.tryParse(sendState.fee.toString()) ?? 0)}'
-                : '${_formatNumber(double.tryParse(sendState.fee.toString()) ?? 0)}',
+            StringUtils.formatCurrency(
+              ref
+                  .read(sendViewModelProvider.notifier)
+                  .feeInSendCurrency
+                  .toStringAsFixed(2),
+              sendState.sendCurrency,
+            ),
           ),
-
-          // _buildDetailRow('Transfer Taxes', '₦0.00'),
           Divider(
             color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
             height: 24,
@@ -575,27 +550,16 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
 
           _buildDetailRow(
             'Total',
-            '₦${_formatNumber(double.tryParse(sendState.totalToPay.toString()) ?? 0)}',
+            '${_getCurrencySymbol(sendState.sendCurrency)}${_formatNumber(double.tryParse(sendState.totalToPay.toString()) ?? 0)}',
             isTotal: true,
           ),
 
-          _buildDetailRow('Beneficiary ', widget.recipientData['name']),
-          SizedBox(height: 6),
+          _buildDetailRow('Beneficiary', widget.recipientData['name']),
 
-          // Bank Name for Manual Input
           if (widget.recipientData['bankName'] != null &&
               widget.recipientData['bankName'].toString().isNotEmpty)
-            _buildDetailRow('Bank Name', widget.recipientData['bankName']),
+            _buildDetailRow('Bank', widget.recipientData['bankName']),
 
-          // Account Name for Manual Input
-          if (widget.recipientData['accountName'] != null &&
-              widget.recipientData['accountName'].toString().isNotEmpty)
-            _buildDetailRow(
-              'Account Name',
-              widget.recipientData['accountName'],
-            ),
-
-          // Account Number - show for both bank and mobile money
           _buildDetailRow(
             widget.selectedData['recipientDeliveryMethod'] == 'bank' ||
                     widget.selectedData['recipientDeliveryMethod'] == 'eft' ||
@@ -603,28 +567,6 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
                 ? 'Account Number'
                 : 'Mobile Money Number',
             widget.recipientData['accountNumber'] ?? 'N/A',
-          ),
-
-          // Network/Provider - change title based on delivery method
-          _buildDetailRow(
-            widget.selectedData['recipientDeliveryMethod'] == 'bank' ||
-                    widget.selectedData['recipientDeliveryMethod'] == 'eft' ||
-                    widget.selectedData['recipientDeliveryMethod'] == 'p2p'
-                ? 'Bank'
-                : 'Mobile Money Provider',
-            _getNetworkName(widget.recipientData['networkId']),
-          ),
-          _buildDetailRow(
-            'Delivery Method',
-            _getDeliveryMethodDisplay(
-              widget.selectedData['recipientDeliveryMethod']?.toString(),
-            ).toUpperCase(),
-          ),
-          _buildDetailRow(
-            'Transfer Time',
-            _getTransferTime(
-              widget.selectedData['recipientDeliveryMethod']?.toString(),
-            ),
             bottomPadding: 0,
           ),
         ],
@@ -632,9 +574,88 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
     );
   }
 
+  Widget _buildCryptoTransferDetails() {
+    final receiveAmount =
+        double.tryParse(
+          widget.selectedData['receiveAmount']?.toString().replaceAll(
+                RegExp(r'[,\s]'),
+                '',
+              ) ??
+              widget.selectedData['sendAmount']?.toString().replaceAll(
+                RegExp(r'[,\s]'),
+                '',
+              ) ??
+              '0',
+        ) ??
+        0;
+    final receiveCurrency =
+        widget.selectedData['receiveCurrency']?.toString() ??
+        widget.selectedData['cryptoCurrency']?.toString() ??
+        'USD';
+    final recipientName =
+        widget.recipientData['name']?.toString() ?? 'Recipient';
+    final amountLabel =
+        '${_formatNumber(receiveAmount)} ${receiveCurrency.toUpperCase()}';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+          width: 1.0,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Transfer Details',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontFamily: 'Chirp',
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 20),
+          _buildDetailRow('Transfer Amount', amountLabel),
+          _buildDetailRow('Recipient', recipientName),
+          _buildDetailRow('Delivery Method', _getCryptoDeliveryLabel()),
+          Divider(
+            color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+            height: 24,
+          ),
+          _buildDetailRow('Total', amountLabel, isTotal: true),
+          _buildDetailRow('Transfer Time', 'Instant', bottomPadding: 0),
+        ],
+      ),
+    );
+  }
+
+  String _getCryptoDeliveryLabel() {
+    final cryptoCurrency =
+        widget.selectedData['cryptoCurrency']?.toString().trim();
+    final cryptoNetwork =
+        widget.selectedData['cryptoNetwork']?.toString().trim() ??
+        _getNetworkName(widget.recipientData['networkId']);
+
+    if (cryptoCurrency != null &&
+        cryptoCurrency.isNotEmpty &&
+        cryptoNetwork.isNotEmpty &&
+        cryptoNetwork != 'Bank Transfer') {
+      return '${cryptoCurrency.toUpperCase()} · $cryptoNetwork';
+    }
+    if (cryptoCurrency != null && cryptoCurrency.isNotEmpty) {
+      return cryptoCurrency.toUpperCase();
+    }
+    return 'Crypto';
+  }
+
   String _getTransferTime(String? deliveryMethod) {
     if (deliveryMethod == null || deliveryMethod.isEmpty) {
-      return '1-24 hours';
+      return 'Usually under 5 minutes';
     }
 
     final methodLower = deliveryMethod.toLowerCase();
@@ -644,9 +665,9 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
       return 'Instant';
     }
 
-    // Bank transfers - manual processing, 24-48 hours
+    // Bank transfers
     if (methodLower == 'bank_transfer' || methodLower == 'bank') {
-      return '24-48 hours';
+      return 'Usually under 5 minutes';
     }
 
     // P2P and EFT - instant
@@ -680,9 +701,9 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
       return 'Instant';
     }
 
-    // Crypto - varies based on network
+    // Crypto — on-chain settlement is near-instant from the user's perspective
     if (methodLower == 'crypto' || methodLower == 'cryptocurrency') {
-      return '10-30 minutes';
+      return 'Instant';
     }
 
     // Cash pickup - requires physical collection
@@ -720,7 +741,16 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
       case 'mobile money number':
         return SvgPicture.asset('assets/icons/svgs/user1.svg', height: 0);
       case 'beneficiary':
-        return SvgPicture.asset('assets/icons/svgs/user1.svg', height: 24);
+      case 'recipient':
+        return label.toLowerCase() == 'recipient'
+            ? Padding(
+              padding: const EdgeInsets.all(1),
+              child: Image.asset('assets/icons/pngs/account_4.png', height: 22),
+            )
+            : Padding(
+              padding: const EdgeInsets.all(1),
+              child: Image.asset('assets/icons/pngs/account_4.png', height: 21),
+            );
       case 'delivery method':
         return SvgPicture.asset('assets/icons/svgs/delivery.svg', height: 24);
       case 'transfer time':
@@ -807,144 +837,11 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
     );
   }
 
-  void _showReasonBottomSheet() {
-    showModalBottomSheet(
-      barrierColor: Colors.black.withOpacity(0.85),
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder:
-          (context) => Container(
-            height: MediaQuery.of(context).size.height * 0.92,
-            decoration: BoxDecoration(
-              color: Theme.of(context).scaffoldBackgroundColor,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            child: Column(
-              children: [
-                SizedBox(height: 18),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 18),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      SizedBox(height: 40, width: 40),
-                      Text(
-                        'Transfer reason',
-                        style: AppTypography.titleLarge.copyWith(
-                          fontFamily: 'FunnelDisplay',
-                          fontSize: 20,
-                          // height: 1.6,
-                          fontWeight: FontWeight.w600,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
-                      ),
-                      InkWell(
-                        splashColor: Colors.transparent,
-                        highlightColor: Colors.transparent,
-                        onTap:
-                            () => {
-                              Navigator.pop(context),
-                              FocusScope.of(context).unfocus(),
-                            },
-                        child: Stack(
-                          alignment: AlignmentGeometry.center,
-                          children: [
-                            SvgPicture.asset(
-                              "assets/icons/svgs/notificationn.svg",
-                              height: 40,
-                              color: Theme.of(context).colorScheme.surface,
-                            ),
-                            SizedBox(
-                              height: 40,
-                              width: 40,
-                              child: Center(
-                                child: Image.asset(
-                                  "assets/icons/pngs/cancelicon.png",
-                                  height: 20,
-                                  width: 20,
-                                  color:
-                                      Theme.of(
-                                        context,
-                                      ).textTheme.bodyLarge!.color,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 16),
-                Expanded(
-                  child: ListView.builder(
-                    padding: EdgeInsets.symmetric(horizontal: 18),
-                    itemCount: _reasons.length,
-                    itemBuilder: (context, index) {
-                      final reason = _reasons[index];
-                      final isSelected = _selectedReason == reason['name'];
-                      return ListTile(
-                        contentPadding: EdgeInsets.symmetric(vertical: 4),
-                        leading: Container(
-                          padding: EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: AppColors.neutral0,
-                            // borderRadius: BorderRadius.circular(12),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Text(
-                            reason['emoji']!,
-                            style: TextStyle(fontSize: 24),
-                          ),
-                        ),
-                        title: Text(
-                          reason['name']!,
-                          style: AppTypography.bodyLarge.copyWith(
-                            fontFamily: 'Chirp',
-                            fontSize: 16,
-                            letterSpacing: -.4,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        trailing:
-                            isSelected
-                                ? SvgPicture.asset(
-                                  'assets/icons/svgs/circle-check.svg',
-                                  color: AppColors.purple500ForTheme(context),
-                                )
-                                : null,
-                        onTap: () {
-                          setState(() {
-                            _selectedReason = reason['name']!;
-                            _reasonController.text = reason['name']!;
-                          });
-                          Navigator.pop(context);
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-    );
-  }
-
   void _proceedToPayment() {
-    if (_selectedReason.isEmpty) {
-      TopSnackbar.show(
-        context,
-        message: 'Please select a reason for transfer',
-        isError: true,
-      );
-      return;
-    }
-
     _paymentData = {
       ...widget.selectedData,
       ...widget.recipientData,
-      'reason': _selectedReason,
+      'reason': SendCopy.defaultTransferReason,
       'description': _descriptionController.text.trim(),
     };
 
@@ -988,9 +885,7 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
                 updatedUser?.transactionPin != null &&
                 updatedUser!.transactionPin!.isNotEmpty;
 
-            if (nowHasPin &&
-                _paymentData != null &&
-                _selectedReason.isNotEmpty) {
+            if (nowHasPin && _paymentData != null) {
               // Show PIN entry bottom sheet
               _hasCheckedPinOnResume = false; // Reset flag
               _showPinEntryBottomSheet();
@@ -1032,84 +927,38 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
 
   /// Handle PIN entry and process payment
   Future<void> _handlePinEntered(String pin) async {
-    // Update processing state (this will trigger modal rebuild via ValueNotifier)
     _isProcessingPin = true;
     _isProcessingPinNotifier.value = true;
+    if (mounted) Navigator.pop(context);
+    if (mounted) TransactionProcessingOverlay.show(context);
 
     try {
-      // For now, sending plain pin - backend should handle encryption
       final encryptedPin = pin;
-
       final sendState = ref.read(sendViewModelProvider);
       final paymentService = locator<PaymentService>();
+      final profile = ref.read(profileViewModelProvider).user;
 
       final receiveCurrency =
           widget.selectedData['receiveCurrency']?.toString().toUpperCase() ??
           sendState.receiverCurrency.toUpperCase();
+      final receiveCountry =
+          widget.selectedData['receiveCountry']?.toString().toUpperCase() ??
+          sendState.receiverCountry.toUpperCase();
       final isCryptoRecipient =
           (widget.recipientData['accountType']?.toString().toLowerCase() ==
-                  'crypto') ||
-              widget.selectedData['cryptoCurrency'] != null;
+              'crypto') ||
+          widget.selectedData['cryptoCurrency'] != null;
 
-      // NGN bank → Flutterwave (debits NGN ledger wallet)
-      if (receiveCurrency == 'NGN' && !isCryptoRecipient) {
-        final amount = double.tryParse(
-              widget.selectedData['receiveAmount']?.toString() ??
-                  widget.selectedData['sendAmount']?.toString() ??
-                  '0',
-            ) ??
-            0;
-        final fee = double.tryParse(sendState.fee?.toString() ?? '0') ?? 0;
-        final bankCode =
-            widget.recipientData['bankCode']?.toString() ??
-            widget.recipientData['networkId']?.toString() ??
-            '';
-        if (bankCode.isEmpty) {
-          TopSnackbar.show(
-            context,
-            message: 'Bank code missing. Select a bank from the list.',
-            isError: true,
-          );
-          return;
-        }
-        final response = await paymentService.bankTransfer(
-          amount: amount,
-          accountNumber:
-              widget.recipientData['accountNumber']?.toString() ?? '',
-          bankCode: bankCode,
-          bankName: widget.recipientData['bankName']?.toString() ?? 'Bank',
-          accountName:
-              widget.recipientData['accountName']?.toString() ??
-              widget.recipientData['name']?.toString() ??
-              'Recipient',
-          fee: fee,
-          pin: encryptedPin,
+      if (isCryptoRecipient) {
+        TopSnackbar.show(
+          context,
+          message: 'Crypto sends use a separate flow.',
+          isError: true,
         );
-        if (response.error == false) {
-          Navigator.pop(context);
-          appRouter.pushNamedAndRemoveUntil(
-            AppRoute.sendPaymentSuccessView,
-            (route) => false,
-            arguments: {
-              'recipientData': widget.recipientData,
-              'selectedData': widget.selectedData,
-              'paymentData': _paymentData ?? {},
-              'transactionId': response.data?.sequenceId ?? response.data?.id,
-            },
-          );
-          return;
-        }
-        throw Exception(
-          response.message.isNotEmpty
-              ? response.message
-              : 'Bank transfer failed',
-        );
+        return;
       }
 
-      // Resolve the best channel for this transaction
       final selectedChannel = _findSelectedChannel(sendState);
-
-      // If no valid channel is found, show an error
       if (selectedChannel == null) {
         TopSnackbar.show(
           context,
@@ -1119,56 +968,160 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
         );
         return;
       }
-      final requestData = await _buildPaymentRequest(
-        sendState: sendState,
-        selectedChannel: selectedChannel,
-        collectionSequenceId: "7e490488-92e4-4de6-a55f-ea0fe17a07150",
+
+      final sendAmount =
+          double.tryParse(
+            widget.selectedData['sendAmount']?.toString().replaceAll(',', '') ??
+                '0',
+          ) ??
+          0;
+      final receiveAmount =
+          double.tryParse(
+            widget.selectedData['receiveAmount']?.toString().replaceAll(
+                  ',',
+                  '',
+                ) ??
+                '0',
+          ) ??
+          0;
+
+      final deliveryMethodForLimits =
+          widget.selectedData['recipientDeliveryMethod']?.toString() ??
+          widget.recipientData['recipientDeliveryMethod']?.toString() ??
+          sendState.selectedDeliveryMethod;
+      final sendCurrency =
+          widget.selectedData['sendCurrency']?.toString().toUpperCase() ??
+          sendState.sendCurrency.toUpperCase();
+      final amountValidation = SendAmountLimits.validate(
+        deliveryMethod: deliveryMethodForLimits,
+        sendCurrency: sendCurrency,
+        receiveCountry: receiveCountry,
+        receiveCurrency: receiveCurrency,
+        sendAmount: sendAmount,
+        receiveAmount: receiveAmount,
+      );
+      if (!amountValidation.isValid) {
+        TopSnackbar.show(
+          context,
+          message: amountValidation.message ?? 'Enter valid amount',
+          isError: true,
+        );
+        return;
+      }
+
+      final networkId =
+          widget.recipientData['networkId']?.toString() ??
+          widget.recipientData['bankCode']?.toString() ??
+          '';
+      if (networkId.isEmpty) {
+        TopSnackbar.show(
+          context,
+          message: 'Bank or network missing. Go back and pick a provider.',
+          isError: true,
+        );
+        return;
+      }
+
+      final sendNotifier = ref.read(sendViewModelProvider.notifier);
+      final deliveryMethod =
+          widget.selectedData['recipientDeliveryMethod']?.toString() ??
+          widget.recipientData['recipientDeliveryMethod']?.toString() ??
+          'bank';
+      final channelId =
+          sendNotifier.resolveRecipientChannelId(
+            receiveCountry: receiveCountry,
+            receiveCurrency: receiveCurrency,
+            deliveryMethod: deliveryMethod,
+            networkId: networkId,
+            existingChannelId:
+                widget.selectedData['recipientChannelId']?.toString() ??
+                widget.recipientData['recipientChannelId']?.toString() ??
+                selectedChannel.id?.toString(),
+          ) ??
+          '';
+      if (channelId.isEmpty) {
+        TopSnackbar.show(
+          context,
+          message: 'Payment channel missing. Try again in a moment.',
+          isError: true,
+        );
+        return;
+      }
+
+      final accountName =
+          widget.recipientData['accountName']?.toString() ??
+          widget.recipientData['name']?.toString() ??
+          'Recipient';
+      final bankName =
+          widget.recipientData['networkName']?.toString() ??
+          _getNetworkName(widget.recipientData['networkId']?.toString());
+      final accountNumber =
+          widget.recipientData['accountNumber']?.toString() ?? '';
+      final payWith = ref.read(selectedDebitCurrencyProvider).toUpperCase();
+      final feeUsd = ref.read(sendViewModelProvider.notifier).transferFeeUsd;
+
+      final response = await paymentService.walletFundedYellowCardSend(
+        sendAmount: sendAmount,
+        receiveAmount: receiveAmount,
+        receiveCurrency: receiveCurrency,
+        country: receiveCountry,
+        channelId: channelId,
+        networkId: networkId,
+        accountNumber: accountNumber,
+        accountName: accountName,
+        accountType: widget.recipientData['accountType']?.toString() ?? 'bank',
+        bankName: bankName,
+        fee: feeUsd,
+        spendCurrency: payWith,
         pin: encryptedPin,
+        recipient: {
+          'name': accountName,
+          'country': receiveCountry,
+          'phone': _resolveRecipientPhone(
+            receiveCountry: receiveCountry,
+            profile: profile,
+          ),
+          'address':
+              widget.recipientData['address']?.toString() ?? 'Not provided',
+          'dob': widget.recipientData['dob']?.toString() ?? '1990-01-01',
+          'email':
+              widget.recipientData['email']?.toString() ??
+              profile?.email ??
+              'recipient@dayfi.co',
+          'idNumber':
+              profile?.idNumber ??
+              widget.recipientData['idNumber']?.toString() ??
+              'A00000000',
+          'idType':
+              profile?.idType ??
+              widget.recipientData['idType']?.toString() ??
+              'passport',
+        },
       );
 
-      // Call createPaymentRequest API
-      final response = await paymentService.createPayment(requestData);
-
-      if (response.error == false && response.data != null) {
-        AppLogger.info('Payment request created successfully');
-
-        // Store the payment data
-        final paymentData = response.data!;
-
-        // Get transaction ID from response
-        final transactionId = paymentData.id ?? paymentData.sequenceId;
-
-        // Close bottom sheet
-        Navigator.pop(context);
-
-        // Navigate to success screen
+      if (response.error == false) {
+        TransactionProcessingOverlay.hide();
         appRouter.pushNamedAndRemoveUntil(
           AppRoute.sendPaymentSuccessView,
-          (Route route) => false, // Remove all previous routes
+          (route) => false,
           arguments: {
             'recipientData': widget.recipientData,
             'selectedData': widget.selectedData,
             'paymentData': _paymentData ?? {},
-            'collectionData': paymentData,
-            'transactionId': transactionId,
+            'transactionId':
+                response.data?.sequenceId ??
+                response.data?.id ??
+                response.data?.paymentSequenceId,
           },
         );
-      } else {
-        // Check if error is PIN-related or balance-related
-        final errorMessage =
-            response.message.isNotEmpty
-                ? response.message
-                : 'Failed to create payment request';
-
-        // Clear PIN if error is PIN-related
-        if (errorMessage.toLowerCase().contains('pin') ||
-            errorMessage.toLowerCase().contains('incorrect') ||
-            errorMessage.toLowerCase().contains('invalid')) {
-          ref.read(transactionPinProvider.notifier).resetForm();
-        }
-
-        throw Exception(errorMessage);
+        return;
       }
+
+      throw Exception(
+        response.message.isNotEmpty
+            ? response.message
+            : 'Failed to initiate transfer',
+      );
     } catch (e) {
       AppLogger.error('Error creating payment request: $e');
 
@@ -1176,24 +1129,31 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
       ref.read(transactionPinProvider.notifier).resetForm();
 
       // Determine error message based on error type
-      String userFriendlyMessage;
-      final errorString = e.toString().toLowerCase();
+      final apiMessage = messageFromApiError(
+        e,
+        fallback: 'Failed to initiate transfer. Please try again.',
+      );
+      final errorString = apiMessage.toLowerCase();
 
+      String userFriendlyMessage;
       if (errorString.contains('pin') || errorString.contains('incorrect')) {
         userFriendlyMessage = 'Incorrect PIN. Please try again.';
+      } else if (errorString.contains('insufficient') &&
+          errorString.contains('ngn balance')) {
+        userFriendlyMessage = apiMessage;
       } else if (errorString.contains('insufficient') ||
-          errorString.contains('balance')) {
-        userFriendlyMessage =
-            'Insufficient wallet balance. Please fund your wallet and try again.';
+          errorString.contains('balance') ||
+          errorString.contains('wallet')) {
+        userFriendlyMessage = apiMessage;
       } else {
-        userFriendlyMessage = 'Failed to initiate transfer. Please try again.';
+        userFriendlyMessage = apiMessage;
       }
 
       // Don't close bottom sheet - let user retry
       // Show error message using TopSnackbar
       TopSnackbar.show(context, message: userFriendlyMessage, isError: true);
     } finally {
-      // Reset processing state (this will trigger modal rebuild via ValueNotifier)
+      TransactionProcessingOverlay.hide();
       _isProcessingPin = false;
       _isProcessingPinNotifier.value = false;
     }
@@ -1312,7 +1272,7 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
     final country = sendState.receiverCountry;
 
     // Get reason
-    final reason = _paymentData?['reason'] ?? 'other';
+    final reason = _paymentData?['reason'] ?? SendCopy.defaultTransferReason;
 
     // Get amount (convert to integer if needed)
     // Use recipient amount in recipient currency for all payments
@@ -1327,9 +1287,24 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
     // Use recipient currency for all payments
     final currency = sendState.receiverCurrency;
 
-    // Get channel ID
+    // Get channel ID (ignore empty strings — they block ?? fallback)
+    final sendNotifier = ref.read(sendViewModelProvider.notifier);
+    final deliveryMethod =
+        widget.selectedData['recipientDeliveryMethod']?.toString() ??
+        widget.recipientData['recipientDeliveryMethod']?.toString() ??
+        'bank';
     final channelId =
-        widget.selectedData['recipientChannelId'] ?? selectedChannel.id ?? '';
+        sendNotifier.resolveRecipientChannelId(
+          receiveCountry: sendState.receiverCountry,
+          receiveCurrency: sendState.receiverCurrency,
+          deliveryMethod: deliveryMethod,
+          networkId: networkId?.toString(),
+          existingChannelId:
+              widget.selectedData['recipientChannelId']?.toString() ??
+              widget.recipientData['recipientChannelId']?.toString() ??
+              selectedChannel.id?.toString(),
+        ) ??
+        '';
 
     // Build metadata
     final metadata = {
@@ -1384,7 +1359,7 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
     // Build payment request payload (including recipient and source)
     final requestData = <String, dynamic>{
       "amount": amount,
-      // "collectionSequenceId": collectionSequenceId,
+      "collectionSequenceId": collectionSequenceId,
       "currency": currency,
       "channelId": channelId,
       "accountType": finalAccountType,
@@ -1545,7 +1520,7 @@ class _TransactionPinBottomSheetState
                                 fontSize: 60,
                                 letterSpacing: -25,
                                 fontFamily: 'FunnelDisplay',
-                                fontWeight: FontWeight.w700,
+                                fontWeight: FontWeight.w600,
                                 color:
                                     index < pinState.pin.length
                                         ? AppColors.purple500ForTheme(context)

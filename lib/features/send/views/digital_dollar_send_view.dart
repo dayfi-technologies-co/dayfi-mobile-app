@@ -1,8 +1,12 @@
+import 'package:dayfi/common/widgets/dayfi_circle_check_icon.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
+import 'package:dayfi/core/theme/app_colors.dart';
+import 'package:dayfi/common/constants/username_copy.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
 import 'package:dayfi/features/send/vm/send_viewmodel.dart';
 import 'package:dayfi/common/utils/tier_utils.dart';
+import 'package:dayfi/common/utils/kyc_flow_navigation.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -86,7 +90,11 @@ class _DigitalDollarSendViewState extends ConsumerState<DigitalDollarSendView> {
                 title: const Text('USDC'),
                 subtitle: const Text('Stellar or Ethereum'),
                 trailing:
-                    _currencyCode == 'USDC' ? const Icon(Icons.check) : null,
+                    _currencyCode == 'USDC'
+                        ? DayfiCircleCheckIcon(
+                          color: AppColors.purple500ForTheme(ctx),
+                        )
+                        : null,
                 onTap: () {
                   _setCurrency('USDC');
                   Navigator.pop(ctx);
@@ -97,7 +105,11 @@ class _DigitalDollarSendViewState extends ConsumerState<DigitalDollarSendView> {
                 title: const Text('USDT'),
                 subtitle: const Text('Ethereum only'),
                 trailing:
-                    _currencyCode == 'USDT' ? const Icon(Icons.check) : null,
+                    _currencyCode == 'USDT'
+                        ? DayfiCircleCheckIcon(
+                          color: AppColors.purple500ForTheme(ctx),
+                        )
+                        : null,
                 onTap: () {
                   _setCurrency('USDT');
                   Navigator.pop(ctx);
@@ -158,7 +170,11 @@ class _DigitalDollarSendViewState extends ConsumerState<DigitalDollarSendView> {
                           ),
                   title: Text(title),
                   trailing:
-                      _networkKey == key ? const Icon(Icons.check) : null,
+                      _networkKey == key
+                          ? DayfiCircleCheckIcon(
+                            color: AppColors.purple500ForTheme(ctx),
+                          )
+                          : null,
                   onTap: () {
                     setState(() => _networkKey = key);
                     Navigator.pop(ctx);
@@ -256,10 +272,11 @@ class _DigitalDollarSendViewState extends ConsumerState<DigitalDollarSendView> {
     final profileState = ref.read(profileViewModelProvider);
     final user = profileState.user;
     if (TierUtils.getCurrentTierLevel(user) == 1) {
-      Navigator.pushNamed(
+      KycFlowNavigation.startUpgrade(
         context,
-        AppRoute.uploadDocumentsView,
-        arguments: const {'showBackButton': true},
+        ref: ref,
+        showBackButton: true,
+        showIntro: false,
       );
       return;
     }
@@ -320,7 +337,7 @@ class _DigitalDollarSendViewState extends ConsumerState<DigitalDollarSendView> {
             children: [
               const SizedBox(height: 12),
               Text(
-                'Recipient address or Dayfi Tag',
+                UsernameCopy.recipientOrAddress,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   fontFamily: 'Chirp',
                   color: Theme.of(

@@ -95,7 +95,7 @@ class DeliveryMethodSelectionBottomSheet extends StatelessWidget {
                           'Please select a different country',
                           style: AppTypography.bodySmall.copyWith(
                             color: AppColors.neutral400,
-                            fontSize: 12,
+                            fontSize: 12.5,
                           ),
                         ),
                       ],
@@ -214,7 +214,7 @@ class DeliveryMethodSelectionBottomSheet extends StatelessWidget {
                                                   '•',
                                                   style: TextStyle(
                                                     color: AppColors.neutral400,
-                                                    fontSize: 12,
+                                                    fontSize: 12.5,
                                                   ),
                                                 ),
                                                 SizedBox(width: 8),
@@ -323,7 +323,7 @@ class DeliveryMethodSelectionBottomSheet extends StatelessWidget {
           value,
           style: AppTypography.bodySmall.copyWith(
             fontFamily: 'Chirp',
-            fontSize: 12,
+            fontSize: 12.5,
             color: isSelected 
                 ? AppColors.primary700 
                 : Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(.85),

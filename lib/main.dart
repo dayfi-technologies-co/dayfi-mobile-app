@@ -6,7 +6,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intercom_flutter/intercom_flutter.dart';
-// import 'package:smile_id/smile_id.dart';
+import 'package:smile_id/smile_id.dart';
 
 import 'package:dayfi/app.dart';
 import 'package:dayfi/app_locator.dart';
@@ -18,14 +18,6 @@ import 'package:dayfi/services/notification_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Smile ID SDK
-  try {
-    // SmileID.initialize(useSandbox: true, enableCrashReporting: true);
-    AppLogger.info('Smile ID initialized successfully');
-  } catch (e) {
-    AppLogger.error('Smile ID initialization error: $e');
-  }
-
   try {
     F.appFlavor = Flavor.values.firstWhere(
       (element) => element.name == appFlavor,
@@ -34,6 +26,19 @@ void main() async {
   } catch (e) {
     AppLogger.error('Error initializing app flavor: $e');
     F.appFlavor = Flavor.values.first;
+  }
+
+  try {
+    final useSandbox = F.appFlavor == Flavor.dev;
+    SmileID.initialize(useSandbox: useSandbox, enableCrashReporting: true);
+    SmileID.setCallbackUrl(
+      callbackUrl: Uri.parse('${F.baseUrl}/kyc/smile/webhook'),
+    );
+    AppLogger.info(
+      'Smile ID initialized (sandbox=$useSandbox) callback=${F.baseUrl}/kyc/smile/webhook',
+    );
+  } catch (e) {
+    AppLogger.error('Smile ID initialization error: $e');
   }
 
   // Enable path URL strategy on web to remove '#' from URLs
@@ -65,7 +70,6 @@ void main() async {
       androidApiKey: intercomAndroidKey,
     );
     await Intercom.instance.setLauncherVisibility(IntercomVisibility.gone);
-    await Intercom.instance.loginUnidentifiedUser();
     AppLogger.info('Intercom initialized successfully');
   } catch (e) {
     AppLogger.error('Intercom initialization error: $e');

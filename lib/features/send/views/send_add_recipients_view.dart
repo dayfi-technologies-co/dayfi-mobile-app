@@ -1,11 +1,21 @@
 import 'dart:developer';
+import 'dart:async' show unawaited;
+import 'package:dayfi/common/constants/username_copy.dart';
+import 'package:dayfi/common/widgets/dayfi_screen_description.dart';
+import 'package:dayfi/features/send/constants/send_copy.dart';
 
 import 'package:dayfi/common/utils/ui_helpers.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
+import 'package:dayfi/features/recipients/helpers/recipient_history_helper.dart';
+import 'package:dayfi/features/recipients/helpers/recipient_save_helper.dart';
+import 'package:dayfi/features/recipients/widgets/recipient_avatar_badge.dart';
 import 'package:dayfi/features/recipients/vm/recipients_viewmodel.dart';
 import 'package:dayfi/models/beneficiary_with_source.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:dayfi/common/utils/haptic_helper.dart';
 
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
@@ -23,6 +33,23 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/features/send/vm/send_viewmodel.dart';
+import 'package:dayfi/features/send/services/ngn_banks_cache.dart';
+import 'package:dayfi/features/wallet/constants/global_wallet.dart';
+import 'package:dayfi/features/wallet/providers/wallet_hub_provider.dart';
+
+bool _isBankRecipientDeliveryMethod(String? method) {
+  switch (method?.toLowerCase()) {
+    case 'bank':
+    case 'bank_transfer':
+    case 'eft':
+    case 'p2p':
+    case 'peer_to_peer':
+    case 'peer-to-peer':
+      return true;
+    default:
+      return false;
+  }
+}
 
 class SendAddRecipientsView extends ConsumerStatefulWidget {
   final Map<String, dynamic> selectedData;
@@ -69,6 +96,9 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
   final _manualAccountNameController = TextEditingController();
   bool _hasConfirmedDetails = false;
 
+  bool get _saveRecipientOnly =>
+      widget.selectedData['saveRecipientOnly'] == true;
+
   /// Countries that support YellowCard bank account verification
   /// Currently only Nigeria is supported per YellowCard API docs
   static const List<String> _verificationSupportedCountries = ['NG'];
@@ -86,13 +116,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
     _selectedCountry = widget.selectedData['receiveCountry'] ?? '';
 
     // Get the correct channel ID based on delivery method
-    if (widget.selectedData['recipientDeliveryMethod'] == 'bank' ||
-        widget.selectedData['recipientDeliveryMethod'] == 'eft' ||
-        widget.selectedData['recipientDeliveryMethod'] == 'p2p') {
-      _selectedChannelId = widget.selectedData['recipientChannelId'] ?? '';
-    } else {
-      _selectedChannelId = widget.selectedData['recipientChannelId'] ?? '';
-    }
+    _selectedChannelId = widget.selectedData['recipientChannelId'] ?? '';
 
     // print('🚀 SendAddRecipientsView initialized');
     // print('🌍 Selected country: $_selectedCountry');
@@ -110,21 +134,13 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
             .loadBeneficiaries(isInitialLoad: true);
       }
 
-      // Use networks from sendState if available, otherwise from selectedData, otherwise fetch
-      final sendState = ref.read(sendViewModelProvider);
-      if (sendState.networks.isNotEmpty) {
-        setState(() {
-          _allNetworks = sendState.networks;
-          _filterNetworks();
-        });
-      } else if (widget.selectedData['networks'] != null) {
-        setState(() {
-          _allNetworks = List<Network>.from(widget.selectedData['networks']);
-          _filterNetworks();
-        });
-      } else {
-        _fetchNetworks();
-      }
+      _hydrateBanksFromCache();
+      _ensureBanksLoaded().then((_) {
+        if (mounted) {
+          _applyPrefillBeneficiary();
+          _applyPrefillAccountNumber();
+        }
+      });
     });
 
     // Add listener to account number field for auto-resolution
@@ -146,80 +162,293 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
     super.dispose();
   }
 
-  /// Fetch available networks from the API
-  Future<void> _fetchNetworks() async {
+  void _applyPrefillBeneficiary() {
+    final raw = widget.selectedData['prefillBeneficiary'];
+    if (raw is! BeneficiaryWithSource) return;
+    _applyBeneficiarySelection(raw);
+  }
+
+  void _applyPrefillAccountNumber() {
+    final raw = widget.selectedData['prefillAccountNumber']?.toString().trim();
+    if (raw == null || raw.isEmpty) return;
+    if (_accountNumberController.text.trim().isNotEmpty) return;
+    _accountNumberController.text = raw;
+  }
+
+  Network? _findNetworkForBeneficiary(BeneficiaryWithSource entry) {
+    Network? matchByName(String? name) {
+      final needle = name?.trim().toLowerCase();
+      if (needle == null || needle.isEmpty) return null;
+      for (final network in _allNetworks) {
+        if ((network.name ?? '').toLowerCase() == needle) return network;
+      }
+      final ng = NgnBanksCache.cached;
+      if (ng != null) {
+        for (final network in ng) {
+          if ((network.name ?? '').toLowerCase() == needle) return network;
+        }
+      }
+      final sendNetworks = ref.read(sendViewModelProvider).networks;
+      for (final network in sendNetworks) {
+        if ((network.name ?? '').toLowerCase() == needle) {
+          for (final local in _allNetworks) {
+            if (local.id == network.id) return local;
+          }
+          return network;
+        }
+      }
+      return null;
+    }
+
+    final byBankName = matchByName(entry.beneficiary.bankName);
+    if (byBankName != null) return byBankName;
+
+    final networkId = entry.source.networkId?.trim() ?? '';
+    if (networkId.isEmpty) return null;
+
+    final resolved =
+        ref.read(sendViewModelProvider.notifier).findNetworkById(networkId);
+    if (resolved != null) return resolved;
+
+    for (final network in _allNetworks) {
+      if (network.id == networkId) return network;
+    }
+
+    for (final network in _allNetworks) {
+      final code = _bankCodeForNetwork(network);
+      if (code != null && code == networkId) return network;
+    }
+
+    final sendNetworks = ref.read(sendViewModelProvider).networks;
+    for (final network in sendNetworks) {
+      if (network.id == networkId) {
+        for (final local in _allNetworks) {
+          if (local.id == network.id) return local;
+        }
+        return network;
+      }
+    }
+
+    final needle = networkId.toLowerCase();
+    for (final network in _allNetworks) {
+      if ((network.name ?? '').toLowerCase() == needle) return network;
+    }
+
+    for (final network in sendNetworks) {
+      if ((network.name ?? '').toLowerCase() == needle) {
+        for (final local in _allNetworks) {
+          if (local.id == network.id) return local;
+        }
+        return network;
+      }
+    }
+
+    return null;
+  }
+
+  void _applyBeneficiarySelection(BeneficiaryWithSource result) {
+    final accountNumber =
+        result.source.accountNumber ?? result.beneficiary.accountNumber ?? '';
+    final resolvedName = RecipientHistoryHelper.primaryLabel(
+      result.beneficiary,
+      result.source,
+    );
+    final country =
+        widget.selectedData['receiveCountry']?.toString().trim().isNotEmpty ==
+                true
+            ? widget.selectedData['receiveCountry'].toString()
+            : RecipientHistoryHelper.resolveReceiveCountry(result);
+
+    final network = _findNetworkForBeneficiary(result);
+
     setState(() {
-      _isLoadingNetworks = true;
-      _networkError = null;
+      _selectedCountry = country.toUpperCase();
+      _selectedNetworkId = network?.id ?? result.source.networkId ?? '';
+      _accountNumberController.text = accountNumber;
+      _resolvedAccountName = resolvedName;
+      _lastResolvedAccountNumber = accountNumber.trim();
+      _lastResolvedNetworkId = _selectedNetworkId;
+
+      if (result.beneficiary.phone.isNotEmpty == true) {
+        _phoneController.text = result.beneficiary.phone;
+      }
+      _manualAccountNameController.text = resolvedName;
+      _hasConfirmedDetails = true;
+
+      if (network != null) {
+        _selectedNetwork = network;
+        _networkController.text = network.name ?? '';
+        _selectedNetworkId = network.id ?? _selectedNetworkId;
+        _lastResolvedNetworkId = _selectedNetworkId;
+      } else {
+        final bankLabel =
+            result.beneficiary.bankName?.trim().isNotEmpty == true
+                ? result.beneficiary.bankName!.trim()
+                : RecipientHistoryHelper.bankNameFromNetworkId(
+                  result.source.networkId,
+                );
+        if (bankLabel != null && bankLabel.isNotEmpty) {
+          _networkController.text = bankLabel;
+        } else if (result.source.networkId?.isNotEmpty == true) {
+          _networkController.text = result.source.networkId!;
+        }
+      }
+
+      _applyNetworkFilter();
     });
+  }
+
+  bool get _usesFlutterwaveBanks =>
+      _selectedCountry.toUpperCase() == 'NG' && _isBankDeliveryMethod;
+
+  void _hydrateBanksFromCache() {
+    List<Network>? banks;
+
+    if (_usesFlutterwaveBanks) {
+      banks = NgnBanksCache.cached;
+    } else {
+      final sendState = ref.read(sendViewModelProvider);
+      if (sendState.networks.isNotEmpty) {
+        banks = sendState.networks;
+      } else if (widget.selectedData['networks'] != null) {
+        banks = List<Network>.from(widget.selectedData['networks']);
+      }
+    }
+
+    if (banks == null || banks.isEmpty) return;
+
+    setState(() {
+      _allNetworks = banks!;
+      _applyNetworkFilter();
+      _isLoadingNetworks = false;
+    });
+  }
+
+  Future<void> _ensureBanksLoaded() async {
+    if (_filteredNetworks.isNotEmpty) return;
+
+    if (_filteredNetworks.isEmpty) {
+      setState(() => _isLoadingNetworks = true);
+    }
 
     try {
-      final paymentService = locator<PaymentService>();
-      final response = await paymentService.fetchNetworks();
+      final notifier = ref.read(sendViewModelProvider.notifier);
+      List<Network> banks;
 
-      if (response.statusCode == 200 && response.data?.networks != null) {
-        setState(() {
-          _allNetworks = response.data!.networks!;
-          _filterNetworks();
-        });
+      if (_usesFlutterwaveBanks) {
+        banks = await notifier.loadNigerianBanks();
       } else {
-        setState(() {
-          _networkError =
-              response.message.isNotEmpty
-                  ? response.message
-                  : 'Failed to load networks';
-        });
+        final sendState = ref.read(sendViewModelProvider);
+        if (sendState.networks.isEmpty) {
+          await notifier.refreshPaymentNetworks();
+        }
+        banks = ref.read(sendViewModelProvider).networks;
       }
-    } catch (e) {
+
+      if (!mounted) return;
       setState(() {
-        _networkError = 'Error loading networks: $e';
+        _allNetworks = banks;
+        _applyNetworkFilter();
+        _networkError =
+            _filteredNetworks.isEmpty ? 'No banks available right now' : null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _networkError ??= 'Error loading banks: $e';
       });
     } finally {
-      setState(() {
-        _isLoadingNetworks = false;
-      });
+      if (mounted) setState(() => _isLoadingNetworks = false);
     }
   }
 
+  String? _bankCodeForNetwork(Network? network) {
+    if (network == null) return null;
+    final code = network.code;
+    if (code is String && RegExp(r'^\d{3,6}$').hasMatch(code)) return code;
+    if (code is Map) {
+      final ng = code['NG'] ?? code['ng'];
+      if (ng != null && RegExp(r'^\d{3,6}$').hasMatch(ng.toString())) {
+        return ng.toString();
+      }
+    }
+    final id = network.id ?? '';
+    if (RegExp(r'^\d{3,6}$').hasMatch(id)) return id;
+    return null;
+  }
+
   /// Filter networks based on selected channel ID
-  void _filterNetworks() {
-    if (_allNetworks.isEmpty || _selectedChannelId.isEmpty) return;
+  void _applyNetworkFilter() {
+    if (_allNetworks.isEmpty) {
+      _filteredNetworks = [];
+      _searchedNetworks = [];
+      return;
+    }
 
-    // print('🔍 Filtering networks for channel ID: $_selectedChannelId');
-    // print('📊 Total networks available: ${_allNetworks.length}');
+    final isNgBank =
+        _selectedCountry.toUpperCase() == 'NG' && _isBankDeliveryMethod;
 
-    // Filter networks by channel ID - networks that support the selected channel
+    if (isNgBank &&
+        (_selectedChannelId.isEmpty ||
+            _selectedChannelId == 'ngn_bank_flutterwave')) {
+      final banks =
+          _allNetworks.where((network) {
+            final ids = network.channelIds ?? [];
+            if (ids.isEmpty || ids.contains('ngn_bank_flutterwave')) {
+              return network.status == 'active' || network.status == null;
+            }
+            return false;
+          }).toList();
+
+      final list = banks.isNotEmpty ? banks : List<Network>.from(_allNetworks);
+      list.sort(
+        (a, b) => (a.name ?? '')
+            .toLowerCase()
+            .compareTo((b.name ?? '').toLowerCase()),
+      );
+      _filteredNetworks = list;
+      _searchedNetworks = _filteredNetworks;
+      return;
+    }
+
+    if (_selectedChannelId.isEmpty) {
+      final targetCountry = _selectedCountry.toUpperCase();
+
+      // If channelId is missing, don't dump *all* cached networks into the list.
+      // Prefer filtering by `network.country` to avoid NG networks bleeding into ZA.
+      final byCountry = _allNetworks.where((network) {
+        final statusOk = network.status == 'active' || network.status == null;
+        if (!statusOk) return false;
+        final nCountry = network.country?.toUpperCase() ?? '';
+        return nCountry.isNotEmpty ? nCountry == targetCountry : false;
+      }).toList();
+
+      _filteredNetworks = byCountry;
+      _searchedNetworks = _filteredNetworks;
+      return;
+    }
+
+    // Filter networks by channel ID - networks that support the selected channel.
+    // Flutterwave NG banks use synthetic channel id `ngn_bank_flutterwave`.
     final channelNetworks =
         _allNetworks.where((network) {
+          final ids = network.channelIds ?? [];
           final hasChannelId =
-              network.channelIds?.contains(_selectedChannelId) == true;
-          if (hasChannelId) {
-            print(
-              '✅ Network "${network.name}" supports channel $_selectedChannelId',
-            );
-          }
-          return network.status == 'active' && hasChannelId;
+              ids.contains(_selectedChannelId) ||
+              // Only allow Flutterwave NGN synthetic channel on NG routes.
+              (isNgBank && ids.contains('ngn_bank_flutterwave'));
+          return (network.status == 'active' || network.status == null) &&
+              hasChannelId;
         }).toList();
 
-    // print('🎯 Filtered networks count: ${channelNetworks.length}');
-
-    // Sort networks alphabetically by name
     channelNetworks.sort((a, b) {
       final nameA = a.name ?? '';
       final nameB = b.name ?? '';
       return nameA.toLowerCase().compareTo(nameB.toLowerCase());
     });
 
-    setState(() {
-      _filteredNetworks = channelNetworks;
-      _searchedNetworks = _filteredNetworks; // Initialize searched networks
-
-      // Don't auto-select - let user make the choice
-      // This prevents the first item from appearing selected in the bottom sheet
-      print(
-        '🎯 Available networks: ${_filteredNetworks.map((n) => n.name).join(", ")}',
-      );
-    });
+    _filteredNetworks = channelNetworks;
+    _searchedNetworks = _filteredNetworks;
   }
 
   /// Filter networks based on search query
@@ -279,9 +508,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
       _hasConfirmedDetails = false;
     });
 
-    // Clear previous resolution when network changes
-    // User will need to click verify button again
-    setState(() {});
+    _tryAutoVerifyAccount();
   }
 
   String _formatPhoneNumber(String phone) {
@@ -320,8 +547,9 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
   }
 
   void _onAccountNumberChanged() {
-    if (_selectedNetwork?.name == 'Manual Input')
+    if (_selectedNetwork?.name == 'Manual Input') {
       return; // No resolution for manual input
+    }
 
     final accountNumber = _accountNumberController.text.trim();
     final deliveryMethod =
@@ -353,30 +581,146 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
         _lastResolvedNetworkId = null;
       });
     }
+
+    _tryAutoVerifyAccount();
   }
 
-  /// Check if verify button should be shown
-  /// Only show for countries that support YellowCard verification (currently Nigeria)
-  bool _shouldShowVerifyButton() {
-    // Don't show verify button for countries without verification support
-    if (!_isVerificationSupported) return false;
-
+  /// Resolve account name automatically when digits reach the required length.
+  void _tryAutoVerifyAccount() {
+    if (!_isVerificationSupported) return;
     if (_selectedNetwork == null || _selectedNetwork?.name == 'Manual Input') {
-      return false;
+      return;
     }
-    if (_isResolving) return false;
-    if (_resolvedAccountName != null) return false; // Already resolved
+    if (_isResolving) return;
 
     final accountNumber = _accountNumberController.text.trim();
     final deliveryMethod =
         widget.selectedData['recipientDeliveryMethod'] ?? 'bank';
 
-    return AccountNumberUtils.isAccountNumberComplete(
+    if (accountNumber == _lastResolvedAccountNumber &&
+        _selectedNetworkId == _lastResolvedNetworkId &&
+        _resolvedAccountName != null) {
+      return;
+    }
+
+    if (!AccountNumberUtils.isAccountNumberComplete(
           accountNumber,
           _selectedCountry,
           deliveryMethod,
-        ) &&
-        RegExp(r'^\d+$').hasMatch(accountNumber);
+        ) ||
+        !RegExp(r'^\d+$').hasMatch(accountNumber)) {
+      return;
+    }
+
+    _resolveAccount(accountNumber);
+  }
+
+  Future<void> _pasteAccountNumber() async {
+    if (_selectedNetwork == null) return;
+
+    HapticHelper.lightImpact();
+    final clipboardData = await Clipboard.getData(Clipboard.kTextPlain);
+    final raw = clipboardData?.text?.trim();
+    if (raw == null || raw.isEmpty) return;
+
+    final deliveryMethod =
+        widget.selectedData['recipientDeliveryMethod'] ?? 'bank';
+    final maxLength = AccountNumberUtils.getMaxLength(
+      _selectedCountry,
+      deliveryMethod,
+    );
+    var sanitized = AccountNumberUtils.sanitizeDigits(raw, _selectedCountry);
+    if (sanitized.length > maxLength) {
+      sanitized = sanitized.substring(0, maxLength);
+    }
+
+    _accountNumberController.value = TextEditingValue(
+      text: sanitized,
+      selection: TextSelection.collapsed(offset: sanitized.length),
+    );
+    _onAccountNumberChanged();
+    if (mounted) setState(() {});
+  }
+
+  Widget? _buildAccountNumberSuffixIcon() {
+    if (_isResolving) {
+      return Container(
+        margin: const EdgeInsets.all(12),
+        child: LoadingAnimationWidget.horizontalRotatingDots(
+          color: AppColors.purple500ForTheme(context),
+          size: 22,
+        ),
+      );
+    }
+
+    if (_resolvedAccountName != null) {
+      return Padding(
+        padding: const EdgeInsets.all(12),
+        child: SvgPicture.asset(
+          'assets/icons/svgs/circle-check.svg',
+          width: 26,
+          height: 26,
+          color: AppColors.success600,
+        ),
+      );
+    }
+
+    if (_resolveError != null && _accountNumberController.text.isNotEmpty) {
+      return GestureDetector(
+        onTap: () {
+          _accountNumberController.clear();
+          setState(() {
+            _resolveError = null;
+            _resolvedAccountName = null;
+          });
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: SvgPicture.asset(
+            'assets/icons/svgs/circle-x.svg',
+            width: 26,
+            height: 26,
+            color: AppColors.error600,
+          ),
+        ),
+      );
+    }
+
+    if (_selectedNetwork != null &&
+        _resolvedAccountName == null &&
+        !_isResolving) {
+      return GestureDetector(
+        onTap: _pasteAccountNumber,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Paste',
+                style: TextStyle(
+                  fontFamily: 'Chirp',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12.5,
+                  letterSpacing: 0,
+                  height: 1.450,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+              const SizedBox(width: 6),
+              SvgPicture.asset(
+                'assets/icons/svgs/paste.svg',
+                color: Theme.of(context).colorScheme.primary,
+                height: 16,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return null;
   }
 
   Future<void> _resolveAccount(String accountNumber) async {
@@ -406,6 +750,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
       final response = await paymentService.resolveBank(
         accountNumber: accountNumber,
         networkId: _selectedNetworkId,
+        bankCode: _bankCodeForNetwork(_selectedNetwork),
       );
 
       // Check if the account number still meets minimum length after the API call
@@ -538,25 +883,13 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                           crossAxisAlignment: CrossAxisAlignment.center,
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
-                            Padding(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: isWide ? 24 : 24,
-                              ),
-                              child: Text(
-                                "Add a recipient to continue your transfer to ${_getCountryName(widget.selectedData['receiveCountry'])} (${widget.selectedData['receiveCurrency'] ?? 'Unknown'}) via ${_getDeliveryMethodDisplayName(widget.selectedData['recipientDeliveryMethod'])}",
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.bodyMedium?.copyWith(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                  fontFamily: 'Chirp',
-                                  letterSpacing: -.25,
-                                  height: 1.5,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
+                            DayfiScreenDescription(
+                              text:
+                                  _saveRecipientOnly
+                                      ? SendCopy.saveRecipient
+                                      : SendCopy.addRecipient,
+                              bottomSpacing: 32,
                             ),
-                            SizedBox(height: 32),
                             // Network Selection Field
                             _buildNetworkSelectionField(),
                             if (_selectedNetwork == null) ...[
@@ -564,15 +897,12 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                               Center(
                                 // padding: EdgeInsets.only(left: 16),
                                 child: Text(
-                                  widget.selectedData['recipientDeliveryMethod'] ==
-                                              'bank' ||
-                                          widget.selectedData['recipientDeliveryMethod'] ==
-                                              'p2p'
+                                  _isBankDeliveryMethod
                                       ? 'Select a bank to enable account resolution'
                                       : 'Select a mobile money provider to enable account resolution',
                                   style: AppTypography.bodySmall.copyWith(
                                     fontFamily: 'Chirp',
-                                    fontSize: 12,
+                                    fontSize: 12.5,
                                     letterSpacing: -.25,
                                     color: Theme.of(
                                       context,
@@ -590,7 +920,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                                     "This network supports all mobile money providers in ${_getCountryName(_selectedCountry)}. Please ensure the account number you enter is registered with a mobile money provider in that country.",
                                     style: AppTypography.bodySmall.copyWith(
                                       fontFamily: 'Chirp',
-                                      fontSize: 12,
+                                      fontSize: 12.5,
                                       letterSpacing: -.25,
                                       color: Theme.of(
                                         context,
@@ -608,7 +938,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                                     "Manual Input allows you to enter bank details directly for transfers to any bank in ${_getCountryName(_selectedCountry)}. Please provide the bank name and account holder name.",
                                     style: AppTypography.bodySmall.copyWith(
                                       fontFamily: 'Chirp',
-                                      fontSize: 12,
+                                      fontSize: 12.5,
                                       letterSpacing: -.25,
                                       color: Theme.of(
                                         context,
@@ -703,10 +1033,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                                       ),
                                       SizedBox(width: 6),
                                       Text(
-                                        widget.selectedData['recipientDeliveryMethod'] ==
-                                                    'bank' ||
-                                                widget.selectedData['recipientDeliveryMethod'] ==
-                                                    'p2p'
+                                        _isBankDeliveryMethod
                                             ? 'No banks available for this delivery method'
                                             : 'No providers available for this delivery method',
                                         style: TextStyle(
@@ -731,18 +1058,12 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                               label:
                                   _selectedNetwork?.name == 'Manual Input'
                                       ? 'Account Number'
-                                      : widget.selectedData['recipientDeliveryMethod'] ==
-                                              'bank' ||
-                                          widget.selectedData['recipientDeliveryMethod'] ==
-                                              'p2p'
+                                      : _isBankDeliveryMethod
                                       ? 'Account Number'
                                       : 'Mobile Money Number',
                               hintText:
                                   _selectedNetwork == null
-                                      ? widget.selectedData['recipientDeliveryMethod'] ==
-                                                  'bank' ||
-                                              widget.selectedData['recipientDeliveryMethod'] ==
-                                                  'p2p'
+                                      ? _isBankDeliveryMethod
                                           ? 'Select a bank first'
                                           : 'Select a mobile money provider first'
                                       : AccountNumberUtils.getAccountNumberHint(
@@ -750,140 +1071,24 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                                         widget.selectedData['recipientDeliveryMethod'] ??
                                             'bank',
                                       ),
-                              keyboardType: TextInputType.number,
+                              keyboardType: TextInputType.phone,
+                              autocorrect: false,
+                              enableSuggestions: false,
+                              formatter: AccountNumberInputFormatter(
+                                countryCode: _selectedCountry,
+                                maxLength: AccountNumberUtils.getMaxLength(
+                                  _selectedCountry,
+                                  widget.selectedData['recipientDeliveryMethod'] ??
+                                      'bank',
+                                ),
+                              ),
                               maxLength: AccountNumberUtils.getMaxLength(
                                 _selectedCountry,
                                 widget.selectedData['recipientDeliveryMethod'] ??
                                     'bank',
                               ),
                               enabled: _selectedNetwork != null,
-                              suffixIcon:
-                                  _isResolving
-                                      ? Container(
-                                        margin: EdgeInsets.all(12),
-                                        child:
-                                            LoadingAnimationWidget.horizontalRotatingDots(
-                                              color:
-                                                  AppColors.purple500ForTheme(
-                                                    context,
-                                                  ),
-                                              size: 22,
-                                            ),
-                                      )
-                                      : _resolvedAccountName != null
-                                      ? Padding(
-                                        padding: EdgeInsets.all(12),
-                                        child: SvgPicture.asset(
-                                          'assets/icons/svgs/circle-check.svg',
-                                          width: 26,
-                                          height: 26,
-                                          color: AppColors.success600,
-                                        ),
-                                      )
-                                      : _resolveError != null &&
-                                          _accountNumberController
-                                              .text
-                                              .isNotEmpty
-                                      ? GestureDetector(
-                                        onTap: () {
-                                          _accountNumberController.clear();
-                                          setState(() {
-                                            _resolveError = null;
-                                            _resolvedAccountName = null;
-                                          });
-                                        },
-                                        child: Padding(
-                                          padding: EdgeInsets.all(12),
-                                          child: SvgPicture.asset(
-                                            'assets/icons/svgs/circle-x.svg',
-                                            width: 26,
-                                            height: 26,
-                                            color: AppColors.error600,
-                                          ),
-                                        ),
-                                      )
-                                      : _shouldShowVerifyButton()
-                                      ? GestureDetector(
-                                        onTap: () {
-                                          FocusScope.of(context).unfocus();
-                                          final accountNumber =
-                                              _accountNumberController.text
-                                                  .trim();
-                                          _resolveAccount(accountNumber);
-                                        },
-                                        child: Container(
-                                          margin: EdgeInsets.all(6),
-                                          padding: EdgeInsets.symmetric(
-                                            horizontal: 8,
-                                            vertical: 10,
-                                          ),
-                                          // decoration: BoxDecoration(
-                                          //   color: AppColors.purple500,
-                                          //   borderRadius: BorderRadius.circular(
-                                          //     20,
-                                          //   ),
-                                          // ),
-                                          child: Text(
-                                            'Verify',
-                                            style: TextStyle(
-                                              fontFamily: 'Chirp',
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w600,
-                                              color: AppColors.purple500,
-                                              letterSpacing: -.1,
-                                            ),
-                                          ),
-                                        ),
-                                      )
-                                      : null,
-
-                              // GestureDetector(
-                              //   onTap: () async {
-                              //     HapticHelper.lightImpact();
-                              //     // Paste from clipboard
-                              //     final clipboardData = await Clipboard.getData(
-                              //       Clipboard.kTextPlain,
-                              //     );
-                              //     if (clipboardData?.text != null &&
-                              //         clipboardData!.text!.isNotEmpty) {
-                              //       _accountNumberController.text =
-                              //           clipboardData.text!;
-                              //       _onAccountNumberChanged();
-                              //     }
-                              //   },
-                              //   child: Padding(
-                              //     padding: EdgeInsets.all(16),
-                              //     child: Row(
-                              //       mainAxisAlignment: MainAxisAlignment.end,
-                              //       mainAxisSize: MainAxisSize.min,
-                              //       children: [
-                              //         Text(
-                              //           "paste",
-                              //           style: TextStyle(
-                              //             fontFamily: 'Chirp',
-                              //             fontWeight: FontWeight.w600,
-                              //             fontSize: 12,
-                              //             letterSpacing: 0.00,
-                              //             height: 1.450,
-                              //             color:
-                              //                 Theme.of(
-                              //                   context,
-                              //                 ).colorScheme.primary,
-                              //           ),
-                              //         ),
-                              //         SizedBox(width: 6),
-                              //         SvgPicture.asset(
-                              //           "assets/icons/svgs/paste.svg",
-                              //           color:
-                              //               Theme.of(
-                              //                 context,
-                              //               ).colorScheme.primary,
-                              //           height: 16,
-                              //         ),
-                              //       ],
-                              //     ),
-                              //   ),
-                              // ),
+                              suffixIcon: _buildAccountNumberSuffixIcon(),
                               validator: (value) {
                                 if (_selectedNetwork == null) {
                                   return 'Please select a $_providerTypeName first';
@@ -1022,7 +1227,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                                   'Account verification isn\'t available in ${_getCountryName(_selectedCountry)} yet. Please enter the account holder\'s name and confirm the details are correct.',
                                   style: AppTypography.bodySmall.copyWith(
                                     fontFamily: 'Chirp',
-                                    fontSize: 12,
+                                    fontSize: 12.5,
                                     letterSpacing: -.25,
                                     color: Theme.of(
                                       context,
@@ -1129,7 +1334,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                             //         context,
                             //       ).textTheme.titleMedium?.copyWith(
                             //      fontFamily: 'FunnelDisplay',
-                            //         fontSize: 12,
+                            //         fontSize: 12.5,
                             //         fontWeight: FontWeight.w600,
                             //         // color: AppColors.neutral900,
                             //       ),
@@ -1243,8 +1448,8 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                             SizedBox(height: 32),
 
                             // Continue Button
-                            PrimaryButton(
-                              text: 'Enter Amount',
+                       Padding(padding: EdgeInsets.symmetric(horizontal: 18), child:     PrimaryButton(
+                              text: _saveRecipientOnly ? 'Save Recipient' : 'Enter Amount',
                               onPressed: _validateAndContinue,
                               enabled: _isFormValid(),
                               height: 48.00000,
@@ -1262,24 +1467,29 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                               width: double.infinity,
                               fullWidth: true,
                               borderRadius: 40,
-                            ),
+                            ),),
 
                             SizedBox(height: 20),
 
-                            Center(
-                              child: TextButton(
-                                style: TextButton.styleFrom(
-                                  // padding: EdgeInsets.zero,
-                                  // minimumSize: Size(50, 30),
-                                  splashFactory: NoSplash.splashFactory,
-                                  backgroundColor: Colors.transparent,
-                                  foregroundColor: Colors.transparent,
-                                  tapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
-                                  alignment: Alignment.center,
-                                ),
-                                onPressed: () async {
-                                  // Show recent beneficiaries in a bottom sheet and allow selection
+                            if (!_saveRecipientOnly)
+                              Center(
+                                child: TextButton(
+                                  style: TextButton.styleFrom(
+                                    // padding: EdgeInsets.zero,
+                                    // minimumSize: Size(50, 30),
+                                    splashFactory: NoSplash.splashFactory,
+                                    backgroundColor: Colors.transparent,
+                                    foregroundColor: Colors.transparent,
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                    alignment: Alignment.center,
+                                  ),
+                                  onPressed: () async {
+                                  unawaited(
+                                    ref
+                                        .read(recipientsProvider.notifier)
+                                        .loadBeneficiaries(),
+                                  );
                                   final result = await showAppBottomSheet<
                                     BeneficiaryWithSource
                                   >(
@@ -1298,25 +1508,23 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                                             final recipientsState = sheetRef
                                                 .watch(recipientsProvider);
                                             final allBeneficiaries =
-                                                recipientsState.beneficiaries
-                                                    .where(
-                                                      (b) =>
-                                                          (b
-                                                                  .beneficiary
-                                                                  .country ??
-                                                              '') ==
-                                                          (widget.selectedData['receiveCountry'] ??
-                                                              ''),
-                                                    )
-                                                    .toList();
-
-                                            final networks =
-                                                sheetRef
-                                                    .watch(
-                                                      sendViewModelProvider,
-                                                    )
-                                                    .networks ??
-                                                [];
+                                                RecipientHistoryHelper
+                                                    .filterForSendContext(
+                                                      recipientsState
+                                                          .beneficiaries,
+                                                      deliveryMethod: widget
+                                                              .selectedData[
+                                                          'recipientDeliveryMethod']
+                                                          ?.toString(),
+                                                      receiveCountry: widget
+                                                              .selectedData[
+                                                          'receiveCountry']
+                                                          ?.toString(),
+                                                      receiveCurrency: widget
+                                                              .selectedData[
+                                                          'receiveCurrency']
+                                                          ?.toString(),
+                                                    );
 
                                             return StatefulBuilder(
                                               builder: (
@@ -1626,80 +1834,10 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                                                                               },
                                                                               child: Row(
                                                                                 children: [
-                                                                                  // Avatar
-                                                                                  Stack(
-                                                                                    alignment:
-                                                                                        Alignment.bottomRight,
-                                                                                    children: [
-                                                                                      Stack(
-                                                                                        alignment:
-                                                                                            Alignment.center,
-                                                                                        children: [
-                                                                                          SvgPicture.asset(
-                                                                                            'assets/icons/svgs/account.svg',
-                                                                                            width:
-                                                                                                40,
-                                                                                            height:
-                                                                                                40,
-                                                                                            color: AppColors.purple500ForTheme(
-                                                                                              context,
-                                                                                            ),
-                                                                                          ),
-                                                                                          Text(
-                                                                                            (b.beneficiary.name.isNotEmpty
-                                                                                                    ? b.beneficiary.name[0]
-                                                                                                    : '?')
-                                                                                                .toUpperCase(),
-                                                                                            style: TextStyle(
-                                                                                              color:
-                                                                                                  AppColors.neutral0,
-                                                                                              fontFamily:
-                                                                                                  'Chirp',
-                                                                                              fontSize:
-                                                                                                  16,
-                                                                                              fontWeight:
-                                                                                                  FontWeight.w500,
-                                                                                            ),
-                                                                                          ),
-                                                                                        ],
-                                                                                      ),
-
-                                                                                      Align(
-                                                                                        alignment:
-                                                                                            Alignment.bottomRight,
-                                                                                        child: Container(
-                                                                                          width:
-                                                                                              15,
-                                                                                          height:
-                                                                                              15,
-                                                                                          decoration: BoxDecoration(
-                                                                                            color:
-                                                                                                AppColors.neutral0,
-                                                                                            shape:
-                                                                                                BoxShape.circle,
-                                                                                            border: Border.all(
-                                                                                              color:
-                                                                                                  AppColors.neutral200,
-                                                                                              width:
-                                                                                                  1,
-                                                                                            ),
-                                                                                          ),
-                                                                                          child: ClipOval(
-                                                                                            child: SvgPicture.asset(
-                                                                                              _getFlagPath(
-                                                                                                b.beneficiary.country,
-                                                                                              ),
-                                                                                              fit:
-                                                                                                  BoxFit.cover,
-                                                                                              width:
-                                                                                                  20,
-                                                                                              height:
-                                                                                                  20,
-                                                                                            ),
-                                                                                          ),
-                                                                                        ),
-                                                                                      ),
-                                                                                    ],
+                                                                                  RecipientAvatarBadge(
+                                                                                    entry: b,
+                                                                                    flagPathForCountry:
+                                                                                        _getFlagPath,
                                                                                   ),
                                                                                   SizedBox(
                                                                                     width:
@@ -1712,7 +1850,10 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                                                                                           CrossAxisAlignment.start,
                                                                                       children: [
                                                                                         Text(
-                                                                                          b.beneficiary.name.toUpperCase(),
+                                                                                          RecipientHistoryHelper.primaryLabel(
+                                                                                            b.beneficiary,
+                                                                                            b.source,
+                                                                                          ).toUpperCase(),
                                                                                           style: AppTypography.bodyLarge.copyWith(
                                                                                             fontFamily:
                                                                                                 'Chirp',
@@ -1728,27 +1869,34 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                                                                                         ),
                                                                                         Text(
                                                                                           (() {
-                                                                                            final networkName =
-                                                                                                networks.any(
-                                                                                                      (
-                                                                                                        n,
-                                                                                                      ) =>
-                                                                                                          n.id ==
-                                                                                                          b.source.networkId,
-                                                                                                    )
-                                                                                                    ? networks
-                                                                                                        .firstWhere(
-                                                                                                          (
-                                                                                                            n,
-                                                                                                          ) =>
-                                                                                                              n.id ==
-                                                                                                              b.source.networkId,
-                                                                                                        )
-                                                                                                        .name
-                                                                                                    : _getDeliveryMethodDisplayName(
-                                                                                                      b.beneficiary.accountType,
-                                                                                                    );
-                                                                                            return "$networkName - ${b.source.accountNumber ?? b.beneficiary.accountNumber ?? ''}";
+                                                                                            if (RecipientHistoryHelper.isDayfiRecipient(b)) {
+                                                                                              return RecipientHistoryHelper.secondaryLabel(
+                                                                                                b.beneficiary,
+                                                                                                b.source,
+                                                                                                ledgerCurrency: b.ledgerCurrency,
+                                                                                              );
+                                                                                            }
+                                                                                            final notifier =
+                                                                                                ref.read(
+                                                                                                  sendViewModelProvider.notifier,
+                                                                                                );
+                                                                                            final resolvedNetwork =
+                                                                                                notifier.findNetworkById(
+                                                                                                  b.source.networkId,
+                                                                                                );
+                                                                                            final label =
+                                                                                                RecipientHistoryHelper.recipientChannelLabel(
+                                                                                                  b,
+                                                                                                  networkName:
+                                                                                                      resolvedNetwork?.name,
+                                                                                                );
+                                                                                            final acct =
+                                                                                                b.source.accountNumber ??
+                                                                                                b.beneficiary.accountNumber ??
+                                                                                                '';
+                                                                                            return acct.isNotEmpty
+                                                                                                ? '$label · $acct'
+                                                                                                : label;
                                                                                           })(),
                                                                                           style: AppTypography.bodyMedium.copyWith(
                                                                                             fontFamily:
@@ -1796,49 +1944,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                                   );
 
                                   if (result != null) {
-                                    setState(() {
-                                      // Populate form with selected beneficiary details
-                                      _selectedNetworkId =
-                                          result.source.networkId ?? '';
-                                      _accountNumberController.text =
-                                          result.source.accountNumber ??
-                                          result.beneficiary.accountNumber ??
-                                          '';
-                                      _resolvedAccountName =
-                                          result.beneficiary.name;
-                                      _phoneController.text =
-                                          result.beneficiary.phone ?? '';
-
-                                      // For countries without verification support, also fill the manual fields
-                                      // and auto-confirm since this is an existing beneficiary
-                                      if (result.beneficiary.name != null &&
-                                          result.beneficiary.name!.isNotEmpty) {
-                                        _manualAccountNameController.text =
-                                            result.beneficiary.name!;
-                                        _hasConfirmedDetails = true;
-                                      }
-
-                                      // Try to find matching network in loaded networks
-                                      final match =
-                                          _allNetworks
-                                              .where(
-                                                (n) =>
-                                                    n.id ==
-                                                    result.source.networkId,
-                                              )
-                                              .toList();
-                                      if (match.isNotEmpty) {
-                                        _selectedNetwork = match.first;
-                                        _networkController.text =
-                                            match.first.name ?? '';
-                                        _selectedNetworkId =
-                                            match.first.id ?? '';
-                                      } else {
-                                        // Fallback to using the network name from source if available
-                                        _networkController.text =
-                                            result.source.networkId ?? '';
-                                      }
-                                    });
+                                    _applyBeneficiarySelection(result);
                                   }
                                 },
                                 child: Text(
@@ -1871,11 +1977,6 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
             color: Colors.black.withOpacity(0.5),
             // child: Center(child: CupertinoActivityIndicator()),
           ),
-        if (_isLoadingNetworks)
-          Container(
-            color: Colors.black.withOpacity(0.5),
-            // child: Center(child: CupertinoActivityIndicator()),
-          ),
       ],
     );
   }
@@ -1887,21 +1988,22 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
       label:
           _networkController.text == 'Manual Input'
               ? ""
-              : widget.selectedData['recipientDeliveryMethod'] == 'bank' ||
-                  widget.selectedData['recipientDeliveryMethod'] == 'eft' ||
-                  widget.selectedData['recipientDeliveryMethod'] == 'p2p'
+              : _isBankDeliveryMethod
               ? 'Bank Name'
               : 'Mobile Money Provider',
       hintText: _getNetworkHintText(),
       shouldReadOnly: true,
-      onTap: _filteredNetworks.isNotEmpty ? _showNetworkBottomSheet : null,
+      onTap:
+          _filteredNetworks.isNotEmpty
+              ? _showNetworkBottomSheet
+              : () {
+                _ensureBanksLoaded();
+              },
       suffixIcon: _buildNetworkSuffixIcon(),
       errorText: _networkError,
       validator: (value) {
         if (_selectedNetwork == null) {
-          return widget.selectedData['recipientDeliveryMethod'] == 'bank' ||
-                  widget.selectedData['recipientDeliveryMethod'] == 'eft' ||
-                  widget.selectedData['recipientDeliveryMethod'] == 'p2p'
+          return _isBankDeliveryMethod
               ? 'Please select a bank'
               : 'Please select a mobile money provider';
         }
@@ -2024,7 +2126,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
     if (method == null) return 'Unknown';
     switch (method.toLowerCase()) {
       case 'dayfi_tag':
-        return 'Dayfi Tag';
+        return UsernameCopy.label;
       case 'bank_transfer':
       case 'bank':
         return 'Bank Transfer';
@@ -2064,10 +2166,9 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
   }
 
   /// Check if the delivery method is bank-related
-  bool get _isBankDeliveryMethod {
-    final method = widget.selectedData['recipientDeliveryMethod'];
-    return method == 'bank' || method == 'eft' || method == 'p2p';
-  }
+  bool get _isBankDeliveryMethod => _isBankRecipientDeliveryMethod(
+    widget.selectedData['recipientDeliveryMethod'] as String?,
+  );
 
   /// Get the provider type name based on delivery method
   String get _providerTypeName {
@@ -2123,30 +2224,29 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
       case 'bank':
         return SvgPicture.asset(
           'assets/icons/svgs/building-bank.svg',
-          height: 24,
-          width: 24,
+          height: 36,
+          width: 36,
         );
       case 'phone':
         return SvgPicture.asset(
           'assets/icons/svgs/device-mobile.svg',
-          height: 24,
-          width: 24,
+          height: 36,
+          width: 36,
         );
       default:
         return SvgPicture.asset(
           'assets/icons/svgs/paymentt.svg',
-          height: 24,
-          width: 24,
+          height: 36,
+          width: 36,
         );
     }
   }
 
   /// Get account type from delivery method
   String _getAccountTypeFromDeliveryMethod() {
-    final method = widget.selectedData['recipientDeliveryMethod'];
-    if (method == 'bank' || method == 'eft' || method == 'p2p') return 'bank';
-    if (method == 'mobile_money') return 'phone';
-    return 'bank'; // default
+    return RecipientHistoryHelper.accountTypeFromDeliveryMethod(
+      widget.selectedData['recipientDeliveryMethod'] as String?,
+    );
   }
 
   /// Get display name for account type
@@ -2155,6 +2255,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
       case 'bank':
         return 'Bank Account';
       case 'phone':
+      case 'mobile_money':
         return 'Mobile Money';
       default:
         return accountType.toUpperCase();
@@ -2245,162 +2346,127 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
                           ],
                         ),
                       ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 18),
+                        child: CustomTextField(
+                          isSearch: true,
+                          controller: _networkSearchController,
+                          label: '',
+                          hintText:
+                              'Search ${_isBankDeliveryMethod ? 'banks' : 'mobile money providers'} ',
+                          borderRadius: 40,
+                          prefixIcon: Container(
+                            width: 40,
+                            alignment: Alignment.centerRight,
+                            constraints: BoxConstraints.tightForFinite(),
+                            child: Center(
+                              child: SvgPicture.asset(
+                                'assets/icons/svgs/search-normal.svg',
+                                height: 26,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurface
+                                    .withValues(alpha: 0.6),
+                              ),
+                            ),
+                          ),
+                          onChanged: (value) {
+                            _filterNetworksBySearch(value);
+                            setModalState(() {});
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 12),
                       Expanded(
-                        child: SingleChildScrollView(
-                          child: Column(
-                            children: [
-                              // Search field
-                              Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 18),
-                                child: CustomTextField(
-                                  isSearch: true,
-                                  controller: _networkSearchController,
-                                  label: '',
-                                  hintText:
-                                      'Search ${widget.selectedData['recipientDeliveryMethod'] == 'bank' || widget.selectedData['recipientDeliveryMethod'] == 'eft' || widget.selectedData['recipientDeliveryMethod'] == 'p2p' ? 'banks' : 'mobile money providers'} ',
-                                  borderRadius: 40,
-                                  prefixIcon: Container(
-                                    width: 40,
-                                    alignment: Alignment.centerRight,
-                                    constraints:
-                                        BoxConstraints.tightForFinite(),
-                                    child: Center(
-                                      child: SvgPicture.asset(
+                        child:
+                            _searchedNetworks.isEmpty
+                                ? Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      SvgPicture.asset(
                                         'assets/icons/svgs/search-normal.svg',
-                                        height: 26,
+                                        height: 64,
                                         color: Theme.of(context)
                                             .colorScheme
                                             .onSurface
-                                            .withOpacity(0.6),
+                                            .withValues(alpha: 0.6),
                                       ),
-                                    ),
-                                  ),
-                                  onChanged: (value) {
-                                    _filterNetworksBySearch(value);
-                                    setModalState(() {});
-                                  },
-                                ),
-                              ),
-                              SizedBox(height: 16),
-                              _searchedNetworks.isEmpty
-                                  ? Center(
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        SvgPicture.asset(
-                                          'assets/icons/svgs/search-normal.svg',
-                                          height: 64,
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        'No ${_getAccountTypeFromDeliveryMethod() == 'bank' ? 'banks' : 'mobile money providers'} found',
+                                        style: TextStyle(
+                                          fontFamily: 'FunnelDisplay',
+                                          fontSize: 16,
                                           color: Theme.of(context)
                                               .colorScheme
                                               .onSurface
-                                              .withOpacity(0.6),
+                                              .withValues(alpha: 0.6),
                                         ),
-
-                                        SizedBox(height: 16),
-                                        Text(
-                                          'No ${_getAccountTypeFromDeliveryMethod() == 'bank' ? 'banks' : 'mobile money providers'} found',
-                                          style: TextStyle(
-                                            fontFamily: 'FunnelDisplay',
-                                            fontSize: 16,
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onSurface
-                                                .withOpacity(0.6),
-                                          ),
-                                        ),
-
-                                        SizedBox(height: 8),
-                                        Text(
-                                          'Try searching with different keywords',
-                                          style: AppTypography.bodyMedium
-                                              .copyWith(
-                                                fontFamily: 'Chirp',
-                                                fontSize: 14,
-                                                color: Theme.of(context)
-                                                    .colorScheme
-                                                    .onSurface
-                                                    .withOpacity(0.4),
-                                              ),
-                                        ),
-                                      ],
-                                    ),
-                                  )
-                                  : ListView.builder(
-                                    shrinkWrap: true,
-                                    physics: NeverScrollableScrollPhysics(),
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 18,
-                                    ),
-                                    itemCount: _searchedNetworks.length,
-                                    itemBuilder: (context, index) {
-                                      final network = _searchedNetworks[index];
-                                      final isSelected =
-                                          _selectedNetwork?.id == network.id;
-
-                                      return ListTile(
-                                        contentPadding: EdgeInsets.symmetric(
-                                          vertical: 4,
-                                        ),
-                                        leading: Container(
-                                          padding: EdgeInsets.all(6),
-                                          decoration: BoxDecoration(
-                                            color: AppColors.neutral0,
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: _getNetworkIcon(network),
-                                        ),
-                                        title: Text(
-                                          network.name?.replaceAll("_", " ") ??
-                                              'Unknown Network',
-                                          style: AppTypography.bodyLarge
-                                              .copyWith(
-                                                fontFamily: 'Chirp',
-                                                fontSize: 16,
-                                                letterSpacing: -.4,
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                        ),
-                                        subtitle:
-                                            network.accountNumberType != null
-                                                ? Text(
-                                                  _getAccountTypeDisplayName(
-                                                    network.accountNumberType!,
-                                                  ),
-                                                  style: AppTypography
-                                                      .bodyMedium
-                                                      .copyWith(
-                                                        fontFamily: 'Chirp',
-                                                        fontSize: 14,
-                                                        letterSpacing: -.4,
-                                                        color: Theme.of(context)
-                                                            .colorScheme
-                                                            .onSurface
-                                                            .withOpacity(0.6),
-                                                      ),
-                                                )
-                                                : null,
-                                        trailing:
-                                            isSelected
-                                                ? SvgPicture.asset(
-                                                  'assets/icons/svgs/circle-check.svg',
-                                                  color:
-                                                      AppColors.purple500ForTheme(
-                                                        context,
-                                                      ),
-                                                )
-                                                : null,
-                                        onTap: () {
-                                          _onNetworkChanged(network);
-                                          Navigator.pop(context);
-                                        },
-                                      );
-                                    },
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Try searching with different keywords',
+                                        style: AppTypography.bodyMedium
+                                            .copyWith(
+                                              fontFamily: 'Chirp',
+                                              fontSize: 14,
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurface
+                                                  .withValues(alpha: 0.4),
+                                            ),
+                                      ),
+                                    ],
                                   ),
-                            ],
-                          ),
-                        ),
+                                )
+                                : ListView.builder(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    18,
+                                    0,
+                                    18,
+                                    24,
+                                  ),
+                                  itemCount: _searchedNetworks.length,
+                                  itemBuilder: (context, index) {
+                                    final network = _searchedNetworks[index];
+                                    final isSelected =
+                                        _selectedNetwork?.id == network.id;
+
+                                    return ListTile(
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            vertical: 4,
+                                          ),
+                                      title: Text(
+                                        network.name?.replaceAll('_', ' ') ??
+                                            'Unknown Network',
+                                        style: AppTypography.bodyLarge
+                                            .copyWith(
+                                              fontFamily: 'Chirp',
+                                              fontSize: 16,
+                                              letterSpacing: -.4,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                      ),
+                                      trailing:
+                                          isSelected
+                                              ? SvgPicture.asset(
+                                                'assets/icons/svgs/circle-check.svg',
+                                                color:
+                                                    AppColors.purple500ForTheme(
+                                                      context,
+                                                    ),
+                                              )
+                                              : null,
+                                      onTap: () {
+                                        _onNetworkChanged(network);
+                                        Navigator.pop(context);
+                                      },
+                                    );
+                                  },
+                                ),
                       ),
                     ],
                   ),
@@ -2424,7 +2490,7 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
     }
   }
 
-  void _validateAndContinue() {
+  Future<void> _validateAndContinue() async {
     // Determine if form is valid based on verification support
     final isManualInput = _selectedNetwork?.name == 'Manual Input';
     final hasVerifiedAccount =
@@ -2465,6 +2531,21 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
         accountName = _manualAccountNameController.text.trim();
       }
 
+      final bankCode = _bankCodeForNetwork(_selectedNetwork);
+      final sendNotifier = ref.read(sendViewModelProvider.notifier);
+      await sendNotifier.initialize();
+      final deliveryMethod =
+          widget.selectedData['recipientDeliveryMethod']?.toString() ?? 'bank';
+      final receiveCurrency =
+          widget.selectedData['receiveCurrency']?.toString() ?? 'NGN';
+      final resolvedChannelId = sendNotifier.resolveRecipientChannelId(
+        receiveCountry: _selectedCountry,
+        receiveCurrency: receiveCurrency,
+        deliveryMethod: deliveryMethod,
+        networkId: _selectedNetworkId,
+        existingChannelId:
+            widget.selectedData['recipientChannelId']?.toString(),
+      );
       final recipientData = {
         'name': accountName,
         'country': _selectedCountry,
@@ -2475,14 +2556,41 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
         'email': _emailController.text.trim(),
         'accountNumber': _accountNumberController.text.trim(),
         'networkId': _selectedNetworkId,
-        'recipientDeliveryMethod':
-            widget.selectedData['recipientDeliveryMethod'] ?? '',
-        'recipientChannelId': widget.selectedData['recipientChannelId'] ?? '',
-        'bankName': isManualInput ? _bankNameController.text.trim() : null,
+        if (bankCode != null) 'bankCode': bankCode,
+        'bankName': isManualInput
+            ? _bankNameController.text.trim()
+            : (_selectedNetwork?.name ?? ''),
+        'networkName': isManualInput
+            ? _bankNameController.text.trim()
+            : (_selectedNetwork?.name ?? ''),
         'accountName':
-            isManualInput ? _accountNameController.text.trim() : null,
+            isManualInput ? _accountNameController.text.trim() : accountName,
+        'recipientDeliveryMethod': deliveryMethod,
+        if (resolvedChannelId != null) 'recipientChannelId': resolvedChannelId,
         'isVerified': _isVerificationSupported && hasVerifiedAccount,
       };
+
+      if (_saveRecipientOnly) {
+        final accountType = RecipientHistoryHelper.accountTypeFromDeliveryMethod(
+          widget.selectedData['recipientDeliveryMethod'] as String?,
+        );
+        final currency =
+            widget.selectedData['receiveCurrency']?.toString() ?? 'NGN';
+        final entry = RecipientSaveHelper.bankOrMobile(
+          name: accountName,
+          country: _selectedCountry,
+          currency: currency,
+          accountNumber: _accountNumberController.text.trim(),
+          networkId: _selectedNetworkId,
+          accountType: accountType,
+          phone: _getFormattedPhoneNumber(),
+          bankName: _selectedNetwork?.name,
+        );
+        await RecipientSaveHelper.save(ref, entry);
+        if (!mounted) return;
+        RecipientSaveHelper.completeSaveRecipientOnlyNavigation(context);
+        return;
+      }
 
       // Get user profile data for sender information
       final profileState = ref.read(profileViewModelProvider);
@@ -2505,7 +2613,14 @@ class _SendAddRecipientsViewState extends ConsumerState<SendAddRecipientsView> {
       appRouter.pushNamed(
         AppRoute.sendView,
         arguments: {
-          'selectedData': widget.selectedData,
+          'selectedData': {
+            ...widget.selectedData,
+            ...payWithRouteArgs(
+              payWithCurrency: ref.read(selectedDebitCurrencyProvider),
+              receiveCurrency:
+                  widget.selectedData['receiveCurrency']?.toString() ?? 'NGN',
+            ),
+          },
           'recipientData': recipientData,
           'senderData': senderData,
         },

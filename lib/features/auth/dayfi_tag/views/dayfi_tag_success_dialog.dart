@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dayfi/common/constants/username_copy.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/scheduler.dart';
 
@@ -39,7 +40,7 @@ class DayfiTagSuccessDialog extends StatelessWidget {
       if (snackbarContext != null) {
         TopSnackbar.show(
           snackbarContext,
-          message: 'Dayfi Tag copied to clipboard',
+          message: UsernameCopy.copiedToClipboard,
           isError: false,
         );
       }
@@ -124,7 +125,7 @@ class DayfiTagSuccessDialog extends StatelessWidget {
 
                 // Title
                 Text(
-                  "Your Dayfi Tag is all set",
+                  UsernameCopy.allSet,
                   style: AppTypography.titleLarge.copyWith(
                  fontFamily: 'FunnelDisplay',
                      fontSize: 24, // height: 1.6,
@@ -137,7 +138,7 @@ class DayfiTagSuccessDialog extends StatelessWidget {
 
                 // Subtitle
                 Text(
-                  "$dayfiId is your Dayfi Tag. It can be found on your profile page, and copied.",
+                  "$dayfiId ${UsernameCopy.successExplanation}",
                   style: AppTypography.bodyMedium.copyWith(
                     fontFamily: 'Chirp',
                     fontSize: 16,
@@ -154,7 +155,7 @@ class DayfiTagSuccessDialog extends StatelessWidget {
 
                 // Copy button
                 PrimaryButton(
-                  text: 'Dayfi Tag copied',
+                  text: UsernameCopy.copied,
                   onPressed: () => _copyDayfiId(context),
                   backgroundColor: AppColors.purple500,
                   textColor: AppColors.neutral0,
@@ -162,6 +163,7 @@ class DayfiTagSuccessDialog extends StatelessWidget {
                   height: 48.00000,
                   width: double.infinity,
                   fullWidth: true,
+                  applyFeatureInset: false,
                   fontFamily: 'Chirp',
                   fontSize: 18,
                   fontWeight: FontWeight.w500,

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:dayfi/common/constants/username_copy.dart';
 import 'package:get_it/get_it.dart';
 import 'package:dayfi/flavors.dart';
 import 'package:dayfi/models/api_response.dart';
@@ -530,7 +531,7 @@ class AuthService {
           ? fromModel
           : (desc.isNotEmpty
               ? desc
-              : 'Could not save your Dayfi Tag. Please try again.');
+              : UsernameCopy.saveError);
       return APIResponse(error: true, message: msg);
     }
   }

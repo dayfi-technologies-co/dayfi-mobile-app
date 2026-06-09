@@ -1,6 +1,7 @@
 import 'package:dayfi/common/utils/number_formatter.dart';
 import 'package:dayfi/common/utils/string_utils.dart';
 import 'package:dayfi/common/utils/tier_utils.dart';
+import 'package:dayfi/common/utils/kyc_flow_navigation.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
@@ -175,10 +176,11 @@ class _StablecoinTopupAmountViewState
     final user = profileState.user;
     final userTierLevel = TierUtils.getCurrentTierLevel(user);
     if (userTierLevel == 1) {
-      Navigator.pushNamed(
+      KycFlowNavigation.startUpgrade(
         context,
-        AppRoute.uploadDocumentsView,
-        arguments: const {'showBackButton': true},
+        ref: ref,
+        showBackButton: true,
+        showIntro: false,
       );
       return;
     }

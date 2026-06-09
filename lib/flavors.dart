@@ -17,8 +17,9 @@ class F {
   }
 
   /// Dev API:
-  /// - **Railway / HTTPS:** `--dart-define=DAYFI_API_BASE_URL=https://…up.railway.app/api/v1` (or use **pilot** / **prod** flavor — base URL is set in this file).
+  /// - **Remote HTTPS:** `--dart-define=DAYFI_API_BASE_URL=https://api.dayfi.co/api/v1`
   /// - **Local:** `--dart-define=DAYFI_API_HOST=127.0.0.1` and `DAYFI_API_PORT=3000` (phone on LAN: use Mac IP, not x.x.x.1).
+  /// Pilot/prod use VPS `api.dayfi.co` (static egress for Flutterwave / Yellow Card). Override with DAYFI_API_BASE_URL if needed.
   static String get baseUrl {
     switch (appFlavor) {
       case Flavor.dev:
@@ -31,9 +32,9 @@ class F {
         const port = String.fromEnvironment('DAYFI_API_PORT', defaultValue: '3000');
         return 'http://$host:$port/api/v1';
       case Flavor.pilot:
-        return "https://dayfibackend-production.up.railway.app/api/v1";
+        return "https://api.dayfi.co/api/v1";
       case Flavor.prod:
-        return "https://dayfibackend-production.up.railway.app/api/v1";
+        return "https://api.dayfi.co/api/v1";
     }
   }
 
@@ -50,17 +51,17 @@ class F {
   }
 
   static String get joinCommunityLinkUrl {
-    return "https://dayfi.com/community";
+    return "https://dayfi.co/community";
   }
 
   static String get camsBaseUrl {
     switch (appFlavor) {
       case Flavor.dev:
-        return "https://api-dev.dayfi.com/cams";
+        return "https://api-dev.dayfi.co/cams";
       case Flavor.pilot:
-        return "https://api-pilot.dayfi.com/cams";
+        return "https://api-pilot.dayfi.co/cams";
       case Flavor.prod:
-        return "https://api.dayfi.com/cams";
+        return "https://api.dayfi.co/cams";
     }
   }
 
@@ -78,11 +79,11 @@ class F {
   static String get cBankingUrl {
     switch (appFlavor) {
       case Flavor.dev:
-        return "https://api-dev.dayfi.com/community/api/v1/banking";
+        return "https://api-dev.dayfi.co/community/api/v1/banking";
       case Flavor.pilot:
-        return "https://api-pilot.dayfi.com/community/api/v1/banking";
+        return "https://api-pilot.dayfi.co/community/api/v1/banking";
       case Flavor.prod:
-        return "https://api.dayfi.com/community/api/v1/banking";
+        return "https://api.dayfi.co/community/api/v1/banking";
     }
   }
 }

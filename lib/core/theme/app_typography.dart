@@ -53,7 +53,7 @@ class AppTypography {
   static const FontWeight semibold = FontWeight.w600;
 
   /// Bold font weight - 700
-  static const FontWeight bold = FontWeight.w700;
+  static const FontWeight bold = FontWeight.w600;
 
   /// Black font weight - 900 (Youth only)
   static const FontWeight black = FontWeight.w900;
@@ -95,7 +95,7 @@ class AppTypography {
 
   /// Headings H1 - 28px, 36px line height, 0em letter spacing
   static const TextStyle headlineLarge = TextStyle(
-    fontSize: 28,
+    fontSize: 24,
     height: 1.286, // 36px line height
     letterSpacing: 0,
     fontWeight: FontWeight.w600, // Bold for H1
@@ -233,7 +233,7 @@ class AppTypography {
 
   /// Label Regular - 12px, 16px line height, 0.6em letter spacing
   static const TextStyle labelRegular = TextStyle(
-    fontSize: 12,
+    fontSize: 12.5,
     height: 1.333, // 16px line height
     letterSpacing: 0.6,
     fontWeight: FontWeight.w500, // Regular weight (matches spec)
@@ -286,7 +286,7 @@ class AppTypography {
 
   /// App Title - Large, bold title for app branding
   static const TextStyle appTitle = TextStyle(
-    fontSize: 28,
+    fontSize: 24,
     height: 1.286, // 36px line height
     letterSpacing: 0,
     fontWeight: FontWeight.w600, // Bold for app branding
@@ -313,7 +313,7 @@ class AppTypography {
 
   /// Caption - Small text for captions and metadata
   static const TextStyle caption = TextStyle(
-    fontSize: 12,
+    fontSize: 12.5,
     height: 1.333, // 16px line height
     letterSpacing: 0.6,
     fontWeight: FontWeight.w500, // Regular for captions

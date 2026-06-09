@@ -1,10 +1,12 @@
+import 'package:dayfi/common/widgets/dayfi_loading_indicator.dart';
+import 'package:dayfi/features/wallet/constants/global_wallet.dart';
 import 'package:dayfi/features/wallet/providers/wallet_hub_provider.dart';
 import 'package:dayfi/models/wallet_hub.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-/// Pick which of the 4 PRD wallets to debit before Send (Yellow Card / username).
+/// Pick pay-with currency before Send (global wallet display currencies).
 Future<String?> showDebitWalletPicker(BuildContext context) async {
   return showModalBottomSheet<String>(
     context: context,
@@ -20,7 +22,10 @@ class _DebitWalletPickerSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final hubState = ref.watch(walletHubProvider);
-    final rows = hubState.hub?.displayRows ?? [];
+    final rows =
+        (hubState.hub?.displayRows ?? [])
+            .where((r) => kGlobalPayCurrencies.contains(r.currency.toUpperCase()))
+            .toList();
 
     return Container(
       decoration: BoxDecoration(
@@ -42,20 +47,38 @@ class _DebitWalletPickerSheet extends ConsumerWidget {
             ),
             Padding(
               padding: const EdgeInsets.all(18),
-              child: Text(
-                'Pay from which wallet?',
-                style: TextStyle(
-                  fontFamily: 'FunnelDisplay',
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
+              child: Column(
+                children: [
+                  Text(
+                    'Pay with',
+                    style: TextStyle(
+                      fontFamily: 'FunnelDisplay',
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Same global balance — shown in the currency you choose.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Chirp',
+                      fontSize: 13,
+                      height: 1.4,
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.55),
+                    ),
+                  ),
+                ],
               ),
             ),
             if (hubState.isLoading)
               const Padding(
                 padding: EdgeInsets.all(24),
-                child: CircularProgressIndicator(),
+                child: DayfiLoadingCenter(),
               )
             else
               Container(
@@ -138,7 +161,7 @@ class _DebitRow extends StatelessWidget {
                     row.currency,
                     style: TextStyle(
                       fontFamily: 'Chirp',
-                      fontSize: 12,
+                      fontSize: 12.5,
                       color: Theme.of(context)
                           .colorScheme
                           .onSurface

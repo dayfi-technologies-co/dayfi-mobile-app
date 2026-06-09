@@ -9,6 +9,7 @@ import 'package:dayfi/services/data_clearing_service.dart';
 import 'package:dayfi/services/local/secure_storage.dart';
 import 'package:dayfi/services/remote/auth_service.dart';
 import 'package:dayfi/common/constants/storage_keys.dart';
+import 'package:dayfi/services/local/intercom_support_service.dart';
 
 class ProfileState {
   final User? user;
@@ -73,6 +74,31 @@ class ProfileState {
 class ProfileViewModel extends StateNotifier<ProfileState> {
   ProfileViewModel() : super(const ProfileState());
 
+  /// Merge server KYC snapshot into secure-storage user (tier, BVN, NIN).
+  Future<void> applyKycProfileSnapshot(Map<String, dynamic> snapshot) async {
+    try {
+      final userData = await localCache.getUser();
+      if (userData.isEmpty) return;
+
+      void setIfPresent(String key, dynamic value) {
+        if (value == null) return;
+        final text = value.toString().trim();
+        if (text.isEmpty) return;
+        userData[key] = value;
+      }
+
+      setIfPresent('level', snapshot['level']);
+      setIfPresent('bvn', snapshot['bvn']);
+      setIfPresent('idType', snapshot['idType'] ?? snapshot['id_type']);
+      setIfPresent('idNumber', snapshot['idNumber'] ?? snapshot['id_number']);
+
+      localCache.setUser = userData;
+      await loadUserProfile();
+    } catch (e) {
+      AppLogger.error('Failed to apply KYC profile snapshot: $e');
+    }
+  }
+
   Future<void> loadUserProfile({bool isInitialLoad = false}) async {
     // Only show loading state if there's no existing data (initial load)
     final shouldShowLoading = isInitialLoad || state.user == null;
@@ -90,100 +116,13 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
         AppLogger.info(
           'User profile loaded successfully: ${user.firstName} ${user.lastName}',
         );
+        await IntercomSupportService.syncUser(user);
 
-        // Detect presence of BVN and NIN in stored user data.
-        // Check explicit keys in the raw stored map (case-insensitive),
-        // and also fall back to idType/idNumber fields on the parsed model.
-        bool hasBVN = false;
-        bool hasNIN = false;
-
-        // Inspect raw map for keys that include 'bvn' or 'nin'
-        for (final key in userData.keys) {
-          final lowerKey = key.toString().toLowerCase();
-          final value = userData[key];
-          if (value == null) continue;
-          final stringValue = value.toString().trim();
-          if (stringValue.isEmpty) continue;
-
-          if (lowerKey.contains('bvn')) {
-            hasBVN = true;
-          }
-          if (lowerKey.contains('nin')) {
-            hasNIN = true;
-          }
-        }
-
-        // Fallback: check parsed user.idType / idNumber
-        if (!hasBVN && user.idType != null && user.idNumber != null) {
-          if (user.idType!.toLowerCase() == 'bvn' &&
-              user.idNumber!.trim().isNotEmpty) {
-            hasBVN = true;
-          }
-        }
-        if (!hasNIN && user.idType != null && user.idNumber != null) {
-          if (user.idType!.toLowerCase() == 'nin' &&
-              user.idNumber!.trim().isNotEmpty) {
-            hasNIN = true;
-          }
-        }
-
-        // If both BVN and NIN exist, force Tier to level-2
-        User effectiveUser = user;
-        if (hasBVN && hasNIN) {
-          // Only modify if not already level-2 or higher
-          final currentLevel = (user.level ?? '').toLowerCase();
-          if (!currentLevel.contains('level-2') &&
-              !currentLevel.contains('level-3')) {
-            effectiveUser = User(
-              userId: user.userId,
-              email: user.email,
-              password: user.password,
-              userType: user.userType,
-              firstName: user.firstName,
-              lastName: user.lastName,
-              middleName: user.middleName,
-              gender: user.gender,
-              dateOfBirth: user.dateOfBirth,
-              country: user.country,
-              state: user.state,
-              city: user.city,
-              street: user.street,
-              postalCode: user.postalCode,
-              address: user.address,
-              phoneNumber: user.phoneNumber,
-              idType: user.idType,
-              idNumber: user.idNumber,
-              status: user.status,
-              refreshToken: user.refreshToken,
-              isDeleted: user.isDeleted,
-              verificationToken: user.verificationToken,
-              verificationTokenExpiryTime: user.verificationTokenExpiryTime,
-              passwordResetToken: user.passwordResetToken,
-              passwordResetTokenExpiryTime: user.passwordResetTokenExpiryTime,
-              verificationEmail: user.verificationEmail,
-              createdAt: user.createdAt,
-              updatedAt: user.updatedAt,
-              token: user.token,
-              expires: user.expires,
-              level: 'level-2',
-              transactionPin: user.transactionPin,
-              isIdVerified: user.isIdVerified,
-              isBiometricsSetup: user.isBiometricsSetup,
-              dayfiId: user.dayfiId,
-              isWalletBackedUp: user.isWalletBackedUp,
-            );
-
-            // Persist the adjusted level back to local storage so UI and future loads are consistent
-            try {
-              localCache.setUser = effectiveUser.toJson();
-            } catch (e) {
-              AppLogger.error('Failed to persist adjusted user level: $e');
-            }
-          }
-        }
+        // Detect presence of BVN and NIN in stored user data for logging only.
+        // Tier level comes from the server (`user.level`); do not override locally.
 
         state = state.copyWith(
-          user: effectiveUser,
+          user: user,
           isLoading: false,
           errorMessage: null,
         );
@@ -353,8 +292,8 @@ class ProfileViewModel extends StateNotifier<ProfileState> {
       final dataClearingService = DataClearingService();
       await dataClearingService.clearAllUserData(ref);
 
-      // Single root route: check email (no back stack, no duplicate login from 401)
-      appRouter.pushCheckEmailAndClearStack(showBackButton: false);
+      // Single root route: onboarding (sign-in entry; no back stack)
+      appRouter.pushOnboardingAndClearStack();
 
       AppLogger.info('User logged out successfully');
     } catch (e) {

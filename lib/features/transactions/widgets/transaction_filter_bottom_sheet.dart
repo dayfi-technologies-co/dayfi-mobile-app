@@ -379,7 +379,7 @@ class _TransactionFilterBottomSheetState
                 'Clear Date Range',
                 style: AppTypography.bodySmall.copyWith(
                   fontFamily: 'Chirp',
-                  fontSize: 12,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.w500,
                   color: AppColors.purple500ForTheme(context),
                 ),
@@ -418,7 +418,7 @@ class _TransactionFilterBottomSheetState
               label,
               style: AppTypography.bodySmall.copyWith(
                 fontFamily: 'Chirp',
-                fontSize: 12,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w500,
                 color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
               ),

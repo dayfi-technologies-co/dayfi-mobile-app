@@ -10,9 +10,11 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/common/widgets/buttons/secondary_button.dart';
 import 'package:dayfi/routes/route.dart';
+import 'package:dayfi/common/utils/post_auth_navigation.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:dayfi/common/utils/dayfi_platform.dart';
 import 'package:flutter/foundation.dart';
 import 'package:video_player/video_player.dart';
 import '../models/onboarding_data.dart';
@@ -40,6 +42,8 @@ class _OnboardingViewState extends ConsumerState<OnboardingView>
   /// True once the decoder has advanced past black frames; poster fades away.
   bool _videoPainted = false;
 
+  bool _redirectingToWebLanding = false;
+
   void _onVideoUpdate() {
     if (_videoPainted || !mounted) return;
     final c = _videoController;
@@ -55,6 +59,14 @@ class _OnboardingViewState extends ConsumerState<OnboardingView>
   @override
   void initState() {
     super.initState();
+    if (isDayfiWeb) {
+      _redirectingToWebLanding = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        appRouter.pushUnauthenticatedEntryAndClearStack();
+      });
+      return;
+    }
     _pageController = PageController();
 
     // iOS: AVFoundation Pigeon channel is not ready in initState; wait until after
@@ -136,6 +148,10 @@ class _OnboardingViewState extends ConsumerState<OnboardingView>
 
   @override
   void dispose() {
+    if (_redirectingToWebLanding) {
+      super.dispose();
+      return;
+    }
     _videoController?.removeListener(_onVideoUpdate);
     _videoController?.dispose();
     _pageController.dispose();
@@ -168,14 +184,14 @@ class _OnboardingViewState extends ConsumerState<OnboardingView>
 
   /// After Apple/Google sign-in, [Navigator] can still be locked when the OS
   /// sheet dismisses. Defer push until after the frame + a microtask.
-  void _scheduleSocialAuthNavigation(String? action) {
+  void _scheduleSocialAuthNavigation({required bool isReturningUser}) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       Future.microtask(() async {
         if (!mounted) return;
         try {
-          if (action == 'login') {
-            await appRouter.pushNamed(AppRoute.createPasscodeView);
+          if (isReturningUser) {
+            await navigateAfterAuthenticatedSession(profileComplete: true);
           } else {
             await appRouter.pushNamed(AppRoute.successSignupView);
           }
@@ -192,6 +208,10 @@ class _OnboardingViewState extends ConsumerState<OnboardingView>
 
   @override
   Widget build(BuildContext context) {
+    if (_redirectingToWebLanding) {
+      return const Scaffold(body: SizedBox.shrink());
+    }
+
     final onboardingState = ref.watch(onboardingViewModelProvider);
     final onboardingViewModel = ref.read(onboardingViewModelProvider.notifier);
 
@@ -200,7 +220,7 @@ class _OnboardingViewState extends ConsumerState<OnboardingView>
     ref.listen<OnboardingState>(onboardingViewModelProvider, (prev, next) {
       if (next.isSuccess) {
         if (prev?.isSuccess == true) return;
-        _scheduleSocialAuthNavigation(next.action);
+        _scheduleSocialAuthNavigation(isReturningUser: next.isReturningUser);
         return;
       }
       final msg = next.message;
@@ -377,6 +397,7 @@ class _OnboardingViewState extends ConsumerState<OnboardingView>
                                                     borderRadius: 50,
                                                     fontFamily: 'Chirp',
                                                     fullWidth: true,
+                                                    applyFeatureInset: false,
                                                     child: Padding(
                                                       padding:
                                                           const EdgeInsets.symmetric(
@@ -466,6 +487,7 @@ class _OnboardingViewState extends ConsumerState<OnboardingView>
                                               borderRadius: 50,
                                               fontFamily: 'Chirp',
                                               fullWidth: true,
+                                              applyFeatureInset: false,
                                               child: Padding(
                                                 padding:
                                                     const EdgeInsets.symmetric(
@@ -584,6 +606,7 @@ class _OnboardingViewState extends ConsumerState<OnboardingView>
                                               fontFamily: 'Chirp',
                                               borderRadius: 50,
                                               fullWidth: true,
+                                              applyFeatureInset: false,
                                             )
                                             .animate()
                                             .fadeIn(
@@ -805,20 +828,20 @@ class TypewriterText extends StatefulWidget {
 }
 
 class _TypewriterTextState extends State<TypewriterText> {
-  final String _fullText = 'Let\'s\ndo money\nbetter';
+  final String _fullText = 'Your money,\nfinally\nglobal';
 
   @override
   Widget build(BuildContext context) {
     return Align(
       alignment: Alignment.center,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(32.0, 0, 32.0, 102.0),
+        padding: const EdgeInsets.fromLTRB(32.0, 0, 32.0, 124.0),
         child: Text(
           _fullText,
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.displayLarge?.copyWith(
             fontSize: 72,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w700,
             color: Colors.white.withValues(alpha: 0.85),
             height: 1,
             fontFamily: 'FunnelDisplay',
@@ -829,3 +852,4 @@ class _TypewriterTextState extends State<TypewriterText> {
     );
   }
 }
+
