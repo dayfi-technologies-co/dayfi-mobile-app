@@ -11,6 +11,7 @@ class DayfiSelectionGrid<T> extends StatelessWidget {
   final int crossAxisCount;
   final double childAspectRatio;
   final bool showTopDivider;
+  final bool compact;
 
   const DayfiSelectionGrid({
     super.key,
@@ -21,6 +22,7 @@ class DayfiSelectionGrid<T> extends StatelessWidget {
     this.crossAxisCount = 2,
     this.childAspectRatio = 2.5,
     this.showTopDivider = true,
+    this.compact = false,
   });
 
   @override
@@ -28,11 +30,11 @@ class DayfiSelectionGrid<T> extends StatelessWidget {
     final bodyColor = Theme.of(context).textTheme.bodyMedium!.color!;
 
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.all(18),
+      margin: compact ? EdgeInsets.zero : const EdgeInsets.symmetric(vertical: 8),
+      padding: compact ? EdgeInsets.zero : const EdgeInsets.all(18),
       decoration: BoxDecoration(
         border:
-            showTopDivider
+            showTopDivider && !compact
                 ? Border(
                   top: BorderSide(color: bodyColor.withValues(alpha: 0.075)),
                 )
@@ -42,10 +44,10 @@ class DayfiSelectionGrid<T> extends StatelessWidget {
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         crossAxisCount: crossAxisCount,
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        mainAxisSpacing: 8,
-        crossAxisSpacing: 8,
-        childAspectRatio: childAspectRatio,
+        padding: compact ? EdgeInsets.zero : const EdgeInsets.symmetric(vertical: 14),
+        mainAxisSpacing: compact ? 6 : 8,
+        crossAxisSpacing: compact ? 6 : 8,
+        childAspectRatio: compact ? 3.1 : childAspectRatio,
         children:
             options.map((option) {
               final selected = isSelected(option);
@@ -54,41 +56,25 @@ class DayfiSelectionGrid<T> extends StatelessWidget {
                 highlightColor: Colors.transparent,
                 onTap: () => onSelected(option),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: compact ? 8 : 8,
+                    vertical: compact ? 8 : 8,
+                  ),
                   decoration: BoxDecoration(
                     color:
                         selected
                             ? const Color(0xff5A78F4)
-                            : bodyColor.withValues(alpha: 0.03),
+                            : Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: bodyColor.withValues(alpha: 0.1)),
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: Stack(
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const SizedBox(width: 16, height: 16),
-                          if (selected)
-                            SvgPicture.asset(
-                              'assets/icons/svgs/circle-check.svg',
-                              height: 16,
-                              colorFilter: const ColorFilter.mode(
-                                AppColors.neutral0,
-                                BlendMode.srcIn,
-                              ),
-                            )
-                          else
-                            const SizedBox(width: 16, height: 16),
-                        ],
-                      ),
                       Align(
                         alignment: Alignment.bottomLeft,
                         child: Text(
                           label(option),
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontSize: 16,
+                            fontSize: compact ? 15 : 16,
                             fontWeight: FontWeight.bold,
                             fontFamily: 'Chirp',
                             color: selected ? AppColors.neutral0 : bodyColor,
@@ -97,6 +83,20 @@ class DayfiSelectionGrid<T> extends StatelessWidget {
                           ),
                         ),
                       ),
+                      if (selected)
+                        Positioned(
+                          top: 0,
+                          right: 0,
+                          child: SvgPicture.asset(
+                            'assets/icons/svgs/circle-check.svg',
+                            height: 16,
+                            width: 16,
+                            colorFilter: const ColorFilter.mode(
+                              AppColors.neutral0,
+                              BlendMode.srcIn,
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),

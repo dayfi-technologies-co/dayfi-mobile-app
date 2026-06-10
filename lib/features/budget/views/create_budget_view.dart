@@ -1,5 +1,5 @@
 import 'package:dayfi/app_locator.dart';
-import 'package:dayfi/common/utils/string_utils.dart';
+import 'package:dayfi/common/helpers/transaction_pin_flow.dart';
 import 'package:dayfi/common/utils/ui_helpers.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/common/widgets/dayfi_compact_chip_row.dart';
@@ -14,9 +14,10 @@ import 'package:dayfi/features/budget/constants/budget_copy.dart';
 import 'package:dayfi/features/budget/widgets/budget_date_field.dart';
 import 'package:dayfi/features/budget/widgets/budget_time_field.dart';
 import 'package:dayfi/features/dayearn/dayearn_flow.dart';
+import 'package:dayfi/features/dayflow/helpers/dayflow_automation_currency.dart';
 import 'package:dayfi/features/dayflow/constants/dayflow_copy.dart';
 import 'package:dayfi/features/dayflow/services/dayflow_api_service.dart';
-import 'package:dayfi/features/dayflow/services/dayflow_dashboard_cache.dart';
+import 'package:dayfi/features/dayflow/services/dayflow_cache_sync.dart';
 import 'package:dayfi/features/pay/widgets/bill_package_bottom_sheet.dart';
 import 'package:dayfi/features/dayearn/helpers/dayearn_format.dart';
 import 'package:dayfi/features/dayearn/services/dayearn_summary_cache.dart';
@@ -28,14 +29,14 @@ import 'package:dayfi/features/pay/widgets/pay_bill_grid_tile.dart';
 import 'package:dayfi/features/pay/widgets/pay_bill_icon_badge.dart';
 import 'package:dayfi/features/recipients/helpers/recipient_history_helper.dart';
 import 'package:dayfi/features/recipients/helpers/recipients_list_cache.dart';
-import 'package:dayfi/features/recipients/widgets/recipient_avatar_badge.dart';
-import 'package:dayfi/models/beneficiary_with_source.dart';
+import 'package:dayfi/features/recipients/widgets/recipient_picker_bottom_sheet.dart';
 import 'package:dayfi/common/services/feature_activity_service.dart';
 import 'package:dayfi/services/remote/budget_service.dart';
 import 'package:dayfi/services/remote/bills_service.dart';
 import 'package:dayfi/services/remote/wallet_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 enum BudgetCreateKind {
@@ -47,7 +48,7 @@ enum BudgetCreateKind {
   oneTimeBill,
 }
 
-class CreateBudgetView extends StatefulWidget {
+class CreateBudgetView extends ConsumerStatefulWidget {
   final BudgetCreateKind kind;
   final bool forDayFlowAutomation;
 
@@ -58,10 +59,10 @@ class CreateBudgetView extends StatefulWidget {
   });
 
   @override
-  State<CreateBudgetView> createState() => _CreateBudgetViewState();
+  ConsumerState<CreateBudgetView> createState() => _CreateBudgetViewState();
 }
 
-class _CreateBudgetViewState extends State<CreateBudgetView> {
+class _CreateBudgetViewState extends ConsumerState<CreateBudgetView> {
   final _amountCtrl = TextEditingController();
   final _billNumberCtrl = TextEditingController();
 
@@ -70,6 +71,8 @@ class _CreateBudgetViewState extends State<CreateBudgetView> {
   late DateTime _startDate;
   DateTime? _endDate;
   TimeOfDay _startTime = const TimeOfDay(hour: 9, minute: 0);
+  double? _ngnEstimate;
+  bool _loadingNgnEstimate = false;
 
   static const _currency = 'USD';
 
@@ -96,7 +99,12 @@ class _CreateBudgetViewState extends State<CreateBudgetView> {
   String? _potId;
   String? _potName;
 
+  bool get _showEndDate => !_isOneTime && _frequency != 'once';
+
+  bool get _showStartTime => widget.forDayFlowAutomation;
+
   static const _frequencyChips = [
+    DayfiCompactChipOption(value: 'once', label: 'One time'),
     DayfiCompactChipOption(value: 'weekly', label: 'Weekly'),
     DayfiCompactChipOption(value: 'biweekly', label: 'Biweekly'),
     DayfiCompactChipOption(value: 'monthly', label: 'Monthly'),
@@ -124,10 +132,6 @@ class _CreateBudgetViewState extends State<CreateBudgetView> {
   bool get _isDailyEarn => widget.kind == BudgetCreateKind.dailyEarn;
 
   bool get _showFrequency => !_isOneTime && !_isSpendingCap;
-
-  bool get _showEndDate => !_isOneTime;
-
-  bool get _showStartTime => widget.forDayFlowAutomation && !_isOneTime;
 
   bool get _showBillPackagePicker {
     final category = _billCategory;
@@ -168,6 +172,7 @@ class _CreateBudgetViewState extends State<CreateBudgetView> {
     super.initState();
     final now = DateTime.now();
     _startDate = DateTime(now.year, now.month, now.day);
+    _amountCtrl.addListener(_onAmountChanged);
     if (_isBillFlow) {
       _billCategory = billCategoryPresets.first;
       _warmBillersForCategory(_billCategory!.code);
@@ -175,6 +180,42 @@ class _CreateBudgetViewState extends State<CreateBudgetView> {
       _prefetchRecipients();
     } else if (_isDailyEarn) {
       _prefetchPots();
+    }
+    if (widget.forDayFlowAutomation) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _refreshNgnEstimate());
+    }
+  }
+
+  void _onAmountChanged() {
+    if (!widget.forDayFlowAutomation) return;
+    _refreshNgnEstimate();
+  }
+
+  Future<void> _refreshNgnEstimate() async {
+    if (!widget.forDayFlowAutomation) return;
+    final amount = double.tryParse(_amountCtrl.text.replaceAll(',', ''));
+    if (amount == null || amount <= 0) {
+      if (mounted) setState(() => _ngnEstimate = null);
+      return;
+    }
+
+    final needsNgn = dayflowAutomationNeedsNgnSource(
+      paymentType: _isSendFlow ? 'send' : 'bill',
+      recipientHint: _isSendFlow ? _recipientChannelLabel : _billerName,
+      toCurrency: 'NGN',
+    );
+    if (!needsNgn) {
+      if (mounted) setState(() => _ngnEstimate = null);
+      return;
+    }
+
+    setState(() => _loadingNgnEstimate = true);
+    final ngn = await dayflowNgnAmountForUsd(amount);
+    if (mounted) {
+      setState(() {
+        _ngnEstimate = ngn;
+        _loadingNgnEstimate = false;
+      });
     }
   }
 
@@ -230,12 +271,7 @@ class _CreateBudgetViewState extends State<CreateBudgetView> {
   }
 
   Future<void> _pickRecipient() async {
-    final picked = await showAppBottomSheet<BeneficiaryWithSource>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => const _RecipientPickerSheet(),
-    );
+    final picked = await showRecipientPickerBottomSheet(context);
     if (picked != null) {
       setState(() {
         _recipientId = picked.beneficiary.id;
@@ -247,6 +283,7 @@ class _CreateBudgetViewState extends State<CreateBudgetView> {
           picked,
         );
       });
+      _refreshNgnEstimate();
     }
   }
 
@@ -355,7 +392,7 @@ class _CreateBudgetViewState extends State<CreateBudgetView> {
 
   String _frequencyLabel(String value) {
     return _frequencyChips
-        .firstWhere((c) => c.value == value, orElse: () => _frequencyChips[2])
+        .firstWhere((c) => c.value == value, orElse: () => _frequencyChips.last)
         .label;
   }
 
@@ -621,6 +658,7 @@ class _CreateBudgetViewState extends State<CreateBudgetView> {
       }
 
       execution = {
+        'toCurrency': 'NGN',
         'bill': {
           'categoryCode': category.code,
           'billerCode': resolveFlutterwaveBillerCode(biller),
@@ -632,31 +670,62 @@ class _CreateBudgetViewState extends State<CreateBudgetView> {
       };
     }
 
+    double? sourceAmount;
+    if (dayflowAutomationNeedsNgnSource(
+      paymentType: paymentType,
+      recipientHint: recipientHint,
+      toCurrency: execution['toCurrency']?.toString(),
+    )) {
+      sourceAmount = await dayflowNgnAmountForUsd(amount);
+      if (sourceAmount == null || sourceAmount <= 0) {
+        if (mounted) {
+          TopSnackbar.show(
+            context,
+            message: 'Could not load exchange rate. Check your connection and try again.',
+            isError: true,
+          );
+        }
+        return;
+      }
+    }
+
     setState(() => _saving = true);
     try {
-      await dayFlowApiService.createAutomation(
-        title: _autoBudgetName(),
-        paymentType: paymentType,
-        amount: amount,
-        frequency: _frequency,
-        startAt: startAt,
-        endAt:
-            _endDate != null
-                ? DateTime(
-                  _endDate!.year,
-                  _endDate!.month,
-                  _endDate!.day,
-                  23,
-                  59,
-                )
-                : null,
-        recipientId: recipientId,
-        recipientHint: recipientHint,
-        execution: execution,
+      final created = await TransactionPinFlow.requestPinAndRun<bool>(
+        context: context,
+        ref: ref,
+        task: (_) async {
+          await dayFlowApiService.createAutomation(
+            title: _autoBudgetName(),
+            paymentType: paymentType,
+            amount: amount,
+            sourceAmount: sourceAmount,
+            frequency: _effectiveFrequency,
+            startAt: startAt,
+            endAt:
+                _endDate != null
+                    ? DateTime(
+                      _endDate!.year,
+                      _endDate!.month,
+                      _endDate!.day,
+                      23,
+                      59,
+                    )
+                    : null,
+            recipientId: recipientId,
+            recipientHint: recipientHint,
+            execution: execution,
+          );
+          DayFlowCacheSync.invalidateAll();
+          FeatureActivityService.instance.invalidate();
+          return true;
+        },
       );
-      DayflowDashboardCache.instance.invalidate();
-      FeatureActivityService.instance.invalidate();
-      if (mounted) Navigator.pop(context, true);
+
+      if (!mounted || created != true) return;
+
+      TopSnackbar.showSafe(context, message: DayFlowCopy.automationCreated);
+      Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
         TopSnackbar.show(context, message: '$e', isError: true);
@@ -757,6 +826,38 @@ class _CreateBudgetViewState extends State<CreateBudgetView> {
                     RegExp(r'[\d.]'),
                   ),
                 ),
+                if (widget.forDayFlowAutomation &&
+                    (_ngnEstimate != null || _loadingNgnEstimate)) ...[
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4),
+                    child:
+                        _loadingNgnEstimate
+                            ? Text(
+                              'Loading NGN estimate…',
+                              style: TextStyle(
+                                fontFamily: 'Chirp',
+                                fontSize: 13,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurface
+                                    .withValues(alpha: 0.5),
+                              ),
+                            )
+                            : Text(
+                              dayflowNgnEstimateLabel(_ngnEstimate) ?? '',
+                              style: TextStyle(
+                                fontFamily: 'Chirp',
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurface
+                                    .withValues(alpha: 0.65),
+                              ),
+                            ),
+                  ),
+                ],
                 if (_showFrequency) ...[
                   const SizedBox(height: 20),
                   _label(context, 'Frequency'),
@@ -847,8 +948,8 @@ class _CreateBudgetViewState extends State<CreateBudgetView> {
   List<Widget> _dailyEarnFields(BuildContext context) {
     return [
       _PickerTile(
-        label: _potName ?? 'Select pot',
-        hint: 'Daily Earn pot',
+        value: _potName ?? 'Select pot',
+        fieldLabel: 'Daily Earn pot',
         onTap: _pickDayEarnPot,
       ),
     ];
@@ -857,8 +958,8 @@ class _CreateBudgetViewState extends State<CreateBudgetView> {
   List<Widget> _sendFields(BuildContext context, double w) {
     return [
       _PickerTile(
-        label: _recipientLabel ?? 'Select recipient',
-        hint: 'Recipient',
+        value: _recipientLabel ?? 'Select recipient',
+        fieldLabel: 'Recipient',
         detail: _recipientChannelLabel,
         onTap: _pickRecipient,
       ),
@@ -868,10 +969,13 @@ class _CreateBudgetViewState extends State<CreateBudgetView> {
   List<Widget> _billFields(BuildContext context, double w) {
     return [
       _label(context, 'Bill type'),
+      const SizedBox(height: 10),
       DayfiSelectionGrid<BillCategory>(
         options: billCategoryPresets,
         isSelected: (cat) => _billCategory?.code == cat.code,
         label: (cat) => cat.name,
+        showTopDivider: false,
+        compact: true,
         onSelected: (cat) {
           setState(() {
             _billCategory = cat;
@@ -885,17 +989,17 @@ class _CreateBudgetViewState extends State<CreateBudgetView> {
           _warmBillersForCategory(cat.code);
         },
       ),
-      const SizedBox(height: 8),
+      const SizedBox(height: 16),
       _PickerTile(
-        label: _billerName ?? 'Select provider',
-        hint: 'Provider',
+        value: _billerName ?? 'Select provider',
+        fieldLabel: 'Provider',
         onTap: _pickBiller,
       ),
       if (_showBillPackagePicker) ...[
         const SizedBox(height: 14),
         _PickerTile(
-          label: _billPackage?.displayLabel ?? 'Select package',
-          hint: 'Package',
+          value: _billPackage?.displayLabel ?? 'Select package',
+          fieldLabel: 'Package',
           onTap: _loadingBillPackages ? () {} : _pickBillPackage,
         ),
       ],
@@ -924,14 +1028,14 @@ class _CreateBudgetViewState extends State<CreateBudgetView> {
 }
 
 class _PickerTile extends StatelessWidget {
-  final String label;
-  final String hint;
+  final String value;
+  final String fieldLabel;
   final String? detail;
   final VoidCallback onTap;
 
   const _PickerTile({
-    required this.label,
-    required this.hint,
+    required this.value,
+    required this.fieldLabel,
     this.detail,
     required this.onTap,
   });
@@ -939,70 +1043,71 @@ class _PickerTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final onSurface = Theme.of(context).colorScheme.onSurface;
-    final isPlaceholder = label.startsWith('Select');
+    final isPlaceholder = value.startsWith('Select');
 
-    return Material(
-      color: onSurface.withOpacity(0.04),
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: onSurface.withOpacity(0.1)),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      hint,
-                      style: TextStyle(
-                        fontFamily: 'Chirp',
-                        fontSize: 12.5,
-                        color: onSurface.withOpacity(0.45),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      label,
-                      style: TextStyle(
-                        fontFamily: 'Chirp',
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color:
-                            isPlaceholder
-                                ? onSurface.withOpacity(0.35)
-                                : onSurface,
-                      ),
-                    ),
-                    if (detail != null && detail!.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        detail!,
-                        style: TextStyle(
-                          fontFamily: 'Chirp',
-                          fontSize: 13,
-                          color: onSurface.withOpacity(0.55),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: onSurface.withOpacity(0.4),
-              ),
-            ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          fieldLabel,
+          style: TextStyle(
+            fontFamily: 'Chirp',
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: onSurface.withValues(alpha: 0.55),
           ),
         ),
-      ),
+        const SizedBox(height: 8),
+        Material(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(12),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          value,
+                          style: TextStyle(
+                            fontFamily: 'Chirp',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color:
+                                isPlaceholder
+                                    ? onSurface.withValues(alpha: 0.35)
+                                    : onSurface,
+                          ),
+                        ),
+                        if (detail != null && detail!.isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            detail!,
+                            style: TextStyle(
+                              fontFamily: 'Chirp',
+                              fontSize: 13,
+                              color: onSurface.withValues(alpha: 0.55),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: onSurface.withValues(alpha: 0.35),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -1071,220 +1176,6 @@ class _BudgetSheetCloseButton extends StatelessWidget {
                 color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-String _budgetFlagPath(String? countryCode) {
-  switch (countryCode?.toUpperCase()) {
-    case 'NG':
-      return 'assets/icons/svgs/world_flags/nigeria.svg';
-    case 'GH':
-      return 'assets/icons/svgs/world_flags/ghana.svg';
-    case 'KE':
-      return 'assets/icons/svgs/world_flags/kenya.svg';
-    case 'UG':
-      return 'assets/icons/svgs/world_flags/uganda.svg';
-    case 'TZ':
-      return 'assets/icons/svgs/world_flags/tanzania.svg';
-    case 'RW':
-      return 'assets/icons/svgs/world_flags/rwanda.svg';
-    case 'ZA':
-      return 'assets/icons/svgs/world_flags/south africa.svg';
-    case 'US':
-      return 'assets/icons/svgs/world_flags/united states.svg';
-    case 'GB':
-      return 'assets/icons/svgs/world_flags/united kingdom.svg';
-    case 'EU':
-      return 'assets/icons/svgs/world_flags/european-union.svg';
-    default:
-      return 'assets/icons/svgs/world_flags/nigeria.svg';
-  }
-}
-
-class _RecipientPickerSheet extends StatefulWidget {
-  const _RecipientPickerSheet();
-
-  @override
-  State<_RecipientPickerSheet> createState() => _RecipientPickerSheetState();
-}
-
-class _RecipientPickerSheetState extends State<_RecipientPickerSheet> {
-  List<BeneficiaryWithSource> _recipients = [];
-  bool _loading = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _hydrateFromCache();
-    _loadRecipients(silent: _recipients.isNotEmpty);
-  }
-
-  List<BeneficiaryWithSource> _filterRecipients(
-    List<BeneficiaryWithSource> list,
-  ) {
-    return list
-        .where(
-          (e) =>
-              RecipientHistoryHelper.isSendRecipient(e) &&
-              !RecipientHistoryHelper.isDayflowRecipient(e) &&
-              !RecipientHistoryHelper.isDayEarnRecipient(e),
-        )
-        .toList();
-  }
-
-  void _hydrateFromCache() {
-    final fromCache = RecipientsListCache.read();
-    if (fromCache == null) return;
-    final filtered = _filterRecipients(fromCache);
-    if (filtered.isEmpty) return;
-    _recipients = filtered;
-    _loading = false;
-  }
-
-  Future<void> _loadRecipients({bool silent = false}) async {
-    if (!silent && _recipients.isEmpty && mounted) {
-      setState(() => _loading = true);
-    }
-    try {
-      final results = await Future.wait([
-        locator<WalletService>().getUniqueBeneficiariesWithSource(),
-        walletService.fetchSavedBeneficiaries(),
-      ]);
-      if (!mounted) return;
-      final merged = _filterRecipients(
-        RecipientHistoryHelper.mergeRecipients(results[0], results[1]),
-      );
-      await RecipientsListCache.write(merged);
-      setState(() {
-        _recipients = merged;
-        _loading = false;
-      });
-    } catch (_) {
-      if (mounted) setState(() => _loading = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final onSurface = Theme.of(context).colorScheme.onSurface;
-    final sheetHeight = MediaQuery.of(context).size.height * 0.72;
-
-    return Container(
-      height: sheetHeight,
-      decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Column(
-        children: [
-          const SizedBox(height: 10),
-          Container(
-            width: 36,
-            height: 4,
-            decoration: BoxDecoration(
-              color: onSurface.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(height: 16),
-          const _BudgetSheetHeader(title: 'Select recipient'),
-          const SizedBox(height: 12),
-          Expanded(
-            child:
-                _loading && _recipients.isEmpty
-                    ? const Center(child: DayfiLoadingIndicator())
-                    : _recipients.isEmpty
-                    ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Text(
-                          'Add a recipient first from Send or Recipients',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: 'Chirp',
-                            fontSize: 14,
-                            color: onSurface.withValues(alpha: 0.6),
-                          ),
-                        ),
-                      ),
-                    )
-                    : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(18, 0, 18, 16),
-                      itemCount: _recipients.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 8),
-                      itemBuilder: (_, i) {
-                        final entry = _recipients[i];
-                        final name = StringUtils.toTitleCase(
-                          RecipientHistoryHelper.primaryLabel(
-                            entry.beneficiary,
-                            entry.source,
-                          ),
-                        );
-                        final channel =
-                            RecipientHistoryHelper.recipientChannelLabel(entry);
-                        return Material(
-                          color: Theme.of(context).colorScheme.surface,
-                          borderRadius: BorderRadius.circular(12),
-                          child: InkWell(
-                            onTap: () => Navigator.pop(context, entry),
-                            borderRadius: BorderRadius.circular(12),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 12,
-                              ),
-                              child: Row(
-                                children: [
-                                  RecipientAvatarBadge(
-                                    entry: entry,
-                                    flagPathForCountry: _budgetFlagPath,
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          name,
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            fontFamily: 'Chirp',
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w600,
-                                            color: onSurface,
-                                          ),
-                                        ),
-                                        if (channel.isNotEmpty) ...[
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            channel,
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(
-                                              fontFamily: 'Chirp',
-                                              fontSize: 13,
-                                              color: onSurface.withValues(
-                                                alpha: 0.6,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
           ),
         ],
       ),

@@ -4,8 +4,8 @@ class DayFlowCopy {
 
   static const featureName = 'DayFlow';
   static const poweredByDayX = 'Powered by DayX';
-  static const tagline = 'Budget & automate your spending';
-  static const homeSubtitle = 'Smartly budget & automate payments';
+  static const tagline = 'Automate sends & bill payments';
+  static const homeSubtitle = 'Schedule autopay from your wallet';
 
   static const safeToSpend = 'Safe to spend';
   static const freeAfterBudgetLabel = 'Free after budget';
@@ -105,6 +105,7 @@ class DayFlowCopy {
   static const cancelFlowConfirm =
       'Unused money will return to your wallet. Scheduled payments will stop.';
   static const startOver = 'Start over';
+  static const clearAllUpcoming = 'Clear all upcoming';
   static const startOverConfirm =
       'This stops all automations and clears your DayFlow plan. '
       'You can set up a fresh budget anytime.';
@@ -126,9 +127,10 @@ class DayFlowCopy {
   static const createNewPlan = createThisMonthBudget;
   static const moveToDayEarn = 'Move to DayEarn';
 
-  static const emptyTitle = 'No budget this month yet';
+  static const emptyTitle = 'No automations yet';
   static const emptyMessage =
-      'Tell DayX how much you have and what you need to cover — mom, bills, data, subscriptions, and more.';
+      'Schedule repeat sends or bill payments — DayFlow runs them on autopay.';
+  static const automatePayment = 'Automate payment';
 
   static const budgetChatWelcome =
       'Hey there! 👋 Ready to plan your month? Tell me your income and what '

@@ -4,8 +4,25 @@ abstract final class DayxCopy {
 
   static const featureName = 'DayX';
 
-  static const chatWelcome =
-      'Hey there! 👋 I\'m DayX — your guide inside DayFi. Ask me to send money, pay bills, check balance, open DayEarn, or plan a budget with DayFlow.';
+  /// Long intro bubble — always the second message; starts with I'm DayX.
+  static const chatWelcomeIntroLead =
+      "I'm DayX — your guide inside DayFi. I can help you send money, "
+      'pay bills, check your balance, open DayEarn savings, or build a '
+      'budget with DayFlow.';
+
+  static const trySayingHeading = 'Try saying:';
+
+  static const actionHeading = 'What would you like to do?';
+
+  static const voiceTryPhrases = [
+    'Send ₦5,000 to mom',
+    'Pay airtime',
+    'Help me budget this month',
+    'What is DayFi?',
+  ];
+
+  @Deprecated('Use greetingLine + chatWelcomeIntroLead as two messages')
+  static const chatWelcome = chatWelcomeIntroLead;
 
   static const offTopicFallback =
       'I\'m best at DayFi tasks — sends, bills, balance, DayEarn, and DayFlow budgets. What would you like to do?';

@@ -1,10 +1,16 @@
+import 'package:dayfi/common/constants/product_features.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
+import 'package:dayfi/features/budget/helpers/budget_navigation.dart';
 import 'package:dayfi/features/budget/models/budget_models.dart';
 import 'package:dayfi/features/budget/services/budget_list_cache.dart';
-import 'package:dayfi/features/budget/views/budget_detail_view.dart';
 import 'package:dayfi/features/budget/views/budgets_view.dart';
+import 'package:dayfi/features/budget/widgets/budget_list_tile.dart';
+import 'package:dayfi/features/dayflow/helpers/dayflow_schedule_from_budget.dart';
+import 'package:dayfi/features/dayflow/models/dayflow_models.dart';
+import 'package:dayfi/features/dayflow/services/dayflow_api_service.dart';
+import 'package:dayfi/features/dayflow/services/dayflow_dashboard_cache.dart';
 import 'package:dayfi/features/invest/constants/invest_copy.dart';
 import 'package:dayfi/features/invest/views/investment_position_detail_view.dart';
 import 'package:dayfi/features/invest/widgets/invest_position_list_tile.dart';
@@ -23,6 +29,7 @@ class HomeOngoingSection extends StatefulWidget {
 
 class _HomeOngoingSectionState extends State<HomeOngoingSection> {
   List<Budget> _budgets = [];
+  DayFlowDashboardSnapshot? _dayflowDash;
   InvestmentSummary? _investment;
   bool _loading = true;
 
@@ -32,21 +39,46 @@ class _HomeOngoingSectionState extends State<HomeOngoingSection> {
     _load();
   }
 
+  DayBudgetScheduleInstance? _dayflowInstanceFor(Budget budget) {
+    if (!budget.isManagedByDayFlow) return null;
+    return DayFlowScheduleFromBudget.resolveInstance(
+      budget,
+      _dayflowDash?.scheduleInstances,
+    );
+  }
+
+  List<Budget> _sortedPreview(List<Budget> rows) {
+    final active = rows.where((b) => b.isActive || b.isPaused).toList();
+    active.sort((a, b) {
+      return DayFlowScheduleFromBudget.compareByNextRun(
+        a,
+        b,
+        _dayflowInstanceFor(a),
+        _dayflowInstanceFor(b),
+      );
+    });
+    return active.take(3).toList();
+  }
+
   Future<void> _load() async {
     try {
-      final results = await Future.wait([
-        budgetService.fetchBudgets(),
-        investmentService.fetchSummary(),
-      ]);
+      final allBudgets = await budgetService.fetchBudgets();
+      InvestmentSummary? investment;
+      if (ProductFeatures.investHomeOngoing) {
+        investment = await investmentService.fetchSummary();
+      }
       if (!mounted) return;
-      final allBudgets = results[0] as List<Budget>;
       BudgetListCache.instance.put(allBudgets);
+
+      DayFlowDashboardSnapshot? dash = DayflowDashboardCache.instance.peek();
+      try {
+        dash ??= await dayFlowApiService.fetchDashboard();
+      } catch (_) {}
+
       setState(() {
-        _budgets = allBudgets
-            .where((b) => b.isActive || b.isPaused)
-            .take(3)
-            .toList();
-        _investment = results[1] as InvestmentSummary;
+        _dayflowDash = dash;
+        _budgets = _sortedPreview(allBudgets);
+        _investment = investment;
         _loading = false;
       });
     } catch (_) {
@@ -54,15 +86,27 @@ class _HomeOngoingSectionState extends State<HomeOngoingSection> {
     }
   }
 
+  Future<void> _openBudget(Budget budget) async {
+    await BudgetNavigation.openDetail(
+      context,
+      budget: budget,
+      onUpdated: _load,
+    );
+    if (mounted) await _load();
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) return const SizedBox.shrink();
 
-    final positions = _investment?.positions
-            .where((p) => p.status == 'active' || p.status == 'matured')
-            .take(3)
-            .toList() ??
-        [];
+    final positions =
+        ProductFeatures.investHomeOngoing
+            ? (_investment?.positions
+                    .where((p) => p.status == 'active' || p.status == 'matured')
+                    .take(3)
+                    .toList() ??
+                [])
+            : <InvestmentPosition>[];
 
     if (positions.isEmpty && _budgets.isEmpty) {
       return const SizedBox.shrink();
@@ -105,8 +149,11 @@ class _HomeOngoingSectionState extends State<HomeOngoingSection> {
               ),
             ),
             const SizedBox(height: 8),
-            ..._budgets.map(
-              (b) => _budgetTile(context, b),
+            BudgetListGroupSection(
+              budgets: _budgets,
+              dayflowInstanceFor: _dayflowInstanceFor,
+              showSpendProgress: false,
+              onBudgetTap: _openBudget,
             ),
           ],
         ],
@@ -145,69 +192,6 @@ class _HomeOngoingSectionState extends State<HomeOngoingSection> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _budgetTile(BuildContext context, Budget b) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: InkWell(
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder:
-                (_) => BudgetDetailView(
-                  budgetId: b.id,
-                  initialBudget: b,
-                ),
-          ),
-        ),
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      b.name,
-                      style: const TextStyle(
-                        fontFamily: 'Chirp',
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
-                      ),
-                    ),
-                    Text(
-                      b.isPaused ? 'Paused' : b.typeLabel,
-                      style: TextStyle(
-                        fontFamily: 'Chirp',
-                        fontSize: 13,
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withOpacity(0.5),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Text(
-                '${b.progressPercent}%',
-                style: const TextStyle(
-                  fontFamily: 'Chirp',
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

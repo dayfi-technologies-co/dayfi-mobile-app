@@ -1,5 +1,6 @@
 import 'package:dayfi/common/constants/username_copy.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
+import 'package:dayfi/common/constants/product_features.dart';
 import 'package:dayfi/features/wallet/constants/global_wallet.dart';
 import 'package:dayfi/features/wallet/views/wallet_receive_view.dart';
 import 'package:dayfi/features/wallet/widgets/add_money_option_list.dart';
@@ -39,21 +40,8 @@ const List<AddMoneyOption> kAddMoneyMethodOptions = [
     title: 'Via $kAddMoneyCryptoLabel',
     subtitle: 'Deposit USD or EUR on-chain',
     iconAsset: 'assets/icons/svgs/coin.svg',
+    enabled: ProductFeatures.cryptoAddMoney,
   ),
-  // AddMoneyOption(
-  //   id: AddMoneyMethod.nfc,
-  //   title: 'Via NFC',
-  //   subtitle: 'Add money via NFC',
-  //   iconAsset: 'assets/icons/svgs/device-mobile.svg',
-  //   enabled: false,
-  // ),
-  // AddMoneyOption(
-  //   id: AddMoneyMethod.card,
-  //   title: 'Via Card',
-  //   subtitle: 'Fund with debit card',
-  //   iconAsset: 'assets/icons/svgs/credit-card.svg',
-  //   enabled: false,
-  // ),
 ];
 
 void showAddMoneyComingSoon(BuildContext context, String label) {

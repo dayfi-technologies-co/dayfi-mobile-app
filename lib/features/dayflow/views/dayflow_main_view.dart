@@ -37,6 +37,7 @@ class DayFlowMainView extends StatefulWidget {
 class _DayFlowMainViewState extends State<DayFlowMainView> {
   DayFlowDashboardSnapshot? _dashboard;
   bool _loading = true;
+  String? _loadError;
   final _searchController = TextEditingController();
   String _searchQuery = '';
 
@@ -130,7 +131,12 @@ class _DayFlowMainViewState extends State<DayFlowMainView> {
   }
 
   Future<void> _load({bool showLoader = true}) async {
-    if (showLoader) setState(() => _loading = true);
+    if (showLoader) {
+      setState(() {
+        _loading = true;
+        _loadError = null;
+      });
+    }
 
     await DayFlowUserStorage.ensureUserScope();
     final localPlan = await DayFlowLocalStore.instance.loadCachedPlan();
@@ -139,24 +145,35 @@ class _DayFlowMainViewState extends State<DayFlowMainView> {
       hub = await walletService.fetchWalletHub();
     } catch (_) {}
 
-    final dash = await dayFlowApiService.fetchDashboard(
-      localPlan: localPlan,
-      localHub: hub,
-    );
+    try {
+      final dash = await dayFlowApiService.fetchDashboard(
+        localPlan: localPlan,
+        localHub: hub,
+      );
 
-    if (mounted) {
-      setState(() {
-        _dashboard =
-            dash ??
-            (localPlan != null && hub != null
-                ? DayFlowAnalytics.buildLocalDashboard(
-                  plan: localPlan,
-                  hub: hub,
-                  flows: const [],
-                )
-                : null);
-        if (showLoader) _loading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _dashboard =
+              dash ??
+              (localPlan != null && hub != null
+                  ? DayFlowAnalytics.buildLocalDashboard(
+                    plan: localPlan,
+                    hub: hub,
+                    flows: const [],
+                  )
+                  : null);
+          _loadError = null;
+          if (showLoader) _loading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _loadError =
+              'Could not load automations. Check your connection and try again.';
+          if (showLoader) _loading = false;
+        });
+      }
     }
   }
 
@@ -165,14 +182,9 @@ class _DayFlowMainViewState extends State<DayFlowMainView> {
     List<DayFlowEnvelope> flows,
     DayFlowPlan? plan,
   ) {
-    // Prefer local expansion from live flows — keeps weekly/upcoming logic in sync with the app.
-    if (flows.isNotEmpty) {
-      return collectLocalScheduleInstances(flows: flows, plan: plan);
-    }
-    final fromApi = dash?.scheduleInstances;
-    if (fromApi != null &&
-        (fromApi.upcoming.isNotEmpty || fromApi.past.isNotEmpty)) {
-      return fromApi;
+    // Prefer server-computed instances so pull-to-refresh stays in sync with api.dayfi.co.
+    if (dash != null) {
+      return dash.scheduleInstances;
     }
     return collectLocalScheduleInstances(flows: flows, plan: plan);
   }
@@ -255,8 +267,8 @@ class _DayFlowMainViewState extends State<DayFlowMainView> {
     }
   }
 
-  Future<void> _startBudgetChat() async {
-    final created = await DayBudgetFlow.openCreateChat(
+  Future<void> _openCreateAutomation() async {
+    final created = await DayBudgetFlow.openCreateAutomation(
       context,
       onActivated: () {
         _load(showLoader: false);
@@ -446,7 +458,7 @@ class _DayFlowMainViewState extends State<DayFlowMainView> {
               //         PopupMenuItem(
               //           value: 'start_over',
               //           child: Text(
-              //             DayFlowCopy.startOver,
+              //             DayFlowCopy.clearAllUpcoming,
               //             style: TextStyle(
               //               fontFamily: 'Chirp',
               //               color: Theme.of(ctx).colorScheme.error,
@@ -456,6 +468,7 @@ class _DayFlowMainViewState extends State<DayFlowMainView> {
               //         ),
               //       ],
               // ),
+             
               Padding(
                 padding: const EdgeInsets.only(right: 18),
                 child: InkWell(
@@ -509,7 +522,20 @@ class _DayFlowMainViewState extends State<DayFlowMainView> {
                                 maxWidth: isWide ? 500 : double.infinity,
                               ),
                               child:
-                                  !hasSetup
+                                  _loadError != null && _dashboard == null
+                                      ? Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 48,
+                                          horizontal: 18,
+                                        ),
+                                        child: DayfiEmptyState(
+                                          title: 'Could not load',
+                                          message: _loadError!,
+                                          actionText: 'Try again',
+                                          onAction: () => _load(showLoader: true),
+                                        ),
+                                      )
+                                      : !hasSetup
                                       ? Padding(
                                         padding: const EdgeInsets.symmetric(
                                           vertical: 48,
@@ -518,9 +544,8 @@ class _DayFlowMainViewState extends State<DayFlowMainView> {
                                         child: DayfiEmptyState(
                                           title: DayFlowCopy.emptyTitle,
                                           message: DayFlowCopy.emptyMessage,
-                                          actionText:
-                                              DayFlowCopy.createThisMonthBudget,
-                                          onAction: _startBudgetChat,
+                                          actionText: DayFlowCopy.automatePayment,
+                                          onAction: _openCreateAutomation,
                                         ),
                                       )
                                       : Column(

@@ -93,8 +93,13 @@ class BudgetDateField extends StatelessWidget {
                 alignment: Alignment.centerRight,
                 child: SvgPicture.asset(
                   'assets/icons/svgs/calendar.svg',
+                  width: 24,
                   height: 24,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
+                  fit: BoxFit.contain,
+                  colorFilter: ColorFilter.mode(
+                    theme.colorScheme.onSurface.withValues(alpha: 0.65),
+                    BlendMode.srcIn,
+                  ),
                 ),
               ),
             ],

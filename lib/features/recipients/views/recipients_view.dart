@@ -562,7 +562,7 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
                             beneficiary,
                             bottomMargin:
                                 index == visibleBeneficiaries.length - 1
-                                    ? 8
+                                    ? 16
                                     : 24,
                           );
                         },
@@ -585,7 +585,7 @@ class _RecipientsViewState extends ConsumerState<RecipientsView>
       curve: Curves.easeOut,
       transform: Matrix4.diagonal3Values(1.0, 1.0, 1.0),
       child: Container(
-        margin: EdgeInsets.only(bottom: 4, top: 4),
+        margin: EdgeInsets.only(bottom: 8, top: 8),
         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,

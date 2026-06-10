@@ -8,8 +8,10 @@ import 'package:dayfi/common/widgets/dayfi_screen_app_bar.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
+import 'package:dayfi/features/budget/constants/budget_copy.dart';
 import 'package:dayfi/features/budget/helpers/budget_amount_format.dart';
 import 'package:dayfi/features/budget/models/budget_models.dart';
+import 'package:dayfi/features/dayflow/helpers/dayflow_schedule_from_budget.dart';
 import 'package:dayfi/services/remote/budget_service.dart';
 import 'package:flutter/material.dart';
 
@@ -163,6 +165,26 @@ class _BudgetDetailViewState extends State<BudgetDetailView> {
                         ),
                         padding: const EdgeInsets.fromLTRB(18, 8, 18, 24),
                         children: [
+                          if (b.isManagedByDayFlow) ...[
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: AppColors.teal500.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                BudgetCopy.managedInDayFlow,
+                                style: TextStyle(
+                                  fontFamily: 'Chirp',
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.teal500,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                          ],
                           _SummaryCard(budget: b),
                           const SizedBox(height: 12),
                           _DetailsCard(budget: b),
@@ -176,33 +198,58 @@ class _BudgetDetailViewState extends State<BudgetDetailView> {
                       padding: const EdgeInsets.fromLTRB(18, 8, 18, 12),
                       child: Column(
                         children: [
-                          PrimaryButton(
-                            text: b.isPaused ? 'Resume' : 'Pause',
-                            onPressed: _busy ? null : _togglePause,
-                            isLoading: _busy,
-                            fullWidth: true,
-                            borderRadius: 38,
-                            height: 48,
-                            backgroundColor: AppColors.purple500ForTheme(
-                              context,
+                          if (b.isManagedByDayFlow)
+                            PrimaryButton(
+                              text: BudgetCopy.viewScheduledPayment,
+                              onPressed:
+                                  _busy
+                                      ? null
+                                      : () async {
+                                        await DayFlowScheduleFromBudget.open(
+                                          context,
+                                          budget: b,
+                                          onUpdated: () => _load(showFullLoader: false),
+                                        );
+                                      },
+                              fullWidth: true,
+                              borderRadius: 38,
+                              height: 48,
+                              backgroundColor: AppColors.purple500ForTheme(
+                                context,
+                              ),
+                              textColor: AppColors.neutral0,
+                              fontFamily: 'Chirp',
+                              fontSize: 18,
+                            )
+                          else ...[
+                            PrimaryButton(
+                              text: b.isPaused ? 'Resume' : 'Pause',
+                              onPressed: _busy ? null : _togglePause,
+                              isLoading: _busy,
+                              fullWidth: true,
+                              borderRadius: 38,
+                              height: 48,
+                              backgroundColor: AppColors.purple500ForTheme(
+                                context,
+                              ),
+                              textColor: AppColors.neutral0,
+                              fontFamily: 'Chirp',
+                              fontSize: 18,
                             ),
-                            textColor: AppColors.neutral0,
-                            fontFamily: 'Chirp',
-                            fontSize: 18,
-                          ),
-                          const SizedBox(height: 12),
-                          SecondaryButton(
-                            borderColor: Colors.transparent,
-                            text: 'Delete budget',
-                            onPressed: _busy ? null : _cancel,
-                            fullWidth: true,
-                            height: 52,
-                            borderRadius: 12,
-                            fontSize: 14,
-                            textColor:
-                                Theme.of(context).colorScheme.onSurface,
-                            fontFamily: 'Chirp',
-                          ),
+                            const SizedBox(height: 12),
+                            SecondaryButton(
+                              borderColor: Colors.transparent,
+                              text: 'Delete budget',
+                              onPressed: _busy ? null : _cancel,
+                              fullWidth: true,
+                              height: 52,
+                              borderRadius: 12,
+                              fontSize: 14,
+                              textColor:
+                                  Theme.of(context).colorScheme.onSurface,
+                              fontFamily: 'Chirp',
+                            ),
+                          ],
                         ],
                       ),
                     ),

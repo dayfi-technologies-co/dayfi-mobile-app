@@ -64,6 +64,28 @@ bool _scheduleNeedsSetup({
   return tag.isEmpty;
 }
 
+int? _parseMonthDay(String? label, DateTime ref) {
+  if (label == null || label.trim().isEmpty) return null;
+  final m = RegExp(r'\b(\d{1,2})(?:st|nd|rd|th)?\b', caseSensitive: false)
+      .firstMatch(label);
+  if (m != null) {
+    final day = int.tryParse(m.group(1)!);
+    if (day != null && day >= 1 && day <= 31) return day;
+  }
+  return ref.day;
+}
+
+String _resolveFrequency({
+  required DayFlowEnvelopeSchedule schedule,
+  required DayFlowEnvelope flow,
+}) {
+  final explicit = schedule.frequency.toLowerCase();
+  if (explicit.isNotEmpty && explicit != 'monthly') return explicit;
+  final fromLabel = dayflowFrequencyFromLabel(schedule.dueLabel ?? flow.periodLabel);
+  if (fromLabel != 'monthly') return fromLabel;
+  return (flow.budgetType ?? 'monthly').toLowerCase();
+}
+
 DayBudgetInstanceStatus _resolveStatus({
   required DateTime dueAt,
   required DateTime now,
@@ -72,14 +94,54 @@ DayBudgetInstanceStatus _resolveStatus({
   if (!_startOfDay(dueAt).isBefore(_startOfDay(now))) {
     return DayBudgetInstanceStatus.upcoming;
   }
-  if (schedule?.nextRunAt != null) {
-    final lastRun = DateTime.tryParse(schedule!.nextRunAt!);
+
+  if (schedule?.lastRunAt != null) {
+    final lastRun = DateTime.tryParse(schedule!.lastRunAt!);
     if (lastRun != null) {
-      final diff = _startOfDay(lastRun).difference(_startOfDay(dueAt)).inDays.abs();
-      if (diff <= 1) return DayBudgetInstanceStatus.paid;
+      final diff =
+          _startOfDay(lastRun).difference(_startOfDay(dueAt)).inDays.abs();
+      if (diff <= 1 && schedule.lastStatus == 'success') {
+        return DayBudgetInstanceStatus.paid;
+      }
+      if (diff <= 1 && schedule.lastStatus == 'failed') {
+        return DayBudgetInstanceStatus.failed;
+      }
     }
   }
+
+  if (schedule?.lastStatus == 'failed') {
+    return DayBudgetInstanceStatus.failed;
+  }
   return DayBudgetInstanceStatus.overdue;
+}
+
+List<DateTime> _datesInRange(DateTime start, DateTime end, int stepDays) {
+  final out = <DateTime>[];
+  var cur = _startOfDay(start);
+  final last = _startOfDay(end);
+  while (!cur.isAfter(last)) {
+    out.add(cur);
+    cur = cur.add(Duration(days: stepDays));
+  }
+  return out;
+}
+
+List<DateTime> _weekdaysInPeriod(
+  DateTime periodStart,
+  DateTime periodEnd,
+  int weekday,
+) {
+  final out = <DateTime>[];
+  var cur = _startOfDay(periodStart);
+  final last = _startOfDay(periodEnd);
+  while (cur.weekday != weekday && !cur.isAfter(last)) {
+    cur = cur.add(const Duration(days: 1));
+  }
+  while (!cur.isAfter(last)) {
+    out.add(cur);
+    cur = cur.add(const Duration(days: 7));
+  }
+  return out;
 }
 
 List<DayBudgetScheduleInstance> _expandSchedule({
@@ -89,11 +151,7 @@ List<DayBudgetScheduleInstance> _expandSchedule({
   required DateTime periodEnd,
   required DateTime now,
 }) {
-  final freq = schedule.frequency.isNotEmpty
-      ? schedule.frequency
-      : dayflowFrequencyFromLabel(
-          schedule.dueLabel ?? flow.periodLabel ?? flow.budgetType ?? flow.flowType,
-        );
+  final freqRaw = _resolveFrequency(schedule: schedule, flow: flow);
   final dueLabel = schedule.dueLabel ?? flow.periodLabel ?? '';
   final scheduleId = schedule.id.isNotEmpty ? schedule.id : schedule.title;
   final paymentType = schedule.paymentType;
@@ -103,9 +161,10 @@ List<DayBudgetScheduleInstance> _expandSchedule({
     recipientHint: schedule.recipientHint,
   );
 
-  DayBudgetScheduleInstance build(DateTime due) {
+  DayBudgetScheduleInstance build(DateTime due, {String? idSuffix}) {
+    final suffix = idSuffix ?? due.toIso8601String().substring(0, 10);
     return DayBudgetScheduleInstance(
-      id: '${flow.id}:$scheduleId:${due.toIso8601String().substring(0, 10)}',
+      id: '${flow.id}:$scheduleId:$suffix',
       flowId: flow.id,
       scheduleId: scheduleId,
       title: schedule.title,
@@ -122,49 +181,53 @@ List<DayBudgetScheduleInstance> _expandSchedule({
     );
   }
 
+  if (freqRaw == 'once') {
+    final due = schedule.nextRunAt != null
+        ? (DateTime.tryParse(schedule.nextRunAt!) ?? periodStart)
+        : periodStart;
+    return [build(due, idSuffix: 'once')];
+  }
+
+  if (freqRaw == 'daily') {
+    return _datesInRange(periodStart, periodEnd, 1).map(build).toList();
+  }
+
   final weekday = _parseWeekday(dueLabel);
-  if (freq == 'weekly' || weekday != null) {
+  if (freqRaw == 'weekly' || weekday != null) {
     final target = weekday ?? _anchorWeekday(schedule, now);
     var anchor = _startOfDay(periodStart);
     final today = _startOfDay(now);
     if (schedule.nextRunAt != null) {
       final next = DateTime.tryParse(schedule.nextRunAt!);
-      if (next != null) {
-        anchor = _startOfDay(next);
-      }
+      if (next != null) anchor = _startOfDay(next);
     }
     if (anchor.isBefore(today)) anchor = today;
+    return _weekdaysInPeriod(anchor, periodEnd, target).map(build).toList();
+  }
 
+  if (freqRaw == 'biweekly') {
+    var anchor = schedule.nextRunAt != null
+        ? _startOfDay(DateTime.tryParse(schedule.nextRunAt!) ?? periodStart)
+        : _startOfDay(periodStart);
+    while (anchor.isBefore(_startOfDay(periodStart))) {
+      anchor = anchor.add(const Duration(days: 14));
+    }
+    final out = <DayBudgetScheduleInstance>[];
     var cur = anchor;
-    while (cur.weekday != target && !cur.isAfter(periodEnd)) {
-      cur = cur.add(const Duration(days: 1));
-    }
-    final out = <DayBudgetScheduleInstance>[];
     while (!cur.isAfter(periodEnd)) {
       out.add(build(cur));
-      cur = cur.add(const Duration(days: 7));
+      cur = cur.add(const Duration(days: 14));
     }
     return out;
   }
 
-  if (freq == 'daily') {
-    final out = <DayBudgetScheduleInstance>[];
-    var cur = _startOfDay(periodStart);
-    while (!cur.isAfter(periodEnd)) {
-      out.add(build(cur));
-      cur = cur.add(const Duration(days: 1));
-    }
-    return out;
-  }
-
-  if (freq == 'once') {
-    final due = schedule.nextRunAt != null
-        ? (DateTime.tryParse(schedule.nextRunAt!) ?? periodStart)
-        : periodStart;
-    return [build(due)];
-  }
-
-  final due = DateTime(periodStart.year, periodStart.month, 1);
+  final dayOfMonth = _parseMonthDay(dueLabel, periodStart) ?? 1;
+  final lastDay = periodEnd.day;
+  final due = DateTime(
+    periodStart.year,
+    periodStart.month,
+    dayOfMonth > lastDay ? lastDay : dayOfMonth,
+  );
   return [build(due)];
 }
 
@@ -260,8 +323,9 @@ DayBudgetScheduleInstances collectLocalScheduleInstances({
   final past = <DayBudgetScheduleInstance>[];
 
   for (final inst in all) {
+    final due = _startOfDay(inst.dueAt);
     if (inst.status == DayBudgetInstanceStatus.upcoming ||
-        !_startOfDay(inst.dueAt).isBefore(today)) {
+        (!due.isBefore(today) && inst.status != DayBudgetInstanceStatus.paid)) {
       upcoming.add(inst);
     } else {
       past.add(inst);

@@ -1,3 +1,4 @@
+import 'package:dayfi/common/constants/product_features.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/common/constants/wallet_flag_assets.dart';
 import 'package:dayfi/common/constants/username_copy.dart';
@@ -29,6 +30,7 @@ import 'package:dayfi/features/dayearn/services/dayearn_summary_cache.dart';
 // import 'package:dayfi/features/dayflow/widgets/dayflow_income_banner.dart';
 // import 'package:dayfi/common/services/feature_activity_service.dart';
 import 'package:dayfi/features/home/widgets/home_promo_banners.dart';
+import 'package:dayfi/features/home/widgets/home_ongoing_section.dart';
 // import 'package:dayfi/features/profile/widgets/profile_upgrade_card.dart';
 import 'package:dayfi/features/profile/views/user_profile_view.dart';
 import 'package:dayfi/features/send/constants/send_country_metadata.dart';
@@ -213,6 +215,8 @@ class _HomeViewState extends ConsumerState<HomeView> {
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ClipOval(
               child: SvgPicture.asset(
@@ -486,12 +490,12 @@ class _HomeViewState extends ConsumerState<HomeView> {
   }
 
   Future<void> _onDayFlowTapped() async {
-    if (!mounted) return;
+    if (!mounted || !ProductFeatures.dayFlowAutopay) return;
     await DayBudgetFlow.open(context);
   }
 
   Future<void> _onDayEarnTapped() async {
-    if (!mounted) return;
+    if (!mounted || !ProductFeatures.dayEarnHomePromo) return;
     final cachedPots = DayEarnSummaryCache.instance.peek()?.pots;
     final hasPots =
         cachedPots != null && cachedPots.isNotEmpty ||
@@ -724,6 +728,11 @@ class _HomeViewState extends ConsumerState<HomeView> {
                               const SizedBox(height: 12),
                               _buildHomePromoSection(),
 
+                              if (ProductFeatures.homeOngoingBudgets) ...[
+                                const SizedBox(height: 12),
+                                const HomeOngoingSection(),
+                              ],
+
                               Padding(
                                 padding: EdgeInsets.symmetric(
                                   horizontal: isWide ? 24 : 18,
@@ -731,7 +740,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
                                 child: _infoCard(),
                               ),
 
-                              const SizedBox(height: 32),
+                              const SizedBox(height: 36),
                               Padding(
                                 padding: EdgeInsets.symmetric(
                                   horizontal: isWide ? 24 : 18,
@@ -793,7 +802,6 @@ class _HomeViewState extends ConsumerState<HomeView> {
           //   ),
           const SizedBox(height: 12),
           HomePromoBannersRow(
-            onTapToPay: () => TapToPayComingSoonSheet.show(context),
             onDayFlow: _onDayFlowTapped,
             onEarn: _onDayEarnTapped,
           ),
@@ -892,6 +900,8 @@ class _HomeViewState extends ConsumerState<HomeView> {
               )
             else
               Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 8),
                   Row(
@@ -900,121 +910,119 @@ class _HomeViewState extends ConsumerState<HomeView> {
                     children: [
                       _buildBalanceCurrencyChip(),
                       const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (_loadingDisplayRate &&
-                                _displayBalanceCurrency != 'USD')
-                              LoadingAnimationWidget.horizontalRotatingDots(
-                                color: Theme.of(context).colorScheme.primary,
-                                size: 24,
-                              )
-                            else if (_displayRate == null &&
-                                _displayBalanceCurrency != 'USD')
-                              Text(
-                                'Rate unavailable',
-                                style: TextStyle(
-                                  fontFamily: 'Chirp',
-                                  fontSize: 14,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurface.withOpacity(0.5),
-                                ),
-                              )
-                            else
-                              RichText(
-                                text: TextSpan(
-                                  children:
-                                      _isBalanceVisible
-                                          ? [
-                                            TextSpan(
-                                              text: displaySymbol,
-                                              style: TextStyle(
-                                                fontSize: 30,
-                                                height: 1,
-                                                fontFamily: 'Chirp',
-                                                fontWeight: FontWeight.w600,
-                                                color:
-                                                    Theme.of(
-                                                      context,
-                                                    ).colorScheme.onSurface,
-                                                letterSpacing: -1,
-                                              ),
-                                            ),
-                                            TextSpan(
-                                              text:
-                                                  _formatNumber(
-                                                    displayBalance,
-                                                  ).split('.')[0],
-                                              style: TextStyle(
-                                                fontSize: 40.0,
-                                                height: 1,
-                                                fontFamily: 'Chirp',
-                                                fontWeight: FontWeight.w600,
-                                                color:
-                                                    Theme.of(
-                                                      context,
-                                                    ).colorScheme.onSurface,
-                                                letterSpacing: -1,
-                                              ),
-                                            ),
-                                            TextSpan(
-                                              text:
-                                                  ".${_formatNumber(displayBalance).split('.').length > 1 ? _formatNumber(displayBalance).split('.')[1] : '00'}",
-                                              style: TextStyle(
-                                                fontSize: 40.0,
-                                                height: 1,
-                                                fontFamily: 'Chirp',
-                                                fontWeight: FontWeight.w600,
-                                                color:
-                                                    Theme.of(
-                                                      context,
-                                                    ).colorScheme.onSurface,
-                                                letterSpacing: -1,
-                                              ),
-                                            ),
-                                          ]
-                                          : [
-                                            TextSpan(
-                                              text: '*****',
-                                              style: TextStyle(
-                                                fontSize: 40.0,
-                                                height: 1,
-                                                fontFamily: 'Chirp',
-                                                fontWeight: FontWeight.w500,
-                                                color:
-                                                    Theme.of(
-                                                      context,
-                                                    ).colorScheme.onSurface,
-                                                letterSpacing: -1.2,
-                                              ),
-                                            ),
-                                          ],
-                                ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (_loadingDisplayRate &&
+                              _displayBalanceCurrency != 'USD')
+                            LoadingAnimationWidget.horizontalRotatingDots(
+                              color: Theme.of(context).colorScheme.primary,
+                              size: 24,
+                            )
+                          else if (_displayRate == null &&
+                              _displayBalanceCurrency != 'USD')
+                            Text(
+                              'Rate unavailable',
+                              style: TextStyle(
+                                fontFamily: 'Chirp',
+                                fontSize: 14,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.5),
                               ),
-                            if (_displayBalanceCurrency != 'USD') ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                _isBalanceVisible
-                                    ? '${_formatNumber(availableBalanceUsd)} USD'
-                                    : '***** USD',
-                                style: AppTypography.titleMedium.copyWith(
-                                  fontFamily: 'Chirp',
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w500,
-                                  letterSpacing: -.2,
-                                  height: 1.2,
-                                  color: Theme.of(
-                                    context,
-                                  ).textTheme.bodyLarge!.color!.withOpacity(.8),
-                                ),
-                                textAlign: TextAlign.start,
-                                overflow: TextOverflow.ellipsis,
+                            )
+                          else
+                            RichText(
+                              text: TextSpan(
+                                children:
+                                    _isBalanceVisible
+                                        ? [
+                                          TextSpan(
+                                            text: displaySymbol,
+                                            style: TextStyle(
+                                              fontSize: 30,
+                                              height: 1,
+                                              fontFamily: 'Chirp',
+                                              fontWeight: FontWeight.w600,
+                                              color:
+                                                  Theme.of(
+                                                    context,
+                                                  ).colorScheme.onSurface,
+                                              letterSpacing: -1,
+                                            ),
+                                          ),
+                                          TextSpan(
+                                            text:
+                                                _formatNumber(
+                                                  displayBalance,
+                                                ).split('.')[0],
+                                            style: TextStyle(
+                                              fontSize: 40.0,
+                                              height: 1,
+                                              fontFamily: 'Chirp',
+                                              fontWeight: FontWeight.w600,
+                                              color:
+                                                  Theme.of(
+                                                    context,
+                                                  ).colorScheme.onSurface,
+                                              letterSpacing: -1,
+                                            ),
+                                          ),
+                                          TextSpan(
+                                            text:
+                                                ".${_formatNumber(displayBalance).split('.').length > 1 ? _formatNumber(displayBalance).split('.')[1] : '00'}",
+                                            style: TextStyle(
+                                              fontSize: 40.0,
+                                              height: 1,
+                                              fontFamily: 'Chirp',
+                                              fontWeight: FontWeight.w600,
+                                              color:
+                                                  Theme.of(
+                                                    context,
+                                                  ).colorScheme.onSurface,
+                                              letterSpacing: -1,
+                                            ),
+                                          ),
+                                        ]
+                                        : [
+                                          TextSpan(
+                                            text: '*****',
+                                            style: TextStyle(
+                                              fontSize: 40.0,
+                                              height: 1,
+                                              fontFamily: 'Chirp',
+                                              fontWeight: FontWeight.w500,
+                                              color:
+                                                  Theme.of(
+                                                    context,
+                                                  ).colorScheme.onSurface,
+                                              letterSpacing: -1.2,
+                                            ),
+                                          ),
+                                        ],
                               ),
-                            ],
+                            ),
+                          if (_displayBalanceCurrency != 'USD') ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              _isBalanceVisible
+                                  ? '${_formatNumber(availableBalanceUsd)} USD'
+                                  : '***** USD',
+                              style: AppTypography.titleMedium.copyWith(
+                                fontFamily: 'Chirp',
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: -.2,
+                                height: 1.2,
+                                color: Theme.of(
+                                  context,
+                                ).textTheme.bodyLarge!.color!.withOpacity(.8),
+                              ),
+                              textAlign: TextAlign.start,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ],
-                        ),
+                        ],
                       ),
                     ],
                   ),
@@ -1087,13 +1095,8 @@ class _HomeViewState extends ConsumerState<HomeView> {
             'Quick Send',
             style: AppTypography.titleMedium.copyWith(
               fontFamily: 'Chirp',
-              fontSize: 15,
-              fontWeight: FontWeight.w500,
-              letterSpacing: -.2,
-              height: 1.2,
-              color: Theme.of(
-                context,
-              ).textTheme.bodyLarge!.color!.withOpacity(.8),
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
             ),
             textAlign: TextAlign.start,
             overflow: TextOverflow.ellipsis,
@@ -1233,7 +1236,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Your global wallet — send worldwide, pay bills, earn with Daily Earn, and budget with DayFlow.',
+              'Your global wallet — send worldwide, pay bills, earn with Daily Earn, and automate payments with DayFlow.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 fontSize: 14,
                 fontFamily: 'Chirp',

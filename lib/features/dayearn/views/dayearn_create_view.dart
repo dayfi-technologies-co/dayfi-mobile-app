@@ -1,23 +1,21 @@
 import 'package:dayfi/app_locator.dart';
-import 'package:dayfi/common/helpers/transaction_completion_flow.dart';
 import 'package:dayfi/common/helpers/transaction_pin_flow.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/common/widgets/dayfi_screen_app_bar.dart';
 import 'package:dayfi/common/widgets/dayfi_screen_description.dart';
 import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
-import 'package:dayfi/features/dayearn/constants/dayearn_copy.dart';
-import 'package:dayfi/common/widgets/transaction_success_view.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
+import 'package:dayfi/features/dayearn/constants/dayearn_copy.dart';
 import 'package:dayfi/features/dayearn/dayearn_flow.dart';
 import 'package:dayfi/features/dayearn/helpers/dayearn_format.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Create DayEarn pot — name, amount, live preview, PIN, success.
+/// Create DayEarn pot — name, amount, live preview, PIN, snackbar confirmation.
 class DayEarnCreateView extends ConsumerStatefulWidget {
   const DayEarnCreateView({super.key});
 
@@ -101,17 +99,14 @@ class _DayEarnCreateViewState extends ConsumerState<DayEarnCreateView> {
 
     if (!mounted || result == null) return;
 
-    await TransactionCompletionFlow.pushSuccess(
+    await DayEarnFlow.onPotCreated(ref);
+    if (!mounted) return;
+
+    TopSnackbar.showSafe(
       context,
-      useRootNavigator: false,
-      screen: TransactionSuccessView(
-        headline: 'Success!',
-        title: 'Your $name Daily Earn pot has been created.',
-        amountText: formatDayEarnAmount(amount, _currency),
-        subtitle: DayEarnCopy.accrualNote,
-        onDone: () => DayEarnFlow.finishCreateFromSuccess(context),
-      ),
+      message: DayEarnCopy.potCreated(name),
     );
+    Navigator.pop(context, true);
   }
 
   @override

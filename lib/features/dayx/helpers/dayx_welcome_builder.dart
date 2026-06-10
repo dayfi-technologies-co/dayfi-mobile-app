@@ -1,16 +1,27 @@
 import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
 import 'package:dayfi/features/transactions/vm/transactions_viewmodel.dart';
 import 'package:dayfi/app_locator.dart';
+import 'package:dayfi/features/dayx/constants/dayx_copy.dart';
 import 'package:dayfi/models/wallet_hub.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Personalized, friendly DayX opener (chat + voice hints).
+/// Personalized, friendly DayX opener — always two bubbles: greeting, then intro.
 abstract final class DayxWelcomeBuilder {
   DayxWelcomeBuilder._();
 
-  static Future<String> buildChatWelcome(WidgetRef ref) async {
+  /// Short opener: `Hey Kolawole! 👋` — never "Hey there!".
+  static String greetingLine(String? rawFirstName) {
+    final firstName = _firstName(rawFirstName);
+    if (firstName.isEmpty) return 'Hey! 👋';
+    return 'Hey $firstName! 👋';
+  }
+
+  /// Placeholder intro while profile/wallet loads.
+  static String introPlaceholder() => DayxCopy.chatWelcomeIntroLead;
+
+  static Future<List<String>> buildChatWelcomeMessages(WidgetRef ref) async {
+    await ref.read(profileViewModelProvider.notifier).loadUserProfile();
     final profile = ref.read(profileViewModelProvider).user;
-    final firstName = _firstName(profile?.firstName);
     WalletHubSnapshot? hub;
     try {
       hub = await walletService.fetchWalletHub();
@@ -25,17 +36,25 @@ abstract final class DayxWelcomeBuilder {
     }
 
     final accountAgeDays = _accountAgeDays(profile?.createdAt);
-    return _compose(
-      firstName: firstName,
-      balanceLabel: hub?.totalAvailableBalance.formatted ?? '\$0.00',
-      transactionCount: txCount,
-      accountAgeDays: accountAgeDays,
-    );
+    return [
+      greetingLine(profile?.firstName),
+      _composeIntroBody(
+        balanceLabel: hub?.totalAvailableBalance.formatted ?? '\$0.00',
+        transactionCount: txCount,
+        accountAgeDays: accountAgeDays,
+      ),
+    ];
+  }
+
+  @Deprecated('Use buildChatWelcomeMessages')
+  static Future<String> buildChatWelcome(WidgetRef ref) async {
+    final parts = await buildChatWelcomeMessages(ref);
+    return '${parts[0]}\n\n${parts[1]}';
   }
 
   static String _firstName(String? raw) {
     final trimmed = raw?.trim() ?? '';
-    if (trimmed.isEmpty) return 'there';
+    if (trimmed.isEmpty) return '';
     return trimmed[0].toUpperCase() + trimmed.substring(1).toLowerCase();
   }
 
@@ -46,20 +65,13 @@ abstract final class DayxWelcomeBuilder {
     return DateTime.now().difference(created.toLocal()).inDays;
   }
 
-  static String _compose({
-    required String firstName,
+  static String _composeIntroBody({
     required String balanceLabel,
     required int transactionCount,
     int? accountAgeDays,
   }) {
     final buffer = StringBuffer()
-      ..writeln('Hey $firstName! 👋')
-      ..writeln('')
-      ..writeln(
-        "I'm DayX — your guide inside DayFi. I can help you send money, "
-        'pay bills, check your balance, open DayEarn savings, or build a '
-        'budget with DayFlow.',
-      )
+      ..writeln(DayxCopy.chatWelcomeIntroLead)
       ..writeln('')
       ..writeln('Your snapshot right now:')
       ..writeln('• Available balance: $balanceLabel');
@@ -80,21 +92,20 @@ abstract final class DayxWelcomeBuilder {
       buffer.writeln('• $transactionCount transactions on your account so far');
     }
 
-    buffer
-      ..writeln('')
-      ..writeln('Try saying:')
-      ..writeln('• "Send ₦5,000 to mom"')
-      ..writeln('• "Pay airtime"')
-      ..writeln('• "Help me budget this month"')
-      ..writeln('• "What is DayFi?"')
-      ..writeln('')
-      ..writeln('What would you like to do?');
-
     return buffer.toString().trim();
   }
 
-  static bool isWelcomeMessage(String text) {
+  static bool isWelcomeGreeting(String text) {
     final t = text.trim();
-    return t.startsWith('Hey ') && t.contains("I'm DayX");
+    if (!t.startsWith('Hey')) return false;
+    return t.contains('👋') && !t.contains("I'm DayX");
+  }
+
+  static bool isWelcomeIntro(String text) {
+    return text.trim().startsWith("I'm DayX");
+  }
+
+  static bool isWelcomeMessage(String text) {
+    return isWelcomeGreeting(text) || isWelcomeIntro(text);
   }
 }

@@ -44,6 +44,8 @@ class BudgetTimeField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return CustomTextField(
       label: label,
       hintText: '9:00 AM',
@@ -51,12 +53,18 @@ class BudgetTimeField extends StatelessWidget {
       width: width,
       shouldReadOnly: true,
       onTap: () => _openPicker(context),
-      suffixIcon: Padding(
-        padding: const EdgeInsets.only(right: 8),
+      suffixIcon: Container(
+        width: 40,
+        alignment: Alignment.centerRight,
         child: SvgPicture.asset(
           'assets/icons/svgs/clock-dollar.svg',
-          height: 20,
-          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.45),
+          width: 24,
+          height: 24,
+          fit: BoxFit.contain,
+          colorFilter: ColorFilter.mode(
+            theme.colorScheme.onSurface.withValues(alpha: 0.65),
+            BlendMode.srcIn,
+          ),
         ),
       ),
     );

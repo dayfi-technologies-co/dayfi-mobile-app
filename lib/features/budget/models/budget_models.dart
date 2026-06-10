@@ -50,6 +50,16 @@ class Budget {
   bool get isActive => status == 'active';
   bool get isPaused => status == 'paused';
 
+  /// Linked autopay created via DayFlow (`metadata.dayflowFlowId` on the server).
+  String? get dayflowFlowId => _metaVal('dayflowFlowId');
+
+  String? get dayflowScheduleId => _metaVal('scheduleId');
+
+  String? get dayflowPaymentType => _metaVal('paymentType');
+
+  bool get isManagedByDayFlow =>
+      dayflowFlowId != null && dayflowFlowId!.isNotEmpty;
+
   factory Budget.fromJson(Map<String, dynamic> json) {
     final cats = <BudgetCategory>[];
     final raw = json['categories'];

@@ -1,5 +1,6 @@
 import 'package:dayfi/features/dayflow/services/dayflow_api_service.dart';
 import 'package:dayfi/features/dayflow/services/dayflow_conversation_store.dart';
+import 'package:dayfi/features/dayflow/services/dayflow_cache_sync.dart';
 import 'package:dayfi/features/dayflow/services/dayflow_dashboard_cache.dart';
 import 'package:dayfi/features/dayflow/services/dayflow_local_store.dart';
 import 'package:dayfi/features/dayflow/services/dayflow_user_storage.dart';
@@ -21,6 +22,6 @@ abstract final class DayFlowResetService {
     await DayFlowLocalStore.instance.clearPlan();
     await DayFlowLocalStore.instance.clearTemplate();
     await DayFlowConversationStore.instance.clear();
-    DayflowDashboardCache.instance.invalidate();
+    DayFlowCacheSync.invalidateAll();
   }
 }

@@ -128,10 +128,10 @@ class _PayWithCurrencySheet extends StatelessWidget {
             const SizedBox(height: 16),
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 18),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(14),
-              ),
+              // decoration: BoxDecoration(
+              //   color: Theme.of(context).colorScheme.surface,
+              //   borderRadius: BorderRadius.circular(14),
+              // ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: List.generate(kGlobalPayCurrencies.length, (i) {
@@ -206,7 +206,7 @@ class _PayWithCurrencySheet extends StatelessWidget {
                           indent: 58,
                           color: Theme.of(
                             context,
-                          ).dividerColor.withValues(alpha: 0.06),
+                          ).dividerColor.withValues(alpha: 0.075),
                         ),
                     ],
                   );

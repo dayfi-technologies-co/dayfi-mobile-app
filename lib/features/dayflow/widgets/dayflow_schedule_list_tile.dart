@@ -2,8 +2,11 @@ import 'package:dayfi/features/dayflow/helpers/dayflow_format.dart';
 import 'package:dayfi/features/dayflow/helpers/dayflow_instance_display.dart';
 import 'package:dayfi/features/dayflow/helpers/dayflow_wallet_balance.dart';
 import 'package:dayfi/features/dayflow/models/dayflow_models.dart';
+import 'package:dayfi/features/dayflow/widgets/dayflow_automation_icon_badge.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+
+const _kDayFlowLeadingSize = 40.0;
+const _kDayFlowInnerIconSize = 26.0;
 
 /// Scheduled payment row styled like [WalletTransactionListTile].
 class DayFlowScheduleListTile extends StatelessWidget {
@@ -57,28 +60,12 @@ class DayFlowScheduleListTile extends StatelessWidget {
             right: 8,
           ),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              SizedBox(
-                width: 40,
-                height: 40,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    SvgPicture.asset(
-                      'assets/icons/svgs/account.svg',
-                      height: 40,
-                      color: instanceTypeColor(
-                        item.paymentType,
-                      ).withValues(alpha: muted ? 0.5 : 1.0),
-                    ),
-                    SvgPicture.asset(
-                      instanceTypeIcon(item.paymentType),
-                      height: 18,
-                      color: Colors.white.withValues(alpha: muted ? 0.7 : 1.0),
-                    ),
-                  ],
-                ),
+              DayFlowAutomationIconBadge(
+                size: _kDayFlowLeadingSize,
+                innerSize: _kDayFlowInnerIconSize,
+                muted: muted,
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -111,31 +98,42 @@ class DayFlowScheduleListTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    amount,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontFamily: 'Karla',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: onSurface.withValues(alpha: alpha),
+              SizedBox(
+                width: 88,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      amount,
+                      textAlign: TextAlign.end,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        fontFamily: 'Karla',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        height: 1.2,
+                        color: onSurface.withValues(alpha: alpha),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    statusLabel,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontFamily: 'Karla',
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: -.6,
-                      height: 1.45,
-                      color: statusColor.withValues(alpha: muted ? 0.65 : 1.0),
+                    const SizedBox(height: 2),
+                    Text(
+                      statusLabel,
+                      textAlign: TextAlign.end,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontFamily: 'Karla',
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: -.6,
+                        height: 1.45,
+                        color: statusColor.withValues(alpha: muted ? 0.65 : 1.0),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),

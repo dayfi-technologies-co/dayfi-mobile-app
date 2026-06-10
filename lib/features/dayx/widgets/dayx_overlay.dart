@@ -12,6 +12,7 @@ import 'package:dayfi/features/dayx/services/dayx_chat_service.dart';
 import 'package:dayfi/features/dayx/services/dayx_quick_routes.dart';
 import 'package:dayfi/features/dayx/constants/dayx_copy.dart';
 import 'package:dayfi/features/dayx/helpers/dayx_welcome_builder.dart';
+import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
 import 'package:dayfi/features/dayx/constants/dayx_product_knowledge.dart';
 import 'package:dayfi/features/dayx/services/dayx_conversation_store.dart';
 import 'package:dayfi/features/dayx/models/dayx_flow.dart';
@@ -19,6 +20,7 @@ import 'package:dayfi/features/dayx/services/dayx_flow_service.dart';
 import 'package:dayfi/features/dayx/services/dayx_flow_executor.dart';
 import 'package:dayfi/features/dayx/services/dayx_flow_pin_retry.dart';
 import 'package:dayfi/features/dayx/widgets/dayx_inline_success.dart';
+import 'package:dayfi/features/dayx/widgets/dayx_suggestion_chips.dart';
 import 'package:dayfi/models/wallet_hub.dart';
 import 'package:dayfi/services/local/intercom_support_service.dart';
 import 'package:flutter/material.dart';
@@ -87,6 +89,7 @@ class _DayxOverlayState extends ConsumerState<DayxOverlay> {
   WalletHubSnapshot? _cachedHub;
   String? _lastSubmittedText;
   DateTime? _lastSubmittedAt;
+  bool _showWelcomeSuggestions = true;
 
   DayxChatMessage? get _activeFlowMessage {
     for (var i = _messages.length - 1; i >= 0; i--) {
@@ -251,7 +254,50 @@ class _DayxOverlayState extends ConsumerState<DayxOverlay> {
     return lines.toString().trim();
   }
 
-  void _dismissTryAsking() {}
+  void _dismissTryAsking() {
+    if (!_showWelcomeSuggestions) return;
+    setState(() => _showWelcomeSuggestions = false);
+  }
+
+  bool get _shouldShowWelcomeSuggestions {
+    if (!_showWelcomeSuggestions) return false;
+    if (_inActiveFlow || _thinking || _flowBusy) return false;
+    if (_messages.isEmpty || _messages.first.isUser) return false;
+    return DayxWelcomeBuilder.isWelcomeGreeting(_messages.first.text);
+  }
+
+  Widget _welcomeSuggestionsPanel() {
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    final headingStyle = TextStyle(
+      fontFamily: 'Chirp',
+      fontSize: 13,
+      fontWeight: FontWeight.w600,
+      letterSpacing: -0.2,
+      color: onSurface.withValues(alpha: 0.72),
+    );
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(DayxCopy.trySayingHeading, style: headingStyle),
+          const SizedBox(height: 8),
+          DayxSuggestionChips(
+            suggestions: DayxCopy.voiceTryPhrases,
+            onSelected: _submit,
+          ),
+          const SizedBox(height: 16),
+          Text(DayxCopy.actionHeading, style: headingStyle),
+          const SizedBox(height: 8),
+          DayxSuggestionChips(
+            suggestions: DayxCopy.starterSuggestions,
+            onSelected: _submit,
+          ),
+        ],
+      ),
+    );
+  }
 
   String get _composerHint {
     final input = _activeFlowMessage?.flowUi?.input;
@@ -281,8 +327,18 @@ class _DayxOverlayState extends ConsumerState<DayxOverlay> {
   void initState() {
     super.initState();
     _inputFocus.addListener(_onInputFocusChange);
+    final user = ref.read(profileViewModelProvider).user;
     _messages.add(
-      const DayxChatMessage(isUser: false, text: DayxCopy.chatWelcome),
+      DayxChatMessage(
+        isUser: false,
+        text: DayxWelcomeBuilder.greetingLine(user?.firstName),
+      ),
+    );
+    _messages.add(
+      DayxChatMessage(
+        isUser: false,
+        text: DayxWelcomeBuilder.introPlaceholder(),
+      ),
     );
     _bootstrap();
     _initSpeech();
@@ -296,11 +352,30 @@ class _DayxOverlayState extends ConsumerState<DayxOverlay> {
     await DayxConversationStore.instance.clear();
     if (!mounted) return;
     try {
-      final welcome = await DayxWelcomeBuilder.buildChatWelcome(ref);
+      final welcomeMessages = await DayxWelcomeBuilder.buildChatWelcomeMessages(
+        ref,
+      );
       if (!mounted) return;
       setState(() {
-        if (_messages.isNotEmpty && !_messages.first.isUser) {
-          _messages[0] = DayxChatMessage(isUser: false, text: welcome);
+        if (_messages.length >= 2 &&
+            !_messages[0].isUser &&
+            !_messages[1].isUser) {
+          _messages[0] = DayxChatMessage(
+            isUser: false,
+            text: welcomeMessages[0],
+          );
+          _messages[1] = DayxChatMessage(
+            isUser: false,
+            text: welcomeMessages[1],
+          );
+        } else {
+          _messages
+            ..clear()
+            ..addAll(
+              welcomeMessages.map(
+                (text) => DayxChatMessage(isUser: false, text: text),
+              ),
+            );
         }
       });
     } catch (_) {}
@@ -378,7 +453,6 @@ class _DayxOverlayState extends ConsumerState<DayxOverlay> {
         history.add(DayxHistoryMessage(role: 'user', content: msg.text));
       } else if (!msg.text.startsWith('Hi —') &&
           !msg.text.startsWith('Hi,') &&
-          msg.text != DayxCopy.chatWelcome &&
           !DayxWelcomeBuilder.isWelcomeMessage(msg.text)) {
         history.add(DayxHistoryMessage(role: 'assistant', content: msg.text));
       }
@@ -1138,18 +1212,37 @@ class _DayxOverlayState extends ConsumerState<DayxOverlay> {
                                       8,
                                     ),
                                     itemCount:
-                                        _messages.length + (_thinking ? 1 : 0),
+                                        _messages.length +
+                                        (_thinking ? 1 : 0) +
+                                        (_shouldShowWelcomeSuggestions ? 1 : 0),
                                     itemBuilder: (context, index) {
+                                      final welcomeExtra =
+                                          _shouldShowWelcomeSuggestions ? 1 : 0;
+                                      final thinkingExtra = _thinking ? 1 : 0;
                                       final total =
                                           _messages.length +
-                                          (_thinking ? 1 : 0);
+                                          welcomeExtra +
+                                          thinkingExtra;
                                       final dataIndex = total - 1 - index;
+
+                                      if (_shouldShowWelcomeSuggestions &&
+                                          dataIndex == 0) {
+                                        return _welcomeSuggestionsPanel();
+                                      }
+
+                                      final slot =
+                                          dataIndex -
+                                          (_shouldShowWelcomeSuggestions
+                                              ? 1
+                                              : 0);
+
                                       if (_thinking &&
-                                          dataIndex == _messages.length) {
+                                          slot == _messages.length) {
                                         return _typingIndicator();
                                       }
+
                                       return _messageBubble(
-                                        _messages[dataIndex],
+                                        _messages[slot],
                                       );
                                     },
                                   ),

@@ -4,7 +4,6 @@ import 'package:dayfi/features/web/views/web_landing_view.dart';
 
 import 'package:dayfi/features/auth/check_email/vm/check_email_viewmodel.dart';
 import 'package:dayfi/features/recipients/views/recipients_view.dart';
-import 'package:dayfi/features/softpos/views/softpos_info_view.dart';
 import 'package:dayfi/core/navigation/dayfi_page_transitions.dart';
 import 'package:flutter/material.dart';
 import 'package:dayfi/features/auth/login/views/login_view.dart';
@@ -34,7 +33,6 @@ import 'package:dayfi/features/wallet/views/wallet_crypto_send_view.dart';
 import 'package:dayfi/features/dayearn/views/dayearn_main_view.dart';
 import 'package:dayfi/features/dayearn/views/dayearn_create_view.dart';
 import 'package:dayfi/features/dayflow/views/dayflow_main_view.dart';
-import 'package:dayfi/features/dayflow/views/dayflow_chat_view.dart';
 import 'package:dayfi/features/pay/views/pay_view.dart';
 import 'package:dayfi/features/pay/views/pay_bills_scope_view.dart';
 import 'package:dayfi/features/pay/views/pay_bills_international_view.dart';
@@ -131,6 +129,7 @@ class AppRoute {
   static const String dayEarnView = '/dayEarnView';
   static const String dayEarnCreateView = '/dayEarnCreateView';
   static const String dayFlowView = '/dayFlowView';
+  /// Reserved — prototype chat disabled for v1; use DayX overlay instead.
   static const String dayFlowChatView = '/dayFlowChatView';
   static const String payView = '/payView';
   static const String payBillsScopeView = '/payBillsScopeView';
@@ -181,6 +180,7 @@ class AppRoute {
   static const String selectDestinationCountryView =
       '/selectDestinationCountryView';
   static const String selectDeliveryMethodView = '/selectDeliveryMethodView';
+  /// Reserved — SoftPOS disabled for v1; no route registered.
   static const String softposInfoView = '/softposInfoView';
   static const String sendFetchCryptoChannelsView =
       '/sendFetchCryptoChannelsView';
@@ -411,8 +411,8 @@ class AppRoute {
         return _getPageRoute(routeSettings, const DayEarnCreateView());
       case dayFlowView:
         return _getPageRoute(routeSettings, const DayFlowMainView());
-      case dayFlowChatView:
-        return _getPageRoute(routeSettings, const DayFlowChatView());
+      // DayFlowChatView prototype disabled for v1 — lib/features/dayflow/views/dayflow_chat_view.dart
+
       case payView:
         return _getPageRoute(routeSettings, const PayView());
       case payBillsScopeView:
@@ -653,8 +653,7 @@ class AppRoute {
       }
       case selectDeliveryMethodView:
         return _getPageRoute(routeSettings, const SelectDeliveryMethodView());
-      case softposInfoView:
-        return _getPageRoute(routeSettings, const SoftposInfoView());
+      // SoftPOS disabled for v1 — lib/features/softpos/ kept for future use.
 
       case sendFetchCryptoChannelsView:
         return _getPageRoute(

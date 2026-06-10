@@ -22,6 +22,7 @@ import 'package:dayfi/features/transactions/vm/transactions_viewmodel.dart';
 import 'package:dayfi/features/dayflow/models/dayflow_models.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/features/dayflow/services/dayflow_api_service.dart';
+import 'package:dayfi/features/dayflow/services/dayflow_cache_sync.dart';
 import 'package:dayfi/features/dayflow/services/dayflow_dashboard_cache.dart';
 import 'package:dayfi/features/dayflow/services/dayflow_chat_service.dart';
 import 'package:dayfi/features/dayflow/services/dayflow_conversation_store.dart';
@@ -794,6 +795,7 @@ class _DayFlowOverlayState extends ConsumerState<DayFlowOverlay> {
       final flow = await dayFlowApiService.createFlowFromDraft(finalDraft);
       final plan = await dayFlowApiService.syncPlanFromDraft(finalDraft);
       await DayFlowLocalStore.instance.savePlan(plan);
+      DayFlowCacheSync.invalidateAll();
       DayflowDashboardCache.instance.put(
         DayFlowAnalytics.buildLocalDashboard(
           plan: plan,
@@ -818,6 +820,7 @@ class _DayFlowOverlayState extends ConsumerState<DayFlowOverlay> {
       });
       widget.onPlanActivated?.call();
       if (mounted) {
+        TopSnackbar.showSafe(context, message: DayFlowCopy.automationCreated);
         _dismiss(result: true);
         if (widget.navigateToDashboardOnSuccess) {
           await DayBudgetFlow.openDashboard(context);
@@ -826,24 +829,19 @@ class _DayFlowOverlayState extends ConsumerState<DayFlowOverlay> {
     }
 
     try {
-      if (widget.task == DayFlowOverlayTask.addItem) {
-        final pinProcessing = ValueNotifier<bool>(false);
-        final completed = await TransactionPinFlow.requestPinAndRun<bool>(
-          context: context,
-          ref: ref,
-          isProcessing: pinProcessing,
-          task: (_) async {
-            await activatePlan();
-            return true;
-          },
-        );
-        if (completed != true && mounted) {
-          setState(() => _approving = false);
-        }
-        return;
+      final pinProcessing = ValueNotifier<bool>(false);
+      final completed = await TransactionPinFlow.requestPinAndRun<bool>(
+        context: context,
+        ref: ref,
+        isProcessing: pinProcessing,
+        task: (_) async {
+          await activatePlan();
+          return true;
+        },
+      );
+      if (completed != true && mounted) {
+        setState(() => _approving = false);
       }
-
-      await activatePlan();
     } catch (e) {
       if (!mounted) return;
       setState(() => _approving = false);

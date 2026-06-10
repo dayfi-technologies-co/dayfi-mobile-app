@@ -1,4 +1,5 @@
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
+import 'package:dayfi/common/widgets/dayfi_screen_app_bar.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/core/navigation/dayfi_page_transitions.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
@@ -12,6 +13,7 @@ import 'package:dayfi/features/dayflow/helpers/dayflow_schedule_setup_launcher.d
 import 'package:dayfi/features/dayflow/helpers/dayflow_wallet_balance.dart';
 import 'package:dayfi/features/dayflow/models/dayflow_models.dart';
 import 'package:dayfi/features/dayflow/services/dayflow_api_service.dart';
+import 'package:dayfi/features/dayflow/services/dayflow_cache_sync.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -34,10 +36,7 @@ class DayFlowScheduleDetailView extends StatelessWidget {
       context,
       DayfiPageRoute<void>(
         builder:
-            (_) => DayFlowScheduleDetailView(
-              item: item,
-              onUpdated: onUpdated,
-            ),
+            (_) => DayFlowScheduleDetailView(item: item, onUpdated: onUpdated),
       ),
     );
   }
@@ -52,13 +51,23 @@ class DayFlowScheduleDetailView extends StatelessWidget {
       return;
     }
 
-    final seed =
-        'Update "${item.title}" — currently '
-        '${formatDayFlowAmount(item.amount, kDayFlowWalletCurrency)}';
+    final due = formatInstanceDueDate(item.dueAt);
+    final recipient = item.recipientHint?.trim();
+    final seed = StringBuffer(
+      'Update my scheduled payment "${item.title}" — '
+      '${formatDayFlowAmount(item.amount, kDayFlowWalletCurrency)} due $due',
+    );
+    if (recipient != null && recipient.isNotEmpty) {
+      seed.write(' to $recipient');
+    }
+    seed.write('.');
     final updated = await DayBudgetFlow.openEditChat(
       context,
-      initialPrompt: seed,
-      onActivated: onUpdated,
+      initialPrompt: seed.toString(),
+      onActivated: () {
+        DayFlowCacheSync.invalidateAll();
+        onUpdated?.call();
+      },
     );
     if (updated && context.mounted) {
       Navigator.pop(context);
@@ -108,7 +117,6 @@ class DayFlowScheduleDetailView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final onSurface = Theme.of(context).colorScheme.onSurface;
     final amount = formatDayFlowAmount(item.amount, kDayFlowWalletCurrency);
     final statusLabel = instanceStatusLabel(
       item.status,
@@ -121,35 +129,10 @@ class DayFlowScheduleDetailView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        scrolledUnderElevation: .5,
-        foregroundColor: Theme.of(context).scaffoldBackgroundColor,
-        shadowColor: Theme.of(context).scaffoldBackgroundColor,
-        surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios,
-            size: 20,
-            color: onSurface,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          DayFlowCopy.scheduleDetailsTitle,
-          style: AppTypography.titleLarge.copyWith(
-            fontFamily: 'FunnelDisplay',
-            fontSize: 24,
-            fontWeight: FontWeight.w600,
-            color: onSurface,
-          ),
-        ),
-        centerTitle: true,
-      ),
+      appBar: DayfiScreenAppBar(title: DayFlowCopy.scheduleDetailsTitle),
       bottomNavigationBar: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(18, 8, 18, 16),
+          padding: const EdgeInsets.fromLTRB(36, 8, 36, 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -161,31 +144,15 @@ class DayFlowScheduleDetailView extends StatelessWidget {
                 borderRadius: 40,
               ),
               const SizedBox(height: 10),
-              SizedBox(
-                width: double.infinity,
+              PrimaryButton(
+                text: DayFlowCopy.cancelFlow,
+                onPressed: () => _stopAutomation(context),
+                fullWidth: true,
                 height: 48,
-                child: OutlinedButton(
-                  onPressed: () => _stopAutomation(context),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Theme.of(context).colorScheme.error,
-                    side: BorderSide(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.error.withValues(alpha: 0.45),
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(40),
-                    ),
-                  ),
-                  child: Text(
-                    DayFlowCopy.cancelFlow,
-                    style: const TextStyle(
-                      fontFamily: 'Chirp',
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
+                borderRadius: 40,
+                backgroundColor: Theme.of(context).colorScheme.surface,
+                textColor: Theme.of(context).colorScheme.error,
+                borderColor: Colors.transparent,
               ),
             ],
           ),
@@ -220,13 +187,16 @@ class DayFlowScheduleDetailView extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  item.title,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontFamily: 'FunnelDisplay',
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  child: Text(
+                    item.title,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontFamily: 'FunnelDisplay',
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -266,14 +236,22 @@ class DayFlowScheduleDetailView extends StatelessWidget {
                       label: 'Due date',
                       value: formatInstanceDueDate(item.dueAt),
                     ),
-                    if (item.dueLabel != null && item.dueLabel!.trim().isNotEmpty)
-                      _DetailRow(label: 'Frequency', value: item.dueLabel!.trim()),
+                    if (item.dueLabel != null &&
+                        item.dueLabel!.trim().isNotEmpty)
+                      _DetailRow(
+                        label: 'Frequency',
+                        value: item.dueLabel!.trim(),
+                      ),
                     _DetailRow(
                       label: 'Auto-send',
                       value: item.autoPay ? 'On' : 'Off',
                     ),
-                    if (item.flowTitle != null && item.flowTitle!.trim().isNotEmpty)
-                      _DetailRow(label: 'Budget', value: item.flowTitle!.trim()),
+                    if (item.flowTitle != null &&
+                        item.flowTitle!.trim().isNotEmpty)
+                      _DetailRow(
+                        label: 'Budget',
+                        value: item.flowTitle!.trim(),
+                      ),
                     _DetailRow(
                       label: 'Type',
                       value: _paymentTypeLabel(item.paymentType),
@@ -366,11 +344,10 @@ class _DetailCard extends StatelessWidget {
     final onSurface = Theme.of(context).colorScheme.onSurface;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: onSurface.withValues(alpha: 0.08)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -378,49 +355,61 @@ class _DetailCard extends StatelessWidget {
           if (title != null) ...[
             Text(
               title!,
-              style: TextStyle(
-                fontFamily: 'FunnelDisplay',
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: onSurface.withValues(alpha: 0.85),
+              style: AppTypography.bodySmall.copyWith(
+                fontFamily: 'Chirp',
+                fontSize: 12.5,
+                letterSpacing: -.25,
+                height: 1.2,
+                fontWeight: FontWeight.w600,
+                color: onSurface.withValues(alpha: 0.5),
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 16),
           ],
-          for (var i = 0; i < rows.length; i++) ...[
-            if (i > 0) const SizedBox(height: 12),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: 110,
-                  child: Text(
-                    rows[i].label,
-                    style: TextStyle(
-                      fontFamily: 'Karla',
-                      fontSize: 13,
-                      color: onSurface.withValues(alpha: 0.55),
+          for (var i = 0; i < rows.length; i++)
+            Padding(
+              padding: EdgeInsets.only(bottom: i < rows.length - 1 ? 12 : 0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: Text(
+                      rows[i].label,
+                      style: AppTypography.bodyMedium.copyWith(
+                        fontFamily: 'Chirp',
+                        fontSize: 14,
+                        letterSpacing: -.4,
+                        fontWeight: FontWeight.w500,
+                        color: onSurface.withValues(alpha: 0.7),
+                      ),
                     ),
                   ),
-                ),
-                Expanded(
-                  child: Text(
-                    rows[i].value,
-                    style: TextStyle(
-                      fontFamily: rows[i].emphasize ? 'Chirp' : 'Karla',
-                      fontSize: rows[i].emphasize ? 15 : 14,
-                      fontWeight:
-                          rows[i].emphasize ? FontWeight.w600 : FontWeight.w500,
-                      color:
-                          rows[i].emphasize
-                              ? AppColors.teal500
-                              : onSurface.withValues(alpha: 0.9),
+                  Expanded(
+                    flex: 3,
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        rows[i].value,
+                        textAlign: TextAlign.end,
+                        style: AppTypography.bodyMedium.copyWith(
+                          fontFamily: 'Chirp',
+                          fontSize: 16,
+                          letterSpacing: -.4,
+                          fontWeight:
+                              rows[i].emphasize
+                                  ? FontWeight.w600
+                                  : FontWeight.w500,
+                          color:
+                              rows[i].emphasize ? AppColors.teal500 : onSurface,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ],
         ],
       ),
     );

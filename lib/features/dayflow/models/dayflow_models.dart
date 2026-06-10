@@ -678,6 +678,8 @@ class DayFlowEnvelopeSchedule {
   final bool autoPay;
   final String? budgetId;
   final String? nextRunAt;
+  final String? lastRunAt;
+  final String? lastStatus;
 
   const DayFlowEnvelopeSchedule({
     required this.id,
@@ -691,6 +693,8 @@ class DayFlowEnvelopeSchedule {
     this.autoPay = false,
     this.budgetId,
     this.nextRunAt,
+    this.lastRunAt,
+    this.lastStatus,
   });
 
   factory DayFlowEnvelopeSchedule.fromJson(Map<String, dynamic> json) {
@@ -706,11 +710,19 @@ class DayFlowEnvelopeSchedule {
       autoPay: json['autoPay'] == true,
       budgetId: json['budgetId']?.toString(),
       nextRunAt: json['nextRunAt']?.toString(),
+      lastRunAt: json['lastRunAt']?.toString(),
+      lastStatus: json['lastStatus']?.toString(),
     );
   }
 }
 
 enum DayBudgetInstanceStatus { upcoming, paid, failed, overdue }
+
+DateTime _parseScheduleDueAt(dynamic raw) {
+  final parsed = DateTime.tryParse(raw?.toString() ?? '');
+  if (parsed == null) return DateTime.now();
+  return parsed.isUtc ? parsed.toLocal() : parsed;
+}
 
 class DayBudgetScheduleInstance {
   final String id;
@@ -765,7 +777,7 @@ class DayBudgetScheduleInstance {
       scheduleId: json['scheduleId']?.toString() ?? '',
       title: json['title']?.toString() ?? '',
       amount: (json['amount'] as num?)?.toDouble() ?? 0,
-      dueAt: DateTime.tryParse(json['dueAt']?.toString() ?? '') ?? DateTime.now(),
+      dueAt: _parseScheduleDueAt(json['dueAt']),
       status: parseStatus(json['status']?.toString()),
       autoPay: json['autoPay'] != false,
       paymentType: json['paymentType']?.toString() ?? 'send',

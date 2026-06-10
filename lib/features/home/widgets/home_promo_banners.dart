@@ -1,3 +1,4 @@
+import 'package:dayfi/common/constants/product_features.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/common/utils/haptic_helper.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
@@ -6,29 +7,28 @@ import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/features/dayflow/constants/dayflow_copy.dart';
+import 'package:dayfi/features/dayflow/widgets/dayflow_automation_icon_badge.dart';
 import 'package:dayfi/features/pay/widgets/pay_bill_icon_badge.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Tap to Pay + DayFlow / DayEarn promo row above Assets on Home.
+/// DayFlow / DayEarn promo row above Assets on Home.
 class HomePromoBannersRow extends StatelessWidget {
-  final VoidCallback onTapToPay;
   final VoidCallback onDayFlow;
   final VoidCallback onEarn;
 
   const HomePromoBannersRow({
     super.key,
-    required this.onTapToPay,
     required this.onDayFlow,
     required this.onEarn,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
+    final children = <Widget>[
+      if (ProductFeatures.dayEarnHomePromo) ...[
         Expanded(
           child: _PromoBanner(
             onTap: onEarn,
@@ -38,26 +38,19 @@ class HomePromoBannersRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        Expanded(
-          child: _PromoBanner(
-            onTap: onDayFlow,
-            innerIconAsset: 'assets/icons/svgs/bubble-text.svg',
-            title: DayFlowCopy.featureName,
-            subtitle: DayFlowCopy.homeSubtitle,
-          ),
-        ),
-        // const SizedBox(width: 8),
-        // Expanded(
-        //   child: _PromoBanner(
-        //     isComingSoon: true,
-        //     onTap: onTapToPay,
-        //     innerIconAsset: 'assets/icons/svgs/wifi.svg',
-        //     title: 'Tap to Pay',
-        //     subtitle: 'Pay contactless in stores',
-        //   ),
-        // ),
       ],
-    );
+      Expanded(
+        child: _PromoBanner(
+          onTap: onDayFlow,
+          // iconBadge: const DayFlowAutomationIconBadge(size: 40, innerSize: 26),
+          innerIconAsset: 'assets/icons/svgs/automation.svg',
+          title: DayFlowCopy.featureName,
+          subtitle: DayFlowCopy.homeSubtitle,
+        ),
+      ),
+    ];
+
+    return Row(children: children);
   }
 }
 
@@ -66,6 +59,7 @@ class _PromoBanner extends StatelessWidget {
   final String innerIconAsset;
   final String title;
   final String subtitle;
+  final Widget? iconBadge;
   final String? badge;
   final bool isComingSoon;
 
@@ -74,6 +68,7 @@ class _PromoBanner extends StatelessWidget {
     required this.innerIconAsset,
     required this.title,
     required this.subtitle,
+    this.iconBadge,
     this.isComingSoon = false,
     // ignore: unused_element_parameter
     this.badge,
@@ -107,11 +102,12 @@ class _PromoBanner extends StatelessWidget {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      PayBillIconBadge(
-                        innerIconAsset: innerIconAsset,
-                        size: 40,
-                        innerSize: 22,
-                      ),
+                      iconBadge ??
+                          PayBillIconBadge(
+                            innerIconAsset: innerIconAsset,
+                            size: 40,
+                            innerSize: 26,
+                          ),
                       const Spacer(),
                       if (badge != null)
                         Container(
@@ -170,7 +166,7 @@ class _PromoBanner extends StatelessWidget {
                       fontFamily: 'Chirp',
                       fontWeight: FontWeight.w600,
                       fontSize: 16,
-                      letterSpacing: -0.25,
+                      letterSpacing: -0.05,
                       height: 1.2,
                       color: onSurface,
                     ),

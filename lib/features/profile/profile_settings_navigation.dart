@@ -1,5 +1,7 @@
+import 'package:dayfi/common/constants/product_features.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
+import 'package:dayfi/features/dayflow/daybudget_flow.dart';
 import 'package:dayfi/features/legal/privacy_notice.dart';
 import 'package:dayfi/features/legal/terms_of_use.dart';
 import 'package:dayfi/routes/route.dart';
@@ -13,6 +15,16 @@ abstract final class ProfileSettingsNavigation {
   static void toAccountLimits() => appRouter.pushNamed(AppRoute.accountLimitsView);
 
   static void toTransactions() => appRouter.pushNamed(AppRoute.transactionsView);
+
+  static void toBudgets() {
+    if (!ProductFeatures.budgets) return;
+    appRouter.pushNamed(AppRoute.budgetsView);
+  }
+
+  static Future<void> toDayFlow(BuildContext context) async {
+    if (!ProductFeatures.dayFlowAutopay) return;
+    await DayBudgetFlow.open(context);
+  }
 
   static void toRecipients() => appRouter.pushNamed(
         AppRoute.recipientsView,

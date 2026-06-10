@@ -2,6 +2,7 @@ import 'package:dayfi/common/widgets/dayfi_screen_app_bar.dart';
 import 'package:dayfi/common/widgets/dayfi_screen_description.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/features/pay/constants/pay_copy.dart';
+import 'package:dayfi/common/constants/product_features.dart';
 import 'package:dayfi/features/pay/widgets/pay_bill_icon_badge.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:flutter/material.dart';
@@ -40,7 +41,7 @@ class PayBillsScopeView extends StatelessWidget {
                   title: payViaTitle('International bills'),
                   innerIconAsset: 'assets/icons/svgs/invoice_c.svg',
                   badge: 'Coming soon',
-                  enabled: false,
+                  enabled: ProductFeatures.payInternationalBills,
                   onTap: () => _openInternational(context),
                 ),
               ],

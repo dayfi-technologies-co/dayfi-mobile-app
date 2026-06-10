@@ -53,6 +53,18 @@ class WalletTransactionLabels {
   static bool isCredit(WalletTransaction tx) {
     // Cross-border sends store both USD send_amount and local receive_amount.
     if (isDebit(tx)) return false;
+    if (isDayEarn(tx)) {
+      final reason = (tx.reason ?? '').toLowerCase();
+      if (reason.contains('withdrawal from')) return true;
+      if (reason.contains('added to') || reason.contains('created')) {
+        return false;
+      }
+    }
+    if (isDayFlow(tx)) {
+      final reason = (tx.reason ?? '').toLowerCase();
+      if (reason.contains('returned unused funds')) return true;
+      if (reason.contains('set aside for')) return false;
+    }
     final status = tx.status.toLowerCase();
     return status.contains('collection') ||
         (tx.receiveAmount != null && (tx.receiveAmount ?? 0) > 0);

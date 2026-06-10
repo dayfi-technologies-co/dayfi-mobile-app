@@ -5,6 +5,7 @@ import 'package:dayfi/features/dayflow/helpers/dayflow_draft_schedules.dart';
 import 'package:dayfi/features/dayflow/helpers/dayflow_wallet_balance.dart'
     show dayFlowOverlayGlobalWallet, kDayFlowWalletCurrency;
 import 'package:dayfi/features/dayflow/models/dayflow_models.dart';
+import 'package:dayfi/features/dayflow/services/dayflow_cache_sync.dart';
 import 'package:dayfi/features/dayflow/services/dayflow_dashboard_cache.dart';
 import 'package:dayfi/flavors.dart';
 import 'package:dayfi/models/wallet_hub.dart';
@@ -137,12 +138,14 @@ class DayFlowApiService {
     DateTime? endAt,
     String? recipientId,
     String? recipientHint,
+    double? sourceAmount,
     Map<String, dynamic>? execution,
   }) async {
     final nextRunAt = startAt.toUtc().toIso8601String();
     final schedule = <String, dynamic>{
       'title': title,
       'amount': amount,
+      if (sourceAmount != null && sourceAmount > 0) 'sourceAmount': sourceAmount,
       'frequency': frequency,
       'autoPay': true,
       'paymentType': paymentType,
@@ -159,7 +162,7 @@ class DayFlowApiService {
       RequestMethod.post,
       data: {
         'title': title,
-        'budgetType': frequency,
+        'budgetType': _flowBudgetType(frequency),
         'periodLabel': _automationPeriodLabel(frequency),
         'summaryLine': DayFlowCopy.flowActivated,
         'currency': kDayFlowWalletCurrency,
@@ -173,7 +176,7 @@ class DayFlowApiService {
     if (raw is! Map) {
       throw Exception('Invalid flow response');
     }
-    DayflowDashboardCache.instance.invalidate();
+    DayFlowCacheSync.invalidateAll();
     return DayFlowEnvelope.fromJson(Map<String, dynamic>.from(raw));
   }
 
@@ -186,9 +189,26 @@ class DayFlowApiService {
     };
   }
 
+  /// Flow-level budgetType must match api.dayfi.co validator (not schedule frequency).
+  static String _flowBudgetType(String frequency) {
+    switch (frequency) {
+      case 'weekly':
+      case 'monthly':
+      case 'annual':
+      case 'custom':
+        return frequency;
+      case 'once':
+      case 'biweekly':
+        // Stored on each schedule via `frequency`; flow envelope uses custom.
+        return 'custom';
+      default:
+        return 'monthly';
+    }
+  }
+
   Future<DayFlowEnvelope> createFlowFromDraft(DayFlowPlanDraft draft) async {
     final schedules = dayflowSchedulesPayloadFromDraft(draft);
-    final budgetType = dayflowScheduleFrequency(draft);
+    final budgetType = _flowBudgetType(dayflowScheduleFrequency(draft));
 
     final response = await _network.call(
       '${F.baseUrl}/dayflow/flows',
@@ -225,6 +245,7 @@ class DayFlowApiService {
       RequestMethod.post,
     );
     final data = await _dataMap(response.data);
+    DayFlowCacheSync.invalidateAll();
     return (data['refundedAmount'] as num?)?.toDouble() ?? 0;
   }
 
@@ -234,6 +255,7 @@ class DayFlowApiService {
     String? recipientHint,
     String? recipientId,
     String? paymentType,
+    double? sourceAmount,
     Map<String, dynamic>? execution,
   }) async {
     await _network.call(
@@ -243,6 +265,7 @@ class DayFlowApiService {
         if (recipientHint != null) 'recipientHint': recipientHint,
         if (recipientId != null) 'recipientId': recipientId,
         if (paymentType != null) 'paymentType': paymentType,
+        if (sourceAmount != null && sourceAmount > 0) 'sourceAmount': sourceAmount,
         if (execution != null) 'execution': execution,
       },
     );

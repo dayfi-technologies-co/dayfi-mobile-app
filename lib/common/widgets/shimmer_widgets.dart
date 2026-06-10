@@ -227,7 +227,7 @@ class ShimmerWidgets {
     );
   }
 
-  /// Tap to Pay + Earn row above Assets on Home.
+  /// Home promo row above Assets (DayEarn + DayFlow).
   static Widget homePromoBannersRowShimmer(BuildContext context) {
     return Row(
       children: [

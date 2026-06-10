@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:dayfi/common/widgets/dayfi_loading_indicator.dart';
 import 'package:dayfi/common/widgets/empty_state_widget.dart';
 import 'package:dayfi/common/widgets/error_state_widget.dart';
+import 'package:dayfi/common/widgets/top_snackbar.dart';
+import 'package:dayfi/features/budget/helpers/budget_navigation.dart';
 import 'package:dayfi/features/budget/helpers/budget_notification_helper.dart';
-import 'package:dayfi/features/budget/views/budget_detail_view.dart';
+import 'package:dayfi/services/remote/budget_service.dart';
 import 'package:dayfi/models/notification_item.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -418,16 +420,23 @@ class _NotificationsViewState extends ConsumerState<NotificationsView> {
     );
   }
 
-  void _openNotificationTarget(NotificationItem notification) {
+  Future<void> _openNotificationTarget(NotificationItem notification) async {
     if (!isBudgetNotification(notification)) return;
     final budgetId = budgetIdFromNotification(notification);
     if (budgetId == null) return;
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => BudgetDetailView(budgetId: budgetId),
-      ),
-    );
+
+    try {
+      final budget = await budgetService.fetchBudget(budgetId);
+      if (!mounted) return;
+      await BudgetNavigation.openDetail(context, budget: budget);
+    } catch (e) {
+      if (!mounted) return;
+      TopSnackbar.show(
+        context,
+        message: e.toString().replaceFirst('Exception: ', ''),
+        isError: true,
+      );
+    }
   }
 
   Color _getNotificationColor(NotificationType type) {

@@ -3,6 +3,7 @@ import 'package:dayfi/common/widgets/dayfi_screen_app_bar.dart';
 import 'package:dayfi/common/widgets/dayfi_screen_description.dart';
 import 'package:dayfi/features/budget/constants/budget_copy.dart';
 import 'package:dayfi/features/budget/views/create_budget_view.dart';
+import 'package:dayfi/features/dayflow/daybudget_flow.dart';
 import 'package:dayfi/features/pay/widgets/pay_bill_icon_badge.dart';
 import 'package:flutter/material.dart';
 
@@ -16,6 +17,13 @@ class CreateBudgetTypeView extends StatelessWidget {
       MaterialPageRoute(builder: (_) => CreateBudgetView(kind: kind)),
     );
     if (created == true && context.mounted) {
+      Navigator.pop(context, true);
+    }
+  }
+
+  Future<void> _openDayFlowAutomation(BuildContext context) async {
+    final created = await DayBudgetFlow.openCreateAutomation(context);
+    if (created && context.mounted) {
       Navigator.pop(context, true);
     }
   }
@@ -60,17 +68,10 @@ class CreateBudgetTypeView extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             _BudgetTypeTile(
-              title: 'Send to someone',
-              subtitle: 'Repeat sends to a saved recipient',
-              innerIconAsset: 'assets/icons/svgs/brand-telegram.svg',
-              onTap: () => _open(context, BudgetCreateKind.send),
-            ),
-            const SizedBox(height: 10),
-            _BudgetTypeTile(
-              title: 'Pay a bill',
-              subtitle: 'Airtime, data, cable, electricity & more',
-              innerIconAsset: 'assets/icons/svgs/bill_.svg',
-              onTap: () => _open(context, BudgetCreateKind.bill),
+              title: 'Automate a payment',
+              subtitle: 'Repeat sends or bill autopay — managed in DayFlow',
+              innerIconAsset: 'assets/icons/svgs/automation.svg',
+              onTap: () => _openDayFlowAutomation(context),
             ),
             const SizedBox(height: 10),
             _BudgetTypeTile(

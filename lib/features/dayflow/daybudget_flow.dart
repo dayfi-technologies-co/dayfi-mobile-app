@@ -1,46 +1,84 @@
 import 'package:dayfi/features/dayflow/dayflow_flow.dart';
+import 'package:dayfi/features/dayflow/models/dayflow_models.dart';
 import 'package:dayfi/features/dayflow/models/dayflow_overlay_task.dart';
 import 'package:dayfi/features/dayflow/services/dayflow_conversation_store.dart';
+import 'package:dayfi/features/dayflow/services/dayflow_api_service.dart';
+import 'package:dayfi/features/dayflow/services/dayflow_cache_sync.dart';
 import 'package:dayfi/features/dayflow/services/dayflow_dashboard_cache.dart';
-import 'package:dayfi/features/dayflow/services/dayflow_local_store.dart';
 import 'package:dayfi/features/dayflow/views/create_dayflow_automation_type_view.dart';
 import 'package:flutter/material.dart';
 
-/// DayFlow entry — chat to create budgets and automations, dashboard when live.
+/// DayFlow entry — automate payment form when empty, dashboard when live.
 abstract final class DayBudgetFlow {
   DayBudgetFlow._();
 
-  /// Home card: new users → budget chat; active setup → dashboard.
+  /// Whether the user has at least one scheduled autopay (send or bill).
+  static bool hasAutomations(DayFlowDashboardSnapshot? snap) {
+    if (snap == null) return false;
+    final instances = snap.scheduleInstances;
+    if (instances.upcoming.isNotEmpty || instances.past.isNotEmpty) {
+      return true;
+    }
+    for (final flow in snap.flows) {
+      if (!flow.isActive) continue;
+      if (flow.schedules.any((s) => s.amount > 0 && s.autoPay)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// Home card: dashboard when automations exist; otherwise automate-payment picker.
   static Future<void> open(BuildContext context) async {
-    final cachedPlan = DayflowDashboardCache.instance.hasActivePlan;
-    if (cachedPlan == true) {
+    var cached = DayflowDashboardCache.instance.peek();
+    if (cached == null) {
+      try {
+        cached = await dayFlowApiService.fetchDashboard();
+      } catch (_) {}
+    }
+
+    if (cached != null) {
+      if (hasAutomations(cached)) {
+        await openDashboard(context);
+      } else if (context.mounted) {
+        await openCreateAutomation(context, navigateToDashboardOnSuccess: true);
+      }
+      return;
+    }
+
+    if (DayflowDashboardCache.instance.hasActivePlan == true) {
       await openDashboard(context);
       return;
     }
 
-    if (cachedPlan == false) {
-      await openCreateChat(context, navigateToDashboardOnSuccess: true);
-      return;
-    }
-
-    // Cache unknown — resolve route before showing chat (avoids chat flash).
-    if (await DayFlowActivity.hasLocalSetup()) {
-      if (!context.mounted) return;
-      await openDashboard(context);
-      return;
-    }
-
-    final hasSetup = await DayFlowActivity.hasPlan();
     if (!context.mounted) return;
-    if (hasSetup) {
-      await openDashboard(context);
-    } else {
-      await openCreateChat(context, navigateToDashboardOnSuccess: true);
+    await openCreateAutomation(context, navigateToDashboardOnSuccess: true);
+  }
+
+  /// First-time automation — send or bill form (no chat).
+  static Future<bool> openCreateAutomation(
+    BuildContext context, {
+    VoidCallback? onActivated,
+    bool navigateToDashboardOnSuccess = false,
+  }) async {
+    final created = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const CreateDayFlowAutomationTypeView(),
+      ),
+    );
+    if (created == true) {
+      DayFlowCacheSync.invalidateAll();
+      onActivated?.call();
+      if (navigateToDashboardOnSuccess && context.mounted) {
+        await openDashboard(context);
+      }
+      return true;
     }
+    return false;
   }
 
   /// First-time / monthly budget creation (DayX budget mode).
-  /// Always starts a fresh chat when no active flows exist yet.
   static Future<bool> openCreateChat(
     BuildContext context, {
     VoidCallback? onActivated,
@@ -75,19 +113,8 @@ abstract final class DayBudgetFlow {
   static Future<bool> openAddAutomation(
     BuildContext context, {
     VoidCallback? onActivated,
-  }) async {
-    final created = await Navigator.push<bool>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const CreateDayFlowAutomationTypeView(),
-      ),
-    );
-    if (created == true) {
-      DayflowDashboardCache.instance.invalidate();
-      onActivated?.call();
-      return true;
-    }
-    return false;
+  }) {
+    return openCreateAutomation(context, onActivated: onActivated);
   }
 
   /// Add a recurring item via chat.

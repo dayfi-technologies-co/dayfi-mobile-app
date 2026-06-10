@@ -3,9 +3,12 @@ import 'dart:async';
 import 'package:dayfi/common/services/feature_activity_service.dart';
 import 'package:dayfi/features/dayearn/dayearn_entry.dart';
 import 'package:dayfi/core/navigation/dayfi_page_transitions.dart';
+import 'package:dayfi/features/dayearn/services/dayearn_summary_cache.dart';
 import 'package:dayfi/features/dayearn/views/dayearn_create_view.dart';
+import 'package:dayfi/features/transactions/vm/transactions_viewmodel.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 abstract final class DayEarnFlow {
   /// Pop feature stack back to main tab shell (bottom nav).
@@ -38,16 +41,26 @@ abstract final class DayEarnFlow {
     );
   }
 
-  /// Call after pot creation before [openHome].
-  static Future<void> onPotCreated() async {
-    await DayEarnEntry.markHasPots();
+  /// Refresh caches after any DayEarn wallet movement.
+  static Future<void> onFundsMoved(WidgetRef ref) async {
+    DayEarnSummaryCache.instance.invalidate();
     FeatureActivityService.instance.invalidate();
+    try {
+      await ref.read(transactionsProvider.notifier).loadTransactions();
+    } catch (_) {}
   }
 
-  /// Success screen Done — land on DayEarn home.
+  /// Call after pot creation before [openHome].
+  static Future<void> onPotCreated(WidgetRef ref) async {
+    await DayEarnEntry.markHasPots();
+    await onFundsMoved(ref);
+  }
+
+  /// Legacy success screen Done — land on DayEarn home.
   static void finishCreateFromSuccess(BuildContext context) {
     if (!context.mounted) return;
-    unawaited(onPotCreated());
+    DayEarnSummaryCache.instance.invalidate();
+    FeatureActivityService.instance.invalidate();
     openHome(context);
   }
 }

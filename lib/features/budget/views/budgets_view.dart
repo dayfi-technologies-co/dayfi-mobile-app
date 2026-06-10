@@ -5,14 +5,18 @@ import 'package:dayfi/common/widgets/dayfi_empty_state.dart';
 import 'package:dayfi/common/widgets/dayfi_screen_app_bar.dart';
 import 'package:dayfi/common/widgets/shimmer_widgets.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
-import 'package:dayfi/core/theme/app_colors.dart';
-import 'package:dayfi/features/budget/helpers/budget_amount_format.dart';
+import 'package:dayfi/features/budget/helpers/budget_navigation.dart';
 import 'package:dayfi/features/budget/models/budget_models.dart';
 import 'package:dayfi/features/budget/services/budget_list_cache.dart';
-import 'package:dayfi/features/budget/views/budget_detail_view.dart';
 import 'package:dayfi/features/budget/views/create_budget_type_view.dart';
+import 'package:dayfi/features/budget/widgets/budget_list_tile.dart';
+import 'package:dayfi/features/dayflow/helpers/dayflow_schedule_from_budget.dart';
+import 'package:dayfi/features/dayflow/models/dayflow_models.dart';
+import 'package:dayfi/features/dayflow/services/dayflow_api_service.dart';
+import 'package:dayfi/features/dayflow/services/dayflow_dashboard_cache.dart';
 import 'package:dayfi/services/remote/budget_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class BudgetsView extends StatefulWidget {
   const BudgetsView({super.key});
@@ -23,10 +27,32 @@ class BudgetsView extends StatefulWidget {
 
 class _BudgetsViewState extends State<BudgetsView> {
   List<Budget> _budgets = [];
+  DayFlowDashboardSnapshot? _dayflowDash;
   bool _loading = false;
   String? _loadError;
 
-  bool get _showFullLoader => _loading && _budgets.isEmpty;
+  bool get _showShimmer => _loading && _budgets.isEmpty;
+
+  DayBudgetScheduleInstance? _dayflowInstanceFor(Budget budget) {
+    if (!budget.isManagedByDayFlow) return null;
+    return DayFlowScheduleFromBudget.resolveInstance(
+      budget,
+      _dayflowDash?.scheduleInstances,
+    );
+  }
+
+  List<Budget> _sortedBudgets(List<Budget> rows) {
+    final sorted = List<Budget>.from(rows);
+    sorted.sort((a, b) {
+      return DayFlowScheduleFromBudget.compareByNextRun(
+        a,
+        b,
+        _dayflowInstanceFor(a),
+        _dayflowInstanceFor(b),
+      );
+    });
+    return sorted;
+  }
 
   @override
   void initState() {
@@ -35,6 +61,7 @@ class _BudgetsViewState extends State<BudgetsView> {
     if (cached != null) {
       _budgets = cached;
     }
+    _dayflowDash = DayflowDashboardCache.instance.peek();
     _load(showFullLoader: _budgets.isEmpty);
   }
 
@@ -49,6 +76,15 @@ class _BudgetsViewState extends State<BudgetsView> {
     }
   }
 
+  Future<void> _onBudgetTap(Budget budget) async {
+    await BudgetNavigation.openDetail(
+      context,
+      budget: budget,
+      onUpdated: () => _load(showFullLoader: false),
+    );
+    if (mounted) await _load(showFullLoader: false);
+  }
+
   Future<void> _load({bool showFullLoader = true}) async {
     if (showFullLoader && _budgets.isEmpty) {
       setState(() {
@@ -58,10 +94,23 @@ class _BudgetsViewState extends State<BudgetsView> {
     }
     try {
       final rows = await withScreenFetchTimeout(budgetService.fetchBudgets());
+      final hasDayFlowBudgets = rows.any((b) => b.isManagedByDayFlow);
+      DayFlowDashboardSnapshot? dash =
+          _dayflowDash ?? DayflowDashboardCache.instance.peek();
+      if (hasDayFlowBudgets) {
+        try {
+          dash = await withScreenFetchTimeout(
+            dayFlowApiService.fetchDashboard(),
+          );
+        } catch (_) {
+          dash ??= DayflowDashboardCache.instance.peek();
+        }
+      }
       BudgetListCache.instance.put(rows);
       if (mounted) {
         setState(() {
-          _budgets = rows;
+          _dayflowDash = dash;
+          _budgets = _sortedBudgets(rows);
           _loadError = null;
         });
       }
@@ -72,19 +121,52 @@ class _BudgetsViewState extends State<BudgetsView> {
                 ? 'Could not load budgets. Check your connection and try again.'
                 : '$e';
         setState(() => _loadError = message);
-        TopSnackbar.show(context, message: message, isError: true);
+        if (_budgets.isEmpty) {
+          TopSnackbar.show(context, message: message, isError: true);
+        }
       }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
+  Widget _buildAddBudgetAction(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 18),
+      child: InkWell(
+        onTap: _openCreateBudget,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            SvgPicture.asset(
+              'assets/icons/svgs/notificationn.svg',
+              height: 40,
+              color: Theme.of(context).colorScheme.surface,
+            ),
+            SizedBox(
+              height: 40,
+              width: 40,
+              child: Center(
+                child: Icon(
+                  Icons.add,
+                  size: 28,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return DayfiFeatureScaffold(
       title: 'Budgets',
+      actions: [_buildAddBudgetAction(context)],
       body:
-          _showFullLoader
+          _showShimmer
               ? ShimmerWidgets.recipientListShimmer(
                 context,
                 itemCount: 4,
@@ -139,72 +221,16 @@ class _BudgetsViewState extends State<BudgetsView> {
                             ),
                             SliverPadding(
                               padding: const EdgeInsets.fromLTRB(18, 0, 18, 24),
-                              sliver: SliverList(
-                                delegate: SliverChildBuilderDelegate((
-                                  context,
-                                  i,
-                                ) {
-                                  final b = _budgets[i];
-                                  return Padding(
-                                    padding: EdgeInsets.only(
-                                      bottom: i < _budgets.length - 1 ? 10 : 0,
-                                    ),
-                                    child: _BudgetCard(
-                                      budget: b,
-                                      onTap: () async {
-                                        await Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder:
-                                                (_) => BudgetDetailView(
-                                                  budgetId: b.id,
-                                                  initialBudget: b,
-                                                ),
-                                          ),
-                                        );
-                                        if (mounted) {
-                                          _load(showFullLoader: false);
-                                        }
-                                      },
-                                    ),
-                                  );
-                                }, childCount: _budgets.length),
+                              sliver: SliverToBoxAdapter(
+                                child: BudgetListGroupSection(
+                                  budgets: _budgets,
+                                  dayflowInstanceFor: _dayflowInstanceFor,
+                                  onBudgetTap: _onBudgetTap,
+                                ),
                               ),
                             ),
                           ],
                         ),
-              ),
-      bottomNavigationBar:
-          _budgets.isEmpty
-              ? null
-              : SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(56, 0, 64, 12),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: _openCreateBudget,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.purple500ForTheme(context),
-                        foregroundColor: AppColors.neutral0,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(38),
-                        ),
-                      ),
-                      icon: const Icon(Icons.add_rounded, size: 20),
-                      label: const Text(
-                        'New budget',
-                        style: TextStyle(
-                          fontFamily: 'Chirp',
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: -0.4,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
               ),
     );
   }
@@ -241,142 +267,6 @@ class _BudgetsErrorState extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _BudgetCard extends StatelessWidget {
-  final Budget budget;
-  final VoidCallback onTap;
-
-  const _BudgetCard({required this.budget, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Theme.of(context).colorScheme.surface,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      budget.name,
-                      style: const TextStyle(
-                        fontFamily: 'Chirp',
-                        fontSize: 17,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: -0.25,
-                      ),
-                    ),
-                  ),
-                  _StatusChip(
-                    label: budget.isPaused ? 'Paused' : budget.frequency,
-                    isPaused: budget.isPaused,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                budget.typeLabel,
-                style: TextStyle(
-                  fontFamily: 'Chirp',
-                  fontSize: 13,
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withOpacity(0.5),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Text(
-                    formatBudgetAmount(budget.amount, budget.currency),
-                    style: const TextStyle(
-                      fontFamily: 'FunnelDisplay',
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const Spacer(),
-                  if (budget.nextRunLabel != null)
-                    Text(
-                      budget.nextRunLabel!,
-                      style: TextStyle(
-                        fontFamily: 'Chirp',
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.primary400,
-                      ),
-                    ),
-                ],
-              ),
-              if (budget.spentAmount > 0) ...[
-                const SizedBox(height: 10),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: budget.progressPercent / 100,
-                    minHeight: 5,
-                    backgroundColor: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withOpacity(0.08),
-                    color: AppColors.primary400,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  '${formatBudgetAmount(budget.spentAmount, budget.currency)} spent',
-                  style: TextStyle(
-                    fontFamily: 'Chirp',
-                    fontSize: 12.5,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withOpacity(0.45),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _StatusChip extends StatelessWidget {
-  final String label;
-  final bool isPaused;
-
-  const _StatusChip({required this.label, required this.isPaused});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color:
-            isPaused
-                ? AppColors.warning500.withOpacity(0.12)
-                : AppColors.success500.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontFamily: 'Chirp',
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: isPaused ? AppColors.warning600 : AppColors.success600,
         ),
       ),
     );

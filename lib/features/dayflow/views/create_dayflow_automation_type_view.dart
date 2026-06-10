@@ -29,7 +29,7 @@ class CreateDayFlowAutomationTypeView extends StatelessWidget {
     final onSurface = Theme.of(context).colorScheme.onSurface;
 
     return DayfiFeatureScaffold(
-      title: 'Automate payment',
+      title: DayFlowCopy.automatePayment,
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(18, 4, 18, 32),
         child: Column(

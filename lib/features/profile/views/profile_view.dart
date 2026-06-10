@@ -1,3 +1,4 @@
+import 'package:dayfi/common/constants/product_features.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/common/widgets/dayfi_screen_app_bar.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
@@ -119,6 +120,26 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
         ),
         const SizedBox(height: ProfileSettingsStyle.sectionSpacing),
         ProfileSettingsSection(
+          title: 'MONEY',
+          children: [
+            ProfileSettingsTile(
+              icon: 'assets/icons/svgs/account.svg',
+              icon2: 'assets/icons/svgs/coin.svg',
+              iconColor: _mutedIcon,
+              title: 'Budgets',
+              onTap: ProfileSettingsNavigation.toBudgets,
+            ),
+            ProfileSettingsTile(
+              icon: 'assets/icons/svgs/account.svg',
+              icon2: 'assets/icons/svgs/automation.svg',
+              iconColor: _mutedIcon,
+              title: 'DayFlow',
+              onTap: () => ProfileSettingsNavigation.toDayFlow(context),
+            ),
+          ],
+        ),
+        const SizedBox(height: ProfileSettingsStyle.sectionSpacing),
+        ProfileSettingsSection(
           title: 'HELP AND SUPPORT',
           children: [
             ProfileSettingsTile(
@@ -174,7 +195,9 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
     icon2: 'assets/icons/svgs/delete.svg',
     iconColor: AppColors.error500,
     title: 'Delete Account',
-    onTap: _showDeleteAccountDialog,
+    onTap: ProductFeatures.profileDeleteAccount
+        ? _showDeleteAccountDialog
+        : () => ProfileSettingsNavigation.contactUs(context),
   );
 
   Widget _buildLogoutButton() => _logoutTile();

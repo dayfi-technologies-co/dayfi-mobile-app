@@ -1,14 +1,14 @@
 import 'package:dayfi/app_locator.dart';
-import 'package:dayfi/common/helpers/transaction_completion_flow.dart';
 import 'package:dayfi/common/helpers/transaction_pin_flow.dart';
+import 'package:dayfi/features/dayearn/dayearn_flow.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
-import 'package:dayfi/common/widgets/dayfi_checkbox.dart';
 import 'package:dayfi/common/widgets/dayfi_screen_app_bar.dart';
 import 'package:dayfi/common/widgets/dayfi_screen_description.dart';
 import 'package:dayfi/features/dayearn/constants/dayearn_copy.dart';
 import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
-import 'package:dayfi/common/widgets/transaction_success_view.dart';
+import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
+import 'package:dayfi/features/dayearn/helpers/dayearn_form_validation.dart';
 import 'package:dayfi/features/dayearn/helpers/dayearn_format.dart';
 import 'package:dayfi/services/remote/dayearn_service.dart';
 import 'package:flutter/material.dart';
@@ -26,8 +26,11 @@ class DayEarnWithdrawView extends ConsumerStatefulWidget {
 }
 
 class _DayEarnWithdrawViewState extends ConsumerState<DayEarnWithdrawView> {
+  final _formKey = GlobalKey<FormState>();
   final _amountController = TextEditingController();
   bool _withdrawAll = false;
+  bool _isAgreed = false;
+  String? _agreementError;
 
   @override
   void dispose() {
@@ -35,13 +38,37 @@ class _DayEarnWithdrawViewState extends ConsumerState<DayEarnWithdrawView> {
     super.dispose();
   }
 
-  bool get _canSubmit {
-    if (_withdrawAll) return widget.pot.balance > 0;
-    final amount = double.tryParse(_amountController.text.trim());
-    return amount != null && amount > 0 && amount <= widget.pot.balance;
+  Widget? _buildWithdrawAllSuffix() {
+    if (widget.pot.balance <= 0) return null;
+
+    return GestureDetector(
+      onTap: () => _onWithdrawAllChanged(!_withdrawAll),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Text(
+          'Withdraw all',
+          style: TextStyle(
+            fontFamily: 'Chirp',
+            fontWeight: FontWeight.w600,
+            fontSize: 12.5,
+            letterSpacing: 0,
+            height: 1.45,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _submit() async {
+    final formValid = _formKey.currentState?.validate() ?? false;
+    if (!_isAgreed) {
+      setState(() => _agreementError = DayEarnCopy.agreementRequired);
+    } else {
+      setState(() => _agreementError = null);
+    }
+    if (!formValid || !_isAgreed) return;
+
     final amount = _withdrawAll
         ? widget.pot.balance
         : double.tryParse(_amountController.text.trim());
@@ -60,16 +87,16 @@ class _DayEarnWithdrawViewState extends ConsumerState<DayEarnWithdrawView> {
     if (!mounted || result == null) return;
 
     final withdrawn = (result['withdrawn'] as num?)?.toDouble() ?? amount ?? 0;
-    await TransactionCompletionFlow.pushSuccess(
+    await DayEarnFlow.onFundsMoved(ref);
+    if (!mounted) return;
+
+    TopSnackbar.showSafe(
       context,
-      screen: TransactionSuccessView(
-        headline: 'Withdrawal successful',
-        title: 'Funds returned to your ${dayEarnWalletLabel()}',
-        amountText: formatDayEarnAmount(withdrawn, kDayEarnCurrency),
-        subtitle: 'Instant — no penalty',
+      message: DayEarnCopy.withdrawSuccessful(
+        formatDayEarnAmount(withdrawn, kDayEarnCurrency),
       ),
     );
-    if (mounted) Navigator.pop(context, true);
+    Navigator.pop(context, true);
   }
 
   void _onWithdrawAllChanged(bool value) {
@@ -81,6 +108,7 @@ class _DayEarnWithdrawViewState extends ConsumerState<DayEarnWithdrawView> {
         _amountController.clear();
       }
     });
+    _formKey.currentState?.validate();
   }
 
   @override
@@ -120,30 +148,110 @@ class _DayEarnWithdrawViewState extends ConsumerState<DayEarnWithdrawView> {
                             color: onSurface.withValues(alpha: 0.55),
                           ),
                         ),
-                        const SizedBox(height: 12),
-                        CustomTextField(
-                          label: 'Amount',
-                          hintText: '0.00',
-                          controller: _amountController,
-                          shouldReadOnly: _withdrawAll,
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
+                        Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              CustomTextField(
+                                label: 'Amount',
+                                hintText: '0.00',
+                                controller: _amountController,
+                                shouldReadOnly: _withdrawAll,
+                                suffixIcon: _buildWithdrawAllSuffix(),
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                  decimal: true,
+                                ),
+                                formatter: FilteringTextInputFormatter.allow(
+                                  RegExp(r'[0-9.]'),
+                                ),
+                                validator: (value) =>
+                                    DayEarnFormValidation.withdrawAmount(
+                                  value,
+                                  potBalance: widget.pot.balance,
+                                  withdrawAll: _withdrawAll,
+                                ),
+                                onChanged: (value) {
+                                  setState(() {
+                                    if (_withdrawAll) {
+                                      final parsed =
+                                          double.tryParse(value.trim());
+                                      if (parsed != widget.pot.balance) {
+                                        _withdrawAll = false;
+                                      }
+                                    }
+                                  });
+                                },
+                              ),
+                            ],
                           ),
-                          formatter: FilteringTextInputFormatter.allow(
-                            RegExp(r'[0-9.]'),
+                        ),
+                        const SizedBox(height: 16),
+                        InkWell(
+                          onTap: () {
+                            setState(() {
+                              _isAgreed = !_isAgreed;
+                              if (_isAgreed) _agreementError = null;
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(8),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 8,
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: Checkbox(
+                                    value: _isAgreed,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _isAgreed = value ?? false;
+                                        if (_isAgreed) _agreementError = null;
+                                      });
+                                    },
+                                    activeColor: AppColors.purple500,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    DayEarnCopy.withdrawAgreement,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          fontFamily: 'Chirp',
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                          letterSpacing: -0.20,
+                                          height: 1.4,
+                                        ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                          onChanged: (_) => setState(() {}),
                         ),
-                        const SizedBox(height: 8),
-                        DayfiCheckboxTile(
-                          value: _withdrawAll,
-                          onChanged:
-                              widget.pot.balance > 0
-                                  ? (v) => _onWithdrawAllChanged(v)
-                                  : null,
-                          label: 'Withdraw all',
-                          checkboxSize: 18,
-                        ),
+                        if (_agreementError != null) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            _agreementError!,
+                            style: TextStyle(
+                              fontFamily: 'Chirp',
+                              fontSize: 12,
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -153,10 +261,10 @@ class _DayEarnWithdrawViewState extends ConsumerState<DayEarnWithdrawView> {
             SafeArea(
               top: false,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 0, 24, 18),
+                padding: const EdgeInsets.fromLTRB(64, 0, 64, 18),
                 child: PrimaryButton(
                   text: 'Withdraw',
-                  onPressed: _canSubmit ? _submit : null,
+                  onPressed: _submit,
                   fullWidth: true,
                   applyFeatureInset: false,
                   height: 48,

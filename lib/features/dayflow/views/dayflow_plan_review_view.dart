@@ -1,3 +1,4 @@
+import 'package:dayfi/common/helpers/transaction_pin_flow.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
@@ -6,8 +7,9 @@ import 'package:dayfi/features/dayflow/helpers/dayflow_format.dart';
 import 'package:dayfi/features/dayflow/models/dayflow_models.dart';
 import 'package:dayfi/features/dayflow/services/dayflow_local_store.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class DayFlowPlanReviewView extends StatefulWidget {
+class DayFlowPlanReviewView extends ConsumerStatefulWidget {
   final DayFlowPlan plan;
   final String sourcePrompt;
 
@@ -18,10 +20,11 @@ class DayFlowPlanReviewView extends StatefulWidget {
   });
 
   @override
-  State<DayFlowPlanReviewView> createState() => _DayFlowPlanReviewViewState();
+  ConsumerState<DayFlowPlanReviewView> createState() =>
+      _DayFlowPlanReviewViewState();
 }
 
-class _DayFlowPlanReviewViewState extends State<DayFlowPlanReviewView> {
+class _DayFlowPlanReviewViewState extends ConsumerState<DayFlowPlanReviewView> {
   late bool _sweepToDayEarn;
 
   @override
@@ -44,9 +47,17 @@ class _DayFlowPlanReviewViewState extends State<DayFlowPlanReviewView> {
       leftover: widget.plan.leftover,
       sweepToDayEarn: _sweepToDayEarn,
     );
-    await DayFlowLocalStore.instance.savePlan(plan);
-    if (!mounted) return;
-    TopSnackbar.show(context, message: 'Plan activated!');
+    final completed = await TransactionPinFlow.requestPinAndRun<bool>(
+      context: context,
+      ref: ref,
+      task: (_) async {
+        await DayFlowLocalStore.instance.savePlan(plan);
+        return true;
+      },
+    );
+    if (!mounted || completed != true) return;
+
+    TopSnackbar.showSafe(context, message: DayFlowCopy.flowActivated);
     Navigator.pop(context, true);
   }
 

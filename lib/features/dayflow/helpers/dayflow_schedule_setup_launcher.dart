@@ -1,11 +1,15 @@
+import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/core/navigation/dayfi_page_transitions.dart';
+import 'package:dayfi/features/dayflow/constants/dayflow_copy.dart';
+import 'package:dayfi/features/dayflow/helpers/dayflow_automation_currency.dart';
 import 'package:dayfi/features/dayflow/models/dayflow_models.dart';
+import 'package:dayfi/features/dayflow/services/dayflow_api_service.dart';
 import 'package:dayfi/features/pay/constants/bill_category_presets.dart';
 import 'package:dayfi/features/pay/constants/flutterwave_bill_presets.dart';
 import 'package:dayfi/features/pay/models/bill_models.dart';
 import 'package:dayfi/features/pay/views/bill_pay_view.dart';
-import 'package:dayfi/features/recipients/helpers/recipient_send_launcher.dart';
-import 'package:dayfi/routes/route.dart';
+import 'package:dayfi/features/recipients/helpers/recipient_history_helper.dart';
+import 'package:dayfi/features/recipients/widgets/recipient_picker_bottom_sheet.dart';
 import 'package:flutter/material.dart';
 
 /// When a schedule row opens Pay or Send, this ties the result back to DayBudget.
@@ -95,15 +99,6 @@ abstract final class DayFlowScheduleSetupLauncher {
     return null;
   }
 
-  static String? _extractDayfiTag(String? hint, String? title) {
-    for (final raw in [hint, title]) {
-      if (raw == null) continue;
-      final match = RegExp(r'@([a-zA-Z0-9_]+)').firstMatch(raw);
-      if (match != null) return match.group(1);
-    }
-    return null;
-  }
-
   static BillBiller _pickAirtimeBiller(String phone, List<BillBiller> billers) {
     if (billers.isEmpty) {
       throw StateError('No billers for category');
@@ -177,62 +172,53 @@ abstract final class DayFlowScheduleSetupLauncher {
     DayBudgetScheduleInstance item,
     DayFlowScheduleSetupContext setup,
   ) async {
-    final amount = item.amount > 0 ? item.amount : null;
-    const currency = 'NGN';
-    final recipientId = item.recipientId?.trim();
-    final tag = _extractDayfiTag(item.recipientHint, item.title);
-    final phone = _extractPhone(item.recipientHint, item.title);
+    final picked = await showRecipientPickerBottomSheet(context);
+    if (picked == null || !context.mounted) return;
 
-    if (recipientId != null && recipientId.isNotEmpty) {
-      await RecipientSendLauncher.launchWithBeneficiaryId(
-        context,
-        beneficiaryId: recipientId,
-        amount: amount,
-        currency: currency,
-        fallbackName: item.recipientHint,
-      );
-      return;
-    }
-
-    if (tag != null && tag.isNotEmpty) {
-      await Navigator.pushNamed(
-        context,
-        AppRoute.sendDayfiIdView,
-        arguments: <String, dynamic>{
-          'debitCurrency': currency,
-          'sendCurrency': currency,
-          'receiveCurrency': currency,
-          'receiveCountry': 'NG',
-          'dayfiId': tag,
-          if (amount != null) 'prefillSendAmount': amount,
-        },
-      );
-      return;
-    }
-
-    if (phone != null) {
-      await Navigator.pushNamed(
-        context,
-        AppRoute.addRecipientsView,
-        arguments: <String, dynamic>{
-          'receiveCountry': 'NG',
-          'receiveCurrency': currency,
-          'sendCurrency': currency,
-          'debitCurrency': currency,
-          'sendCountry': 'NG',
-          'recipientDeliveryMethod': 'mobile_money',
-          'recipientChannelId': '002_mobile_money',
-          'prefillAccountNumber': phone,
-          if (amount != null) 'prefillSendAmount': amount,
-        },
-      );
-      return;
-    }
-
-    await Navigator.pushNamed(
-      context,
-      AppRoute.recipientsView,
-      arguments: <String, dynamic>{'fromSendView': true},
+    final recipientId = picked.beneficiary.id;
+    final label = RecipientHistoryHelper.primaryLabel(
+      picked.beneficiary,
+      picked.source,
     );
+    final channel = RecipientHistoryHelper.recipientChannelLabel(picked);
+    final recipientHint =
+        channel.isNotEmpty ? '$label · $channel' : label;
+
+    double? sourceAmount;
+    if (item.amount > 0 &&
+        dayflowAutomationNeedsNgnSource(
+          paymentType: 'send',
+          recipientHint: recipientHint,
+          toCurrency: 'NGN',
+        )) {
+      sourceAmount = await dayflowNgnAmountForUsd(item.amount);
+    }
+
+    try {
+      await dayFlowApiService.updateFlowSchedule(
+        flowId: setup.flowId,
+        scheduleId: setup.scheduleId,
+        paymentType: 'send',
+        recipientId: recipientId,
+        recipientHint: recipientHint,
+        sourceAmount: sourceAmount,
+        execution: const {'toCurrency': 'NGN'},
+      );
+      setup.onLinked?.call();
+      if (context.mounted) {
+        TopSnackbar.show(
+          context,
+          message: DayFlowCopy.scheduleLinkedToBudget,
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        TopSnackbar.show(
+          context,
+          message: e.toString().replaceFirst('Exception: ', ''),
+          isError: true,
+        );
+      }
+    }
   }
 }
