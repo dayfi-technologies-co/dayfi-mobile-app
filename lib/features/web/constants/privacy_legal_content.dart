@@ -4,7 +4,7 @@ const privacyLegalDocument = LegalDocument(
   id: LegalDocumentId.privacy,
   pageTitle: 'Privacy Notice',
   subtitle:
-      'How we collect, use, and protect your personal data when you use DayFi to send money, pay bills, and manage your wallet.',
+      'How we collect, use, and protect your personal data when you use DayFi to send and receive payments.',
   effectiveDate: 'Effective date: 11 May 2026',
   sections: [
     LegalSection(
@@ -12,7 +12,7 @@ const privacyLegalDocument = LegalDocument(
       title: 'Introduction and scope',
       paragraphs: [
         'DayFi Technologies Inc. ("DayFi," "we," "our," or "us") is committed to protecting your privacy. This Privacy Notice explains how we collect, use, disclose, retain, and protect personal data when you access or use our website, mobile applications, wallet and payment tools, APIs, and any related services (collectively, the "Services").',
-        'DayFi is designed to help individuals send money, pay bills, budget, and save through a personal multi-currency wallet. That includes NGN bank collection and payouts through our banking partner Flutterwave, optional stablecoin settlement (for example Stellar USDC and supported EVM flows), and device-based experiences such as tap-to-pay on compatible hardware where available. Some features may be in limited availability or marked coming soon as we expand coverage.',
+        'DayFi is designed to help individuals send and receive money through secure bank and digital payment rails. That includes NGN collection and payouts through our banking partner Flutterwave. Some features may be in limited availability as we expand coverage.',
         'This Notice applies to all individuals who use DayFi\'s Services, whether as account holders or visitors to our website. If you use DayFi on behalf of a business, the same principles apply to the personal data we process for that account. It does not apply to third-party services, websites, or partners—such as Flutterwave—whose own privacy policies govern the data they hold. We encourage you to review those policies separately.',
         'By creating an account or using the Services, you acknowledge that you have read and understood this Privacy Notice. If you have questions, contact us at privacy@dayfi.co.',
       ],
@@ -24,8 +24,8 @@ const privacyLegalDocument = LegalDocument(
         'The personal data we collect depends on how you use the Services. We aim to collect only what is necessary for us to provide and improve DayFi.',
         'Identity details: Your legal name, date of birth where required, and profile information such as your DayFi ID or username. Where you choose virtual account (VA) onboarding, we collect information required to issue a dedicated NGN VA through Flutterwave, which may include your Bank Verification Number (BVN). BVN is a sensitive identifier and is handled with particular care—it is transmitted securely to Flutterwave for VA issuance and may be stored in encrypted form in our systems only where our operating environment is explicitly configured to allow it.',
         'Contact information: Email address, phone number, and any business or mailing address you provide during registration or account management.',
-        'Financial and payment data: NGN virtual account numbers and bank metadata issued by or coordinated with Flutterwave; your payout bank account details when you request withdrawals; recipient details you save for sends; stablecoin wallet addresses and on-chain transaction references (for example Stellar USDC deposits or EVM-compatible flows); bill-payment metadata; wallet balances; budget and Daily Earn records; and your transaction and ledger history within the platform.',
-        'Device and technical data: Device model, operating system, app version, IP address, and session diagnostics. Where you use tap-to-pay, NFC, or similar device-based payment technology, we also process signals necessary to complete or secure the transaction on supported hardware. We may collect crash and error data to diagnose and improve the app.',
+        'Financial and payment data: NGN virtual account numbers and bank metadata issued by or coordinated with Flutterwave; your payout bank account details when you send or receive funds; recipient details you save for sends; wallet balances; and your transaction and ledger history within the platform.',
+        'Device and technical data: Device model, operating system, app version, IP address, and session diagnostics. We may collect crash and error data to diagnose and improve the app.',
         'Usage and analytics data: How you navigate the app, features you use, settings you configure, and aggregate behavioral patterns that help us understand how the product performs. This data is typically collected using first-party instrumentation and may in future involve trusted analytics partners under data processing agreements.',
         'Communications: Messages and files you submit via in-app support, email correspondence, and authentication or delivery logs when we send you service communications.',
       ],
@@ -34,10 +34,9 @@ const privacyLegalDocument = LegalDocument(
       number: '03',
       title: 'How we collect information',
       paragraphs: [
-        'Directly from you: When you register for an account, complete identity verification, send money, pay bills, set budgets, fund your wallet, or contact our support team. You are always in control of what you provide.',
+        'Directly from you: When you register for an account, complete identity verification, send or receive money, fund your wallet, or contact our support team. You are always in control of what you provide.',
         'Automatically: When you use our app or visit our website, we may collect technical data through logs, cookies, and similar technologies. This includes information about your device, session timing, and payment status updates. We use this data primarily for security, reliability, and diagnosing issues—not for cross-site advertising.',
         'From Flutterwave: When we create or manage your NGN virtual account, reconcile inbound bank transfers, or execute outbound NGN payouts you initiate, Flutterwave provides us with transaction identifiers, status messages, and other data required to operate those payment flows accurately.',
-        'From blockchain networks and indexers: Where you choose stablecoin settlement rails, we may receive confirmation data from public blockchain networks or trusted indexers to verify that a payment was received on-chain and to credit your wallet or sale record accordingly. Note that transaction data on public blockchains is visible to anyone with network access—this is a fundamental property of those networks, not a choice we make.',
         'From verification or identity services: We may work with third-party services to help validate account information or detect fraud, consistent with applicable law. Any such service is bound by a data processing agreement with us.',
       ],
     ),
@@ -46,10 +45,8 @@ const privacyLegalDocument = LegalDocument(
       title: 'How we use your information',
       paragraphs: [
         'We use your personal data for the following purposes, always based on a valid legal ground:',
-        'Providing and operating the Services: This includes processing sends and top-ups, paying bills, maintaining your ledger and wallet, running budget and Daily Earn features, sending transactional notifications, and managing your account settings. This is necessary to perform our contract with you.',
+        'Providing and operating the Services: This includes processing sends and receives, maintaining your ledger and wallet, sending transactional notifications, and managing your account settings. This is necessary to perform our contract with you.',
         'NGN banking operations: Operating virtual account collection and outbound bank payouts through Flutterwave in accordance with their requirements and applicable Nigerian financial law. We cannot provide NGN bank rails without processing the identity and account data Flutterwave requires.',
-        'Stablecoin settlement: Orchestrating optional on-chain payment flows so that you receive timely, transparent payment status. This includes communicating with blockchain networks and monitoring for confirmed inbound transactions.',
-        'Device-based payment experiences: Enabling tap-to-pay, NFC, gift-card, and other checkout paths on supported hardware and software versions. These flows depend on device and OS data; we only collect what is necessary to complete or secure the transaction.',
         'Product improvement and development: Analyzing how the Services are used in aggregate to fix bugs, improve performance, and build new features. We aim to use anonymized or aggregated data for this purpose where possible.',
         'Security, fraud prevention, and compliance: Detecting and investigating suspicious activity, protecting our platform and users from unauthorized access or fraudulent transactions, and meeting our legal and regulatory obligations—including anti-money-laundering (AML) and know-your-customer (KYC) requirements in Nigeria and any other jurisdiction where we operate.',
         'Communications: Sending you service messages (for example transaction confirmations, security alerts, and policy updates), responding to your support requests, and providing guidance on using the platform. We do not send marketing messages without your consent.',
@@ -63,7 +60,6 @@ const privacyLegalDocument = LegalDocument(
         'Flutterwave and its banking partners: We share identity, account, and transaction data with Flutterwave strictly as required to issue and operate your NGN virtual account, match inbound transfers to the correct account, and execute outbound NGN payouts you request. Flutterwave processes this data under their own privacy policy and applicable Nigerian banking regulations.',
         'Infrastructure, hosting, and operations vendors: We use third-party providers for cloud hosting, database management, monitoring, security tooling, email delivery, and customer support software. Each provider processes data on our behalf under a data processing agreement and is not permitted to use your data for their own purposes.',
         'Analytics and diagnostics: We may share limited technical data with trusted analytics providers to understand app performance and usage patterns. We configure these integrations to minimize personal data transmission and do not use them for targeted advertising.',
-        'Blockchain networks: Where you use stablecoin rails, the transaction details required to complete a payment (such as a wallet address and amount) are broadcast to public blockchain networks. This data is visible to anyone and is irreversible once confirmed—that is a structural property of blockchain technology.',
         'Regulators, courts, and law enforcement: We may disclose personal data when we believe in good faith that such disclosure is required or permitted by law, a valid court order, or a regulatory requirement applicable to DayFi or our partners. We review such requests for legal validity and will challenge overbroad requests where permitted.',
         'Business transfers: If DayFi is involved in a merger, acquisition, or sale of all or substantially all of its assets, personal data held by us may be transferred as part of that transaction. We will provide notice to affected users as required by law.',
         'Aggregated or de-identified data: We may share information that has been aggregated or de-identified in a way that cannot reasonably identify you, for purposes such as industry research, product announcements, or partnerships.',

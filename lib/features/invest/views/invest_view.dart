@@ -190,7 +190,7 @@ class _InvestViewState extends ConsumerState<InvestView> {
                           Text(
                             '\$${headerBalance.toStringAsFixed(2)}',
                             style: TextStyle(
-                              fontSize: 40.0,
+                              fontSize: 38.0,
                               height: 1,
                               fontFamily: 'Chirp',
                               fontWeight: FontWeight.w600,

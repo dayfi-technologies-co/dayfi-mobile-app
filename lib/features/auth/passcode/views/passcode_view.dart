@@ -1,4 +1,5 @@
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
+import 'package:dayfi/common/widgets/dayfi_web_dialog.dart';
 import 'package:dayfi/common/widgets/buttons/secondary_button.dart';
 import 'package:dayfi/common/utils/haptic_helper.dart';
 import 'package:flutter/gestures.dart';
@@ -372,11 +373,10 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
 
   // Logout Dialog Widget
   Widget _buildLogoutDialog() {
-    return Dialog(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+    return DayfiWebDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: Container(
-        padding: EdgeInsets.all(28),
+      child: Padding(
+        padding: const EdgeInsets.all(28),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -525,6 +525,7 @@ class _PasscodeViewState extends ConsumerState<PasscodeView> {
     return InkWell(
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
+      hoverColor: Colors.transparent,
       onTap: () {
         HapticHelper.lightImpact();
         onTap();

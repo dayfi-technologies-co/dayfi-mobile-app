@@ -1,3 +1,5 @@
+import 'package:dayfi/features/pay/constants/bill_display_labels.dart';
+
 class BillCategory {
   final int? id;
   final String name;
@@ -49,6 +51,10 @@ class BillBiller {
       flutterwaveBillerCode: json['flutterwave_biller_code']?.toString(),
     );
   }
+
+  /// Grid, app bar, and history — never shows 9mobile or a Nigeria suffix.
+  String get displayName =>
+      billBillerTitleFrom(shortName: shortName, name: name);
 }
 
 class BillItem {
@@ -91,8 +97,9 @@ class BillItem {
     );
   }
 
-  String get displayLabel =>
-      shortName.isNotEmpty ? shortName : name;
+  String get displayLabel => formatBillBillerLabel(
+        shortName.isNotEmpty ? shortName : name,
+      );
 }
 
 /// Smallest priced packages first; flexible / custom (amount 0) last.

@@ -105,7 +105,7 @@ class Budget {
       case 'bill_reminder':
         return frequency == 'once' ? 'Bill reminder' : 'Bills';
       case 'invest_allocation':
-        return 'Daily Earn';
+        return 'DayEarn';
       case 'category_spend':
         return 'Spending cap';
       default:
@@ -202,7 +202,7 @@ class Budget {
         ));
       case 'invest_allocation':
         final pot = _metaVal('potName');
-        if (pot != null) rows.add(MapEntry('Daily Earn pot', pot));
+        if (pot != null) rows.add(MapEntry('DayEarn pot', pot));
         rows.add(MapEntry(
           'Note',
           'Scheduled deposit — runs when automation is live.',

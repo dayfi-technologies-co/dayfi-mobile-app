@@ -5,7 +5,7 @@ class DayFlowCopy {
   static const featureName = 'DayFlow';
   static const poweredByDayX = 'Powered by DayX';
   static const tagline = 'Automate sends & bill payments';
-  static const homeSubtitle = 'Schedule autopay from your wallet';
+  static const homeSubtitle = 'Automate your payments';
 
   static const safeToSpend = 'Safe to spend';
   static const freeAfterBudgetLabel = 'Free after budget';
@@ -54,8 +54,10 @@ class DayFlowCopy {
   static const billAutomationDescription =
       'Automate repeat bill payments — provider, package, account, and schedule.';
   static const automatePaymentButton = 'Turn on autopay';
+  static const saveAutomationButton = 'Save changes';
   static const automationCreated =
       'Autopay is on — your payment is scheduled.';
+  static const automationUpdated = 'Scheduled payment updated.';
   static const totalBudget = 'Total budget';
   static const totalSpent = 'Total spent';
   static const availableBalance = 'Available balance';

@@ -27,6 +27,7 @@ class DayfiScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
     return InkWell(
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
+      hoverColor: Colors.transparent,
       onTap: () {
         FocusScope.of(context).unfocus();
         if (onPressed != null) {
@@ -150,7 +151,6 @@ class DayfiFeatureScaffold extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(0, 8, 0, 0),
           child: body,
         ),
-
         bottomNavigationBar: bottomNavigationBar,
       ),
     );

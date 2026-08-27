@@ -54,7 +54,7 @@ class _PayBillerBrandIconState extends State<PayBillerBrandIcon> {
 
       return Container(
         decoration: BoxDecoration(
-          border: Border.all(color: borderColor.withOpacity(0.5), width: 4),
+          border: Border.all(color: borderColor.withOpacity(0.35), width: 6),
           borderRadius: BorderRadius.circular(32),
         ),
         child: ClipRRect(

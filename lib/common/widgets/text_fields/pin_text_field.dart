@@ -1,12 +1,11 @@
 // import 'package:epass/ui/common/app_colors.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:pin_code_fields/pin_code_fields.dart';
 
-class PinTextField extends StatelessWidget {
+class PinTextField extends StatefulWidget {
   final Function(String)? onTextChanged;
   final Function()? onCancel;
   final Function(String)? onCompleted;
@@ -37,31 +36,65 @@ class PinTextField extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    // pin_code_fields defaults to a Material paste confirmation; on iOS use Cupertino instead.
-    final DialogConfig? pasteDialogConfig =
-        !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS
-            ? DialogConfig(platform: PinCodePlatform.iOS)
-            : null;
+  State<PinTextField> createState() => _PinTextFieldState();
+}
 
+class _PinTextFieldState extends State<PinTextField> {
+  late final TextEditingController _controller;
+  late final bool _ownsController;
+
+  @override
+  void initState() {
+    super.initState();
+    _ownsController = widget.controller == null;
+    _controller = widget.controller ?? TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    if (_ownsController) {
+      _controller.dispose();
+    }
+    super.dispose();
+  }
+
+  /// Paste digits into the field without the pin_code_fields confirmation dialog.
+  bool _pasteSilently(String? text) {
+    if (text == null) return false;
+    final digits = text.replaceAll(RegExp(r'\D'), '');
+    if (digits.isEmpty) return false;
+    final value =
+        digits.length > widget.length
+            ? digits.substring(0, widget.length)
+            : digits;
+    _controller.text = value;
+    widget.onTextChanged?.call(value);
+    if (value.length == widget.length) {
+      widget.onCompleted?.call(value);
+    }
+    return false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return PinCodeTextField(
       keyboardType: TextInputType.number,
-      focusNode: focusNode,
+      focusNode: widget.focusNode,
       enablePinAutofill: true,
-      controller: controller,
-      dialogConfig: pasteDialogConfig,
+      controller: _controller,
+      beforeTextPaste: _pasteSilently,
       autoDisposeControllers: false,
       blinkDuration: const Duration(milliseconds: 10),
-      enabled: isEnabled,
-      validator: validator,
-      textInputAction: textInputAction,
+      enabled: widget.isEnabled,
+      validator: widget.validator,
+      textInputAction: widget.textInputAction,
       cursorWidth: 1,
       enableActiveFill: true,
-      obscureText: obscureText,
+      obscureText: widget.obscureText,
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
       textStyle: Theme.of(context).textTheme.headlineMedium?.copyWith(
         fontSize: 20,
-       fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w500,
         fontFamily: 'Chirp',
         letterSpacing: 0,
       ),
@@ -72,8 +105,8 @@ class PinTextField extends StatelessWidget {
         inactiveBorderWidth: 1,
         selectedBorderWidth: 1,
         borderWidth: 1,
-        fieldHeight: height ?? 60.0,
-        fieldWidth: width ?? 48.0,
+        fieldHeight: widget.height ?? 60.0,
+        fieldWidth: widget.width ?? 48.0,
         borderRadius: BorderRadius.circular(12),
         shape: PinCodeFieldShape.box,
         inactiveFillColor: Theme.of(context).colorScheme.surface,
@@ -83,11 +116,10 @@ class PinTextField extends StatelessWidget {
         activeColor: AppColors.purple500ForTheme(context).withOpacity(.2),
         selectedColor: AppColors.purple500ForTheme(context),
       ),
-
       appContext: context,
-      length: length,
-      onCompleted: onCompleted,
-      onChanged: onTextChanged!,
+      length: widget.length,
+      onCompleted: widget.onCompleted,
+      onChanged: widget.onTextChanged!,
       animationType: AnimationType.fade,
       animationDuration: const Duration(milliseconds: 150),
       cursorColor: AppColors.purple500ForTheme(context),

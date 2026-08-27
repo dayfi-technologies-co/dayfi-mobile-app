@@ -8,10 +8,18 @@ import 'package:dayfi/services/local/secure_storage.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
+import 'package:dayfi/common/widgets/dayfi_web_dialog.dart';
 import 'package:dayfi/common/constants/storage_keys.dart';
 import 'package:dayfi/models/user_model.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:dayfi/features/home/vm/home_viewmodel.dart';
+import 'package:dayfi/features/transactions/vm/transactions_viewmodel.dart';
+import 'package:dayfi/features/notifications/vm/notifications_viewmodel.dart';
+import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
+import 'package:dayfi/features/wallet/providers/wallet_hub_provider.dart';
+import 'package:dayfi/features/send/vm/send_viewmodel.dart';
+import 'package:dayfi/features/recipients/vm/recipients_viewmodel.dart';
 
 class ReenterPasscodeState {
   final String passcode;
@@ -131,13 +139,12 @@ class ReenterPasscodeNotifier extends StateNotifier<ReenterPasscodeState> {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: Theme.of(context).colorScheme.surface,
+        return DayfiWebDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
           ),
-          child: Container(
-            padding: EdgeInsets.all(28),
+          child: Padding(
+            padding: const EdgeInsets.all(28),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -170,8 +177,8 @@ class ReenterPasscodeNotifier extends StateNotifier<ReenterPasscodeState> {
                   text: 'Continue',
                   onPressed: () async {
                     Navigator.of(context).pop();
+                    _invalidateUserDataProviders();
                     final user = await _getCurrentUser();
-                    // Check if device supports biometrics
                     final canCheckBiometrics =
                         await _deviceSupportsBiometrics();
                     if (isFromSignup ||
@@ -233,6 +240,18 @@ class ReenterPasscodeNotifier extends StateNotifier<ReenterPasscodeState> {
         );
       },
     );
+  }
+
+  void _invalidateUserDataProviders() {
+    final container = getGlobalProviderContainer();
+    if (container == null) return;
+    container.invalidate(homeViewModelProvider);
+    container.invalidate(transactionsProvider);
+    container.invalidate(walletHubProvider);
+    container.invalidate(notificationsProvider);
+    container.invalidate(profileViewModelProvider);
+    container.invalidate(sendViewModelProvider);
+    container.invalidate(recipientsProvider);
   }
 
   /// Get current user from secure storage

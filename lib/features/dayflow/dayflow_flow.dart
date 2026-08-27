@@ -7,6 +7,7 @@ import 'package:dayfi/core/navigation/dayfi_page_transitions.dart';
 import 'package:dayfi/features/dayflow/views/dayflow_main_view.dart';
 import 'package:dayfi/features/dayflow/widgets/dayflow_overlay.dart';
 import 'package:dayfi/routes/route.dart';
+import 'package:dayfi/common/widgets/dayfi_web_dialog.dart';
 import 'package:flutter/material.dart';
 
 abstract final class DayFlowFlow {
@@ -58,7 +59,7 @@ abstract final class DayFlowFlow {
 
     final plan = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => DayfiWebAlertDialog(
         title: Text(DayFlowCopy.incomeDetectedTitle),
         content: Text(
           '${DayFlowCopy.incomeWelcome('New funds')} '

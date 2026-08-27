@@ -1,5 +1,6 @@
 import 'package:dayfi/common/helpers/wallet_transaction_labels.dart';
 import 'package:dayfi/common/utils/available_balance_calculator.dart';
+import 'package:dayfi/common/utils/string_utils.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/features/recipients/helpers/recipient_history_helper.dart';
 import 'package:dayfi/models/wallet_transaction.dart';
@@ -80,8 +81,12 @@ class WalletTransactionDisplay {
     if (WalletTransactionLabels.isBillReversal(transaction)) return false;
     if (!WalletTransactionLabels.isCredit(transaction)) return false;
     if (isUsdBankDeposit(transaction)) return false;
-    if (transaction.receiveChannel?.toLowerCase() == 'bank') {
-      final reason = (transaction.reason ?? '').toLowerCase();
+    final channel = transaction.receiveChannel?.toLowerCase() ?? '';
+    if (channel == 'crypto') return false;
+
+    final reason = (transaction.reason ?? '').toLowerCase();
+    final name = transaction.beneficiary.name.toLowerCase();
+    if (channel == 'bank') {
       if (reason.contains('ngn bank') ||
           reason.contains('flutterwave') ||
           (reason.contains('deposit') &&
@@ -89,6 +94,12 @@ class WalletTransactionDisplay {
               !reason.contains('usd'))) {
         return true;
       }
+    }
+
+    // Flutterwave / local bank top-ups often arrive as "Wallet Top Up"
+    // with a NGN face value plus a small USD credit.
+    if (name == 'wallet top up' || reason.contains('flutterwave')) {
+      return _ngnUsdDepositPair(transaction) != null;
     }
     return false;
   }
@@ -293,8 +304,37 @@ class WalletTransactionDisplay {
 
   static NgnBankDepositFx? ngnBankDepositFx(WalletTransaction transaction) {
     if (!isNgnBankDeposit(transaction)) return null;
-    final ngn = transaction.ngnAmount ?? transaction.receiveAmount;
-    final usd = transaction.usdCredited ?? transaction.sendAmount;
+    return _ngnUsdDepositPair(transaction);
+  }
+
+  /// Pair NGN paid vs USD credited, even when send/receive amounts are swapped.
+  static NgnBankDepositFx? _ngnUsdDepositPair(WalletTransaction transaction) {
+    final values = <double>[
+      if ((transaction.ngnAmount ?? 0) > 0) transaction.ngnAmount!,
+      if ((transaction.receiveAmount ?? 0) > 0) transaction.receiveAmount!,
+      if ((transaction.sendAmount ?? 0) > 0) transaction.sendAmount!,
+    ];
+
+    double? usd = transaction.usdCredited;
+    if (usd == null || usd <= 0 || usd >= 50) {
+      for (final value in values) {
+        if (value > 0 && value < 50) {
+          usd = value;
+          break;
+        }
+      }
+    }
+
+    double? ngn = transaction.ngnAmount;
+    if (ngn == null || ngn < 50) {
+      for (final value in values) {
+        if (value >= 50) {
+          ngn = value;
+          break;
+        }
+      }
+    }
+
     if (ngn == null || usd == null || ngn <= 0 || usd <= 0) return null;
     return NgnBankDepositFx(
       ngnAmount: ngn,
@@ -1243,15 +1283,7 @@ class WalletTransactionDisplay {
     return '${buffer.toString()}.$decimalPart';
   }
 
-  static String capitalizeWords(String text) {
-    return text
-        .split(' ')
-        .map((word) {
-          if (word.isEmpty) return word;
-          return word[0].toUpperCase() + word.substring(1).toLowerCase();
-        })
-        .join(' ');
-  }
+  static String capitalizeWords(String text) => StringUtils.toTitleCase(text);
 
   static String currencySymbol(String currency) {
     switch (currency) {

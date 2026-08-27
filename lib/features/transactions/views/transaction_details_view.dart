@@ -3,6 +3,7 @@ import 'package:dayfi/common/constants/username_copy.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/common/widgets/dayfi_loading_indicator.dart';
 import 'package:dayfi/common/widgets/dayfi_screen_app_bar.dart';
+import 'package:dayfi/common/widgets/dayfi_web_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -193,10 +194,10 @@ class _TransactionDetailsViewState
     );
     final showLocalPayoutNgn =
         payoutProfile.isPayout && payoutProfile.hasLocalReceive;
-    final dateTime = _formatDateTime(widget.transaction.timestamp);
-    final isCollection = _effectiveStatus.toLowerCase().contains(
-      'collection',
+    final ngnDepositFx = WalletTransactionDisplay.ngnBankDepositFx(
+      widget.transaction,
     );
+    final dateTime = _formatDateTime(widget.transaction.timestamp);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -213,7 +214,21 @@ class _TransactionDetailsViewState
             color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
-        if (showLocalPayoutNgn) ...[
+        if (ngnDepositFx != null) ...[
+          SizedBox(height: 4),
+          Text(
+            WalletTransactionDisplay.formatNgnWhole(ngnDepositFx.ngnAmount),
+            style: AppTypography.bodyMedium.copyWith(
+              fontFamily: 'Karla',
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              letterSpacing: -.2,
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withOpacity(0.65),
+            ),
+          ),
+        ] else if (showLocalPayoutNgn) ...[
           SizedBox(height: 4),
           Text(
             WalletTransactionDisplay.payoutReceiveAmountText(
@@ -286,29 +301,6 @@ class _TransactionDetailsViewState
                     SizedBox(height: 4),
                     Text(
                       networkSubtitle,
-                      style: AppTypography.bodyMedium.copyWith(
-                        fontFamily: 'Chirp',
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: -.2,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withOpacity(0.65),
-                      ),
-                    ),
-                  ],
-                  if (WalletTransactionDisplay.ngnBankDepositFx(
-                        widget.transaction,
-                      ) !=
-                      null &&
-                      !WalletTransactionDisplay.isCrossBorderBankSend(
-                        widget.transaction,
-                      )) ...[
-                    SizedBox(height: 4),
-                    Text(
-                      WalletTransactionDisplay.formatNgnBankDepositSubtitle(
-                        widget.transaction,
-                      ),
                       style: AppTypography.bodyMedium.copyWith(
                         fontFamily: 'Chirp',
                         fontSize: 13,
@@ -1632,6 +1624,17 @@ class _TransactionDetailsViewState
       );
       return '\$$formatted';
     }
+    if (_isWalletTopUp() || _isDepositIncome()) {
+      final usd = widget.transaction.usdCredited ??
+          _usdScaleAmount(widget.transaction.sendAmount) ??
+          _usdScaleAmount(widget.transaction.receiveAmount);
+      if (usd != null) {
+        final formatted = StringUtils.formatNumberWithCommas(
+          usd.toStringAsFixed(2),
+        );
+        return '\$$formatted';
+      }
+    }
     final numeric = amount.replaceAll(RegExp(r'[^\d.]'), '');
     final parsed = double.tryParse(numeric.replaceAll(',', ''));
     if (parsed == null) return amount;
@@ -1641,6 +1644,11 @@ class _TransactionDetailsViewState
         : _paymentCurrencySymbol();
     final formatted = StringUtils.formatNumberWithCommas(parsed.toStringAsFixed(2));
     return '$symbol$formatted';
+  }
+
+  double? _usdScaleAmount(double? value) {
+    if (value == null || value <= 0 || value >= 50) return null;
+    return value;
   }
 
   bool _isDepositIncome() =>
@@ -2408,11 +2416,10 @@ class _TransactionDetailsViewState
   }
 
   Widget _buildPaymentConfirmationDialog() {
-    return Dialog(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+    return DayfiWebDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: Container(
-        padding: EdgeInsets.all(28),
+      child: Padding(
+        padding: const EdgeInsets.all(28),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -2497,11 +2504,10 @@ class _TransactionDetailsViewState
   }
 
   Widget _buildNotPaidDialog() {
-    return Dialog(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+    return DayfiWebDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: Container(
-        padding: EdgeInsets.all(28),
+      child: Padding(
+        padding: const EdgeInsets.all(28),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -2568,11 +2574,10 @@ class _TransactionDetailsViewState
   }
 
   Widget _buildCancelDialog() {
-    return Dialog(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+    return DayfiWebDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: Container(
-        padding: EdgeInsets.all(28),
+      child: Padding(
+        padding: const EdgeInsets.all(28),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

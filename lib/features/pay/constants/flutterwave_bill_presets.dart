@@ -1,4 +1,7 @@
+import 'package:dayfi/features/pay/constants/bill_display_labels.dart';
 import 'package:dayfi/features/pay/models/bill_models.dart';
+
+export 'package:dayfi/features/pay/constants/bill_display_labels.dart';
 
 /// Preview billers when Flutterwave / bills API is unavailable (IP whitelist, etc.).
 const String kFlutterwavePreviewBillerPrefix = 'fw_preview_';
@@ -16,6 +19,17 @@ bool isMtnNigeriaAirtimeBill(BillCategory category, BillBiller biller) {
   if (category.code.toUpperCase() != 'AIRTIME') return false;
   final name = '${biller.shortName ?? ''} ${biller.name}'.toLowerCase();
   return name.contains('mtn');
+}
+
+String billBillerTitle(BillBiller biller) => biller.displayName;
+
+bool billerMatchesTelcoNetwork(BillBiller biller, String network) {
+  final hay = formatBillBillerLabel(
+    '${biller.shortName ?? ''} ${biller.name}',
+  ).toLowerCase();
+  final needle = formatBillBillerLabel(network).toLowerCase();
+  if (needle.isEmpty) return false;
+  return hay.contains(needle);
 }
 
 String _billItemLabel(BillItem item) =>
@@ -65,7 +79,7 @@ String categoryInnerIconAsset(String categoryCode) {
 }
 
 const _billBrandImageRules = <(List<String> keys, String asset)>[
-  (['9mobile', 'etisalat'], 'assets/images/bills/9mobile.png'),
+  (['t2mobile', 't2 mobile', '9mobile', 'etisalat'], 'assets/images/bills/t2mobile.png'),
   (['abuja', 'aedc'], 'assets/images/bills/abuja.jpg'),
   (['airtel'], 'assets/images/bills/airtel.jpeg'),
   (['benin', 'bedc'], 'assets/images/bills/benin.jpeg'),
@@ -122,8 +136,12 @@ List<BillItem> billItemsFromRows(List<dynamic> rows) {
 
 String billerInnerIconAsset(BillBiller biller, String categoryCode) {
   final name = '${biller.shortName ?? ''} ${biller.name}'.toLowerCase();
-  if (name.contains('mtn') || name.contains('glo') || name.contains('airtel') ||
-      name.contains('9mobile') || name.contains('etisalat')) {
+  if (name.contains('mtn') ||
+      name.contains('glo') ||
+      name.contains('airtel') ||
+      name.contains('t2mobile') ||
+      name.contains('9mobile') ||
+      name.contains('etisalat')) {
     return categoryCode.toUpperCase() == 'MOBILEDATA'
         ? 'assets/icons/svgs/wifi.svg'
         : 'assets/icons/svgs/phone-call.svg';
@@ -200,7 +218,7 @@ List<BillBiller> flutterwavePreviewBillersFor(String categoryCode) {
         ),
         _previewBiller(
           slug: 'AIRTIME_9MOBILE',
-          name: '9mobile',
+          name: 'T2mobile',
           flutterwaveCode: 'BIL099',
         ),
       ];
@@ -215,7 +233,7 @@ List<BillBiller> flutterwavePreviewBillersFor(String categoryCode) {
         ),
         _previewBiller(
           slug: 'DATA_9MOBILE',
-          name: '9mobile',
+          name: 'T2mobile',
           flutterwaveCode: 'BIL111',
         ),
       ];

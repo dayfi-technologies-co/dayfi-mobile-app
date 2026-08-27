@@ -10,7 +10,6 @@ class WebLandingView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const WebLandingShell(
-      showAnnouncement: false,
       activeRoute: AppRoute.webLandingView,
       fullWidthChild: true,
       child: _LandingContent(),
@@ -40,6 +39,10 @@ class _LandingContent extends StatelessWidget {
             isMobile: isMobile,
             isDesktop: isDesktop,
           ),
+        ),
+        LandingFullBleedSection(
+          backgroundColor: LandingSectionColors.dayx,
+          child: const LandingDayXSection(),
         ),
         LandingFullBleedSection(
           backgroundColor: LandingSectionColors.highlights,

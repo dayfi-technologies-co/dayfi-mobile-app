@@ -5,11 +5,6 @@ import 'package:flutter/material.dart';
 abstract final class LandingCopy {
   LandingCopy._();
 
-  // Announcement
-  static const announcementText =
-      'We\'ve secured our microfinance banking license in Nigeria — our home market 🎉.';
-  static const announcementCta = 'See what this means for you →';
-
   // Nav
   static const navContact = 'Contact us';
   static const navFaqs = 'FAQs';
@@ -18,14 +13,19 @@ abstract final class LandingCopy {
 
   static const brandName = 'DayFi';
 
-  // Hero
-  static const heroLine1 = 'Your global wallet';
-  static const heroLine2 = 'for';
-  static const heroLine3 = 'Africa';
+  // Hero — AI financial copilot positioning
+  static const heroHeadline = 'Your AI money\ncopilot for Africa';
+  static const heroLine1 = 'Your AI money';
+  static const heroLine2 = 'copilot';
+  static const heroLine3 = 'for Africa';
   static const heroSubtitle =
-      'Send money worldwide, pay airtime and bills, hold USD and NGN, set personal budgets, and grow savings with Daily Earn — all in one app built for everyday people.';
+      'DayX helps you send, pay bills, budget, and save in plain language. '
+      'Hold USD and NGN, automate with DayFlow, grow with DayEarn — '
+      'one intelligent wallet for everyday people.';
   static const heroSubtitleShort =
-      'Make international transfers to local bank accounts, mobile money and crypto wallets — pay airtime and bills, earn on savings, and smartly budget and automate your spending — all from one multi-currency wallet.';
+      'Meet DayX — ask or speak to move money, pay airtime and bills, '
+      'set budgets, and automate spending. USD and NGN in one wallet, '
+      'with DayFlow autopay and DayEarn daily-interest savings.';
 
   static const qrTitle = 'Get the DayFi app';
   static const qrSubtitle =
@@ -53,25 +53,47 @@ abstract final class LandingCopy {
   static const previewReceiverCurrency = 'NGN';
   static const previewDeliveryMethod = 'Bank account';
 
+  // DayX spotlight
+  static const dayxSectionTitle = 'Meet DayX';
+  static const dayxSectionSubtitle =
+      'Your AI guide inside DayFi. Chat or use your voice — DayX understands '
+      'what you want to do with your money and helps you get there faster.';
+  static const dayxSectionBody =
+      'Ask to send money, pay a bill, check your balance, open a DayEarn pot, '
+      'or build a budget with DayFlow. No menus to hunt — just say what you need.';
+  static const dayxTrySayingLabel = 'Try saying';
+  static const dayxTryPhrases = <String>[
+    'Send ₦5,000 to mom',
+    'Pay my DSTV bill',
+    'Help me budget this month',
+    'What\'s my balance?',
+  ];
+  static const dayxPoweredNote =
+      'DayFlow automations are powered by DayX — tell it what to schedule and when.';
+
   // Value highlights
   static const deliveryHighlights = <LandingHighlightBlock>[
     LandingHighlightBlock(
-      title: 'More than a transfer app',
+      title: 'Intelligence built in',
       body:
-          'DayFi is the single place where your money lives. Hold multiple currencies, move funds to any bank or mobile money account, pay your bills, and get full visibility into every transaction in real time.',
-      icon: 'assets/icons/svgs/swap.svg',
+          'DayX is not a bolt-on chatbot — it is how you navigate DayFi. '
+          'Send, pay bills, check balances, and open DayEarn or DayFlow '
+          'without digging through screens. Your money, guided by AI.',
+      icon: 'assets/icons/svgs/spark.svg',
     ),
     LandingHighlightBlock(
       title: 'Candor, every transfer',
       body:
-          'See the exact fee, live exchange rate, and estimated arrival time before you confirm anything. No fine print, no last minute surprises. What you review is what happens, every single time.',
+          'See the exact fee, live exchange rate, and estimated arrival time '
+          'before you confirm anything. No fine print, no last-minute surprises. '
+          'What you review is what happens, every single time.',
       icon: 'assets/icons/svgs/transactions.svg',
     ),
   ];
 
   // Core capabilities
   static const deliveryMethodsTitle =
-      'One wallet for how you actually use money.';
+      'Everything your money needs — in one place.';
   static const deliveryMethods = <LandingDeliveryMethod>[
     LandingDeliveryMethod(
       title: 'Send worldwide',
@@ -80,7 +102,7 @@ abstract final class LandingCopy {
       iconName: 'bank',
     ),
     LandingDeliveryMethod(
-      title: 'Pay via username',
+      title: 'Pay via @username',
       description:
           'Send instantly to another DayFi user with their @username. No account numbers needed. Share yours to get paid the same way.',
       iconName: 'id',
@@ -90,6 +112,30 @@ abstract final class LandingCopy {
       description:
           'Top up airtime and data, pay cable TV, internet, and utilities from your global balance without switching apps.',
       iconName: 'bills',
+    ),
+    LandingDeliveryMethod(
+      title: 'DayFlow autopay',
+      description:
+          'Automate repeat sends and bill payments on a schedule. Tell DayX what to pay and when — DayFlow runs it for you.',
+      iconName: 'automation',
+    ),
+    LandingDeliveryMethod(
+      title: 'DayEarn savings',
+      description:
+          'Named pots that earn daily interest. Add from your USD wallet, watch it grow, and withdraw anytime with no penalty.',
+      iconName: 'dayearn',
+    ),
+    LandingDeliveryMethod(
+      title: 'Budgets & reminders',
+      description:
+          'Set spending caps, schedule savings deposits, and get one-time reminders before a bill or send is due.',
+      iconName: 'budget',
+    ),
+    LandingDeliveryMethod(
+      title: 'Crypto & stablecoin top-up',
+      description:
+          'Fund your wallet via supported stablecoin rails including Stellar USDC. Hold USD and NGN alongside on-chain deposits.',
+      iconName: 'crypto',
     ),
   ];
 
@@ -113,19 +159,27 @@ abstract final class LandingCopy {
   // How it works (4 steps)
   static const howItWorksTitle = 'Get started in minutes';
   static const howItWorksSubtitle =
-      'Create your DayFi account on web or mobile, verify once, then send, pay bills, budget, and save from the same wallet.';
+      'Create your account, verify once, then ask DayX to send, pay, budget, automate, or save — all from the same wallet.';
   static const howItWorksSteps = <LandingStep>[
-    LandingStep(number: '1', title: 'Sign up with your email', body: ''),
-    LandingStep(number: '2', title: 'Verify your identity', body: ''),
+    LandingStep(
+      number: '1',
+      title: 'Sign up with your email',
+      body: 'Create your DayFi account on web or mobile.',
+    ),
+    LandingStep(
+      number: '2',
+      title: 'Verify your identity',
+      body: 'Complete KYC so you can fund and move money.',
+    ),
     LandingStep(
       number: '3',
-      title: 'Fund your wallet and move money',
-      body: '',
+      title: 'Fund your wallet',
+      body: 'Add NGN, USD, or stablecoin — paths depend on your market.',
     ),
     LandingStep(
       number: '4',
-      title: 'Track sends, bills, and savings live',
-      body: '',
+      title: 'Ask DayX — or tap to act',
+      body: 'Send, pay bills, open DayFlow, or grow DayEarn savings.',
     ),
   ];
 
@@ -134,19 +188,19 @@ abstract final class LandingCopy {
   static const testimonials = <LandingTestimonial>[
     LandingTestimonial(
       quote:
-          'USD and NGN in one app, DSTV paid in seconds. The rate is always clear before I confirm.',
+          'I asked DayX to pay my airtime and it just worked. USD and NGN in one app, rates clear before I confirm.',
       name: 'Amara O.',
       location: 'London, UK',
     ),
     LandingTestimonial(
       quote:
-          'Friends pay me via @username and I cash out instantly. Bills and airtime take seconds.',
+          'Friends pay me via @username and I cash out instantly. DayFlow handles my DSTV every month.',
       name: 'David K.',
       location: 'Lagos, Nigeria',
     ),
     LandingTestimonial(
       quote:
-          'Daily Earn keeps me saving and DayFlow tracks my spending. One money app, not five.',
+          'DayEarn keeps me saving and DayFlow tracks my spending. One intelligent money app, not five.',
       name: 'Zainab M.',
       location: 'Abuja, Nigeria',
     ),
@@ -160,7 +214,30 @@ abstract final class LandingCopy {
     LandingFaq(
       question: 'What is DayFi?',
       answer:
-          'DayFi is a personal finance app for individuals — not businesses. You get a multi-currency wallet to send money across borders, pay bills, set budgets, automate spending with DayFlow, and save with Daily Earn. Everything is designed around how everyday people move, spend, and grow money.',
+          'DayFi is an AI-powered personal finance app for individuals — not businesses. '
+          'You get a multi-currency wallet, DayX to guide you in plain language, '
+          'DayFlow to automate sends and bills, DayEarn for daily-interest savings, '
+          'and personal budgets — all designed for how everyday people move, spend, and grow money.',
+    ),
+    LandingFaq(
+      question: 'What is DayX?',
+      answer:
+          'DayX is your AI financial guide inside DayFi. Chat or use voice to send money, '
+          'pay bills, check your balance, open DayEarn pots, or set up DayFlow automations. '
+          'DayX helps you act faster without hunting through menus.',
+    ),
+    LandingFaq(
+      question: 'What is DayFlow?',
+      answer:
+          'DayFlow schedules repeat sends and bill payments from your wallet. '
+          'Set it once — autopay runs on the date and time you choose. '
+          'DayFlow is powered by DayX, so you can describe what you want in natural language.',
+    ),
+    LandingFaq(
+      question: 'What is DayEarn?',
+      answer:
+          'DayEarn lets you create named savings pots that accrue interest daily. '
+          'Add from your USD wallet, watch it grow, and withdraw back to your balance anytime — no lock-in penalty.',
     ),
     LandingFaq(
       question: 'Who is DayFi for?',
@@ -171,11 +248,6 @@ abstract final class LandingCopy {
       question: 'How do I add money to DayFi?',
       answer:
           'Fund your wallet by bank transfer to your dedicated NGN virtual account (where available), stablecoin deposit on supported networks including Stellar USDC, or other methods shown in the app. Available paths depend on your verification level and market.',
-    ),
-    LandingFaq(
-      question: 'What is Daily Earn?',
-      answer:
-          'Daily Earn lets you create named savings pots that accrue interest daily. Add from your USD wallet, watch it grow, and withdraw back to your balance anytime — no lock-in penalty.',
     ),
     LandingFaq(
       question: 'Is DayFi safe?',
@@ -210,7 +282,7 @@ abstract final class LandingCopy {
   ];
 
   // Final CTA
-  static const finalCtaTitle = 'Open your global wallet';
+  static const finalCtaTitle = 'Your AI money copilot awaits';
   static const finalCtaButton = 'Create your free account';
 
   // Footer

@@ -11,6 +11,13 @@ import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/services/data_clearing_service.dart';
 import 'package:dayfi/core/auth/logout_navigation_suppressor.dart';
 import 'package:dayfi/core/auth/session_auth_service.dart';
+import 'package:dayfi/features/home/vm/home_viewmodel.dart';
+import 'package:dayfi/features/transactions/vm/transactions_viewmodel.dart';
+import 'package:dayfi/features/notifications/vm/notifications_viewmodel.dart';
+import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
+import 'package:dayfi/features/wallet/providers/wallet_hub_provider.dart';
+import 'package:dayfi/features/send/vm/send_viewmodel.dart';
+import 'package:dayfi/features/recipients/vm/recipients_viewmodel.dart';
 
 class PasscodeState {
   final String passcode;
@@ -306,6 +313,7 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
       final hasUser = userJson.isNotEmpty && userJson != 'null';
 
       if (token.isNotEmpty && hasUser) {
+        _invalidateUserDataProviders();
         final promptBiometric =
             await BiometricPreferences.consumePostLoginBiometricPrompt();
         appRouter.pushMainAndClearStack(
@@ -315,19 +323,25 @@ class PasscodeNotifier extends StateNotifier<PasscodeState> {
         return;
       }
 
-      if (hasUser) {
-        _showErrorSnackBar('Session expired. Please sign in again.');
-        appRouter.pushCheckEmailAndClearStack();
-        return;
-      }
-
       await _clearStoredCredentials();
-      _showErrorSnackBar('Please login again.');
+      _showErrorSnackBar('Session expired. Please sign in again.');
       appRouter.pushOnboardingAndClearStack();
     } catch (e) {
       AppLogger.error('Error in authentication and navigation: $e');
       _showErrorSnackBar('Login failed. Please try again.');
     }
+  }
+
+  void _invalidateUserDataProviders() {
+    final container = getGlobalProviderContainer();
+    if (container == null) return;
+    container.invalidate(homeViewModelProvider);
+    container.invalidate(transactionsProvider);
+    container.invalidate(walletHubProvider);
+    container.invalidate(notificationsProvider);
+    container.invalidate(profileViewModelProvider);
+    container.invalidate(sendViewModelProvider);
+    container.invalidate(recipientsProvider);
   }
 
   void _showErrorSnackBar(String message) {

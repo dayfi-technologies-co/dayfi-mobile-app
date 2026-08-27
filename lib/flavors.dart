@@ -21,13 +21,14 @@ class F {
   /// - **Local:** `--dart-define=DAYFI_API_HOST=127.0.0.1` and `DAYFI_API_PORT=3000` (phone on LAN: use Mac IP, not x.x.x.1).
   /// Pilot/prod use VPS `api.dayfi.co` (static egress for Flutterwave / Yellow Card). Override with DAYFI_API_BASE_URL if needed.
   static String get baseUrl {
+    const remoteOverride = String.fromEnvironment('DAYFI_API_BASE_URL', defaultValue: '');
+    if (remoteOverride.isNotEmpty) {
+      final trimmed = remoteOverride.replaceAll(RegExp(r'/+$'), '');
+      return trimmed.endsWith('/api/v1') ? trimmed : '$trimmed/api/v1';
+    }
+
     switch (appFlavor) {
       case Flavor.dev:
-        const remoteBase = String.fromEnvironment('DAYFI_API_BASE_URL', defaultValue: '');
-        if (remoteBase.isNotEmpty) {
-          final trimmed = remoteBase.replaceAll(RegExp(r'/+$'), '');
-          return trimmed.endsWith('/api/v1') ? trimmed : '$trimmed/api/v1';
-        }
         const host = String.fromEnvironment('DAYFI_API_HOST', defaultValue: '127.0.0.1');
         const port = String.fromEnvironment('DAYFI_API_PORT', defaultValue: '3000');
         return 'http://$host:$port/api/v1';

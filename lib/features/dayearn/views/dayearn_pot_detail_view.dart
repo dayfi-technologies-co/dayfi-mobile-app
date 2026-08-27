@@ -7,6 +7,7 @@ import 'package:dayfi/common/widgets/dayfi_balance_header.dart';
 import 'package:dayfi/common/widgets/dayfi_loading_indicator.dart';
 import 'package:dayfi/common/widgets/dayfi_screen_app_bar.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
+import 'package:dayfi/core/navigation/dayfi_page_transitions.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/features/dayearn/constants/dayearn_copy.dart';
 import 'package:dayfi/features/dayearn/helpers/dayearn_format.dart';
@@ -76,7 +77,7 @@ class _DayEarnPotDetailViewState extends State<DayEarnPotDetailView> {
     if (pot == null) return;
     final changed = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(
+      DayfiPageRoute<bool>(
         builder: (_) => DayEarnWithdrawView(potId: pot.id, pot: pot),
       ),
     );
@@ -94,7 +95,7 @@ class _DayEarnPotDetailViewState extends State<DayEarnPotDetailView> {
     if (pot == null) return;
     final changed = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(
+      DayfiPageRoute<bool>(
         builder: (_) => DayEarnAddView(potId: pot.id, pot: pot),
       ),
     );

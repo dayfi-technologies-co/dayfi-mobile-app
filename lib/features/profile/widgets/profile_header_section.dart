@@ -397,6 +397,7 @@ class _ProfileHeaderSectionState extends ConsumerState<ProfileHeaderSection> {
     return InkWell(
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
+      hoverColor: Colors.transparent,
       onTap: () async {
         final result = await Navigator.pushNamed(
           context,

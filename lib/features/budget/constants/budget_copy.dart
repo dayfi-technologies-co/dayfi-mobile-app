@@ -3,7 +3,7 @@ abstract final class BudgetCopy {
   BudgetCopy._();
 
   static const newBudgetIntro =
-      'Set a spending cap, auto-save to Daily Earn, or set a one-time reminder. '
+      'Set a spending cap, auto-save to DayEarn, or set a one-time reminder. '
       'For recurring send or bill autopay, use DayFlow.';
 
   static const automateInDayFlowNote =

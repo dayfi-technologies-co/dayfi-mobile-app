@@ -1,3 +1,4 @@
+import 'package:dayfi/features/pay/constants/flutterwave_bill_presets.dart';
 import 'package:dayfi/models/wallet_transaction.dart';
 
 /// Labels for wallet history rows that are not P2P / bank sends.
@@ -212,7 +213,9 @@ class WalletTransactionLabels {
   }
 
   static String? billProviderName(WalletTransaction tx) {
-    return _metaString(tx, 'billerName') ?? _metaString(tx, 'itemName');
+    final raw = _metaString(tx, 'billerName') ?? _metaString(tx, 'itemName');
+    if (raw == null || raw.trim().isEmpty) return null;
+    return formatBillBillerLabel(raw);
   }
 
   static String billPayLabel(WalletTransaction tx) {
@@ -234,25 +237,33 @@ class WalletTransactionLabels {
     if (name.isNotEmpty &&
         !_isGenericBillName(name) &&
         !lower.endsWith(' refund')) {
-      return name.replaceAll(RegExp(r'\s+refund$', caseSensitive: false), '');
+      return formatBillBillerLabel(
+        name.replaceAll(RegExp(r'\s+refund$', caseSensitive: false), ''),
+      );
     }
 
     final reason = tx.reason?.trim() ?? '';
     if (reason.toLowerCase().contains(' refund · ')) {
       final parts = reason.split('·');
-      if (parts.length > 1) return parts.sublist(1).join('·').trim();
+      if (parts.length > 1) {
+        return formatBillBillerLabel(parts.sublist(1).join('·').trim());
+      }
     }
     if (reason.contains('·')) {
       final head = reason.split('·').first.trim();
       if (head.toLowerCase().endsWith(' refund')) {
-        return head
-            .substring(0, head.length - ' refund'.length)
-            .trim();
+        return formatBillBillerLabel(
+          head.substring(0, head.length - ' refund'.length).trim(),
+        );
       }
-      if (!head.toLowerCase().contains('sent via')) return head;
+      if (!head.toLowerCase().contains('sent via')) {
+        return formatBillBillerLabel(head);
+      }
     }
     if (reason.isNotEmpty && !reason.toLowerCase().contains('sent via')) {
-      return reason.replaceAll(RegExp(r'\s+refund$', caseSensitive: false), '');
+      return formatBillBillerLabel(
+        reason.replaceAll(RegExp(r'\s+refund$', caseSensitive: false), ''),
+      );
     }
 
     final provider = billProviderName(tx);
@@ -335,10 +346,10 @@ class WalletTransactionLabels {
       return billListTitle(tx);
     }
     if (isDayEarn(tx)) {
-      return isCredit(tx) ? 'DAYEARN WITHDRAWAL' : 'DAYEARN DEPOSIT';
+      return isCredit(tx) ? 'DayEarn Withdrawal' : 'DayEarn Deposit';
     }
     if (isDayFlow(tx)) {
-      return isCredit(tx) ? 'DAYFLOW REFUND' : 'DAYFLOW LOCK';
+      return isCredit(tx) ? 'DayFlow Refund' : 'DayFlow Lock';
     }
     if (isInvestment(tx)) return 'INVESTMENT LOCK';
     if (isBudget(tx)) return 'BUDGET SPEND';

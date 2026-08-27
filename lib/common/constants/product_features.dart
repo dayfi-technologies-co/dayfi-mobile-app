@@ -14,6 +14,9 @@ abstract final class ProductFeatures {
   static const bool dayFlowAutopay = true;
   static const bool budgets = true;
   static const bool dayXOverlay = true;
+
+  /// Voice-first DayX v2 (YarnGPT TTS + Nigerian persona). Reroutes orb tap.
+  static const bool dayXv2 = true;
   static const bool transactionsHistory = true;
   static const bool notifications = true;
   static const bool profileBasics = true;

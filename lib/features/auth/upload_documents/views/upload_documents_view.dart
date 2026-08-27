@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
+import 'package:dayfi/common/widgets/dayfi_web_dialog.dart';
 import 'package:dayfi/features/auth/upload_documents/vm/upload_documents_viewmodel.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:lottie/lottie.dart';
@@ -336,13 +337,12 @@ class _UploadDocumentsViewState extends ConsumerState<UploadDocumentsView> {
       context: context,
       barrierDismissible: false,
       builder:
-          (BuildContext context) => Dialog(
-            backgroundColor: Theme.of(context).colorScheme.surface,
+          (BuildContext context) => DayfiWebDialog(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(24),
             ),
-            child: Container(
-              padding: EdgeInsets.all(28),
+            child: Padding(
+              padding: const EdgeInsets.all(28),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [

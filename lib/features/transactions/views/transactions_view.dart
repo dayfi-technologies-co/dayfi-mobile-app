@@ -35,9 +35,11 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref
-          .read(transactionsProvider.notifier)
-          .loadTransactions(isInitialLoad: true);
+      if (!ref.read(transactionsProvider).hasLoaded) {
+        ref
+            .read(transactionsProvider.notifier)
+            .loadTransactions(isInitialLoad: true);
+      }
       analyticsService.trackScreenView(screenName: 'TransactionsView');
     });
   }
@@ -159,7 +161,7 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
                       child: Align(
                         alignment:
                             transactionsState.isLoading &&
-                                    transactionsState.transactions.isEmpty
+                                    !transactionsState.hasLoaded
                                 ? Alignment.topCenter
                                 : Alignment.center,
                         child: ConstrainedBox(
@@ -269,7 +271,7 @@ class _TransactionsViewState extends ConsumerState<TransactionsView>
 
   Widget _buildMainContent(TransactionsState transactionsState, bool isWide) {
     if (transactionsState.transactions.isEmpty) {
-      if (transactionsState.isLoading) {
+      if (transactionsState.isLoading && !transactionsState.hasLoaded) {
         return ShimmerWidgets.recipientListShimmer(
           context,
           itemCount: 8,

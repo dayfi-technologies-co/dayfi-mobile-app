@@ -3,6 +3,18 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Flutter Web (landing + Railway API)",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "deviceId": "chrome",
+      "args": [
+        "--dart-define",
+        "FLAVOR=dev",
+        "--dart-define=DAYFI_API_BASE_URL=https://dayfi-api-production.up.railway.app/api/v1"
+      ]
+    },
+    {
       // iOS Simulator / Android emulator on this Mac → API on localhost. DAYFI_API_PORT must match the port printed when you run `npm run dev` (3000 or 3001 if 3000 is in use).
       "name": "Flutter Dev (simulator, local API)",
       "type": "dart",
@@ -17,6 +29,20 @@
         "DAYFI_API_HOST=127.0.0.1",
         "--dart-define",
         "DAYFI_API_PORT=3001"
+      ]
+    },
+    {
+      // Temporary API while api.dayfi.co (Hetzner) is down — auth/signup work; FW/YC need static IP on VPS.
+      "name": "Flutter Dev (Railway API)",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "args": [
+        "--flavor",
+        "dev",
+        "--dart-define",
+        "FLAVOR=dev",
+        "--dart-define=DAYFI_API_BASE_URL=https://dayfi-api-production.up.railway.app/api/v1"
       ]
     },
     {
@@ -47,6 +73,19 @@
         "--dart-define=DAYFI_API_HOST=${input:dayfiMacLanIp}",
         "--dart-define",
         "DAYFI_API_PORT=${input:dayfiApiPort}"
+      ]
+    },
+    {
+      "name": "Flutter Pilot (Railway API — temp)",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "args": [
+        "--flavor",
+        "pilot",
+        "--dart-define",
+        "FLAVOR=pilot",
+        "--dart-define=DAYFI_API_BASE_URL=https://dayfi-api-production.up.railway.app/api/v1"
       ]
     },
     {

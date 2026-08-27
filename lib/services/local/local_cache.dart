@@ -58,7 +58,8 @@ class LocalCache {
 
   Future<void> saveToLocalCache({required String key, required value}) async {
     try {
-      await sharedPreferences.setString(key, value.toString());
+      final encoded = value is String ? value : jsonEncode(value);
+      await sharedPreferences.setString(key, encoded);
     } catch (e) {
       AppLogger.error('Error saving to local cache: $e');
     }

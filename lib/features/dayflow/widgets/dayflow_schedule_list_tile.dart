@@ -2,7 +2,7 @@ import 'package:dayfi/features/dayflow/helpers/dayflow_format.dart';
 import 'package:dayfi/features/dayflow/helpers/dayflow_instance_display.dart';
 import 'package:dayfi/features/dayflow/helpers/dayflow_wallet_balance.dart';
 import 'package:dayfi/features/dayflow/models/dayflow_models.dart';
-import 'package:dayfi/features/dayflow/widgets/dayflow_automation_icon_badge.dart';
+import 'package:dayfi/features/pay/widgets/pay_bill_icon_badge.dart';
 import 'package:flutter/material.dart';
 
 const _kDayFlowLeadingSize = 40.0;
@@ -62,10 +62,13 @@ class DayFlowScheduleListTile extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              DayFlowAutomationIconBadge(
-                size: _kDayFlowLeadingSize,
-                innerSize: _kDayFlowInnerIconSize,
-                muted: muted,
+              Opacity(
+                opacity: muted ? 0.5 : 1.0,
+                child: const PayBillIconBadge(
+                  innerIconAsset: 'assets/icons/svgs/automation.svg',
+                  size: _kDayFlowLeadingSize,
+                  innerSize: _kDayFlowInnerIconSize,
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(

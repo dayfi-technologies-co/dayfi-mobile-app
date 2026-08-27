@@ -16,9 +16,19 @@ class TopSnackbar {
     Duration duration = const Duration(seconds: 3),
   }) {
     SchedulerBinding.instance.addPostFrameCallback((_) {
-      final ctx = NavigatorKey.appNavigatorKey.currentContext ?? context;
-      if (!ctx.mounted) return;
-      show(ctx, message: message, isError: isError, duration: duration);
+      final rootContext = NavigatorKey.appNavigatorKey.currentContext;
+      if (rootContext != null && rootContext.mounted) {
+        show(
+          rootContext,
+          message: message,
+          isError: isError,
+          duration: duration,
+        );
+        return;
+      }
+      if (context.mounted) {
+        show(context, message: message, isError: isError, duration: duration);
+      }
     });
   }
 

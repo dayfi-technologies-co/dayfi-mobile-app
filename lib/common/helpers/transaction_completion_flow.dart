@@ -1,4 +1,5 @@
 import 'package:dayfi/common/widgets/top_snackbar.dart';
+import 'package:dayfi/services/remote/network/api_error.dart';
 import 'package:dayfi/common/widgets/transaction_processing_overlay.dart';
 import 'package:dayfi/core/navigation/dayfi_page_transitions.dart';
 import 'package:dayfi/common/widgets/transaction_success_view.dart';
@@ -20,9 +21,14 @@ class TransactionCompletionFlow {
       return await task();
     } catch (e) {
       if (showErrorSnackbar && context.mounted) {
+        final message = e is ApiError
+            ? (e.errorDescription?.trim().isNotEmpty == true
+                ? e.errorDescription!.trim()
+                : e.toString())
+            : e.toString().replaceFirst('Exception: ', '');
         TopSnackbar.show(
           context,
-          message: e.toString().replaceFirst('Exception: ', ''),
+          message: message,
           isError: true,
         );
       }

@@ -250,6 +250,7 @@ class _PickerSheetCloseButton extends StatelessWidget {
     return InkWell(
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
+      hoverColor: Colors.transparent,
       onTap: () {
         onPressed();
         FocusScope.of(context).unfocus();

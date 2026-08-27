@@ -66,6 +66,7 @@ class EmptyStateWidget extends StatelessWidget {
       child: Padding(
         padding: EdgeInsets.all(18),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -125,7 +126,7 @@ class EmptyStateWidget extends StatelessWidget {
               SizedBox(height: 24),
               customButton!,
             ],
-            SizedBox(height: 96),
+            const SizedBox(height: 24),
           ],
         ),
       ),

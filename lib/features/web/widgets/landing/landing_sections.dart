@@ -56,57 +56,9 @@ abstract final class LandingSectionColors {
   static const security = Color.fromARGB(255, 14, 14, 14);
   static const howItWorks = AppColors.neutral900;
   static const testimonials = Color.fromARGB(255, 14, 14, 14);
+  static const dayx = Color.fromARGB(255, 14, 14, 14);
   static const faq = AppColors.neutral900;
   static const finalCta = Color.fromARGB(255, 38, 24, 12);
-}
-
-class LandingAnnouncementBanner extends StatelessWidget {
-  const LandingAnnouncementBanner({super.key, required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.orange500,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          child: Center(
-            child: Wrap(
-              alignment: WrapAlignment.center,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              spacing: 6,
-              children: [
-                LandingCopyableText(
-                  LandingCopy.announcementText,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontFamily: 'Chirp',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.neutral0,
-                  ),
-                ),
-                LandingCopyableText(
-                  LandingCopy.announcementCta,
-                  style: const TextStyle(
-                    fontFamily: 'Chirp',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.neutral0,
-                    decoration: TextDecoration.underline,
-                    decorationColor: AppColors.neutral0,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 class LandingHeroSection extends StatelessWidget {
@@ -234,7 +186,7 @@ class _HeroLeftColumn extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           LandingCopyableText(
-            "Send money in a heartbeat",
+            LandingCopy.heroHeadline,
             style: theme.textTheme.titleLarge?.copyWith(
               fontFamily: 'FunnelDisplay',
               fontSize: isMobile ? 52 : 88,
@@ -1061,6 +1013,141 @@ class _LandingDashedBorderPainter extends CustomPainter {
   }
 }
 
+/// DayX AI spotlight — chat/voice financial guide.
+class LandingDayXSection extends StatelessWidget {
+  const LandingDayXSection({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final contentWidth = constraints.maxWidth;
+        final isMobile = WebLayout.isMobile(contentWidth);
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: EdgeInsets.only(
+                right: WebLayout.sectionLargeRightInset(contentWidth),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  LandingCopyableText(
+                    LandingCopy.dayxSectionTitle,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontFamily: 'FunnelDisplay',
+                      fontSize: isMobile ? 68 : 112,
+                      fontWeight: FontWeight.w400,
+                      height: 1,
+                      letterSpacing: -2,
+                      color: AppColors.neutral0,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  LandingCopyableText(
+                    LandingCopy.dayxSectionSubtitle,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      fontFamily: 'Chirp',
+                      fontSize: isMobile ? 16 : 18,
+                      fontWeight: FontWeight.w400,
+                      height: 1.55,
+                      letterSpacing: 0.1,
+                      color: AppColors.neutral0.withValues(alpha: 0.85),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  LandingCopyableText(
+                    LandingCopy.dayxSectionBody,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontFamily: 'Chirp',
+                      fontSize: isMobile ? 15 : 17,
+                      fontWeight: FontWeight.w400,
+                      height: 1.55,
+                      color: AppColors.neutral0.withValues(alpha: 0.72),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
+            LandingCopyableText(
+              LandingCopy.dayxTrySayingLabel,
+              style: TextStyle(
+                fontFamily: 'Chirp',
+                fontSize: isMobile ? 13 : 14,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.4,
+                color: AppColors.neutral0.withValues(alpha: 0.55),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children:
+                  LandingCopy.dayxTryPhrases
+                      .map(
+                        (phrase) => Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.neutral0.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(32),
+                            border: Border.all(
+                              color: AppColors.orange500.withValues(alpha: 0.45),
+                            ),
+                          ),
+                          child: Text(
+                            phrase,
+                            style: TextStyle(
+                              fontFamily: 'Chirp',
+                              fontSize: isMobile ? 14 : 15,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.neutral0,
+                              letterSpacing: -0.2,
+                            ),
+                          ),
+                        ),
+                      )
+                      .toList(),
+            ),
+            const SizedBox(height: 40),
+            Align(
+              alignment: Alignment.centerRight,
+              child: SvgPicture.asset(
+                'assets/icons/svgs/spark.svg',
+                height: isMobile ? 120 : 180,
+                colorFilter: const ColorFilter.mode(
+                  AppColors.orange500,
+                  BlendMode.srcIn,
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            LandingCopyableText(
+              LandingCopy.dayxPoweredNote,
+              style: TextStyle(
+                fontFamily: 'Chirp',
+                fontSize: isMobile ? 14 : 15,
+                fontWeight: FontWeight.w500,
+                fontStyle: FontStyle.italic,
+                height: 1.5,
+                color: AppColors.neutral0.withValues(alpha: 0.6),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
 class LandingDeliveryHighlightsSection extends StatelessWidget {
   const LandingDeliveryHighlightsSection({super.key});
 
@@ -1223,6 +1310,14 @@ class _DeliveryMethodCard extends StatelessWidget {
         return 'assets/icons/svgs/at.svg';
       case 'bills':
         return 'assets/icons/svgs/invoice_c.svg';
+      case 'automation':
+        return 'assets/icons/svgs/automation.svg';
+      case 'dayearn':
+        return 'assets/icons/svgs/coin.svg';
+      case 'budget':
+        return 'assets/icons/svgs/bell-dollar.svg';
+      case 'crypto':
+        return 'assets/icons/svgs/brand-stellar.svg';
       default:
         return 'assets/icons/svgs/building-bank.svg';
     }

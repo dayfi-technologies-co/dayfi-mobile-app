@@ -16,6 +16,7 @@ import 'package:dayfi/features/budget/widgets/budget_time_field.dart';
 import 'package:dayfi/features/dayearn/dayearn_flow.dart';
 import 'package:dayfi/features/dayflow/helpers/dayflow_automation_currency.dart';
 import 'package:dayfi/features/dayflow/constants/dayflow_copy.dart';
+import 'package:dayfi/features/dayflow/models/dayflow_automation_edit_context.dart';
 import 'package:dayfi/features/dayflow/services/dayflow_api_service.dart';
 import 'package:dayfi/features/dayflow/services/dayflow_cache_sync.dart';
 import 'package:dayfi/features/pay/widgets/bill_package_bottom_sheet.dart';
@@ -51,11 +52,13 @@ enum BudgetCreateKind {
 class CreateBudgetView extends ConsumerStatefulWidget {
   final BudgetCreateKind kind;
   final bool forDayFlowAutomation;
+  final DayFlowAutomationEditContext? dayFlowEdit;
 
   const CreateBudgetView({
     super.key,
     required this.kind,
     this.forDayFlowAutomation = false,
+    this.dayFlowEdit,
   });
 
   @override
@@ -95,13 +98,25 @@ class _CreateBudgetViewState extends ConsumerState<CreateBudgetView> {
   // Spending cap
   String _spendingCategory = BudgetCopy.spendingCategories.first;
 
-  // Daily Earn
+  // DayEarn
   String? _potId;
   String? _potName;
 
   bool get _showEndDate => !_isOneTime && _frequency != 'once';
 
   bool get _showStartTime => widget.forDayFlowAutomation;
+
+  bool get _isEditingDayFlow => widget.dayFlowEdit != null;
+
+  String? get _billerDisplayName {
+    if (_biller != null) return billBillerTitle(_biller!);
+    final raw =
+        _billerShortName?.trim().isNotEmpty == true
+            ? _billerShortName
+            : _billerName;
+    if (raw == null || raw.trim().isEmpty) return null;
+    return formatBillBillerLabel(raw);
+  }
 
   static const _frequencyChips = [
     DayfiCompactChipOption(value: 'once', label: 'One time'),
@@ -182,7 +197,73 @@ class _CreateBudgetViewState extends ConsumerState<CreateBudgetView> {
       _prefetchPots();
     }
     if (widget.forDayFlowAutomation) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _refreshNgnEstimate());
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _applyDayFlowEditPrefill();
+        _refreshNgnEstimate();
+      });
+    }
+  }
+
+  Future<void> _applyDayFlowEditPrefill() async {
+    final edit = widget.dayFlowEdit;
+    if (edit == null || !mounted) return;
+
+    final start = edit.startAt.toLocal();
+    setState(() {
+      _frequency = edit.frequency;
+      _startDate = DateTime(start.year, start.month, start.day);
+      _startTime = TimeOfDay(hour: start.hour, minute: start.minute);
+      _endDate = edit.endAt == null
+          ? null
+          : DateTime(
+            edit.endAt!.year,
+            edit.endAt!.month,
+            edit.endAt!.day,
+          );
+      if (edit.amount > 0) {
+        _amountCtrl.text = edit.amount.toStringAsFixed(2);
+      }
+    });
+
+    if (_isSendFlow) {
+      final parsed = DayFlowAutomationEditContext.parseRecipientHint(
+        edit.recipientHint,
+      );
+      if (edit.recipientId != null && edit.recipientId!.isNotEmpty) {
+        await _prefetchRecipients();
+        final cached = RecipientsListCache.read();
+        if (cached != null) {
+          for (final picked in cached) {
+            if (picked.beneficiary.id == edit.recipientId) {
+              if (!mounted) return;
+              setState(() {
+                _recipientId = edit.recipientId;
+                _recipientLabel = RecipientHistoryHelper.primaryLabel(
+                  picked.beneficiary,
+                  picked.source,
+                );
+                _recipientChannelLabel =
+                    RecipientHistoryHelper.recipientChannelLabel(picked);
+              });
+              return;
+            }
+          }
+        }
+      }
+      if (!mounted) return;
+      if (parsed.label.isNotEmpty) {
+        setState(() {
+          _recipientId = edit.recipientId;
+          _recipientLabel = parsed.label;
+          _recipientChannelLabel = parsed.channel;
+        });
+      }
+      return;
+    }
+
+    if (_isBillFlow && edit.billCustomerId != null) {
+      if (!mounted) return;
+      setState(() => _billNumberCtrl.text = edit.billCustomerId!.trim());
     }
   }
 
@@ -322,8 +403,8 @@ class _CreateBudgetViewState extends ConsumerState<CreateBudgetView> {
       setState(() {
         _biller = picked;
         _billerCode = picked.billerCode;
-        _billerName = picked.name;
-        _billerShortName = picked.shortName;
+        _billerName = billBillerTitle(picked);
+        _billerShortName = billBillerTitle(picked);
         _billItems = [];
         _billPackage = null;
       });
@@ -404,9 +485,9 @@ class _CreateBudgetViewState extends ConsumerState<CreateBudgetView> {
       final freq = _frequencyLabel(_frequency);
       final pot = _potName?.trim();
       if (pot != null && pot.isNotEmpty) {
-        return '$freq Daily Earn — $pot';
+        return '$freq DayEarn — $pot';
       }
-      return '$freq Daily Earn';
+      return '$freq DayEarn';
     }
     if (_isOneTime) {
       if (_isSendFlow) {
@@ -416,10 +497,7 @@ class _CreateBudgetViewState extends ConsumerState<CreateBudgetView> {
         }
         return 'Reminder: send';
       }
-      final provider =
-          _billerShortName?.trim().isNotEmpty == true
-              ? _billerShortName!.trim()
-              : _billerName?.trim();
+      final provider = _billerDisplayName;
       final cat = _billCategory?.name ?? 'Bill';
       if (provider != null && provider.isNotEmpty) {
         return 'Reminder: $provider $cat';
@@ -435,10 +513,7 @@ class _CreateBudgetViewState extends ConsumerState<CreateBudgetView> {
       }
       return '$freq send';
     }
-    final provider =
-        _billerShortName?.trim().isNotEmpty == true
-            ? _billerShortName!.trim()
-            : _billerName?.trim();
+    final provider = _billerDisplayName;
     final cat = _billCategory?.name ?? 'Bill';
     if (provider != null && provider.isNotEmpty) {
       return '$freq $provider $cat';
@@ -495,7 +570,7 @@ class _CreateBudgetViewState extends ConsumerState<CreateBudgetView> {
       if (_potId == null || _potId!.isEmpty) {
         TopSnackbar.show(
           context,
-          message: 'Select a Daily Earn pot',
+          message: 'Select a DayEarn pot',
           isError: true,
         );
         return false;
@@ -605,6 +680,9 @@ class _CreateBudgetViewState extends ConsumerState<CreateBudgetView> {
   }
 
   Future<void> _saveDayFlowAutomation() async {
+    if (_isEditingDayFlow) {
+      return _saveDayFlowAutomationEdit();
+    }
     if (!_validate()) return;
 
     final amount = double.parse(_amountCtrl.text.replaceAll(',', ''));
@@ -632,10 +710,7 @@ class _CreateBudgetViewState extends ConsumerState<CreateBudgetView> {
       execution = const {'toCurrency': 'NGN'};
     } else {
       paymentType = 'bill';
-      final provider =
-          _billerShortName?.trim().isNotEmpty == true
-              ? _billerShortName!.trim()
-              : _billerName?.trim() ?? '';
+      final provider = _billerDisplayName ?? '';
       recipientHint = '$provider · ${_billNumberCtrl.text.trim()}';
       final biller = _biller;
       final category = _billCategory;
@@ -664,7 +739,7 @@ class _CreateBudgetViewState extends ConsumerState<CreateBudgetView> {
           'billerCode': resolveFlutterwaveBillerCode(biller),
           'itemCode': item.itemCode,
           'customerId': _billNumberCtrl.text.trim(),
-          'billerName': biller.name,
+          'billerName': billBillerTitle(biller),
           'itemName': item.displayLabel,
         },
       };
@@ -735,7 +810,142 @@ class _CreateBudgetViewState extends ConsumerState<CreateBudgetView> {
     }
   }
 
+  Future<void> _saveDayFlowAutomationEdit() async {
+    final edit = widget.dayFlowEdit;
+    if (edit == null) return;
+    if (!_validate()) return;
+
+    final amount = double.parse(_amountCtrl.text.replaceAll(',', ''));
+    final startAt = DateTime(
+      _startDate.year,
+      _startDate.month,
+      _startDate.day,
+      _startTime.hour,
+      _startTime.minute,
+    );
+
+    Map<String, dynamic>? execution;
+    String? recipientHint;
+    String? recipientId;
+    late final String paymentType;
+
+    if (_isSendFlow) {
+      paymentType = 'send';
+      recipientId = _recipientId;
+      final channel = _recipientChannelLabel?.trim();
+      recipientHint =
+          channel != null && channel.isNotEmpty
+              ? '${_recipientLabel ?? ''} · $channel'.trim()
+              : _recipientLabel;
+      execution = const {'toCurrency': 'NGN'};
+    } else {
+      paymentType = 'bill';
+      final provider = _billerDisplayName ?? '';
+      recipientHint = '$provider · ${_billNumberCtrl.text.trim()}';
+      final biller = _biller;
+      final category = _billCategory;
+      if (biller == null || category == null) return;
+
+      final item =
+          _billPackage ??
+          defaultBillItemFor(
+            category: category,
+            biller: biller,
+            items: _billItems,
+          );
+      if (item == null) {
+        TopSnackbar.show(
+          context,
+          message: 'Select a package',
+          isError: true,
+        );
+        return;
+      }
+
+      execution = {
+        'toCurrency': 'NGN',
+        'bill': {
+          'categoryCode': category.code,
+          'billerCode': resolveFlutterwaveBillerCode(biller),
+          'itemCode': item.itemCode,
+          'customerId': _billNumberCtrl.text.trim(),
+          'billerName': billBillerTitle(biller),
+          'itemName': item.displayLabel,
+        },
+      };
+    }
+
+    double? sourceAmount;
+    if (dayflowAutomationNeedsNgnSource(
+      paymentType: paymentType,
+      recipientHint: recipientHint,
+      toCurrency: execution['toCurrency']?.toString(),
+    )) {
+      sourceAmount = await dayflowNgnAmountForUsd(amount);
+      if (sourceAmount == null || sourceAmount <= 0) {
+        if (mounted) {
+          TopSnackbar.show(
+            context,
+            message:
+                'Could not load exchange rate. Check your connection and try again.',
+            isError: true,
+          );
+        }
+        return;
+      }
+    }
+
+    setState(() => _saving = true);
+    try {
+      final saved = await TransactionPinFlow.requestPinAndRun<bool>(
+        context: context,
+        ref: ref,
+        task: (_) async {
+          await dayFlowApiService.updateFlowSchedule(
+            flowId: edit.flowId,
+            scheduleId: edit.scheduleId,
+            title: _autoBudgetName(),
+            paymentType: paymentType,
+            amount: amount,
+            frequency: _effectiveFrequency,
+            startAt: startAt,
+            endAt:
+                _endDate != null
+                    ? DateTime(
+                      _endDate!.year,
+                      _endDate!.month,
+                      _endDate!.day,
+                      23,
+                      59,
+                    )
+                    : null,
+            recipientId: recipientId,
+            recipientHint: recipientHint,
+            sourceAmount: sourceAmount,
+            execution: execution,
+          );
+          FeatureActivityService.instance.invalidate();
+          return true;
+        },
+      );
+
+      if (!mounted || saved != true) return;
+
+      TopSnackbar.showSafe(context, message: DayFlowCopy.automationUpdated);
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (mounted) {
+        TopSnackbar.show(context, message: '$e', isError: true);
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
   String get _screenTitle {
+    if (_isEditingDayFlow) {
+      return widget.dayFlowEdit!.screenTitleForKind(isSend: _isSendFlow);
+    }
     switch (widget.kind) {
       case BudgetCreateKind.send:
         return 'Send to someone';
@@ -744,7 +954,7 @@ class _CreateBudgetViewState extends ConsumerState<CreateBudgetView> {
       case BudgetCreateKind.spendingCap:
         return 'Spending cap';
       case BudgetCreateKind.dailyEarn:
-        return 'Daily Earn';
+        return 'DayEarn';
       case BudgetCreateKind.oneTimeSend:
         return 'Remind me to send';
       case BudgetCreateKind.oneTimeBill:
@@ -771,7 +981,7 @@ class _CreateBudgetViewState extends ConsumerState<CreateBudgetView> {
       case BudgetCreateKind.spendingCap:
         return 'Set a monthly spending limit by category. Track how much you spend — payments are not blocked automatically yet.';
       case BudgetCreateKind.dailyEarn:
-        return 'Schedule repeat deposits from your USD wallet into a Daily Earn pot.';
+        return 'Schedule repeat deposits from your USD wallet into a DayEarn pot.';
       case BudgetCreateKind.oneTimeSend:
         return 'Set a one-time reminder to send money. Payment is not automatic — you\'ll need to complete the send yourself.';
       case BudgetCreateKind.oneTimeBill:
@@ -913,7 +1123,9 @@ class _CreateBudgetViewState extends ConsumerState<CreateBudgetView> {
               child: PrimaryButton(
                 text:
                     widget.forDayFlowAutomation
-                        ? DayFlowCopy.automatePaymentButton
+                        ? (_isEditingDayFlow
+                            ? DayFlowCopy.saveAutomationButton
+                            : DayFlowCopy.automatePaymentButton)
                         : 'Create budget',
                 onPressed: _saving ? null : _save,
                 isLoading: _saving,
@@ -949,7 +1161,7 @@ class _CreateBudgetViewState extends ConsumerState<CreateBudgetView> {
     return [
       _PickerTile(
         value: _potName ?? 'Select pot',
-        fieldLabel: 'Daily Earn pot',
+        fieldLabel: 'DayEarn pot',
         onTap: _pickDayEarnPot,
       ),
     ];
@@ -991,7 +1203,7 @@ class _CreateBudgetViewState extends ConsumerState<CreateBudgetView> {
       ),
       const SizedBox(height: 16),
       _PickerTile(
-        value: _billerName ?? 'Select provider',
+        value: _billerDisplayName ?? 'Select provider',
         fieldLabel: 'Provider',
         onTap: _pickBiller,
       ),
@@ -1153,6 +1365,7 @@ class _BudgetSheetCloseButton extends StatelessWidget {
     return InkWell(
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
+      hoverColor: Colors.transparent,
       onTap: () {
         onPressed();
         FocusScope.of(context).unfocus();
@@ -1300,7 +1513,7 @@ class _BillerPickerSheetState extends State<_BillerPickerSheet> {
                       itemBuilder: (context, index) {
                         final biller = _billers[index];
                         return PayBillGridTile(
-                          title: biller.shortName ?? biller.name,
+                          title: billBillerTitle(biller),
                           innerIconAsset: billerInnerIconAsset(
                             biller,
                             widget.categoryCode,
@@ -1384,7 +1597,7 @@ class _DayEarnPotPickerSheetState extends State<_DayEarnPotPickerSheet> {
             ),
           ),
           const SizedBox(height: 16),
-          const _BudgetSheetHeader(title: 'Select Daily Earn pot'),
+          const _BudgetSheetHeader(title: 'Select DayEarn pot'),
           const SizedBox(height: 12),
           Expanded(
             child:
@@ -1398,7 +1611,7 @@ class _DayEarnPotPickerSheetState extends State<_DayEarnPotPickerSheet> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              'Create a Daily Earn pot first',
+                              'Create a DayEarn pot first',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontFamily: 'Chirp',

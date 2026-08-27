@@ -11,6 +11,7 @@ class TransactionsState {
   final List<WalletTransaction> transactions;
   final List<TransactionGroup> groupedTransactions;
   final bool isLoading;
+  final bool hasLoaded;
   final String? errorMessage;
   final String searchQuery;
   final TransactionFilterOptions filters;
@@ -19,6 +20,7 @@ class TransactionsState {
     this.transactions = const [],
     this.groupedTransactions = const [],
     this.isLoading = false,
+    this.hasLoaded = false,
     this.errorMessage,
     this.searchQuery = '',
     this.filters = const TransactionFilterOptions(),
@@ -28,6 +30,7 @@ class TransactionsState {
     List<WalletTransaction>? transactions,
     List<TransactionGroup>? groupedTransactions,
     bool? isLoading,
+    bool? hasLoaded,
     String? errorMessage,
     String? searchQuery,
     TransactionFilterOptions? filters,
@@ -36,6 +39,7 @@ class TransactionsState {
       transactions: transactions ?? this.transactions,
       groupedTransactions: groupedTransactions ?? this.groupedTransactions,
       isLoading: isLoading ?? this.isLoading,
+      hasLoaded: hasLoaded ?? this.hasLoaded,
       errorMessage: errorMessage,
       searchQuery: searchQuery ?? this.searchQuery,
       filters: filters ?? this.filters,
@@ -53,12 +57,19 @@ class TransactionGroup {
 class TransactionsNotifier extends StateNotifier<TransactionsState> {
   final LocalCache _localCache = locator<LocalCache>();
   final WalletService _walletService;
+  bool _inFlight = false;
 
   TransactionsNotifier(this._walletService) : super(TransactionsState());
 
-  Future<void> loadTransactions({bool isInitialLoad = false}) async {
-    // Try to load cached transactions first
-    if (state.transactions.isEmpty) {
+  Future<void> loadTransactions({
+    bool isInitialLoad = false,
+    bool forceRefresh = false,
+  }) async {
+    if (_inFlight && !forceRefresh) return;
+    _inFlight = true;
+
+    // Try to load cached transactions first (skip when forcing a network refresh).
+    if (!forceRefresh && state.transactions.isEmpty) {
       final cached = _localCache.getFromLocalCache('transactions');
       if (cached != null) {
         try {
@@ -74,12 +85,14 @@ class TransactionsNotifier extends StateNotifier<TransactionsState> {
             transactions: txs,
             groupedTransactions: grouped,
             isLoading: false,
+            hasLoaded: true,
           );
         } catch (_) {}
       }
     }
-    // Only show loading if no cache
-    final shouldShowLoading = state.transactions.isEmpty;
+
+    // Skeleton only on the first visit with nothing to show.
+    final shouldShowLoading = !state.hasLoaded && state.transactions.isEmpty;
     state = state.copyWith(isLoading: shouldShowLoading, errorMessage: null);
     try {
       // Fetch first page to get total pages count
@@ -116,6 +129,7 @@ class TransactionsNotifier extends StateNotifier<TransactionsState> {
         transactions: deduped,
         groupedTransactions: groupedTransactions,
         isLoading: false,
+        hasLoaded: true,
       );
       FeatureActivityService.instance.updateFromTransactions(allTransactions);
       // Reapply any existing search/filters
@@ -125,8 +139,11 @@ class TransactionsNotifier extends StateNotifier<TransactionsState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
+        hasLoaded: true,
         errorMessage: 'Failed to load transactions. Please try again.',
       );
+    } finally {
+      _inFlight = false;
     }
   }
 

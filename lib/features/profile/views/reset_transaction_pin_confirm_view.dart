@@ -9,6 +9,7 @@ import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/services/local/secure_storage.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
+import 'package:dayfi/common/widgets/dayfi_web_dialog.dart';
 import 'package:dayfi/common/widgets/dayfi_circle_check_icon.dart';
 import 'package:dayfi/features/profile/vm/profile_viewmodel.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
@@ -155,8 +156,7 @@ class _ResetTransactionPinConfirmViewState
       context: context,
       barrierDismissible: false,
       builder:
-          (context) => Dialog(
-            backgroundColor: Theme.of(context).colorScheme.surface,
+          (context) => DayfiWebDialog(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),

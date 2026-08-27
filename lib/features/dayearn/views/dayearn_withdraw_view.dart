@@ -6,7 +6,6 @@ import 'package:dayfi/common/widgets/dayfi_screen_app_bar.dart';
 import 'package:dayfi/common/widgets/dayfi_screen_description.dart';
 import 'package:dayfi/features/dayearn/constants/dayearn_copy.dart';
 import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
-import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/features/dayearn/helpers/dayearn_form_validation.dart';
 import 'package:dayfi/features/dayearn/helpers/dayearn_format.dart';
@@ -30,6 +29,7 @@ class _DayEarnWithdrawViewState extends ConsumerState<DayEarnWithdrawView> {
   final _amountController = TextEditingController();
   bool _withdrawAll = false;
   bool _isAgreed = false;
+  bool _submitting = false;
   String? _agreementError;
 
   @override
@@ -61,6 +61,8 @@ class _DayEarnWithdrawViewState extends ConsumerState<DayEarnWithdrawView> {
   }
 
   Future<void> _submit() async {
+    if (_submitting) return;
+
     final formValid = _formKey.currentState?.validate() ?? false;
     if (!_isAgreed) {
       setState(() => _agreementError = DayEarnCopy.agreementRequired);
@@ -69,34 +71,41 @@ class _DayEarnWithdrawViewState extends ConsumerState<DayEarnWithdrawView> {
     }
     if (!formValid || !_isAgreed) return;
 
-    final amount = _withdrawAll
-        ? widget.pot.balance
-        : double.tryParse(_amountController.text.trim());
+    final parsedAmount = double.tryParse(_amountController.text.trim());
+    final withdrawAll =
+        _withdrawAll ||
+        (parsedAmount != null && parsedAmount >= widget.pot.balance);
+    final amount = withdrawAll ? widget.pot.balance : parsedAmount;
 
-    final result = await TransactionPinFlow.requestPinAndRun<Map<String, dynamic>?>(
-      context: context,
-      ref: ref,
-      task: (pin) => dayEarnService.withdraw(
-        potId: widget.potId,
-        pin: pin,
-        amount: _withdrawAll ? null : amount,
-        withdrawAll: _withdrawAll,
-      ),
-    );
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() => _submitting = true);
+    try {
+      final result =
+          await TransactionPinFlow.requestPinAndRun<Map<String, dynamic>?>(
+            context: context,
+            ref: ref,
+            task: (pin) => dayEarnService.withdraw(
+              potId: widget.potId,
+              pin: pin,
+              amount: withdrawAll ? null : amount,
+              withdrawAll: withdrawAll,
+            ),
+          );
 
-    if (!mounted || result == null) return;
+      if (!mounted || result == null) return;
 
-    final withdrawn = (result['withdrawn'] as num?)?.toDouble() ?? amount ?? 0;
-    await DayEarnFlow.onFundsMoved(ref);
-    if (!mounted) return;
-
-    TopSnackbar.showSafe(
-      context,
-      message: DayEarnCopy.withdrawSuccessful(
-        formatDayEarnAmount(withdrawn, kDayEarnCurrency),
-      ),
-    );
-    Navigator.pop(context, true);
+      final withdrawn =
+          (result['withdrawn'] as num?)?.toDouble() ?? amount ?? 0;
+      DayEarnFlow.completeWithSnackbar(
+        context: context,
+        ref: ref,
+        message: DayEarnCopy.withdrawSuccessful(
+          formatDayEarnAmount(withdrawn, kDayEarnCurrency),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
   }
 
   void _onWithdrawAllChanged(bool value) {
@@ -264,7 +273,8 @@ class _DayEarnWithdrawViewState extends ConsumerState<DayEarnWithdrawView> {
                 padding: const EdgeInsets.fromLTRB(64, 0, 64, 18),
                 child: PrimaryButton(
                   text: 'Withdraw',
-                  onPressed: _submit,
+                  onPressed: _submitting ? null : _submit,
+                  isLoading: _submitting,
                   fullWidth: true,
                   applyFeatureInset: false,
                   height: 48,

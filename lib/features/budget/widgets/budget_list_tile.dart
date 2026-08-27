@@ -4,9 +4,8 @@ import 'package:dayfi/features/budget/models/budget_models.dart';
 import 'package:dayfi/features/dayflow/helpers/dayflow_instance_display.dart';
 import 'package:dayfi/features/dayflow/helpers/dayflow_schedule_instances.dart';
 import 'package:dayfi/features/dayflow/models/dayflow_models.dart';
-import 'package:dayfi/features/dayflow/widgets/dayflow_automation_icon_badge.dart';
+import 'package:dayfi/features/pay/widgets/pay_bill_icon_badge.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 const _kBudgetLeadingSize = 40.0;
 const _kBudgetInnerIconSize = 26.0;
@@ -39,9 +38,9 @@ class BudgetListTile extends StatelessWidget {
       fontFamily: 'Karla',
       fontSize: 12.5,
       fontWeight: FontWeight.w500,
-      letterSpacing: -.2,
+      letterSpacing: -.4,
       height: 1.45,
-      color: onSurface.withValues(alpha: 0.6),
+      color: onSurface.withValues(alpha: 0.65),
     );
 
     return Semantics(
@@ -91,6 +90,7 @@ class BudgetListTile extends StatelessWidget {
                           subtitle,
                           style: timeLineStyle,
                           maxLines: 1,
+                        
                           overflow: TextOverflow.ellipsis,
                         ),
                       ],
@@ -218,31 +218,12 @@ class _BudgetLeadingIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (_isAutomation) {
-      return const DayFlowAutomationIconBadge(
-        size: _kBudgetLeadingSize,
-        innerSize: _kBudgetInnerIconSize,
-      );
-    }
-
-    return SizedBox(
-      width: _kBudgetLeadingSize,
-      height: _kBudgetLeadingSize,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          SvgPicture.asset(
-            'assets/icons/svgs/account.svg',
-            height: _kBudgetLeadingSize,
-            color: _iconColor(budget, dayflowInstance),
-          ),
-          SvgPicture.asset(
-            _iconAsset(budget, dayflowInstance),
-            height: _kBudgetInnerIconSize,
-            color: Colors.white,
-          ),
-        ],
-      ),
+    return PayBillIconBadge(
+      innerIconAsset: _isAutomation
+          ? 'assets/icons/svgs/automation.svg'
+          : _iconAsset(budget, dayflowInstance),
+      size: _kBudgetLeadingSize,
+      innerSize: _kBudgetInnerIconSize,
     );
   }
 }
@@ -315,22 +296,6 @@ _TrailingMeta _trailingFor(
     label: budget.statusLabel,
     color: budget.isActive ? AppColors.success500 : AppColors.neutral500,
   );
-}
-
-Color _iconColor(Budget budget, DayBudgetScheduleInstance? instance) {
-  if (instance != null) {
-    return instanceTypeColor(instance.paymentType);
-  }
-  if (budget.isManagedByDayFlow) {
-    return instanceTypeColor(budget.dayflowPaymentType ?? 'send');
-  }
-
-  return switch (budget.type) {
-    'bill_reminder' => AppColors.purple500,
-    'recurring_send' => AppColors.teal500,
-    'invest_allocation' => AppColors.primary400,
-    _ => AppColors.orange500,
-  };
 }
 
 String _iconAsset(Budget budget, DayBudgetScheduleInstance? instance) {

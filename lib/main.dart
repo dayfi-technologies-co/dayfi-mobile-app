@@ -1,5 +1,6 @@
 import 'package:dayfi/services/local/analytics_service.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:url_strategy/url_strategy.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -16,7 +17,10 @@ import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/services/notification_service.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  if (!kIsWeb) {
+    FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+  }
 
   try {
     F.appFlavor = Flavor.values.firstWhere(
@@ -28,17 +32,19 @@ void main() async {
     F.appFlavor = Flavor.values.first;
   }
 
-  try {
-    final useSandbox = F.appFlavor == Flavor.dev;
-    SmileID.initialize(useSandbox: useSandbox, enableCrashReporting: true);
-    SmileID.setCallbackUrl(
-      callbackUrl: Uri.parse('${F.baseUrl}/kyc/smile/webhook'),
-    );
-    AppLogger.info(
-      'Smile ID initialized (sandbox=$useSandbox) callback=${F.baseUrl}/kyc/smile/webhook',
-    );
-  } catch (e) {
-    AppLogger.error('Smile ID initialization error: $e');
+  if (!kIsWeb) {
+    try {
+      final useSandbox = F.appFlavor == Flavor.dev;
+      SmileID.initialize(useSandbox: useSandbox, enableCrashReporting: true);
+      SmileID.setCallbackUrl(
+        callbackUrl: Uri.parse('${F.baseUrl}/kyc/smile/webhook'),
+      );
+      AppLogger.info(
+        'Smile ID initialized (sandbox=$useSandbox) callback=${F.baseUrl}/kyc/smile/webhook',
+      );
+    } catch (e) {
+      AppLogger.error('Smile ID initialization error: $e');
+    }
   }
 
   // Enable path URL strategy on web to remove '#' from URLs

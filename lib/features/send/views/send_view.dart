@@ -9,6 +9,7 @@ import 'package:dayfi/common/utils/haptic_helper.dart';
 import 'package:dayfi/common/utils/available_balance_calculator.dart';
 import 'package:dayfi/common/widgets/dayfi_screen_description.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
+import 'package:dayfi/common/widgets/dayfi_web_dialog.dart';
 import 'package:dayfi/features/send/constants/send_copy.dart';
 import 'package:dayfi/common/widgets/buttons/secondary_button.dart';
 import 'package:flutter/material.dart';
@@ -697,11 +698,10 @@ class _SendViewState extends ConsumerState<SendView>
 
   // Insufficient Balance Dialog Widget
   Widget _buildInsufficientBalanceDialog({int pendingTransactionCount = 0}) {
-    return Dialog(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+    return DayfiWebDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: Container(
-        padding: EdgeInsets.all(28),
+      child: Padding(
+        padding: const EdgeInsets.all(28),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

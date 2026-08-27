@@ -284,7 +284,9 @@ class _ThemeSelectionSheet extends ConsumerWidget {
                     child: Text(
                       'Select theme',
                       textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      style: Theme.of(
+                        context,
+                      ).textTheme.headlineMedium?.copyWith(
                         fontFamily: 'FunnelDisplay',
                         fontSize: 22,
                         fontWeight: FontWeight.w600,
@@ -315,7 +317,8 @@ class _ThemeSelectionSheet extends ConsumerWidget {
                               'assets/icons/pngs/cancelicon.png',
                               height: 20,
                               width: 20,
-                              color: Theme.of(context).textTheme.bodyLarge?.color,
+                              color:
+                                  Theme.of(context).textTheme.bodyLarge?.color,
                             ),
                           ),
                         ),
@@ -325,22 +328,22 @@ class _ThemeSelectionSheet extends ConsumerWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 28),
-              child: Text(
-                'Choose how Dayfi should look.',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  fontFamily: 'Chirp',
-                  letterSpacing: -.25,
-                  height: 1.45,
-                  color: onSurface.withValues(alpha: 0.55),
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
+            // const SizedBox(height: 8),
+            // Padding(
+            //   padding: const EdgeInsets.symmetric(horizontal: 28),
+            //   child: Text(
+            //     'Choose how Dayfi should look.',
+            //     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            //       fontSize: 14,
+            //       fontWeight: FontWeight.w500,
+            //       fontFamily: 'Chirp',
+            //       letterSpacing: -.25,
+            //       height: 1.45,
+            //       color: onSurface.withValues(alpha: 0.55),
+            //     ),
+            //     textAlign: TextAlign.center,
+            //   ),
+            // ),
             const SizedBox(height: 20),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 18),
@@ -368,7 +371,7 @@ class _ThemeOptionsGroup extends StatelessWidget {
   });
 
   final List<({AppThemeMode mode, String icon, String title, String subtitle})>
-      options;
+  options;
   final AppThemeMode selected;
   final Color primary;
   final void Function(AppThemeMode mode) onPick;
@@ -408,9 +411,11 @@ class _ThemeOptionsGroup extends StatelessWidget {
                           child: Center(
                             child: SvgPicture.asset(
                               option.icon,
-                              height:
-                                  option.icon.contains('moon') ? 24 : 26,
-                              color: onSurface.withValues(alpha: 0.85),
+                              height: option.icon.contains('moon') ? 20 : 24,
+                              color:
+                                  isSelected
+                                      ? primary.withValues(alpha: 0.85)
+                                      : onSurface.withValues(alpha: 0.85),
                             ),
                           ),
                         ),
@@ -421,10 +426,9 @@ class _ThemeOptionsGroup extends StatelessWidget {
                             children: [
                               Text(
                                 option.title,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleLarge
-                                    ?.copyWith(
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.titleLarge?.copyWith(
                                   fontFamily: 'Chirp',
                                   fontSize: 18,
                                   letterSpacing: -.25,
@@ -432,18 +436,21 @@ class _ThemeOptionsGroup extends StatelessWidget {
                                   color: isSelected ? primary : onSurface,
                                 ),
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                option.subtitle,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w500,
-                                  height: 1.2,
-                                  fontFamily: 'Chirp',
-                                  letterSpacing: -.25,
-                                  fontSize: 14,
-                                  color: onSurface.withValues(alpha: 0.65),
-                                ),
-                              ),
+                              // const SizedBox(height: 4),
+                              // Text(
+                              //   option.subtitle,
+                              //   style: TextStyle(
+                              //     fontWeight: FontWeight.w500,
+                              //     height: 1.2,
+                              //     fontFamily: 'Chirp',
+                              //     letterSpacing: -.25,
+                              //     fontSize: 14,
+                              //     color:
+                              //         isSelected
+                              //             ? primary.withValues(alpha: 0.65)
+                              //             : onSurface.withValues(alpha: 0.65),
+                              //   ),
+                              // ),
                             ],
                           ),
                         ),

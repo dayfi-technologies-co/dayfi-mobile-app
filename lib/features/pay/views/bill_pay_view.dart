@@ -173,8 +173,7 @@ class _BillPayViewState extends ConsumerState<BillPayView> {
       _packageController.text = '';
       return;
     }
-    _packageController.text =
-        item.shortName.isNotEmpty ? item.shortName : item.name;
+    _packageController.text = item.displayLabel;
     _syncAmountFromSelection();
   }
 
@@ -431,11 +430,8 @@ class _BillPayViewState extends ConsumerState<BillPayView> {
             'billerCode': _paymentBillerCode,
             'itemCode': _selected!.itemCode,
             'customerId': customerId,
-            'billerName': widget.biller.name,
-            'itemName':
-                _selected!.shortName.isNotEmpty
-                    ? _selected!.shortName
-                    : _selected!.name,
+            'billerName': widget.biller.displayName,
+            'itemName': _selected!.displayLabel,
           },
         },
       );
@@ -525,11 +521,8 @@ class _BillPayViewState extends ConsumerState<BillPayView> {
             customerId: customerId,
             amount: amount,
             pin: pin,
-            billerName: widget.biller.name,
-            itemName:
-                _selected!.shortName.isNotEmpty
-                    ? _selected!.shortName
-                    : _selected!.name,
+            billerName: widget.biller.displayName,
+            itemName: _selected!.displayLabel,
           );
           await ref.read(walletHubProvider.notifier).refresh();
           return payResult;
@@ -560,7 +553,7 @@ class _BillPayViewState extends ConsumerState<BillPayView> {
     await TransactionCompletionFlow.pushSuccess(
       context,
       screen: TransactionCompletionFlow.billSuccess(
-        billerName: widget.biller.name,
+        billerName: widget.biller.displayName,
         amount: amount,
         reference: result['reference']?.toString() ?? '',
         token: token,
@@ -594,7 +587,7 @@ class _BillPayViewState extends ConsumerState<BillPayView> {
     return Stack(
       children: [
         DayfiFeatureScaffold(
-      title: widget.biller.shortName ?? widget.biller.name,
+      title: widget.biller.displayName,
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(18, 12, 18, 32),
         child: Column(

@@ -89,7 +89,7 @@ class _BillBillersViewState extends State<BillBillersView> {
   @override
   Widget build(BuildContext context) {
     return DayfiFeatureScaffold(
-      title: widget.category.name,
+      title: formatBillBillerLabel(widget.category.name),
       body: Padding(
         padding: const EdgeInsets.fromLTRB(0, 12, 0, 0),
         child:
@@ -98,7 +98,7 @@ class _BillBillersViewState extends State<BillBillersView> {
                   child: Padding(
                     padding: const EdgeInsets.all(24),
                     child: Text(
-                      'No providers available for ${widget.category.name}',
+                      'No providers available for ${formatBillBillerLabel(widget.category.name)}',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontFamily: 'Chirp',
@@ -127,7 +127,7 @@ class _BillBillersViewState extends State<BillBillersView> {
                         delegate: SliverChildBuilderDelegate((context, index) {
                           final biller = _billers[index];
                           return PayBillGridTile(
-                            title: biller.shortName ?? biller.name,
+                            title: biller.displayName,
                             innerIconAsset: billerInnerIconAsset(
                               biller,
                               widget.category.code,

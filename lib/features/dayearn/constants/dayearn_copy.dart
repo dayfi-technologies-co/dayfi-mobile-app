@@ -1,12 +1,14 @@
-/// User-facing copy for Daily Earn.
+/// User-facing copy for DayEarn.
 class DayEarnCopy {
   DayEarnCopy._();
 
-  static const featureName = 'Daily Earn';
-  static const createCta = 'Create New Daily Earn';
+  static const featureName = 'DayEarn';
+  static const createCta = 'Create DayEarn';
   static const addMoreCta = 'Add More';
+  static const addToCta = 'Add to DayEarn';
+  static const totalBalanceLabel = 'Total DayEarn Balance';
   static const withdrawCta = 'Withdraw';
-  static const emptyTitle = 'No Daily Earn pots yet';
+  static const emptyTitle = 'No DayEarn pots yet';
   static const emptyMessage =
       'Create a named pot to earn daily interest. Withdraw anytime with no penalty.';
   static const accrualNote =
@@ -26,7 +28,7 @@ class DayEarnCopy {
   static const withdrawDescription =
       'Move funds back to your wallet instantly — no penalty.';
   static const withdrawAgreement =
-      'I understand and agree with all the Terms & Conditions for withdrawing from Daily Earn on dayfi.';
+      'I understand and agree with all the Terms & Conditions for withdrawing from DayEarn on dayfi.';
   static const amountRequired = 'Enter an amount';
   static const amountInvalid = 'Enter a valid amount';
   static const insufficientWalletBalance = 'Insufficient wallet balance';

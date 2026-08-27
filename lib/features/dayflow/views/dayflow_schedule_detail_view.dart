@@ -1,15 +1,15 @@
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/common/widgets/dayfi_screen_app_bar.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
+import 'package:dayfi/common/widgets/dayfi_web_dialog.dart';
 import 'package:dayfi/core/navigation/dayfi_page_transitions.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/features/dayflow/constants/dayflow_copy.dart';
-import 'package:dayfi/features/dayflow/daybudget_flow.dart';
 import 'package:dayfi/features/dayflow/helpers/dayflow_format.dart';
 import 'package:dayfi/features/dayflow/helpers/dayflow_instance_display.dart';
+import 'package:dayfi/features/dayflow/helpers/dayflow_schedule_edit_launcher.dart';
 import 'package:dayfi/features/dayflow/helpers/dayflow_schedule_instances.dart';
-import 'package:dayfi/features/dayflow/helpers/dayflow_schedule_setup_launcher.dart';
 import 'package:dayfi/features/dayflow/helpers/dayflow_wallet_balance.dart';
 import 'package:dayfi/features/dayflow/models/dayflow_models.dart';
 import 'package:dayfi/features/dayflow/services/dayflow_api_service.dart';
@@ -42,29 +42,10 @@ class DayFlowScheduleDetailView extends StatelessWidget {
   }
 
   Future<void> _edit(BuildContext context) async {
-    if (item.needsSetup) {
-      await DayFlowScheduleSetupLauncher.open(
-        context,
-        item,
-        onUpdated: onUpdated,
-      );
-      return;
-    }
-
-    final due = formatInstanceDueDate(item.dueAt);
-    final recipient = item.recipientHint?.trim();
-    final seed = StringBuffer(
-      'Update my scheduled payment "${item.title}" — '
-      '${formatDayFlowAmount(item.amount, kDayFlowWalletCurrency)} due $due',
-    );
-    if (recipient != null && recipient.isNotEmpty) {
-      seed.write(' to $recipient');
-    }
-    seed.write('.');
-    final updated = await DayBudgetFlow.openEditChat(
+    final updated = await DayFlowScheduleEditLauncher.open(
       context,
-      initialPrompt: seed.toString(),
-      onActivated: () {
+      item,
+      onUpdated: () {
         DayFlowCacheSync.invalidateAll();
         onUpdated?.call();
       },
@@ -78,7 +59,7 @@ class DayFlowScheduleDetailView extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder:
-          (ctx) => AlertDialog(
+          (ctx) => DayfiWebAlertDialog(
             title: Text(DayFlowCopy.cancelFlow),
             content: Text(DayFlowCopy.cancelFlowConfirm),
             actions: [
@@ -234,7 +215,7 @@ class DayFlowScheduleDetailView extends StatelessWidget {
                   rows: [
                     _DetailRow(
                       label: 'Due date',
-                      value: formatInstanceDueDate(item.dueAt),
+                      value: formatInstanceDueDateTime(item.dueAt),
                     ),
                     if (item.dueLabel != null &&
                         item.dueLabel!.trim().isNotEmpty)

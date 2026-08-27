@@ -51,7 +51,7 @@ bool dayflowDeliversNonUsd({
   if (to.isNotEmpty && to != 'USD') return true;
   final hint = (recipientHint ?? '').toLowerCase();
   return RegExp(
-    r'opay|palmpay|naira|ngn|mtn|glo|airtel|9mobile|gtb|access|uba|zenith|bank|nigeria',
+    r'opay|palmpay|naira|ngn|mtn|glo|airtel|9mobile|t2mobile|gtb|access|uba|zenith|bank|nigeria',
     caseSensitive: false,
   ).hasMatch(hint);
 }

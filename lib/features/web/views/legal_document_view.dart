@@ -3,6 +3,8 @@ import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/features/web/constants/legal_documents_registry.dart';
 import 'package:dayfi/features/web/models/legal_document.dart';
 import 'package:dayfi/features/web/utils/web_layout.dart';
+import 'package:dayfi/features/web/widgets/landing/landing_copyable_text.dart';
+import 'package:dayfi/features/web/widgets/landing/landing_sections.dart';
 import 'package:dayfi/features/web/widgets/web_landing_shell.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:flutter/material.dart';
@@ -35,12 +37,12 @@ class LegalDocumentView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final doc = _document;
-    final body = _LegalDocumentBody(document: doc);
 
     if (isDayfiWeb) {
       return WebLandingShell(
         activeRoute: _activeRoute,
-        child: body,
+        fullWidthChild: true,
+        child: _LegalDocumentWebBody(document: doc),
       );
     }
 
@@ -67,7 +69,87 @@ class LegalDocumentView extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      body: body,
+      body: _LegalDocumentBody(document: doc),
+    );
+  }
+}
+
+class _LegalDocumentWebBody extends StatelessWidget {
+  const _LegalDocumentWebBody({required this.document});
+
+  final LegalDocument document;
+
+  @override
+  Widget build(BuildContext context) {
+    final viewportWidth = MediaQuery.sizeOf(context).width;
+    final isMobile = WebLayout.isMobile(viewportWidth);
+    final topPad = WebLayout.sectionVerticalGap(viewportWidth) * 2;
+    final heroTopPad = topPad * .5;
+    final theme = Theme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        LandingFullBleedSection(
+          backgroundColor: LandingSectionColors.hero,
+          padding: EdgeInsets.fromLTRB(0, heroTopPad, 0, topPad * .75),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              LandingCopyableText(
+                document.pageTitle,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontFamily: 'FunnelDisplay',
+                  fontSize: isMobile ? 68 : 112,
+                  fontWeight: FontWeight.w400,
+                  height: 1,
+                  letterSpacing: -2,
+                  color: AppColors.neutral900,
+                ),
+              ),
+              const SizedBox(height: 32),
+              LandingCopyableText(
+                document.subtitle,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  fontFamily: 'Chirp',
+                  fontSize: isMobile ? 16 : 18,
+                  fontWeight: FontWeight.w400,
+                  height: 1.55,
+                  letterSpacing: 0.2,
+                  color: AppColors.neutral800,
+                ),
+              ),
+              const SizedBox(height: 16),
+              LandingCopyableText(
+                document.effectiveDate,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontFamily: 'Chirp',
+                  fontSize: isMobile ? 14 : 16,
+                  fontStyle: FontStyle.italic,
+                  height: 1.5,
+                  color: AppColors.neutral700,
+                ),
+              ),
+            ],
+          ),
+        ),
+        LandingFullBleedSection(
+          backgroundColor: LandingSectionColors.hero,
+          padding: EdgeInsets.only(bottom: topPad * 2),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ...document.sections.map(
+                (section) => _LegalSectionBlock(
+                  section: section,
+                  isWeb: true,
+                  isMobile: isMobile,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -86,27 +168,10 @@ class _LegalDocumentBody extends StatelessWidget {
         final isMobile = WebLayout.isMobile(constraints.maxWidth);
 
         return SingleChildScrollView(
-          padding: EdgeInsets.fromLTRB(
-            0,
-            isDayfiWeb ? 24 : 16,
-            0,
-            48,
-          ),
+          padding: const EdgeInsets.fromLTRB(32, 16, 32, 48),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (isDayfiWeb) ...[
-                Text(
-                  document.pageTitle,
-                  style: theme.textTheme.headlineLarge?.copyWith(
-                    fontFamily: 'FunnelDisplay',
-                    fontSize: isMobile ? 32 : 40,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -1,
-                  ),
-                ),
-                const SizedBox(height: 12),
-              ],
               Text(
                 document.subtitle,
                 style: theme.textTheme.bodyLarge?.copyWith(
@@ -127,7 +192,11 @@ class _LegalDocumentBody extends StatelessWidget {
               ),
               const SizedBox(height: 32),
               ...document.sections.map(
-                (section) => _LegalSectionBlock(section: section),
+                (section) => _LegalSectionBlock(
+                  section: section,
+                  isWeb: false,
+                  isMobile: isMobile,
+                ),
               ),
             ],
           ),
@@ -138,16 +207,37 @@ class _LegalDocumentBody extends StatelessWidget {
 }
 
 class _LegalSectionBlock extends StatelessWidget {
-  const _LegalSectionBlock({required this.section});
+  const _LegalSectionBlock({
+    required this.section,
+    required this.isWeb,
+    required this.isMobile,
+  });
 
   final LegalSection section;
+  final bool isWeb;
+  final bool isMobile;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final titleStyle = theme.textTheme.titleLarge?.copyWith(
+      fontFamily: 'FunnelDisplay',
+      fontSize: isWeb ? (isMobile ? 28 : 36) : 22,
+      fontWeight: isWeb ? FontWeight.w500 : FontWeight.w600,
+      height: isWeb ? 1.1 : null,
+      letterSpacing: isWeb ? -1 : -0.3,
+      color: isWeb ? AppColors.neutral900 : null,
+    );
+    final bodyStyle = theme.textTheme.bodyMedium?.copyWith(
+      fontFamily: 'Chirp',
+      fontSize: isWeb ? (isMobile ? 16 : 18) : 15,
+      height: 1.55,
+      letterSpacing: isWeb ? 0.2 : -0.2,
+      color: isWeb ? AppColors.neutral800 : null,
+    );
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 28),
+      padding: EdgeInsets.only(bottom: isWeb ? 48 : 28),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -155,49 +245,38 @@ class _LegalSectionBlock extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 36,
-                height: 36,
+                width: isWeb ? 44 : 36,
+                height: isWeb ? 44 : 36,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: AppColors.orange500.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(isWeb ? 12 : 8),
                 ),
                 child: Text(
                   section.number,
                   style: theme.textTheme.labelLarge?.copyWith(
                     fontFamily: 'FunnelDisplay',
+                    fontSize: isWeb ? 16 : null,
                     fontWeight: FontWeight.w700,
                     color: AppColors.orange500,
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 16),
               Expanded(
-                child: Text(
-                  section.title,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontFamily: 'FunnelDisplay',
-                    fontSize: 22,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: -0.3,
-                  ),
-                ),
+                child: isWeb
+                    ? LandingCopyableText(section.title, style: titleStyle)
+                    : Text(section.title, style: titleStyle),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: isWeb ? 20 : 12),
           ...section.paragraphs.map(
             (paragraph) => Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Text(
-                paragraph,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontFamily: 'Chirp',
-                  fontSize: 15,
-                  height: 1.55,
-                  letterSpacing: -0.2,
-                ),
-              ),
+              padding: const EdgeInsets.only(bottom: 12),
+              child: isWeb
+                  ? LandingCopyableText(paragraph, style: bodyStyle)
+                  : Text(paragraph, style: bodyStyle),
             ),
           ),
         ],

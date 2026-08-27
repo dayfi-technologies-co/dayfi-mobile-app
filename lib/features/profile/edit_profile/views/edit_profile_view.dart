@@ -5,6 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
+import 'package:dayfi/common/widgets/dayfi_web_dialog.dart';
 import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/features/profile/edit_profile/vm/edit_profile_viewmodel.dart';
@@ -777,7 +778,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
+        return DayfiWebAlertDialog(
           title: Text(
             'Request $fieldName Change',
             style: AppTypography.titleMedium.copyWith(
@@ -862,7 +863,7 @@ class _EditProfileViewState extends ConsumerState<EditProfileView> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
+        return DayfiWebAlertDialog(
           title: Text(
             'Verify Phone Number Change',
             style: AppTypography.titleMedium.copyWith(

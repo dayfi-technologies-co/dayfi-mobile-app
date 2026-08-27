@@ -82,7 +82,7 @@ class CreateBudgetTypeView extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             _BudgetTypeTile(
-              title: 'Daily Earn',
+              title: 'DayEarn',
               subtitle: 'Auto-save to a pot on a schedule',
               innerIconAsset: 'assets/icons/svgs/clock-dollar.svg',
               onTap: () => _open(context, BudgetCreateKind.dailyEarn),

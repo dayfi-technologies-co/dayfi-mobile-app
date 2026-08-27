@@ -4,6 +4,8 @@ import 'package:dayfi/common/services/feature_activity_service.dart';
 import 'package:dayfi/features/dayearn/dayearn_entry.dart';
 import 'package:dayfi/core/navigation/dayfi_page_transitions.dart';
 import 'package:dayfi/features/dayearn/services/dayearn_summary_cache.dart';
+import 'package:dayfi/common/widgets/top_snackbar.dart';
+import 'package:dayfi/core/navigation/navigator_key.dart';
 import 'package:dayfi/features/dayearn/views/dayearn_create_view.dart';
 import 'package:dayfi/features/transactions/vm/transactions_viewmodel.dart';
 import 'package:dayfi/routes/route.dart';
@@ -41,19 +43,57 @@ abstract final class DayEarnFlow {
     );
   }
 
-  /// Refresh caches after any DayEarn wallet movement.
+  /// Refresh caches after any DayEarn wallet movement (non-blocking).
   static Future<void> onFundsMoved(WidgetRef ref) async {
     DayEarnSummaryCache.instance.invalidate();
     FeatureActivityService.instance.invalidate();
-    try {
-      await ref.read(transactionsProvider.notifier).loadTransactions();
-    } catch (_) {}
+    unawaited(
+      ref
+          .read(transactionsProvider.notifier)
+          .loadTransactions(forceRefresh: true)
+          .catchError((_) {}),
+    );
   }
 
-  /// Call after pot creation before [openHome].
+  /// Call after pot creation — marks local state then refreshes in background.
   static Future<void> onPotCreated(WidgetRef ref) async {
     await DayEarnEntry.markHasPots();
     await onFundsMoved(ref);
+  }
+
+  /// Leave the current DayEarn screen, show a top snackbar on the route below.
+  static void completeWithSnackbar({
+    required BuildContext context,
+    required WidgetRef ref,
+    required String message,
+    bool afterPotCreated = false,
+  }) {
+    if (afterPotCreated) {
+      unawaited(DayEarnEntry.markHasPots());
+    }
+    unawaited(onFundsMoved(ref));
+
+    if (!context.mounted) return;
+
+    final navigator = Navigator.of(context);
+    final shouldPop = navigator.canPop();
+
+    if (shouldPop) {
+      navigator.pop(true);
+    } else {
+      final rootContext = NavigatorKey.appNavigatorKey.currentContext;
+      if (rootContext != null && rootContext.mounted) {
+        openHome(rootContext);
+      }
+    }
+
+    // Show after the pop so the snackbar attaches to the route underneath.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final rootContext = NavigatorKey.appNavigatorKey.currentContext;
+      if (rootContext != null && rootContext.mounted) {
+        TopSnackbar.show(rootContext, message: message);
+      }
+    });
   }
 
   /// Legacy success screen Done — land on DayEarn home.

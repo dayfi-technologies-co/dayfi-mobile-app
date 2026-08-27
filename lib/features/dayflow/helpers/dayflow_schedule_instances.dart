@@ -1,7 +1,9 @@
+import 'package:dayfi/features/budget/widgets/budget_time_field.dart';
 import 'package:dayfi/features/dayflow/helpers/dayflow_draft_schedules.dart';
 import 'package:dayfi/features/dayflow/helpers/dayflow_format.dart';
 import 'package:dayfi/features/dayflow/helpers/dayflow_wallet_balance.dart';
 import 'package:dayfi/features/dayflow/models/dayflow_models.dart';
+import 'package:flutter/material.dart';
 
 DateTime _startOfDay(DateTime d) => DateTime(d.year, d.month, d.day);
 
@@ -161,6 +163,20 @@ List<DayBudgetScheduleInstance> _expandSchedule({
     recipientHint: schedule.recipientHint,
   );
 
+  TimeOfDay? runTime;
+  if (schedule.nextRunAt != null) {
+    final next = DateTime.tryParse(schedule.nextRunAt!);
+    if (next != null) {
+      final local = next.isUtc ? next.toLocal() : next;
+      runTime = TimeOfDay(hour: local.hour, minute: local.minute);
+    }
+  }
+
+  DateTime withRunTime(DateTime date) {
+    if (runTime == null) return date;
+    return DateTime(date.year, date.month, date.day, runTime.hour, runTime.minute);
+  }
+
   DayBudgetScheduleInstance build(DateTime due, {String? idSuffix}) {
     final suffix = idSuffix ?? due.toIso8601String().substring(0, 10);
     return DayBudgetScheduleInstance(
@@ -169,7 +185,7 @@ List<DayBudgetScheduleInstance> _expandSchedule({
       scheduleId: scheduleId,
       title: schedule.title,
       amount: schedule.amount,
-      dueAt: due,
+      dueAt: withRunTime(due),
       status: _resolveStatus(dueAt: due, now: now, schedule: schedule),
       autoPay: schedule.autoPay,
       paymentType: paymentType,
@@ -358,6 +374,14 @@ String formatInstanceDueDate(DateTime due) {
     'Dec',
   ];
   return '${months[due.month - 1]} ${due.day}';
+}
+
+String formatInstanceDueDateTime(DateTime due) {
+  final date = formatInstanceDueDate(due);
+  final local = due.toLocal();
+  if (local.hour == 0 && local.minute == 0) return date;
+  final time = BudgetTimeField.formatDisplay(TimeOfDay.fromDateTime(local));
+  return '$date, $time';
 }
 
 String formatInstanceLine(

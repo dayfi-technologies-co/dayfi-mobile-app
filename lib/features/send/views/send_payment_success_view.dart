@@ -13,7 +13,6 @@ import 'package:dayfi/common/widgets/transaction_processing_overlay.dart';
 import 'package:dayfi/features/send/helpers/send_success_navigation.dart';
 import 'package:dayfi/features/send/vm/send_viewmodel.dart';
 import 'package:dayfi/features/transactions/vm/transactions_viewmodel.dart';
-import 'package:dayfi/features/recipients/vm/recipients_viewmodel.dart';
 import 'package:dayfi/common/helpers/ngn_bank_transfer_partner.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/common/utils/haptic_helper.dart';
@@ -58,30 +57,26 @@ class _SendPaymentSuccessViewState extends ConsumerState<SendPaymentSuccessView>
   }
 
   Future<void> _refreshTransactionHistory() async {
-    if (widget.transactionId == null) return;
+    final id = widget.transactionId;
+    if (id == null) return;
+
+    final cached = SendSuccessNavigation.findInProvider(ref, id);
+    if (cached != null) {
+      if (mounted) setState(() => _transaction = cached);
+      unawaited(ref.read(transactionsProvider.notifier).loadTransactions());
+      return;
+    }
 
     try {
-      // Fetch transactions and find the specific one
-      final transactionsNotifier = ref.read(transactionsProvider.notifier);
-      await transactionsNotifier.loadTransactions();
-      await ref.read(recipientsProvider.notifier).loadBeneficiaries();
-      final transactions = ref.read(transactionsProvider).transactions;
-
-      final match = widget.transactionId == null
-          ? null
-          : SendSuccessNavigation.findTransaction(
-              transactions,
-              widget.transactionId!,
-            );
+      await ref.read(transactionsProvider.notifier).loadTransactions();
+      final match = SendSuccessNavigation.findInProvider(ref, id);
       if (!mounted) return;
       setState(() => _transaction = match);
 
       if (match != null) {
-        AppLogger.info(
-          'Transaction fetched successfully: ${widget.transactionId}',
-        );
+        AppLogger.info('Transaction prefetched: $id');
       } else {
-        AppLogger.error('Transaction not found: ${widget.transactionId}');
+        AppLogger.error('Transaction not found: $id');
       }
     } catch (e) {
       AppLogger.error('Failed to fetch transaction: $e');
@@ -460,7 +455,7 @@ class _SendPaymentSuccessViewState extends ConsumerState<SendPaymentSuccessView>
         Column(
           children: [
             PrimaryButton(
-              text: 'View transaction',
+              text: 'View transactions',
               onPressed: _viewTransaction,
               isLoading: _isNavigating,
               backgroundColor: Colors.white,

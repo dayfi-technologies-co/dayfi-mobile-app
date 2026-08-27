@@ -16,6 +16,7 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:dayfi/common/helpers/transaction_completion_flow.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/features/send/constants/send_copy.dart';
+import 'package:dayfi/features/send/helpers/send_success_navigation.dart';
 
 class SendDayfiIdReviewView extends ConsumerStatefulWidget {
   final Map<String, dynamic> selectedData;
@@ -278,11 +279,7 @@ class _SendDayfiIdReviewViewState extends ConsumerState<SendDayfiIdReviewView>
     }
 
     if (successArgs != null && mounted) {
-      appRouter.pushNamedAndRemoveUntil(
-        AppRoute.sendPaymentSuccessView,
-        (route) => false,
-        arguments: successArgs,
-      );
+      SendSuccessNavigation.navigateToPaymentSuccess(successArgs);
     }
   }
 

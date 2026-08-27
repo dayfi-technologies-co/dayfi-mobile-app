@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
+import 'package:dayfi/common/widgets/dayfi_web_dialog.dart';
 import 'package:dayfi/features/send/constants/send_copy.dart';
 import 'package:dayfi/features/send/vm/send_viewmodel.dart';
 import 'package:dayfi/common/utils/number_formatter.dart';
@@ -937,12 +938,12 @@ class _BankTransferAmountViewState
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return Dialog(
+        return DayfiWebDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
           ),
-          child: Container(
-            padding: EdgeInsets.all(28),
+          child: Padding(
+            padding: const EdgeInsets.all(28),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -1045,7 +1046,7 @@ class _BankTransferAmountViewState
     showDialog(
       context: context,
       builder:
-          (context) => AlertDialog(
+          (context) => DayfiWebAlertDialog(
             title: const Text('Payment Expired'),
             content: const Text(
               'The payment details have expired. Please create a new payment.',

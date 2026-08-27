@@ -1,12 +1,16 @@
+import 'package:dayfi/common/constants/product_features.dart';
 import 'package:dayfi/features/dayx/services/dayx_action_handler.dart';
-import 'package:dayfi/features/dayx/widgets/dayx_orb_button.dart';
 import 'package:dayfi/features/dayx/widgets/dayx_overlay.dart';
 import 'package:dayfi/features/dayx/services/dayx_voice_hold_bridge.dart';
 import 'package:dayfi/features/dayx/widgets/dayx_voice_overlay.dart';
+import 'package:dayfi/features/dayx_v2/dayx_v2_entry.dart';
+import 'package:dayfi/features/dayx_v2/views/dayx_v2_overlay.dart';
+import 'package:dayfi/features/dayx/widgets/dayx_navigation.dart';
 import 'package:dayfi/features/home/views/home_view.dart';
 import 'package:dayfi/features/home/vm/home_viewmodel.dart';
 import 'package:dayfi/features/recipients/views/recipients_view.dart';
 import 'package:dayfi/features/transactions/views/transactions_view.dart';
+import 'package:dayfi/features/transactions/vm/transactions_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dayfi/features/profile/views/profile_view.dart';
@@ -14,6 +18,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
+import 'package:dayfi/common/widgets/dayfi_web_dialog.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/services/local/secure_storage.dart';
 import 'package:dayfi/common/constants/storage_keys.dart';
@@ -65,11 +70,33 @@ class _MainViewState extends ConsumerState<MainView> {
     });
   }
 
+  @override
+  void didUpdateWidget(MainView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialTabIndex != widget.initialTabIndex &&
+        widget.initialTabIndex != _currentIndex) {
+      _currentIndex = widget.initialTabIndex;
+    }
+  }
+
   void changeTab(int index) {
-    if (mounted && index >= 0 && index < _screens.length) {
-      setState(() {
-        _currentIndex = index;
-      });
+    if (!mounted || index < 0 || index >= _screens.length) return;
+    if (_currentIndex == index) {
+      _onTabSelected(index);
+      return;
+    }
+    setState(() => _currentIndex = index);
+    _onTabSelected(index);
+  }
+
+  void _onTabSelected(int index) {
+    if (index == 0) {
+      ref.read(homeViewModelProvider.notifier).fetchWalletDetails(
+        forceRefresh: true,
+      );
+    } else if (index == 1) {
+      // Keep the last list on screen; refresh in the background without skeleton.
+      ref.read(transactionsProvider.notifier).loadTransactions();
     }
   }
 
@@ -171,13 +198,12 @@ class _MainViewState extends ConsumerState<MainView> {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: Theme.of(context).colorScheme.surface,
+        return DayfiWebDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
           ),
-          child: Container(
-            padding: EdgeInsets.all(28),
+          child: Padding(
+            padding: const EdgeInsets.all(28),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -310,33 +336,58 @@ class _MainViewState extends ConsumerState<MainView> {
   }
 
   void _openDayX() {
+    void onNavigate(String target) {
+      DayxNavigation.handle(
+        context: context,
+        target: target,
+        changeTab: changeTab,
+      );
+    }
+
+    if (ProductFeatures.dayXv2) {
+      DayxV2Entry.open(
+        context,
+        onChangeTab: changeTab,
+        onNavigate: onNavigate,
+      );
+      return;
+    }
+
     DayxOverlay.show(
       context,
       onChangeTab: changeTab,
-      onNavigate: (target) {
-        DayxNavigation.handle(
-          context: context,
-          target: target,
-          changeTab: changeTab,
-        );
-      },
+      onNavigate: onNavigate,
     );
   }
 
   void _openDayXVoice({required bool fromNavHold}) {
+    void onNavigate(String target) {
+      DayxNavigation.handle(
+        context: context,
+        target: target,
+        changeTab: changeTab,
+      );
+    }
+
+    if (ProductFeatures.dayXv2) {
+      DayxVoiceHoldBridge.onHoldReleased =
+          fromNavHold ? DayxV2Overlay.requestFinalizeListening : null;
+      DayxV2Entry.open(
+        context,
+        onChangeTab: changeTab,
+        onNavigate: onNavigate,
+        fromNavHold: fromNavHold,
+      ).whenComplete(DayxVoiceHoldBridge.clear);
+      return;
+    }
+
     DayxVoiceHoldBridge.onHoldReleased =
         fromNavHold ? DayxVoiceOverlay.requestFinalizeListening : null;
     DayxVoiceOverlay.show(
       context,
       fromNavHold: fromNavHold,
       onChangeTab: changeTab,
-      onNavigate: (target) {
-        DayxNavigation.handle(
-          context: context,
-          target: target,
-          changeTab: changeTab,
-        );
-      },
+      onNavigate: onNavigate,
     ).whenComplete(DayxVoiceHoldBridge.clear);
   }
 
@@ -376,7 +427,7 @@ class _MainViewState extends ConsumerState<MainView> {
             ],
           ),
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 0),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
@@ -395,18 +446,18 @@ class _MainViewState extends ConsumerState<MainView> {
                   ),
                 ),
                 
-                Container(
-                  margin: EdgeInsets.symmetric(horizontal: 12),
-                  width: 56,
-                  child: Transform.translate(
-                    offset: const Offset(0, -14),
-                    child: DayxOrbButton(
-                      onTap: _openDayX,
-                      onHoldStart: _onDayXHoldStart,
-                      onHoldEnd: _onDayXHoldEnd,
-                    ),
-                  ),
-                ),
+                // Container(
+                //   margin: EdgeInsets.symmetric(horizontal: 12),
+                //   width: 56,
+                //   child: Transform.translate(
+                //     offset: const Offset(0, -14),
+                //     child: DayxOrbButton(
+                //       onTap: _openDayX,
+                //       onHoldStart: _onDayXHoldStart,
+                //       onHoldEnd: _onDayXHoldEnd,
+                //     ),
+                //   ),
+                // ),
                 Expanded(
                   child: _buildNavItem(
                     index: 2,
@@ -437,21 +488,10 @@ class _MainViewState extends ConsumerState<MainView> {
     bool isPNG = false,
   }) {
     return GestureDetector(
-      onTap: () {
-        if (index != _currentIndex) {
-          setState(() {
-            _currentIndex = index;
-          });
-          if (index == 0) {
-            ref
-                .read(homeViewModelProvider.notifier)
-                .fetchWalletDetails(forceRefresh: true);
-          }
-        }
-      },
+      onTap: () => changeTab(index),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 50),
-        height: 80,
+        height: 82,
         padding: EdgeInsets.symmetric(horizontal: 8),
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(50)),
         child: Opacity(

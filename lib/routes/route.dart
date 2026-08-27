@@ -70,6 +70,7 @@ import 'package:dayfi/features/profile/views/reset_transaction_pin_otp_view.dart
 import 'package:dayfi/features/profile/views/reset_transaction_pin_new_view.dart';
 import 'package:dayfi/features/profile/views/reset_transaction_pin_confirm_view.dart';
 import 'package:dayfi/features/profile/views/faq_view.dart';
+import 'package:dayfi/features/web/views/web_faq_view.dart';
 import 'package:dayfi/features/send/views/send_view.dart';
 import 'package:dayfi/features/send/views/select_destination_country_view.dart';
 import 'package:dayfi/features/send/views/select_delivery_method_view.dart';
@@ -226,6 +227,7 @@ class AppRoute {
           const LegalDocumentView(documentId: LegalDocumentId.government),
         );
       case webFaqPath:
+        return _getPageRoute(routeSettings, const WebFaqView());
       case faqView:
         return _getPageRoute(routeSettings, const FaqView());
       case addWalletAddressView:

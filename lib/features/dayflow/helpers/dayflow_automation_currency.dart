@@ -13,7 +13,7 @@ bool dayflowAutomationNeedsNgnSource({
 
   final hint = (recipientHint ?? '').toLowerCase();
   return RegExp(
-    r'opay|palmpay|naira|ngn|mtn|glo|airtel|9mobile|gtb|access|uba|zenith|bank|nigeria|momo',
+    r'opay|palmpay|naira|ngn|mtn|glo|airtel|9mobile|t2mobile|gtb|access|uba|zenith|bank|nigeria|momo',
   ).hasMatch(hint);
 }
 

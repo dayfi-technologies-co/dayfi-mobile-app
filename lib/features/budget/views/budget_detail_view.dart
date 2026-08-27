@@ -6,6 +6,7 @@ import 'package:dayfi/common/widgets/buttons/secondary_button.dart';
 import 'package:dayfi/common/widgets/dayfi_loading_indicator.dart';
 import 'package:dayfi/common/widgets/dayfi_screen_app_bar.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
+import 'package:dayfi/common/widgets/dayfi_web_dialog.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/features/budget/constants/budget_copy.dart';
@@ -103,7 +104,7 @@ class _BudgetDetailViewState extends State<BudgetDetailView> {
     final ok = await showDialog<bool>(
       context: context,
       builder:
-          (ctx) => AlertDialog(
+          (ctx) => DayfiWebAlertDialog(
             title: const Text(
               'Delete budget?',
               style: TextStyle(fontFamily: 'Chirp'),

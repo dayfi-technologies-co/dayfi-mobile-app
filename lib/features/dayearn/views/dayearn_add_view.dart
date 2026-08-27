@@ -6,7 +6,6 @@ import 'package:dayfi/common/widgets/dayfi_screen_app_bar.dart';
 import 'package:dayfi/common/widgets/dayfi_screen_description.dart';
 import 'package:dayfi/features/dayearn/constants/dayearn_copy.dart';
 import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
-import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/features/dayearn/helpers/dayearn_form_validation.dart';
 import 'package:dayfi/features/dayearn/helpers/dayearn_format.dart';
@@ -29,6 +28,7 @@ class _DayEarnAddViewState extends ConsumerState<DayEarnAddView> {
   final _formKey = GlobalKey<FormState>();
   final _amountController = TextEditingController();
   double? _walletBalance;
+  bool _submitting = false;
 
   @override
   void initState() {
@@ -85,34 +85,38 @@ class _DayEarnAddViewState extends ConsumerState<DayEarnAddView> {
   }
 
   Future<void> _submit() async {
+    if (_submitting) return;
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final amount = double.tryParse(_amountController.text.trim());
     if (amount == null) return;
 
-    final result = await TransactionPinFlow.requestPinAndRun(
-      context: context,
-      ref: ref,
-      task: (pin) => dayEarnService.deposit(
-        potId: widget.potId,
-        amount: amount,
-        pin: pin,
-      ),
-    );
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() => _submitting = true);
+    try {
+      final result = await TransactionPinFlow.requestPinAndRun(
+        context: context,
+        ref: ref,
+        task: (pin) => dayEarnService.deposit(
+          potId: widget.potId,
+          amount: amount,
+          pin: pin,
+        ),
+      );
 
-    if (!mounted || result == null) return;
+      if (!mounted || result == null) return;
 
-    await DayEarnFlow.onFundsMoved(ref);
-    if (!mounted) return;
-
-    TopSnackbar.showSafe(
-      context,
-      message: DayEarnCopy.fundsAdded(
-        widget.pot.name,
-        formatDayEarnAmount(amount, kDayEarnCurrency),
-      ),
-    );
-    Navigator.pop(context, true);
+      DayEarnFlow.completeWithSnackbar(
+        context: context,
+        ref: ref,
+        message: DayEarnCopy.fundsAdded(
+          widget.pot.name,
+          formatDayEarnAmount(amount, kDayEarnCurrency),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
   }
 
   @override
@@ -150,9 +154,12 @@ class _DayEarnAddViewState extends ConsumerState<DayEarnAddView> {
               ),
             ),
             const Spacer(),
-          Padding(padding: const EdgeInsets.symmetric(horizontal: 32), child:   PrimaryButton(
-              text: 'Add to Daily Earn',
-              onPressed: _submit,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: PrimaryButton(
+              text: DayEarnCopy.addToCta,
+              onPressed: _submitting ? null : _submit,
+              isLoading: _submitting,
               fullWidth: true,
               height: 48,
               borderRadius: 40,

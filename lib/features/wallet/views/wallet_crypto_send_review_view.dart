@@ -7,6 +7,7 @@ import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/features/recipients/helpers/recipient_history_helper.dart';
 import 'package:dayfi/features/send/constants/send_copy.dart';
+import 'package:dayfi/features/send/helpers/send_success_navigation.dart';
 import 'package:dayfi/features/wallet/constants/crypto_network_catalog.dart';
 import 'package:dayfi/features/send/vm/transaction_pin_viewmodel.dart';
 import 'package:dayfi/routes/route.dart';
@@ -119,10 +120,7 @@ class _WalletCryptoSendReviewViewState
     }
 
     final recipientLabel = RecipientHistoryHelper.truncateAddress(_to);
-    appRouter.pushNamedAndRemoveUntil(
-      AppRoute.sendPaymentSuccessView,
-      (route) => false,
-      arguments: {
+    SendSuccessNavigation.navigateToPaymentSuccess({
         'recipientData': {'name': recipientLabel},
         'selectedData': {
           'sendAmount': _amount,
@@ -138,8 +136,7 @@ class _WalletCryptoSendReviewViewState
           'reason': SendCopy.defaultTransferReason,
         },
         'transactionId': hash,
-      },
-    );
+    });
   }
 
   Widget _getDetailIcon(String label) {

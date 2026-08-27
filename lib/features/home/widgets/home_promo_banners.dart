@@ -7,7 +7,6 @@ import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/core/theme/app_colors.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
 import 'package:dayfi/features/dayflow/constants/dayflow_copy.dart';
-import 'package:dayfi/features/dayflow/widgets/dayflow_automation_icon_badge.dart';
 import 'package:dayfi/features/pay/widgets/pay_bill_icon_badge.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -33,6 +32,7 @@ class HomePromoBannersRow extends StatelessWidget {
           child: _PromoBanner(
             onTap: onEarn,
             innerIconAsset: 'assets/icons/svgs/clock-dollar.svg',
+            accentColor: AppColors.purple600,
             title: 'DayEarn',
             subtitle: 'Earn up to 20% annually',
           ),
@@ -42,8 +42,8 @@ class HomePromoBannersRow extends StatelessWidget {
       Expanded(
         child: _PromoBanner(
           onTap: onDayFlow,
-          // iconBadge: const DayFlowAutomationIconBadge(size: 40, innerSize: 26),
           innerIconAsset: 'assets/icons/svgs/automation.svg',
+          accentColor: AppColors.teal600,
           title: DayFlowCopy.featureName,
           subtitle: DayFlowCopy.homeSubtitle,
         ),
@@ -59,7 +59,7 @@ class _PromoBanner extends StatelessWidget {
   final String innerIconAsset;
   final String title;
   final String subtitle;
-  final Widget? iconBadge;
+  final Color accentColor;
   final String? badge;
   final bool isComingSoon;
 
@@ -68,7 +68,8 @@ class _PromoBanner extends StatelessWidget {
     required this.innerIconAsset,
     required this.title,
     required this.subtitle,
-    this.iconBadge,
+    required this.accentColor,
+    // ignore: unused_element_parameter
     this.isComingSoon = false,
     // ignore: unused_element_parameter
     this.badge,
@@ -84,13 +85,21 @@ class _PromoBanner extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         splashColor: Colors.transparent,
-        highlightColor: onSurface.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(14),
+        highlightColor: accentColor.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(16),
         child: Ink(
           decoration: BoxDecoration(
+            // gradient: LinearGradient(
+            //   begin: Alignment.topLeft,
+            //   end: Alignment.bottomRight,
+            //   colors: [
+            //     accentColor.withValues(alpha: isDark ? 0.24 : 0.14),
+            //     accentColor.withValues(alpha: isDark ? 0.10 : 0.05),
+            //   ],
+            // ),
             color: surface,
             borderRadius: BorderRadius.circular(16),
-            // border: Border.all(color: onSurface.withValues(alpha: 0.06)),
+            // border: Border.all(color: accentColor.withValues(alpha: 0.20)),
           ),
           child: SizedBox(
             height: 118,
@@ -99,15 +108,14 @@ class _PromoBanner extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const SizedBox(height: 4),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      iconBadge ??
-                          PayBillIconBadge(
-                            innerIconAsset: innerIconAsset,
-                            size: 40,
-                            innerSize: 26,
-                          ),
+                      _ColorfulIconBadge(
+                        innerIconAsset: innerIconAsset,
+                        accentColor: accentColor,
+                      ),
                       const Spacer(),
                       if (badge != null)
                         Container(
@@ -178,9 +186,9 @@ class _PromoBanner extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontFamily: 'Chirp',
-                      fontSize: 12,
+                      fontSize: 12.5,
                       height: 1.25,
-                      color: onSurface.withValues(alpha: 0.5),
+                      color: onSurface.withValues(alpha: 0.85),
                     ),
                   ),
                 ],
@@ -189,6 +197,47 @@ class _PromoBanner extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Filled accent circle + white glyph used by the colorful Home promo banners.
+class _ColorfulIconBadge extends StatelessWidget {
+  const _ColorfulIconBadge({
+    required this.innerIconAsset,
+    required this.accentColor,
+  });
+
+  final String innerIconAsset;
+  final Color accentColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        SizedBox(
+          width: 40,
+          height: 40,
+          // decoration: BoxDecoration(shape: BoxShape.circle, ),
+          child: Center(
+            child: SvgPicture.asset(
+              "assets/icons/svgs/recipients.svg",
+              width: 40,
+              height: 40,
+              color: accentColor,
+            ),
+          ),
+        ),
+        Center(
+          child: SvgPicture.asset(
+            innerIconAsset,
+            width: 26,
+            height: 26,
+            colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -508,6 +557,7 @@ class _TapToPaySheetCloseButton extends StatelessWidget {
     return InkWell(
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
+      hoverColor: Colors.transparent,
       onTap: () {
         onPressed();
         FocusScope.of(context).unfocus();

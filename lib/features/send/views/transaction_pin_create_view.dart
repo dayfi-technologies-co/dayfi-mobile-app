@@ -7,6 +7,7 @@ import 'package:dayfi/services/local/secure_storage.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/routes/route.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
+import 'package:dayfi/common/widgets/dayfi_web_dialog.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/common/utils/haptic_helper.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -38,12 +39,6 @@ class _TransactionPinCreateViewState
     // Reset the shared provider state when entering this view
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(transactionPinProvider.notifier).resetForm();
-      // Listen for provider errors and show TopSnackbar when backend/VM sets an error
-      ref.listen<TransactionPinState>(transactionPinProvider, (previous, next) {
-        if (next.errorMessage.isNotEmpty) {
-          TopSnackbar.show(context, message: next.errorMessage, isError: true);
-        }
-      });
       _showSecurityDialog();
     });
   }
@@ -53,13 +48,12 @@ class _TransactionPinCreateViewState
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: Theme.of(context).colorScheme.surface,
+        return DayfiWebDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
           ),
-          child: Container(
-            padding: EdgeInsets.all(28),
+          child: Padding(
+            padding: const EdgeInsets.all(28),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -200,6 +194,12 @@ class _TransactionPinCreateViewState
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<TransactionPinState>(transactionPinProvider, (previous, next) {
+      if (next.errorMessage.isNotEmpty &&
+          next.errorMessage != previous?.errorMessage) {
+        TopSnackbar.show(context, message: next.errorMessage, isError: true);
+      }
+    });
     final pinNotifier = ref.read(transactionPinProvider.notifier);
 
     return GestureDetector(

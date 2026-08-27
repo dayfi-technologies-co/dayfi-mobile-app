@@ -126,11 +126,11 @@ abstract final class DayFlowScheduleSetupLauncher {
         prefix.startsWith('0818') ||
         prefix.startsWith('0909') ||
         prefix.startsWith('0908')) {
-      network = '9mobile';
+      network = 'T2mobile';
     }
 
     for (final biller in billers) {
-      if (biller.name.toLowerCase().contains(network.toLowerCase())) {
+      if (billerMatchesTelcoNetwork(biller, network)) {
         return biller;
       }
     }

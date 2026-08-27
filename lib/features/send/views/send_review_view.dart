@@ -9,6 +9,7 @@ import 'package:dayfi/common/widgets/dayfi_screen_description.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/features/send/constants/send_copy.dart';
 import 'package:dayfi/features/send/helpers/send_amount_limits.dart';
+import 'package:dayfi/features/send/helpers/send_success_navigation.dart';
 import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
 import 'package:dayfi/features/send/vm/send_viewmodel.dart';
 import 'package:dayfi/features/wallet/providers/wallet_hub_provider.dart';
@@ -1101,10 +1102,7 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
 
       if (response.error == false) {
         TransactionProcessingOverlay.hide();
-        appRouter.pushNamedAndRemoveUntil(
-          AppRoute.sendPaymentSuccessView,
-          (route) => false,
-          arguments: {
+        SendSuccessNavigation.navigateToPaymentSuccess({
             'recipientData': widget.recipientData,
             'selectedData': widget.selectedData,
             'paymentData': _paymentData ?? {},
@@ -1112,8 +1110,7 @@ class _SendReviewViewState extends ConsumerState<SendReviewView>
                 response.data?.sequenceId ??
                 response.data?.id ??
                 response.data?.paymentSequenceId,
-          },
-        );
+        });
         return;
       }
 

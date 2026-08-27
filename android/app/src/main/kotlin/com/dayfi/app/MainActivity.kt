@@ -1,4 +1,4 @@
-package com.dayfi.dayfi
+package com.dayfi.app
 
 import io.flutter.embedding.android.FlutterActivity
 

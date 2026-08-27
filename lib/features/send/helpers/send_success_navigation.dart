@@ -4,6 +4,7 @@ import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/common/utils/app_logger.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/core/navigation/navigator_key.dart';
+import 'package:dayfi/features/main/views/main_view.dart';
 import 'package:dayfi/features/recipients/vm/recipients_viewmodel.dart';
 import 'package:dayfi/features/transactions/vm/transactions_viewmodel.dart';
 import 'package:dayfi/models/wallet_transaction.dart';
@@ -17,6 +18,20 @@ class SendSuccessNavigation {
 
   static const transactionsTabIndex = 1;
 
+  /// Keeps [MainView] under the success screen so returning is a fast pop.
+  static bool keepMainViewRoute(Route<dynamic> route) =>
+      route.settings.name == AppRoute.mainView;
+
+  static Future<T?> navigateToPaymentSuccess<T extends Object?>(
+    Object arguments,
+  ) {
+    return appRouter.pushNamedAndRemoveUntil<T>(
+      AppRoute.sendPaymentSuccessView,
+      keepMainViewRoute,
+      arguments: arguments,
+    );
+  }
+
   static WalletTransaction? findTransaction(
     List<WalletTransaction> transactions,
     String transactionId,
@@ -28,6 +43,12 @@ class SendSuccessNavigation {
       if (_matchesId(txn, normalized)) return txn;
     }
     return null;
+  }
+
+  static WalletTransaction? findInProvider(WidgetRef ref, String? transactionId) {
+    final id = transactionId?.trim();
+    if (id == null || id.isEmpty) return null;
+    return findTransaction(ref.read(transactionsProvider).transactions, id);
   }
 
   static bool _matchesId(WalletTransaction txn, String id) {
@@ -64,10 +85,12 @@ class SendSuccessNavigation {
   }) async {
     if (cached != null) return cached;
 
+    final inMemory = findInProvider(ref, transactionId);
+    if (inMemory != null) return inMemory;
+
     try {
       await ref.read(transactionsProvider.notifier).loadTransactions();
-      final transactions = ref.read(transactionsProvider).transactions;
-      final match = findTransaction(transactions, transactionId);
+      final match = findInProvider(ref, transactionId);
       if (match != null) return match;
       AppLogger.error('Transaction not found: $transactionId');
     } catch (e) {
@@ -76,49 +99,72 @@ class SendSuccessNavigation {
     return null;
   }
 
-  static void _refreshRelatedData(WidgetRef ref) {
-    unawaited(ref.read(transactionsProvider.notifier).loadTransactions());
+  static void _refreshRecipients(WidgetRef ref) {
     unawaited(ref.read(recipientsProvider.notifier).loadBeneficiaries());
   }
 
-  /// Clears the send stack to Main → Transactions, then opens details when found.
+  static void _selectTransactionsTab() {
+    mainViewKey.currentState?.changeTab(transactionsTabIndex);
+  }
+
+  /// Pops back to Main (fast) or rebuilds Main when needed, then opens details.
   static Future<void> openTransactionDetailsOrList({
     required WidgetRef ref,
     String? transactionId,
     WalletTransaction? prefetchedTransaction,
   }) async {
-    WalletTransaction? transaction = prefetchedTransaction;
     final id = transactionId?.trim();
+    var transaction =
+        prefetchedTransaction ?? (id != null ? findInProvider(ref, id) : null);
 
-    if (transaction == null && id != null && id.isNotEmpty) {
-      transaction = await resolveTransaction(ref: ref, transactionId: id);
+    final navigator = NavigatorKey.appNavigatorKey.currentState;
+    if (navigator == null) return;
+
+    if (navigator.canPop()) {
+      navigator.pop();
+      _selectTransactionsTab();
     } else {
-      _refreshRelatedData(ref);
+      await appRouter.pushNamedAndRemoveUntil(
+        AppRoute.mainView,
+        (Route route) => false,
+        arguments: transactionsTabIndex,
+      );
+      _selectTransactionsTab();
     }
 
-    await appRouter.pushNamedAndRemoveUntil(
-      AppRoute.mainView,
-      (Route route) => false,
-      arguments: transactionsTabIndex,
-    );
+    _refreshRecipients(ref);
 
     if (transaction != null) {
-      await appRouter.pushNamed(
-        AppRoute.transactionDetailsView,
-        arguments: transaction,
+      unawaited(
+        appRouter.pushNamed(
+          AppRoute.transactionDetailsView,
+          arguments: transaction,
+        ),
       );
       return;
     }
 
-    if (id != null && id.isNotEmpty) {
-      final navContext = NavigatorKey.appNavigatorKey.currentContext;
-      if (navContext != null) {
-        TopSnackbar.show(
-          navContext,
-          message:
-              'Transaction details aren\'t ready yet. Check your transactions list.',
-        );
-      }
-    }
+    if (id == null || id.isEmpty) return;
+
+    unawaited(
+      resolveTransaction(ref: ref, transactionId: id).then((resolved) {
+        if (resolved != null) {
+          appRouter.pushNamed(
+            AppRoute.transactionDetailsView,
+            arguments: resolved,
+          );
+          return;
+        }
+
+        final navContext = NavigatorKey.appNavigatorKey.currentContext;
+        if (navContext != null) {
+          TopSnackbar.show(
+            navContext,
+            message:
+                'Transaction details aren\'t ready yet. Check your transactions list.',
+          );
+        }
+      }),
+    );
   }
 }

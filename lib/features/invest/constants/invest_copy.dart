@@ -2,7 +2,7 @@
 class InvestCopy {
   InvestCopy._();
 
-  static const featureName = 'Daily Earn';
+  static const featureName = 'DayEarn';
   static const homeQuickAction = 'Earn';
   static const homeSectionTitle = 'Active earnings';
   static const listTitle = 'Your earnings';

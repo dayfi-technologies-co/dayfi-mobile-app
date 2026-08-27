@@ -16,6 +16,7 @@ import 'package:dayfi/common/widgets/dayfi_loading_indicator.dart';
 import 'package:dayfi/common/widgets/transaction_processing_overlay.dart';
 import 'package:dayfi/common/widgets/top_snackbar.dart';
 import 'package:dayfi/features/send/constants/send_copy.dart';
+import 'package:dayfi/features/send/helpers/send_success_navigation.dart';
 
 class RegularTransferTransactionPinView extends ConsumerStatefulWidget {
   final Map<String, dynamic> selectedData;
@@ -157,17 +158,13 @@ class _RegularTransferTransactionPinViewState
         }
 
         TransactionProcessingOverlay.hide();
-        appRouter.pushNamedAndRemoveUntil(
-          AppRoute.sendPaymentSuccessView,
-          (Route route) => false,
-          arguments: {
+        SendSuccessNavigation.navigateToPaymentSuccess({
             'recipientData': widget.recipientData,
             'selectedData': widget.selectedData,
             'paymentData': widget.paymentData,
             'collectionData': collectionData,
             'transactionId': collectionSequenceId,
-          },
-        );
+        });
       } else {
         throw Exception(
           response.message.isNotEmpty

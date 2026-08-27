@@ -9,8 +9,9 @@ import 'package:dayfi/services/local/secure_storage.dart';
 
 /// Keeps users signed in for the configured JWT lifetime (~30 days).
 ///
-/// On 401 we first try a silent email/password re-login, then fall back to the
-/// passcode lock screen instead of wiping the whole session.
+/// On 401 we first try a silent email/password re-login. If that fails, clear
+/// the session and send the user to the main onboarding screen (Google / Apple /
+/// Email) — never the email-only check-email page.
 class SessionAuthService {
   SessionAuthService._();
 
@@ -70,20 +71,7 @@ class SessionAuthService {
         return;
       }
 
-      final storage = locator<SecureStorageService>();
-      final passcode = await storage.read(StorageKeys.passcode);
-      final userJson = await storage.read(StorageKeys.user);
-      final hasPasscode = passcode.isNotEmpty;
-      final hasUser = userJson.isNotEmpty && userJson != 'null';
-
-      if (hasPasscode && hasUser) {
-        AppLogger.info('Returning to passcode lock (session expired)');
-        await storage.delete(StorageKeys.token);
-        appRouter.replaceWithPasscode();
-        return;
-      }
-
-      AppLogger.info('No recovery path — clearing session');
+      AppLogger.info('Session expired — routing to onboarding');
       final container = ProviderContainer();
       await DataClearingService().clearAllUserDataWithContainer(container);
       appRouter.pushOnboardingAndClearStack();

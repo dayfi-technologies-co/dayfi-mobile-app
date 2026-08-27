@@ -159,7 +159,7 @@ class _DayEarnMainViewState extends State<DayEarnMainView> {
                     sliver: SliverList(
                       delegate: SliverChildListDelegate([
                         DayfiBalanceHeaderCard(
-                          label: 'Total Daily Earn Balance',
+                          label: DayEarnCopy.totalBalanceLabel,
                           amount: _headerAmount(s),
                           currency: _headerCurrency(s),
                           currencySymbolFor: dayEarnCurrencySymbol,
@@ -197,7 +197,7 @@ class _DayEarnMainViewState extends State<DayEarnMainView> {
                           ],
                         ),
                         const SizedBox(height: 16),
-                        PrimaryButton(
+                     Padding(padding: const EdgeInsets.symmetric(horizontal: 18), child:   PrimaryButton(
                           text: DayEarnCopy.createCta,
                           onPressed: _create,
                           fullWidth: true,
@@ -209,7 +209,7 @@ class _DayEarnMainViewState extends State<DayEarnMainView> {
                           textColor: AppColors.neutral0,
                           fontFamily: 'Chirp',
                           fontSize: 17,
-                        ),
+                        ),),
                         const SizedBox(height: 20),
                         if (pots.isEmpty)
                           DayfiEmptyState(

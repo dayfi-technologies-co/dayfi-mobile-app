@@ -252,9 +252,14 @@ class DayFlowApiService {
   Future<void> updateFlowSchedule({
     required String flowId,
     required String scheduleId,
+    String? title,
     String? recipientHint,
     String? recipientId,
     String? paymentType,
+    double? amount,
+    String? frequency,
+    DateTime? startAt,
+    DateTime? endAt,
     double? sourceAmount,
     Map<String, dynamic>? execution,
   }) async {
@@ -262,13 +267,20 @@ class DayFlowApiService {
       '${F.baseUrl}/dayflow/flows/$flowId/schedules/$scheduleId',
       RequestMethod.patch,
       data: {
+        if (title != null && title.trim().isNotEmpty) 'title': title.trim(),
         if (recipientHint != null) 'recipientHint': recipientHint,
         if (recipientId != null) 'recipientId': recipientId,
         if (paymentType != null) 'paymentType': paymentType,
+        if (amount != null && amount > 0) 'amount': amount,
+        if (frequency != null && frequency.isNotEmpty) 'frequency': frequency,
+        if (startAt != null)
+          'nextRunAt': startAt.toUtc().toIso8601String(),
+        if (endAt != null) 'endsAt': endAt.toUtc().toIso8601String(),
         if (sourceAmount != null && sourceAmount > 0) 'sourceAmount': sourceAmount,
         if (execution != null) 'execution': execution,
       },
     );
+    DayFlowCacheSync.invalidateAll();
   }
 
   Future<DayFlowPlan?> syncPlan(DayFlowPlan plan) async {

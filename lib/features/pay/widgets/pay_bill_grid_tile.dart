@@ -1,3 +1,4 @@
+import 'package:dayfi/features/pay/constants/bill_display_labels.dart';
 import 'package:dayfi/features/pay/widgets/pay_bill_icon_badge.dart';
 import 'package:dayfi/features/pay/widgets/pay_biller_brand_icon.dart';
 import 'package:flutter/material.dart';
@@ -55,7 +56,7 @@ class PayBillGridTile extends StatelessWidget {
                 ),
               const Spacer(),
               Text(
-                title,
+                formatBillBillerLabel(title),
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(

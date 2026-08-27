@@ -6,6 +6,7 @@ import 'dart:developer';
 
 import 'package:dayfi/common/constants/storage_keys.dart';
 import 'package:dayfi/common/widgets/buttons/buttons.dart';
+import 'package:dayfi/common/widgets/dayfi_web_dialog.dart';
 import 'package:dayfi/services/local/secure_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -352,7 +353,7 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
     showDialog(
       context: context,
       builder:
-          (context) => AlertDialog(
+          (context) => DayfiWebAlertDialog(
             title: const Text('Payment Expired'),
             content: const Text(
               'The payment details have expired. Please create a new payment.',
@@ -2120,13 +2121,12 @@ class _SendPaymentMethodViewState extends ConsumerState<SendPaymentMethodView> {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return Dialog(
+        return DayfiWebDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
           ),
-
-          child: Container(
-            padding: EdgeInsets.all(28),
+          child: Padding(
+            padding: const EdgeInsets.all(28),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [

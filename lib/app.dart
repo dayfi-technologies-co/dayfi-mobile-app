@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:dayfi/common/utils/dayfi_platform.dart';
 import 'package:dayfi/features/web/utils/web_route_helper.dart'
     show instantWebBootRoute, resolveWebInitialRoute, unauthenticatedEntryRoute;
@@ -18,6 +20,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dayfi/services/transaction_monitor_service.dart';
 import 'package:dayfi/common/widgets/connectivity_wrapper.dart';
+import 'package:dayfi/common/widgets/dayfi_responsive_scope.dart';
 import 'package:dayfi/services/local/secure_storage.dart';
 import 'package:dayfi/services/version_service.dart';
 import 'package:dayfi/common/constants/storage_keys.dart';
@@ -48,6 +51,8 @@ class MyApp extends ConsumerStatefulWidget {
 }
 
 class _MyAppState extends ConsumerState<MyApp> {
+  final DayfiRouteTracker _routeTracker = DayfiRouteTracker();
+
   String _initialRoute = unauthenticatedEntryRoute;
   bool _isInitialized = false;
   bool _transactionMonitorStarted = false;
@@ -56,6 +61,11 @@ class _MyAppState extends ConsumerState<MyApp> {
   @override
   void initState() {
     super.initState();
+    if (!kIsWeb) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        FlutterNativeSplash.remove();
+      });
+    }
     if (isDayfiWeb) {
       final instantRoute = instantWebBootRoute(Uri.base.path);
       if (instantRoute != null) {
@@ -74,6 +84,21 @@ class _MyAppState extends ConsumerState<MyApp> {
 
       // Check if this is a new app version and clear data if needed
       await versionService.isNewVersion();
+
+      // Detect reinstall: SharedPreferences is wiped on uninstall but iOS
+      // Keychain (flutter_secure_storage) survives. If our sentinel is missing
+      // but secure storage has auth data, this is a fresh install — wipe stale
+      // Keychain so the user sees onboarding, not the old passcode screen.
+      final prefs = locator<SharedPreferences>();
+      final hasLaunchedBefore = prefs.getBool('has_launched_before') ?? false;
+      if (!hasLaunchedBefore) {
+        final staleToken = await secureStorage.read(StorageKeys.token);
+        if (staleToken.isNotEmpty) {
+          AppLogger.info('Reinstall detected — clearing stale Keychain data');
+          await secureStorage.deleteAll();
+        }
+        await prefs.setBool('has_launched_before', true);
+      }
 
       final firstTime = await secureStorage.read(StorageKeys.isFirstTime);
       final token = await secureStorage.read(StorageKeys.token);
@@ -218,31 +243,52 @@ class _MyAppState extends ConsumerState<MyApp> {
                 });
               }
 
+              final dialogTheme = DialogThemeData(
+                insetPadding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 24,
+                ),
+                constraints: BoxConstraints(
+                  maxWidth:
+                      isDayfiWeb
+                          ? DayfiResponsive.dialogMaxWidth
+                          : 560,
+                  minWidth: 280,
+                ),
+              );
+
               return ConnectivityWrapper(
                 child: MaterialApp(
                   builder: (context, child) {
                     // Ignore iOS/Android system font-size accessibility scaling.
                     final mediaQuery = MediaQuery.of(context);
-                    return MediaQuery(
+                    final scaledChild = MediaQuery(
                       data: mediaQuery.copyWith(
                         textScaler: TextScaler.noScaling,
                       ),
                       child: child ?? const SizedBox.shrink(),
                     );
+                    return DayfiWebAppShell(
+                      routeTracker: _routeTracker,
+                      child: scaledChild,
+                    );
                   },
                   navigatorObservers: [
+                    _routeTracker,
                     if (analyticsObserver != null) analyticsObserver!,
                   ],
                   debugShowCheckedModeBanner: false,
                   title: AppConstants.appName,
                   theme: themeData.copyWith(
                     scaffoldBackgroundColor: const Color(0xffFEF9F3),
+                    dialogTheme: dialogTheme,
                     extensions:
                         AppThemeExtensionsFactory.createLightExtensions().values
                             .toList(),
                   ),
                   darkTheme: AppTheme.darkTheme.copyWith(
                     scaffoldBackgroundColor: AppColors.neutral950,
+                    dialogTheme: dialogTheme,
                     extensions:
                         AppThemeExtensionsFactory.createDarkExtensions().values
                             .toList(),

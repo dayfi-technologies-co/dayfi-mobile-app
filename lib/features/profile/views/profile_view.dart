@@ -1,6 +1,7 @@
 import 'package:dayfi/common/constants/product_features.dart';
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/common/widgets/dayfi_screen_app_bar.dart';
+import 'package:dayfi/common/widgets/dayfi_web_dialog.dart';
 import 'package:dayfi/common/widgets/buttons/primary_button.dart';
 import 'package:dayfi/common/widgets/buttons/secondary_button.dart';
 import 'package:flutter/material.dart';
@@ -118,26 +119,26 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
           title: 'APPEARANCE',
           children: [ProfileThemeSettingsTile()],
         ),
-        const SizedBox(height: ProfileSettingsStyle.sectionSpacing),
-        ProfileSettingsSection(
-          title: 'MONEY',
-          children: [
-            ProfileSettingsTile(
-              icon: 'assets/icons/svgs/account.svg',
-              icon2: 'assets/icons/svgs/coin.svg',
-              iconColor: _mutedIcon,
-              title: 'Budgets',
-              onTap: ProfileSettingsNavigation.toBudgets,
-            ),
-            ProfileSettingsTile(
-              icon: 'assets/icons/svgs/account.svg',
-              icon2: 'assets/icons/svgs/automation.svg',
-              iconColor: _mutedIcon,
-              title: 'DayFlow',
-              onTap: () => ProfileSettingsNavigation.toDayFlow(context),
-            ),
-          ],
-        ),
+        // const SizedBox(height: ProfileSettingsStyle.sectionSpacing),
+        // ProfileSettingsSection(
+        //   title: 'MONEY',
+        //   children: [
+        //     ProfileSettingsTile(
+        //       icon: 'assets/icons/svgs/account.svg',
+        //       icon2: 'assets/icons/svgs/coin.svg',
+        //       iconColor: _mutedIcon,
+        //       title: 'Budgets',
+        //       onTap: ProfileSettingsNavigation.toBudgets,
+        //     ),
+        //     ProfileSettingsTile(
+        //       icon: 'assets/icons/svgs/account.svg',
+        //       icon2: 'assets/icons/svgs/automation.svg',
+        //       iconColor: _mutedIcon,
+        //       title: 'DayFlow',
+        //       onTap: () => ProfileSettingsNavigation.toDayFlow(context),
+        //     ),
+        //   ],
+        // ),
         const SizedBox(height: ProfileSettingsStyle.sectionSpacing),
         ProfileSettingsSection(
           title: 'HELP AND SUPPORT',
@@ -264,11 +265,10 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
   }
 
   Widget _buildLogoutDialog() {
-    return Dialog(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+    return DayfiWebDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: Container(
-        padding: EdgeInsets.all(28),
+      child: Padding(
+        padding: const EdgeInsets.all(28),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -286,8 +286,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
   }
 
   Widget _buildDeleteAccountDialog() {
-    return Dialog(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+    return DayfiWebDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Padding(
         padding: const EdgeInsets.all(28),

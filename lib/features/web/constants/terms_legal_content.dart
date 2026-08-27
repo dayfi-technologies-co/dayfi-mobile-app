@@ -4,7 +4,7 @@ const termsLegalDocument = LegalDocument(
   id: LegalDocumentId.terms,
   pageTitle: 'Terms of Use',
   subtitle:
-      'The rules and guidelines for using DayFi as an individual — including sending money, paying bills, multi-currency wallets, stablecoins, and other features where available.',
+      'The rules and guidelines for using DayFi to send and receive payments.',
   effectiveDate: 'Effective date: 11 May 2026',
   sections: [
     LegalSection(
@@ -12,7 +12,7 @@ const termsLegalDocument = LegalDocument(
       title: 'Introduction',
       paragraphs: [
         'Welcome to DayFi Technologies Inc. ("DayFi," "we," "our," or "us"). These Terms of Use ("Terms") govern your access to and use of our products and services, including the DayFi website, mobile application, APIs, webhooks, and all related tools (collectively, the "Services").',
-        'DayFi is a personal finance application for individuals. We help you send money across Africa, hold multi-currency balances, pay everyday bills, set personal budgets, and save with products such as Daily Earn. Our platform may integrate NGN virtual accounts and bank payouts through Flutterwave, optional stablecoin settlement (for example Stellar USDC and supported EVM paths), tap-to-pay on compatible devices, and additional payment experiences as we expand. Some capabilities are limited to certain regions, verification levels, or device types, and may be marked coming soon or beta until we announce general availability.',
+        'DayFi is a payments application for individuals. We help you send money to others and receive money into your account across supported corridors. Our platform integrates NGN virtual accounts and bank payouts through Flutterwave where available. Some capabilities are limited to certain regions or verification levels, and may be marked coming soon until we announce general availability.',
         'By creating an account, accessing, or using the Services in any way, you agree to be bound by these Terms and our Privacy Notice, which is incorporated by reference. If you do not agree to these Terms, do not create an account or use the Services. If you are using the Services on behalf of a business or legal entity, you represent that you have the authority to bind that entity to these Terms.',
       ],
     ),
@@ -43,15 +43,13 @@ const termsLegalDocument = LegalDocument(
       number: '04',
       title: 'Services overview',
       paragraphs: [
-        'DayFi provides personal financial services for individual users. The Services may include, depending on your region and verification tier:',
-        '• Multi-currency wallet: Holding and viewing balances in supported currencies such as USD, NGN, GBP, and EUR.',
-        '• Send money: Transferring funds to bank accounts, mobile money, DayFi IDs, or supported digital rails across African and other corridors.',
-        '• Add money: Funding your wallet by bank transfer, stablecoin deposit, or other supported top-up methods.',
-        '• Pay bills: Paying airtime, mobile data, TV, internet, utilities, and other bill categories where available.',
-        '• Budgets: Setting personal spending limits, scheduling repeat transfers, and receiving bill or budget reminders.',
-        '• Daily Earn: Named savings pots that accrue daily interest, subject to product terms shown in the app.',
-        '• Transaction history and notifications: Reviewing past activity and receiving alerts for payments, security events, and product updates.',
-        'Payment experiences may include, where available and supported: NGN bank transfer to a Flutterwave-issued virtual account; outbound NGN bank withdrawals routed through Flutterwave; stablecoin settlement paths (including Stellar USDC and EVM-network flows we support); bill payments; and tap-to-pay or NFC-based checkout on compatible devices.',
+        'DayFi provides payment services for individual users. The Services may include, depending on your region and verification tier:',
+        '• Wallet: Holding balances in supported currencies so you can send and receive payments.',
+        '• Send money: Transferring funds to bank accounts, mobile money, DayFi IDs, or other supported rails.',
+        '• Receive money: Accepting inbound transfers via NGN virtual account, bank transfer, or other supported collection methods.',
+        '• Add money: Funding your wallet by bank transfer or other supported top-up methods.',
+        '• Transaction history and notifications: Reviewing past activity and receiving alerts for payments and security events.',
+        'Payment experiences may include, where available: NGN bank transfer to a Flutterwave-issued virtual account for receiving funds; outbound NGN bank withdrawals routed through Flutterwave; and transfers to supported recipients when you send money.',
         'Not every payment path is available in every market, on every device, or at every verification level. Labels such as coming soon, limited access, or beta may apply until we announce general availability.',
       ],
     ),
@@ -74,9 +72,9 @@ const termsLegalDocument = LegalDocument(
       number: '06',
       title: 'Fees and charges',
       paragraphs: [
-        'DayFi and its partners may charge fees in connection with the Services. These may include transaction fees on sales processed through the platform, foreign exchange spreads or conversion fees where applicable, withdrawal or payout fees for NGN bank transfers or stablecoin movements, and subscription or access fees for premium features.',
+        'DayFi and its partners may charge fees in connection with the Services. These may include transaction fees, foreign exchange spreads or conversion fees where applicable, and withdrawal or payout fees for NGN bank transfers.',
         'Where a fee applies to a specific action, we aim to display the fee or a clear estimate before you confirm that action—for example, before you confirm a payout request or select a checkout rail.',
-        'Third parties—including banks, card networks, blockchain validators, or gas networks—may impose separate fees or minimums beyond our control. These are not our fees and we may not be able to predict or display them in advance.',
+        'Third parties—including banks and payment partners—may impose separate fees or minimums beyond our control. These are not our fees and we may not be able to predict or display them in advance.',
         'All fees are non-refundable except where required by law or as otherwise stated in writing by DayFi. We may update our fee schedule from time to time and will provide reasonable notice of material changes.',
       ],
     ),
@@ -84,7 +82,7 @@ const termsLegalDocument = LegalDocument(
       number: '07',
       title: 'Transaction limits and holds',
       paragraphs: [
-        'We may impose limits on transaction size, daily or monthly volume, withdrawal amounts, or stablecoin flows based on your verification level, risk profile, partner rules, or applicable law. These limits may be adjusted at any time to protect the integrity of the platform or to comply with regulatory requirements.',
+        'We may impose limits on transaction size, daily or monthly volume, or withdrawal amounts based on your verification level, risk profile, partner rules, or applicable law. These limits may be adjusted at any time to protect the integrity of the platform or to comply with regulatory requirements.',
         'We may place holds on funds pending settlement, dispute resolution, verification, fraud investigation, or compliance review. During a hold, you may not be able to access or withdraw the affected funds. We will notify you of holds where permitted and resolve them as promptly as practicable.',
         'If you believe a limit or hold has been applied in error, contact support@dayfi.co with your account details and a description of the issue.',
       ],
@@ -95,17 +93,15 @@ const termsLegalDocument = LegalDocument(
       paragraphs: [
         'Using the Services involves certain risks that you should understand:',
         '• NGN payment rails: Inbound bank transfers and Flutterwave-mediated payouts depend on the availability and accuracy of third-party banking infrastructure. Timing, settlement windows, and success of specific transfers may vary and are not fully within our control.',
-        '• Stablecoin and on-chain settlement: Blockchain transactions are irreversible once confirmed. Stablecoin values, while designed to be stable, may deviate from their peg in extreme market conditions. On-chain data is publicly visible and permanent. Regulatory treatment of digital assets varies by jurisdiction and may change.',
-        '• Device-based checkout (tap-to-pay, NFC): These flows depend on device hardware, operating system version, permissions granted by the user, and third-party certifications. Availability does not imply certification for every use case or compliance with every local standard.',
         '• Security: While we implement strong security controls, no system is perfectly secure. Unauthorized access to your account, device compromise, or social engineering attacks could result in loss of funds or data. You are responsible for securing the devices and credentials used with DayFi.',
-        '• Regulatory and legal risk: The regulatory environment for payments, stablecoins, and digital financial services is evolving. Changes in law or regulation could affect the availability of specific features or the terms on which we can offer the Services.',
+        '• Regulatory and legal risk: The regulatory environment for payments and digital financial services is evolving. Changes in law or regulation could affect the availability of specific features or the terms on which we can offer the Services.',
       ],
     ),
     LegalSection(
       number: '09',
       title: 'Privacy and data handling',
       paragraphs: [
-        'Your use of the Services is also governed by our Privacy Notice, which is incorporated into these Terms by reference. The Privacy Notice explains in detail how we collect, use, share, and protect your personal data—including data processed with Flutterwave for NGN banking, data observable on public blockchain networks when you use stablecoin rails, and device data used for tap-to-pay and related experiences.',
+        'Your use of the Services is also governed by our Privacy Notice, which is incorporated into these Terms by reference. The Privacy Notice explains in detail how we collect, use, share, and protect your personal data—including data processed with Flutterwave for NGN banking.',
         'By using the Services, you consent to our data practices as described in the Privacy Notice. If you have questions about your data or wish to exercise your data rights, contact privacy@dayfi.co.',
       ],
     ),
@@ -132,7 +128,7 @@ const termsLegalDocument = LegalDocument(
       title: 'Disclaimer and limitation of liability',
       paragraphs: [
         'The Services are provided on an \'as-is\' and \'as-available\' basis without warranties of any kind. To the maximum extent permitted by applicable law, DayFi expressly disclaims all implied warranties, including warranties of merchantability, fitness for a particular purpose, non-infringement, and accuracy.',
-        'We do not warrant that the Services will be uninterrupted, error-free, or free from harmful components; that defects will be corrected; or that third-party services (including Flutterwave\'s banking infrastructure or blockchain networks) will meet your expectations.',
+        'We do not warrant that the Services will be uninterrupted, error-free, or free from harmful components; that defects will be corrected; or that third-party services (including Flutterwave\'s banking infrastructure) will meet your expectations.',
         'To the maximum extent permitted by law, DayFi, its directors, officers, employees, and agents are not liable for any indirect, incidental, special, consequential, or punitive damages, or for lost profits, lost revenue, lost data, or business interruption, arising out of or related to your use of or inability to use the Services—even if we have been advised of the possibility of such damages.',
         'Where liability cannot be fully excluded, our aggregate liability arising out of or related to these Terms or the Services is limited to the greater of: (a) the total fees you paid DayFi for the Services in the three (3) calendar months immediately preceding the event giving rise to the claim, or (b) one hundred US dollars (US\$100). This limitation applies to all causes of action in aggregate, not per incident.',
         'Nothing in these Terms limits liability that cannot be excluded or limited under applicable law—including liability for death or personal injury caused by negligence, or for fraud or fraudulent misrepresentation.',

@@ -17,14 +17,12 @@ class WebLandingShell extends StatefulWidget {
     required this.child,
     this.activeRoute,
     this.showFooter = true,
-    this.showAnnouncement = true,
     this.fullWidthChild = false,
   });
 
   final Widget child;
   final String? activeRoute;
   final bool showFooter;
-  final bool showAnnouncement;
 
   /// When true, [child] spans the full viewport width (for full-bleed section bands).
   final bool fullWidthChild;
@@ -73,10 +71,6 @@ class _WebLandingShellState extends State<WebLandingShell> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        if (widget.showAnnouncement)
-                          LandingAnnouncementBanner(
-                            onTap: () => _navigate(AppRoute.webAboutPath),
-                          ),
                         ColoredBox(
                           color: LandingSectionColors.hero,
                           child: Column(
@@ -159,7 +153,6 @@ class _WebHeaderBar extends StatelessWidget {
 
   static const _headerNav = <_NavLink>[
     _NavLink(LandingCopy.navContact, '_contact'),
-    _NavLink(LandingCopy.navFaqs, AppRoute.webFaqPath),
     _NavLink(LandingCopy.navLogin, AppRoute.loginPath),
     _NavLink(LandingCopy.navSignUp, AppRoute.signupPath),
   ];
@@ -864,13 +857,11 @@ Widget wrapWithWebShellIfNeeded({
   required Widget child,
   String? activeRoute,
   bool showFooter = true,
-  bool showAnnouncement = true,
 }) {
   if (!isDayfiWeb) return child;
   return WebLandingShell(
     activeRoute: activeRoute,
     showFooter: showFooter,
-    showAnnouncement: showAnnouncement,
     child: child,
   );
 }

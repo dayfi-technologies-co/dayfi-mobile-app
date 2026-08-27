@@ -1,0 +1,10 @@
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/logo_splash.png"
+  min_sdk_android: 26
+  adaptive_icon_background: "#5645F5"
+  adaptive_icon_foreground: "assets/images/logo_splash.png"
+  remove_alpha_ios: true
+  background_color_ios: "#5645F5"
+  image_path_ios: "assets/images/logo_splash.png"

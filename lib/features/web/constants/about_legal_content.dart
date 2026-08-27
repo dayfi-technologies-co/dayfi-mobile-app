@@ -4,7 +4,7 @@ const aboutLegalDocument = LegalDocument(
   id: LegalDocumentId.about,
   pageTitle: 'About DayFi',
   subtitle:
-      'We build a personal finance app for everyday people — send money across Africa, pay bills, budget smarter, and save with Daily Earn, on regulated rails where available.',
+      'We build an AI-powered personal finance app — DayX guides you in plain language to send, pay bills, automate with DayFlow, and save with DayEarn, on regulated rails where available.',
   effectiveDate: 'Last updated: 11 May 2026',
   sections: [
     LegalSection(
@@ -20,14 +20,16 @@ const aboutLegalDocument = LegalDocument(
       number: '02',
       title: 'What DayFi does',
       paragraphs: [
-        'DayFi is a personal finance app for individuals—not a business-only POS or merchant gateway. It is designed around how everyday people send, receive, spend, and save money.',
+        'DayFi is an AI-powered personal finance app for individuals—not a business-only POS or merchant gateway. It is designed around how everyday people send, receive, spend, and save money.',
         'At its core, DayFi gives you:',
+        '• DayX — your AI guide to send, pay bills, check balances, and open savings or budgets in plain language.',
+        '• DayFlow — automate repeat sends and bill payments on a schedule, powered by DayX.',
         '• A multi-currency wallet to hold USD, NGN, and other supported balances in one account.',
         '• Send money to family, friends, and recipients across Africa via bank transfer, mobile money, DayFi ID, or supported digital rails.',
         '• Add money by bank transfer, stablecoin deposit, or other supported funding methods.',
         '• Pay bills such as airtime, mobile data, cable TV, internet, and utilities from your global balance.',
         '• Personal budgets to cap spending, schedule repeat transfers, and get reminders before bills or sends are due.',
-        '• Daily Earn savings pots that accrue daily interest, with flexible withdrawals.',
+        '• DayEarn savings pots that accrue daily interest, with flexible withdrawals.',
         '• A clear transaction history and real-time notifications so you always know when money moves.',
         'Payment paths available or in development include NGN bank transfer to a dedicated Flutterwave virtual account, outbound NGN bank withdrawals, stablecoin settlement (including Stellar USDC and supported EVM-network paths), bill payments, and tap-to-pay on compatible devices. Not every path is available in every market, at every verification level, or on every device. We label features clearly as live, limited access, or coming soon so you can plan accordingly.',
       ],

@@ -320,6 +320,7 @@ class _NotificationsViewState extends ConsumerState<NotificationsView> {
     return InkWell(
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
+      hoverColor: Colors.transparent,
       onTap: () {
         if (!notification.isRead) {
           _markAsRead(notification);

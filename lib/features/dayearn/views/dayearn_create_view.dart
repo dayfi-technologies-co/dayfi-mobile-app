@@ -28,6 +28,7 @@ class _DayEarnCreateViewState extends ConsumerState<DayEarnCreateView> {
   final _amountController = TextEditingController();
   static const _currency = kDayEarnCurrency;
   double? _usdBalance;
+  bool _submitting = false;
 
   DayEarnInterestPreview get _interestPreview {
     final parsed = double.tryParse(_amountController.text.trim());
@@ -71,6 +72,8 @@ class _DayEarnCreateViewState extends ConsumerState<DayEarnCreateView> {
   }
 
   Future<void> _submit() async {
+    if (_submitting) return;
+
     final name = _nameController.text.trim();
     final amount = double.tryParse(_amountController.text.trim());
     if (name.isEmpty || amount == null || amount <= 0) {
@@ -82,31 +85,32 @@ class _DayEarnCreateViewState extends ConsumerState<DayEarnCreateView> {
       return;
     }
 
-    final result =
-        await TransactionPinFlow.requestPinAndRun<Map<String, dynamic>?>(
-          context: context,
-          ref: ref,
-          returnRoute: AppRoute.dayEarnCreateView,
-          task: (pin) async {
-            return dayEarnService.createPot(
+    setState(() => _submitting = true);
+    try {
+      final result =
+          await TransactionPinFlow.requestPinAndRun<Map<String, dynamic>?>(
+            context: context,
+            ref: ref,
+            returnRoute: AppRoute.dayEarnCreateView,
+            task: (pin) => dayEarnService.createPot(
               name: name,
               amount: amount,
               currency: _currency,
               pin: pin,
-            );
-          },
-        );
+            ),
+          );
 
-    if (!mounted || result == null) return;
+      if (!mounted || result == null) return;
 
-    await DayEarnFlow.onPotCreated(ref);
-    if (!mounted) return;
-
-    TopSnackbar.showSafe(
-      context,
-      message: DayEarnCopy.potCreated(name),
-    );
-    Navigator.pop(context, true);
+      DayEarnFlow.completeWithSnackbar(
+        context: context,
+        ref: ref,
+        message: DayEarnCopy.potCreated(name),
+        afterPotCreated: true,
+      );
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
   }
 
   @override
@@ -216,7 +220,8 @@ class _DayEarnCreateViewState extends ConsumerState<DayEarnCreateView> {
                 padding: const EdgeInsets.symmetric(horizontal: 32),
                 child: PrimaryButton(
                   text: 'Next',
-                  onPressed: _canContinue ? _submit : null,
+                  onPressed: _canContinue && !_submitting ? _submit : null,
+                  isLoading: _submitting,
                   fullWidth: true,
                   height: 48,
                   borderRadius: 40,

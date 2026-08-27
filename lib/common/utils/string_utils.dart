@@ -1,20 +1,26 @@
 
 class StringUtils {
+  /// Product names that must keep mid-word capitals in UI copy.
+  static const _brandWords = <String, String>{
+    'dayearn': 'DayEarn',
+    'dayflow': 'DayFlow',
+    'dayfi': 'Dayfi',
+  };
 
   static bool isNullOrEmpty(String? value) {
     return value == null || value.isEmpty;
   }
 
+  static String formatTitleWord(String word) {
+    if (word.isEmpty) return word;
+    final brand = _brandWords[word.toLowerCase()];
+    if (brand != null) return brand;
+    return word[0].toUpperCase() + word.substring(1).toLowerCase();
+  }
 
   static String toTitleCase(String text) {
     if (isNullOrEmpty(text)) return text;
-    return text
-        .split(' ')
-        .map((word) {
-          if (word.isEmpty) return word;
-          return word[0].toUpperCase() + word.substring(1).toLowerCase();
-        })
-        .join(' ');
+    return text.split(' ').map(formatTitleWord).join(' ');
   }
 
   static String removeWhitespace(String text) {

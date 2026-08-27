@@ -176,25 +176,28 @@ class _BudgetsViewState extends State<BudgetsView> {
                 onRefresh: () => _load(showFullLoader: false),
                 child:
                     _budgets.isEmpty
-                        ? ListView(
+                        ? CustomScrollView(
                           physics: const AlwaysScrollableScrollPhysics(
                             parent: BouncingScrollPhysics(),
                           ),
-                          children: [
-                            SizedBox(
-                              height: MediaQuery.of(context).size.height * 0.45,
-                              child: _loadError != null
-                                  ? _BudgetsErrorState(
-                                    message: _loadError!,
-                                    onRetry: () => _load(),
-                                  )
-                                  : DayfiEmptyStateBody(
-                                    title: 'No budgets yet',
-                                    message:
-                                        'Schedule sends, bills, spending caps, Daily Earn deposits, or one-time reminders.',
-                                    actionText: 'Create budget',
-                                    onAction: _openCreateBudget,
-                                  ),
+                          slivers: [
+                            SliverFillRemaining(
+                              hasScrollBody: false,
+                              child: Center(
+                                child:
+                                    _loadError != null
+                                        ? _BudgetsErrorState(
+                                          message: _loadError!,
+                                          onRetry: () => _load(),
+                                        )
+                                        : DayfiEmptyState(
+                                          title: 'No budgets yet',
+                                          message:
+                                              'Schedule sends, bills, spending caps, DayEarn deposits, or one-time reminders.',
+                                          actionText: 'Create budget',
+                                          onAction: _openCreateBudget,
+                                        ),
+                              ),
                             ),
                           ],
                         )

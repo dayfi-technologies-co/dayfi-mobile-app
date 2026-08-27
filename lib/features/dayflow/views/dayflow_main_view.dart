@@ -1,6 +1,7 @@
 import 'package:dayfi/app_locator.dart';
 import 'package:dayfi/common/utils/haptic_helper.dart';
 import 'package:dayfi/common/widgets/dayfi_empty_state.dart';
+import 'package:dayfi/common/widgets/dayfi_web_dialog.dart';
 import 'package:dayfi/common/widgets/shimmer_widgets.dart';
 import 'package:dayfi/common/widgets/text_fields/custom_text_field.dart';
 import 'package:dayfi/core/theme/app_typography.dart';
@@ -223,7 +224,7 @@ class _DayFlowMainViewState extends State<DayFlowMainView> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder:
-          (ctx) => AlertDialog(
+          (ctx) => DayfiWebAlertDialog(
             title: Text(DayFlowCopy.startOver),
             content: Text(DayFlowCopy.startOverConfirm),
             actions: [

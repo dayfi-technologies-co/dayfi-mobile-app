@@ -39,6 +39,7 @@ class _PayWithCurrencySheet extends StatelessWidget {
     return InkWell(
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
+      hoverColor: Colors.transparent,
       onTap: () => Navigator.pop(context),
       child: Stack(
         alignment: Alignment.center,
